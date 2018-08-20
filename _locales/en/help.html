@@ -1,0 +1,94 @@
+<div style="background:#f90;text-align:center;">Only Firefox after 60 are supported now </div>
+<br />
+<div style="background:#f90;text-align:center;">Hint of v1.3.2: Please re-install backend to make ScrapBee safer</div>
+<h2>What's ScrapBee?</h2>
+ScrapBee is a Firefox Quantum extension trying to inherit some properties of <a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a>,
+at least, it can read/write data left over from ScrapBook (of course, we can create new). For ScrapBook do not support Firefox Quantum, ScrapBee is expected to be
+an extension acts like ScrapBook under Firefox Quantum.
+<p>With ScrapBee, you can save web page scraps to local storage, and manage scraps in browser sidebar。</p>
+<h2>What's Rdf?</h2>
+Rdf is ScrapBee/ScrapBook's data file in which properties of scraps stored in.
+<h2>Install/Setup</h2>
+After ScrapBee installed, please just finish the <a href="#initiate">Initiate</a> steps before using ScrapBee.
+<h2>How to use?</h2>
+<img src="image/hints/01.png" class="" alt="" />
+<p class=""> Click on ScrapBee Icon, ScrapBee will be opened in sidebar(Mark1), create folders in sidebar if needed.(Mark2) </p>
+<img src="image/hints/02.png" class="" alt="" />
+<p class="">Full load the page you want to capture, click on menu item "Capture Page" in content menu to capture the page(Mark3) </p>
+<img src="image/hints/03.png" class="" alt="" />
+<p class="">You can also save selected part of the page, and click on menu item Capture Selection to save it(Mark4) </p>
+<img src="image/hints/04.png" class="" alt="" />
+<p class="">When you are capturing content, a entity will be showed up in sidebar(Mark5),
+  and it's icon will be showed in status waiting until capture finished, then you can open local content(Mark6) by
+  clicking on it, you can also open origin URL by click on the origin URL button(Mark7). </p>
+<h4>Be Ware</h4>
+Whatever you are capturing, please keep ScrapBee opened in sidebar, entity of scraps captured will be saved to position in sidebar currently selected(if no folder/entity selected, it will be saved as top level). Also, you can move entities around by dragging them.
+<h2>Trouble Shooting</h2>
+<h4>Port</h4>
+If ScrapBee stop working, and if you see error message in <a href="#log">Log</a> window like:
+<div class="embeded-log-text"> error: listen tcp :9900: bind: address already in use</div>
+Please try to kill the process binds on that port manually, e.g. under Linux you can do:
+<div class="embeded-log-text">fuser -k 9900/tcp</div>
+Or try another backend port in <a href="#settings">Settings</a>
+<h4>File system permission</h4>
+Please do not register rdfs under a directory without read/write permission for current user,
+e.g. common users have no write permission of Windows root directory like c:\, but register rdfs
+in a sub directory of it like c:\foobar will work in general.
+<h4>Reported as Trojan malware</h4>
+Backend of ScrapBee is likely treated as Trojan by  scanners, please add ScrapBee to white list of scanners to prevent miss-block/mis-kill, please contact me if you have a better solution。
+<h4>Download installation scripts fails</h4>
+If you can not download the installation scripts for some reason, e.g. mis-blocked by security tools.
+Please try to re-download the backend:
+<br/>Close Firefox->Delete files under “<i>USER-DOWNLOAD-DIRECTORY</i>/scrapbee/”->Start Firefox->Download again
+<br/><br/>If this not helps, please create the scripts manually in “<i>USER-DOWNLOAD-DIRECTORY</i>/scrapbee/”:
+<br /> <br />
+scrapbee_backend.json: (<b>Important:</b> replace "<b><i>USER-DOWNLOAD-DIRECTORY</i></b>" to your real <b>USER DOWNLOAD DIRECTORY</b>)
+<div class="embeded-log-text">
+  {<br />
+  "allowed_extensions": [<br />
+  "scrapbee@scrapbee.org"<br />
+  ],<br />
+  "description": "Scrapbee backend",<br />
+  "name": "scrapbee_backend",<br />
+  "path": "<i>USER-DOWNLOAD-DIRECTORY</i>/scrapbee/scrapbee_backend",<br />
+  "type": "stdio"<br />
+  }<br />
+</div>
+install.bat(Windows):
+<div class="embeded-log-text">
+  <!-- reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
+       reg add    "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d %USERPROFILE%\Downloads\scrapbee\scrapbee_backend.json  /f<br /> -->
+  reg delete "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
+  reg add    "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d %USERPROFILE%\Downloads\scrapbee\scrapbee_backend.json  /f<br />
+  echo done<br />
+  pause<br />
+</div>
+install.sh(Linux)
+<div class="embeded-log-text">
+  #!/bin/bash<br />
+  chmod +x scrapbee_backend<br />
+  dest="${HOME}/.mozilla/native-messaging-hosts"<br />
+  if [ ! -d "$dest" ];then<br />
+  &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p "$dest"<br />
+  fi<br />
+  cp scrapbee_backend.json "$dest"<br />
+  echo done<br />
+</div>
+install.sh(Mac)
+<div class="embeded-log-text">
+  #!/bin/bash<br />
+  chmod +x scrapbee_backend<br />
+  dest="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
+  if [ ! -d $dest ];then<br />
+  &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p $dest<br />
+  fi<br />
+  cp scrapbee_backend.json $dest<br />
+  echo done<br />
+</div>
+<h4>STILL DO NOT WORK?</h4>
+Check the <a href="#log">log</a>, there are maybe infomation shows what happend.
+<br>Restart Firefox, this helps sometime.
+<br>Or you can email us to  <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
+<br>Or you can make questions in our github repo: <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
+<h2>BACKUP</h2>
+ScrapBee provides no backup function, please backup rdfs and other data files manually often :).

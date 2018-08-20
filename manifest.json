@@ -1,0 +1,53 @@
+{
+    "manifest_version": 2,
+    "name": "ScrapBee",
+    "version": "1.3.2",
+    "description": "__MSG_extensionDescription__",
+    "default_locale": "en",
+    "icons": {
+	"64": "icons/bee.png"
+    },
+    "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'" ,
+    "permissions": [	
+        "nativeMessaging", 
+        "contextMenus",
+        "menus",
+        "downloads",
+        "bookmarks",
+        "storage",
+        "unlimitedStorage",
+        "activeTab",
+        "tabs",
+        "webNavigation",
+        "webRequest",
+        "webRequestBlocking",
+        "file:///*",
+        "http://*/*",
+        "https://*/*",
+	"notifications"
+    ],
+    "applications": {
+        "gecko": {
+            "id": "scrapbee@scrapbee.org"
+        }
+    },
+    "sidebar_action": {
+        "default_title": "ScrapBee",
+        "default_panel": "main.html",
+        "default_icon": "icons/bee.png"
+    },
+    "background": {
+        "scripts": ["background.js"]
+    },
+    "browser_action": {
+	"default_icon": {
+	    "16": "icons/bee.png",
+	    "32": "icons/bee.png"
+	}
+    },
+    "content_scripts": [{
+        "matches": ["http://*/*", "https://*/*"],
+        "js": ["jquery-3.3.1.js", "proto.js", "md5.js", "content_script.js"],
+	"css": ["content_script.css"]
+    }]
+}

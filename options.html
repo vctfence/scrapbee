@@ -1,0 +1,174 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>ScrapBee -> {Setting}</title>
+    <link rel="icon" href="icons/bee.svg" type="image/png" />
+    <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
+    <script type="text/javascript" src="jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="proto.js"></script>
+    <script type="module" src="options.js"></script>
+  </head>
+  <body>
+    <div id="div-page">
+      <div id="div-form-left">
+        <!-- <img src="favicon.ico" class="" alt="" style="width:50%"/> -->
+        <a class="left-index" href="#initiate">{Initiate}</a>
+        <a class="left-index" href="#settings">{Setting}</a>
+        <a class="left-index" href="#log">{Log}</a>
+        <a class="left-index" href="#help">{Help}</a>
+        <a class="left-index" href="#donate">{Donate}</a>
+      </div>
+      <div id="div-initiate" class="div-area" style="display:none">
+        <table width="" cellspacing="" cellpadding="" border="0" class="form-table" style=";max-width:700px">
+          <tr>
+            <td>{Step}-1</td>
+            <td>
+              <div class="">
+                {STEP1_TEXT_1}
+                <!-- Download ScrapBee backend executable and 2 installation file to <i>USER-DOWNLOAD-DIRECTORY</i>/screepbee/, by just click on the button below. -->
+              </div>
+              <br /><input id="btnDownloadBackend" type="button" name="add" value="{Download}"/>
+              <span id="txtBackendPath"></span>
+              <br/><br/>
+              <div class="tips">
+                {STEP1_TEXT_2}
+                <!-- Windows users maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under
+                     <i>USER-DOWNLOAD-DIRECTORY</i>/screepbee/, start Firefox and download again.<br><br>
+                     Please use standard version of Firefox, Beta or Nightly maybe not work for ScrapBee. -->
+                </div>
+            </td>
+          </tr>
+          <tr>
+            <td>{Step}-2</td>
+            <td>
+              <div>
+                {STEP2_TEXT_1}
+                <!-- Run the installation script downloaded above manually: -->
+                <br>
+                <br>Linux/Mac:
+                <br>{STEP2_TEXT_2}<!-- Run the commands in your terminal -->
+                <br>cd <i style="color:#900">&lt;{DOWNLOAD_DESTINATION_DIRECTORY}&gt;</i>
+                <br>bash install.sh
+                <br>
+                <br>Windows:
+                <br>open <i style="color:#900">&lt;{DOWNLOAD_DESTINATION_DIRECTORY}&gt;</i>
+                <br>Run install.bat ({STEP2_TEXT_3}<!-- You maybe need to run the script as administrator -->)
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>{Step}-3</td>
+            <td>
+              <div>{STEP3_TEXT_1}<a href="#settings">{Setting}</a></div>
+            </td>
+          </tr>
+          <tr>
+            <td>{Step}-4</td>
+            <td>
+              <div>{STEP4_TEXT_1}</div>
+            </td>
+          </tr>          
+          <tr>
+            <td>{Step}-5</td>
+            <td>
+              <div>{STEP5_TEXT_1}</div>
+            </td>
+          </tr>           
+        </table>
+      </div>
+      <div id="div-settings" class="div-area" style="display:none;">
+        <table width="" cellspacing="" cellpadding="" border="0" class="form-table">       
+          <tr>
+            <td>{Rdf Files}</td>
+            <td>
+              <div class="tips">
+                {RDF_FILES_TIP}<br>
+                <!-- These are <b>absolute</b> paths of ScrapBee major data file with extension ".rdf". <br/><br>
+                     
+                     e.g. c:\scrapbee\test.rdf for Windows<br>
+                     or /home/userID/scrapbee/test.rdf for Linux, /Users/userID/scrapbee/test.rdf for Mac<br><br>
+                     
+                     So that you can setup multiple rdf files to classify your scraps.<br/>
+                     You can have different rdfs inside same directory.<br/>
+                     No need to create these files maunally.<br/>
+                     And here's a good news for <a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a> user, that ScrapBook rdfs are also supported. -->
+              </div>
+              <div class="panel" id="rdf-area"></div>
+              <input type="button" name="add" value="+" style="margin-top:5px;"/>
+            </td>
+          </tr>
+          <tr>
+            <td>{Backend Port}</td>
+            <td id="">
+              <input type="text" name="backend_port" value="" />
+              <div class="tips" style="display:inline-block;vertical-align:top;">
+                {BACKEND_PORT_TIP}
+                <!-- TCP port ScrapBee backend server listens. e.g. 9900 --> 
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>{Color}</td>
+            <td id="">
+              <div class="tips">
+                {COLOR_TIP} <!-- Change color of some elements to make ScrapBee a better looking. <br>These colors should be in format: #FFFFFF or #FFF -->
+              </div>
+              <div class="panel" style="vertical-align:top;">
+                <table width="" cellspacing="" cellpadding="0" border="0" class="form-table inner" style="display:inline-block;">
+                  <tr><td>{Background}</td><td><input type="text" name="bg_color" value=""/></td></tr>
+                  <tr><td>{BASIC_TEXT}</td><td><input type="text" name="font_color" value=""/></td></tr>
+                  <tr><td>{BOOKMARK_TEXT}</td><td><input type="text" name="bookmark_color" value=""/></td></tr>
+                  <tr><td>{Separator}</td><td><input type="text" name="separator_color" value=""/></td></tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>{Behavior}</td>
+            <td id="">
+              <div class="panel">
+                <table width="" cellspacing="" cellpadding="0" border="0" class="form-table inner">
+                  <tr>
+                    <td>{OPEN_IN_CURRENT_TAB}</td><td>
+                      <input type="checkbox" name="open_in_current_tab" value="" style="vertical-align:top"/>
+                      <div class="tips" style="display:inline-block;vertical-align:top">
+                        {OPEN_IN_CURRENT_TAB_TIP}
+                        <!-- 
+                             By default, ScrapBee opens each scrap in new tab when clicking on an entity,
+                             <br>and open scrap in current tab by holding control(meta for Mac)
+                             while clicking. <br>You can reverse this behavior by check on the option. -->                        
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><input type="button" name="save" value="{Save}" /></td>
+          </tr>
+        </table>
+      </div>
+      <div id="div-donate" class="div-area" style="display:none;">
+        <div style="font-size:15px;text-align:center;vertical-align:middle;">
+          <br /><br /><img src="icons/bee-logo.svg" class="" alt="" width="200"/>
+          <br /><br />
+          {DONATE_WORDS}
+          <!-- To make ScrapBee grows better,
+               <br />your donations are very welcome,
+               <br />thanks for your support !!!
+             -->
+          <br />
+          <br /><input type="button" name="" value="{DONATE_WITH_PAYPAL}" id="donate"/>
+          <br /><br />
+          <div>{MORE_DONATE_WAY}</div>
+        </div>
+      </div>
+      <div id="div-help" class="div-area" style="display:none;">
+      </div>
+      <div id="div-log" class="div-area" style="display:none;height:100%;position:relative">
+        <div class="console"></div>
+      </div>
+  </body>
+</html>

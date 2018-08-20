@@ -1,0 +1,136 @@
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- HTTP 1.1 -->
+    <meta http-equiv="pragma" content="no-cache">
+    <!-- HTTP 1.0 -->
+    <meta http-equiv="cache-control" content="no-cache">
+    <!-- Prevent caching at the proxy server -->
+    <meta http-equiv="expires" content="0">
+    <link rel="stylesheet" type="text/css" href="main.css" media="screen"/>
+    <script type="text/javascript" src="jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="md5.js"></script>
+    <script type="text/javascript" src="proto.js"></script>
+    <script type="module" src="main.js"></script>
+  </head>
+  <body contextmenu="popup-menu-body">
+    <div style="" class="toolbar table">
+      <div class="table-row">
+        <div class="table-cell">
+          <img class="tool-button" src="icons/settings.svg" class="" title="{Setting}" id="btnSet"/>
+          <img class="tool-button" src="icons/reload.svg" class="" title="{Reload}" id="btnLoad"/>
+          <img class="tool-button" src="icons/help.svg" class="" title="{Help}" id="btnHelp"/>
+          <img class="tool-button" src="icons/search.svg" class="" title="{Search}" id="btnSearch"/>
+          <a href="options.html#donate" style="color:blue;font-size:9px" target="_blank">{DONATE}</a>
+        </div>
+        <div style="text-align:right;">
+          Rdf <select id="listRdf" autocomplete="off" style=""></select>
+          <img class="tool-button" src="icons/openfolder.svg" class="" title="{Open Folder}" id="btnFileManager"/>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-cover dlg-confirm" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title">[title]</div>
+          <div class="dlg-table" style="overflow:hidden;">
+            <div class="row">
+              <div class="cell">[message]</div>
+            </div>
+            <div class="row">
+              <div class="cell" style="text-align:center;">
+                <input type="button" class="button-ok" value="{DLG_OK}"" />
+                <input type="button" class="button-cancle" value="{DLG_CANCLE}"" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>    
+    <div class="dlg-cover dlg-alert" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title">[title]</div>
+          <div class="dlg-table" style="overflow:hidden;">
+            <div class="row">
+              <div class="cell">[message]</div>
+            </div>
+            <div class="row">
+              <div class="cell" style="text-align:center;">
+                <input type="button" class="button-ok" value="OK" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-cover dlg-folder" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title">{New Folder}</div>
+          <div class="dlg-table" style="overflow:hidden;">
+            <div class="row">
+              <div class="cell" style="width:50px;text-align:right;">{Title}</div>
+              <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
+            </div>
+            <div class="row">
+              <div class="cell"></div>
+              <div class="cell">
+                <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
+                <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="cell"></div>
+              <div class="cell">
+                <input type="button" class="button-ok" value="{DLG_OK}" />
+                <input type="button" class="button-cancle" value="{DLG_CANCLE}" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-cover dlg-prompt" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title i18n i18n-innerHTML">{Rename}</div>
+          <div class="dlg-table" style="overflow:hidden;">
+            <div class="row">
+              <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Title}</div>
+              <div class="cell"><input type="" name="title" value="" style="width:100%"/></div>
+            </div>
+            <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
+              <div class="cell"></div>
+              <div class="cell">
+                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
+                <input type="button" class="button-cancle i18n i18n-value" value="{DLG_CANCLE}"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="root folder-content i18n">{Loading...}</div>
+    <menu type="context" id="popup-menu-folder">
+      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png" class="i18n i18n-label"></menuitem> -->
+      <menuitem id="menuRename" label="{Rename}" icon="icons/rename.svg" class="i18n i18n-label"></menuitem>
+      <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg" class="i18n i18n-label"></menuitem>
+      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg" class="i18n i18n-label"></menuitem>
+      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg" class="i18n i18n-label"></menuitem>
+    </menu>
+    <menu type="context" id="popup-menu-link">
+      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png" class="i18n i18n-label"></menuitem> -->
+      <menuitem id="menuRename" label="{Rename}"" icon="icons/rename.svg" class="i18n i18n-label"></menuitem>
+      <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg" class="i18n i18n-label"></menuitem>
+      <!-- <menu label="Modify" id="menuModify"></menu> -->
+      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg" class="i18n i18n-label"></menuitem>
+      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg" class="i18n i18n-label"></menuitem>
+    </menu>
+    <menu type="context" id="popup-menu-body">
+      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg" class="i18n i18n-label"></menuitem>
+      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg" class="i18n i18n-label"></menuitem>
+    </menu>
+  </body>
+</html>

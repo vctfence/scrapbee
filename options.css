@@ -1,0 +1,162 @@
+*{
+    font-family:"WenQuanYi Micro Hei",
+		"Open Sans",
+		"Fira Sans",
+		"Lucida Sans",
+		"Lucida Sans Unicode",
+		"Trebuchet MS",
+		"Liberation Sans",
+		"Nimbus Sans L",
+		sans-serif;
+    font-size:12px;
+}
+html{
+    height:100%;
+    width:100%;
+}
+body{
+    margin:0;
+    display:table;
+    min-height:100%;
+    max-height:100%;
+    height: 100%;
+    width:100%;
+}
+#div-page{
+    display:table-row;
+    background:#999;
+}
+#div-form-left {
+    display:table-cell;
+    background:#999;
+    padding:0;
+    vertical-align:top;
+    width:150px;
+    min-width:150px;
+    border-right:1px solid #777;
+}
+.form-table {
+}
+.div-area{
+    display:table-cell;
+    padding:15px;
+    overflow:scroll;
+}
+input[type=button]{
+    padding:5px 20px;
+    appearance: none;
+    -moz-appearance: none;
+    border-radius:5px;
+    border:none;
+    background:#079;
+    color:#fff;
+    cursor:pointer;
+}
+#txtBackendPath{
+    border-radius:5px;
+    border:1px solid;
+    background:#ccc;
+    padding:5px;
+    display:none;
+}
+.form-table input[type=button]:hover{
+    background:#080;
+}
+.form-table input[type=button]::-moz-focus-inner{
+    border:none;
+}
+#rdf-area input[type=text]{
+    width:450px;
+}
+.form-table input[type=checkbox]{
+    margin-top:8px;
+}
+.form-table input[type=text]{
+    border-radius:5px;
+    border:1px solid;
+    padding:5px 5px;
+    background:#555;
+    color:#fff;
+    border:none;
+}
+.form-table>tbody>tr>td:first-child{
+    vertical-align:top;
+    text-align:right;
+    text-decoration:underline;
+    font-weight:bold;
+    padding-top:17px;
+    font-size:15px;
+    white-space:nowrap;
+}
+div.panel{
+    border-radius:5px;
+    border:1px solid #777;
+    padding:10px;
+    white-space:nowrap;
+}
+.form-table.inner>tbody>tr>td:first-child{
+    vertical-align:top;
+    text-align:right;
+    font-weight:normal;
+    padding-top:8px;
+    text-decoration:none;
+    font-size:12px;
+}
+.form-table>tbody>tr>td{
+    padding:15px 5px;
+}
+.form-table.inner>tbody>tr>td{
+    padding:0px 0px;
+}
+.form-table>tbody>tr{
+    border-bottom:1px solid;
+}
+.left-index{
+    outline: none;
+    padding:15px 0px;
+    color:#000;
+    font-size:14px;
+    display:block;
+    text-align:center;
+    width:100%;
+}
+.left-index.focus{
+    border-right:3px solid #079;
+    background:#bbb;
+}
+#rdf-area div{
+    margin-bottom:3px;
+    white-space:nowrap;
+}
+#rdf-area div input:first-child{
+    width:100px;
+}
+.tips{
+    border-radius:5px;
+    border:1px solid #777;
+    background:#cc9;
+    padding:5px;
+    margin-bottom:5px;
+}
+.console{
+    border:1px solid #000;
+    overflow:auto;
+    padding:10px;
+    position:absolute;
+    top:50px;
+    left:50px;
+    right:50px;
+    bottom:50px;
+    background:#333;
+    color:#eee;
+}
+h2{
+    font-size:18px;
+}
+.embeded-log-text{
+    background:#333;
+    color:#eee;
+    padding:10px;
+    width:-moz-fit-content;
+    margin:5px 0;
+}
