@@ -92,13 +92,9 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 	    $("a.left-index[href='#settings']").addClass("focus")
 	}
     }
-    window.onhashchange=function(){
-	applyArea();
-    }
+    window.onhashchange=()=>applyArea();
     applyArea()
-    $("#donate").click(function(){
-	window.open('http://PayPal.me/VFence', '_blank');
-    });
+    $("#donate").click(()=>window.open('http://PayPal.me/VFence', '_blank'));
     $("#btnDownloadBackend").click(function(){
 	function Next(){
 	    var src_exec = "scrapbee_backend";
@@ -115,9 +111,7 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 		saveAs: false
 	    }).then(function(id){
 		// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/downloads/DownloadItem
-		var searching = browser.downloads.search({
-		    id: id
-		}).then(function(downloads){
+		browser.downloads.search({id: id}).then((downloads) => {
 		    var fn = function(downloadDelta){
 			if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
 			    browser.downloads.onChanged.removeListener(fn);

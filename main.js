@@ -15,8 +15,7 @@ function dir(o, delimiter){
     return a.join(delimiter || "\n");
 }
 function withCurrTab(fn){
-    var querying = browser.tabs.query({currentWindow: true, active: true});
-    querying.then(function(tabs){
+    browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
         fn.apply(null, [tabs[0]]);
     });
 }
@@ -380,14 +379,11 @@ function requestPageSaving(itemId, type){
 }
 function updateMenuItem(t){
     browser.contextMenus.removeAll(function(){
-        var mid = browser.contextMenus.create({id: "catch", title: `catch ${t}`, onclick:function(){}});
+        browser.contextMenus.create({id: "catch", title: `catch ${t}`, onclick:function(){}});
     });
 }
 function withFocusedWindow(callback){
-    browser.windows.getLastFocused().then(function(win){
-	callback(win);
-    }, function(){
-    });
+    browser.windows.getLastFocused().then((win) => callback(win));
 }
 /* receive message from background page */
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -493,6 +489,5 @@ document.addEventListener('contextmenu', function(event){
 });
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     windowId = windowInfo.id;
-}, function(){
 });
 console.log("==> main.js loaded");
