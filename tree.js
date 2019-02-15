@@ -23,7 +23,7 @@ class BookTree {
 
     listenUserEvents() {
         var self = this;
-        var draging = false;
+        var dragging = false;
         var $drag_item;
         var $ref_item;
         var t;
@@ -45,7 +45,7 @@ class BookTree {
                 if (e.button == 0) {
                     $drag_item = $el;
                     $ref_item = $el;
-                    draging = true;
+                    dragging = true;
                     t = 0;
                 }
                 //this.setCapture(e);
@@ -82,8 +82,8 @@ class BookTree {
             }
         });
         $(document).bind("mouseup.BookTree", function (e) {
-            if (!draging) return;
-            draging = false;
+            if (!dragging) return;
+            dragging = false;
             $(".drag-mark").remove();
             if ($ref_item && [1, 2, 3].includes(t)) {
                 if ($drag_item[0] != $ref_item[0]) {
@@ -94,7 +94,7 @@ class BookTree {
             $(".drag-into").removeClass("drag-into");
         });
         $(document).bind("mousemove.BookTree", function (e) {
-            if (!draging) return;
+            if (!dragging) return;
             // var $el = $ref_item = getItemNode(e.target) || $ref_item;
             var $el = $ref_item = self.getItemY(e.pageY) || $ref_item;
             var drag_mark = "<hr class='drag-mark'/>";
@@ -475,7 +475,7 @@ class BookTree {
             this.xmlDoc.documentElement.appendChild(node);
         }
     }
-    xmlSerializ() {
+    xmlSerialized() {
         var serializer = new XMLSerializer();
         return serializer.serializeToString(this.xmlDoc);
     }
