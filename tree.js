@@ -244,9 +244,8 @@ class BookTree {
                     // this is root
                 }
             }
-            for (var j = 0; j < seq.children.length; j++) {
+            for (let child of seq.children) {
                 try {
-                    var child = seq.children[j];
                     var seq_node = self.getSeqNode(child.getAttribute("RDF:resource"));
                     var separator = self.getDecSeparator(child.getAttribute("RDF:resource"));
                     if (seq_node) { // folder
