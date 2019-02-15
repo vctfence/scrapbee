@@ -1,7 +1,7 @@
 import {BookTree} from "./tree.js";
 import {msg_hub, log, settings} from "./global.js"
 import {scriptsAllowed, showNotification} from "./utils.js"
-import {getMainMimeExt} from "./mime.types.js"
+import {getMainMimeExt} from "./libs/mime.types.js"
 
 var currTree;
 var windowId;
