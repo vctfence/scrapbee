@@ -28,7 +28,8 @@
     ],
     "applications": {
         "gecko": {
-            "id": "scrapbee@scrapbee.org"
+            "id": "scrapbee@scrapbee.org",
+            "strict_min_version": "60.0"
         }
     },
     "sidebar_action": {
