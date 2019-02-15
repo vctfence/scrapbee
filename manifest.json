@@ -46,9 +46,25 @@
 	    "32": "icons/bee.png"
 	}
     },
-    "content_scripts": [{
-        "matches": ["http://*/*", "https://*/*"],
-        "js": ["jquery-3.3.1.js", "proto.js", "md5.js", "content_script.js"],
-	"css": ["content_script.css"]
-    }]
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ],
+            "js": [
+                "jquery-3.3.1.js",
+                "proto.js",
+                "md5.js",
+                "content_script.js"
+            ],
+            "css": [
+                "content_script.css"
+            ]
+        }
+    ],
+    "options_ui": {
+        "open_in_tab": true,
+        "page": "options.html"
+    }
 }
