@@ -61,7 +61,7 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 	    settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
 	    alert("Save success")
 	}catch(e){
-	    alert("Save faild")
+		alert("Save failed")
 	}
     });
     var paths = settings.getRdfPaths();
@@ -97,6 +97,7 @@ ${FILE_I18N}: <input type="text" name="value"/> \
     $("#donate").click(()=>window.open('http://PayPal.me/VFence', '_blank'));
     $("#btnDownloadBackend").click(function(){
 	function Next(){
+		const extRoot = "moz-extension://" + settings.extension_id;
 	    var src_exec = "scrapbee_backend";
 	    if(settings.platform=="mac")
 		src_exec += "_mac"
@@ -105,11 +106,11 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 	    src_exec += settings.platform=="windows"?".exe":"";
 	    var dest_exec = "scrapbee_backend" + (settings.platform=="windows"?".exe":"");
 	    browser.downloads.download({
-    		url: "moz-extension://" + settings.extension_id + "/bin/" + src_exec,
+    		url: extRoot + "/bin/" + src_exec,
     		filename: "scrapbee/" + dest_exec,
     		conflictAction: "overwrite",
-		saveAs: false
-	    }).then(function(id){
+			saveAs: false
+	    }).then(id => { // TODO: 优化逻辑和注释
 		// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/downloads/DownloadItem
 		browser.downloads.search({id: id}).then((downloads) => {
 		    var fn = function(downloadDelta){
@@ -130,24 +131,24 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 				    }
 				}
 				if(settings.platform=="windows")
-				    downloadFile("moz-extension://" + settings.extension_id + "/install/install.bat", "scrapbee/install.bat", done);
+				    downloadFile(extRoot + "/install/install.bat", "scrapbee/install.bat", done);
 				else if(settings.platform=="mac")
-				    downloadFile("moz-extension://" + settings.extension_id + "/install/install_mac.sh", "scrapbee/install.sh", done);
+				    downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh", done);
 				else
-				    downloadFile("moz-extension://" + settings.extension_id + "/install/install_lnx.sh", "scrapbee/install.sh", done);
+				    downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh", done);
 			    });
 			}
 		    }
 		    browser.downloads.onChanged.addListener(fn);
-		}, function(){
-		    //
+		}).catch( function(error){ // TODO: not works
+			$("#txtBackendPath").html("error: " + error);
 		});
-	    }, function(){
-    		//
+		}).catch(function (error) { // TODO: catch if exec file not exits
+			$("#txtBackendPath").html("error: " + error);
 	    });
 	}
 	$("#txtBackendPath").show();
-	$("#txtBackendPath").html("Downloading...")
+	$("#txtBackendPath").html("Downloading...") // todo: error output
 	setTimeout(Next, 1000);
     });
     function downloadFile(src, dest, callback){
