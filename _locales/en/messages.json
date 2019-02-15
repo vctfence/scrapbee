@@ -1,214 +1,214 @@
 {
     "extensionName": {
-	"message": "ScrapBee",
-	"description": "Name of the extension."
+        "message": "ScrapBee",
+        "description": "Name of the extension."
     },
     "extensionDescription": {
-	"message": "Captures the web page into local storage and manages captured pages in browser sidebar. Compatible with ScrapBook documents.",
-	"description": "Description of the extension."
+        "message": "Captures the web page into local storage and manages captured pages in browser sidebar. Compatible with ScrapBook documents.",
+        "description": "Description of the extension."
     },
-    "Firefox":{
-	"message": "Firefox"
+    "Firefox": {
+        "message": "Firefox"
     },
     "DLG_OK": {
-	"message": "OK"
-    },    
+        "message": "OK"
+    },
     "DLG_CANCLE": {
-	"message": "CANCLE"
+        "message": "CANCLE"
     },
     "Setting": {
-	"message": "Settings"
+        "message": "Settings"
     },
     "Reload": {
-	"message": "Reload"
+        "message": "Reload"
     },
     "Search": {
-	"message": "Search"
+        "message": "Search"
     },
     "Help": {
-	"message": "Help"
+        "message": "Help"
     },
     "Folder": {
-	"message": "Folder"
-    },    
+        "message": "Folder"
+    },
     "Open Folder": {
-	"message": "Open Folder"
-    },    
+        "message": "Open Folder"
+    },
     "Title": {
-	"message": "Title"
-    },    
+        "message": "Title"
+    },
     "Rename": {
-	"message": "Rename"
+        "message": "Rename"
     },
     "Step": {
-	"message": "Step"
-    },    
+        "message": "Step"
+    },
     "Name": {
-	"message": "Name"
+        "message": "Name"
     },
     "Save": {
-	"message": "Save"
-    },    
+        "message": "Save"
+    },
     "File": {
-	"message": "File"
-    },       
+        "message": "File"
+    },
     "Donate": {
-	"message": "Donate"
+        "message": "Donate"
     },
     "DONATE_WITH_PAYPAL": {
-	"message": "DONATE WITH PAYPAL"
+        "message": "DONATE WITH PAYPAL"
     },
     "New Folder": {
-	"message": "New Folder"
+        "message": "New Folder"
     },
     "New Separator": {
-	"message": "New Separator"
-    },    
+        "message": "New Separator"
+    },
     "CapturePage": {
-	"message": "CapturePage"
+        "message": "CapturePage"
     },
     "As Root Node": {
-	"message": "As Root Node"
+        "message": "As Root Node"
     },
     "At Current Position": {
-	"message": "At Current Position"
+        "message": "At Current Position"
     },
     "CaptureSelection": {
-	"message": "Capture Selection"
+        "message": "Capture Selection"
     },
     "CaptureUrl": {
-	"message": "Capture Url"
+        "message": "Capture Url"
     },
     "Download": {
-	"message": "Download"
+        "message": "Download"
     },
     "ToggleSidebar": {
-	"message": "Toggle Sidebar"
+        "message": "Toggle Sidebar"
     },
     "Delete": {
-	"message": "Delete"
+        "message": "Delete"
     },
     "Initiate": {
-	"message": "Initiate"
+        "message": "Initiate"
     },
     "History": {
-	"message": "History"
+        "message": "History"
     },
     "Log": {
-	"message": "Log"
+        "message": "Log"
     },
-    "Rdf Files":{
-	"message": "Rdf File"
+    "Rdf Files": {
+        "message": "Rdf File"
     },
-    "Backend Port":{
-	"message": "Backend Port"
+    "Backend Port": {
+        "message": "Backend Port"
     },
     "Background": {
-	"message": "Background"
+        "message": "Background"
     },
-    "DOWNLOAD_DESTINATION_DIRECTORY":{
-	"message": "Download Destination Directory"
+    "DOWNLOAD_DESTINATION_DIRECTORY": {
+        "message": "Download Destination Directory"
     },
     "STEP1_TEXT_1": {
-	"message": "Download ScrapBee backend executable and 2 installation file to\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", by just click on the button below."
+        "message": "Download ScrapBee backend executable and 2 installation file to\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", by just click on the button below."
     },
     "STEP1_TEXT_2": {
-	"message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", start Firefox and download again. And, Please use standart version of {Firefox} at least 60。"
+        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", start Firefox and download again. And, Please use standart version of {Firefox} at least 60。"
     },
     "STEP2_TEXT_1": {
-	"message": "Run the installation script downloaded above manually:"
+        "message": "Run the installation script downloaded above manually:"
     },
     "STEP2_TEXT_2": {
-	"message": "Run the commands in your terminal:"
+        "message": "Run the commands in your terminal:"
     },
     "STEP2_TEXT_3": {
-	"message": "You maybe need to run the script as administrator"
+        "message": "You maybe need to run the script as administrator"
     },
     "STEP3_TEXT_1": {
-	"message": "Done"
+        "message": "Done"
     },
     "STEP4_TEXT_1": {
-	"message": "Restart {Firefox}"
+        "message": "Restart {Firefox}"
     },
     "STEP5_TEXT_1": {
-	"message": "Enjoy"
+        "message": "Enjoy"
     },
     "BASIC_TEXT": {
-	"message": "Basic text"
-    },     
+        "message": "Basic text"
+    },
     "BOOKMARK_TEXT": {
-	"message": "Bookmark text"
+        "message": "Bookmark text"
     },
     "Language": {
-	"message": "lanugage"
+        "message": "lanugage"
     },
     "Separator": {
-	"message": "Separator"
-    },     
+        "message": "Separator"
+    },
     "RDF_FILES_TIP": {
-	"message": "Set rdf files ending with extension '.rdf' to register information of scraps，downloaded scraps will be saved in directory \"data\" under the same directory of the rdf file.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> you can setup multiple rdf files to classify your scraps，<br>You can have different rdfs inside same directory.<br>No need to create these files maunally.<br/><br/> And here's a good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user, that ScrapBook rdfs are also supported."
+        "message": "Set rdf files ending with extension '.rdf' to register information of scraps，downloaded scraps will be saved in directory \"data\" under the same directory of the rdf file.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> you can setup multiple rdf files to classify your scraps，<br>You can have different rdfs inside same directory.<br>No need to create these files maunally.<br/><br/> And here's a good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user, that ScrapBook rdfs are also supported."
     },
-    "BACKEND_PORT_TIP":{
-	"message": "TCP port ScrapBee backend server listens. e.g. 9900"
-    },    
-    "Color":{
-	"message": "Color"
+    "BACKEND_PORT_TIP": {
+        "message": "TCP port ScrapBee backend server listens. e.g. 9900"
     },
-    "Scrap":{
-	"message": "scrap"
-    },    
-    "COLOR_TIP":{
-	"message": "Change color of some elements to make ScrapBee a better looking. <br>These colors should be in format: #FFFFFF or #FFF"
+    "Color": {
+        "message": "Color"
+    },
+    "Scrap": {
+        "message": "scrap"
+    },
+    "COLOR_TIP": {
+        "message": "Change color of some elements to make ScrapBee a better looking. <br>These colors should be in format: #FFFFFF or #FFF"
     },
     "ALREADY_DOWNLOADED_TO": {
-	"message": "already downloaded to"
+        "message": "already downloaded to"
     },
-    "Behavior":{
-	"message": "Behavior"
-    },   
-    "OPEN_IN_CURRENT_TAB":{
-	"message": "Open in current tab"
+    "Behavior": {
+        "message": "Behavior"
     },
-    "OPEN_IN_CURRENT_TAB_TIP":{
-	"message": "By default, ScrapBee opens each scrap in new tab when clicking on an entity, <br>and open scrap in current tab by holding control(meta for Mac) while clicking. <br>You can reverse this by checkon on the option. "
+    "OPEN_IN_CURRENT_TAB": {
+        "message": "Open in current tab"
     },
-    "DONATE_WORDS":{
-	"message": "To make ScrapBee grows better, <br />your donations are very welcome, <br />thanks for your support !!!"
+    "OPEN_IN_CURRENT_TAB_TIP": {
+        "message": "By default, ScrapBee opens each scrap in new tab when clicking on an entity, <br>and open scrap in current tab by holding control(meta for Mac) while clicking. <br>You can reverse this by checkon on the option. "
     },
-    "MORE_DONATE_WAY":{
-	"message": "<br>"
+    "DONATE_WORDS": {
+        "message": "To make ScrapBee grows better, <br />your donations are very welcome, <br />thanks for your support !!!"
+    },
+    "MORE_DONATE_WAY": {
+        "message": "<br>"
     },
     "RESULTS_FOUND": {
-	"message": "RESULTS FOUND"
+        "message": "RESULTS FOUND"
     },
     "NOT_EXISTS": {
-	"message": "do not exists"
+        "message": "do not exists"
     },
     "Yes": {
-	"message": "Yes"
+        "message": "Yes"
     },
     "No": {
-	"message": "No"
-    },    
+        "message": "No"
+    },
     "CREATE_OR_NOT": {
-	"message": "create it"
-    },    
+        "message": "create it"
+    },
     "NewDirectory": {
-	"message": "New Directory"
+        "message": "New Directory"
     },
     "ConfirmDeleteDirectory": {
-	"message": "This is a folder, do you really want delete it and items within it?"
+        "message": "This is a folder, do you really want delete it and items within it?"
     },
     "ConfirmDeleteItem": {
-	"message": "Realy delete the selected item?"
+        "message": "Realy delete the selected item?"
     },
     "Warning": {
-	"message": "Warning"
+        "message": "Warning"
     },
     "Confirm": {
-	"message": "Confirm"
-    },        
+        "message": "Confirm"
+    },
     "Loading...": {
-	"message": "Loading..."
+        "message": "Loading..."
     }
 }

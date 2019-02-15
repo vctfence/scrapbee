@@ -5,11 +5,11 @@
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
-	"64": "icons/bee.png"
+        "64": "icons/bee.png"
     },
-    "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'" ,
-    "permissions": [	
-        "nativeMessaging", 
+    "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'",
+    "permissions": [
+        "nativeMessaging",
         "contextMenus",
         "menus",
         "downloads",
@@ -24,7 +24,7 @@
         "file:///*",
         "http://*/*",
         "https://*/*",
-	"notifications"
+        "notifications"
     ],
     "applications": {
         "gecko": {
@@ -37,17 +37,31 @@
         "default_icon": "icons/bee.png"
     },
     "background": {
-        "scripts": ["background.js"]
+        "scripts": [
+            "background.js"
+        ]
     },
     "browser_action": {
-	"default_icon": {
-	    "16": "icons/bee.png",
-	    "32": "icons/bee.png"
-	}
+        "default_icon": {
+            "16": "icons/bee.png",
+            "32": "icons/bee.png"
+        }
     },
-    "content_scripts": [{
-        "matches": ["http://*/*", "https://*/*"],
-        "js": ["jquery-3.3.1.js", "proto.js", "md5.js", "content_script.js"],
-	"css": ["content_script.css"]
-    }]
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ],
+            "js": [
+                "jquery-3.3.1.js",
+                "proto.js",
+                "md5.js",
+                "content_script.js"
+            ],
+            "css": [
+                "content_script.css"
+            ]
+        }
+    ]
 }

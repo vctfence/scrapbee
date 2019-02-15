@@ -1,0 +1,214 @@
+{
+    "extensionName": {
+        "message": "ScrapBee",
+        "description": "Name of the extension."
+    },
+    "extensionDescription": {
+        "message": "抓取网页内容到本地存储，并可以在浏览器侧边栏中进行管理。兼容ScrapBook文档。",
+        "description": "Description of the extension."
+    },
+    "Firefox": {
+        "message": "火狐"
+    },
+    "DLG_OK": {
+        "message": "确认"
+    },
+    "DLG_CANCLE": {
+        "message": "取消"
+    },
+    "Setting": {
+        "message": "设置"
+    },
+    "Reload": {
+        "message": "刷新"
+    },
+    "Search": {
+        "message": "查找"
+    },
+    "Help": {
+        "message": "帮助"
+    },
+    "Folder": {
+        "message": "文件夹"
+    },
+    "Open Folder": {
+        "message": "打开文件夹"
+    },
+    "Title": {
+        "message": "标题"
+    },
+    "Rename": {
+        "message": "重命名"
+    },
+    "Step": {
+        "message": "步骤"
+    },
+    "Name": {
+        "message": "名称"
+    },
+    "Save": {
+        "message": "保存"
+    },
+    "File": {
+        "message": "文件"
+    },
+    "Donate": {
+        "message": "捐助"
+    },
+    "DONATE_WITH_PAYPAL": {
+        "message": "通过 PayPal 捐助"
+    },
+    "New Folder": {
+        "message": "新建文件夹"
+    },
+    "New Separator": {
+        "message": "新建分隔条"
+    },
+    "CapturePage": {
+        "message": "抓取页面"
+    },
+    "As Root Node": {
+        "message": "作为根目录"
+    },
+    "At Current Position": {
+        "message": "在当前位置"
+    },
+    "CaptureSelection": {
+        "message": "抓取选区"
+    },
+    "CaptureUrl": {
+        "message": "抓取网址"
+    },
+    "Download": {
+        "message": "下载"
+    },
+    "ToggleSidebar": {
+        "message": "Toggle Sidebar"
+    },
+    "Delete": {
+        "message": "删除"
+    },
+    "Initiate": {
+        "message": "初始化"
+    },
+    "History": {
+        "message": "更新历史"
+    },
+    "Log": {
+        "message": "日志"
+    },
+    "Rdf Files": {
+        "message": "Rdf文件"
+    },
+    "Backend Port": {
+        "message": "端口"
+    },
+    "Background": {
+        "message": "背景"
+    },
+    "DOWNLOAD_DESTINATION_DIRECTORY": {
+        "message": "下载目录"
+    },
+    "STEP1_TEXT_1": {
+        "message": "下载ScrapBee后端可执行文件和2个安装文件到\"<i>用户下载目录</i>/screepbee/\"，只需点击下方按钮。"
+    },
+    "STEP1_TEXT_2": {
+        "message": "您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除\"<i>用户下载目录</i>/screepbee/\"中的所有文件，重启{Firefox}再次下载。另外，请使用{Firefox}60及以后的标准版{Firefox}。"
+    },
+    "STEP2_TEXT_1": {
+        "message": "手工运行上面下载的安装脚本："
+    },
+    "STEP2_TEXT_2": {
+        "message": "在终端中执行："
+    },
+    "STEP2_TEXT_3": {
+        "message": "你可能需要以管理员身份运行此脚本"
+    },
+    "STEP3_TEXT_1": {
+        "message": "完成"
+    },
+    "STEP4_TEXT_1": {
+        "message": "重启{Firefox}"
+    },
+    "STEP5_TEXT_1": {
+        "message": "敬请使用"
+    },
+    "BASIC_TEXT": {
+        "message": "基础文本"
+    },
+    "BOOKMARK_TEXT": {
+        "message": "书签文本"
+    },
+    "Language": {
+        "message": "语言"
+    },
+    "Separator": {
+        "message": "分隔符"
+    },
+    "RDF_FILES_TIP": {
+        "message": "设置ScrapBee的rdf文件，用于登记下载信息，以'.rdf'为扩展名，而下载数据将保存于rdf文件所在目录下的data文件夹中<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)<br> 或者：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个rdf文件来实现{Scrap}的分类，可以在同一文件夹下放置多个rdf文件，不需要手工创建这些文件。<br/><br/> ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的rdf文件，这对于使用过ScrapBook的用户是一个好消息。"
+    },
+    "BACKEND_PORT_TIP": {
+        "message": "后端程序监听的TCP端口，比如9900"
+    },
+    "Color": {
+        "message": "颜色"
+    },
+    "Scrap": {
+        "message": "收藏内容"
+    },
+    "COLOR_TIP": {
+        "message": "通过改变某些元素的颜色来美化ScrapBee，颜色格式应为 #FFFFFF 或 #FFF"
+    },
+    "ALREADY_DOWNLOADED_TO": {
+        "message": "已下载到"
+    },
+    "Behavior": {
+        "message": "行为"
+    },
+    "OPEN_IN_CURRENT_TAB": {
+        "message": "在当前标签打开"
+    },
+    "OPEN_IN_CURRENT_TAB_TIP": {
+        "message": "点击条目时，ScrapBook默认在新标签页中打开{Scrap}，<br>如果按住Control(苹果系统中使用Meta)，则在当前标签中打开，<br>你可以通过此选项来切换两种操作"
+    },
+    "DONATE_WORDS": {
+        "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!"
+    },
+    "MORE_DONATE_WAY": {
+        "message": "您也可以通过以下方式捐助: <br><br> <img src='image/donate/alipay.jpg' class='' alt='' width='300'/>  <img src='image/donate/wxpay.jpg' class='' alt='' width='300' /> <br><br><br><br><br><br><br><br>"
+    },
+    "RESULTS_FOUND": {
+        "message": "个结果"
+    },
+    "NOT_EXISTS": {
+        "message": "不存在"
+    },
+    "Yes": {
+        "message": "是"
+    },
+    "No": {
+        "message": "否"
+    },
+    "CREATE_OR_NOT": {
+        "message": "是否生成"
+    },
+    "NewDirectory": {
+        "message": "新建文件夹"
+    },
+    "ConfirmDeleteDirectory": {
+        "message": "这是一个文件夹, 真的要删除它和其中所有内容?"
+    },
+    "ConfirmDeleteItem": {
+        "message": "真的要删除所选项?"
+    },
+    "Warning": {
+        "message": "警告"
+    },
+    "Confirm": {
+        "message": "确认"
+    },
+    "Loading...": {
+        "message": "加载中..."
+    }
+}
