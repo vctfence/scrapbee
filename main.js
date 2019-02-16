@@ -104,10 +104,10 @@ function showDlg(name, data, callback){
     });
 }
 function alert(title, message, callback){
-    showDlg("{Warning}".translate(), {title:title, message:message}, callback);
+    showDlg("alert", {title:title, message:message}, callback);
 }
 function confirm(title, message, callback){
-    showDlg("{Confirm}".translate(), {title:title, message:message}, callback);
+    showDlg("confirm", {title:title, message:message}, callback);
 }
 /* context menu listener */
 var menulistener={};
@@ -119,7 +119,7 @@ menulistener.onDelete = function(){
     });
 }
 menulistener.onCreateFolder = function(){
-    showDlg("{Folder}".translate(), {title: ""}, function(d){
+    showDlg("folder", {title: ""}, function(d){
 	var p;
 	if($(".dlg-folder").find("input[name=pos]:checked").val() == "root"){
 	    p = $(".root.folder-content");
