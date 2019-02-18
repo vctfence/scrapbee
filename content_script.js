@@ -170,17 +170,12 @@ function getImages(){
     return images.join("\n");
 }
 function saveContent(itemId, windowId, content){
-    var sending = browser.runtime.sendMessage({
+    browser.runtime.sendMessage({
         type: 'SAVE_CONTENT',
 	content: content,
 	itemId: itemId,
 	windowId: windowId
     });
-    sending.then(function(resp){
-	// response
-    }, function(err){
-	// err
-    });  
 }
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == "GET_PAGE_SELECTION_REQUEST"){

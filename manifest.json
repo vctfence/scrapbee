@@ -7,24 +7,24 @@
     "icons": {
 	"64": "icons/bee.png"
     },
-    "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'" ,
-    "permissions": [	
-        "nativeMessaging", 
-        "contextMenus",
-        "menus",
-        "downloads",
-        "bookmarks",
-        "storage",
-        "unlimitedStorage",
+    "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'",
+    "permissions": [
         "activeTab",
-        "tabs",
-        "webNavigation",
-        "webRequest",
-        "webRequestBlocking",
+        "bookmarks",
+        "contextMenus",
+        "downloads",
         "file:///*",
         "http://*/*",
         "https://*/*",
-	"notifications"
+        "menus",
+        "nativeMessaging",
+        "notifications",
+        "storage",
+        "tabs",
+        "unlimitedStorage",
+        "webNavigation",
+        "webRequest",
+        "webRequestBlocking"
     ],
     "applications": {
         "gecko": {
@@ -46,9 +46,25 @@
 	    "32": "icons/bee.png"
 	}
     },
-    "content_scripts": [{
-        "matches": ["http://*/*", "https://*/*"],
-        "js": ["jquery-3.3.1.js", "proto.js", "md5.js", "content_script.js"],
-	"css": ["content_script.css"]
-    }]
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ],
+            "css": [
+                "content_script.css"
+            ],
+            "js": [
+                "libs/jquery-3.3.1.js",
+                "libs/md5.js",
+                "proto.js",
+                "content_script.js"
+            ]
+        }
+    ],
+    "options_ui": {
+        "open_in_tab": true,
+        "page": "options.html"
+    }
 }

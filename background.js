@@ -77,8 +77,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }
 });
 function withCurrTab(fn){
-    var querying = browser.tabs.query({currentWindow: true, active: true});
-    querying.then(function(tabs){
+    browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
         fn.apply(null, [tabs[0]]);
     });
 }
