@@ -26,7 +26,7 @@ function genItemId(){
 function saveRdf(){
     log("info", `saving changes to rdf`);
     var rdf=currTree.rdf;
-    $.post(settings.backend_url + "savefile", {filename:rdf, content: currTree.xmlSerializ()}, function(r){
+    $.post(settings.backend_url + "savefile", {filename:rdf, content: currTree.xmlSerialized()}, function(r){
 	msg_hub.send('RDF_EDITED', {windowId: windowId, rdf: rdf});
 	log("info", `save changes to rdf, done`);
     });

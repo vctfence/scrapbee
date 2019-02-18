@@ -35,8 +35,7 @@ String.prototype.fillData = function(data) {
 	    return data(s);
 	}
         var parts = s.split("."), d = data, r;
-        for(var i=0;i<parts.length;i++){
-            var p = parts[i];
+        for (let p of parts){
             if(p){r = d[p]; d = r}
             if(!d) break;
         }
@@ -112,14 +111,14 @@ ScrapbeeElement.prototype.processResources=function(){
     var dict = {}, r=[];
     if(this[fn] instanceof Function){
 	var f = this[fn]();
-	for(var i=0;i<f.length;i++){
-	    res.push(f[i]);
+	for(let s of f){
+	    res.push(s);
 	}
     }
-    for(var i=0;i<res.length;i++){
-	if(!dict[res[i].url]){
-	    dict[res[i].url] = 1;
-	    r.push(res[i]);
+    for(let re of res){
+	if(!dict[re.url]){
+	    dict[re.url] = 1;
+	    r.push(re);
 	}
     }
     return r;

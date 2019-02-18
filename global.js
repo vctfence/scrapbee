@@ -12,10 +12,9 @@ settings.set=function(k, v, sync){
     }
 }
 settings.loadFromStorage=function(){
-    for(var i = 0, len = localStorage.length; i < len; ++i ) {
-	var k = localStorage.key(i);
-	settings.set(k, localStorage.getItem(k));
-    }
+    Object.keys(localStorage).forEach(function (key) {
+        settings.set(key, localStorage.getItem(key));
+    });
 }
 settings.getRdfPaths=function(){
     var paths = (localStorage.getItem('rdf_paths')||"").split("\n");
