@@ -1,6 +1,5 @@
 import { settings, log } from "./global.js";
 
-
 class BookTree {
     constructor(xmlString, rdf_full_file) {
         var self = this;
@@ -15,12 +14,9 @@ class BookTree {
             self["NS_" + k] = v;
         });
     }
-
     translateResource(r, rdf_path, id) {
-        var r = r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path.replace(/\\/g, '/') + "");
-        return r.replace(/\/{2,}/g, '/');
+        return r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path).replace(/\/{2,}/g, '/');
     }
-
     listenUserEvents() {
         var self = this;
         var dragging = false;
@@ -308,12 +304,11 @@ class BookTree {
             $container = $(".folder.root");
         if (wait) icon = "icons/loading.gif";
         /** create item element */
-        var $item = $("<div id='{id}' class='item {type}' title='{title}' source='{source}' draggable='true'><label>{label}</label></div>".fillData(
-            {
-                id: id, type: type, icon: icon, source: source,
-                "title": title,
-                "label": title || "?"
-            }));
+        var $item = $("<div id='{id}' class='item {type}' title='{title}' source='{source}' draggable='true'><label>{label}</label></div>".fillData({
+            id: id, type: type, icon: icon, source: source,
+            "title": title,
+            "label": title || "?"
+        }));
         if (ref_id) {
             $item.insertAfter($("#" + ref_id));
         } else {
@@ -515,5 +510,4 @@ class BookTree {
         return r;
     }
 }
-
 export { BookTree };
