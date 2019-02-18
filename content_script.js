@@ -89,18 +89,17 @@ function getContent(sele, callback){
     $(div).find("#scrapbee-waiting").remove();
     /** css */
     var css=[]
-    for(var i=0;i<document.styleSheets.length;i++){
+    for(let sheet of document.styleSheets){
         try{
-	    var c = document.styleSheets[i]; 
-	    var r = c.rules || c.cssRules;
-	    for(var j=0;j<r.length;j++){
-                css.push(r[j].cssText + "");
+        var rule = sheet.rules || sheet.cssRules;
+        for (let r of rule){
+                css.push(r.cssText + "");
 	    }
         }catch(e){
 	    if(e.name == "SecurityError") {
 		try{
 		    var request = new XMLHttpRequest();
-		    request.open('GET', c.href, false);  // `false` makes the request synchronous
+            request.open('GET', sheet.href, false);  // `false` makes the request synchronous
 		    request.send(null);
 		    if (request.status === 200) {
 			css.push(request.responseText);
@@ -117,11 +116,11 @@ function getContent(sele, callback){
     res.push({type:"image", "url": location.origin + "/favicon.ico", filename:"favicon.ico"});
     div.childNodes.iterateAll(function(item){
         if(item.nodeType == 1){
-    	    var r = new ScrapbeeElement(item).processResources();
-    	    for(var i=0;i<r.length;i++){
-    		if(!dict[r[i].url]){		    
-    		    dict[r[i].url] = 1;
-    		    res.push(r[i]);
+    	    var el = new ScrapbeeElement(item).processResources();
+    	    for(let r of el){
+    		if(!dict[r.url]){
+    		    dict[r.url] = 1;
+    		    res.push(r);
     		}
     	    }
         }
@@ -154,11 +153,10 @@ function getContent(sele, callback){
 /* message listener */
 function getAllCssLoaded(){
     var css=[]
-    for(var i=0;i<document.styleSheets.length;i++){
+    for(let sheet of document.styleSheets){
         try{
-            var r = document.styleSheets[i].cssRules;
-            for(var j=0;j<r.length;j++){
-                css.push(r[j].cssText+"");
+            for (let rule of sheet.cssRules){
+                css.push(rule.cssText+"");
             }
         }catch(e){}
     }
@@ -166,8 +164,8 @@ function getAllCssLoaded(){
 }
 function getImages(){
     var images=[]
-    for(var i=0;i<document.images.length;i++){
-        images.push(document.images[i].src);
+    for(let image of document.images){
+        images.push(image.src);
     }
     return images.join("\n");
 }
