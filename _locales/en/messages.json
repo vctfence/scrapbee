@@ -210,5 +210,8 @@
     },        
     "Loading...": {
 	"message": "Loading..."
-    }
+    },
+    "SAME_RDF_MODIFIED": {
+	"message": "Same rdf modified, click OK to refresh"
+    }    
 }

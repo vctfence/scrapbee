@@ -84,42 +84,47 @@ function showDlg(name, data, callback){
     });
     $dlg.find("input.button-ok").unbind(".dlg");
     $dlg.find("input.button-cancle").unbind(".dlg");
-    $dlg.find("input.button-ok").bind("click.dlg", function(){
-	var data = {};
-	$dlg.find("input").each(function(){
-	    if(this.name){
-		if(this.type=="radio"){
-		    if(this.checked)
+    /** return promise object */
+    var p = new Promise(function(resolve, reject){
+	$dlg.find("input.button-ok").bind("click.dlg", function(){
+	    var data = {};
+	    $dlg.find("input").each(function(){
+		if(this.name){
+		    if(this.type=="radio"){
+			if(this.checked)
+			    data[this.name] = $(this).val();
+		    }else{
 			data[this.name] = $(this).val();
-		}else{
-		    data[this.name] = $(this).val();
+		    }
 		}
-	    }
-	})
-	$dlg.remove();
-	callback && callback(data);
+	    })
+	    $dlg.remove();
+	    resolve(data);
+	    // callback && callback(data);
+	});
+	$dlg.find("input.button-cancle").bind("click.dlg", function(){
+	    $dlg.remove();
+	});
     });
-    $dlg.find("input.button-cancle").bind("click.dlg", function(){
-	$dlg.remove();
-    });
+    return p;
 }
-function alert(title, message, callback){
-    showDlg("alert", {title:title, message:message}, callback);
+function alert(title, message){
+    return showDlg("alert", {title:title.translate(), message:message.translate()});
 }
-function confirm(title, message, callback){
-    showDlg("confirm", {title:title, message:message}, callback);
+function confirm(title, message){
+    return showDlg("confirm", {title:title.translate(), message:message.translate()});
 }
 /* context menu listener */
 var menulistener={};
 menulistener.onDelete = function(){
-    confirm("warning", "{ConfirmDeleteItem}".translate(), function(){
+    confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
 	currTree.removeItem($(".item.focus"), function(){
 	    saveRdf(); // all done (all sub nodes removed)
 	});
     });
 }
 menulistener.onCreateFolder = function(){
-    showDlg("folder", {title: ""}, function(d){
+    showDlg("folder", {}).then(function(d){
 	var p;
 	if($(".dlg-folder").find("input[name=pos]:checked").val() == "root"){
 	    p = $(".root.folder-content");
@@ -395,7 +400,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	browser.runtime.sendMessage({session_id:request.session_id});
     }else if(request.type == 'RDF_EDITED'){
 	if(request.content.rdf == currTree.rdf){
-	    alert("Warning", "Same rdf modified, click ok to reload.", function(r){
+	    alert("{Warning}", "{SAME_RDF_MODIFIED}").then(function(r){
 		loadXml(currTree.rdf);	
 	    });
 	}
