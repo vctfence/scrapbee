@@ -13,8 +13,8 @@
     "DLG_OK": {
         "message": "OK"
     },
-    "DLG_CANCLE": {
-        "message": "CANCLE"
+    "DLG_CANCEL": {
+        "message": "CANCEL"
     },
     "Setting": {
         "message": "Settings"

@@ -82,7 +82,7 @@ function showDlg(name, data, callback){
 	}
     });
     $dlg.find("input.button-ok").unbind(".dlg");
-    $dlg.find("input.button-cancle").unbind(".dlg");
+    $dlg.find("input.button-cancel").unbind(".dlg");
     /** return promise object */
     var p = new Promise(function(resolve, reject){
 	$dlg.find("input.button-ok").bind("click.dlg", function(){
@@ -101,7 +101,7 @@ function showDlg(name, data, callback){
 	    resolve(data);
 	    // callback && callback(data);
 	});
-	$dlg.find("input.button-cancle").bind("click.dlg", function(){
+	$dlg.find("input.button-cancel").bind("click.dlg", function(){
 	    $dlg.remove();
 	});
     });
