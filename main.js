@@ -112,14 +112,16 @@ function confirm(title, message, callback){
 /* context menu listener */
 var menulistener={};
 menulistener.onDelete = function(){
-    confirm("{Warning}".translate(), "{ConfirmDeleteItem}".translate(), function(){
+    confirm("warning".translate(), "{ConfirmDeleteItem}".translate(), function(){
 	currTree.removeItem($(".item.focus"), function(){
 	    saveRdf(); // all done (all sub nodes removed)
 	});
     });
 }
 menulistener.onCreateFolder = function(){
+
     showDlg("folder", {title: ""}, function(d){
+
 	var p;
 	if($(".dlg-folder").find("input[name=pos]:checked").val() == "root"){
 	    p = $(".root.folder-content");
