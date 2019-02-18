@@ -104,22 +104,22 @@ function showDlg(name, data, callback){
     });
 }
 function alert(title, message, callback){
-    showDlg("warning", {title:title, message:message}, callback);
+    showDlg("alert", {title:title, message:message}, callback);
 }
 function confirm(title, message, callback){
-    showDlg("confirm".translate(), {title:title, message:message}, callback);
+    showDlg("confirm", {title:title, message:message}, callback);
 }
 /* context menu listener */
 var menulistener={};
 menulistener.onDelete = function(){
-    confirm("warning".translate(), "{ConfirmDeleteItem}".translate(), function(){
+    confirm("warning", "{ConfirmDeleteItem}".translate(), function(){
 	currTree.removeItem($(".item.focus"), function(){
 	    saveRdf(); // all done (all sub nodes removed)
 	});
     });
 }
 menulistener.onCreateFolder = function(){
-    showDlg("folder".translate(), {title: ""}, function(d){
+    showDlg("folder", {title: ""}, function(d){
 	var p;
 	if($(".dlg-folder").find("input[name=pos]:checked").val() == "root"){
 	    p = $(".root.folder-content");
