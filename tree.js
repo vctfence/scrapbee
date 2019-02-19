@@ -10,7 +10,17 @@ class BookTreeNodeBuffer {
     appendChild(c) {
         this.children.push(c)
     }
+    flattenArray() {
+        var list = [this.start]
+        this.children.forEach(function(c){
+            list = list.concat(c.flattenArray());
+        })
+        list.push(this.end);
+        return list;        
+    }
     flatten() {
+        // return this.flattenArray().join("");
+        
         var list = [this.start]
         this.children.forEach(function(c){
             list.push(c.flatten());
@@ -235,8 +245,6 @@ class BookTree {
                     buffers[json.id] = bf;
                     if(buffers[parentId])
                         buffers[parentId].appendChild(bf);
-                    else
-                        log("error", parentId)
                 }
             });
             var html = buffers["urn:scrapbook:root"].flatten();
@@ -267,35 +275,37 @@ class BookTree {
                         title: desc_node.getAttributeNS(self.MAIN_NS, "title")
                     });
                 } else {
-                    // this is root
+                    // this is root (hidden)
                 }
             }
             for (let child of seq.children) {
                 try {
                     var seq_node = self.getSeqNode(child.getAttribute("RDF:resource"));
-                    var separator = self.getDecSeparator(child.getAttribute("RDF:resource"));
                     if (seq_node) { // folder
                         SeqProcesser(seq_node, seq_id);
-                    } else if (separator) {
-                        var id = child.getAttribute("RDF:resource").replace("urn:scrapbook:item", "");
-                        fn({ nodeType: 'separator', id: id, parentId: seq_id })
-                    } else { // child
-                        var node = self.getDescNode(child.getAttribute("RDF:resource"));
-                        if (node) {
-                            var type = node.getAttributeNS(self.MAIN_NS, "type");
-                            if (!(["local", "bookmark"].includes(type))) type = "local"
-                            fn({
-                                parentId: seq_id,
-                                nodeType: "item",
-                                id: node.getAttributeNS(self.MAIN_NS, "id"),
-                                type: type,
-                                source: node.getAttributeNS(self.MAIN_NS, "source"),
-                                icon: node.getAttributeNS(self.MAIN_NS, "icon"),
-                                title: node.getAttributeNS(self.MAIN_NS, "title")
-                            });
+                    } else {
+                        var separator = self.getDecSeparator(child.getAttribute("RDF:resource"));
+                        if(separator) {
+                            var id = child.getAttribute("RDF:resource").replace("urn:scrapbook:item", "");
+                            fn({ nodeType: 'separator', id: id, parentId: seq_id });
+                        } else {   // child
+                            var node = self.getDescNode(child.getAttribute("RDF:resource"));
+                            if (node) {
+                                var type = node.getAttributeNS(self.MAIN_NS, "type");
+                                if (!(["local", "bookmark"].includes(type))) type = "local"
+                                fn({
+                                    parentId: seq_id,
+                                    nodeType: "item",
+                                    id: node.getAttributeNS(self.MAIN_NS, "id"),
+                                    type: type,
+                                    source: node.getAttributeNS(self.MAIN_NS, "source"),
+                                    icon: node.getAttributeNS(self.MAIN_NS, "icon"),
+                                    title: node.getAttributeNS(self.MAIN_NS, "title")
+                                });
+                            }
                         }
                     }
-                } catch (e) {
+                } catch(e) {
                     log("error", e.message)
                 }
             }
