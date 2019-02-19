@@ -304,11 +304,8 @@ class BookTree {
             $container = $(".folder.root");
         if (wait) icon = "icons/loading.gif";
         /** create item element */
-        var $item = $("<div id='{id}' class='item {type}' title='{title}' source='{source}' draggable='true'><label>{label}</label></div>".fillData({
-            id: id, type: type, icon: icon, source: source,
-            "title": title,
-            "label": title || "?"
-        }));
+        var label = title || "?";
+        var $item = $(`<div id='${id}' class='item ${type}' title='${title}' source='${source}' draggable='true'><label>${label}</label></div>`);
         if (ref_id) {
             $item.insertAfter($("#" + ref_id));
         } else {
@@ -332,11 +329,8 @@ class BookTree {
     }
     createFolder($container, id, ref_id, title, is_new_node) {
         title = $.trim(title);
-        var $folder = $("<div id='{id}' class='item folder' title='{title}' draggable='true'><label>{label}</label></div>".fillData({
-            "id": id,
-            "title": title,
-            "label": title || "?"
-        }));
+        var label = title || "?";
+        var $folder = $(`<div id='${id}' class='item folder' title='${title}' draggable='true'><label>${label}</label></div>`);
         if (ref_id) {
             $folder.insertAfter($("#" + ref_id));
         } else {
