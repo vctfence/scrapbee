@@ -193,6 +193,7 @@ class BookTree {
         var root_seq = this.getSeqNode("urn:scrapbook:root");
         var $root_container = $(".root.folder-content");
         $root_container.html("");
+        var _begin = new Date().getTime();
         try {
             this.iterateNodes(function (json) {
                 var $container;
@@ -217,6 +218,8 @@ class BookTree {
         } catch (e) {
             log("error", e)
         }
+        var sec = new Date().getTime() - _begin;
+        log("info", `render time cost = ${sec}ms`);        
         this.listenUserEvents();
     }
     iterateNodes(fn) {
