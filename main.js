@@ -142,7 +142,7 @@ menulistener.onRename = function(){
     if($(".item.focus").length){
     	var $label = $(".item.focus label");
     	var t0 = $(".item.focus").attr("title");
-	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}.then(function(d){
+	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}).then(function(d){
 	    var t1 = d.title.htmlEncode();
 	    if(t1 != t0){
    		currTree.renameItem($(".item.focus"), t1, function(){
