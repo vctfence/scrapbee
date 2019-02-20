@@ -43,7 +43,9 @@ class BookTree {
         });
     }
     translateResource(r, rdf_path, id) {
-        return r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path).replace(/\/{2,}/g, '/');
+        return r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path).replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
+            return b + "/"
+        });
     }
     listenUserEvents() {
         var self = this;
