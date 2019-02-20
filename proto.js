@@ -24,12 +24,19 @@ String.prototype.htmlDecode=function(){
 	.replace(/&nbsp;/g,' ')
 	.replace(/&#39;/g,"'") ;
 }
+/*
+  html style escape characters
+  @chars: chars be escaped
+  @slashed: replace chars slashed only
+*/
 String.prototype.escape = function(chars, slashed) {
     return this.replace(new RegExp((slashed ? "\\\\":"") + "([" + chars + "])", "g"), function(a, b) {
         return "&#" + b.charCodeAt(0) +";"
     });
 }
+/* replace placeholders inside string whith given data */
 String.prototype.fillData = function(data) {
+    /** value getter */
     function v(s){
 	if(data instanceof Function){
 	    return data(s);
@@ -42,18 +49,20 @@ String.prototype.fillData = function(data) {
         return r;
     }
     var c = 1;
-    var s = this.replace(/{([\s\S]+)}/g, function(a, b) {
+    /** escape slashed special characters (become normal) */
+    var s = this.replace(/\{([\s\S]+)\}/g, function(a, b) {
         return "{" + b.escape("?:!", true) + "}";
     });
+    /** replace all placeholder recursively */
     while(c) {
         c = 0;
-        s = s.replace(/\{([^\{\}]+?)\}/g, function(match, key) {
-            var m = null, r;  
-            if(m = key.match(/^([\s\S]+?)\!([\s\S]*?)(?:\:([\s\S]*))?$/)) {
+        s = s.replace(/\{([^\{\}]+?)\}/g, function(match, key) { /** match placeholders */
+            var m = null, r;
+            if(m = key.match(/^([\s\S]+?)\!([\s\S]*?)(?:\:([\s\S]*))?$/)) { /** negative test: match [key]![true-part][:false-part] */
                 r = !v(m[1]) ? m[2] : (typeof(m[3]) !="undefined" ? m[3] : "");
-            } else if(m = key.match(/^([\s\S]+?)\?([\s\S]*?)(?:\:([\s\S]*))?$/)) {
+            } else if(m = key.match(/^([\s\S]+?)\?([\s\S]*?)(?:\:([\s\S]*))?$/)) { /** positive test: match [key]?[true-part][:false-part] */
                 r = v(m[1]) ? m[2] : (typeof(m[3]) !="undefined" ? m[3] : "");
-            } else {
+            } else { /** directly */
                 var t = v(key);
                 r = typeof(t) != "undefined" ? String(t).escape("?:!", false) : "";
             }
@@ -93,12 +102,12 @@ String.prototype.isHexColor=function(){
     return this.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}||[0-9a-f]{8})$/i);
 }
 // NodeList.prototype.forEach = Array.prototype.forEach;
-NodeList.prototype.iterateAll = function(fn){
-    this.forEach(function(item){
-        fn(item);
-        item.childNodes.iterateAll(fn);
-    });
-}
+// NodeList.prototype.iterateAll = function(fn){
+//     this.forEach(function(item){
+//         fn(item);
+//         item.childNodes.iterateAll(fn);
+//     });
+// }
 /*  */
 function ScrapbeeElement(el){
     this.el = el;
