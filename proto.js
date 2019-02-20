@@ -101,14 +101,14 @@ Date.prototype.format=function(fmt){
 String.prototype.isHexColor=function(){
     return this.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}||[0-9a-f]{8})$/i);
 }
-// NodeList.prototype.forEach = Array.prototype.forEach;
-// NodeList.prototype.iterateAll = function(fn){
-//     this.forEach(function(item){
-//         fn(item);
-//         item.childNodes.iterateAll(fn);
-//     });
-// }
-/*  */
+NodeList.prototype.forEach = Array.prototype.forEach;
+NodeList.prototype.iterateAll = function(fn){
+    this.forEach(function(item){
+        fn(item);
+        item.childNodes.iterateAll(fn);
+    });
+}
+
 function ScrapbeeElement(el){
     this.el = el;
 }
