@@ -383,6 +383,20 @@ class BookTree {
         }        
         return bf;
     }
+    createSeparator($container, id, ref_id, is_new_node) {
+        var bf = new BookTreeNodeBuffer("<div class='item separator'/>", "");
+        if (is_new_node) {
+            var $hr = $(bf.flatten());
+            if (ref_id) {
+                $hr.insertAfter($("#" + ref_id)).attr("id", id);
+            } else {
+                $hr.appendTo($container).attr("id", id);
+            }
+            var folder_id = this.getContainerFolderId($container);
+            this.createSeparatorXml(folder_id, id, ref_id);
+        }
+        return bf;
+    }
     removeItem($item, callback) {
         var self = this;
         var id = $item.attr("id");
@@ -398,21 +412,7 @@ class BookTree {
         }
         this.removeItemXml(id);
         callback && callback();
-    }
-    createSeparator($container, id, ref_id, is_new_node) {
-        // var $hr = $("<div class='item separator'/>");
-        // if (ref_id) {
-        //     $hr.insertAfter($("#" + ref_id)).attr("id", id);
-        // } else {
-        //     $hr.appendTo($container).attr("id", id);
-        // }
-        if (is_new_node) {
-            var folder_id = this.getContainerFolderId($container);
-            this.createSeparatorXml(folder_id, id, ref_id);
-        }
-        var bf = new BookTreeNodeBuffer("<div class='item separator'/>", "");
-        return bf;
-    }
+    }    
     /** =============== xml part =============== */
     moveItemXml(id, folder_id, ref_id, move_type) {
         var node = this.getLiNode("urn:scrapbook:item" + id);
