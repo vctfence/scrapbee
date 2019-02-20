@@ -106,52 +106,33 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 	    src_exec += settings.platform=="windows"?".exe":"";
 	    var dest_exec = "scrapbee_backend" + (settings.platform=="windows"?".exe":"");
             /** download backend executable */
-	    browser.downloads.download({
-    		url: extRoot + "/bin/" + src_exec,
-    		filename: "scrapbee/" + dest_exec,
-    		conflictAction: "overwrite",
-		saveAs: false  /** no "save as" dialog shows */
-	    }).then(id => {
-                // TODO: 优化逻辑和注释
-		// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/downloads/DownloadItem
-                /** get backend executable downloading delta */
-		browser.downloads.search({id: id}).then((downloads) => { 
-                    /** backend executable downloading event listener */
-		    var fn = function(downloadDelta){
-                        /** backend executable downloading complete */
-			if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){ 
-			    browser.downloads.onChanged.removeListener(fn);
-			    var filename = downloads[0].filename;
-			    var json = {"allowed_extensions":["scrapbee@scrapbee.org"],
-					"description":"Scrapbee backend",
-					"name":"scrapbee_backend",
-					"path":filename, /** path to downloaded back executable */
-					"type":"stdio"}
-                            /** download json */
-			    downloadJsonText(json, "scrapbee/scrapbee_backend.json", function(){ /** download json done */
-				function done(){ /** download installation script done */
-				    settings.set('backend_path', filename.replace(/[^\\\/]*$/,""));
-				    if(settings.backend_path){
-					$("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
-				    }
-				}
-                                /** download installation script */
-				if(settings.platform=="windows")
-				    downloadFile(extRoot + "/install/install.bat", "scrapbee/install.bat", done);
-				else if(settings.platform=="mac")
-				    downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh", done);
-				else
-				    downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh", done);
-			    });
-			}
-		    }
-		    browser.downloads.onChanged.addListener(fn);
-		}).catch( function(error){ // TODO: catch if downloading item does not exists
-		    $("#txtBackendPath").html("error: " + error);
-		});
-	    }).catch(function (error) { // TODO: catch if fails start download exec
-		$("#txtBackendPath").html("error: " + error);
-	    });
+            downloadFile(extRoot + "/bin/" + src_exec, "scrapbee/" + dest_exec, function(id){
+                /*** query really filename of backend executable */
+	        browser.downloads.search({id: id}).then((downloads) => {
+                    var filename = downloads[0].filename;
+		    var json = {"allowed_extensions":["scrapbee@scrapbee.org"],
+			        "description":"Scrapbee backend",
+			        "name":"scrapbee_backend",
+			        "path":filename, /** path to downloaded backend executable */
+			        "type":"stdio"}
+                    /*** download json */
+		    downloadJsonText(json, "scrapbee/scrapbee_backend.json", function(){
+		        function done(){ /** download installation script done */
+			    settings.set('backend_path', filename.replace(/[^\\\/]*$/,""));
+			    if(settings.backend_path){
+			        $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
+			    }
+		        }
+                        /** download installation script */
+		        if(settings.platform=="windows")
+			    downloadFile(extRoot + "/install/install.bat", "scrapbee/install.bat", done);
+		        else if(settings.platform=="mac")
+			    downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh", done);
+		        else
+			    downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh", done);
+		    }); 
+                });
+            });
 	}
 	$("#txtBackendPath").show();
 	$("#txtBackendPath").html("Downloading...") // todo: error output
@@ -167,11 +148,13 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 	    var fn = function(downloadDelta){
 		if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
 		    browser.downloads.onChanged.removeListener(fn);
-		    callback && callback()
+		    callback && callback(id)
 		}
 	    }
 	    browser.downloads.onChanged.addListener(fn);
-	});
+	}).catch(function (error) {
+            $("#txtBackendPath").html("error: " + error);
+        });
     }
     function downloadJsonText(json, filename, callback){
 	var jstr = JSON.stringify(json, null, 2)
@@ -187,11 +170,13 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 		if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
 		    browser.downloads.onChanged.removeListener(fn);
 		    URL.revokeObjectURL(objectURL);
-		    callback && callback()
+		    callback && callback(id)
 		}
 	    }
 	    browser.downloads.onChanged.addListener(fn);
-	});
+	}).catch(function (error) {
+            $("#txtBackendPath").html("error: " + error);
+        });
     }
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	var $div = $("#div-log .console");
