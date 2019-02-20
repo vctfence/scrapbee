@@ -1,6 +1,6 @@
 import { settings, log } from "./global.js";
 
-class BookTreeNodeBuffer {
+class NodeHTMLBuffer {
     constructor(start, end) {
         this.start=start;
         this.end=end;
@@ -222,7 +222,7 @@ class BookTree {
         var $root_container = $(".root.folder-content");
         $root_container.html("");
         var buffers={};
-        buffers["urn:scrapbook:root"] = new BookTreeNodeBuffer("", "");
+        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");
         var _begin = new Date().getTime();
         try{
             this.iterateNodes(function (json) {
@@ -346,7 +346,7 @@ class BookTree {
         if (icon) {
             style = "background-image:url(" + this.translateResource(icon, this.rdf_path, id) + ");";
         }
-        var bf = new BookTreeNodeBuffer(
+        var bf = new NodeHTMLBuffer(
             `<div id='${id}' class='item ${type}' title='${title}' style='${style}' source='${source}' draggable='true'><label>${label}</label>`,
             (type == "local" ? "<div class='origin'></div>" : "") + "</div>");
         if (is_new_node) {
@@ -370,7 +370,7 @@ class BookTree {
     createFolder($container, id, ref_id, title, is_new_node) {
         title = $.trim(title);
         var label = title || "?";
-        var bf = new BookTreeNodeBuffer(`<div id='${id}' class='item folder' title='${title}' draggable='true'><label>${label}</label></div><div class='folder-content'>`,"</div>");
+        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title}' draggable='true'><label>${label}</label></div><div class='folder-content'>`,"</div>");
         if (is_new_node) {
             var $folder = $(bf.flatten());
             if (ref_id) {
@@ -384,7 +384,7 @@ class BookTree {
         return bf;
     }
     createSeparator($container, id, ref_id, is_new_node) {
-        var bf = new BookTreeNodeBuffer("<div class='item separator'/>", "");
+        var bf = new NodeHTMLBuffer("<div class='item separator'/>", "");
         if (is_new_node) {
             var $hr = $(bf.flatten());
             if (ref_id) {
