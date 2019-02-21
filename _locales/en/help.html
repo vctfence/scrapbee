@@ -1,4 +1,4 @@
-<div style="background:#f90;text-align:center;">Only Firefox after 60 are supported now </div>
+<div style="background:#f90;text-align:center;">Only Firefox 60 and later are supported now </div>
 <br />
 <div style="background:#f90;text-align:center;">Hint since v1.3.2: Please re-install backend to make ScrapBee safer</div>
 <h2>What's ScrapBee?</h2>
@@ -18,11 +18,11 @@ After ScrapBee installed, please just finish the <a href="#initiate">Initiate</a
 <img src="image/hints/03.png" class="" alt="" />
 <p class="">You can also save selected part of the page, and click on menu item Capture Selection to save it(Mark4) </p>
 <img src="image/hints/04.png" class="" alt="" />
-<p class="">When you are capturing content, a entity will be showed up in sidebar(Mark5),
+<p class="">When capture started, an entity will be showed up in sidebar(Mark5),
   and it's icon will be showed in status waiting until capture finished, then you can open local content(Mark6) by
   clicking on it, you can also open origin URL by click on the origin URL button(Mark7). </p>
 <h4>Be Ware</h4>
-Whatever you are capturing, please keep ScrapBee opened in sidebar, entity of scraps captured will be saved to position in sidebar currently selected(if no folder/entity selected, it will be saved as top level). Also, you can move entities around by dragging them.
+Whatever you are capturing, please keep ScrapBee opened in sidebar, entity of scraps captured will be saved to position in sidebar currently selected(if no folder/entity selected, it will be saved to the end of top level). Also, you can move entities around by dragging them.
 <h2>Trouble Shooting</h2>
 <h4>Port</h4>
 If ScrapBee stop working, and if you see error message in <a href="#log">Log</a> window like:
@@ -32,8 +32,7 @@ Please try to kill the process binds on that port manually, e.g. under Linux you
 Or try another backend port in <a href="#settings">Settings</a>
 <h4>File system permission</h4>
 Please do not register rdfs under a directory without read/write permission for current user,
-e.g. common users have no write permission of Windows root directory like c:\, but register rdfs
-in a sub directory of it like c:\foobar will work in general.
+e.g. common users have no write permission of Windows root directory like c:\, but sub directory of that like c:\foobar works in general.
 <h4>Reported as Trojan malware</h4>
 Backend of ScrapBee is likely treated as Trojan by  scanners, please add ScrapBee to white list of scanners to prevent miss-block/mis-kill, please contact me if you have a better solution。
 <h4>Download installation scripts fails</h4>
@@ -85,10 +84,10 @@ install.sh(Mac)
   cp scrapbee_backend.json $dest<br />
   echo done<br />
 </div>
-<h4>STILL DO NOT WORK?</h4>
+<h4>Still do not work?</h4>
 Check the <a href="#log">log</a>, there are maybe infomation shows what happend.
 <br>Restart Firefox, this helps sometime.
 <br>Or, you can make questions in our github repo: <a href="https://github.com/vctfence/scrapbee">https://github.com/vctfence/scrapbee</a>
 <br>Or email us to  <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
-<h2>BACKUP</h2>
+<h2>Backup</h2>
 ScrapBee provides no backup function, please backup rdfs and scrap files manually often :).
