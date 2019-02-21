@@ -125,7 +125,7 @@ menulistener.onDelete = function(){
 menulistener.onCreateFolder = function(){
     showDlg("folder", {}).then(function(d){
 	var p;
-	if($(".dlg-folder").find("input[name=pos]:checked").val() == "root"){
+	if(d.pos == "root"){
 	    p = $(".root.folder-content");
 	}else{
 	    p = getCurrContainer(); 
