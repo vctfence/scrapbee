@@ -176,7 +176,7 @@
         "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!"
     },
     "MORE_DONATE_WAY":{
-        "message": "您也可以通过以下方式捐助: <br><br> <img src='image/donate/alipay.jpg' class='' alt='' width='300'/>  <img src='image/donate/wxpay.jpg' class='' alt='' width='300' /> <br><br><br><br><br><br><br><br>"
+        "message": "您也可以通过以下方式捐助: <br><br> <img src='image/donate/alipay.jpg' class='' alt='' width='300'/><br><br><img src='image/donate/wxpay.jpg' class='' alt='' width='300' /> <br><br><br><br><br><br><br><br>"
     },
     "RESULTS_FOUND": {
         "message": "个结果"
