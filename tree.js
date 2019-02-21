@@ -41,6 +41,9 @@ class BookTree {
                 self.MAIN_NS = v;
             self["NS_" + k] = v;
         });
+        this.nsResolver=function(prefix) {
+            return self["NS_" + prefix] || null;
+        }
     }
     translateResource(r, rdf_path, id) {
         return r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path).replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
@@ -284,7 +287,7 @@ class BookTree {
                     if (seq_node) { // folder
                         SeqProcesser(seq_node, seq_id);
                     } else {
-                        var separator = self.getDecSeparator(child.getAttribute("RDF:resource"));
+                        var separator = self.getSeparatorNode(child.getAttribute("RDF:resource"));
                         if(separator) {
                             var id = child.getAttribute("RDF:resource").replace("urn:scrapbook:item", "");
                             fn({ nodeType: 'separator', id: id, parentId: seq_id });
@@ -511,31 +514,25 @@ class BookTree {
         var serializer = new XMLSerializer();
         return serializer.serializeToString(this.xmlDoc);
     }
-    nsResolver() {
-        var self = this;
-        return function (prefix) {
-            return self["NS_" + prefix] || null;
-        }
-    }
     getLiNode(about) {
-        var search = '//RDF:li[@RDF:resource="' + about + '"]';
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver(), XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        return result.iterateNext();
+        var search = `//RDF:li[@RDF:resource='${about}']`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        return result.singleNodeValue;
     }
     getDescNode(about) {
-        var search = '//RDF:Description[@RDF:about="' + about + '"]';
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver(), XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        return result.iterateNext();
+        var search = `//RDF:Description[@RDF:about='${about}']`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        return result.singleNodeValue;
     }
     getSeqNode(about) {
-        var search = '//RDF:Seq[@RDF:about="' + about + '"]';
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver(), XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        return result.iterateNext();
+        var search = `//RDF:Seq[@RDF:about='${about}']`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        return result.singleNodeValue;
     }
-    getDecSeparator(about) {
-        var search = '//NC:BookmarkSeparator[@RDF:about="' + about + '"]';
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver(), XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        return result.iterateNext();
+    getSeparatorNode(about) {
+        var search = `//NC:BookmarkSeparator[@RDF:about='${about}']`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        return result.singleNodeValue;
     }
     getNameSpaces() {
         var r = {};
