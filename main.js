@@ -269,18 +269,20 @@ window.onload=function(){
 function loadXml(rdf){
     currTree=null;
     if(!rdf)return;
-    $(".root.folder-content").html("Loading...");
+    $(".root.folder-content").html("{Loading...}".translate());
     var rdf_path = rdf.replace(/[^\/\\]*$/, "");
     var rdf_file = rdf.replace(/.*[\/\\]/, "");    
     var xmlhttp=new XMLHttpRequest();
     xmlhttp.onload = function(r) {
 	try{
+            var _begin = new Date().getTime();
 	    currTree = new BookTree(r.target.response, rdf)
 	    currTree.renderTree();
+            var cost = new Date().getTime() - _begin;
+            log("info", `rdf loaded in ${cost}ms`)
 	}catch(e){
 	    log("error", e.message)
 	}
-	log("info", `rdf "${rdf}" loaded`)
 	currTree.onXmlChanged=function(){
 	    saveRdf();
 	}

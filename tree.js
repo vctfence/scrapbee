@@ -228,7 +228,6 @@ class BookTree {
         $root_container.html("");
         var buffers={};
         buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");
-        var _begin = new Date().getTime();
         try{
             this.iterateNodes(function (json) {
                 var parentId = json.parentId || "urn:scrapbook:root";
@@ -256,8 +255,6 @@ class BookTree {
         }catch(e){
             log("error", e.message)
         }
-        var cost = new Date().getTime() - _begin;
-        log("info", `render time cost = ${cost}ms`);
         this.listenUserEvents();
     }
     iterateNodes(fn) {
