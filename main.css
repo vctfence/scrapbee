@@ -72,7 +72,7 @@ html,body{
     /* background-color:#ccc; */
     /* color:#000; */
 }
-.item.local.focus label,
+.item.bookmark.focus label,
 .item.local.focus label,
 .item.folder.focus label{
     background-color:#079;
