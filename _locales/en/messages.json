@@ -110,10 +110,10 @@
         "message": "Download Destination Directory"
     },
     "STEP1_TEXT_1": {
-        "message": "Download ScrapBee backend executable and 2 installation file to\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", by just click on the button below."
+        "message": "Download ScrapBee backend executable and 2 installation files to\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", by just click on the button below."
     },
     "STEP1_TEXT_2": {
-        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", start Firefox and download again. (Please use standard version of {Firefox} later than 60)"
+        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", start Firefox and download again. (Please use standard version of {Firefox} 60 and later)"
     },
     "STEP2_TEXT_1": {
         "message": "Run the installation script downloaded above manually:"
@@ -146,10 +146,10 @@
         "message": "Separator"
     },
     "RDF_FILES_TIP": {
-        "message": "Set rdf files ending with extension '.rdf' to register information of scraps，downloaded scraps will be saved in \"data\" folder beside the rdf file.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> You can setup multiple rdf files to classify your scraps，<br>You can have different rdfs inside same directory.<br>No need to create these files maunally.<br/><br/> And here's a good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user, that ScrapBook rdfs are also supported."
+        "message": "Set absolute path rdf files ending with extension '.rdf' to register information of scraps，downloaded scraps will be saved in \"data\" folder beside the rdf file.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> You can setup multiple rdf files to classify your scraps，<br>You can have different rdfs inside same directory.<br>No need to create these files maunally.<br/><br/> Good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user: ScrapBook rdfs are also supported."
     },
     "BACKEND_PORT_TIP":{
-        "message": "TCP port ScrapBee backend server listens. e.g. 9900"
+        "message": "TCP port ScrapBee backend listens. e.g. 9900"
     },
     "Color":{
         "message": "Color"
@@ -170,7 +170,7 @@
         "message": "Open in current tab"
     },
     "OPEN_IN_CURRENT_TAB_TIP":{
-        "message": "By default, ScrapBee opens each scrap in new tab when clicking on an entity, <br>and open scraps in current tab by holding control(meta for Mac) while clicking. <br>You can reverse this by turn on the option. "
+        "message": "By default, ScrapBee opens each scrap in new tab when clicking on an entity, <br>and open scraps in current tab by holding control(meta for Mac) while clicking. <br>You can reverse this by turn on this option. "
     },
     "DONATE_WORDS":{
         "message": "To make ScrapBee grows better, <br/>your donations are very welcome, <br/>thanks for your support !!!"
@@ -179,7 +179,7 @@
         "message": "<br>"
     },
     "RESULTS_FOUND": {
-        "message": "RESULTS FOUND"
+        "message": " RESULT(S) FOUND"
     },
     "NOT_EXISTS": {
         "message": "do not exists"
