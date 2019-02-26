@@ -198,29 +198,82 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }
     return false;
 });
-function buildTools(){
-    if(location.href.match(/\http:\/\/localhost\:9900\/.+?edit=1$/)){
-	return;
-	var sheet = document.createElement('style')
-	// all: unset; all: initial; all: none
-	// sheet.innerHTML = ".scrapbee input {all: none; } .scrapbee, .scrapbee *{font-size:9px;font-family:''}";
-	sheet.innerHTML = " \
-.scrapbee{all:unset; *{all:unset}} \
-.scrapbee, .scrapbee *{ \
-  left:0px; \
-  font-family: 'verdana', 'ms song', '宋体', 'Arial', '微软雅黑', 'Helvetica', 'sans-serif'; \
-}";
-	document.body.appendChild(sheet);
+
+function isDescendant(parent, child) {
+    var node = child;
+    while (node != null) {
+        if (node == parent) {
+            return true;
+        }
+        node = node.parentNode;
+    }
+    return false;
+}
+
+class EditToolBar{
+    constructor(scrap_path){
+        var self = this;
+        this.scrap_path=scrap_path;
+        this.buildTools()
+        window.addEventListener("click", function(e){
+            if(!isDescendant(self.div, e.target) && self.last && self.editing){
+                self.last.parentNode.removeChild(self.last)
+                self.last=null;
+            }
+        })
+        window.addEventListener("mousemove", function(e){
+            if(self.editing){
+                var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
+                if(dom && !isDescendant(self.div, dom)){
+                    if(self.last)
+                        self.last.style.border = self.last_border;
+                    self.last_border = dom.style.border;
+                    self.last = dom;
+                    dom.style.border="2px solid #f00";
+                }
+            }
+        });        
+    }
+    toggleDomEdit(on){
+        var self = this;
+        if(self.last)
+            self.last.style.border = self.last_border;        
+        
+        self.last = null;
+        self.last_border = null;
+        self.editing = on;
+        document.body.style.cursor=self.editing?"crosshair":"";
+    }
+    saveDoc(){
+        var self=this;
+        self.toggleDomEdit(false)
+        var doc = document.documentElement.cloneNode(true)
+        $(doc).find(".scrapbee-edit-bar").remove();
+        browser.runtime.sendMessage({
+            type: 'SAVE_CONTENT2',
+	    content: $(doc).html(),
+	    path: self.scrap_path,
+            title: document.title
+        });
+    }
+    buildTools(){
+        var self = this;
         var div = document.createElement("div");
-        div.className = "scrapbee"
+        div.className = "scrapbee-edit-bar"
         document.body.appendChild(div);
+        this.div=div;
+
         var img = document.createElement("img");
         img.style.verticalAlign="middle";
         img.style.marginLeft="10px"
+
         img.style.width = img.style.height = "20px";
+
+        var icon_bee = "moz-extension://da352c42-7aa1-43a3-9d87-205a3f638792/icons/bee.png"
         img.src = icon_bee;
+
         div.appendChild(img);
-        div.innerHTML+="ScrapBee&nbsp;&nbsp;";
+        div.innerHTML+=" ScrapBee&nbsp;&nbsp;";
         div.style.background="#aaa";
         div.style.borderTop="1px solid #999";
         div.style.width="100%";
@@ -229,25 +282,63 @@ function buildTools(){
         div.style.verticalAlign="middle";
         div.style.lineHeight="50px";
         div.style.bottom="0";
+
         div.style.zIndex=999999999999;
         document.body.style.marginBottom="100px";
         document.body.style.paddingLeft="0px";
         div.style.textAlign="left";
+        
+        var btn = document.createElement("input");
+        btn.type="button";
+        btn.value="save";
+        btn.style.lineHeight="20px";
+        div.appendChild(btn);
+        btn.addEventListener("click", function(){
+            self.saveDoc();
+        });
+        
         var btn = document.createElement("input");
         btn.type="button";
         btn.value="modify";
         btn.style.lineHeight="20px";
-        div.appendChild(btn);
-        btn.addEventListener("click", function(){
-            alert("me?")
-        });
-        var btn = document.createElement("input");
-        btn.type="button";
-        btn.value="X";
-        btn.style.lineHeight="20px";
         btn.style.marginLeft="5px";
         div.appendChild(btn);
+
+        btn.addEventListener("click", function(){
+            self.toggleDomEdit(true)
+        });
+
+        var drop = document.createElement("select");
+        drop.style.lineHeight="20px";
+        drop.height="40px"
+        drop.style.marginLeft="5px";
+        
+        $("<option>").appendTo(drop).html("aaa<b style='color:#777'>ttttt</b>")
+        $("<option>").appendTo(drop).html("aaa")
+        $("<option>").appendTo(drop).html("aaa")
+        $("<option>").appendTo(drop).html("aaa")
+        $("<option>").appendTo(drop).html("aaa")
+        $("<option>").appendTo(drop).html("aaa")
+        $("<option>").appendTo(drop).html("aaa")
+        
+        div.appendChild(drop);
+
     }
+}
+
+var platform = "linux";
+if (navigator.platform == "Win64" || navigator.platform == "Win32") {
+    platform = "windows";
+}else if(/Mac.+/.test(navigator.platform)){
+    platform = "mac";
+}
+
+if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/\d+\/)\?scrapbee_editing=1$/i)){
+    var path = RegExp.$1;
+    if(platform!="windows"){
+        path = `/${path}`
+    }
+    new EditToolBar(path)
 }
 
 function downloadFile(url, callback){

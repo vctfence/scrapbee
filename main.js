@@ -390,6 +390,9 @@ function withFocusedWindow(callback){
 /* receive message from background page */
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'UPDATE_CONTEXTMENU_REQUEST'){
+
+    }else if(request.type == 'SAVE_CONTENT2'){
+	savePage2(request.path, request.title, request.content);
     }else if(request.type == 'SAVE_CONTENT' && request.windowId == windowId){
 	savePage(request.itemId, request.content.title, request.content.html, request.content.css, request.content.res, function(){
 	    browser.tabs.sendMessage(sender.tab.id, {type: 'SAVE_CONTENT_FINISHED', itemId: request.itemId, title: request.content.title}, null);
@@ -482,6 +485,11 @@ function savePage(itemId, title, content, css, res, callback){
 	    	// error
 	    });
 	}
+    });
+}
+function savePage2(path, title, content){
+    $.post(settings.backend_url + "savefile", {filename: `${path}/index.html`, content: content}, function(r){
+	showNotification({message: `Save content of "${title}" done`, title: "Info"});
     });
 }
 document.addEventListener('contextmenu', function(event){
