@@ -49,6 +49,12 @@
     "Save": {
         "message": "Save"
     },
+    "Modify": {
+        "message": "Modify"
+    },
+    "MARK_PEN": {
+        "message": "Mark Pen"
+    },      
     "File": {
         "message": "File"
     },

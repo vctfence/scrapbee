@@ -59,6 +59,7 @@
                 "libs/jquery-3.3.1.js",
                 "libs/md5.js",
                 "proto.js",
+                "marker.js",
                 "content_script.js"
             ]
         }
