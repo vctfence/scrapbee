@@ -8,6 +8,9 @@
     background-position:center center;
     background-size:30%;
 }
+
+
+
 /* .scrapbee-edit-bar{ */
 /*     background:#f00; */
 /*     height:100px; */
@@ -17,3 +20,38 @@
 /*     position:fixed; */
 /*     z-index:2147483647;    */
 /* } */
+
+.hl1{
+    color:#f00;
+    border-bottom:1px solid #0f0;
+    background:#f00;
+    color:#fff
+}
+.hl2{
+    color:#ff0;
+    border-bottom:1px solid #f0f;
+}
+.scrapbee-edit-bar,  .scrapbee-edit-bar *{
+    font-family:"WenQuanYi Micro Hei",
+		"Open Sans",
+		"Fira Sans",
+		"Lucida Sans",
+		"Lucida Sans Unicode",
+		"Trebuchet MS",
+		"Liberation Sans",
+		"Nimbus Sans L",
+		sans-serif;
+    font-size:12px;
+    box-sizing: content-box
+}
+.scrapbee-edit-bar input[type=button]{
+    background:#09c;
+    color:#fff;
+    cursor:pointer;
+    border-radius:5px;
+    padding:3px 15px;
+    border:none;
+}
+.scrapbee-menu-item{
+    text-align:center;
+}

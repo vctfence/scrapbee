@@ -49,6 +49,12 @@
     "Save": {
         "message": "保存"
     },
+    "Modify": {
+        "message": "修改"
+    },
+    "MARK_PEN": {
+        "message": "记号笔"
+    },        
     "File": {
         "message": "文件"
     },
