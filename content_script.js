@@ -177,6 +177,47 @@ function saveContent(itemId, windowId, content){
 	windowId: windowId
     });
 }
+function wrapSelection(node) {
+    // https://bbs.csdn.net/topics/390813174/
+
+    var range = window.getSelection().getRangeAt(0);
+    range.surroundContents(node)
+    return
+
+    if(range){
+        var c = range.cloneContents();
+        range.deleteContents();
+        var n = c.firstChild;
+        var ws=[]
+        while(n){
+            var w;
+            if(n.nodeType==1){
+                // w = n;
+                // var nn = node.cloneNode()
+                // nn.innerHTML = n.innerHTML;
+                // n.innerHTML = ""
+                // n.appendChild(nn)
+
+                w = node.cloneNode()
+                w.innerHTML = n.innerHTML;
+                
+                // https://developer.mozilla.org/en-US/docs/Web/API/Range
+                // Range.insertNode()
+                // Range.surroundContents()
+                // Range.deleteContents()
+                
+            }else{
+                w = node.cloneNode()
+                w.appendChild(c);
+            }
+            ws.push(w)
+            n=n.nextSibling;
+        }
+        ws.reverse().forEach(function(node){
+            range.insertNode(node);
+        })
+    }
+}
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == "GET_PAGE_SELECTION_REQUEST"){
 	if(lock()){
@@ -263,60 +304,55 @@ class EditToolBar{
     }
     buildTools(){
         var self = this;
+	var editing=false;
+	/** toolbar */
         $(".scrapbee-edit-bar").remove();
         var div = document.createElement("div");
         div.className = "scrapbee-edit-bar"
         document.body.appendChild(div);
         this.div=div;
+	/** icon */
         var img = document.createElement("img");
-        img.style.verticalAlign="middle";
-        img.style.marginLeft="10px"
-        img.style.width = img.style.height = "20px";
+	img.className="scrapbee-icon"
 	var extension_id = browser.i18n.getMessage("@@extension_id"); 
-        var icon_bee = `moz-extension://${extension_id}/icons/bee.png`
-	var editing=false;
-        img.src = icon_bee;
-        div.appendChild(img);
-        div.innerHTML+=" ScrapBee&nbsp;&nbsp;";
-
+        img.src = `moz-extension://${extension_id}/icons/bee.png`;
+	div.appendChild(img);
+	div.innerHTML+=" ScrapBee&nbsp;&nbsp;";
+        /** body */
         document.body.style.marginBottom="100px";
         document.body.style.paddingLeft="0px";
         document.body.style.marginLeft="0px";
-
-        div.style.textAlign="left";
+	/** save button */
         var btn = document.createElement("input");
         btn.type="button";
 	btn.className="yellow-button"
         btn.value=chrome.i18n.getMessage("save");
-        btn.style.lineHeight="20px";
         div.appendChild(btn);
         btn.addEventListener("click", function(){
             self.saveDoc();
         });
+	/** modify dom button */
         var btn = document.createElement("input");
         btn.type="button";
 	btn.className="blue-button"
         btn.value=chrome.i18n.getMessage("MODIFY_DOM_ON");
-        btn.style.lineHeight="20px";
-        btn.style.marginLeft="5px";
         div.appendChild(btn);
         btn.addEventListener("click", function(){
             editing=!editing;
             self.toggleDomEdit(editing)
-
 	    this.value=chrome.i18n.getMessage(editing?"MODIFY_DOM_OFF":"MODIFY_DOM_ON");
 	    $(this).prop("disabled", false)
         });
+	/** mark pen button */
         var btn = document.createElement("input");
         btn.type="button";
 	btn.className="blue-button mark-pen-btn"
         btn.value=chrome.i18n.getMessage("MARK_PEN");
-        btn.style.lineHeight="20px";
-        btn.style.marginLeft="5px";
         div.appendChild(btn);
         btn.addEventListener("click", function(){
             $(self.menu).toggle()
         });
+	/** mark pen menu */
         var rect_btn = btn.getBoundingClientRect();
         var rect_div = this.div.getBoundingClientRect();
         var $m = $("<div>").appendTo(this.div);
@@ -334,7 +370,7 @@ class EditToolBar{
                 verticalAlign:"middle"
             }).bind("mousedown", function(e){
                 e.preventDefault()
-                mark("hl1")
+                mark("scrapbee-marker-1");
             });
             $("<div class='scrapbee-menu-item'>Simple Text</div>").appendTo($item).css(child).css({
                 height:"14px",
