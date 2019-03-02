@@ -356,11 +356,8 @@ class EditToolBar{
         var rect_btn = btn.getBoundingClientRect();
         var rect_div = this.div.getBoundingClientRect();
         var $m = $("<div>").appendTo(this.div);
-        for (let child of [{background:"#f0f", color:"#fff"},
-                           {background:"#ff0"},
-                           {background:"#f00", color:"#fff", borderBottom:"2px solid #0f0"},
-                           {borderBottom:"2px solid #f00"}
-                          ]){
+        for (let child of ["scrapbee-marker-1", "scrapbee-marker-2", "scrapbee-marker-3", "scrapbee-marker-4"]){
+	    
             var $item = $("<div>").appendTo($m).html("").css({
                 height:"14px",
                 color:"#333",
@@ -370,9 +367,9 @@ class EditToolBar{
                 verticalAlign:"middle"
             }).bind("mousedown", function(e){
                 e.preventDefault()
-                mark("scrapbee-marker-1");
+                mark(child);
             });
-            $("<div class='scrapbee-menu-item'>Simple Text</div>").appendTo($item).css(child).css({
+            $(`<div class='scrapbee-menu-item ${child}'>Simple Text</div>`).appendTo($item).css({
                 height:"14px",
                 lineHeight:"14px",
                 minWidth:"200px"
@@ -390,6 +387,17 @@ class EditToolBar{
             borderWidth: "1px 1px 0px 1px"
         });
         this.menu = $m[0];
+
+
+	/** reload button */
+        var btn = document.createElement("input");
+        btn.type="button";
+	btn.className="blue-button"
+        btn.value=chrome.i18n.getMessage("Reload");
+        div.appendChild(btn);
+        btn.addEventListener("click", function(){
+            window.location.reload()
+        });
     }
 }
 var platform = "linux";

@@ -21,13 +21,21 @@
 
 .scrapbee-marker-1{
     color:#f00;
-    border-bottom:1px solid #0f0;
-    background:#f00 !important;
+    border-bottom:2px solid #0f0;
+    background:#f00 ;
     color:#fff
 }
 .scrapbee-marker-2{
-    color:#ff0;
-    border-bottom:1px solid #f0f;
+    color:#fff;
+    background:#0f0 ;
+    border-bottom:2px solid #f0f;
+}
+.scrapbee-marker-3{
+    color:#000;
+    border-bottom:2px solid #00f;
+}
+.scrapbee-marker-4{
+    border-bottom:2px solid #f00;
 }
 .scrapbee-edit-bar{
     background: #aaa;
