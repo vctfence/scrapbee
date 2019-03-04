@@ -390,7 +390,7 @@ class EditToolBar{
                 e.preventDefault()
                 mark(child);
             });
-            $(`<div class='scrapbee-menu-item ${child}'></div>`).appendTo($item).css({
+            $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
                 height:"14px",
                 lineHeight:"14px",
                 minWidth:"200px"
