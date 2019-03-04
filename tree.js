@@ -101,7 +101,7 @@ class BookTree {
                     return;
                 var url = $el.attr("source");
                 if ($el.hasClass("local") && !$(e.target).hasClass("origin")) {
-                    url = self.getItemIndexPage($el.attr("id"));
+                    url = self.getItemIndexPage($el.attr("id")) + "?scrapbee_editing=1";
                 }
                 if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey)) {
                     browser.tabs.update({ url: url }, function (tab) { });

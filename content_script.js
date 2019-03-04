@@ -390,7 +390,7 @@ class EditToolBar{
                 e.preventDefault()
                 mark(child);
             });
-            $(`<div class='scrapbee-menu-item ${child}'>Simple Text</div>`).appendTo($item).css({
+            $(`<div class='scrapbee-menu-item ${child}'></div>`).appendTo($item).css({
                 height:"14px",
                 lineHeight:"14px",
                 minWidth:"200px"
@@ -424,7 +424,7 @@ if (navigator.platform == "Win64" || navigator.platform == "Win32") {
     platform = "mac";
 }
 $(document).ready(function(){
-    if(1 || location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/\d+\/)\?scrapbee_editing=1$/i)){
+    if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/\d+\/)\?scrapbee_editing=1$/i)){
         var path = RegExp.$1;
         if(platform!="windows"){
             path = `/${path}`
