@@ -41,7 +41,7 @@ Please try to re-download the backend:
 <br/>Close Firefox->Delete files under “<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/”->Start Firefox->Download again
 <br/><br/>If this not helps, please create the scripts manually in “<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/”:
 <br /> <br />
-scrapbee_backend.json: (<b>Important:</b> replace "<b><i>FIREFOX-DOWNLOAD-DIRECTORY</i></b>" to your real <b>USER DOWNLOAD DIRECTORY</b>)
+scrapbee_backend.json: (<b>Important:</b> replace "<b><i>FIREFOX-DOWNLOAD-DIRECTORY</i></b>" to your real <b>FireFox DOWNLOAD DIRECTORY</b>)
 <div class="embeded-log-text">
   {<br />
   "allowed_extensions": [<br />
@@ -57,9 +57,9 @@ install.bat(Windows, CODEPAGE UTF-8):
 <div class="embeded-log-text">
   chcp 65001<br />
   reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
-  reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d <i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json /f<br />
+  reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json" /f<br />
   reg delete "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
-  reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d <i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json  /f<br />
+  reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json"  /f<br />
   echo done<br />
   pause<br />
 </div>

@@ -54,9 +54,9 @@ install.bat(Windows, CODEPAGE UTF-8):
 <div class="embeded-log-text">
   chcp 65001<br />
   reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
-  reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d <i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json /f<br />
+  reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json" /f<br />
   reg delete "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
-  reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d <i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json  /f<br />
+  reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json"  /f<br />
   echo done<br />
   pause<br />
 </div>
