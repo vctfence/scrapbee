@@ -8,8 +8,10 @@ function __log__(logtype, content){
     browser.runtime.sendMessage({type:'LOGGING', log});
 }
 
-/* log firefox and platform */
+/* log version and platform */
 browser.runtime.getBrowserInfo().then(function(info) {
+    var manifest = browser.runtime.getManifest();
+    __log__("info", "ScrapBee version = " + manifest.version);
     __log__("info", "browser = " + info.name + " " + info.version);
     var main_version = parseInt(info.version.replace(/\..+/, ""));
     if(info.name != "Firefox" || main_version < 60){
