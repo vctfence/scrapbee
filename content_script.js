@@ -369,13 +369,16 @@ class EditToolBar{
         btn.value=chrome.i18n.getMessage("MARK_PEN");
         div.appendChild(btn);
         btn.addEventListener("click", function(){
-            $(self.menu).toggle()
+            $(self.menu).toggle();
+            var rect_div = self.div.getBoundingClientRect();
+            var rect_btn = this.getBoundingClientRect();
+            $(self.menu).css("bottom", (rect_div.bottom - rect_btn.top) + "px");
+            $(self.menu).css("left", rect_btn.left + "px");
         });
         /** mark pen menu */
-        var rect_btn = btn.getBoundingClientRect();
-        var rect_div = this.div.getBoundingClientRect();
         var $m = $("<div>").appendTo(this.div);
-        for (let child of ["scrapbee-marker-1", "scrapbee-marker-2", "scrapbee-marker-3", "scrapbee-marker-4"]){
+        for (let child of ["scrapbee-marker-1", "scrapbee-marker-2", "scrapbee-marker-3", "scrapbee-marker-4",
+                           "scrapbee-marker-5", "scrapbee-marker-6", "scrapbee-marker-7", "scrapbee-marker-8"]){
             var $item = $("<div>").appendTo($m).html("").css({
                 height:"14px",
                 color:"#333",
@@ -396,8 +399,6 @@ class EditToolBar{
         $m.css({
             position: 'absolute',
             zIndex: 2147483647,
-            bottom: (rect_div.bottom - rect_btn.top) + "px",
-            left: rect_btn.left + "px",
             border: "1px solid #999",
             background: "#fff",
             display: "none",
