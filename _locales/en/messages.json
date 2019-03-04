@@ -116,7 +116,7 @@
         "message": "Background"
     },
     "FIREFOX_DOWNLOAD_DIRECTORY":{
-        "message": "Download Directory"
+        "message": "Firefox Download Directory"
     },
     "STEP1_TEXT_1": {
         "message": "Download ScrapBee backend executable and 2 installation files to\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", by just click on the button below."
