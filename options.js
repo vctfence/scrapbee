@@ -116,16 +116,18 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 			        "path":filename, /** path to downloaded backend executable */
 			        "type":"stdio"}
                     /*** download json */
-		    downloadJsonText(json, "scrapbee/scrapbee_backend.json", function(){
+                    var jstr = JSON.stringify(json, null, 2)
+		    downloadText(jstr, "scrapbee/scrapbee_backend.json", function(){
 		        function done(){ /** download installation script done */
-			    settings.set('backend_path', filename.replace(/[^\\\/]*$/,""));
+                            var download_path = filename.replace(/[^\\\/]*$/,"");
+			    settings.set('backend_path', download_path);
 			    if(settings.backend_path){
 			        $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
 			    }
 		        }
                         /** download installation script */
 		        if(settings.platform=="windows")
-			    downloadFile(extRoot + "/install/install.bat", "scrapbee/install.bat", done);
+			    downloadText(installBat(download_path), "scrapbee/install.bat", done);
 		        else if(settings.platform=="mac")
 			    downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh", done);
 		        else
@@ -138,6 +140,15 @@ ${FILE_I18N}: <input type="text" name="value"/> \
 	$("#txtBackendPath").html("Downloading...") // todo: error output
 	setTimeout(Next, 1000);
     });
+    function installBat(backend_path){
+        return `chcp 65001
+reg delete "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /f 
+reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d ${backend_path}\scrapbee_backend.json /f
+reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f 
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d ${backend_path}\scrapbee_backend.json /f
+echo done
+pause`
+    }
     function downloadFile(src, dest, callback){
 	browser.downloads.download({
 	    url:src,
@@ -156,9 +167,8 @@ ${FILE_I18N}: <input type="text" name="value"/> \
             $("#txtBackendPath").html("error: " + error);
         });
     }
-    function downloadJsonText(json, filename, callback){
-	var jstr = JSON.stringify(json, null, 2)
-	var blob = new Blob([jstr], {type : 'text/plain'});
+    function downloadText(text, filename, callback){
+	var blob = new Blob([text], {type : 'text/plain'});
 	var objectURL = URL.createObjectURL(blob);
 	browser.downloads.download({
 	    url:objectURL,

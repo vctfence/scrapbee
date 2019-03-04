@@ -38,7 +38,7 @@ ScrapBee的后端软件及安装脚本容易被杀毒、防木马软件误报为
 <br/>关闭火狐->删除“<i>用户下载目录</i>/scrapbee/”中的所有文件->启动火狐->再次下载
 <br/><br/>如果仍然失败，请在“<i>用户下载目录</i>/scrapbee/”中尝试手工建立这些文件
 <br /> <br />
-scrapbee_backend.json: (<b>重要：</b>请替换"<b><i>用户下载目录</i></b>"为你的实际<b>用户下载目录</b>)
+scrapbee_backend.json: (<b>重要：</b>请替换"<b><i>用户下载目录</i></b>"为你的实际<b>火狐下载目录</b>)
 <div class="embeded-log-text">
   {<br />
   "allowed_extensions": [<br />
@@ -50,12 +50,13 @@ scrapbee_backend.json: (<b>重要：</b>请替换"<b><i>用户下载目录</i></
   "type": "stdio"<br />
   }<br />
 </div>
-install.bat(Windows):
+install.bat(Windows, CODEPAGE UTF-8):
 <div class="embeded-log-text">
-  <!-- reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
-       reg add    "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d %USERPROFILE%\Downloads\scrapbee\scrapbee_backend.json  /f<br /> -->
+  chcp 65001<br />
+  reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
+  reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d <i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json /f<br />
   reg delete "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
-  reg add    "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d %USERPROFILE%\Downloads\scrapbee\scrapbee_backend.json  /f<br />
+  reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d <i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json  /f<br />
   echo done<br />
   pause<br />
 </div>

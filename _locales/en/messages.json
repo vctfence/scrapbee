@@ -112,14 +112,14 @@
     "Background": {
         "message": "Background"
     },
-    "DOWNLOAD_DESTINATION_DIRECTORY":{
-        "message": "Download Destination Directory"
+    "FIREFOX_DOWNLOAD_DIRECTORY":{
+        "message": "Download Directory"
     },
     "STEP1_TEXT_1": {
-        "message": "Download ScrapBee backend executable and 2 installation files to\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", by just click on the button below."
+        "message": "Download ScrapBee backend executable and 2 installation files to\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", by just click on the button below."
     },
     "STEP1_TEXT_2": {
-        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{DOWNLOAD_DESTINATION_DIRECTORY}</i>/screepbee/\", start Firefox and download again. (Please use standard version of {Firefox} 60 and later)"
+        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", start Firefox and download again. (Please use standard version of {Firefox} 60 and later)"
     },
     "STEP2_TEXT_1": {
         "message": "Run the installation script downloaded above manually:"
