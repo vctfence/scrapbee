@@ -177,47 +177,6 @@ function saveContent(itemId, windowId, content){
         windowId: windowId
     });
 }
-function wrapSelection(node) {
-    // https://bbs.csdn.net/topics/390813174/
-
-    var range = window.getSelection().getRangeAt(0);
-    range.surroundContents(node)
-    return
-
-    if(range){
-        var c = range.cloneContents();
-        range.deleteContents();
-        var n = c.firstChild;
-        var ws=[]
-        while(n){
-            var w;
-            if(n.nodeType==1){
-                // w = n;
-                // var nn = node.cloneNode()
-                // nn.innerHTML = n.innerHTML;
-                // n.innerHTML = ""
-                // n.appendChild(nn)
-
-                w = node.cloneNode()
-                w.innerHTML = n.innerHTML;
-
-                // https://developer.mozilla.org/en-US/docs/Web/API/Range
-                // Range.insertNode()
-                // Range.surroundContents()
-                // Range.deleteContents()
-
-            }else{
-                w = node.cloneNode()
-                w.appendChild(c);
-            }
-            ws.push(w)
-            n=n.nextSibling;
-        }
-        ws.reverse().forEach(function(node){
-            range.insertNode(node);
-        })
-    }
-}
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == "GET_PAGE_SELECTION_REQUEST"){
         if(lock()){
@@ -249,8 +208,6 @@ function isDescendant(parent, child) {
     }
     return false;
 }
-
-
 function loadCss(href){
     var head  = document.getElementsByTagName('head')[0];
     var link  = document.createElement('link');
@@ -260,7 +217,6 @@ function loadCss(href){
     link.media = 'all';
     head.appendChild(link);
 }
-
 class EditToolBar{
     constructor(scrap_path){
         var self = this;
@@ -377,9 +333,27 @@ class EditToolBar{
         });
         /** mark pen menu */
         var $m = $("<div>").appendTo(this.div);
+        /** marker cleaner */
+        var $item = $("<div>").appendTo($m).css({
+            height:"14px",
+            color:"#333",
+            cursor:"pointer",
+            borderBottom:"1px solid #999",
+            padding:"8px 20px",
+            verticalAlign:"middle"
+        }).bind("mousedown", function(e){
+            e.preventDefault()
+            clearMarkPen();
+        });
+        $(`<div class='scrapbee-menu-item'>Clear Markers</div>`).appendTo($item).css({
+            height:"14px",
+            lineHeight:"14px",
+            minWidth:"200px"
+        });
+        /** markers */
         for (let child of ["scrapbee-marker-1", "scrapbee-marker-2", "scrapbee-marker-3", "scrapbee-marker-4",
                            "scrapbee-marker-5", "scrapbee-marker-6", "scrapbee-marker-7", "scrapbee-marker-8"]){
-            var $item = $("<div>").appendTo($m).html("").css({
+            var $item = $("<div>").appendTo($m).css({
                 height:"14px",
                 color:"#333",
                 cursor:"pointer",

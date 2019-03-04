@@ -50,10 +50,8 @@ function getCurrSelection(){
 function clearMarkPen(){
     var selection = getCurrSelection()
     $(selection.parent).find(".scrapbee-mark-pen").each(function(){
-    
         if(selection.range.intersectsNode(this))
             $(this).replaceWith($(this).text());
-
     });
 }
 
