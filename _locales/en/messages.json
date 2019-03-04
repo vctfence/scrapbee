@@ -49,12 +49,15 @@
     "Save": {
         "message": "Save"
     },
-    "Modify": {
-        "message": "Modify"
+    "MODIFY_DOM_ON": {
+        "message": "Page Cleaning"
+    },
+    "MODIFY_DOM_OFF": {
+        "message": "Close Page Cleaning"
     },
     "MARK_PEN": {
         "message": "Mark Pen"
-    },      
+    },
     "File": {
         "message": "File"
     },

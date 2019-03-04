@@ -49,12 +49,15 @@
     "Save": {
         "message": "保存"
     },
-    "Modify": {
-        "message": "修改"
+    "MODIFY_DOM_ON": {
+        "message": "页面清理"
+    },
+    "MODIFY_DOM_OFF": {
+        "message": "关闭页面清理"
     },
     "MARK_PEN": {
         "message": "记号笔"
-    },        
+    },
     "File": {
         "message": "文件"
     },
