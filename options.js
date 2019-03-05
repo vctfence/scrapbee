@@ -27,6 +27,16 @@ window.onload=function(){
     })
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+
+    /** more donation */
+    if($.trim($("#divMoreDonateWay>div").text())){
+        $("#divMoreDonateWay").show()
+        $("#divMoreDonateWay>a").click(function(){
+            $("#divMoreDonateWay>div").toggle();
+            return false;
+        });
+    }
+     
     $("input[name='add']").click(function(){
         createRdfField("", "");
     });

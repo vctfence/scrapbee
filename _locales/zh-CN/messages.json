@@ -184,8 +184,11 @@
     "DONATE_WORDS":{
         "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!"
     },
+    "MORE_DONATE_WAY_TOGGLE":{
+        "message": "其它方式"
+    },
     "MORE_DONATE_WAY":{
-        "message": "您也可以通过以下方式捐助: <br><br> <img src='image/donate/alipay.jpg' class='' alt='' width='300'/><br><br><img src='image/donate/wxpay.jpg' class='' alt='' width='300' /> <br><br><br><br><br><br><br><br>"
+        "message": "您也可以通过以下方式捐助: <br><br> <img src='image/donate/alipay.jpg' class='' alt='' width='300'/><br><br><img src='image/donate/wxpay.jpg' class='' alt='' width='300' />"
     },
     "RESULTS_FOUND": {
         "message": "个结果"

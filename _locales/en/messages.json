@@ -184,8 +184,11 @@
     "DONATE_WORDS":{
         "message": "To make ScrapBee grows better, <br/>your donations are very welcome, <br/>thanks for your support !!!"
     },
+    "MORE_DONATE_WAY_TOGGLE":{
+        "message": "In other way"
+    },    
     "MORE_DONATE_WAY":{
-        "message": "<br>"
+        "message": ""
     },
     "RESULTS_FOUND": {
         "message": " RESULT(S) FOUND"
