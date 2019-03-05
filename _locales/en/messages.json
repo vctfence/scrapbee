@@ -222,5 +222,8 @@
     },
     "SAME_RDF_MODIFIED": {
         "message": "Same rdf modified, click OK to refresh"
+    },
+    "NO_SELECTION_ACTIVATED": {
+        "message": "No selection activated"
     }
 }

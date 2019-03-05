@@ -222,5 +222,8 @@
     },
     "SAME_RDF_MODIFIED": {
         "message": "同一RDF被修改，点击确认后刷新"
-    }
+    },
+    "NO_SELECTION_ACTIVATED": {
+        "message": "没有激活选区"
+    }    
 }

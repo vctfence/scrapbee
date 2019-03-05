@@ -222,7 +222,7 @@ class EditToolBar{
         var self = this;
         this.scrap_path=scrap_path;
         this.buildTools()
-        window.addEventListener("click", function(e){
+        window.addEventListener("mousedown", function(e){
             if(e.button == 0) {
                 if(!isDescendant(self.div, e.target) /** out of toolbar */
                    && self.last && self.editing){
@@ -230,10 +230,13 @@ class EditToolBar{
                     self.last.parentNode.removeChild(self.last);
                     self.last=null;
                 }
+    
                 /** hide marker-pen menu when click somewhere */
                 if(!$(e.target).hasClass("mark-pen-btn")){
-                    e.preventDefault();
-                    $(self.menu).hide();
+                    if($(self.menu).is(":visible")){
+                        e.preventDefault();
+                        $(self.menu).hide();
+                    }
                 }
             }
         });
@@ -253,6 +256,13 @@ class EditToolBar{
                 }
             }
         });
+    }
+    isSelectionOn(){
+        var selection = window.getSelection();
+        if(selection && selection.rangeCount > 0){
+            return !selection.getRangeAt(0).collapsed; 
+        }
+        return false;
     }
     toggleDomEdit(on){
         var self = this;
@@ -343,7 +353,12 @@ class EditToolBar{
             verticalAlign:"middle"
         }).bind("mousedown", function(e){
             e.preventDefault()
-            clearMarkPen();
+            $(self.menu).hide();
+            if(self.isSelectionOn()){
+                clearMarkPen();
+            }else{
+                alert("{NO_SELECTION_ACTIVATED}".translate());
+            }
         });
         $(`<div class='scrapbee-menu-item'>Clear Markers</div>`).appendTo($item).css({
             height:"14px",
@@ -362,7 +377,12 @@ class EditToolBar{
                 verticalAlign:"middle"
             }).bind("mousedown", function(e){
                 e.preventDefault()
-                mark(child);
+                $(self.menu).hide();
+                if(self.isSelectionOn()){
+                    mark(child);
+                }else{
+                    alert("{NO_SELECTION_ACTIVATED}".translate());
+                }
             });
             $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
                 height:"14px",
