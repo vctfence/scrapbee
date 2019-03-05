@@ -386,7 +386,7 @@ class BookTree {
         return bf;
     }
     createSeparator($container, id, ref_id, is_new_node) {
-        var bf = new NodeHTMLBuffer("<div class='item separator'/>", "");
+        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item separator'/>`, "");
         if (is_new_node) {
             var $hr = $(bf.flatten());
             if (ref_id) {
@@ -439,6 +439,8 @@ class BookTree {
         var node = this.getSeqNode("urn:scrapbook:item" + id);
         if (node) node.parentNode.removeChild(node);
         var node = this.getDescNode("urn:scrapbook:item" + id);
+        if (node) node.parentNode.removeChild(node);
+        var node = this.getSeparatorNode("urn:scrapbook:item" + id);
         if (node) node.parentNode.removeChild(node);
     }
     createSeparatorXml(folder_id, id, ref_id) {
