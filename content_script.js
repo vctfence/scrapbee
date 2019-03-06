@@ -208,9 +208,21 @@ function isDescendant(parent, child) {
     }
     return false;
 }
-function loadCss(href){
+function loadCssInline(id, href){
+    $(`*[id='${id}']`).remove();
+    $.get(href, null, null, "text").done(function(data, textStatus, jqXHR) {
+        var el = document.createElement("style")
+        el.innerHTML = data;
+        el.id = id;
+        var head  = document.getElementsByTagName('head')[0];
+        head.appendChild(el);
+    });
+}
+function loadCss(id, href){
+    $(`*[id='${id}']`).remove();
     var head  = document.getElementsByTagName('head')[0];
     var link  = document.createElement('link');
+    link.id = id;
     link.rel  = 'stylesheet';
     link.type = 'text/css';
     link.href = href;
@@ -230,7 +242,6 @@ class EditToolBar{
                     self.last.parentNode.removeChild(self.last);
                     self.last=null;
                 }
-    
                 /** hide marker-pen menu when click somewhere */
                 if(!$(e.target).hasClass("mark-pen-btn")){
                     if($(self.menu).is(":visible")){
@@ -290,7 +301,8 @@ class EditToolBar{
         var editing=false;
         var extension_id = browser.i18n.getMessage("@@extension_id");
         /** load editing css */
-        loadCss(`moz-extension://${extension_id}/edit.css`)
+        loadCss("scrapbee_editing_css", `moz-extension://${extension_id}/edit.css`)
+        loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`)
         /** toolbar */
         $(".scrapbee-edit-bar").remove();
         var div = document.createElement("div");

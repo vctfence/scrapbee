@@ -1,0 +1,30 @@
+.scrapbee-marker-1{
+    color:#fff;
+    background:#00f ;
+}
+
+.scrapbee-marker-2{
+    color:#f00;
+    background:#f00 ;
+    color:#fff
+}
+.scrapbee-marker-3{
+    color:#000;
+    background:#0f0 ;
+}
+.scrapbee-marker-4{
+    color:#000;
+    background:#fd0 ;
+}
+.scrapbee-marker-5{
+    border-bottom:2px solid #00f;
+}
+.scrapbee-marker-6{
+    border-bottom:2px solid #f00;
+}
+.scrapbee-marker-7{
+    border-bottom:2px dashed #00f;
+}
+.scrapbee-marker-8{
+    border-bottom:2px dashed #f00;
+}
