@@ -105,7 +105,7 @@ function getContent(sele, callback){
                         css.push(request.responseText);
                     }
                 }catch(e){
-                    log("error", e);
+                    log.error(e);
                 }
             }
         }
@@ -455,7 +455,7 @@ function downloadFile(url, callback){
         }
         oReq.send();
     }catch(e){
-        log("error", `download file error, ${e}`)
+        log.error(`download file error, ${e}`)
         callback(false);
     }
 }

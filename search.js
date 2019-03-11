@@ -1,4 +1,4 @@
-import {settings} from "./global.js"
+import {settings} from "./settings.js"
 import {BookTree} from "./tree.js"
 
 function Queue(maxWorkingTasks, workingFn){
@@ -51,7 +51,7 @@ function loadXml(rdf){
 	processTree(tree)
     };
     xmlhttp.onerror = function(err) {
-	// log("info", `load ${rdf} failed, ${err}`)
+	// log.info(`load ${rdf} failed, ${err}`)
     };
     xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
     xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');

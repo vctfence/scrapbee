@@ -1,4 +1,4 @@
-import { settings, log } from "./global.js";
+import {settings} from "./settings.js";
 
 class NodeHTMLBuffer {
     constructor(start, end) {
@@ -253,7 +253,7 @@ class BookTree {
             $root_container.html(html);
             this.rendered = true;
         }catch(e){
-            log("error", e.message)
+            log.error(e.message)
         }
         this.listenUserEvents();
     }
@@ -306,7 +306,7 @@ class BookTree {
                         }
                     }
                 } catch(e) {
-                    log("error", e.message)
+                    log.error(e.message)
                 }
             }
         }

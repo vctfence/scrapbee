@@ -101,7 +101,6 @@ browser.menus.create({
 		    browser.tabs.sendMessage(tab.id, {type: 'REQUIRE_OPEN_SIDEBAR'}, null);
 		});
 	    }else{
-		// msg_hub.send('SAVE_PAGE_SELECTION_REQUEST');
 		browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
 	    }
 	});
@@ -121,7 +120,6 @@ browser.menus.create({
 		    browser.tabs.sendMessage(tab.id, {type: 'REQUIRE_OPEN_SIDEBAR'}, null);
 		});
 	    }else{
-		// msg_hub.send('SAVE_PAGE_REQUEST');
 		browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
 	    }
 	});
@@ -140,7 +138,6 @@ browser.menus.create({
 		    browser.tabs.sendMessage(tab.id, {type: 'REQUIRE_OPEN_SIDEBAR'}, null);
 		});
 	    }else{
-		// msg_hub.send('SAVE_URL_REQUEST');
 		browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
 	    }
 	});

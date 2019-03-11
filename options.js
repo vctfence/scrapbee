@@ -1,4 +1,6 @@
-import {msg_hub, log, settings} from "/global.js"
+import {settings} from "./settings.js"
+
+var msg_hub = new MsgHub();
 
 function getAsync(file) {
     var r;

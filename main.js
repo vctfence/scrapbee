@@ -1,10 +1,12 @@
 import {BookTree} from "./tree.js";
-import {msg_hub, log, settings} from "./global.js"
+import {settings} from "./settings.js"
 import {scriptsAllowed, showNotification} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
 var currTree;
 var windowId;
+
+var msg_hub = new MsgHub();
 
 /* show members of an object */
 function dir(o, delimiter){
@@ -23,11 +25,11 @@ function genItemId(){
     return new Date().format("yyyyMMddhhmmss");
 }
 function saveRdf(){
-    log("info", `saving changes to rdf`);
+    log.info(`saving changes to rdf`);
     var rdf=currTree.rdf;
     $.post(settings.backend_url + "savefile", {filename:rdf, content: currTree.xmlSerialized()}, function(r){
 	msg_hub.send('RDF_EDITED', {windowId: windowId, rdf: rdf});
-	log("info", `save changes to rdf, done`);
+	log.info(`save changes to rdf, done`);
     });
 }
 function initRdf(rdf, callback){
@@ -279,9 +281,9 @@ function loadXml(rdf){
 	    currTree = new BookTree(r.target.response, rdf)
 	    currTree.renderTree();
             var cost = new Date().getTime() - _begin;
-            log("info", `rdf loaded in ${cost}ms`)
+            log.info(`rdf loaded in ${cost}ms`)
 	}catch(e){
-	    log("error", e.message)
+	    log.error(e.message)
 	}
 	currTree.onXmlChanged=function(){
 	    saveRdf();
@@ -291,7 +293,7 @@ function loadXml(rdf){
 	}
     };
     xmlhttp.onerror = function(err) {
-	log("info", `load ${rdf} failed, ${err}`)
+	log.info(`load ${rdf} failed, ${err}`)
     };
     xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
     xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
@@ -302,7 +304,7 @@ function loadXml(rdf){
     xmlhttp.send();
 }
 function switchRdf(rdf){
-    log("info", `switch to rdf "${rdf}"`)
+    log.info(`switch to rdf "${rdf}"`)
     settings.set('last_rdf', rdf);
     if(!$.trim(rdf)){
 	$(".root.folder-content").html("Invaid rdf path.")
@@ -318,7 +320,7 @@ function switchRdf(rdf){
 	    try{
 		$(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate())
 	    }catch(e){
-		log("info", e.message)
+		log.info(e.message)
 	    }
 	    $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
 		initRdf(rdf, function(){
@@ -368,14 +370,14 @@ function requestPageSaving(itemId, type){
 	try{
 	    if (!(await scriptsAllowed(tab.id))) {
 		var err = "Content script is not allowed on this page";
-		log("error", err)
+		log.error(err)
 		await showNotification({message: err, title: "Error"});
 		return;
 	    }
 	    currTree.createLink(getCurrContainer(), "local", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
             browser.tabs.sendMessage(tab.id, {type: type, itemId: itemId, windowId: windowId}, null);
 	}catch(e){
-	    log("error", e.message)
+	    log.error(e.message)
 	}
     });
 }
@@ -412,7 +414,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 		    requestPageSaving(genItemId(), 'GET_PAGE_SELECTION_REQUEST');
 	    });
 	}else{
-	    log("error", "rdf have not been loaded")
+	    log.error("rdf have not been loaded")
 	}
     }else if(request.type == 'SAVE_PAGE_REQUEST'){
 	if(currTree && currTree.rendered) {
@@ -422,7 +424,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 		}
 	    });
 	}else{
-	    log("error", "rdf have not been loaded")
+	    log.error("rdf have not been loaded")
 	}
     }else if(request.type == 'SAVE_URL_REQUEST'){
 	if(currTree && currTree.rendered) {
@@ -431,7 +433,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 		    requestUrlSaving(genItemId());
 	    });
 	}else{
-	    log("error", "rdf have not been loaded")
+	    log.error("rdf have not been loaded")
 	}
     }
 });

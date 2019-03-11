@@ -48,7 +48,6 @@ settings.set('platform', platform, false);
 settings.set('id', browser.runtime.id, false);
 settings.set('extension_id', browser.i18n.getMessage("@@extension_id"), false);
 settings.set('open_in_current_tab', "off", false);
-
 settings.loadFromStorage();
 settings.pathJoin=function(){
     var arr = Array.from(arguments);
@@ -57,26 +56,4 @@ settings.pathJoin=function(){
 settings.getLastRdfPath=function(){
     return settings.last_rdf.replace(/[^\/\\]*$/, "")
 }
-function log(logtype, content){
-    browser.runtime.sendMessage({type:'LOG', logtype:logtype, content: content});
-}
-var msg_hub = new (function(){
-    var id = 0;
-    var listeners = {};
-    this.send = function(type, content, callback) {
-	var session_id = Math.random();
-	if(callback)
-	    listeners[session_id] = callback;
-	browser.runtime.sendMessage({type: type, content: content, session_id: session_id});
-    }
-    browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-	var session_id = request.session_id;
-	if(listeners[session_id]){
-	    listeners[session_id](request);
-	    delete listeners[session_id];
-	}
-    });
-})();
-
-
-export {settings, log, msg_hub}
+export {settings}

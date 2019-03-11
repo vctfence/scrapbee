@@ -60,6 +60,7 @@
                 "libs/md5.js",
                 "proto.js",
                 "marker.js",
+                "message.js",
                 "content_script.js"
             ]
         }
