@@ -45,8 +45,8 @@ window.onload=function(){
     function createRdfField(k, v){
         var NAME_I18N = browser.i18n.getMessage("Name");
         var FILE_I18N = browser.i18n.getMessage("File");
-        var $el = $(`<div>${NAME_I18N}: <input type="text" name="name"/> \
-${FILE_I18N}: <input type="text" name="value"/> \
+        var $el = $(`<div>${NAME_I18N} <input type="text" name="name"/> \
+${FILE_I18N} <input type="text" name="value"/> \
 <input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
         $el.find("input[name=name]").val(k);
         $el.find("input[name=value]").val(v);
