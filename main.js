@@ -173,23 +173,28 @@ function showRdfList(){
 }
 function applyColor(){
     var bg_color = settings.bg_color;
-    if(bg_color && bg_color.isHexColor()){
-	$(document.body).css("background-color", bg_color);
-	$(".toolbar").css("background-color", bg_color);
-    }
+    // if(bg_color){
+    //     $(document.body).css("background-color", "#" + bg_color);
+    //     $(".toolbar").css("background-color", "#" + bg_color);
+    // }
     var id = "scrapbee_setting_style";
     $("#"+id).remove();
     var sheet = document.createElement('style');
     sheet.id=id;
+
+ 
     sheet.innerHTML = [
 	"*{color:", settings.font_color, "}",
-	".item.folder{color:", settings.font_color, "}",
-	".item.local label{color:", settings.font_color, "}",
-	".item.bookmark label{color:", settings.bookmark_color, "}",
-	".toolbar{backgroud-color:", settings.bg_color, "}",
-	"body{backgroud-color:", settings.bg_color, "}",
-	".item.separator{border-color:", settings.bg_color, ";background:", settings.separator_color, "}"
+	".item.folder{color:#", settings.font_color, "}",
+	".item.local label{color:#", settings.font_color, "}",
+	".item.bookmark label{color:#", settings.bookmark_color, "}",
+	".toolbar{backgroud-color:#", settings.bg_color, "}",
+	"body{background:#", settings.bg_color, "}",
+        ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
+	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}"
     ].join("");
+
+    console.log(sheet.innerHTML)
     document.body.appendChild(sheet);
 }
 window.addEventListener("storage", function(e){

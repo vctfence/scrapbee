@@ -73,11 +73,10 @@ input[type=button]{
 }
 .form-table input[type=text]{
     border-radius:5px;
-    border:1px solid;
-    padding:5px 5px;
+    border:1px solid #222;
+    padding:4px 5px;
     background:#555;
     color:#fff;
-    border:none;
 }
 .form-table>tbody>tr>td:first-child{
     vertical-align:top;

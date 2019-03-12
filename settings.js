@@ -40,10 +40,10 @@ if (navigator.platform == "Win64" || navigator.platform == "Win32") {
 // settings.set('debug', true, false);
 settings.set('fs_path_separator', platform=='windows'?'\\':'/', false);
 settings.set('backend_port', "9900", false);
-settings.set('bg_color', '#fff', false);
-settings.set('font_color', '#000', false);
-settings.set('separator_color', '#999', false);
-settings.set('bookmark_color', '#050', false);
+settings.set('bg_color', 'fff', false);
+settings.set('font_color', '000', false);
+settings.set('separator_color', '999', false);
+settings.set('bookmark_color', '050', false);
 settings.set('platform', platform, false);
 settings.set('id', browser.runtime.id, false);
 settings.set('extension_id', browser.i18n.getMessage("@@extension_id"), false);

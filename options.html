@@ -5,6 +5,7 @@
     <link rel="icon" href="icons/bee.svg" type="image/png" />
     <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
     <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="libs/jscolor.js"></script>
     <script type="text/javascript" src="proto.js"></script>
     <script type="text/javascript" src="message.js"></script>
     <script type="module" src="options.js"></script>
@@ -100,10 +101,11 @@
               </div>
               <div class="panel" style="vertical-align:top;">
                 <table width="" cellspacing="" cellpadding="0" border="0" class="form-table inner" style="display:inline-block;">
-                  <tr><td>{Background}</td><td><input type="text" name="bg_color" value=""/></td></tr>
-                  <tr><td>{BASIC_TEXT}</td><td><input type="text" name="font_color" value=""/></td></tr>
-                  <tr><td>{BOOKMARK_TEXT}</td><td><input type="text" name="bookmark_color" value=""/></td></tr>
-                  <tr><td>{Separator}</td><td><input type="text" name="separator_color" value=""/></td></tr>
+                  <tr><td>{Background}</td><td><input type="text" name="bg_color" value="" class="jscolor"/></td></tr>
+                  <tr><td>{BASIC_TEXT}</td><td><input type="text" name="font_color" value="" class="jscolor"/></td></tr>
+                  <tr><td>{BOOKMARK_TEXT}</td><td><input type="text" name="bookmark_color" value="" class="jscolor"/></td></tr>
+                  <tr><td>{Separator}</td><td><input type="text" name="separator_color" value="" class="jscolor"/></td></tr>
+
                 </table>
               </div>
             </td>
