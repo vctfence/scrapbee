@@ -215,8 +215,6 @@ function loadAll(){
     $("#listRdf").change(function(){
 	switchRdf(this.value);  // switch rdf and notify other side bar.
     });
-    /**  */
-    applyColor();
     /** open file manager */
     $("#btnFileManager").click(function(){
 	var rdf_path=currTree.rdf_path;
@@ -264,8 +262,9 @@ window.onload=function(){
 	var listener = menulistener[this.id.replace(/^menu/, "on")];
 	listener && listener();
     });    
-    if(settings.debug)
-	loadAll();
+
+    /**  */
+    applyColor();
 
     // browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST'});
     msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
