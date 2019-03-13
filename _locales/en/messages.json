@@ -148,6 +148,9 @@
     "BOOKMARK_TEXT": {
         "message": "Bookmark text"
     },
+    "ENTITY_SIZE": {
+        "message": "Entity Size"
+    },    
     "Language": {
         "message": "lanugage"
     },
@@ -160,9 +163,12 @@
     "BACKEND_PORT_TIP":{
         "message": "TCP port ScrapBee backend listens. e.g. 9900"
     },
-    "Color":{
-        "message": "Color"
+    "_COLOR":{
+        "message": " Color"
     },
+    "Appearance":{
+        "message": "Appearance"
+    },    
     "Scrap":{
         "message": "scrap"
     },

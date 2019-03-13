@@ -29,6 +29,14 @@ window.onload=function(){
     })
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+
+    /** help mark */
+    $(".help-mark").hover(function(e){
+        $(this).next(".tips.hide").show().css({left: (e.pageX )+"px", top: (e.pageY) +"px"})
+    }, function(){
+        $(this).next(".tips.hide").hide();
+    });
+
     
     /** more donation */
     if($.trim($("#divMoreDonateWay>div").text())){
@@ -70,6 +78,7 @@ ${FILE_I18N} <input type="text" name="value"/> \
             settings.set('font_color', $("input[name=font_color]").val().replace("#", ""));
             settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""));
             settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""));
+            settings.set('font_size', ($("input[name=font_size]").val() / 100) * 12);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
             alert("Save success")
         }catch(e){
@@ -82,19 +91,21 @@ ${FILE_I18N} <input type="text" name="value"/> \
             createRdfField(k, paths[i]);
         });
     }
+    $("input[name=font_size]").change(function(){
+        $(this).next("span").text((parseInt(this.value)) +"%");
+    });
     $("input[name=bg_color]").val(settings.bg_color.replace("#", ""));
     $("input[name=font_color]").val(settings.font_color.replace("#", ""));
     $("input[name=separator_color]").val(settings.separator_color.replace("#", ""));
     $("input[name=bookmark_color]").val(settings.bookmark_color.replace("#", ""));
+    $("input[name=font_size]").val((settings.font_size/12) * 100).change();
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")
     if(settings.backend_path){
         $("#txtBackendPath").show();
         $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
     }
-    
     jscolor.installByClassName("jscolor");
-
     function applyArea(){
         $(".div-area").hide();
         $("a.left-index").removeClass("focus")

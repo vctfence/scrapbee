@@ -58,7 +58,7 @@ html,body{
     vertical-align:top;
     line-height:18px;
     padding-left:20px;
-    background-size:18px 18px !important;
+    background-size:18px 18px;
     /* color:red; */
     white-space:nowrap;
 }
@@ -84,14 +84,14 @@ html,body{
     vertical-align:top;
     line-height:18px;
     padding-left:20px;
-    background-size:18px 18px !important;
+    background-size:18px 18px;
     white-space:nowrap;
     margin-left:5px;
     display:inline;
     background:url(icons/online.png);
     background-repeat:no-repeat;
     background-position:0px 7px;
-    background-size:9px 9px !important;
+    background-size:9px 9px;
 }
 .box{
     margin:70px 20px 20px 20px;
@@ -249,5 +249,3 @@ select{
 .filter-green-0{
     filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);
 }
-
-

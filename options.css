@@ -69,7 +69,7 @@ input[type=button]{
     width:450px;
 }
 .form-table input[type=checkbox]{
-    margin-top:8px;
+    /* margin-top:8px; */
 }
 .form-table input[type=text]{
     border-radius:5px;
@@ -83,7 +83,7 @@ input[type=button]{
     text-align:right;
     text-decoration:underline;
     font-weight:bold;
-    padding-top:14px;
+    padding-top:7px;
     font-size:15px;
     white-space:nowrap;
 }
@@ -94,15 +94,14 @@ div.panel{
     white-space:nowrap;
 }
 .form-table.inner>tbody>tr>td:first-child{
-    vertical-align:top;
+    vertical-align:middle;
     text-align:right;
     font-weight:normal;
-    padding-top:8px;
     text-decoration:none;
     font-size:12px;
 }
 .form-table>tbody>tr>td{
-    padding:15px 5px;
+    padding:5px 5px;
 }
 .form-table.inner>tbody>tr>td{
     padding:0px 0px;
@@ -136,6 +135,11 @@ div.panel{
     background:#cc9;
     padding:5px;
     margin-bottom:5px;
+    text-align:left;
+}
+.tips.hide{
+    display:none;
+    position: absolute;
 }
 .console{
     border:1px solid #000;
@@ -158,4 +162,49 @@ h2{
     padding:10px;
     width:-moz-fit-content;
     margin:5px 0;
+}
+/* ============= slidbar =============== */
+/* The slider itself */
+.slider {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    /* width: 100%; */ /* Full-width */
+    height: 6px; /* Specified height */
+    background: #555; /* Grey background */
+    outline: none; /* Remove outline */
+    /* opacity: 0.7; */ /* Set transparency (for mouse-over effects on hover) */
+    -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+    transition: opacity .2s;
+    display: inline-block;
+}
+/* Mouse-over effects */
+.slider:hover {
+    opacity: 1; /* Fully shown on mouse-over */
+}
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */ 
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 14px; /* Set a specific slider handle width */
+    height: 14px; /* Slider handle height */
+    background: #079; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+}
+.slider::-moz-range-thumb {
+    width: 14px; /* Set a specific slider handle width */
+    height: 14px; /* Slider handle height */
+    background: #079; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+}
+.slider::-moz-focus-outer {
+    border: 0;
+}
+.help-mark{
+    width:20px;
+    height:20px;
+    
+    background:url(icons/help-mark.svg);
+    background-size: 20px 20px;
+    vertical-align:middle;
+    display:inline-block;
 }

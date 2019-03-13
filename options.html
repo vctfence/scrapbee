@@ -88,24 +88,26 @@
             <td>{Backend Port}</td>
             <td id="">
               <input type="text" name="backend_port" value="" />
-              <div class="tips" style="display:inline-block;vertical-align:top;">
-                {BACKEND_PORT_TIP}
-              </div>
+              <i class="help-mark"></i>
+              <div class="tips hide">{BACKEND_PORT_TIP}</div>
             </td>
           </tr>
           <tr>
-            <td>{Color}</td>
+            <td>{Appearance}</td>
             <td id="">
-              <div class="tips">
-                {COLOR_TIP}
-              </div>
+              <div class="tips hide">{COLOR_TIP}</div>
               <div class="panel" style="vertical-align:top;">
-                <table width="" cellspacing="" cellpadding="0" border="0" class="form-table inner" style="display:inline-block;">
-                  <tr><td>{Background}</td><td><input type="text" name="bg_color" value="" class="jscolor"/></td></tr>
-                  <tr><td>{BASIC_TEXT}</td><td><input type="text" name="font_color" value="" class="jscolor"/></td></tr>
-                  <tr><td>{BOOKMARK_TEXT}</td><td><input type="text" name="bookmark_color" value="" class="jscolor"/></td></tr>
-                  <tr><td>{Separator}</td><td><input type="text" name="separator_color" value="" class="jscolor"/></td></tr>
-
+                <table width="50%" cellspacing="" cellpadding="0" border="0" class="form-table inner" style="display:inline-block;vertical-align:top;">
+                  <tr><td>{Background}{_COLOR}</td><td><input type="text" name="bg_color" value="" class="jscolor"/></td></tr>
+                  <tr><td>{BASIC_TEXT}{_COLOR}</td><td><input type="text" name="font_color" value="" class="jscolor"/></td></tr>
+                  <tr><td>{BOOKMARK_TEXT}{_COLOR}</td><td><input type="text" name="bookmark_color" value="" class="jscolor"/></td></tr>
+                  <tr><td>{Separator}{_COLOR}</td><td><input type="text" name="separator_color" value="" class="jscolor"/></td></tr>
+                </table>
+                <table width="50%" cellspacing="" cellpadding="0" border="0" class="form-table inner" style="display:inline-block;vertical-align:top;">
+                  <tr>
+                    <td>{ENTITY_SIZE}</td><td>
+                      <input type="range" min="100" max="250" value="20" class="slider" name="font_size"> <span></span>
+                    </td></tr>
                 </table>
               </div>
             </td>
@@ -114,13 +116,12 @@
             <td>{Behavior}</td>
             <td id="">
               <div class="panel">
-                <table width="" cellspacing="" cellpadding="0" border="0" class="form-table inner">
+                <table width="100%" cellspacing="" cellpadding="0" border="0" class="form-table inner">
                   <tr>
-                    <td>{OPEN_IN_CURRENT_TAB}</td><td>
+                    <td width="100">{OPEN_IN_CURRENT_TAB}</td><td>
                       <input type="checkbox" name="open_in_current_tab" value="" style="vertical-align:top"/>
-                      <div class="tips" style="display:inline-block;vertical-align:top">
-                        {OPEN_IN_CURRENT_TAB_TIP}
-                      </div>
+                      <i class="help-mark"></i>
+                      <div class="tips hide">{OPEN_IN_CURRENT_TAB_TIP}</div>
                     </td>
                   </tr>
                 </table>

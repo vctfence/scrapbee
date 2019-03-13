@@ -148,6 +148,9 @@
     "BOOKMARK_TEXT": {
         "message": "书签文本"
     },
+    "ENTITY_SIZE": {
+        "message": "条目大小"
+    },
     "Language": {
         "message": "语言"
     },
@@ -160,9 +163,12 @@
     "BACKEND_PORT_TIP":{
         "message": "后端程序监听的TCP端口，比如9900"
     },
-    "Color":{
+    "_COLOR":{
         "message": "颜色"
     },
+    "Appearance":{
+        "message": "外观"
+    },    
     "Scrap":{
         "message": "收藏内容"
     },

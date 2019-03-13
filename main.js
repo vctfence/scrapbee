@@ -182,16 +182,19 @@ function applyColor(){
     var sheet = document.createElement('style');
     sheet.id=id;
 
+    var item_h = parseInt(settings.font_size) * 1.4;
+
     sheet.innerHTML = [
 	"*{color:", settings.font_color, "}",
 	".item.folder{color:#", settings.font_color, "}",
-	".item.local label{color:#", settings.font_color, "}",
-	".item.bookmark label{color:#", settings.bookmark_color, "}",
+	".item.local, .item.bookmark label{color:#", settings.bookmark_color, "}",
 	".toolbar{backgroud-color:#", settings.bg_color, "}",
 	"body{background:#", settings.bg_color, "}",
         ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
 	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
-        ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}"
+        ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}",
+        `.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}`,
+        `.folder-content{margin-left:${item_h}px}`
     ].join("");
 
     document.body.appendChild(sheet);
@@ -199,7 +202,7 @@ function applyColor(){
 window.addEventListener("storage", function(e){
     if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
 	showRdfList();
-    }else if(e.key.match(/\w+_color/)){
+    }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
 	applyColor();
     }else if(e.key == "last_rdf"){
     }else if(e.key == "backend_port"){
