@@ -181,7 +181,6 @@ h2{
 .slider:hover {
     opacity: 1; /* Fully shown on mouse-over */
 }
-/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */ 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none; /* Override default look */
     appearance: none;
@@ -189,12 +188,16 @@ h2{
     height: 14px; /* Slider handle height */
     background: #079; /* Green background */
     cursor: pointer; /* Cursor on hover */
+    border-radius:50%;
+    border:none;
 }
 .slider::-moz-range-thumb {
     width: 14px; /* Set a specific slider handle width */
     height: 14px; /* Slider handle height */
     background: #079; /* Green background */
     cursor: pointer; /* Cursor on hover */
+    border-radius:50%;
+    border:none;
 }
 .slider::-moz-focus-outer {
     border: 0;

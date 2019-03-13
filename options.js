@@ -91,14 +91,14 @@ ${FILE_I18N} <input type="text" name="value"/> \
             createRdfField(k, paths[i]);
         });
     }
-    $("input[name=font_size]").change(function(){
+    $("input[name=font_size]").bind("input", function(){ // bind 'input' instead of 'change' event
         $(this).next("span").text((parseInt(this.value)) +"%");
     });
     $("input[name=bg_color]").val(settings.bg_color.replace("#", ""));
     $("input[name=font_color]").val(settings.font_color.replace("#", ""));
     $("input[name=separator_color]").val(settings.separator_color.replace("#", ""));
     $("input[name=bookmark_color]").val(settings.bookmark_color.replace("#", ""));
-    $("input[name=font_size]").val((settings.font_size/12) * 100).change();
+    $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")
     if(settings.backend_path){

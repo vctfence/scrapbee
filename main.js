@@ -172,17 +172,14 @@ function showRdfList(){
     }
 }
 function applyColor(){
-    var bg_color = settings.bg_color;
-    // if(bg_color){
-    //     $(document.body).css("background-color", "#" + bg_color);
-    //     $(".toolbar").css("background-color", "#" + bg_color);
-    // }
     var id = "scrapbee_setting_style";
     $("#"+id).remove();
     var sheet = document.createElement('style');
     sheet.id=id;
 
     var item_h = parseInt(settings.font_size) * 1.4;
+    var origin_h = parseInt(settings.font_size) * 0.75;
+    var bg_color = settings.bg_color;
 
     sheet.innerHTML = [
 	"*{color:", settings.font_color, "}",
@@ -194,7 +191,8 @@ function applyColor(){
 	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
         ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}",
         `.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}`,
-        `.folder-content{margin-left:${item_h}px}`
+        `.folder-content{margin-left:${item_h}px}`,
+        `.item .origin{background-size:${origin_h}px ${origin_h}px};`
     ].join("");
 
     document.body.appendChild(sheet);

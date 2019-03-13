@@ -229,7 +229,8 @@ html,body{
     color:#fff;
     cursor:pointer;
     border-radius:5px;
-    padding:0px 15px;
+    padding:2px 5px;
+    border:0;
 }
 .item.separator{
     width:100%;
