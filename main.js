@@ -1,6 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings} from "./settings.js"
-import {scriptsAllowed, showNotification} from "./utils.js"
+import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
 var currTree;
@@ -182,7 +182,6 @@ function applyColor(){
     var sheet = document.createElement('style');
     sheet.id=id;
 
- 
     sheet.innerHTML = [
 	"*{color:", settings.font_color, "}",
 	".item.folder{color:#", settings.font_color, "}",
@@ -191,10 +190,10 @@ function applyColor(){
 	".toolbar{backgroud-color:#", settings.bg_color, "}",
 	"body{background:#", settings.bg_color, "}",
         ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
-	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}"
+	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
+        ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}"
     ].join("");
 
-    console.log(sheet.innerHTML)
     document.body.appendChild(sheet);
 }
 window.addEventListener("storage", function(e){

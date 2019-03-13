@@ -216,11 +216,12 @@ html,body{
 .tool-button{
     cursor:pointer;
     vertical-align:middle;
-    border-radius:5px;
-    background:#999;
+    border-radius:11px;
+    width:22px;
+    height:22px;
 }
 .tool-button:hover{
-    background:#09c;
+    background:#0003;
     color:#fff;
 }
 .blue-button{
@@ -243,3 +244,10 @@ html,body{
 select{
     color: #000;
 }
+/* hex to filter
+ https://codepen.io/sosuke/pen/Pjoqqp */
+.filter-green-0{
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);
+}
+
+
