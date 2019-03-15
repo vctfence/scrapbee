@@ -183,8 +183,8 @@ function applyColor(){
 
     sheet.innerHTML = [
 	"*{color:", settings.font_color, "}",
-	".item.folder{color:#", settings.font_color, "}",
-	".item.local, .item.bookmark label{color:#", settings.bookmark_color, "}",
+	".item.local, .item.folder{color:#", settings.font_color, "}",
+	".item.bookmark label{color:#", settings.bookmark_color, "}",
 	".toolbar{backgroud-color:#", settings.bg_color, "}",
 	"body{background:#", settings.bg_color, "}",
         ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
