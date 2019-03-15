@@ -250,3 +250,14 @@ select{
 .filter-green-0{
     filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);
 }
+.simple-menu{
+    min-with:50px;
+    position:absolute;
+    background:#999;
+    right:0;
+}
+.simple-menu div{
+    color:#000;
+    padding:5px 15px;
+    cursor:pointer;
+}
