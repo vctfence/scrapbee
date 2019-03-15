@@ -1,8 +1,13 @@
 /* logging */
 var log_pool = [];
 function __log__(logtype, content){
-    if(typeof content != "string")
-    	content = JSON.stringify(content);
+    if(typeof content != "string"){
+        try{
+    	    content = JSON.stringify(content);
+        }catch(e){
+            content = content + "";
+        }
+    }
     var log = {logtype:logtype, content: content}
     log_pool.push(`${logtype}: ${content}`);
     browser.runtime.sendMessage({type:'LOGGING', log});

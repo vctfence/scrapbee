@@ -13,7 +13,7 @@
    version="1.1"
    id="svg6"
    sodipodi:docname="reload.svg"
-   inkscape:version="0.92.2 2405546, 2018-03-11">
+   inkscape:version="0.92.4 5da689c313, 2019-01-14">
   <metadata
      id="metadata12">
     <rdf:RDF>
@@ -44,8 +44,8 @@
      id="namedview8"
      showgrid="false"
      inkscape:zoom="22.627417"
-     inkscape:cx="-7.7743024"
-     inkscape:cy="13.364672"
+     inkscape:cx="12.15727"
+     inkscape:cy="12.480789"
      inkscape:window-x="1920"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -85,6 +85,6 @@
   <path
      d="m 18.191419,5.9086884 a 8.7116288,8.7116288 0 1 0 1.905669,9.4194486 H 17.679611 A 6.5337216,6.5337216 0 1 1 16.590658,7.465892 l -3.462873,3.506431 H 20.75046 V 3.3496473 Z"
      id="path4"
-     style="fill:#333333;fill-opacity:1;stroke-width:1"
+     style="fill:#f9f9f9;fill-opacity:1;stroke-width:1"
      inkscape:connector-curvature="0" />
 </svg>

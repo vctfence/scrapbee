@@ -154,21 +154,26 @@ menulistener.onRename = function(){
 	});
     }
 }
+var drop;
 function showRdfList(){
     var lastRdf = settings.last_rdf;
     var names = settings.rdf_path_names;
-    $("#listRdf").html("");
     var saw = false;
     var paths = settings.getRdfPaths();
+    drop = drop || new SimpleDropdown($(".drop-button")[0], [])
+    drop.clear()
+    drop.onchange=(function(title, value){
+        $(".drop-button .label").html(title)
+	switchRdf(value);  // switch rdf and notify other side bar.
+    });
     if(paths){
 	settings.getRdfPathNames().forEach(function(n, i){
-	    var $opt = $("<option></option>").appendTo($("#listRdf")).html(n).attr("value", paths[i]);
 	    if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
 		saw = true;
-		$opt.attr("selected", true);
+                drop.select(n, paths[i])
 	    }
+            drop.addItem(n, paths[i]);
 	});
-	switchRdf($("#listRdf").val());
     }
 }
 function applyColor(){
@@ -178,23 +183,30 @@ function applyColor(){
     sheet.id=id;
 
     var item_h = parseInt(settings.font_size) * 1.4;
-    var origin_h = parseInt(settings.font_size) * 0.75;
+    var origin_h = parseInt(settings.font_size) * 0.85;
     var bg_color = settings.bg_color;
-
-    sheet.innerHTML = [
-	"*{color:", settings.font_color, "}",
-	".item.folder{color:#", settings.font_color, "}",
-	".item.local, .item.bookmark label{color:#", settings.bookmark_color, "}",
-	".toolbar{backgroud-color:#", settings.bg_color, "}",
-	"body{background:#", settings.bg_color, "}",
-        ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
-	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
-        ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}",
-        `.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}`,
-        `.folder-content{margin-left:${item_h}px}`,
-        `.item .origin{background-size:${origin_h}px ${origin_h}px};`
-    ].join("");
-
+    var filter = getColorFilter("#"+settings.font_color).filter;
+    
+    sheet.innerHTML=`
+*{color:${settings.font_color}}
+.item.local,.item.folder{color:#${settings.font_color}}
+.item.bookmark label{color:#${settings.bookmark_color}}
+.toolbar{backgroud-color:#${settings.bg_color}}
+body{background:#${settings.bg_color}}
+.toolbar{border-color:#${settings.separator_color};background:#${settings.bg_color}}
+.item.separator{border-color:#${settings.bg_color};background:#${settings.separator_color}}
+.tool-button{background:#${settings.font_color}}
+.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;
+background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}
+.folder-content{margin-left:${item_h}px}
+.item .origin{background-size:${origin_h}px ${origin_h}px; line-height:${item_h}px}}
+.simple-menu-button:{border-color:#${settings.font_color}}
+.simple-menu{background:#${settings.bg_color};border-color:#${settings.font_color}}
+.drop-button{border: 1px solid #${settings.font_color}}
+.drop-button .label{color:#${settings.font_color}}
+.drop-button .button{border-left:1px solid #${settings.font_color}; color:#${settings.font_color}}
+.item .origin{${filter}}`
+    
     document.body.appendChild(sheet);
 }
 window.addEventListener("storage", function(e){
@@ -213,9 +225,6 @@ window.addEventListener("storage", function(e){
 function loadAll(){    
     /** rdf list */
     showRdfList(); /** this will trigger loading a rdf initially */
-    $("#listRdf").change(function(){
-	switchRdf(this.value);  // switch rdf and notify other side bar.
-    });
     /** open file manager */
     $("#btnFileManager").click(function(){
 	var rdf_path=currTree.rdf_path;
@@ -263,14 +272,62 @@ window.onload=function(){
 	var listener = menulistener[this.id.replace(/^menu/, "on")];
 	listener && listener();
     });    
-
     /**  */
     applyColor();
-
     // browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST'});
     msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
 	loadAll();
     });
+}
+class SimpleDropdown{
+    constructor(button, items){
+        var self = this;
+        this.button = button;
+        this.$menu = $("<div class='simple-menu'></div>").appendTo(document.body);
+        items.forEach(function(v){
+            if(v) self.addItem(v.title || v, v.value || v);
+        });
+        this.bindEvents();
+        this.value=null;
+    }
+    clear(){
+        this.$menu.html("");
+        this.value=null;
+    }
+    addItem(title, value){
+        $(`<div class='simple-menu-item' value='${value}'>${title}</div>`).appendTo(this.$menu);
+    }
+    select(title, value){
+        this.value = value;
+        this.onchange && this.onchange(title, value)
+    }
+    bindEvents(){
+        var self = this;
+        function hput(){
+            var p = self.button.getBoundingClientRect();
+            self.$menu.css({left: Math.min(p.left, document.body.clientWidth - self.$menu.outerWidth() - 1) + "px"});
+        }
+        $(window).resize(function(){
+            hput();
+        });
+        $(document.body).bind("mousedown", function(e){
+            if($(e.target).closest(self.button).length > 0){
+                var p = self.button.getBoundingClientRect();
+                self.$menu.css({top:p.bottom+"px"})
+                hput();
+                self.$menu.toggle();   
+            }else if($(e.target).hasClass("simple-menu-item")){
+                self.$menu.hide();
+                var title = $(e.target).html();
+                var value = $(e.target).attr("value");
+                if(self.value != value){
+                    self.select(title, value);
+                }
+            }else if($(e.target).closest(self.$menu).length == 0){
+                self.$menu.hide();
+            }
+        });
+    }
 }
 function loadXml(rdf){
     currTree=null;
@@ -396,7 +453,6 @@ function withFocusedWindow(callback){
 /* receive message from background page */
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'UPDATE_CONTEXTMENU_REQUEST'){
-
     }else if(request.type == 'SAVE_CONTENT2'){
 	savePage2(request.path, request.title, request.content);
     }else if(request.type == 'SAVE_CONTENT' && request.windowId == windowId){

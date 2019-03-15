@@ -81,16 +81,13 @@ html,body{
 .item .origin{
     cursor:pointer;
     /* width:-moz-fit-content; */
-    vertical-align:top;
-    line-height:18px;
+    vertical-align:middle;
     padding-left:20px;
-    background-size:18px 18px;
-    white-space:nowrap;
     margin-left:5px;
     display:inline;
-    background:url(icons/online.png);
+    background:url(icons/online.svg);
     background-repeat:no-repeat;
-    background-position:0px 7px;
+    background-position:0px 0px;
     background-size:9px 9px;
 }
 .box{
@@ -214,15 +211,64 @@ html,body{
     display:table-cell;
 }
 .tool-button{
+    display:nowrap;
+    background:#000;
+    display:inline-block;
     cursor:pointer;
     vertical-align:middle;
     border-radius:11px;
     width:22px;
     height:22px;
 }
-.tool-button:hover{
-    background:#0003;
-    color:#fff;
+.tool-button.set{
+    mask-image:url(icons/settings.svg);
+}
+.tool-button.help{
+    mask-image:url(icons/help.svg);
+}
+.tool-button.reload{
+    mask-image:url(icons/reload.svg);
+}
+.tool-button.search{
+    mask-image:url(icons/search.svg);
+}
+.tool-button.open{
+    mask-image:url(icons/openfolder.svg);
+}
+.tool-button.set:hover{
+    background-size:22px 22px;
+    mask-repeat:no-repeat;
+    background-image:url(icons/settings.svg);
+    background-color:#777;
+    mask-image:none;
+}
+.tool-button.help:hover{
+    background-size:22px 22px;
+    mask-repeat:no-repeat;
+    background-image:url(icons/help.svg);
+    background-color:#777;
+    mask-image:none;
+}
+.tool-button.reload:hover{
+    background-size:22px 22px;
+    mask-repeat:no-repeat;
+    background-image:url(icons/reload.svg);
+    background-color:#777;
+    mask-image:none;
+}
+.tool-button.search:hover{
+    background-size:22px 22px;
+    mask-repeat:no-repeat;
+    background-image:url(icons/search.svg);
+    background-color:#777;
+    mask-image:none;
+}
+.tool-button.open:hover{
+    background-size:22px 22px;
+    mask-repeat:no-repeat;
+    background-image:url(icons/openfolder.svg);
+    background-color:#777;
+    mask-image:none;
 }
 .blue-button{
     background:#09c;
@@ -245,19 +291,61 @@ html,body{
 select{
     color: #000;
 }
-/* hex to filter
- https://codepen.io/sosuke/pen/Pjoqqp */
-.filter-green-0{
-    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);
-}
+/* */
 .simple-menu{
     min-with:50px;
-    position:absolute;
+    position:fixed;
     background:#999;
-    right:0;
+    border:1px solid #fff;
+    z-index:99999999;
+    top:300px;
+    display:none;
+    max-height:200px;
+    overflow-y:auto;
+}
+.simple-menu-button{
+    border-radius:5px;
+    background:none;
+    padding:2px 5px;
+    border:1px solid #fff;
+    font-size:16px;
+    text-align:center;
 }
 .simple-menu div{
-    color:#000;
     padding:5px 15px;
-    cursor:pointer;
+    position:relative;
+    font-size:16px;
+}
+.simple-menu div:hover{
+    background:#555;
+    color:#fff;
+}
+/* */
+.drop-button{
+    border-radius: 5px;
+    border: 1px solid #f00;
+    display:inline-block;
+    white-space:nowrap;
+    cursor:default;
+    vertical-align:top;
+}
+.drop-button>*{
+    display:inline-block;
+    vertical-align:top;
+}
+.drop-button .label{
+    font-size:14px;
+    line-height:20px;
+    padding:0px 10px;
+    color:#f00;
+}
+.drop-button .button{
+    border-left:1px solid #f00;
+    color:#f00;
+    text-align:center;
+    width:20px;
+    height:20px;
+    font-size:14px;
+    line-height:16px;
+    padding:2px 0;
 }
