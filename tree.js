@@ -34,15 +34,15 @@ class BookTree {
         this.rdf = rdf_full_file;
         this.rdf_path = rdf_full_file.replace(/[^\/\\]*$/, "");
         this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
-        var namespaces = this.getNameSpaces();
-        Object.keys(namespaces).forEach(function (k) {
-            var v = namespaces[k];
+        this.namespaces = this.getNameSpaces();
+        Object.keys(this.namespaces).forEach(function (k) {
+            var v = self.namespaces[k];
             if (/^NS\d+$/.test(k))
                 self.MAIN_NS = v;
             self["NS_" + k] = v;
         });
         this.nsResolver=function(prefix) {
-            return self["NS_" + prefix] || null;
+            return self.namespaces[prefix] || null;
         }
     }
     translateResource(r, rdf_path, id) {
@@ -222,12 +222,15 @@ class BookTree {
     }
     renderTree() {
         var self = this;
-        var x = this.xmlDoc.getElementsByTagNameNS(this.NS_RDF, "Seq");
+        // var x = this.xmlDoc.getElementsByTagNameNS(this.NS_RDF, "Seq");
+
+        this.cacheXmlNode();
+
         var root_seq = this.getSeqNode("urn:scrapbook:root");
         var $root_container = $(".root.folder-content");
         $root_container.html("");
         var buffers={};
-        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");
+        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        
         try{
             this.iterateNodes(function (json) {
                 var parentId = json.parentId || "urn:scrapbook:root";
@@ -434,14 +437,27 @@ class BookTree {
         }
     }
     removeItemXml(id) {
-        var node = this.getLiNode("urn:scrapbook:item" + id);
-        if (node) node.parentNode.removeChild(node);
-        var node = this.getSeqNode("urn:scrapbook:item" + id);
-        if (node) node.parentNode.removeChild(node);
-        var node = this.getDescNode("urn:scrapbook:item" + id);
-        if (node) node.parentNode.removeChild(node);
-        var node = this.getSeparatorNode("urn:scrapbook:item" + id);
-        if (node) node.parentNode.removeChild(node);
+        var about = "urn:scrapbook:item" + id;
+        var node = this.desc_node_cache[about]
+            || this.separator_node_cache[about]
+            || this.seq_node_cache[about]
+            || this.getLiNode(about);
+        
+        if(node){
+            node.parentNode.removeChild(node);
+            delete this.desc_node_cache[about]
+            delete this.seq_node_cache[about]
+            delete this.separator_node_cache[about]
+        }
+        
+        // var node = this.getLiNode("urn:scrapbook:item" + id);
+        // if (node) node.parentNode.removeChild(node);
+        // var node = this.getSeqNode("urn:scrapbook:item" + id);
+        // if (node) node.parentNode.removeChild(node);
+        // var node = this.getDescNode("urn:scrapbook:item" + id);
+        // if (node) node.parentNode.removeChild(node);
+        // var node = this.getSeparatorNode("urn:scrapbook:item" + id);
+        // if (node) node.parentNode.removeChild(node);
     }
     createSeparatorXml(folder_id, id, ref_id) {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
@@ -459,6 +475,7 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "id", id);
             node.setAttributeNS(this.MAIN_NS, "type", "separator");
             this.xmlDoc.documentElement.appendChild(node);
+            this.separator_node_cache["urn:scrapbook:item" + id] = node;
             this.onXmlChanged && this.onXmlChanged();
         }
     }
@@ -483,6 +500,7 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "source", source);
             node.setAttributeNS(this.MAIN_NS, "icon", icon);
             this.xmlDoc.documentElement.appendChild(node);
+            this.desc_node_cache["urn:scrapbook:item" + id] = node;
         }
     }
     createFolderXml(folder_id, id, ref_id, title) {
@@ -507,6 +525,7 @@ class BookTree {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Seq");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
             this.xmlDoc.documentElement.appendChild(node);
+            this.seq_node_cache["urn:scrapbook:item" + id] = node;
         }
     }
     xmlSerialized() {
@@ -518,20 +537,49 @@ class BookTree {
         var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
         return result.singleNodeValue;
     }
+    cacheXmlNode() {
+        var search = `/RDF:RDF/RDF:Description`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+        this.desc_node_cache={}
+        var n;
+        while(n = result.iterateNext()){
+            this.desc_node_cache[n.getAttribute("RDF:about")] = n;
+        }
+        var search = `/RDF:RDF/RDF:Seq`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+        this.seq_node_cache={}
+        var n;
+        while(n = result.iterateNext()){
+            this.seq_node_cache[n.getAttribute("RDF:about")] = n;
+        }
+        var search = `/RDF:RDF/NC:BookmarkSeparator`;
+        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+        this.separator_node_cache={}
+        var n;
+        while(n = result.iterateNext()){
+            this.separator_node_cache[n.getAttribute("RDF:about")] = n;
+        }
+    }
     getDescNode(about) {
-        var search = `//RDF:Description[@RDF:about='${about}']`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        return result.singleNodeValue;
+        if(this.desc_node_cache[about])
+            return this.desc_node_cache[about];
+        // var search = `/RDF:RDF/RDF:Description[@RDF:about='${about}']`;
+        // var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        // return result.singleNodeValue;
     }
     getSeqNode(about) {
-        var search = `//RDF:Seq[@RDF:about='${about}']`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        return result.singleNodeValue;
+       if(this.seq_node_cache[about])
+            return this.seq_node_cache[about];
+        // var search = `/RDF:RDF/RDF:Seq[@RDF:about='${about}']`;
+        // var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        // return result.singleNodeValue;
     }
     getSeparatorNode(about) {
-        var search = `//NC:BookmarkSeparator[@RDF:about='${about}']`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        return result.singleNodeValue;
+       if(this.separator_node_cache[about])
+            return this.separator_node_cache[about];
+        // var search = `/RDF:RDF/NC:BookmarkSeparator[@RDF:about='${about}']`;
+        // var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+        // return result.singleNodeValue;
     }
     getNameSpaces() {
         var r = {};
