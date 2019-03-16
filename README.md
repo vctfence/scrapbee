@@ -1,3 +1,3 @@
-# ScrapBee -- An Extension For Firefox Quantum
+# ScrapYard -- An Extension For Firefox Quantum
 
-Captures web page into local storage and manages captured pages in sidebar. Compatible with ScrapBook documents. Win/Mac/Linux supported.
+A totally unorthodoxal approach to bookmarking, involving UbiquityWE, python/Enso-open source and Org Mode is planned.
