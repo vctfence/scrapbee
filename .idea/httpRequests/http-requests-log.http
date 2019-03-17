@@ -1,0 +1,668 @@
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T101458.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T101441.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T101104.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T100720.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T100635.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T100543.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T100524.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T100450.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T100328.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013858.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013831.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013810.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013749.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013638.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013530.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013351.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T013022.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T011526.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T011428.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-18T011234.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "/example/category",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T110559.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104700.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104415.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104345.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104327.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104309.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104149.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T104045.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T103913.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T103609.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T102803.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T094909.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much/badly",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T093956.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "group": "suck/very/much",
+    "tags": "test,example"
+}
+
+<> 2019-03-17T093409.500.html
+
+###
+

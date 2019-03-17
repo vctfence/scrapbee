@@ -1,0 +1,13 @@
+
+SCRAPYARD_VERSION = "0.1"
+
+SCRAPYARD_PORT = 31800
+
+SCRAPYARD_PATH = "~/scrapyard"
+
+import os
+
+SCRAPYARD_PATH = os.path.expanduser(SCRAPYARD_PATH)
+SCRAPYARD_DATA_PATH = os.path.join(SCRAPYARD_PATH, "data")
+SCRAPYARD_ATTACH_PATH = os.path.join(SCRAPYARD_DATA_PATH, "files")
+SCRAPYARD_INDEX_PATH = os.path.join(SCRAPYARD_DATA_PATH, "index.db")
