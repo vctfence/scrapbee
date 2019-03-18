@@ -1,12 +1,12 @@
-import threading, platform, os, random, string, json
+import threading, platform, os, random, string, json, hmac
 
-from flask import Flask, g, request, send_from_directory
+from functools import wraps
+from flask import Flask, g, request, make_response, send_from_directory
 from werkzeug.serving import make_server
+from base64 import b64encode, b64decode
+from hashlib import sha1
 
 import db, config
-
-#if os.environ["FLASK_DEBUG"] == "1":
-#    db.init()
 
 
 HOST = "localhost"
@@ -18,8 +18,46 @@ static_dir = os.path.join(server_dir, "static")
 app = Flask(__name__, static_url_path='', static_folder=static_dir)
 
 
+def check_sid(header):
+    try:
+        user, password = header.split(':')
+    except Exception as e:
+        return None
+
+    if not hasattr(g, "db"):
+        g.db = db.open()
+
+    user = db.get_user(g.db, user)
+
+    print(password)
+
+    if user and user["sid"] == hmac.new(password.encode("ascii"), user["name"].encode("ascii"), sha1).hexdigest():
+        return user["id"]
+    else:
+        return None
+
+
+def authenticated(f):
+    @wraps(f)
+    def _f(*args, **kwargs):
+        try:
+            user_id = check_sid(request.headers['X-Scrapyard-Auth'])
+        except KeyError:
+            user_id = None
+
+        if user_id:
+            g.user_id = user_id
+            return f(*args, **kwargs)
+        else:
+            response = make_response('Auth error', 403)
+            response.headers['Content-Type'] = 'text/plain'
+            return response
+    return _f
+
+
 def init():
-    g.db = db.db_open()
+    if not hasattr(g, "db"):
+        g.db = db.open()
 
 
 app.before_first_request(init)
@@ -35,18 +73,19 @@ def add_header(r):
 
 
 @app.route('/api/scrapyard/version')
+@authenticated
 def get_scrapyard_version():
     """Returns Scrapyard version"""
     return config.SCRAPYARD_VERSION
 
 
 @app.route('/api/add/bookmark', methods=["POST"])
+@authenticated
 def add_bookmark():
     """Adds a bookmark (an URL without attachment)
 
     Accepts JSON:
 
-    :user:  user name
     :name:  bookmark name
     :uri:   bookmark URL
     :group: hierarchical group path, the first item in the path is a name of a shelf

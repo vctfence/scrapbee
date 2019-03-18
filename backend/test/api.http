@@ -5,8 +5,14 @@
 # * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
 # * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
 
+GET http://localhost:31800/api/scrapyard/version
+X-Scrapyard-Auth: default:default
+
+###
+
 POST http://localhost:31800/api/add/bookmark
 Content-Type: application/json
+X-Scrapyard-Auth: default:default
 
 {
     "name": "example bookmark",

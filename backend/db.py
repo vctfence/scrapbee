@@ -9,10 +9,10 @@ NODE_TYPE_BOOKMARK = 2
 NODE_TYPE_ARCHIVE = 3
 
 
-def db_open():
+def open():
     db = DAL('sqlite://' + config.SCRAPYARD_INDEX_PATH, migrate_enabled=False)
     
-    db.define_table('user', Field('id', type='integer'), Field('name'))
+    db.define_table('user', Field('id', type='integer'), Field('name'), Field('sid'))
     db.define_table('shelf', Field('id', type='integer'), Field('user_id', type='integer'), Field('name'),
                     Field('file'))
     db.define_table('node', Field('id', type='integer'), Field('uuid', type='text'), Field('type', type='integer'),
@@ -24,10 +24,6 @@ def db_open():
     db.define_table('tag_to_node', Field('tag_id', type='integer'), Field('node_id', type='integer'))
     
     return db
-
-
-def init():
-    db = db_open()
 
 
 def get_user(db, name):
