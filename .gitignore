@@ -5,3 +5,4 @@ node_modules
 image/donate/
 venv
 backend/flask.bat
+.idea/httpRequests/http-requests-log.http

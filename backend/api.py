@@ -100,6 +100,12 @@ def list_nodes():
     return db.list_nodes(g.db, g.user_id, request.json)
 
 
+@app.route('/api/list/groups', methods=["GET"])
+@authenticated
+def list_groups():
+    return db.list_groups(g.db, g.user_id)
+
+
 @app.route('/api/list/tags', methods=["GET"])
 @authenticated
 def list_tags():

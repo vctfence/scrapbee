@@ -18,7 +18,7 @@ X-Scrapyard-Auth: default:default
     "name": "example bookmark"
     ,"uri": "https://example.com"
     ,"path": "/example/category"
-#    ,"tags": "test,example"
+    ,"tags": "test,example"
 }
 
 ###
@@ -32,6 +32,11 @@ X-Scrapyard-Auth: default:default
 #    ,"tags": "test,example"
     ,"type": 2
 }
+
+###
+
+GET http://localhost:31800/api/list/groups
+X-Scrapyard-Auth: default:default
 
 ###
 

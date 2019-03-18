@@ -10,6 +10,8 @@ NODE_TYPE_GROUP = 1
 NODE_TYPE_BOOKMARK = 2
 NODE_TYPE_ARCHIVE = 3
 
+DEFAULT_SHELF_NAME = "default"
+
 
 def open():
     db = DAL('sqlite://' + config.SCRAPYARD_INDEX_PATH, migrate_enabled=False)
@@ -37,7 +39,7 @@ def query_user(db, name):
 
 def query_shelf(db, user_id, name):
     if not name:
-        name = "default"
+        name = DEFAULT_SHELF_NAME
 
     rows = db((db.shelf.name.upper() == name.upper()) & (db.shelf.user_id == user_id)).select()
 
@@ -94,7 +96,7 @@ def create_group(db, shelf_id, name):
 
 def get_group(db, shelf_id, name):
     if not name:
-        return {id: None}
+        return {"id": None}
 
     group = query_group(db, shelf_id, name)
 
@@ -131,7 +133,7 @@ def split_path(json):
     if path:
         shelf, *path = [s.strip() for s in path.split("/")]
     else:
-        shelf = "default"
+        shelf = DEFAULT_SHELF_NAME
 
     return shelf, path
 
@@ -150,6 +152,7 @@ def add_bookmark(db, user_id, json):
     uri = json.get("uri", None)
 
     shelf, path = split_path(json)
+
     shelf = get_shelf(db, user_id, shelf)
     group = get_group(db, shelf["id"], path)
 
@@ -193,9 +196,31 @@ def list_nodes(db, user_id, json):
     if tags:
         sql += " and tag_to_node.tag_id in {}". format(tags)
 
+    sql += " order by node.pos"
+
     rows = db.executesql(sql, as_dict=True)
 
     if rows:
+        return serializer.dumps(rows)
+    else:
+        return "[]"
+
+
+def list_groups(db, user_id):
+    sql = "select distinct node.id, node.uuid, node.path, shelf.name as shelf_name " \
+          "from node join shelf on node.shelf_id = shelf.id " \
+          "where shelf.user_id = {} and node.type = {}".format(user_id, NODE_TYPE_GROUP)
+
+    rows = db.executesql(sql, as_dict=True)
+
+    if rows:
+        # add shelf name for display in suggestions
+        for r in rows:
+            if r["shelf_name"] != DEFAULT_SHELF_NAME:
+                r["path"] = r["shelf_name"] + "/" + r["path"]
+            else:
+                r["path"] = "/" + r["path"]
+
         return serializer.dumps(rows)
     else:
         return "[]"
