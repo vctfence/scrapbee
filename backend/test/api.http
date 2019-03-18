@@ -34,3 +34,8 @@ X-Scrapyard-Auth: default:default
 }
 
 ###
+
+GET http://localhost:31800/api/list/tags
+X-Scrapyard-Auth: default:default
+
+###

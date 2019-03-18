@@ -198,4 +198,13 @@ def list_nodes(db, user_id, json):
     if rows:
         return serializer.dumps(rows)
     else:
-        return ""
+        return "[]"
+
+
+def list_tags(db, user_id):
+    rows = db(db.tag.user_id == user_id).select()
+
+    if rows:
+        return rows.as_json()
+    else:
+        return "[]"

@@ -100,6 +100,12 @@ def list_nodes():
     return db.list_nodes(g.db, g.user_id, request.json)
 
 
+@app.route('/api/list/tags', methods=["GET"])
+@authenticated
+def list_tags():
+    return db.list_tags(g.db, g.user_id)
+
+
 class Httpd(threading.Thread):
 
     def __init__(self, app):
