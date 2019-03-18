@@ -27,9 +27,7 @@ def check_sid(header):
     if not hasattr(g, "db"):
         g.db = db.open()
 
-    user = db.get_user(g.db, user)
-
-    print(password)
+    user = db.query_user(g.db, user)
 
     if user and user["sid"] == hmac.new(password.encode("ascii"), user["name"].encode("ascii"), sha1).hexdigest():
         return user["id"]
@@ -88,12 +86,18 @@ def add_bookmark():
 
     :name:  bookmark name
     :uri:   bookmark URL
-    :group: hierarchical group path, the first item in the path is a name of a shelf
+    :path: hierarchical node group path, the first item in the path is a name of a shelf
     :tags:  comma-separated list of tags
     
     :returns: the original JSON with the inserted DB-record ID added
     """
-    return db.add_bookmark(g.db, request.json)
+    return db.add_bookmark(g.db, g.user_id, request.json)
+
+
+@app.route('/api/list/nodes', methods=["POST"])
+@authenticated
+def list_nodes():
+    return db.list_nodes(g.db, g.user_id, request.json)
 
 
 class Httpd(threading.Thread):

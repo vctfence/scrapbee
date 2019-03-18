@@ -1,3 +1,5 @@
+import json as serializer
+
 import config
 
 from pydal import DAL, Field
@@ -26,35 +28,41 @@ def open():
     return db
 
 
-def get_user(db, name):
+def query_user(db, name):
     rows = db(db.user.name.upper() == name.upper()).select()
 
     if len(rows) > 0:
         return rows[0]
 
 
-def create_shelf(db, user_id, name):
-    file = name + ".org"
-    id = db.shelf.insert(user_id=user_id, name=name, file=file)
-    #db.commit()
-
-    return {"id": id, "user_id": user_id, "name": name, "file": file}
-
-
-def get_shelf(db, user_id, name):
-    if name == "":
+def query_shelf(db, user_id, name):
+    if not name:
         name = "default"
 
     rows = db((db.shelf.name.upper() == name.upper()) & (db.shelf.user_id == user_id)).select()
 
     if rows:
         return rows[0]
+
+
+def create_shelf(db, user_id, name):
+    file = name + ".org"
+    id = db.shelf.insert(user_id=user_id, name=name, file=file)
+
+    return {"id": id, "user_id": user_id, "name": name, "file": file}
+
+
+def get_shelf(db, user_id, name):
+    shelf = query_shelf(db, user_id, name)
+
+    if shelf:
+        return shelf
     else:
         return create_shelf(db, user_id, name)
 
 
-def query_group(db, shelf_id, name):
-    full_name = "/".join(name)
+def query_group(db, shelf_id, path):
+    full_name = "/".join(path)
     rows = db((db.node.path.upper() == full_name.upper()) & (db.node.shelf_id == shelf_id)).select()
     if rows:
         return rows[0]
@@ -63,12 +71,8 @@ def query_group(db, shelf_id, name):
 def create_group(db, shelf_id, name):
     def create_subgroup(parent, simple_name, full_name, date_added):
         parent_id = parent["id"] if parent else None
-        print (full_name)
-        print (parent_id)
-        print (shelf_id)
         id = db.node.insert(shelf_id=shelf_id, parent_id=parent_id, type=NODE_TYPE_GROUP, name=simple_name,
                             path=full_name, date_added=date_added)
-        #db.commit()
         return {"id": id, "shelf_id": shelf_id, "parent_id": parent_id, "name": simple_name, "path": full_name,
                 "date_added": date_added, "type": 0}
 
@@ -100,58 +104,98 @@ def get_group(db, shelf_id, name):
         return create_group(db, shelf_id, name)
 
 
-def create_tag(db, user_id, name):
-    id = db.tag.insert(user_id=user_id, name=name)
-    #db.commit()
-
-    return {"id": id, "user_id": user_id, "name": name}
-
-
-def get_tag(db, user_id, name):
+def query_tag(db, user_id, name):
     rows = db((db.tag.name.upper() == name.upper()) & (db.tag.user_id == user_id)).select()
 
     if rows:
         return rows[0]
+
+
+def create_tag(db, user_id, name):
+    id = db.tag.insert(user_id=user_id, name=name)
+    return {"id": id, "user_id": user_id, "name": name}
+
+
+def get_tag(db, user_id, name):
+    tag = query_tag(db, user_id, name)
+
+    if tag:
+        return tag
     else:
         return create_tag(db, user_id, name)
 
 
-def add_bookmark(db, json):
-    user = json.get("user", "default")
-    group = json.get("group", None)
-    name = json.get("name", None)
-    uri = json.get("uri", None)
-    tags = json.get("tags", None)
-    shelf = None
+def split_path(json):
+    path = json.get("path", None)
 
-    if group:
-        shelf, *group = [s.strip() for s in group.split("/")]
+    if path:
+        shelf, *path = [s.strip() for s in path.split("/")]
     else:
         shelf = "default"
 
+    return shelf, path
+
+
+def split_tags(json):
+    tags = json.get("tags", None)
+
     if tags:
-        tags = [s.strip() for s in tags.split(",")]
+        return [s.strip() for s in tags.split(",")]
     else:
-        tags = []
+        return []
 
-    if user:
-        user_id = get_user(db, user)["id"]
-    else:
-        user_id = get_user(db, "default")["id"]
 
+def add_bookmark(db, user_id, json):
+    name = json.get("name", None)
+    uri = json.get("uri", None)
+
+    shelf, path = split_path(json)
     shelf = get_shelf(db, user_id, shelf)
-    group = get_group(db, shelf["id"], group)
-    tags = [get_tag(db, user_id, t) for t in tags if t]
+    group = get_group(db, shelf["id"], path)
 
-    id = db.node.insert(parent_id=group["id"], type=NODE_TYPE_BOOKMARK, name=name, uri=uri, date_added=datetime.now())
-    #db.commit()
+    tags = [get_tag(db, user_id, t) for t in split_tags(json) if t]
 
-    if tags:
-        for t in tags:
-            db.tag_to_node.insert(tag_id=t["id"], node_id=id)
+    id = db.node.insert(shelf_id=shelf["id"], parent_id=group["id"], type=NODE_TYPE_BOOKMARK, name=name, uri=uri,
+                        date_added=datetime.now())
+
+    for t in tags:
+        db.tag_to_node.insert(tag_id=t["id"], node_id=id)
 
     db.commit()
 
-    print (tags)
     return ""
 
+
+def list_nodes(db, user_id, json):
+    type = json.get("type", None)
+    shelf, path = split_path(json)
+
+    shelf = query_shelf(db, user_id, shelf)
+    group = query_group(db, shelf["id"], path)
+
+    tags = [query_tag(db, user_id, t)["id"] for t in split_tags(json) if t]
+    if tags:
+        tags = "(" + ",".join([str(t) for t in tags]) + ")"
+
+    sql = "select distinct node.* from node "
+
+    if tags:
+        sql += "join tag_to_node on node.id = tag_to_node.node_id "
+
+    sql += " where shelf_id = {}".format(shelf["id"])
+
+    if type:
+        sql += " and type = {}". format(type)
+
+    if group:
+        sql += " and parent_id = {}". format(group["id"])
+
+    if tags:
+        sql += " and tag_to_node.tag_id in {}". format(tags)
+
+    rows = db.executesql(sql, as_dict=True)
+
+    if rows:
+        return serializer.dumps(rows)
+    else:
+        return ""

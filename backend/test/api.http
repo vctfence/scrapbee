@@ -15,10 +15,22 @@ Content-Type: application/json
 X-Scrapyard-Auth: default:default
 
 {
-    "name": "example bookmark",
-    "uri": "https://example.com",
-    "group": "/example/category",
-    "tags": "test,example"
+    "name": "example bookmark"
+    ,"uri": "https://example.com"
+    ,"path": "/example/category"
+#    ,"tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category"
+#    ,"tags": "test,example"
+    ,"type": 2
 }
 
 ###

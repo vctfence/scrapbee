@@ -1,0 +1,363 @@
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category"
+    ,"type": 2
+}
+
+<> 2019-03-18T021110.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category"
+    ,"type": 2
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category"
+    ,"type": 2
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+<> 2019-03-18T020911.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+<> 2019-03-18T020817.500.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "path": "/example/category"
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+<> 2019-03-18T013001.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+<> 2019-03-18T012854.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+<> 2019-03-18T012800.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "path": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "path": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example/category",
+    "tags": "test,example",
+    "type": 2
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T011557.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T011523.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "path": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "example bookmark",
+    "uri": "https://example.com",
+    "path": "/example/category",
+    "tags": "test,example"
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T124521.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T124449.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T124440.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T124351.500.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/example",
+    "tags": "test,example",
+    "type": 1
+}
+
+<> 2019-03-18T124216.500.html
+
+###
+
