@@ -277,7 +277,7 @@ func fileManagerHandle(w http.ResponseWriter, r *http.Request){
 /* ========== MAIN ENTRIES ========== */
 func main(){
   /** log */
-	logfile,err:=os.OpenFile("scrapbee_backend.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logfile,err:=os.OpenFile("scrapyard_backend.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
   if err!=nil{
     fmt.Printf("%s\r\n",err.Error())
     os.Exit(-1)

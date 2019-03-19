@@ -28,20 +28,20 @@ function lockListener(event){
     event.returnValue = '';
 }
 function lock(){
-    if(!$("#scrapbee-waiting").length){
-        var $cover = $("<div id='scrapbee-waiting'></div>").appendTo(document.body)
+    if(!$("#scrapyard-waiting").length){
+        var $cover = $("<div id='scrapyard-waiting'></div>").appendTo(document.body)
         $cover.css({"background-image":"url("+browser.extension.getURL("icons/bee-waiting.svg")+")"})
         window.addEventListener("beforeunload", lockListener);
         return true;
     }
 }
 function unlock(){
-    $("#scrapbee-waiting").remove();
+    $("#scrapyard-waiting").remove();
     window.removeEventListener("beforeunload", lockListener);
 }
 function notifyMe(msg) {
     function Next(){
-        var notification = new Notification(msg, {tag:"scrapbee-tag"});
+        var notification = new Notification(msg, {tag:"scrapyard-tag"});
         notification.onshow = function () {
             setTimeout(notification.close.bind(notification), 5000);
         }
@@ -86,7 +86,7 @@ function getContent(sele, callback){
     }else{
         div.appendChild(document.documentElement.cloneNode(true));
     }
-    $(div).find("#scrapbee-waiting").remove();
+    $(div).find("#scrapyard-waiting").remove();
     /** css */
     var css=[]
     for(let sheet of document.styleSheets){
@@ -116,7 +116,7 @@ function getContent(sele, callback){
     res.push({type:"image", "url": location.origin + "/favicon.ico", filename:"favicon.ico"});
     div.childNodes.iterateAll(function(item){
         if(item.nodeType == 1){
-            var el = new ScrapbeeElement(item).processResources();
+            var el = new ScrapyardElement(item).processResources();
             for(let r of el){
                 if(!dict[r.url]){
                     dict[r.url] = 1;
@@ -194,7 +194,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // notifyMe("save " + request.title + " finished.");
         unlock();
     } else if(request.type == 'REQUIRE_OPEN_SIDEBAR'){
-        alert("Please open ScrapBee in sidebar before the action")
+        alert("Please open Scrapyard in sidebar before the action")
     }
     return false;
 });
@@ -288,7 +288,7 @@ class EditToolBar{
     saveDoc(){
         var self=this;
         var doc = document.documentElement.cloneNode(true)
-        $(doc).find(".scrapbee-edit-bar").remove();
+        $(doc).find(".scrapyard-edit-bar").remove();
         browser.runtime.sendMessage({
             type: 'SAVE_CONTENT2',
             content: $(doc).html(),
@@ -301,20 +301,20 @@ class EditToolBar{
         var editing=false;
         var extension_id = browser.i18n.getMessage("@@extension_id");
         /** load editing css */
-        loadCss("scrapbee_editing_css", `moz-extension://${extension_id}/edit.css`)
-        loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`)
+        loadCss("scrapyard_editing_css", `moz-extension://${extension_id}/edit.css`)
+        loadCssInline("scrapyard_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`)
         /** toolbar */
-        $(".scrapbee-edit-bar").remove();
+        $(".scrapyard-edit-bar").remove();
         var div = document.createElement("div");
-        div.className = "scrapbee-edit-bar"
+        div.className = "scrapyard-edit-bar"
         document.body.appendChild(div);
         this.div=div;
         /** icon */
         var img = document.createElement("img");
-        img.className="scrapbee-icon"
+        img.className="scrapyard-icon"
         img.src = `moz-extension://${extension_id}/icons/bee.png`;
         div.appendChild(img);
-        div.innerHTML+=" ScrapBee&nbsp;&nbsp;";
+        div.innerHTML+=" Scrapyard&nbsp;&nbsp;";
         /** body */
         document.body.style.marginBottom="100px";
         document.body.style.paddingLeft="0px";
@@ -372,14 +372,14 @@ class EditToolBar{
                 alert("{NO_SELECTION_ACTIVATED}".translate());
             }
         });
-        $(`<div class='scrapbee-menu-item'>Clear Markers</div>`).appendTo($item).css({
+        $(`<div class='scrapyard-menu-item'>Clear Markers</div>`).appendTo($item).css({
             height:"14px",
             lineHeight:"14px",
             minWidth:"200px"
         });
         /** markers */
-        for (let child of ["scrapbee-marker-1", "scrapbee-marker-2", "scrapbee-marker-3", "scrapbee-marker-4",
-                           "scrapbee-marker-5", "scrapbee-marker-6", "scrapbee-marker-7", "scrapbee-marker-8"]){
+        for (let child of ["scrapyard-marker-1", "scrapyard-marker-2", "scrapyard-marker-3", "scrapyard-marker-4",
+                           "scrapyard-marker-5", "scrapyard-marker-6", "scrapyard-marker-7", "scrapyard-marker-8"]){
             var $item = $("<div>").appendTo($m).css({
                 height:"14px",
                 color:"#333",
@@ -396,7 +396,7 @@ class EditToolBar{
                     alert("{NO_SELECTION_ACTIVATED}".translate());
                 }
             });
-            $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
+            $(`<div class='scrapyard-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
                 height:"14px",
                 lineHeight:"14px",
                 minWidth:"200px"
@@ -430,7 +430,7 @@ if (navigator.platform == "Win64" || navigator.platform == "Win32") {
     platform = "mac";
 }
 $(document).ready(function(){
-    if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/\d+\/)\?scrapbee_editing=1&refresh=\d+$/i)){
+    if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/\d+\/)\?scrapyard_editing=1&refresh=\d+$/i)){
         var path = RegExp.$1;
         if(platform!="windows"){
             path = `/${path}`

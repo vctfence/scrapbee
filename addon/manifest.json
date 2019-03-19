@@ -1,6 +1,6 @@
 {
     "manifest_version": 2,
-    "name": "ScrapBee",
+    "name": "Scrapyard",
     "version": "1.4.1",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
@@ -28,12 +28,12 @@
     ],
     "applications": {
         "gecko": {
-            "id": "scrapbee@scrapbee.org",
+            "id": "scrapyard@scrapyard.org",
             "strict_min_version": "60.0"
         }
     },
     "sidebar_action": {
-        "default_title": "ScrapBee",
+        "default_title": "Scrapyard",
         "default_panel": "main.html",
         "default_icon": "icons/bee.png"
     },

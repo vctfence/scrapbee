@@ -1,30 +1,30 @@
-.scrapbee-marker-1{
+.scrapyard-marker-1{
     color:#fff;
     background:#00f ;
 }
 
-.scrapbee-marker-2{
+.scrapyard-marker-2{
     color:#f00;
     background:#f00 ;
     color:#fff
 }
-.scrapbee-marker-3{
+.scrapyard-marker-3{
     color:#000;
     background:#0f0 ;
 }
-.scrapbee-marker-4{
+.scrapyard-marker-4{
     color:#000;
     background:#fd0 ;
 }
-.scrapbee-marker-5{
+.scrapyard-marker-5{
     border-bottom:2px solid #00f;
 }
-.scrapbee-marker-6{
+.scrapyard-marker-6{
     border-bottom:2px solid #f00;
 }
-.scrapbee-marker-7{
+.scrapyard-marker-7{
     border-bottom:2px dotted #00f;
 }
-.scrapbee-marker-8{
+.scrapyard-marker-8{
     border-bottom:2px dotted #f00;
 }

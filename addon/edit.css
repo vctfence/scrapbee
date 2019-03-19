@@ -1,5 +1,5 @@
 
-/* .scrapbee-edit-bar{ */
+/* .scrapyard-edit-bar{ */
 /*     background:#f00; */
 /*     height:100px; */
 /*     left:0; */
@@ -8,7 +8,7 @@
 /*     position:fixed; */
 /*     z-index:2147483647;    */
 /* } */
-.scrapbee-edit-bar{
+.scrapyard-edit-bar{
     background: #aaa;
     border-top: 1px solid #999;
     width: 100%;
@@ -20,13 +20,13 @@
     z-index: 2147483647;
     text-align:left;
 }
-.scrapbee-icon{
+.scrapyard-icon{
     vertical-Align:middle;
     margin-Left:10px;
     width :20px;
     height : 20px;
 }
-.scrapbee-edit-bar,  .scrapbee-edit-bar *{
+.scrapyard-edit-bar,  .scrapyard-edit-bar *{
     font-family:"WenQuanYi Micro Hei",
 		"Open Sans",
 		"Fira Sans",
@@ -39,7 +39,7 @@
     font-size:12px;
     box-sizing: content-box;
 }
-.scrapbee-edit-bar input[type=button].blue-button{
+.scrapyard-edit-bar input[type=button].blue-button{
     background:#09c;
     color:#fff;
     cursor:pointer;
@@ -49,7 +49,7 @@
     line-height:20px;
     margin-left:5px;
 }
-.scrapbee-edit-bar input[type=button].yellow-button{
+.scrapyard-edit-bar input[type=button].yellow-button{
     background:#f70;
     color:#fff;
     cursor:pointer;
@@ -59,9 +59,9 @@
     line-height:20px;
     margin-left:5px;
 }
-.scrapbee-edit-bar input[type=button]:disabled{
+.scrapyard-edit-bar input[type=button]:disabled{
     background:#555;
 }
-.scrapbee-menu-item{
+.scrapyard-menu-item{
     text-align:center;
 }

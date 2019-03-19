@@ -109,10 +109,10 @@ NodeList.prototype.iterateAll = function(fn){
     });
 }
 
-function ScrapbeeElement(el){
+function ScrapyardElement(el){
     this.el = el;
 }
-ScrapbeeElement.prototype.processResources=function(){
+ScrapyardElement.prototype.processResources=function(){
     this.style = window.getComputedStyle(this.el, false);
     var t = this.el.tagName.toLowerCase().replace(/^\w/, function(m){return m.toUpperCase();});
     var fn = "get" + t + "Resources";
@@ -132,7 +132,7 @@ ScrapbeeElement.prototype.processResources=function(){
     }
     return r;
 }
-ScrapbeeElement.prototype.getCommonResources=function(){
+ScrapyardElement.prototype.getCommonResources=function(){
     var bg = this.style.backgroundImage;
     var m, r=[];
     if(m = bg.match(/^url\(['"]?(.+?)['"]?\)/)){
@@ -146,8 +146,8 @@ ScrapbeeElement.prototype.getCommonResources=function(){
     }
     return r;
 }
-ScrapbeeElement.prototype.getImgResources=function(){
-    // console.log("ScrapbeeElement.prototype.getImgResources:", this.el.src)
+ScrapyardElement.prototype.getImgResources=function(){
+    // console.log("ScrapyardElement.prototype.getImgResources:", this.el.src)
     var r=[];
     if(this.el.getAttribute("src")){
 	var hex = hex_md5(this.el.src);
@@ -156,16 +156,16 @@ ScrapbeeElement.prototype.getImgResources=function(){
     }
     return r;
 }
-ScrapbeeElement.prototype.getScriptResources=function(){
+ScrapyardElement.prototype.getScriptResources=function(){
     this.el.src=""
     this.el.innerHTML=""
     return [];
 }
-ScrapbeeElement.prototype.getStyleResources=function(){
+ScrapyardElement.prototype.getStyleResources=function(){
     this.el.innerHTML=""
     return [];
 }
-ScrapbeeElement.prototype.getLinkResources=function(){
+ScrapyardElement.prototype.getLinkResources=function(){
     var r=[]
     if(this.el.rel=="shortcut icon"){
 	r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"})
@@ -175,7 +175,7 @@ ScrapbeeElement.prototype.getLinkResources=function(){
     }
     return r;
 }
-ScrapbeeElement.prototype.getIframeResources=function(){
+ScrapyardElement.prototype.getIframeResources=function(){
     this.el.src=""
     this.el.innerHTML=""
     return [];

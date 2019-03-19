@@ -11,7 +11,7 @@ function __log__(logtype, content){
 /* log version and platform */
 browser.runtime.getBrowserInfo().then(function(info) {
     var manifest = browser.runtime.getManifest();
-    __log__("info", "ScrapBee version = " + manifest.version);
+    __log__("info", "Scrapyard version = " + manifest.version);
     __log__("info", "browser = " + info.name + " " + info.version);
     var main_version = parseInt(info.version.replace(/\..+/, ""));
     if(info.name != "Firefox" || main_version < 60){
@@ -28,7 +28,7 @@ function connectPort(){
 	browser.runtime.onConnect.addListener((p) => {
 	    __log__("info", `backend connected`);
 	})
-	port = browser.runtime.connectNative("scrapbee_backend");
+	port = browser.runtime.connectNative("scrapyard_backend");
 	port.onDisconnect.addListener((p) => {
 	    if (p.error) {
 		__log__('info', `backend disconnected due to an error: ${p.error.message}`);
@@ -85,11 +85,11 @@ function withCurrTab(fn){
 }
 
 /* build menu */
-browser.menus.remove("scrapbee-capture-selection");
-browser.menus.remove("scrapbee-capture-page");
-browser.menus.remove("scrapbee-capture-url");
+browser.menus.remove("scrapyard-capture-selection");
+browser.menus.remove("scrapyard-capture-page");
+browser.menus.remove("scrapyard-capture-url");
 browser.menus.create({
-    id: "scrapbee-capture-selection",
+    id: "scrapyard-capture-selection",
     title: browser.i18n.getMessage("CaptureSelection"),
     contexts: ["selection"],
     documentUrlPatterns: ["http://*/*", "https://*/*"],
@@ -107,7 +107,7 @@ browser.menus.create({
     }
 }, function(){});
 browser.menus.create({
-    id: "scrapbee-capture-page",
+    id: "scrapyard-capture-page",
     title: browser.i18n.getMessage("CapturePage"),
     contexts: ["page"],
     documentUrlPatterns: ["http://*/*",  "https://*/*"],
@@ -126,7 +126,7 @@ browser.menus.create({
     }
 }, function(){});
 browser.menus.create({
-    id: "scrapbee-capture-url",
+    id: "scrapyard-capture-url",
     title: browser.i18n.getMessage("CaptureUrl"),
     contexts: ["page", "selection"],
     documentUrlPatterns: ["http://*/*",  "https://*/*"],

@@ -49,7 +49,7 @@ function getCurrSelection(){
 
 function clearMarkPen(){
     var selection = getCurrSelection()
-    $(selection.parent).find(".scrapbee-mark-pen").each(function(){
+    $(selection.parent).find(".scrapyard-mark-pen").each(function(){
         if(selection.range.intersectsNode(this))
             $(this).replaceWith($(this).text());
     });
@@ -57,7 +57,7 @@ function clearMarkPen(){
 
 function mark(hlclass){
     var hltag="span";
-    hlclass = "scrapbee-mark-pen " + hlclass;
+    hlclass = "scrapyard-mark-pen " + hlclass;
 
     var selection = getCurrSelection()
     

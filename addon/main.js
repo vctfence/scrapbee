@@ -34,7 +34,7 @@ function saveRdf(){
 }
 function initRdf(rdf, callback){
     var content = '<?xml version="1.0"?>\
-<RDF:RDF xmlns:NS1="scrapbee@126.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
+<RDF:RDF xmlns:NS1="scrapyard@126.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
 <RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>\
 </RDF:RDF>';
     $.post(settings.backend_url + "savefile", {filename:rdf, content: content}, function(r){
@@ -172,7 +172,7 @@ function showRdfList(){
     }
 }
 function applyColor(){
-    var id = "scrapbee_setting_style";
+    var id = "scrapyard_setting_style";
     $("#"+id).remove();
     var sheet = document.createElement('style');
     sheet.id=id;
@@ -234,7 +234,7 @@ window.onload=function(){
     }
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
-	// window.open("options.html", "_scrapbee_option")
+	// window.open("options.html", "_scrapyard_option")
         browser.tabs.create({
             "url": "options.html"
         });
@@ -242,14 +242,14 @@ window.onload=function(){
     }
     var btn = document.getElementById("btnHelp");
     btn.onclick = function(){
-	// window.open("options.html#help", "_scrapbee_option")
+	// window.open("options.html#help", "_scrapyard_option")
         browser.tabs.create({
 	    "url": "options.html#help"
         });
     }
     var btn = document.getElementById("btnSearch");
     btn.onclick = function(){
-	// window.open("search.html", "_scrapbee_search")
+	// window.open("search.html", "_scrapyard_search")
         browser.tabs.create({
     	    "url": "search.html"
         });

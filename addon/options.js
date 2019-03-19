@@ -124,26 +124,26 @@ ${FILE_I18N} <input type="text" name="value"/> \
     $("#btnDownloadBackend").click(function(){
         function Next(){
             const extRoot = "moz-extension://" + settings.extension_id;
-            var src_exec = "scrapbee_backend";
+            var src_exec = "scrapyard_backend";
             if(settings.platform=="mac")
                 src_exec += "_mac"
             else if(settings.platform=="linux")
                 src_exec += "_lnx"
             src_exec += settings.platform=="windows"?".exe":"";
-            var dest_exec = "scrapbee_backend" + (settings.platform=="windows"?".exe":"");
+            var dest_exec = "scrapyard_backend" + (settings.platform=="windows"?".exe":"");
             /** download backend executable */
-            downloadFile(extRoot + "/bin/" + src_exec, "scrapbee/" + dest_exec, function(id){
+            downloadFile(extRoot + "/bin/" + src_exec, "scrapyard/" + dest_exec, function(id){
                 /*** query really filename of backend executable */
                 browser.downloads.search({id: id}).then((downloads) => {
                     var filename = downloads[0].filename;
-                    var json = {"allowed_extensions":["scrapbee@scrapbee.org"],
-                                "description":"Scrapbee backend",
-                                "name":"scrapbee_backend",
+                    var json = {"allowed_extensions":["scrapyard@scrapyard.org"],
+                                "description":"Scrapyard backend",
+                                "name":"scrapyard_backend",
                                 "path":filename, /** path to downloaded backend executable */
                                 "type":"stdio"}
                     /*** download json */
                     var jstr = JSON.stringify(json, null, 2)
-                    downloadText(jstr, "scrapbee/scrapbee_backend.json", function(){
+                    downloadText(jstr, "scrapyard/scrapyard_backend.json", function(){
                         var download_path = filename.replace(/[^\\\/]*$/,"");
                         function done(){ /** download installation script done */
                             settings.set('backend_path', download_path);
@@ -153,11 +153,11 @@ ${FILE_I18N} <input type="text" name="value"/> \
                         }
                         /** download installation script */
                         if(settings.platform=="windows")
-                            downloadText(installBat(download_path), "scrapbee/install.bat", done);
+                            downloadText(installBat(download_path), "scrapyard/install.bat", done);
                         else if(settings.platform=="mac")
-                            downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh", done);
+                            downloadFile(extRoot + "/install/install_mac.sh", "scrapyard/install.sh", done);
                         else
-                            downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh", done);
+                            downloadFile(extRoot + "/install/install_lnx.sh", "scrapyard/install.sh", done);
                     });
                 });
             });
@@ -168,10 +168,10 @@ ${FILE_I18N} <input type="text" name="value"/> \
     });
     function installBat(backend_path){
         return `chcp 65001\r\n\r
-reg delete "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /f\r
-reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
-reg delete "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /f\r
-reg add "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
+reg delete "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /f\r
+reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /d "${backend_path}\scrapyard_backend.json" /f\r\n\r
+reg delete "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /f\r
+reg add "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /d "${backend_path}\scrapyard_backend.json" /f\r\n\r
 echo done\r
 pause`
     }
