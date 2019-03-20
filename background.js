@@ -12,7 +12,9 @@ function __log__(logtype, content){
     log_pool.push(`${logtype}: ${content}`);
     browser.runtime.sendMessage({type:'LOGGING', log});
 }
-
+function __log_clear__(){
+    log_pool = [];
+}
 /* log version and platform */
 browser.runtime.getBrowserInfo().then(function(info) {
     var manifest = browser.runtime.getManifest();
@@ -24,7 +26,6 @@ browser.runtime.getBrowserInfo().then(function(info) {
     }
     __log__("info", "platform = " + navigator.platform);
 });
-
 /* backend*/
 var port;
 var web_started;
@@ -79,6 +80,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	});
     }else if(request.type == 'LOG'){
 	__log__(request.logtype, request.content)
+    }else if(request.type == 'CLEAR_LOG'){
+	__log_clear__()        
     }else if(request.type == 'GET_ALL_LOG_REQUEST'){
 	browser.runtime.sendMessage({session_id:request.session_id, logs: log_pool.join("\n")});
     }
@@ -148,11 +151,9 @@ browser.menus.create({
 	});
     }
 }, function(){});
-
 /* toolbar icon */
 browser.browserAction.onClicked.addListener(function(){
     browser.sidebarAction.open()
 });
-
 // browser.browserAction.onClicked.removeListener(listener)
 // browser.browserAction.onClicked.hasListener(listener)

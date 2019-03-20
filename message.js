@@ -7,6 +7,12 @@ var log = {
     },
     warning: function(content){
         browser.runtime.sendMessage({type:'LOG', logtype: "warning", content: content});
+    },
+    debug: function(content){
+        browser.runtime.sendMessage({type:'LOG', logtype: "debug", content: content});
+    },
+    clear: function(content){
+        browser.runtime.sendMessage({type:'CLEAR_LOG'});
     }
 }
 

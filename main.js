@@ -34,7 +34,7 @@ function saveRdf(){
 }
 function initRdf(rdf, callback){
     var content = '<?xml version="1.0"?>\
-<RDF:RDF xmlns:NS1="scrapbee@126.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
+<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
 <RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>\
 </RDF:RDF>';
     $.post(settings.backend_url + "savefile", {filename:rdf, content: content}, function(r){
