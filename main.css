@@ -216,9 +216,9 @@ html,body{
     display:inline-block;
     cursor:pointer;
     vertical-align:middle;
-    border-radius:11px;
     width:22px;
     height:22px;
+    mask-size:22px 22px;
 }
 .tool-button.set{
     mask-image:url(icons/settings.svg);
@@ -241,6 +241,7 @@ html,body{
     background-image:url(icons/settings.svg);
     background-color:#777;
     mask-image:none;
+    border-radius:11px;
 }
 .tool-button.help:hover{
     background-size:22px 22px;
@@ -248,6 +249,7 @@ html,body{
     background-image:url(icons/help.svg);
     background-color:#777;
     mask-image:none;
+    border-radius:11px;
 }
 .tool-button.reload:hover{
     background-size:22px 22px;
@@ -255,6 +257,7 @@ html,body{
     background-image:url(icons/reload.svg);
     background-color:#777;
     mask-image:none;
+    border-radius:11px;
 }
 .tool-button.search:hover{
     background-size:22px 22px;
@@ -262,6 +265,7 @@ html,body{
     background-image:url(icons/search.svg);
     background-color:#777;
     mask-image:none;
+    border-radius:11px;
 }
 .tool-button.open:hover{
     background-size:22px 22px;
@@ -269,6 +273,7 @@ html,body{
     background-image:url(icons/openfolder.svg);
     background-color:#777;
     mask-image:none;
+    border-radius:11px;
 }
 .blue-button{
     background:#09c;
