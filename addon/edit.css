@@ -39,7 +39,9 @@
     font-size:12px;
     box-sizing: content-box;
 }
-.scrapyard-edit-bar input[type=button].blue-button{
+.scrapyard-edit-bar input[type=button].blue-button,
+.scrapyard-edit-bar input[type=button].yellow-button,
+.scrapyard-edit-bar input[type=button].black-button {
     background:#09c;
     color:#fff;
     cursor:pointer;
@@ -51,13 +53,9 @@
 }
 .scrapyard-edit-bar input[type=button].yellow-button{
     background:#f70;
-    color:#fff;
-    cursor:pointer;
-    border-radius:5px;
-    padding:3px 15px;
-    border:none;
-    line-height:20px;
-    margin-left:5px;
+}
+.scrapyard-edit-bar input[type=button].black-button{
+    background:#000;
 }
 .scrapyard-edit-bar input[type=button]:disabled{
     background:#555;

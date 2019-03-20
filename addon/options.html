@@ -13,73 +13,20 @@
   <body>
     <div id="div-page">
       <div id="div-form-left">
-        <a class="left-index" href="#initiate">{Initiate}</a>
+        <!--a class="left-index" href="#initiate">{Initiate}</a-->
         <a class="left-index" href="#settings">{Setting}</a>
-        <a class="left-index" href="#log">{Log}</a>
+        <!--a class="left-index" href="#log">{Log}</a-->
         <a class="left-index" href="#help">{Help}</a>
-        <a class="left-index" href="#donate">{Donate}</a>
-      </div>
-      <div id="div-initiate" class="div-area" style="display:none">
-        <table width="" cellspacing="" cellpadding="" border="0" class="form-table" style=";max-width:700px">
-          <tr>
-            <td>{Step}-1</td>
-            <td>
-              <div class="">
-                {STEP1_TEXT_1}
-              </div>
-              <br /><input id="btnDownloadBackend" type="button" name="add" value="{Download}"/>
-              <span id="txtBackendPath"></span>
-              <br/><br/>
-              <div class="tips">
-                {STEP1_TEXT_2}
-                </div>
-            </td>
-          </tr>
-          <tr>
-            <td>{Step}-2</td>
-            <td>
-              <div>
-                {STEP2_TEXT_1}
-                <br>
-                <br>Linux/Mac:
-                <br>{STEP2_TEXT_2}
-                <br>cd <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;\scrapyard</i>
-                <br>bash install.sh
-                <br>
-                <br>Windows:
-                <br>open <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;/scrapyard</i>
-                <br>Run install.bat ({STEP2_TEXT_3}
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>{Step}-3</td>
-            <td>
-              <div>{STEP3_TEXT_1} <a href="#settings">{Setting}</a></div>
-            </td>
-          </tr>
-          <tr>
-            <td>{Step}-4</td>
-            <td>
-              <div>{STEP4_TEXT_1}</div>
-            </td>
-          </tr>          
-          <tr>
-            <td>{Step}-5</td>
-            <td>
-              <div>{STEP5_TEXT_1}</div>
-            </td>
-          </tr>           
-        </table>
+        <!--a class="left-index" href="#donate">{Donate}</a-->
       </div>
       <div id="div-settings" class="div-area" style="display:none;">
         <table width="" cellspacing="" cellpadding="" border="0" class="form-table">       
           <tr>
             <td>{Rdf Files}</td>
             <td>
-              <div class="tips">
+              <!--div class="tips">
                 {RDF_FILES_TIP}<br>
-              </div>
+              </div-->
               <div class="panel" id="rdf-area"></div>
               <input type="button" name="add" value="+" style="margin-top:5px;"/>
             </td>
@@ -134,24 +81,7 @@
           </tr>
         </table>
       </div>
-      <div id="div-donate" class="div-area" style="display:none;">
-        <div style="font-size:15px;text-align:center;vertical-align:middle;">
-          <br /><br /><img src="icons/bee-logo.svg" class="" alt="" width="200"/>
-          <br /><br />
-          {DONATE_WORDS}
-          <br />
-          <br /><input type="button" name="" value="{DONATE_WITH_PAYPAL}" id="donate"/>
-          <br /><br />
-          <div id="divMoreDonateWay" style="display:none;">
-            <a href="">{MORE_DONATE_WAY_TOGGLE}</a>
-            <div style="display:none;margin-top:30px;">{MORE_DONATE_WAY}</div>
-          </div>
-        </div>
-      </div>
       <div id="div-help" class="div-area" style="display:none;">
-      </div>
-      <div id="div-log" class="div-area" style="display:none;height:100%;position:relative">
-        <div class="console"></div>
       </div>
   </body>
 </html>

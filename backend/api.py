@@ -73,21 +73,21 @@ def add_header(r):
 @app.route('/api/scrapyard/version')
 @authenticated
 def get_scrapyard_version():
-    """Returns Scrapyard version"""
+    """ Returns Scrapyard version """
     return config.SCRAPYARD_VERSION
 
 
 @app.route('/api/add/bookmark', methods=["POST"])
 @authenticated
 def add_bookmark():
-    """Adds a bookmark (an URL without attachment)
+    """ Adds a bookmark to database (an URL without attachment).
 
     Accepts JSON:
 
-    :name:  bookmark name
-    :uri:   bookmark URL
-    :path: hierarchical node group path, the first item in the path is a name of a shelf
-    :tags:  comma-separated list of tags
+    :name:  bookmark name (string)
+    :uri:   bookmark URL (string)
+    :path:  hierarchical node group path, the first item in the path is a name of a shelf (string)
+    :tags:  comma-separated list of tags (string)
     
     :returns: the original JSON with the inserted DB-record ID added
     """
@@ -97,19 +97,77 @@ def add_bookmark():
 @app.route('/api/list/nodes', methods=["POST"])
 @authenticated
 def list_nodes():
+    """ Lists the specified nodes.
+
+        Accepts JSON:
+
+        :search: filter for node name or URL (string)
+        :path:   filter hierarchical node group path, the first item in the path is a name of a shelf (string)
+        :tags:   filter for node tags (string)
+        :type:   filter for node type (integer)
+        :limit:  limit for the returned record number (integer)
+        :depth:  specify depth of search (string): "group" or "subtree"
+
+        :returns: list of filtered node database records
+    """
     return db.list_nodes(g.db, g.user_id, request.json)
+
+
+@app.route('/api/list/shelves', methods=["GET"])
+@authenticated
+def list_shelves():
+    """ Lists all user's shelves. """
+    return db.list_shelves(g.db, g.user_id)
 
 
 @app.route('/api/list/groups', methods=["GET"])
 @authenticated
 def list_groups():
+    """ Lists all user's groups for use in completion. """
     return db.list_groups(g.db, g.user_id)
 
 
 @app.route('/api/list/tags', methods=["GET"])
 @authenticated
 def list_tags():
+    """ Lists all user's tags for use in completion. """
     return db.list_tags(g.db, g.user_id)
+
+
+@app.route('/api/create/shelf', methods=["POST"])
+@authenticated
+def create_shelf():
+    """ Creates a shelf
+
+        Accepts JSON:
+
+        :name: Shelf name (string)
+
+        :returns: created shelf database record """
+    return db.new_shelf(g.db, g.user_id, request.json)
+
+
+@app.route('/api/rename/shelf', methods=["POST"])
+@authenticated
+def rename_shelf():
+    """ Creates a shelf
+
+        Accepts JSON:
+
+        :name: Shelf name (string)
+        :new_name: New shelf name (string) """
+    return db.rename_shelf(g.db, g.user_id, request.json)
+
+
+@app.route('/api/delete/shelf', methods=["POST"])
+@authenticated
+def delete_shelf():
+    """ Deletes a shelf
+
+        Accepts JSON:
+
+        :name: Shelf name (string) """
+    return db.delete_shelf(g.db, g.user_id, request.json)
 
 
 class Httpd(threading.Thread):

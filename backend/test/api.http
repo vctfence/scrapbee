@@ -35,6 +35,11 @@ X-Scrapyard-Auth: default:default
 
 ###
 
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+###
+
 GET http://localhost:31800/api/list/groups
 X-Scrapyard-Auth: default:default
 

@@ -224,13 +224,17 @@ html,body{
     background:#0003;
     color:#fff;
 }
-.blue-button{
+.blue-button, .black-button{
     background:#09c;
     color:#fff;
     cursor:pointer;
     border-radius:5px;
     padding:2px 5px;
     border:0;
+}
+.black-button {
+    background:#fff;
+    color:#000;
 }
 .item.separator{
     width:100%;
@@ -253,11 +257,17 @@ select{
 .simple-menu{
     min-with:50px;
     position:absolute;
-    background:#999;
-    right:0;
+    background:#fff;
+    right: 10px;
+    margin-top: 5px;
+    border: solid 1px black;
 }
 .simple-menu div{
     color:#000;
     padding:5px 15px;
     cursor:pointer;
+}
+
+.simple-menu div:hover{
+    background: #ccc;
 }

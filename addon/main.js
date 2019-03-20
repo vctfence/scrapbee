@@ -1,5 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings} from "./settings.js"
+import {Backend} from "./backend.js"
 import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
@@ -8,10 +9,14 @@ var windowId;
 
 var msg_hub = new MsgHub();
 
+let backend = new Backend("http://localhost:31800", "default:default");
+
+const DEFAULT_SHELF_NAME = "default"
+
 /* show members of an object */
 function dir(o, delimiter){
     var a = [];
-    for(i in o){
+    for(let i in o){
         a.push(i)
     }
     return a.join(delimiter || "\n");
@@ -109,12 +114,12 @@ function showDlg(name, data, callback){
     });
     return p;
 }
-function alert(title, message){
-    return showDlg("alert", {title:title.translate(), message:message.translate()});
-}
-function confirm(title, message){
-    return showDlg("confirm", {title:title.translate(), message:message.translate()});
-}
+// function alert(title, message){
+//     return showDlg("alert", {title:title.translate(), message:message.translate()});
+// }
+// function confirm(title, message){
+//     return showDlg("confirm", {title:title.translate(), message:message.translate()});
+// }
 /* context menu listener */
 var menulistener={};
 menulistener.onDelete = function(){
@@ -156,20 +161,22 @@ menulistener.onRename = function(){
 }
 function showRdfList(){
     var lastRdf = settings.last_rdf;
-    var names = settings.rdf_path_names;
     $("#listRdf").html("");
     var saw = false;
-    var paths = settings.getRdfPaths();
-    if(paths){
-	settings.getRdfPathNames().forEach(function(n, i){
-	    var $opt = $("<option></option>").appendTo($("#listRdf")).html(n).attr("value", paths[i]);
-	    if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
-		saw = true;
-		$opt.attr("selected", true);
-	    }
-	});
-	switchRdf($("#listRdf").val());
-    }
+
+    backend.httpGet("/api/list/shelves", (shelves) => {
+        console.log(shelves)
+        $("#listRdf").find("option").remove()
+        for (let shelf of shelves) {
+            console.log(shelf);
+            var $opt = $("<option></option>").appendTo($("#listRdf")).html(shelf.name).attr("value", shelf.id);
+            if(!saw && typeof lastRdf != "undefined" && shelf.id === lastRdf){
+                saw = true;
+                $opt.attr("selected", true);
+            }
+        }
+        switchRdf($("#listRdf").val());
+    });
 }
 function applyColor(){
     var id = "scrapyard_setting_style";
@@ -224,54 +231,7 @@ function loadAll(){
 	});
     });
 }
-window.onload=function(){
-    /* i18n */
-    document.title = document.title.translate();
-    document.body.innerHTML = document.body.innerHTML.translate();
-    var btn = document.getElementById("btnLoad");
-    btn.onclick = function(){
-	if(currTree && currTree.rdf)loadXml(currTree.rdf);
-    }
-    var btn = document.getElementById("btnSet");
-    btn.onclick = function(){
-	// window.open("options.html", "_scrapyard_option")
-        browser.tabs.create({
-            "url": "options.html"
-        });
-	// runtime.openOptionsPage()
-    }
-    var btn = document.getElementById("btnHelp");
-    btn.onclick = function(){
-	// window.open("options.html#help", "_scrapyard_option")
-        browser.tabs.create({
-	    "url": "options.html#help"
-        });
-    }
-    var btn = document.getElementById("btnSearch");
-    btn.onclick = function(){
-	// window.open("search.html", "_scrapyard_search")
-        browser.tabs.create({
-    	    "url": "search.html"
-        });
-    }
-    // $(".i18n").each(function(i, item){
-    // 	if(/i18n-(\w+)/.test(item.className)){
-    // 	    item[RegExp.$1] = browser.i18n.getMessage(item[RegExp.$1]) || item[RegExp.$1];
-    // 	}
-    // });
-    $("menuitem").click(function(e){
-	var listener = menulistener[this.id.replace(/^menu/, "on")];
-	listener && listener();
-    });    
 
-    /**  */
-    applyColor();
-
-    // browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST'});
-    msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
-	loadAll();
-    });
-}
 function loadXml(rdf){
     currTree=null;
     if(!rdf)return;
@@ -506,4 +466,127 @@ document.addEventListener('contextmenu', function(event){
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     windowId = windowInfo.id;
 });
+
+window.onclick = function(event) {
+    if (!event.target.matches("#shelf-menu-button"))
+        $(".simple-menu").hide();
+};
+
+window.onload=function(){
+    /* i18n */
+    document.title = document.title.translate();
+    document.body.innerHTML = document.body.innerHTML.translate();
+    var btn = document.getElementById("btnLoad");
+    btn.onclick = function(){
+        if(currTree && currTree.rdf)loadXml(currTree.rdf);
+    }
+    var btn = document.getElementById("btnSet");
+    btn.onclick = function(){
+        // window.open("options.html", "_scrapyard_option")
+        browser.tabs.create({
+            "url": "options.html"
+        });
+        // runtime.openOptionsPage()
+    }
+    var btn = document.getElementById("btnHelp");
+    btn.onclick = function(){
+        // window.open("options.html#help", "_scrapyard_option")
+        browser.tabs.create({
+            "url": "options.html#help"
+        });
+    }
+    var btn = document.getElementById("btnSearch");
+    btn.onclick = function(){
+        // window.open("search.html", "_scrapyard_search")
+        browser.tabs.create({
+            "url": "search.html"
+        });
+    }
+
+    $("#shelf-menu-button").click(() => {$("#shelf-menu").toggle()});
+    $("#shelf-menu-create").click(() => {
+        let name = prompt("Enter shelf name");
+
+        if (name) {
+            let existingOption = $(`#listRdf option:contains("${name}")`);
+            let selectedOption = $("#listRdf option:selected");
+
+            if (existingOption.length) {
+                selectedOption.removeAttr("selected");
+                existingOption.attr("selected", true);
+
+                // TODO: add tree switching
+            }
+
+            if (name !== DEFAULT_SHELF_NAME) {
+                backend.httpPost("/api/create/shelf", {"name": name}, (shelf) => {
+                        if (shelf) {
+                            selectedOption.removeAttr("selected");
+                            $("<option></option>").appendTo($("#listRdf"))
+                                .html(shelf.name)
+                                .attr("value", shelf.id)
+                                .attr("selected", true);
+                        }
+                    }
+                );
+            }
+        }
+    });
+
+    $("#shelf-menu-rename").click(() => {
+        let selectedOption = $("#listRdf option:selected");
+        let name = selectedOption.text();
+
+        if (name && name !== DEFAULT_SHELF_NAME) {
+            // TODO: 118n
+            let newName = prompt("Enter new name for '" + name + "'");
+
+            if (newName) {
+                backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
+                        selectedOption.html(newName);
+                    },
+                    e => {
+                        console.log(JSON.stringify(e))
+                    }
+                );
+            }
+        }
+
+    });
+
+    $("#shelf-menu-delete").click(() => {
+        let selectedOption = $("#listRdf option:selected");
+        let name = selectedOption.text();
+
+        // TODO: 118n
+        if (confirm("Do you really want to delete '" + name + "'"))
+            if (name && name !== DEFAULT_SHELF_NAME) {
+                backend.httpPost("/api/delete/shelf", {"name": name}, () => {
+                        selectedOption.remove();
+                    },
+                    e => {console.log(JSON.stringify(e))}
+                );
+            }
+
+    });
+
+
+    // $(".i18n").each(function(i, item){
+    // 	if(/i18n-(\w+)/.test(item.className)){
+    // 	    item[RegExp.$1] = browser.i18n.getMessage(item[RegExp.$1]) || item[RegExp.$1];
+    // 	}
+    // });
+    // $("menuitem").click(function(e){
+    // var listener = menulistener[this.id.replace(/^menu/, "on")];
+    // listener && listener();
+    // });
+
+    /**  */
+    applyColor();
+
+    // browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST'});
+    //msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
+    loadAll();
+    // });
+}
 console.log("==> main.js loaded");
