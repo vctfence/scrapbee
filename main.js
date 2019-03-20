@@ -182,7 +182,8 @@ function applyColor(){
     var sheet = document.createElement('style');
     sheet.id=id;
 
-    var item_h = parseInt(settings.font_size) * 1.4;
+    var item_h = parseInt(settings.font_size) * 1.6;
+    var icon_h = parseInt(settings.font_size) * 1.3;
     var origin_h = parseInt(settings.font_size) * 0.85;
     var bg_color = settings.bg_color;
     var filter = getColorFilter("#"+settings.font_color).filter;
@@ -197,9 +198,10 @@ body{background:#${settings.bg_color}}
 .item.separator{border-color:#${settings.bg_color};background:#${settings.separator_color}}
 .tool-button{background:#${settings.font_color}}
 .item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;
-background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}
+background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}
 .folder-content{margin-left:${item_h}px}
-.item .origin{background-size:${origin_h}px ${origin_h}px; line-height:${item_h}px}}
+.item .origin{width:${origin_h}px;height:${origin_h}px;background-size:${origin_h}px ${origin_h}px; line-height:${item_h}px}
+.item{line-height:${item_h}px}
 .simple-menu-button:{border-color:#${settings.font_color}}
 .simple-menu{background:#${settings.bg_color};border-color:#${settings.font_color}}
 .drop-button{border: 1px solid #${settings.font_color}}

@@ -61,6 +61,7 @@ html,body{
     background-size:18px 18px;
     /* color:red; */
     white-space:nowrap;
+    width:0px;
 }
 .item label{
     text-overflow:ellipsis;
@@ -69,6 +70,7 @@ html,body{
     display: inline-block;
     padding:1px 2px;
     border-radius:3px;
+        vertical-align:top;
     /* background-color:#ccc; */
     /* color:#000; */
 }
@@ -81,14 +83,16 @@ html,body{
 .item .origin{
     cursor:pointer;
     /* width:-moz-fit-content; */
-    vertical-align:middle;
+    vertical-align:top;
     padding-left:20px;
     margin-left:5px;
-    display:inline;
+    display:inline-block;
     background:url(icons/online.svg);
     background-repeat:no-repeat;
     background-position:0px 0px;
     background-size:9px 9px;
+    width:9px;
+    height:9px;
 }
 .box{
     margin:70px 20px 20px 20px;
