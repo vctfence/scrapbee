@@ -158,7 +158,7 @@
         "message": "Separator"
     },
     "RDF_FILES_TIP": {
-        "message": "Set absolute path of rdf files(ending with extension '.rdf') to register information of scraps，downloaded scraps will be saved in \"data\" folder beside the rdf files.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> You can setup multiple rdf files to classify your scraps，<br>You can have different rdfs inside same directory.<br>No need to create these files maunally.<br/><br/> Good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user: ScrapBook rdfs are also supported."
+        "message": "Set absolute path of rdf files(ending with extension '.rdf') to register information of scraps，downloaded scraps will be saved in \"data\" folder beside the rdf files.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> You can setup multiple rdf files to classify your scraps，<br>You can have different rdf files inside same directory.<br>No need to create these files maunally.<br/><br/> Good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user: ScrapBook rdfs are also supported."
     },
     "BACKEND_PORT_TIP":{
         "message": "TCP port ScrapBee backend listens. e.g. 9900"

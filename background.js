@@ -33,7 +33,7 @@ function connectPort(){
     if(!port){
 	browser.runtime.onConnect.addListener((p) => {
 	    __log__("info", `backend connected`);
-	})
+	});
 	port = browser.runtime.connectNative("scrapbee_backend");
 	port.onDisconnect.addListener((p) => {
 	    if (p.error) {
