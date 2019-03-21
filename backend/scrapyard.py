@@ -6,7 +6,7 @@ import api
 
 
 if __name__ == "__main__":
-    for p in [config.SCRAPYARD_PATH, config.SCRAPYARD_DATA_PATH, config.SCRAPYARD_ATTACH_PATH]:
+    for p in [config.SCRAPYARD_PATH, config.SCRAPYARD_DATA_PATH]:
         if not os.path.exists(p):
             os.makedirs(p)
 

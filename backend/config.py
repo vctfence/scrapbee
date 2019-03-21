@@ -9,5 +9,4 @@ import os
 
 SCRAPYARD_PATH = os.path.expanduser(SCRAPYARD_PATH)
 SCRAPYARD_DATA_PATH = os.path.join(SCRAPYARD_PATH, "data")
-SCRAPYARD_ATTACH_PATH = os.path.join(SCRAPYARD_DATA_PATH, "files")
-SCRAPYARD_INDEX_PATH = os.path.join(SCRAPYARD_DATA_PATH, "index.db")
+SCRAPYARD_INDEX_PATH = os.path.join(SCRAPYARD_PATH, "index.db")

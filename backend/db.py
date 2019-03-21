@@ -270,6 +270,7 @@ def list_nodes(db, user_id, json):
         sql += " and type = {}".format(type)
 
     if search:
+        search = search.replace("'", "\\'").replace("_", "\\_").replace("%", "\\%").replace("*", "%")
         sql += " and (upper(node.name) like upper('%{0}%') or upper(node.uri) like upper('%{0}%'))".format(search)
 
     if type:

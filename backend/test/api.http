@@ -15,7 +15,7 @@ Content-Type: application/json
 X-Scrapyard-Auth: default:default
 
 {
-    "name": "example bookmark"
+    "name": "cadabra cadabra cadabrac adabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra"
     ,"uri": "https://example.com"
     ,"path": "/example/category"
     ,"tags": "test,example"

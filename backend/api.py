@@ -120,14 +120,14 @@ def list_shelves():
     return db.list_shelves(g.db, g.user_id)
 
 
-@app.route('/api/list/groups', methods=["GET"])
+@app.route('/api/completion/list/groups', methods=["GET"])
 @authenticated
 def list_groups():
     """ Lists all user's groups for use in completion. """
     return db.list_groups(g.db, g.user_id)
 
 
-@app.route('/api/list/tags', methods=["GET"])
+@app.route('/api/completion/list/tags', methods=["GET"])
 @authenticated
 def list_tags():
     """ Lists all user's tags for use in completion. """
