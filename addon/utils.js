@@ -14,7 +14,7 @@ function showNotification({message, title='', type = 'info'}) {
         type: 'basic',
         title: title,
         message: message,
-        iconUrl: '/icons/bee.png'
+        iconUrl: '/icons/scrapyard.svg'
     });
 }
 

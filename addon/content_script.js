@@ -312,7 +312,7 @@ class EditToolBar{
         /** icon */
         var img = document.createElement("img");
         img.className="scrapyard-icon"
-        img.src = `moz-extension://${extension_id}/icons/bee.png`;
+        img.src = `moz-extension://${extension_id}/icons/scrapyard.svg`;
         div.appendChild(img);
         div.innerHTML+=" Scrapyard&nbsp;&nbsp;";
         /** body */

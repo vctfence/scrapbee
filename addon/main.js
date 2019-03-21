@@ -165,12 +165,10 @@ function showRdfList(){
     var saw = false;
 
     backend.httpGet("/api/list/shelves", (shelves) => {
-        console.log(shelves)
         $("#listRdf").find("option").remove()
         for (let shelf of shelves) {
-            console.log(shelf);
             var $opt = $("<option></option>").appendTo($("#listRdf")).html(shelf.name).attr("value", shelf.id);
-            if(!saw && typeof lastRdf != "undefined" && shelf.id === lastRdf){
+            if(!saw && typeof lastRdf != "undefined" && shelf.id == lastRdf){
                 saw = true;
                 $opt.attr("selected", true);
             }
@@ -221,14 +219,7 @@ function loadAll(){
     /** rdf list */
     showRdfList(); /** this will trigger loading a rdf initially */
     $("#listRdf").change(function(){
-	switchRdf(this.value);  // switch rdf and notify other side bar.
-    });
-    /** open file manager */
-    $("#btnFileManager").click(function(){
-	var rdf_path=currTree.rdf_path;
-	$.post(settings.backend_url + "filemanager/", {path:rdf_path}, function(r){
-	    // 
-	});
+	    switchRdf(this.value);  // switch rdf and notify other side bar.
     });
 }
 
@@ -268,32 +259,52 @@ function loadXml(rdf){
     xmlhttp.send();
 }
 function switchRdf(rdf){
-    log.info(`switch to rdf "${rdf}"`)
     settings.set('last_rdf', rdf);
-    if(!$.trim(rdf)){
-	$(".root.folder-content").html("Invaid rdf path.")
-	return;
-    }
-    $(".root.folder-content").html("{Loading...}".translate());
-    /** check rdf exists */
-    $.post(settings.backend_url + "isfile/", {path: rdf}, function(r){
-	if(r == "yes"){
-	    loadXml(rdf);
-	}else if(rdf){
-	    /** show it need to create rdf */
-	    try{
-		$(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate())
-	    }catch(e){
-		log.info(e.message)
-	    }
-	    $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
-		initRdf(rdf, function(){
-		    loadXml(rdf);
-		});
-		return false;
-	    });
-	}
-    });
+
+    let path = $(`#listRdf option[value="${rdf}"]`).text();
+
+    backend.httpPost("/api/list/nodes", {
+           path: path
+        },
+        nodes => {
+
+            for (let n of nodes) {
+                n.text = n.name;
+                delete n.name;
+
+                n.parent = n.parent_id;
+                if (!n.parent)
+                    n.parent = "#";
+
+                n.li_attr = { "class": "show_tooltip",
+                              "title": `${n.text}\x0A${n.uri}` };
+
+                if (n.type == 1)
+                    n.icon = "/icons/group.svg";
+
+                if (!n.icon)
+                    n.icon = "/icons/homepage.png";
+            }
+
+            $('#treeview').jstree(true).settings.core.data = nodes;
+            $('#treeview').jstree(true).refresh();
+
+            $("#treeview").jstree({
+                //plugins: ["themes"],
+                core: {
+                    worker: false,
+                    data: nodes,
+                    themes: {
+                        name: "default",
+                        dots: false,
+                        icons: true
+                    }
+                }
+            });
+        },
+        error => {
+            console.log(error);
+        });
 }
 function requestUrlSaving(itemId){
     withCurrTab(function(tab){
@@ -478,8 +489,8 @@ window.onload=function(){
     document.body.innerHTML = document.body.innerHTML.translate();
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
-        if(currTree && currTree.rdf)loadXml(currTree.rdf);
-    }
+        //if(currTree && currTree.rdf)loadXml(currTree.rdf);
+    };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
         // window.open("options.html", "_scrapyard_option")
@@ -567,9 +578,20 @@ window.onload=function(){
                     e => {console.log(JSON.stringify(e))}
                 );
             }
-
     });
 
+
+    $("#treeview").jstree({
+        //plugins: ["themes"],
+        core: {
+            worker: false,
+            themes: {
+                name: "default",
+                dots: false,
+                icons: true
+            }
+        }
+    });
 
     // $(".i18n").each(function(i, item){
     // 	if(/i18n-(\w+)/.test(item.className)){

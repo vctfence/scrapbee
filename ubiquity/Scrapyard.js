@@ -95,7 +95,7 @@ function genericErrorHandler(error) {
 
 
 function updateGroupSuggestions() {
-    scrapyardGet("/api/completion/list/groups", groups => {
+    scrapyardGet("/api/completion/groups", groups => {
         if (groups) {
             noun_scrapyard_group._items.length = 0;
             groups.forEach(g => noun_scrapyard_group._items.push(g));
@@ -105,7 +105,7 @@ function updateGroupSuggestions() {
 
 
 function updateTagSuggestions() {
-    scrapyardGet("/api/completion/list/tags", tags => {
+    scrapyardGet("/api/completion/tags", tags => {
         if (tags) {
             noun_scrapyard_tag._items.length = 0;
             tags.forEach(t => noun_scrapyard_tag._items.push(t));

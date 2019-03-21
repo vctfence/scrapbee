@@ -6,3 +6,5 @@ image/donate/
 venv
 backend/flask.bat
 .idea/httpRequests/http-requests-log.http
+addon/.web-extension-id
+addon/web-ext-artifacts
