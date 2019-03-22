@@ -220,6 +220,9 @@
     "ConfirmDeleteItem": {
         "message": "Realy delete the selected item?"
     },
+    "Error": {
+        "message": "Error"
+    },
     "Warning": {
         "message": "Warning"
     },

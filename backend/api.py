@@ -170,6 +170,42 @@ def delete_shelf():
     return db.delete_shelf(g.db, g.user_id, request.json)
 
 
+@app.route('/api/create/group', methods=["POST"])
+@authenticated
+def create_group():
+    """ Creates a group
+
+        Accepts JSON:
+
+        :path: group path (string)
+
+        :returns: created group database record """
+    return db.new_group(g.db, g.user_id, request.json)
+
+
+@app.route('/api/rename/group', methods=["POST"])
+@authenticated
+def rename_group():
+    """ Creates a group
+
+        Accepts JSON:
+
+        :path: group path (string)
+        :new_name: New group name (string) """
+    return db.rename_group(g.db, g.user_id, request.json)
+
+
+@app.route('/api/delete/group', methods=["POST"])
+@authenticated
+def delete_group():
+    """ Deletes a group
+
+        Accepts JSON:
+
+        :path: group path (string) """
+    return db.delete_group(g.db, g.user_id, request.json)
+
+
 class Httpd(threading.Thread):
 
     def __init__(self, app):

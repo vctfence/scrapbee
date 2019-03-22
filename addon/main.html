@@ -58,7 +58,7 @@
                     </div>
                 </div>
             </div>
-            <div class="dlg-cover dlg-folder" style="display:none;">
+            <!--div class="dlg-cover dlg-folder" style="display:none;">
                 <div class="dlg">
                     <div class="dlg-box">
                         <div class="dlg-title">{New Folder}</div>
@@ -84,7 +84,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div-->
             <div class="dlg-cover dlg-prompt" style="display:none;">
                 <div class="dlg">
                     <div class="dlg-box">
@@ -122,15 +122,17 @@
                     <input id="shelf-menu-button" type="button" name="dropRdf" value="&#9660" style="height: 23px;"
                            class="black-button"/>
                     <div id="shelf-menu" class="simple-menu" style="display:none">
-                        <div id="shelf-menu-create">Create</div>
-                        <div id="shelf-menu-rename">Rename</div>
-                        <div id="shelf-menu-delete">Delete</div>
+                        <div id="shelf-menu-create">Create shelf</div>
+                        <div id="shelf-menu-rename">Rename shelf</div>
+                        <div id="shelf-menu-delete">Delete shelf</div>
+                        <div id="shelf-menu-create-folder">Create folder</div>
                     </div>
                     <!--img class="tool-button" src="icons/openfolder.svg" class="" title="{Open Folder}" id="btnFileManager"/-->
                 </div>
             </div>
         </div>
-        <div id="treeview-container"><div id="treeview" class="root folder-content i18n">{Loading...}</div></div>
+        <div id="treeview-container">
+            <div id="treeview" class="root folder-content i18n"></div></div>
     </div>
 </div>
 </body>

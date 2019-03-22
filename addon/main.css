@@ -300,3 +300,8 @@ select{
 .simple-menu div:hover{
     background: #ccc;
 }
+
+#shelf-menu-create-folder {
+    margin-top: 5px;
+    border-top: 1px solid black;
+}

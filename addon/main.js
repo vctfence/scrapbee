@@ -3,6 +3,10 @@ import {Backend} from "./backend.js"
 import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
+
+const NODE_TYPE_FOLDER = 1;
+
+
 var currTree;
 var windowId;
 
@@ -168,44 +172,7 @@ function showRdfList(){
         switchRdf($("#listRdf").val());
     });
 }
-function applyColor(){
-    // var id = "scrapyard_setting_style";
-    // $("#"+id).remove();
-    // var sheet = document.createElement('style');
-    // sheet.id=id;
-    //
-    // var item_h = parseInt(settings.font_size) * 1.4;
-    // var origin_h = parseInt(settings.font_size) * 0.75;
-    // var bg_color = settings.bg_color;
-    //
-    // sheet.innerHTML = [
-	// "*{color:", settings.font_color, "}",
-	// ".item.local, .item.folder{color:#", settings.font_color, "}",
-	// ".item.bookmark label{color:#", settings.bookmark_color, "}",
-	// ".toolbar{backgroud-color:#", settings.bg_color, "}",
-	// "body{background:#", settings.bg_color, "}",
-    //     ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
-	// ".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
-    //     ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}",
-    //     `.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}`,
-    //     //`.folder-content{margin-left:${item_h}px}`,
-    //     `.item .origin{background-size:${origin_h}px ${origin_h}px};`
-    // ].join("");
-    //
-    // document.body.appendChild(sheet);
-}
-// window.addEventListener("storage", function(e){
-//     if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
-// 	showRdfList();
-//     }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
-// 	applyColor();
-//     }else if(e.key == "last_rdf"){
-//     }else if(e.key == "backend_port"){
-// 	msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
-// 	    loadAll();
-// 	});
-//     }
-// });
+
 /* on page loaded */
 function loadAll(){    
     /** rdf list */
@@ -215,21 +182,27 @@ function loadAll(){
     });
 }
 
-function populateTree(data) {
-    $("#treeview").jstree({
-        plugins : ["themes", "ui", "contextmenu"],
-        core: {
-            worker: false,
-            animation: 0,
-            data: data,
-            themes: {
-                name: "default",
-                dots: false,
-                icons: true,
-            }
-        }
-    });
+
+function toJsTreeNode(n) {
+    n.text = n.name;
+    delete n.name;
+
+    n.parent = n.parent_id;
+    if (!n.parent)
+        n.parent = "#";
+
+    if (n.type == NODE_TYPE_FOLDER)
+        n.icon = "/icons/group.svg";
+    else
+        n.li_attr = { "class": "show_tooltip",
+            "title": `${n.text}\x0A${n.uri}` };
+
+    if (!n.icon)
+        n.icon = "/icons/homepage.png";
+
+    return n;
 }
+
 
 function switchRdf(rdf){
     settings.set('last_rdf', rdf);
@@ -241,28 +214,10 @@ function switchRdf(rdf){
         },
         nodes => {
 
-            for (let n of nodes) {
-                n.text = n.name;
-                delete n.name;
-
-                n.parent = n.parent_id;
-                if (!n.parent)
-                    n.parent = "#";
-
-                if (n.type == 1)
-                    n.icon = "/icons/group.svg";
-                else
-                    n.li_attr = { "class": "show_tooltip",
-                                  "title": `${n.text}\x0A${n.uri}` };
-
-                if (!n.icon)
-                    n.icon = "/icons/homepage.png";
-            }
+            nodes.forEach(toJsTreeNode);
 
             $('#treeview').jstree(true).settings.core.data = nodes;
             $('#treeview').jstree(true).refresh();
-
-            populateTree(nodes);
         },
         error => {
             console.log(error);
@@ -457,7 +412,7 @@ window.onload=function(){
     document.body.innerHTML = document.body.innerHTML.translate();
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
-        //if(currTree && currTree.rdf)loadXml(currTree.rdf);
+        switchRdf(settings.last_rdf);
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
@@ -496,17 +451,16 @@ window.onload=function(){
 
                 if (name !== DEFAULT_SHELF_NAME) {
                     backend.httpPost("/api/create/shelf", {"name": name}, (shelf) => {
-                            if (shelf) {
-                                selectedOption.removeAttr("selected");
-                                $("<option></option>").appendTo($("#listRdf"))
-                                    .html(shelf.name)
-                                    .attr("value", shelf.id)
-                                    .attr("selected", true);
+                        if (shelf) {
+                            selectedOption.removeAttr("selected");
+                            $("<option></option>").appendTo($("#listRdf"))
+                                .html(shelf.name)
+                                .attr("value", shelf.id)
+                                .attr("selected", true);
 
-                                switchRdf(shelf.id);
-                            }
+                            switchRdf(shelf.id);
                         }
-                    );
+                    });
                 }
             }
         });
@@ -526,10 +480,13 @@ window.onload=function(){
                         },
                         e => {
                             console.log(JSON.stringify(e))
-                        }
-                    );
+                        });
                 }
             });
+        }
+        else if (name === DEFAULT_SHELF_NAME) {
+            // TODO: i18n
+            alert("{Error}", "The 'default' shelf could not be renamed.")
         }
 
     });
@@ -537,6 +494,12 @@ window.onload=function(){
     $("#shelf-menu-delete").click(() => {
         let selectedOption = $("#listRdf option:selected");
         let name = selectedOption.text();
+
+        if (name === DEFAULT_SHELF_NAME) {
+            // TODO: i18n
+            alert("{Error}", "The 'default' shelf could not be deleted.")
+            return;
+        }
 
         // TODO: 118n
         confirm( "{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
@@ -571,7 +534,49 @@ window.onload=function(){
         });
     });
 
-    populateTree();
+    $("#shelf-menu-create-folder").click(() => {
+
+        showDlg("prompt").then(data => {
+            let name;
+            if (name = data.title) {
+                let nodes = $('#treeview').jstree(true).settings.core.data;
+
+                if (nodes && nodes.filter(n => n.parent === "#")
+                        .some(n => n.text.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+                    // TODO: i18n
+                    alert("{Error}", `Folder '${name}' already exists.`);
+                    return;
+                }
+
+                let selectedOption = $("#listRdf option:selected");
+                let shelf = selectedOption.text();
+
+                backend.httpPost("/api/create/group", {"path": shelf + "/" + name}, group => {
+                    console.log(group);
+                    if (group) {
+                        toJsTreeNode(group);
+                        console.log($('#treeview').jstree(true).create_node);
+                        $('#treeview').jstree(true).create_node(null, group);
+                    }
+                });
+            }
+        });
+    });
+
+    $("#treeview").jstree({
+        plugins : ["contextmenu", "dnd"],
+        core: {
+            worker: false,
+            animation: 0,
+            check_callback: true,
+            themes: {
+                name: "default",
+                dots: false,
+                icons: true,
+            }
+        }
+    });
+
     loadAll();
 };
 console.log("==> main.js loaded");

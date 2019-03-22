@@ -30,6 +30,32 @@ def open():
     return db
 
 
+def split_path(json):
+    path = json.get("path", None)
+
+    if path:
+        if path.endswith("/"):
+            path = path[:-1]
+
+        shelf, *path = [s.strip() for s in path.split("/")]
+
+        if not shelf:
+            shelf = DEFAULT_SHELF_NAME
+    else:
+        shelf = DEFAULT_SHELF_NAME
+
+    return shelf, path
+
+
+def split_tags(json):
+    tags = json.get("tags", None)
+
+    if tags:
+        return [s.strip() for s in tags.split(",")]
+    else:
+        return []
+
+
 def query_user(db, name):
     rows = db(db.user.name.upper() == name.upper()).select()
 
@@ -101,7 +127,6 @@ def rename_shelf(db, user_id, json):
 
 # for use in CRUD API
 def delete_shelf(db, user_id, json):
-    print(json)
     name = json.get("name", None)
 
     if not name or name == DEFAULT_SHELF_NAME:
@@ -159,6 +184,58 @@ def get_group(db, shelf_id, name):
         return create_group(db, shelf_id, name)
 
 
+# for use in CRUD API
+def new_group(db, user_id, json):
+    shelf, path = split_path(json)
+
+    shelf = query_shelf(db, user_id, shelf)
+    group = None
+
+    if shelf:
+        group = get_group(db, shelf["id"], path)
+
+    if group:
+        db.commit()
+        return db(db.node.id == group["id"]).select()[0].as_json()
+    else:
+        return ""
+
+
+# for use in CRUD API
+def rename_group(db, user_id, json):
+    name = json.get("name", None)
+    new_name = json.get("new_name", None)
+
+    if not name:
+        return ""
+
+    if new_name:
+        group = query_group(db, user_id, name)
+        if group:
+            group.name = new_name
+            group.update_record()
+            db.commit()
+            return "{}"
+
+    return ""
+
+
+# for use in CRUD API
+def delete_group(db, user_id, json):
+    name = json.get("name", None)
+
+    if not name:
+        return ""
+
+    group = get_group(db, user_id, name)
+
+    if group:
+        group.delete_record()
+        db.commit()
+
+    return "{}"
+
+
 def query_tag(db, user_id, name):
     rows = db((db.tag.name.upper() == name.upper()) & (db.tag.user_id == user_id)).select()
 
@@ -178,32 +255,6 @@ def get_tag(db, user_id, name):
         return tag
     else:
         return create_tag(db, user_id, name)
-
-
-def split_path(json):
-    path = json.get("path", None)
-
-    if path:
-        if path.endswith("/"):
-            path = path[:-1]
-
-        shelf, *path = [s.strip() for s in path.split("/")]
-
-        if not shelf:
-            shelf = DEFAULT_SHELF_NAME
-    else:
-        shelf = DEFAULT_SHELF_NAME
-
-    return shelf, path
-
-
-def split_tags(json):
-    tags = json.get("tags", None)
-
-    if tags:
-        return [s.strip() for s in tags.split(",")]
-    else:
-        return []
 
 
 def add_bookmark(db, user_id, json, commit=True):
