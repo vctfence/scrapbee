@@ -101,6 +101,7 @@ def rename_shelf(db, user_id, json):
 
 # for use in CRUD API
 def delete_shelf(db, user_id, json):
+    print(json)
     name = json.get("name", None)
 
     if not name or name == DEFAULT_SHELF_NAME:
@@ -205,7 +206,7 @@ def split_tags(json):
         return []
 
 
-def add_bookmark(db, user_id, json):
+def add_bookmark(db, user_id, json, commit=True):
     name = json.get("name", None)
     uri = json.get("uri", None)
     icon = json.get("icon", None)
@@ -223,7 +224,8 @@ def add_bookmark(db, user_id, json):
     for t in tags:
         db.tag_to_node.insert(tag_id=t["id"], node_id=id)
 
-    db.commit()
+    if commit:
+        db.commit()
 
     return db(db.node.id == id).select()[0].as_json()
 

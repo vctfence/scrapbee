@@ -1,4 +1,3 @@
-import {BookTree} from "./tree.js";
 import {settings} from "./settings.js"
 import {Backend} from "./backend.js"
 import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
@@ -30,21 +29,6 @@ function genItemId(){
     return new Date().format("yyyyMMddhhmmss");
 }
 function saveRdf(){
-    log.info(`saving changes to rdf`);
-    var rdf=currTree.rdf;
-    $.post(settings.backend_url + "savefile", {filename:rdf, content: currTree.xmlSerialized()}, function(r){
-	msg_hub.send('RDF_EDITED', {windowId: windowId, rdf: rdf});
-	log.info(`save changes to rdf, done`);
-    });
-}
-function initRdf(rdf, callback){
-    var content = '<?xml version="1.0"?>\
-<RDF:RDF xmlns:NS1="scrapyard@126.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
-<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>\
-</RDF:RDF>';
-    $.post(settings.backend_url + "savefile", {filename:rdf, content: content}, function(r){
-	callback && callback();
-    });
 }
 function getCurrContainer(){
     var $container;
@@ -90,75 +74,83 @@ function showDlg(name, data, callback){
     });
     $dlg.find("input.button-ok").unbind(".dlg");
     $dlg.find("input.button-cancel").unbind(".dlg");
+    $dlg.find("input.dialog-input").first().focus();
     /** return promise object */
     var p = new Promise(function(resolve, reject){
-	$dlg.find("input.button-ok").bind("click.dlg", function(){
-	    var data = {};
-	    $dlg.find("input").each(function(){
-		if(this.name){
-		    if(this.type=="radio"){
-			if(this.checked)
-			    data[this.name] = $(this).val();
-		    }else{
-			data[this.name] = $(this).val();
-		    }
-		}
-	    })
-	    $dlg.remove();
-	    resolve(data);
-	    // callback && callback(data);
-	});
-	$dlg.find("input.button-cancel").bind("click.dlg", function(){
-	    $dlg.remove();
-	});
+        function proceed() {
+            var data = {};
+            $dlg.find("input").each(function(){
+                if(this.name){
+                    if(this.type=="radio"){
+                        if(this.checked)
+                            data[this.name] = $(this).val();
+                    }else{
+                        data[this.name] = $(this).val();
+                    }
+                }
+            })
+            $dlg.remove();
+            resolve(data);
+            // callback && callback(data);
+        }
+        $dlg.find("input.button-ok").bind("click.dlg", proceed);
+        $dlg.find("input.dialog-input").bind("keydown.dlg", ev => {
+            if (ev.key == "Enter")
+                proceed()
+            if (ev.key == "Escape")
+                $dlg.remove();
+        });
+        $dlg.find("input.button-cancel").bind("click.dlg", function(){
+           $dlg.remove();
+	    });
     });
     return p;
 }
-// function alert(title, message){
-//     return showDlg("alert", {title:title.translate(), message:message.translate()});
+function alert(title, message){
+   return showDlg("alert", {title:title.translate(), message:message.translate()});
+}
+function confirm(title, message){
+   return showDlg("confirm", {title:title.translate(), message:message.translate()});
+}
+// /* context menu listener */
+// var menulistener={};
+// menulistener.onDelete = function(){
+//     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
+// 	currTree.removeItem($(".item.focus"), function(){
+// 	    saveRdf(); // all done (all sub nodes removed)
+// 	});
+//     });
 // }
-// function confirm(title, message){
-//     return showDlg("confirm", {title:title.translate(), message:message.translate()});
+// menulistener.onCreateFolder = function(){
+//     showDlg("folder", {}).then(function(d){
+// 	var p;
+// 	if(d.pos == "root"){
+// 	    p = $(".root.folder-content");
+// 	}else{
+// 	    p = getCurrContainer();
+// 	}
+//     	currTree.createFolder(p, genItemId(), getCurrRefId(), d.title, true);
+//     	saveRdf();
+//     });
 // }
-/* context menu listener */
-var menulistener={};
-menulistener.onDelete = function(){
-    confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
-	currTree.removeItem($(".item.focus"), function(){
-	    saveRdf(); // all done (all sub nodes removed)
-	});
-    });
-}
-menulistener.onCreateFolder = function(){
-    showDlg("folder", {}).then(function(d){
-	var p;
-	if(d.pos == "root"){
-	    p = $(".root.folder-content");
-	}else{
-	    p = getCurrContainer(); 
-	}
-    	currTree.createFolder(p, genItemId(), getCurrRefId(), d.title, true);
-    	saveRdf();
-    });
-}
-menulistener.onCreateSeparator = function(){
-    currTree.createSeparator(getCurrContainer(), genItemId(), getCurrRefId(), true);
-}
-menulistener.onDebug = function(){}
-menulistener.onRename = function(){
-    if($(".item.focus").length){
-    	var $label = $(".item.focus label");
-    	var t0 = $(".item.focus").attr("title");
-	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}).then(function(d){
-	    var t1 = d.title.htmlEncode();
-	    if(t1 != t0){
-   		currTree.renameItem($(".item.focus"), t1, function(){
-    		    saveRdf();
-    		});
-	    }
-	});
-    }
-}
+// menulistener.onCreateSeparator = function(){
+//     currTree.createSeparator(getCurrContainer(), genItemId(), getCurrRefId(), true);
+// }
+// menulistener.onDebug = function(){}
+// menulistener.onRename = function(){
+//     if($(".item.focus").length){
+//     	var $label = $(".item.focus label");
+//     	var t0 = $(".item.focus").attr("title");
+// 	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}).then(function(d){
+// 	    var t1 = d.title.htmlEncode();
+// 	    if(t1 != t0){
+//    		currTree.renameItem($(".item.focus"), t1, function(){
+//     		    saveRdf();
+//     		});
+// 	    }
+// 	});
+//     }
+// }
 function showRdfList(){
     var lastRdf = settings.last_rdf;
     $("#listRdf").html("");
@@ -177,43 +169,43 @@ function showRdfList(){
     });
 }
 function applyColor(){
-    var id = "scrapyard_setting_style";
-    $("#"+id).remove();
-    var sheet = document.createElement('style');
-    sheet.id=id;
-
-    var item_h = parseInt(settings.font_size) * 1.4;
-    var origin_h = parseInt(settings.font_size) * 0.75;
-    var bg_color = settings.bg_color;
-
-    sheet.innerHTML = [
-	"*{color:", settings.font_color, "}",
-	".item.local, .item.folder{color:#", settings.font_color, "}",
-	".item.bookmark label{color:#", settings.bookmark_color, "}",
-	".toolbar{backgroud-color:#", settings.bg_color, "}",
-	"body{background:#", settings.bg_color, "}",
-        ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
-	".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
-        ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}",
-        `.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}`,
-        `.folder-content{margin-left:${item_h}px}`,
-        `.item .origin{background-size:${origin_h}px ${origin_h}px};`
-    ].join("");
-
-    document.body.appendChild(sheet);
+    // var id = "scrapyard_setting_style";
+    // $("#"+id).remove();
+    // var sheet = document.createElement('style');
+    // sheet.id=id;
+    //
+    // var item_h = parseInt(settings.font_size) * 1.4;
+    // var origin_h = parseInt(settings.font_size) * 0.75;
+    // var bg_color = settings.bg_color;
+    //
+    // sheet.innerHTML = [
+	// "*{color:", settings.font_color, "}",
+	// ".item.local, .item.folder{color:#", settings.font_color, "}",
+	// ".item.bookmark label{color:#", settings.bookmark_color, "}",
+	// ".toolbar{backgroud-color:#", settings.bg_color, "}",
+	// "body{background:#", settings.bg_color, "}",
+    //     ".toolbar{border-color:#", settings.separator_color, ";background:#", settings.bg_color, "}",
+	// ".item.separator{border-color:#", settings.bg_color, ";background:#", settings.separator_color, "}",
+    //     ".tool-button{", getColorFilter("#"+settings.font_color).filter, "}",
+    //     `.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;background-size:${item_h}px ${item_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}`,
+    //     //`.folder-content{margin-left:${item_h}px}`,
+    //     `.item .origin{background-size:${origin_h}px ${origin_h}px};`
+    // ].join("");
+    //
+    // document.body.appendChild(sheet);
 }
-window.addEventListener("storage", function(e){
-    if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
-	showRdfList();
-    }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
-	applyColor();
-    }else if(e.key == "last_rdf"){
-    }else if(e.key == "backend_port"){
-	msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
-	    loadAll();
-	});
-    }
-});
+// window.addEventListener("storage", function(e){
+//     if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
+// 	showRdfList();
+//     }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
+// 	applyColor();
+//     }else if(e.key == "last_rdf"){
+//     }else if(e.key == "backend_port"){
+// 	msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
+// 	    loadAll();
+// 	});
+//     }
+// });
 /* on page loaded */
 function loadAll(){    
     /** rdf list */
@@ -223,41 +215,22 @@ function loadAll(){
     });
 }
 
-function loadXml(rdf){
-    currTree=null;
-    if(!rdf)return;
-    $(".root.folder-content").html("{Loading...}".translate());
-    var rdf_path = rdf.replace(/[^\/\\]*$/, "");
-    var rdf_file = rdf.replace(/.*[\/\\]/, "");    
-    var xmlhttp=new XMLHttpRequest();
-    xmlhttp.onload = function(r) {
-	try{
-            var _begin = new Date().getTime();
-	    currTree = new BookTree(r.target.response, rdf)
-	    currTree.renderTree();
-            var cost = new Date().getTime() - _begin;
-            log.info(`rdf loaded in ${cost}ms`)
-	}catch(e){
-	    log.error(e.message)
-	}
-	currTree.onXmlChanged=function(){
-	    saveRdf();
-	}
-	currTree.onItemRemoved=function(id){
-	    $.post(settings.backend_url + "deletedir/", {path: rdf_path + "data/" + id}, function(r){});
-	}
-    };
-    xmlhttp.onerror = function(err) {
-	log.info(`load ${rdf} failed, ${err}`)
-    };
-    xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
-    xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
-    xmlhttp.setRequestHeader('cache-control', 'max-age=0');
-    xmlhttp.setRequestHeader('expires', '0');
-    xmlhttp.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
-    xmlhttp.setRequestHeader('pragma', 'no-cache');
-    xmlhttp.send();
+function populateTree(data) {
+    $("#treeview").jstree({
+        plugins : ["themes", "ui", "contextmenu"],
+        core: {
+            worker: false,
+            animation: 0,
+            data: data,
+            themes: {
+                name: "default",
+                dots: false,
+                icons: true,
+            }
+        }
+    });
 }
+
 function switchRdf(rdf){
     settings.set('last_rdf', rdf);
 
@@ -289,18 +262,7 @@ function switchRdf(rdf){
             $('#treeview').jstree(true).settings.core.data = nodes;
             $('#treeview').jstree(true).refresh();
 
-            $("#treeview").jstree({
-                //plugins: ["themes"],
-                core: {
-                    worker: false,
-                    data: nodes,
-                    themes: {
-                        name: "default",
-                        dots: false,
-                        icons: true
-                    }
-                }
-            });
+            populateTree(nodes);
         },
         error => {
             console.log(error);
@@ -364,52 +326,58 @@ function updateMenuItem(t){
 function withFocusedWindow(callback){
     browser.windows.getLastFocused().then((win) => callback(win));
 }
+
 /* receive message from background page */
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if(request.type == 'UPDATE_CONTEXTMENU_REQUEST'){
+    if (request.type == 'UPDATE_CONTEXTMENU_REQUEST') {
 
-    }else if(request.type == 'SAVE_CONTENT2'){
-	savePage2(request.path, request.title, request.content);
-    }else if(request.type == 'SAVE_CONTENT' && request.windowId == windowId){
-	savePage(request.itemId, request.content.title, request.content.html, request.content.css, request.content.res, function(){
-	    browser.tabs.sendMessage(sender.tab.id, {type: 'SAVE_CONTENT_FINISHED', itemId: request.itemId, title: request.content.title}, null);
-	});
-    }else if(request.type == 'GET_OTHER_INSTANCE_REQUEST'){
-	browser.runtime.sendMessage({session_id:request.session_id});
-    }else if(request.type == 'RDF_EDITED'){
-	if(request.content.rdf == currTree.rdf){
-	    alert("{Warning}", "{SAME_RDF_MODIFIED}").then(function(r){
-		loadXml(currTree.rdf);	
-	    });
-	}
-    }else if(request.type == 'SAVE_PAGE_SELECTION_REQUEST'){
-	if(currTree && currTree.rendered) {
-	    withFocusedWindow(function(win){
-		if(win.id == windowId)
-		    requestPageSaving(genItemId(), 'GET_PAGE_SELECTION_REQUEST');
-	    });
-	}else{
-	    log.error("rdf have not been loaded")
-	}
-    }else if(request.type == 'SAVE_PAGE_REQUEST'){
-	if(currTree && currTree.rendered) {
-	    withFocusedWindow(function(win){
-		if(win.id == windowId){
-		    requestPageSaving(genItemId(), 'GET_PAGE_REQUEST');
-		}
-	    });
-	}else{
-	    log.error("rdf have not been loaded")
-	}
-    }else if(request.type == 'SAVE_URL_REQUEST'){
-	if(currTree && currTree.rendered) {
-	    withFocusedWindow(function(win){
-		if(win.id == windowId)
-		    requestUrlSaving(genItemId());
-	    });
-	}else{
-	    log.error("rdf have not been loaded")
-	}
+    } else if (request.type == 'SAVE_CONTENT2') {
+        savePage2(request.path, request.title, request.content);
+    } else if (request.type == 'SAVE_CONTENT' && request.windowId == windowId) {
+        savePage(request.itemId, request.content.title, request.content.html,
+            request.content.css, request.content.res, function () {
+            browser.tabs.sendMessage(sender.tab.id, {
+                type: 'SAVE_CONTENT_FINISHED',
+                itemId: request.itemId,
+                title: request.content.title
+            }, null);
+        });
+    } else if (request.type == 'GET_OTHER_INSTANCE_REQUEST') {
+        browser.runtime.sendMessage({session_id: request.session_id});
+    } else if (request.type == 'RDF_EDITED') {
+        if (request.content.rdf == currTree.rdf) {
+            alert("{Warning}", "{SAME_RDF_MODIFIED}").then(function (r) {
+                //loadXml(currTree.rdf);
+            });
+        }
+    } else if (request.type == 'SAVE_PAGE_SELECTION_REQUEST') {
+        if (currTree && currTree.rendered) {
+            withFocusedWindow(function (win) {
+                if (win.id == windowId)
+                    requestPageSaving(genItemId(), 'GET_PAGE_SELECTION_REQUEST');
+            });
+        } else {
+            log.error("rdf have not been loaded")
+        }
+    } else if (request.type == 'SAVE_PAGE_REQUEST') {
+        if (currTree && currTree.rendered) {
+            withFocusedWindow(function (win) {
+                if (win.id == windowId) {
+                    requestPageSaving(genItemId(), 'GET_PAGE_REQUEST');
+                }
+            });
+        } else {
+            log.error("rdf have not been loaded")
+        }
+    } else if (request.type == 'SAVE_URL_REQUEST') {
+        if (currTree && currTree.rendered) {
+            withFocusedWindow(function (win) {
+                if (win.id == windowId)
+                    requestUrlSaving(genItemId());
+            });
+        } else {
+            log.error("rdf have not been loaded")
+        }
     }
 });
 msg_hub.send('GET_OTHER_INSTANCE_REQUEST', '', function(response){
@@ -493,22 +461,18 @@ window.onload=function(){
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
-        // window.open("options.html", "_scrapyard_option")
         browser.tabs.create({
             "url": "options.html"
         });
-        // runtime.openOptionsPage()
     }
     var btn = document.getElementById("btnHelp");
     btn.onclick = function(){
-        // window.open("options.html#help", "_scrapyard_option")
         browser.tabs.create({
             "url": "options.html#help"
         });
     }
     var btn = document.getElementById("btnSearch");
     btn.onclick = function(){
-        // window.open("search.html", "_scrapyard_search")
         browser.tabs.create({
             "url": "search.html"
         });
@@ -516,32 +480,36 @@ window.onload=function(){
 
     $("#shelf-menu-button").click(() => {$("#shelf-menu").toggle()});
     $("#shelf-menu-create").click(() => {
-        let name = prompt("Enter shelf name");
 
-        if (name) {
-            let existingOption = $(`#listRdf option:contains("${name}")`);
-            let selectedOption = $("#listRdf option:selected");
+        showDlg("prompt").then(data => {
+            let name;
+            if (name = data.title) {
+                let existingOption = $(`#listRdf option:contains("${name}")`);
+                let selectedOption = $("#listRdf option:selected");
 
-            if (existingOption.length) {
-                selectedOption.removeAttr("selected");
-                existingOption.attr("selected", true);
+                if (existingOption.length) {
+                    selectedOption.removeAttr("selected");
+                    existingOption.attr("selected", true);
 
-                // TODO: add tree switching
-            }
+                    // TODO: add tree switching
+                }
 
-            if (name !== DEFAULT_SHELF_NAME) {
-                backend.httpPost("/api/create/shelf", {"name": name}, (shelf) => {
-                        if (shelf) {
-                            selectedOption.removeAttr("selected");
-                            $("<option></option>").appendTo($("#listRdf"))
-                                .html(shelf.name)
-                                .attr("value", shelf.id)
-                                .attr("selected", true);
+                if (name !== DEFAULT_SHELF_NAME) {
+                    backend.httpPost("/api/create/shelf", {"name": name}, (shelf) => {
+                            if (shelf) {
+                                selectedOption.removeAttr("selected");
+                                $("<option></option>").appendTo($("#listRdf"))
+                                    .html(shelf.name)
+                                    .attr("value", shelf.id)
+                                    .attr("selected", true);
+
+                                switchRdf(shelf.id);
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
-        }
+        });
     });
 
     $("#shelf-menu-rename").click(() => {
@@ -550,17 +518,18 @@ window.onload=function(){
 
         if (name && name !== DEFAULT_SHELF_NAME) {
             // TODO: 118n
-            let newName = prompt("Enter new name for '" + name + "'");
-
-            if (newName) {
-                backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
-                        selectedOption.html(newName);
-                    },
-                    e => {
-                        console.log(JSON.stringify(e))
-                    }
-                );
-            }
+            showDlg("prompt").then(data => {
+                let newName;
+                if (newName = data.title) {
+                    backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
+                            selectedOption.html(newName);
+                        },
+                        e => {
+                            console.log(JSON.stringify(e))
+                        }
+                    );
+                }
+            });
         }
 
     });
@@ -570,46 +539,39 @@ window.onload=function(){
         let name = selectedOption.text();
 
         // TODO: 118n
-        if (confirm("Do you really want to delete '" + name + "'"))
+        confirm( "{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
             if (name && name !== DEFAULT_SHELF_NAME) {
                 backend.httpPost("/api/delete/shelf", {"name": name}, () => {
+                        let prevItem = null;
+                        let found = false;
+                        $("#listRdf option").each((i, o) => {
+                            if (found) {
+                                return;
+                            }
+
+                            if (o.value === selectedOption.val()) {
+                                found = true;
+                                return;
+                            }
+                            prevItem = o;
+                        });
+
+                        selectedOption.removeAttr("selected");
+                        if (prevItem) {
+                            $(prevItem).attr("selected", true);
+                            switchRdf(prevItem.value);
+                        }
                         selectedOption.remove();
                     },
-                    e => {console.log(JSON.stringify(e))}
+                    e => {
+                        console.log(JSON.stringify(e))
+                    }
                 );
             }
+        });
     });
 
-
-    $("#treeview").jstree({
-        //plugins: ["themes"],
-        core: {
-            worker: false,
-            animation: 0,
-            themes: {
-                name: "default",
-                dots: false,
-                icons: true,
-            }
-        }
-    });
-
-    // $(".i18n").each(function(i, item){
-    // 	if(/i18n-(\w+)/.test(item.className)){
-    // 	    item[RegExp.$1] = browser.i18n.getMessage(item[RegExp.$1]) || item[RegExp.$1];
-    // 	}
-    // });
-    // $("menuitem").click(function(e){
-    // var listener = menulistener[this.id.replace(/^menu/, "on")];
-    // listener && listener();
-    // });
-
-    /**  */
-    applyColor();
-
-    // browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST'});
-    //msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
+    populateTree();
     loadAll();
-    // });
-}
+};
 console.log("==> main.js loaded");

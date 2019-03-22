@@ -23,7 +23,6 @@ def run_locally():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=['run_locally', 'import', 'user_add', 'user_reset', 'user_delete'])
-    parser.add_argument('--format')
     parser.add_argument('--file')
     parser.add_argument('--user')
     args = parser.parse_args()
@@ -36,10 +35,10 @@ if __name__ == "__main__":
                 print("No file specified.")
                 sys.exit(-1)
 
-            with open(args.file, 'r', encoding="utf-8") as org:
-                user = args.user
-                shelf = os.path.splitext(os.path.basename(args.file))[0]
+            user = args.user
+            file, ext = os.path.splitext(os.path.basename(args.file))
 
-                content = org.read()
-                imports.import_org(args.user, shelf, content)
+            if ".org" == ext:
+                with open(args.file, 'r', encoding="utf-8") as org:
+                    imports.import_org(args.user, file, org.read())
 

@@ -1,0 +1,28 @@
+#treeview {
+    overflow-x: hidden;
+}
+.jstree-default .jstree-node {
+    margin-left: 16px;
+    min-width: 16px;
+}
+.jstree-default .jstree-icon:empty {
+    width: 16px;
+    height: 16px;
+    line-height: 24px;
+    margin-top: 4px;
+}
+.jstree-default > .jstree-no-dots .jstree-open > .jstree-ocl {
+    background-position: -40px -8px;
+}
+.jstree-default > .jstree-no-dots .jstree-closed > .jstree-ocl {
+    background-position: -8px -8px;
+}
+.jstree-default .jstree-themeicon {
+    margin-right: 4px;
+}
+.jstree-default .jstree-clicked {
+    background: #ddd;
+}
+.jstree-default .jstree-hovered {
+    background: #eee;
+}

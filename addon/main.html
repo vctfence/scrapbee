@@ -1,7 +1,7 @@
 <html>
-  <head>
+<head>
     <title></title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <!-- HTTP 1.1 -->
     <meta http-equiv="pragma" content="no-cache">
     <!-- HTTP 1.0 -->
@@ -11,165 +11,127 @@
     <link rel="stylesheet" type="text/css" href="main.css" media="screen"/>
     <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
     <script type="text/javascript" src="libs/jstree/jstree.js"></script>
-    <script type="text/javascript" src="message.js"></script>    
+    <script type="text/javascript" src="message.js"></script>
     <script type="text/javascript" src="libs/md5.js"></script>
     <script type="text/javascript" src="proto.js"></script>
     <script type="module" src="main.js"></script>
 
-    <link rel="stylesheet" href="libs/jstree/themes/default/style.min.css" />
-    <style>
-        #treeview {
-            overflow-x: hidden;
-        }
-        .jstree-default .jstree-node {
-            margin-left: 16px;
-            min-width: 16px;
-        }
-        .jstree-default .jstree-icon:empty {
-            width: 16px;
-            height: 16px;
-            line-height: 24px;
-            margin-top: 4px;
-        }
-        .jstree-default > .jstree-no-dots .jstree-open > .jstree-ocl {
-            background-position: -40px -8px;
-        }
-        .jstree-default > .jstree-no-dots .jstree-closed > .jstree-ocl {
-            background-position: -8px -8px;
-        }
-        .jstree-default .jstree-themeicon {
-            margin-right: 4px;
-        }
-        .folder-content.root {
-            margin: 6px;
-            margin-top: 55px;
-        }
-    </style>
-  </head>
-  <body contextmenu="popup-menu-body">
-    <div style="" class="toolbar table">
-      <div class="table-row">
-        <div class="table-cell">
-          <img class="tool-button" src="icons/reload.svg" title="{Reload}" id="btnLoad"/>
-          <img class="tool-button" src="icons/search.svg" title="{Search}" id="btnSearch"/>
-          <img class="tool-button" src="icons/settings.svg" title="{Setting}" id="btnSet"/>
-          <img class="tool-button" src="icons/help.svg" title="{Help}" id="btnHelp"/>
-          <!--a href="options.html#donate" style="color:blue;font-size:9px;text-transform:uppercase;" target="_blank">{DONATE}</a-->
+    <link rel="stylesheet" href="libs/jstree/themes/default/style.min.css"/>
+    <link rel="stylesheet" href="jstree.css"/>
+</head>
+<body contextmenu="popup-menu-body">
+<div id="main-container">
+    <div id="flex-container">
+        <div id="toolbar" style="" class="toolbar table">
+            <div class="dlg-cover dlg-confirm" style="display:none;">
+                <div class="dlg">
+                    <div class="dlg-box">
+                        <div class="dlg-title">[title]</div>
+                        <div class="dlg-table" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="cell">[message]</div>
+                            </div>
+                            <div class="row">
+                                <div class="cell" style="text-align:center;">
+                                    <input type="button" class="button-ok" value="{DLG_OK}" />
+                                    <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dlg-cover dlg-alert" style="display:none;">
+                <div class="dlg">
+                    <div class="dlg-box">
+                        <div class="dlg-title">[title]</div>
+                        <div class="dlg-table" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="cell">[message]</div>
+                            </div>
+                            <div class="row">
+                                <div class="cell" style="text-align:center;">
+                                    <input type="button" class="button-ok" value="OK"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dlg-cover dlg-folder" style="display:none;">
+                <div class="dlg">
+                    <div class="dlg-box">
+                        <div class="dlg-title">{New Folder}</div>
+                        <div class="dlg-table" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="cell" style="width:50px;text-align:right;">{Title}</div>
+                                <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
+                            </div>
+                            <div class="row">
+                                <div class="cell"></div>
+                                <div class="cell">
+                                    <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
+                                    <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="cell"></div>
+                                <div class="cell">
+                                    <input type="button" class="button-ok" value="{DLG_OK}"/>
+                                    <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dlg-cover dlg-prompt" style="display:none;">
+                <div class="dlg">
+                    <div class="dlg-box">
+                        <div class="dlg-title i18n i18n-innerHTML">{Rename}</div>
+                        <div class="dlg-table" style="overflow:hidden;">
+                            <div class="row">
+                                <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Title}</div>
+                                <div class="cell"><input class="dialog-input" type="" name="title" value=""
+                                                         style="width:100%"/></div>
+                            </div>
+                            <div class="row"
+                                 style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
+                                <div class="cell"></div>
+                                <div class="cell">
+                                    <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
+                                    <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-row">
+                <div class="table-cell">
+                    <img class="tool-button" src="icons/reload.svg" title="{Reload}" id="btnLoad"/>
+                    <img class="tool-button" src="icons/search.svg" title="{Search}" id="btnSearch"/>
+                    <img class="tool-button" src="icons/settings.svg" title="{Setting}" id="btnSet"/>
+                    <img class="tool-button" src="icons/help.svg" title="{Help}" id="btnHelp"/>
+                    <!--a href="options.html#donate" style="color:blue;font-size:9px;text-transform:uppercase;" target="_blank">{DONATE}</a-->
+                </div>
+                <div style="text-align:right;">
+                    Shelf:
+                    <select id="listRdf" autocomplete="off" style="display:"></select>
+                    <input id="shelf-menu-button" type="button" name="dropRdf" value="&#9660" style="height: 23px;"
+                           class="black-button"/>
+                    <div id="shelf-menu" class="simple-menu" style="display:none">
+                        <div id="shelf-menu-create">Create</div>
+                        <div id="shelf-menu-rename">Rename</div>
+                        <div id="shelf-menu-delete">Delete</div>
+                    </div>
+                    <!--img class="tool-button" src="icons/openfolder.svg" class="" title="{Open Folder}" id="btnFileManager"/-->
+                </div>
+            </div>
         </div>
-        <div style="text-align:right;">
-          Shelf:
-          <select id="listRdf" autocomplete="off" style="display:"></select>
-          <input id="shelf-menu-button" type="button" name="dropRdf" value="&#9660" style="height: 23px;" class="black-button"/>
-          <div id="shelf-menu" class="simple-menu" style="display:none">
-            <div id="shelf-menu-create">Create</div>
-            <div id="shelf-menu-rename">Rename</div>
-            <div id="shelf-menu-delete">Delete</div>
-          </div>
-          <!--img class="tool-button" src="icons/openfolder.svg" class="" title="{Open Folder}" id="btnFileManager"/-->
-        </div>
-      </div>
+        <div id="treeview-container"><div id="treeview" class="root folder-content i18n">{Loading...}</div></div>
     </div>
-    <div class="dlg-cover dlg-confirm" style="display:none;">
-      <div class="dlg">
-        <div class="dlg-box">
-          <div class="dlg-title">[title]</div>
-          <div class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell">[message]</div>
-            </div>
-            <div class="row">
-              <div class="cell" style="text-align:center;">
-                <input type="button" class="button-ok" value="{DLG_OK}"" />
-                <input type="button" class="button-cancel" value="{DLG_CANCEL}"" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dlg-cover dlg-alert" style="display:none;">
-      <div class="dlg">
-        <div class="dlg-box">
-          <div class="dlg-title">[title]</div>
-          <div class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell">[message]</div>
-            </div>
-            <div class="row">
-              <div class="cell" style="text-align:center;">
-                <input type="button" class="button-ok" value="OK" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dlg-cover dlg-folder" style="display:none;">
-      <div class="dlg">
-        <div class="dlg-box">
-          <div class="dlg-title">{New Folder}</div>
-          <div class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell" style="width:50px;text-align:right;">{Title}</div>
-              <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
-            </div>
-            <div class="row">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
-                <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="button" class="button-ok" value="{DLG_OK}" />
-                <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dlg-cover dlg-prompt" style="display:none;">
-      <div class="dlg">
-        <div class="dlg-box">
-          <div class="dlg-title i18n i18n-innerHTML">{Rename}</div>
-          <div class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Title}</div>
-              <div class="cell"><input type="" name="title" value="" style="width:100%"/></div>
-            </div>
-            <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
-                <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="treeview" class="root folder-content i18n">{Loading...}</div>
-    <menu type="context" id="popup-menu-folder">
-      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png" class="i18n i18n-label"></menuitem> -->
-      <menuitem id="menuRename" label="{Rename}" icon="icons/rename.svg" class="i18n i18n-label"></menuitem>
-      <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg" class="i18n i18n-label"></menuitem>
-      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg" class="i18n i18n-label"></menuitem>
-      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg" class="i18n i18n-label"></menuitem>
-    </menu>
-    <menu type="context" id="popup-menu-link">
-      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png" class="i18n i18n-label"></menuitem> -->
-      <menuitem id="menuRename" label="{Rename}"" icon="icons/rename.svg" class="i18n i18n-label"></menuitem>
-      <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg" class="i18n i18n-label"></menuitem>
-      <!-- <menu label="Modify" id="menuModify"></menu> -->
-      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg" class="i18n i18n-label"></menuitem>
-      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg" class="i18n i18n-label"></menuitem>
-    </menu>
-    <menu type="context" id="popup-menu-body">
-      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg" class="i18n i18n-label"></menuitem>
-      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg" class="i18n i18n-label"></menuitem>
-    </menu>
-  </body>
+</div>
+</body>
 </html>
