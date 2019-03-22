@@ -276,11 +276,11 @@ function switchRdf(rdf){
                 if (!n.parent)
                     n.parent = "#";
 
-                n.li_attr = { "class": "show_tooltip",
-                              "title": `${n.text}\x0A${n.uri}` };
-
                 if (n.type == 1)
                     n.icon = "/icons/group.svg";
+                else
+                    n.li_attr = { "class": "show_tooltip",
+                                  "title": `${n.text}\x0A${n.uri}` };
 
                 if (!n.icon)
                     n.icon = "/icons/homepage.png";
@@ -585,10 +585,11 @@ window.onload=function(){
         //plugins: ["themes"],
         core: {
             worker: false,
+            animation: 0,
             themes: {
                 name: "default",
                 dots: false,
-                icons: true
+                icons: true,
             }
         }
     });

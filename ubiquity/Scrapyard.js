@@ -4,6 +4,8 @@
 const SCRAPYARD_BACKEND = "http://localhost:31800";
 const SCRAPYARD_USER = "default:default";
 
+const DEFAULT_OUTPUT_LIMIT = 50;
+
 
 function scrapyardGet(path, success, error) {
     return $.ajax(SCRAPYARD_BACKEND + path, {
@@ -129,6 +131,9 @@ function unpackArgs(args) {
         limit: args.cause && args.cause.text? args.cause.text: null,
         type:  args.format && args.format.text? args.format.data: null,
     };
+
+    if (!result.limit)
+        result.limit = DEFAULT_OUTPUT_LIMIT;
     
     for (let k of Object.keys(result)) {
         if (!result[k])

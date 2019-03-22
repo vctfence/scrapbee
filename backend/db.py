@@ -12,8 +12,6 @@ NODE_TYPE_ARCHIVE = 3
 
 DEFAULT_SHELF_NAME = "default"
 
-DEFAULT_OUTPUT_LIMIT = 50
-
 
 def open():
     db = DAL('sqlite://' + config.SCRAPYARD_INDEX_PATH, migrate_enabled=False)
@@ -115,7 +113,6 @@ def delete_shelf(db, user_id, json):
         db.commit()
 
     return "{}"
-
 
 
 def query_group(db, shelf_id, path):
@@ -233,7 +230,7 @@ def add_bookmark(db, user_id, json):
 
 def list_nodes(db, user_id, json):
     search = json.get("search", None)
-    limit = json.get("limit", DEFAULT_OUTPUT_LIMIT)
+    limit = json.get("limit", None)
     depth = json.get("depth", "subtree")
     type = json.get("type", None)
     path = json.get("path", None)
@@ -287,7 +284,8 @@ def list_nodes(db, user_id, json):
     if tags:
         sql += " and tag_to_node.tag_id in {}".format(tags)
 
-    sql += " limit {}".format(limit)
+    if limit:
+        sql += " limit {}".format(limit)
 
     #print(sql)
 

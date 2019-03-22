@@ -15,7 +15,7 @@ Content-Type: application/json
 X-Scrapyard-Auth: default:default
 
 {
-    "name": "cadabra cadabra cadabrac adabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra cadabra"
+    "name": "example node"
     ,"uri": "https://example.com"
     ,"path": "/example/category"
     ,"tags": "test,example"
@@ -28,9 +28,9 @@ Content-Type: application/json
 X-Scrapyard-Auth: default:default
 
 {
-    "path": "/example/category"
+    "path": "art"
 #    ,"tags": "test,example"
-    ,"type": 2
+#    ,"type": 2
 }
 
 ###
@@ -40,12 +40,12 @@ X-Scrapyard-Auth: default:default
 
 ###
 
-GET http://localhost:31800/api/list/groups
+GET http://localhost:31800/api/completion/groups
 X-Scrapyard-Auth: default:default
 
 ###
 
-GET http://localhost:31800/api/list/tags
+GET http://localhost:31800/api/completion/tags
 X-Scrapyard-Auth: default:default
 
 ###
