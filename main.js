@@ -183,7 +183,7 @@ function applyColor(){
     sheet.id=id;
 
     var item_h = parseInt(settings.font_size) * 1.6;
-    var icon_h = parseInt(settings.font_size) * 1.3;
+    var icon_h = parseInt(settings.font_size) * 1.5;
     var origin_h = parseInt(settings.font_size) * 0.85;
     var bg_color = settings.bg_color;
     var filter = getColorFilter("#"+settings.font_color).filter;
@@ -207,8 +207,10 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-h
 .drop-button{border: 1px solid #${settings.font_color}}
 .drop-button .label{color:#${settings.font_color}}
 .drop-button .button{border-left:1px solid #${settings.font_color}; color:#${settings.font_color}}
-.item .origin{${filter}}`
-    
+.item .origin{${filter}}
+.tool-button:hover,.item.folder.focus label,.item.local.focus label,.simple-menu div:hover{background-color:#${settings.selection_color}}
+`
+
     document.body.appendChild(sheet);
 }
 window.addEventListener("storage", function(e){

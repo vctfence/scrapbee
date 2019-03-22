@@ -148,6 +148,9 @@
     "BOOKMARK_TEXT": {
         "message": "书签文本"
     },
+    "SELECTED_ITEM": {
+        "message": "选中项"
+    },
     "ENTITY_SIZE": {
         "message": "条目大小"
     },
@@ -158,7 +161,7 @@
         "message": "分隔符"
     },
     "RDF_FILES_TIP": {
-        "message": "设置rdf文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到rdf文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)<br> 或者：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个rdf文件来实现{Scrap}的分类，可以在同一文件夹下放置多个rdf文件，不需要手工创建这些文件。<br/><br/> ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的rdf文件，这对于使用过ScrapBook的用户是一个好消息。<br> <i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>如果您喜欢ScrapBee, 请评个5星</i></a>"
+        "message": "设置rdf文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到rdf文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)<br> 或者：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个rdf文件来实现{Scrap}的分类，可以在同一文件夹下放置多个rdf文件，不需要手工创建这些文件。<br/><br/> ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的rdf文件，这对于使用过ScrapBook的用户是一个好消息。"
     },
     "BACKEND_PORT_TIP":{
         "message": "后端程序监听的TCP端口，比如9900"
@@ -188,7 +191,7 @@
         "message": "点击条目时，ScrapBook默认在新标签页中打开{Scrap}，<br>如果按住Control(苹果系统中使用Meta)，则在当前标签中打开，<br>你可以通过此选项来切换两种操作"
     },
     "DONATE_WORDS":{
-        "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!"
+        "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!<br><i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>如果您喜欢ScrapBee, 请评个5星</i></a>"
     },
     "MORE_DONATE_WAY_TOGGLE":{
         "message": "其它方式"

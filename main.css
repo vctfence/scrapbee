@@ -70,7 +70,7 @@ html,body{
     display: inline-block;
     padding:1px 2px;
     border-radius:3px;
-        vertical-align:top;
+    vertical-align:top;
     /* background-color:#ccc; */
     /* color:#000; */
 }
@@ -85,7 +85,6 @@ html,body{
     /* width:-moz-fit-content; */
     vertical-align:top;
     padding-left:20px;
-    margin-left:5px;
     display:inline-block;
     background:url(icons/online.svg);
     background-repeat:no-repeat;
@@ -240,42 +239,24 @@ html,body{
     mask-image:url(icons/openfolder.svg);
 }
 .tool-button.set:hover{
-    background-size:22px 22px;
-    mask-repeat:no-repeat;
     background-image:url(icons/settings.svg);
-    background-color:#777;
-    mask-image:none;
-    border-radius:11px;
 }
 .tool-button.help:hover{
-    background-size:22px 22px;
-    mask-repeat:no-repeat;
     background-image:url(icons/help.svg);
-    background-color:#777;
-    mask-image:none;
-    border-radius:11px;
 }
 .tool-button.reload:hover{
-    background-size:22px 22px;
-    mask-repeat:no-repeat;
     background-image:url(icons/reload.svg);
-    background-color:#777;
-    mask-image:none;
-    border-radius:11px;
 }
 .tool-button.search:hover{
-    background-size:22px 22px;
-    mask-repeat:no-repeat;
     background-image:url(icons/search.svg);
-    background-color:#777;
-    mask-image:none;
-    border-radius:11px;
 }
 .tool-button.open:hover{
+    background-image:url(icons/openfolder.svg);
+}
+.tool-button:hover{
     background-size:22px 22px;
     mask-repeat:no-repeat;
-    background-image:url(icons/openfolder.svg);
-    background-color:#777;
+    background-color:#700;
     mask-image:none;
     border-radius:11px;
 }
@@ -326,7 +307,7 @@ select{
     font-size:16px;
 }
 .simple-menu div:hover{
-    background:#555;
+    background-color:#555;
     color:#fff;
 }
 /* */

@@ -36,7 +36,6 @@ window.onload=function(){
     }, function(){
         $(this).next(".tips.hide").hide();
     });
-
     
     /** more donation */
     if($.trim($("#divMoreDonateWay>div").text())){
@@ -78,6 +77,7 @@ ${FILE_I18N} <input type="text" name="value"/> \
             settings.set('font_color', $("input[name=font_color]").val().replace("#", ""));
             settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""));
             settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""));
+            settings.set('selection_color', $("input[name=selection_color]").val().replace("#", ""));
             settings.set('font_size', ($("input[name=font_size]").val() / 100) * 12);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
             alert("Save success")
@@ -100,6 +100,7 @@ ${FILE_I18N} <input type="text" name="value"/> \
     $("input[name=bookmark_color]").val(settings.bookmark_color.replace("#", ""));
     $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
     $("input[name=backend_port]").val(settings.backend_port);
+    $("input[name=selection_color]").val(settings.selection_color);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")
     if(settings.backend_path){
         $("#txtBackendPath").show();

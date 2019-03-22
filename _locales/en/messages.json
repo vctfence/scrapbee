@@ -148,6 +148,9 @@
     "BOOKMARK_TEXT": {
         "message": "Bookmark text"
     },
+    "SELECTED_ITEM": {
+        "message": "Selected Item"
+    },
     "ENTITY_SIZE": {
         "message": "Entity Size"
     },    
