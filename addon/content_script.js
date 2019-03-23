@@ -30,7 +30,7 @@ function lockListener(event){
 function lock(){
     if(!$("#scrapyard-waiting").length){
         var $cover = $("<div id='scrapyard-waiting'></div>").appendTo(document.body)
-        $cover.css({"background-image":"url("+browser.extension.getURL("icons/bee-waiting.svg")+")"})
+        $cover.css({"background-image":"url("+browser.extension.getURL("icons/scrapyard.svg")+")"})
         window.addEventListener("beforeunload", lockListener);
         return true;
     }

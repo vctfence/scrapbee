@@ -24,7 +24,7 @@ def import_org(user, shelf, content):
             "uri": uri,
             "path": path,
             "tags": ",".join(node.tags) if node.tags else None
-        })
+        }, commit=False)
         print(path + "/" + name)
 
     def import_nodes(path, nodes):
@@ -39,6 +39,7 @@ def import_org(user, shelf, content):
         tree = PyOrgMode.OrgDataStructure()
         tree.load_from_string(content)
         import_nodes(shelf, tree.root.content)
+        data.commit()
     else:
         print("User '" + user + "' not found.")
 

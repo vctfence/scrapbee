@@ -206,6 +206,32 @@ def delete_group():
     return db.delete_group(g.db, g.user_id, request.json)
 
 
+@app.route('/api/nodes/copy', methods=["POST"])
+@authenticated
+def copy_nodes():
+    """ Copies nodes to the destination
+
+        Accepts JSON:
+
+        :nodes: array of UUIDs of the nodes to copy 
+        :dest:  UUID of the destination node
+
+        :returns: database records of the newly created nodes"""
+    return db.copy_nodes(g.db, g.user_id, request.json)
+
+
+@app.route('/api/nodes/move', methods=["POST"])
+@authenticated
+def move_nodes():
+    """ Moves nodes to the destination
+
+        Accepts JSON:
+
+        :nodes: array of UUIDs of the nodes to move 
+        :dest:  UUID of the destination node"""
+    return db.move_nodes(g.db, g.user_id, request.json)
+
+
 class Httpd(threading.Thread):
 
     def __init__(self, app):

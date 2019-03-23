@@ -386,3 +386,89 @@ def list_tags(db, user_id):
         return serializer.dumps([{"name": r["name"]} for r in rows])
     else:
         return "[]"
+
+
+def rename_existing(db, node, dest_id):
+    children = db(db.node.parent_id == dest_id).select()
+    existing = [e for e in children if e.name.upper() == node.name.upper()]
+
+    if existing:
+        node.name += "*"
+
+
+def copy_nodes(db, user_id, json):
+    nodes = json.get("nodes", None)
+    dest = json.get("dest", None)
+
+    if nodes and dest:
+        result = []
+
+        dest_node = db(db.node.uuid == dest).select()[0]
+
+        def do_copy(node, parent):
+            children = db(db.node.parent_id == node.id).select()
+
+            del node["id"]
+            del node["uuid"]
+            node["parent_id"] = parent.id
+            node["shelf_id"] = dest_node["shelf_id"]
+
+            if node.type == NODE_TYPE_GROUP:
+                node["path"] = parent["path"] + "/" + node["name"]
+
+            id = db["node"].insert(**node)
+            new_node = db(db.node.id == id).select()[0]
+
+            result.append(new_node)
+
+            if children:
+                for c in children:
+                    do_copy(c, new_node)
+
+        for n in db(db.node.uuid.belongs(nodes)).select():
+            rename_existing(db, n, dest_node.id)
+            do_copy(n, dest_node)
+
+        db.commit()
+
+        return "[" + ",".join([n.as_json() for n in result]) + "]"
+
+    return ""
+
+
+def move_nodes(db, user_id, json):
+    nodes = json.get("nodes", None)
+    dest = json.get("dest", None)
+
+    if nodes and dest:
+        result = []
+
+        dest_node = db(db.node.uuid == dest).select()[0]
+
+        def do_move(node, parent):
+            node["parent_id"] = parent["id"]
+            node["shelf_id"] = parent["shelf_id"]
+
+            if node.type == NODE_TYPE_GROUP:
+                node["path"] = parent["path"] + "/" + node["name"]
+
+            node.update_record()
+
+            result.append(node)
+
+            children = db(db.node.parent_id == node.id).select()
+            if children:
+                for c in children:
+                    do_move(c, node)
+
+        for n in db(db.node.uuid.belongs(nodes)).select():
+            rename_existing(db, n, dest_node.id)
+            do_move(n, dest_node)
+
+        db.commit()
+        return "[" + ",".join([n.as_json() for n in result]) + "]"
+
+    return ""
+
+
+

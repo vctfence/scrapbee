@@ -17,7 +17,7 @@ X-Scrapyard-Auth: default:default
 {
     "name": "example node"
     ,"uri": "https://example.com"
-    ,"path": "/example/category"
+    ,"path": "example/category"
     ,"tags": "test,example"
 }
 
@@ -28,7 +28,7 @@ Content-Type: application/json
 X-Scrapyard-Auth: default:default
 
 {
-    "path": "art"
+    "path": "misk"
 #    ,"tags": "test,example"
 #    ,"type": 2
 }
@@ -47,5 +47,17 @@ X-Scrapyard-Auth: default:default
 
 GET http://localhost:31800/api/completion/tags
 X-Scrapyard-Auth: default:default
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["FCBE280D977CCCAB936558B89B584C04"],
+    "dest": "20D939B0734E64F9A0818C26DCB61091"
+
+}
 
 ###
