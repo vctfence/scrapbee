@@ -390,10 +390,14 @@ def list_tags(db, user_id):
 
 def rename_existing(db, node, dest_id):
     children = db(db.node.parent_id == dest_id).select()
-    existing = [e for e in children if e.name.upper() == node.name.upper()]
+    original = node.name
+    existing = [e.name for e in children if e.name.upper() == original.upper()]
 
-    if existing:
-        node.name += "*"
+    n = 1
+    while existing:
+        node.name = original + " (" + str(n) + ")"
+        n += 1
+        existing = [e.name for e in children if e.name.upper() == node.name.upper()]
 
 
 def copy_nodes(db, user_id, json):
@@ -430,7 +434,6 @@ def copy_nodes(db, user_id, json):
             do_copy(n, dest_node)
 
         db.commit()
-
         return "[" + ",".join([n.as_json() for n in result]) + "]"
 
     return ""

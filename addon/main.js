@@ -3,9 +3,12 @@ import {Backend} from "./backend.js"
 import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
+const NODE_TYPE_SHELF = 0;
 const NODE_TYPE_FOLDER = 1;
 const NODE_TYPE_BOOKMARK = 2;
 const NODE_TYPE_ARCHIVE = 2;
+
+const SHELF_NODE_ROOT_ID = "%root%"
 
 var currTree;
 var windowId;
@@ -258,32 +261,51 @@ function customMenu(node) { // TODO: i18n
         },
         propertiesItem: {
             separator_before: true,
-            label: "Properties",
+            label: "Properties...",
             action: function () {
-
+                switch (node.original.type) {
+                    case NODE_TYPE_BOOKMARK:
+                        break;
+                }
+            }
+        },
+        renameItem: {
+            separator_before: true,
+            label: "Rename",
+            action: function () {
+                switch (node.original.type) {
+                    case NODE_TYPE_SHELF:
+                        $("#shelf-menu-rename").click();
+                        break;
+                }
             }
         }
     };
 
-    switch (node.original.type) {
-        case NODE_TYPE_FOLDER:
-            delete items.openItem;
-            delete items.openOriginalItem;
-            delete items.todoItem;
-            break;
-        case NODE_TYPE_ARCHIVE:
-            delete items.openAllItem;
-        case NODE_TYPE_BOOKMARK:
-            delete items.openAllItem;
-            delete items.sortItem;
-            delete items.openOriginalItem;
-            delete items.newFolderItem;
-            break;
-    }
+    console.log(node)
 
-    if ($(node).hasClass("folder")) {
-        // Delete the "delete" menu item
-        delete items.deleteItem;
+    if (node.original.type !== NODE_TYPE_SHELF) {
+        switch (node.original.type) {
+            case NODE_TYPE_FOLDER:
+                delete items.openItem;
+                delete items.openOriginalItem;
+                delete items.todoItem;
+                delete items.propertiesItem;
+                break;
+            case NODE_TYPE_ARCHIVE:
+            case NODE_TYPE_BOOKMARK:
+                delete items.openAllItem;
+                delete items.sortItem;
+                delete items.openOriginalItem;
+                delete items.newFolderItem;
+                delete items.renameItem;
+                break;
+        }
+    }
+    else {
+        for (let k in items)
+            if (!["newFolderItem", "renameItem"].find(s => s === k))
+                delete items[k];
     }
 
     return items;
@@ -363,11 +385,11 @@ function toJsTreeNode(n) {
 
     n.parent = n.parent_id;
     if (!n.parent)
-        n.parent = "#";
+        n.parent = SHELF_NODE_ROOT_ID;
 
     if (n.type == NODE_TYPE_FOLDER)
         n.icon = "/icons/group.svg";
-    else {
+    else if (n.type != NODE_TYPE_SHELF) {
         let uri = "";
         if (n.uri)
             uri = false //n.uri.length > 60
@@ -403,11 +425,18 @@ function switchRdf(rdf) {
             path: path
         },
         nodes => {
+            let tree = $('#treeview').jstree(true);
 
             nodes.forEach(toJsTreeNode);
 
-            $('#treeview').jstree(true).settings.core.data = nodes;
-            $('#treeview').jstree(true).refresh();
+            let shelf_data = [{id: SHELF_NODE_ROOT_ID, parent: "#", text: path, icon: "/icons/bookmarks.svg",
+                               type: NODE_TYPE_SHELF}];
+            shelf_data = shelf_data.concat(nodes);
+
+            tree.settings.core.data = shelf_data;
+            tree.refresh();
+            let root_node = tree.get_node(SHELF_NODE_ROOT_ID);
+            tree.open_node(root_node);
         },
         error => {
             console.log(error);
@@ -614,10 +643,9 @@ browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     windowId = windowInfo.id;
 });
 
-window.onclick = function (event) {
-    if (!event.target.matches("#shelf-menu-button"))
-        $(".simple-menu").hide();
-};
+// window.onclick = function (event) {
+//
+// };
 
 window.onload = function () {
     /* i18n */
@@ -651,8 +679,8 @@ window.onload = function () {
         $("#shelf-menu").toggle()
     });
     $("#shelf-menu-create").click(() => {
-
-        showDlg("prompt", {caption: "Create shelf"}).then(data => {
+        // TODO: i18n
+        showDlg("prompt", {caption: "Create shelf", label: "Name"}).then(data => {
             let name;
             if (name = data.title) {
                 let existingOption = $(`#listRdf option:contains("${name}")`);
@@ -686,14 +714,16 @@ window.onload = function () {
 
         if (name && name !== DEFAULT_SHELF_NAME) {
             // TODO: 118n
-            showDlg("prompt", {caption: "Rename shelf"}).then(data => {
+            showDlg("prompt", {caption: "Rename shelf", label: "Name", title: name}).then(data => {
                 let newName;
                 if (newName = data.title) {
                     backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
                             selectedOption.html(newName);
+                            let tree = $("#treeview").jstree(true);
+                            tree.rename_node(tree.get_node(SHELF_NODE_ROOT_ID), newName);
                         },
                         e => {
-                            console.log(JSON.stringify(e))
+                            console.log(e)
                         });
                 }
             });
@@ -749,7 +779,7 @@ window.onload = function () {
 
     $("#shelf-menu-create-folder").click(() => {
         // TODO: i18n
-        showDlg("prompt", {caption: "Create folder"}).then(data => {
+        showDlg("prompt", {caption: "Create folder", label: "Name"}).then(data => {
             let name;
             if (name = data.title) {
                 let nodes = $('#treeview').jstree(true).settings.core.data;
@@ -792,8 +822,6 @@ window.onload = function () {
             show_at_node: false,
             items: customMenu
         }
-    }).on("copy_node.jstree", function (e, data) {
-        data.node.source_uuid = data.original.original.uuid;
     });
 
     $(document).on('click', $(".jstree-anchor"), function(e) {
@@ -804,6 +832,8 @@ window.onload = function () {
                 browser.tabs.create({
                     "url": uri
                 });
+            if (!event.target.matches("#shelf-menu-button"))
+                $(".simple-menu").hide();
             e.preventDefault();
             return false;
         }

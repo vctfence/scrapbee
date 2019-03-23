@@ -228,7 +228,9 @@ def move_nodes():
         Accepts JSON:
 
         :nodes: array of UUIDs of the nodes to move 
-        :dest:  UUID of the destination node"""
+        :dest:  UUID of the destination node
+
+        :returns: database records of the all moved nodes"""
     return db.move_nodes(g.db, g.user_id, request.json)
 
 
