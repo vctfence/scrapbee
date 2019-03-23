@@ -19,6 +19,11 @@ let backend = new Backend("http://localhost:31800", "default:default");
 
 const DEFAULT_SHELF_NAME = "default";
 
+
+function isVirtualShelf(name) {
+    return false;
+}
+
 /* show members of an object */
 function dir(o, delimiter) {
     var a = [];
@@ -131,19 +136,19 @@ function confirm(title, message) {
 }
 
 /* context menu listener */
-function customMenu(node) { // TODO: i18n
+function customMenu(sel_node) { // TODO: i18n
     let tree = $('#treeview').jstree(true);
     let nodes = tree.settings.core.data;
-    let data = node.original;
+    let sel_node_data = sel_node.original;
 
     let items = {
         openItem: {
             label: "Open",
             action: function () {
-                switch(data.type) {
+                switch(sel_node_data.type) {
                     case NODE_TYPE_BOOKMARK:
                         browser.tabs.create({
-                            "url": data.uri
+                            "url": sel_node_data.uri
                         });
                         break;
                 }
@@ -152,7 +157,7 @@ function customMenu(node) { // TODO: i18n
         openAllItem: {
             label: "Open All",
             action: function () {
-                let children = nodes.filter(n => node.children.some(id => id == n.id));
+                let children = nodes.filter(n => sel_node.children.some(id => id == n.id));
                 children.forEach(c =>  browser.tabs.create({
                     "url": c.uri
                 }))
@@ -162,14 +167,43 @@ function customMenu(node) { // TODO: i18n
             label: "Open the Original Link",
             action: function () {
                 browser.tabs.create({
-                    "url": data.uri
+                    "url": sel_node_data.uri
                 });
             }
         },
         newFolderItem: {
             label: "New Folder...",
             action: function () {
+                // TODO: i18n
+                showDlg("prompt", {caption: "Create Folder", label: "Name"}).then(dlg_data => {
+                    let name;
+                    if (name = dlg_data.title) {
+                        let selectedOption = $("#listRdf option:selected");
+                        let shelf = selectedOption.text();
 
+                        if (!isVirtualShelf(shelf)) {
+
+                            let new_group = shelf;
+
+                            if (sel_node_data.path)
+                                new_group += `/${sel_node_data.path}`;
+
+                            new_group += `/${name}`;
+
+                            backend.httpPost("/api/create/group", {"path": new_group}, group => {
+                                if (group) {
+                                    toJsTreeNode(group);
+                                    tree.deselect_all(true);
+                                    tree.select_node(tree.create_node(sel_node, group));
+                                }
+                            });
+                        }
+                        else {
+                            alert("{Error}", `Can not create folder in a virtual shelf.`);
+                            return;
+                        }
+                    }
+                });
             }
         },
         cutItem: {
@@ -187,7 +221,7 @@ function customMenu(node) { // TODO: i18n
         },
         pasteItem: {
             label: "Paste",
-            _disabled: !(tree.can_paste() && data.type === NODE_TYPE_FOLDER),
+            _disabled: !(tree.can_paste() && sel_node_data.type === NODE_TYPE_FOLDER),
             action: function () {
                 let buffer = tree.get_buffer();
                 let selection =  Array.isArray(buffer.node)
@@ -195,7 +229,7 @@ function customMenu(node) { // TODO: i18n
                     : [buffer.node.original.uuid];
                 backend.httpPost("/api/nodes/" + buffer.mode.split("_")[0], {
                     nodes: selection,
-                    dest: data.uuid
+                    dest: sel_node_data.uuid
                 }, new_nodes => {
                     switch (buffer.mode) {
                         case "copy_node":
@@ -263,7 +297,7 @@ function customMenu(node) { // TODO: i18n
             separator_before: true,
             label: "Properties...",
             action: function () {
-                switch (node.original.type) {
+                switch (sel_node.original.type) {
                     case NODE_TYPE_BOOKMARK:
                         break;
                 }
@@ -273,7 +307,7 @@ function customMenu(node) { // TODO: i18n
             separator_before: true,
             label: "Rename",
             action: function () {
-                switch (node.original.type) {
+                switch (sel_node.original.type) {
                     case NODE_TYPE_SHELF:
                         $("#shelf-menu-rename").click();
                         break;
@@ -282,10 +316,8 @@ function customMenu(node) { // TODO: i18n
         }
     };
 
-    console.log(node)
-
-    if (node.original.type !== NODE_TYPE_SHELF) {
-        switch (node.original.type) {
+    if (sel_node.original.type !== NODE_TYPE_SHELF) {
+        switch (sel_node.original.type) {
             case NODE_TYPE_FOLDER:
                 delete items.openItem;
                 delete items.openOriginalItem;
@@ -371,11 +403,9 @@ function showRdfList() {
 
 /* on page loaded */
 function loadAll() {
-    /** rdf list */
     showRdfList();
-    /** this will trigger loading a rdf initially */
     $("#listRdf").change(function () {
-        switchRdf(this.value);  // switch rdf and notify other side bar.
+        switchRdf(this.value);
     });
 }
 
@@ -643,10 +673,6 @@ browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     windowId = windowInfo.id;
 });
 
-// window.onclick = function (event) {
-//
-// };
-
 window.onload = function () {
     /* i18n */
     document.title = document.title.translate();
@@ -714,7 +740,7 @@ window.onload = function () {
 
         if (name && name !== DEFAULT_SHELF_NAME) {
             // TODO: 118n
-            showDlg("prompt", {caption: "Rename shelf", label: "Name", title: name}).then(data => {
+            showDlg("prompt", {caption: "Rename", label: "Name", title: name}).then(data => {
                 let newName;
                 if (newName = data.title) {
                     backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
@@ -777,35 +803,6 @@ window.onload = function () {
         });
     });
 
-    $("#shelf-menu-create-folder").click(() => {
-        // TODO: i18n
-        showDlg("prompt", {caption: "Create folder", label: "Name"}).then(data => {
-            let name;
-            if (name = data.title) {
-                let nodes = $('#treeview').jstree(true).settings.core.data;
-
-                if (nodes && nodes.filter(n => n.parent === "#")
-                    .some(n => n.text.toLocaleLowerCase() === name.toLocaleLowerCase())) {
-                    // TODO: i18n
-                    alert("{Error}", `Folder '${name}' already exists.`);
-                    return;
-                }
-
-                let selectedOption = $("#listRdf option:selected");
-                let shelf = selectedOption.text();
-
-                backend.httpPost("/api/create/group", {"path": shelf + "/" + name}, group => {
-                    console.log(group);
-                    if (group) {
-                        toJsTreeNode(group);
-                        console.log($('#treeview').jstree(true).create_node);
-                        $('#treeview').jstree(true).create_node(null, group);
-                    }
-                });
-            }
-        });
-    });
-
     $("#treeview").jstree({
         plugins: ["wholerow", "contextmenu", "dnd"],
         core: {
@@ -822,9 +819,9 @@ window.onload = function () {
             show_at_node: false,
             items: customMenu
         }
-    });
+    })
 
-    $(document).on('click', $(".jstree-anchor"), function(e) {
+    $(document).on("click.jstree", $(".jstree-anchor"), function(e) {
         if(e.button === 0 || e.button === 1) {
             let clickable = e.target.getAttribute("data-clickable");
             let uri = e.target.getAttribute("data-uri");

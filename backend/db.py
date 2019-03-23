@@ -56,6 +56,18 @@ def split_tags(json):
         return []
 
 
+def rename_existing(db, node, dest_id):
+    children = db(db.node.parent_id == dest_id).select()
+    original = node["name"]
+    existing = [e["name"] for e in children if e["name"].upper() == original.upper()]
+
+    n = 1
+    while existing:
+        node["name"] = original + " (" + str(n) + ")"
+        n += 1
+        existing = [e["name"] for e in children if e["name"].upper() == node["name"].upper()]
+
+
 def query_user(db, name):
     rows = db(db.user.name.upper() == name.upper()).select()
 
@@ -189,7 +201,11 @@ def new_group(db, user_id, json):
     shelf, path = split_path(json)
 
     shelf = query_shelf(db, user_id, shelf)
-    group = None
+    dest_group = query_group(db, shelf["id"], path[:-1])
+    dest_id = dest_group["id"] if dest_group else None
+    group = {"name": path[-1]}
+    rename_existing(db, group, dest_id)
+    path = path[:-1] + [group["name"]]
 
     if shelf:
         group = get_group(db, shelf["id"], path)
@@ -386,18 +402,6 @@ def list_tags(db, user_id):
         return serializer.dumps([{"name": r["name"]} for r in rows])
     else:
         return "[]"
-
-
-def rename_existing(db, node, dest_id):
-    children = db(db.node.parent_id == dest_id).select()
-    original = node.name
-    existing = [e.name for e in children if e.name.upper() == original.upper()]
-
-    n = 1
-    while existing:
-        node.name = original + " (" + str(n) + ")"
-        n += 1
-        existing = [e.name for e in children if e.name.upper() == node.name.upper()]
 
 
 def copy_nodes(db, user_id, json):
