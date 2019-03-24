@@ -186,7 +186,7 @@ def create_group():
 @app.route('/api/rename/group', methods=["POST"])
 @authenticated
 def rename_group():
-    """ Creates a group
+    """ Renames a group
 
         Accepts JSON:
 

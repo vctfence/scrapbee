@@ -4,9 +4,9 @@ import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
 const NODE_TYPE_SHELF = 0;
-const NODE_TYPE_FOLDER = 1;
+const NODE_TYPE_GROUP = 1;
 const NODE_TYPE_BOOKMARK = 2;
-const NODE_TYPE_ARCHIVE = 2;
+const NODE_TYPE_ARCHIVE = 3;
 
 const SHELF_NODE_ROOT_ID = "%root%"
 
@@ -20,7 +20,7 @@ let backend = new Backend("http://localhost:31800", "default:default");
 const DEFAULT_SHELF_NAME = "default";
 
 
-function isVirtualShelf(name) {
+function isBuiltinShelf(name) {
     return false;
 }
 
@@ -181,16 +181,14 @@ function customMenu(sel_node) { // TODO: i18n
                         let selectedOption = $("#listRdf option:selected");
                         let shelf = selectedOption.text();
 
-                        if (!isVirtualShelf(shelf)) {
+                        if (!isBuiltinShelf(shelf)) {
+                            let parents = sel_node.parents
+                                .filter(p => p !== "#")
+                                .map(p => tree.get_node(p).text).reverse();
 
-                            let new_group = shelf;
+                            let path = (parents.length? (parents.join("/") + "/"): "") + sel_node.text + "/" + name;
 
-                            if (sel_node_data.path)
-                                new_group += `/${sel_node_data.path}`;
-
-                            new_group += `/${name}`;
-
-                            backend.httpPost("/api/create/group", {"path": new_group}, group => {
+                            backend.httpPost("/api/create/group", {"path": path}, group => {
                                 if (group) {
                                     toJsTreeNode(group);
                                     tree.deselect_all(true);
@@ -199,7 +197,7 @@ function customMenu(sel_node) { // TODO: i18n
                             });
                         }
                         else {
-                            alert("{Error}", `Can not create folder in a virtual shelf.`);
+                            alert("{Error}", `Can not create folder in a built-in shelf.`);
                             return;
                         }
                     }
@@ -221,7 +219,7 @@ function customMenu(sel_node) { // TODO: i18n
         },
         pasteItem: {
             label: "Paste",
-            _disabled: !(tree.can_paste() && sel_node_data.type === NODE_TYPE_FOLDER),
+            _disabled: !(tree.can_paste() && sel_node_data.type === NODE_TYPE_GROUP),
             action: function () {
                 let buffer = tree.get_buffer();
                 let selection =  Array.isArray(buffer.node)
@@ -299,6 +297,7 @@ function customMenu(sel_node) { // TODO: i18n
             action: function () {
                 switch (sel_node.original.type) {
                     case NODE_TYPE_BOOKMARK:
+                    case NODE_TYPE_ARCHIVE:
                         break;
                 }
             }
@@ -311,6 +310,31 @@ function customMenu(sel_node) { // TODO: i18n
                     case NODE_TYPE_SHELF:
                         $("#shelf-menu-rename").click();
                         break;
+                    case NODE_TYPE_GROUP:
+                       showDlg("prompt", {caption: "Rename",
+                                    label: "Name", title: sel_node_data.text}).then(data => {
+                            let new_name;
+                            if (new_name = data.title) {
+                                let parents = sel_node.parents
+                                    .filter(p => p !== "#")
+                                    .map(p => tree.get_node(p).text).reverse();
+
+                                let path = parents.join("/") + "/" + sel_node.text;
+
+                                backend.httpPost("/api/rename/group", {
+                                        "path": path,
+                                        "new_name": new_name
+                                    }, group => {
+                                        sel_node_data.text = new_name;
+                                        sel_node_data.path = group.path;
+                                        tree.rename_node(tree.get_node(sel_node), new_name);
+                                    },
+                                    e => {
+                                        console.log(e)
+                                    });
+                            }
+                        });
+                        break;
                 }
             }
         }
@@ -318,7 +342,7 @@ function customMenu(sel_node) { // TODO: i18n
 
     if (sel_node.original.type !== NODE_TYPE_SHELF) {
         switch (sel_node.original.type) {
-            case NODE_TYPE_FOLDER:
+            case NODE_TYPE_GROUP:
                 delete items.openItem;
                 delete items.openOriginalItem;
                 delete items.todoItem;
@@ -417,7 +441,7 @@ function toJsTreeNode(n) {
     if (!n.parent)
         n.parent = SHELF_NODE_ROOT_ID;
 
-    if (n.type == NODE_TYPE_FOLDER)
+    if (n.type == NODE_TYPE_GROUP)
         n.icon = "/icons/group.svg";
     else if (n.type != NODE_TYPE_SHELF) {
         let uri = "";
@@ -755,7 +779,7 @@ window.onload = function () {
             });
         } else if (name === DEFAULT_SHELF_NAME) {
             // TODO: i18n
-            alert("{Error}", "The 'default' shelf could not be renamed.")
+            alert("{Error}", "The shelf 'default' could not be renamed.")
         }
 
     });

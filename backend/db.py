@@ -30,9 +30,7 @@ def open():
     return db
 
 
-def split_path(json):
-    path = json.get("path", None)
-
+def split_path(path):
     if path:
         if path.endswith("/"):
             path = path[:-1]
@@ -43,6 +41,7 @@ def split_path(json):
             shelf = DEFAULT_SHELF_NAME
     else:
         shelf = DEFAULT_SHELF_NAME
+        path = []
 
     return shelf, path
 
@@ -198,7 +197,8 @@ def get_group(db, shelf_id, name):
 
 # for use in CRUD API
 def new_group(db, user_id, json):
-    shelf, path = split_path(json)
+    path = json.get("path", None)
+    shelf, path = split_path(path)
 
     shelf = query_shelf(db, user_id, shelf)
     dest_group = query_group(db, shelf["id"], path[:-1])
@@ -219,19 +219,34 @@ def new_group(db, user_id, json):
 
 # for use in CRUD API
 def rename_group(db, user_id, json):
-    name = json.get("name", None)
+    path = json.get("path", None)
     new_name = json.get("new_name", None)
 
-    if not name:
+    if not path or not new_name:
         return ""
 
+    shelf, path = split_path(path)
+
+    print(shelf)
+    print(path)
+
     if new_name:
-        group = query_group(db, user_id, name)
+        shelf = query_shelf(db, user_id, shelf)
+        group = query_group(db, shelf.id, path)
         if group:
+            old_path = group.path
             group.name = new_name
+            group.path = "/".join(path[:-1] + [new_name])
             group.update_record()
+            sql = "update node set path = '{0}' || substr(path, {1}) where type = {2}"
+            sql += " and parent_id in (with recursive subtree(i) as (select {3} " \
+                   " union select id from node, subtree where node.parent_id = subtree.i)" \
+                   " select i from subtree)"\
+
+            db.executesql(sql.format(group.path, len(old_path) + 1, NODE_TYPE_GROUP, group["id"]))
+
             db.commit()
-            return "{}"
+            return group.as_json()
 
     return ""
 
@@ -275,10 +290,11 @@ def get_tag(db, user_id, name):
 
 def add_bookmark(db, user_id, json, commit=True):
     name = json.get("name", None)
+    path = json.get("path", None)
     uri = json.get("uri", None)
     icon = json.get("icon", None)
 
-    shelf, path = split_path(json)
+    shelf, path = split_path(path)
 
     shelf = get_shelf(db, user_id, shelf)
     group = get_group(db, shelf["id"], path)
@@ -307,7 +323,7 @@ def list_nodes(db, user_id, json):
     group = None
 
     if path:
-        shelf, path = split_path(json)
+        shelf, path = split_path(path)
 
     if shelf:
         shelf = query_shelf(db, user_id, shelf)

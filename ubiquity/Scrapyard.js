@@ -184,7 +184,7 @@ CmdUtils.CreateCommand({
                     let text = "";
                                         
                     if (n.type === 1) {
-                        n.full_path = (n.shelf === "default"? "/": n.shelf) + n.path;
+                        n.full_path = (n.shelf === "default"? "": n.shelf) + "/" + n.path;
 
                         text = "<img class='n-image' src='/res/icons/folder.png'>"
                              + "<div class='n-group'>" + n.full_path + "</div>";
