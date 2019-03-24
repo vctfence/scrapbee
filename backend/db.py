@@ -494,4 +494,30 @@ def move_nodes(db, user_id, json):
     return ""
 
 
+def delete_nodes(db, user_id, json):
+    nodes = json.get("nodes", None)
+
+    if nodes:
+        for n in db(db.node.uuid.belongs(nodes)).select():
+            try:
+                sql = "select * from attachment where node_id in " \
+                      " (with recursive subtree(i) as (select {} " \
+                      " union select id from node, subtree where node.parent_id = subtree.i)" \
+                      " select i from subtree)".format(n.id)
+
+                attachments = db.executesql(sql)
+
+                for a in attachments:
+                    pass
+
+                n.delete_record()
+            except Exception as e:
+                print(e)
+
+            db.commit()
+
+
+        return "{}"
+
+    return ""
 

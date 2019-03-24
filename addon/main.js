@@ -136,38 +136,48 @@ function confirm(title, message) {
 }
 
 /* context menu listener */
-function customMenu(sel_node) { // TODO: i18n
+function customMenu(ctx_node) { // TODO: i18n
     let tree = $('#treeview').jstree(true);
-    let nodes = tree.settings.core.data;
-    let sel_node_data = sel_node.original;
+    let selected_nodes = tree.get_selected(true) || [];
+    let multiselect = selected_nodes && selected_nodes.length > 1;
+    let all_nodes = tree.settings.core.data;
+    let ctx_node_data = ctx_node.original;
 
     let items = {
         openItem: {
             label: "Open",
             action: function () {
-                switch(sel_node_data.type) {
-                    case NODE_TYPE_BOOKMARK:
-                        browser.tabs.create({
-                            "url": sel_node_data.uri
-                        });
-                        break;
+                for (let n of selected_nodes) {
+                    switch (n.original.type) {
+                        case NODE_TYPE_BOOKMARK:
+                            browser.tabs.create({
+                                "url": n.original.uri
+                            });
+                            break;
+                    }
                 }
             }
         },
         openAllItem: {
             label: "Open All",
             action: function () {
-                let children = nodes.filter(n => sel_node.children.some(id => id == n.id));
+                let children = all_nodes.filter(n => ctx_node.children.some(id => id == n.id));
                 children.forEach(c =>  browser.tabs.create({
                     "url": c.uri
                 }))
+            }
+        },
+        sortItem: {
+            label: "Sort by Name",
+            action: function () {
+
             }
         },
         openOriginalItem: {
             label: "Open the Original Link",
             action: function () {
                 browser.tabs.create({
-                    "url": sel_node_data.uri
+                    "url": ctx_node_data.uri
                 });
             }
         },
@@ -178,21 +188,21 @@ function customMenu(sel_node) { // TODO: i18n
                 showDlg("prompt", {caption: "Create Folder", label: "Name"}).then(dlg_data => {
                     let name;
                     if (name = dlg_data.title) {
-                        let selectedOption = $("#listRdf option:selected");
+                        let selectedOption = $("#shelfList option:selected");
                         let shelf = selectedOption.text();
 
                         if (!isBuiltinShelf(shelf)) {
-                            let parents = sel_node.parents
+                            let parents = ctx_node.parents
                                 .filter(p => p !== "#")
                                 .map(p => tree.get_node(p).text).reverse();
 
-                            let path = (parents.length? (parents.join("/") + "/"): "") + sel_node.text + "/" + name;
+                            let path = (parents.length? (parents.join("/") + "/"): "") + ctx_node.text + "/" + name;
 
                             backend.httpPost("/api/create/group", {"path": path}, group => {
                                 if (group) {
                                     toJsTreeNode(group);
                                     tree.deselect_all(true);
-                                    tree.select_node(tree.create_node(sel_node, group));
+                                    tree.select_node(tree.create_node(ctx_node, group));
                                 }
                             });
                         }
@@ -208,18 +218,18 @@ function customMenu(sel_node) { // TODO: i18n
             separator_before: true,
             label: "Cut",
             action: function () {
-                tree.cut(tree.get_selected(true));
+                tree.cut(selected_nodes);
             }
         },
         copyItem: {
             label: "Copy",
             action: function () {
-                tree.copy(tree.get_selected(true));
+                tree.copy(selected_nodes);
             }
         },
         pasteItem: {
             label: "Paste",
-            _disabled: !(tree.can_paste() && sel_node_data.type === NODE_TYPE_GROUP),
+            _disabled: !(tree.can_paste() && ctx_node_data.type === NODE_TYPE_GROUP),
             action: function () {
                 let buffer = tree.get_buffer();
                 let selection =  Array.isArray(buffer.node)
@@ -227,7 +237,7 @@ function customMenu(sel_node) { // TODO: i18n
                     : [buffer.node.original.uuid];
                 backend.httpPost("/api/nodes/" + buffer.mode.split("_")[0], {
                     nodes: selection,
-                    dest: sel_node_data.uuid
+                    dest: ctx_node_data.uuid
                 }, new_nodes => {
                     switch (buffer.mode) {
                         case "copy_node":
@@ -281,21 +291,25 @@ function customMenu(sel_node) { // TODO: i18n
             separator_before: true,
             label: "Delete",
             action: function () {
+                confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
+                    let selected_uuids = selected_nodes.map(n => n.original.uuid);
 
-            }
-        },
-        sortItem: {
-            separator_before: true,
-            label: "Sort by Name",
-            action: function () {
-
+                    backend.httpPost("/api/nodes/delete", {
+                            nodes: selected_uuids
+                        }, group => {
+                            tree.delete_node(selected_nodes);
+                        },
+                        e => {
+                            console.log(e)
+                        });
+                });
             }
         },
         propertiesItem: {
             separator_before: true,
             label: "Properties...",
             action: function () {
-                switch (sel_node.original.type) {
+                switch (ctx_node.original.type) {
                     case NODE_TYPE_BOOKMARK:
                     case NODE_TYPE_ARCHIVE:
                         break;
@@ -303,31 +317,30 @@ function customMenu(sel_node) { // TODO: i18n
             }
         },
         renameItem: {
-            separator_before: true,
             label: "Rename",
             action: function () {
-                switch (sel_node.original.type) {
+                switch (ctx_node.original.type) {
                     case NODE_TYPE_SHELF:
                         $("#shelf-menu-rename").click();
                         break;
                     case NODE_TYPE_GROUP:
                        showDlg("prompt", {caption: "Rename",
-                                    label: "Name", title: sel_node_data.text}).then(data => {
+                                    label: "Name", title: ctx_node_data.text}).then(data => {
                             let new_name;
                             if (new_name = data.title) {
-                                let parents = sel_node.parents
+                                let parents = ctx_node.parents
                                     .filter(p => p !== "#")
                                     .map(p => tree.get_node(p).text).reverse();
 
-                                let path = parents.join("/") + "/" + sel_node.text;
+                                let path = parents.join("/") + "/" + ctx_node.text;
 
                                 backend.httpPost("/api/rename/group", {
                                         "path": path,
                                         "new_name": new_name
                                     }, group => {
-                                        sel_node_data.text = new_name;
-                                        sel_node_data.path = group.path;
-                                        tree.rename_node(tree.get_node(sel_node), new_name);
+                                        ctx_node_data.text = new_name;
+                                        ctx_node_data.path = group.path;
+                                        tree.rename_node(tree.get_node(ctx_node), new_name);
                                     },
                                     e => {
                                         console.log(e)
@@ -340,8 +353,8 @@ function customMenu(sel_node) { // TODO: i18n
         }
     };
 
-    if (sel_node.original.type !== NODE_TYPE_SHELF) {
-        switch (sel_node.original.type) {
+    if (ctx_node.original.type !== NODE_TYPE_SHELF) {
+        switch (ctx_node.original.type) {
             case NODE_TYPE_GROUP:
                 delete items.openItem;
                 delete items.openOriginalItem;
@@ -364,6 +377,14 @@ function customMenu(sel_node) { // TODO: i18n
                 delete items[k];
     }
 
+    if (multiselect) {
+        items["sortItem"] && (items["sortItem"]._disabled = true);
+        items["renameItem"] && (items["renameItem"]._disabled = true);
+        items["openAllItem"] && (items["openAllItem"]._disabled = true);
+        items["newFolderItem"] && (items["newFolderItem"]._disabled = true);
+        items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
+    }
+
     return items;
 }
 
@@ -377,59 +398,30 @@ function customMenu(sel_node) { // TODO: i18n
 // 	});
 //     });
 // }
-// menulistener.onCreateFolder = function(){
-//     showDlg("folder", {}).then(function(d){
-// 	var p;
-// 	if(d.pos == "root"){
-// 	    p = $(".root.folder-content");
-// 	}else{
-// 	    p = getCurrContainer();
-// 	}
-//     	currTree.createFolder(p, genItemId(), getCurrRefId(), d.title, true);
-//     	saveRdf();
-//     });
-// }
-// menulistener.onCreateSeparator = function(){
-//     currTree.createSeparator(getCurrContainer(), genItemId(), getCurrRefId(), true);
-// }
-// menulistener.onDebug = function(){}
-// menulistener.onRename = function(){
-//     if($(".item.focus").length){
-//     	var $label = $(".item.focus label");
-//     	var t0 = $(".item.focus").attr("title");
-// 	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}).then(function(d){
-// 	    var t1 = d.title.htmlEncode();
-// 	    if(t1 != t0){
-//    		currTree.renameItem($(".item.focus"), t1, function(){
-//     		    saveRdf();
-//     		});
-// 	    }
-// 	});
-//     }
-// }
-function showRdfList() {
+
+function loadShelves() {
     var lastRdf = settings.last_rdf;
-    $("#listRdf").html("");
+    $("#shelfList").html("");
     var saw = false;
 
     backend.httpGet("/api/list/shelves", (shelves) => {
-        $("#listRdf").find("option").remove()
+        $("#shelfList").find("option").remove()
         for (let shelf of shelves) {
-            var $opt = $("<option></option>").appendTo($("#listRdf")).html(shelf.name).attr("value", shelf.id);
+            var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
             if (!saw && typeof lastRdf != "undefined" && shelf.id == lastRdf) {
                 saw = true;
                 $opt.attr("selected", true);
             }
         }
-        switchRdf($("#listRdf").val());
+        switchShelf($("#shelfList").val());
     });
 }
 
 /* on page loaded */
 function loadAll() {
-    showRdfList();
-    $("#listRdf").change(function () {
-        switchRdf(this.value);
+    loadShelves();
+    $("#shelfList").change(function () {
+        switchShelf(this.value);
     });
 }
 
@@ -470,10 +462,10 @@ function toJsTreeNode(n) {
     return n;
 }
 
-function switchRdf(rdf) {
+function switchShelf(rdf) {
     settings.set('last_rdf', rdf);
 
-    let path = $(`#listRdf option[value="${rdf}"]`).text();
+    let path = $(`#shelfList option[value="${rdf}"]`).text();
 
     backend.httpPost("/api/list/nodes", {
             path: path
@@ -704,7 +696,7 @@ window.onload = function () {
 
     var btn = document.getElementById("btnLoad");
     btn.onclick = function () {
-        showRdfList();
+        loadShelves();
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function () {
@@ -733,8 +725,8 @@ window.onload = function () {
         showDlg("prompt", {caption: "Create shelf", label: "Name"}).then(data => {
             let name;
             if (name = data.title) {
-                let existingOption = $(`#listRdf option:contains("${name}")`);
-                let selectedOption = $("#listRdf option:selected");
+                let existingOption = $(`#shelfList option:contains("${name}")`);
+                let selectedOption = $("#shelfList option:selected");
 
                 if (existingOption.length) {
                     selectedOption.removeAttr("selected");
@@ -745,12 +737,12 @@ window.onload = function () {
                     backend.httpPost("/api/create/shelf", {"name": name}, (shelf) => {
                         if (shelf) {
                             selectedOption.removeAttr("selected");
-                            $("<option></option>").appendTo($("#listRdf"))
+                            $("<option></option>").appendTo($("#shelfList"))
                                 .html(shelf.name)
                                 .attr("value", shelf.id)
                                 .attr("selected", true);
 
-                            switchRdf(shelf.id);
+                            switchShelf(shelf.id);
                         }
                     });
                 }
@@ -759,7 +751,7 @@ window.onload = function () {
     });
 
     $("#shelf-menu-rename").click(() => {
-        let selectedOption = $("#listRdf option:selected");
+        let selectedOption = $("#shelfList option:selected");
         let name = selectedOption.text();
 
         if (name && name !== DEFAULT_SHELF_NAME) {
@@ -785,7 +777,7 @@ window.onload = function () {
     });
 
     $("#shelf-menu-delete").click(() => {
-        let selectedOption = $("#listRdf option:selected");
+        let selectedOption = $("#shelfList option:selected");
         let name = selectedOption.text();
 
         if (name === DEFAULT_SHELF_NAME) {
@@ -800,7 +792,7 @@ window.onload = function () {
                 backend.httpPost("/api/delete/shelf", {"name": name}, () => {
                         let prevItem = null;
                         let found = false;
-                        $("#listRdf option").each((i, o) => {
+                        $("#shelfList option").each((i, o) => {
                             if (found) {
                                 return;
                             }
@@ -815,7 +807,7 @@ window.onload = function () {
                         selectedOption.removeAttr("selected");
                         if (prevItem) {
                             $(prevItem).attr("selected", true);
-                            switchRdf(prevItem.value);
+                            switchShelf(prevItem.value);
                         }
                         selectedOption.remove();
                     },
@@ -849,7 +841,7 @@ window.onload = function () {
         if(e.button === 0 || e.button === 1) {
             let clickable = e.target.getAttribute("data-clickable");
             let uri = e.target.getAttribute("data-uri");
-            if (clickable)
+            if (clickable && !e.ctrlKey)
                 browser.tabs.create({
                     "url": uri
                 });

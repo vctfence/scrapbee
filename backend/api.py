@@ -234,6 +234,17 @@ def move_nodes():
     return db.move_nodes(g.db, g.user_id, request.json)
 
 
+@app.route('/api/nodes/delete', methods=["POST"])
+@authenticated
+def delete_nodes():
+    """ Deletes the specified nodes
+
+        Accepts JSON:
+
+        :nodes: array of UUIDs of the nodes to delete"""
+    return db.delete_nodes(g.db, g.user_id, request.json)
+
+
 class Httpd(threading.Thread):
 
     def __init__(self, app):
