@@ -148,7 +148,7 @@ def list_nodes():
         :tags:   filter for node tags (string)
         :type:   filter for node type (integer)
         :limit:  limit for the returned record number (integer)
-        :depth:  specify depth of search (string): "group" or "subtree"
+        :depth:  specify depth of search (string): "group", "subtree" or "root+subtree"
 
         :returns: list of filtered node database records
     """

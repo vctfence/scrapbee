@@ -1,0 +1,568 @@
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "misk",
+    "depth": "root+subtree"
+}
+
+<> 2019-03-24T093835.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "misk",
+    "depth": "root+subtree"
+}
+
+<> 2019-03-24T093738.200.html
+
+###
+
+GET http://localhost:31800/api/completion/groups
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T090506.200.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T090121.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "default"
+}
+
+<> 2019-03-24T085325.200.html
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
+}
+
+<> 2019-03-24T083219.200.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T083216.200.html
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
+}
+
+<> 2019-03-24T083129.200.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T083126.200.html
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
+}
+
+<> 2019-03-24T082815.200.html
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
+}
+
+<> 2019-03-24T082740.500.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T082639.200.html
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
+}
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
+}
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T081914.200.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T080953.200.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T080937.200.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T080724.200.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T080702.500.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T080629.500.html
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+<> 2019-03-24T075347.500.html
+
+###
+
+POST http://localhost:31800/api/rename/shelf
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "sucking",
+    "new_name": "fucking"
+}
+
+<> 2019-03-24T072457.200.html
+
+###
+
+POST http://localhost:31800/api/rename/shelf
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "sucking",
+    "name": "fucking"
+}
+
+###
+
+POST http://localhost:31800/api/create/shelf
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "sucking"
+}
+
+<> 2019-03-24T072411.200.html
+
+###
+
+POST http://localhost:31800/api/delete/shelf
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "sucking"
+}
+
+<> 2019-03-24T072353.200.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T072304.200.html
+
+###
+
+POST http://localhost:31800/api/create/shelf
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "sucking"
+}
+
+<> 2019-03-24T072220.200.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T072108.200.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T072022.200.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T071946.500.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T071838.500.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T070805.500.html
+
+###
+
+GET http://localhost:31800/api/list/shelves
+X-Scrapyard-Auth: default:default
+
+<> 2019-03-24T070327.500.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["FCBE280D977CCCAB936558B89B584C04"],
+    "dest": "20D939B0734E64F9A0818C26DCB61091"
+
+}
+
+<> 2019-03-23T063702.200.html
+
+###
+
+POST http://localhost:31800/api/add/bookmark
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "example node"
+    ,"uri": "https://example.com"
+    ,"path": "example/category"
+    ,"tags": "test,example"
+}
+
+<> 2019-03-23T054123.200.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+<> 2019-03-23T023812.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "misk"
+}
+
+<> 2019-03-23T023252.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "misk/test"
+}
+
+<> 2019-03-23T023237.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/test"
+}
+
+<> 2019-03-23T023208.200.html
+
+###
+
+POST http://localhost:31800/api/list/nodes
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/test"
+}
+
+<> 2019-03-23T023055.200.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+<> 2019-03-23T022429.200.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+<> 2019-03-23T021741.200.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+<> 2019-03-23T021708.200.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+<> 2019-03-23T021645.500.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["8E291606659BBB9D423B0E85DAD5004E"],
+    "dest": "1DDA99711E052A8A4E9F4C37C6FE3966"
+
+}
+
+<> 2019-03-23T021556.500.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["AEF2EEE6230DF13A6B6422D5BA0CC064"],
+    "dest": "8E291606659BBB9D423B0E85DAD5004E"
+
+}
+
+<> 2019-03-23T014112.200.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["AEF2EEE6230DF13A6B6422D5BA0CC064"],
+    "dest": "8E291606659BBB9D423B0E85DAD5004E"
+
+}
+
+<> 2019-03-23T014037.500.html
+
+###
+
+POST http://localhost:31800/api/nodes/copy
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "nodes": ["AEF2EEE6230DF13A6B6422D5BA0CC064"],
+    "dest": "8E291606659BBB9D423B0E85DAD5004E"
+
+}
+
+###
+

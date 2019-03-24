@@ -5,10 +5,10 @@ import config
 from pydal import DAL, Field
 from datetime import datetime
 
-
-NODE_TYPE_GROUP = 1
-NODE_TYPE_BOOKMARK = 2
-NODE_TYPE_ARCHIVE = 3
+NODE_TYPE_SHELF = 1
+NODE_TYPE_GROUP = 2
+NODE_TYPE_BOOKMARK = 3
+NODE_TYPE_ARCHIVE = 4
 
 DEFAULT_SHELF_NAME = "default"
 
@@ -17,21 +17,41 @@ def open():
     db = DAL('sqlite://' + config.SCRAPYARD_INDEX_PATH, migrate_enabled=False)
     
     db.define_table('user', Field('id', type='integer'), Field('name'), Field('sid'))
-    db.define_table('shelf', Field('id', type='integer'), Field('user_id', type='integer'), Field('name'),
-                    Field('file'))
     db.define_table('node', Field('id', type='integer'), Field('uuid', type='text'), Field('type', type='integer'),
-                    Field('shelf_id', type='integer'), Field('name'), Field('uri'), Field('path'), Field('icon'),
+                    Field('user_id', type='integer'), Field('name'), Field('uri'), Field('path'), Field('icon'),
                     Field('pos', type='integer'), Field('parent_id'), Field('date_added', 'datetime'),
                     Field('todo_state', type='integer'), Field('todo_date', 'datetime'), Field('details'))
     db.define_table('attachment', Field('id', type='integer'), Field('node_id', type='integer'),
                     Field('uuid', type='text'), Field('name'))
     db.define_table('tag', Field('id', type='integer'), Field('user_id', type='integer'), Field('name'))
     db.define_table('tag_to_node', Field('tag_id', type='integer'), Field('node_id', type='integer'))
-    
+
     return db
 
 
+def obj(dict):
+    return type('', (), dict)()
+
+
+def only(list):
+    return list[0] if len(list) > 0 else None
+
+
+def normalize(path):
+    if path.startswith("/"):
+        return DEFAULT_SHELF_NAME + path
+    else:
+        return path
+
+
+def select_all_children_of(node_id):
+    return " (with recursive subtree(i) as (select {} " \
+           " union select id from node, subtree where node.parent_id = subtree.i)" \
+           " select i from subtree)".format(node_id)
+
+
 def split_path(path):
+    """ Correctly splits shelf name from the rest of the path, returns 'default' shelf for path, starging with '/' """
     if path:
         if path.endswith("/"):
             path = path[:-1]
@@ -57,6 +77,7 @@ def split_tags(json):
 
 
 def rename_existing(db, node, dest_id):
+    """ Adds '(N)' to a name if one already exists under dest_id """
     children = db(db.node.parent_id == dest_id).select()
     original = node["name"]
     existing = [e["name"] for e in children if e["name"].upper() == original.upper()]
@@ -79,17 +100,16 @@ def query_shelf(db, user_id, name):
     if not name:
         name = DEFAULT_SHELF_NAME
 
-    rows = db((db.shelf.name.upper() == name.upper()) & (db.shelf.user_id == user_id)).select()
+    shelf = db((db.node.name.upper() == name.upper()) & (db.node.user_id == user_id)
+               & (db.node.type == NODE_TYPE_SHELF)).select()
 
-    if rows:
-        return rows[0]
+    return only(shelf)
 
 
 def create_shelf(db, user_id, name):
-    file = name + ".org"
-    id = db.shelf.insert(user_id=user_id, name=name, file=file)
+    id = db.node.insert(user_id=user_id, type=NODE_TYPE_SHELF, name=name, path=name, date_added=datetime.now())
 
-    return {"id": id, "user_id": user_id, "name": name, "file": file}
+    return only(db(db.node.id == id).select())
 
 
 # creates, if not exists
@@ -113,7 +133,7 @@ def new_shelf(db, user_id, json):
 
     if shelf:
         db.commit()
-        return serializer.dumps(shelf)
+        return shelf.as_json()
     else:
         return ""
 
@@ -129,8 +149,16 @@ def rename_shelf(db, user_id, json):
     if new_name:
         shelf = query_shelf(db, user_id, name)
         if shelf:
+            old_name = shelf.name
             shelf.name = new_name
+            shelf.path = new_name
             shelf.update_record()
+
+            sql = "update node set path = '{0}' || substr(path, {1}) where type = {2}"
+            sql += " and parent_id in " + select_all_children_of(shelf.id)
+
+            db.executesql(sql.format(shelf.name, len(old_name) + 1, NODE_TYPE_GROUP))
+
             db.commit()
             return "{}"
 
@@ -144,7 +172,7 @@ def delete_shelf(db, user_id, json):
     if not name or name == DEFAULT_SHELF_NAME:
         return ""
 
-    shelf = get_shelf(db, user_id, name)
+    shelf = query_shelf(db, user_id, name)
 
     if shelf:
         shelf.delete_record()
@@ -153,67 +181,73 @@ def delete_shelf(db, user_id, json):
     return "{}"
 
 
-def query_group(db, shelf_id, path):
-    full_name = "/".join(path)
-    rows = db((db.node.path.upper() == full_name.upper()) & (db.node.shelf_id == shelf_id)).select()
-    if rows:
-        return rows[0]
+def query_group(db, user_id, path):
+    if path:
+        path = normalize(path)
+        group = db((db.node.path.upper() == path.upper()) & (db.node.user_id == user_id)).select()
+        return only(group)
 
 
-def create_group(db, shelf_id, name):
-    def create_subgroup(parent, simple_name, full_name, date_added):
-        parent_id = parent["id"] if parent else None
-        id = db.node.insert(shelf_id=shelf_id, parent_id=parent_id, type=NODE_TYPE_GROUP, name=simple_name,
-                            path=full_name, date_added=date_added)
-        return {"id": id, "shelf_id": shelf_id, "parent_id": parent_id, "name": simple_name, "path": full_name,
-                "date_added": date_added, "type": 0}
+def create_group(db, user_id, path):
+    shelf, path_list = split_path(path)
+    shelf = get_shelf(db, user_id, shelf)
+
+    def create_subgroup(parent, name, path, date_added):
+        id = db.node.insert(user_id=user_id, parent_id=parent.id, type=NODE_TYPE_GROUP, name=name,
+                            path=path, date_added=date_added)
+        return only(db(db.node.id == id).select())
 
     def do_create(parent, tail, head):
         if tail:
             first, *rest = tail
             head.append(first)
-            subgroup = query_group(db, shelf_id, head)
+            group_path = shelf.name + "/" + "/".join(head)
+            subgroup = query_group(db, user_id, group_path)
 
             if not subgroup:
-                subgroup = create_subgroup(parent, head[-1], "/".join(head), datetime.now())
+                subgroup = create_subgroup(parent, head[-1], group_path, datetime.now())
 
             return do_create(subgroup, rest, head)
         else:
             return parent
 
-    return do_create(None, name, list())
+    return do_create(shelf, path_list, list())
 
 
-def get_group(db, shelf_id, name):
-    if not name:
-        return {"id": None}
+def get_group(db, user_id, path):
+    if not path:
+        return obj({"id": None})
 
-    group = query_group(db, shelf_id, name)
+    group = query_group(db, user_id, path)
 
     if group:
         return group
     else:
-        return create_group(db, shelf_id, name)
+        return create_group(db, user_id, path)
+
+
+def unique_path(db, user_id, path):
+    path_list = path.split("/")
+
+    dest_group = query_group(db, user_id, "/".join(path_list[:-1]))
+    dest_id = dest_group.id if dest_group else None
+    if dest_id:
+        group = {"name": path_list[-1]}
+        rename_existing(db, group, dest_id)
+        path_list = path_list[:-1] + [group["name"]]
+        return "/".join(path_list)
+    else:
+        return path
 
 
 # for use in CRUD API
 def new_group(db, user_id, json):
     path = json.get("path", None)
-    shelf, path = split_path(path)
-
-    shelf = query_shelf(db, user_id, shelf)
-    dest_group = query_group(db, shelf["id"], path[:-1])
-    dest_id = dest_group["id"] if dest_group else None
-    group = {"name": path[-1]}
-    rename_existing(db, group, dest_id)
-    path = path[:-1] + [group["name"]]
-
-    if shelf:
-        group = get_group(db, shelf["id"], path)
+    group = get_group(db, user_id, unique_path(db, user_id, path))
 
     if group:
         db.commit()
-        return db(db.node.id == group["id"]).select()[0].as_json()
+        return only(db(db.node.id == group.id).select()).as_json()
     else:
         return ""
 
@@ -226,40 +260,35 @@ def rename_group(db, user_id, json):
     if not path or not new_name:
         return ""
 
-    shelf, path = split_path(path)
+    path_list = normalize(path).split("/")
+    group = query_group(db, user_id, path)
 
-    print(shelf)
-    print(path)
+    if group:
+        old_path = group.path
+        new_path = unique_path(db, user_id, "/".join(path_list[:-1] + [new_name]))
 
-    if new_name:
-        shelf = query_shelf(db, user_id, shelf)
-        group = query_group(db, shelf.id, path)
-        if group:
-            old_path = group.path
-            group.name = new_name
-            group.path = "/".join(path[:-1] + [new_name])
-            group.update_record()
-            sql = "update node set path = '{0}' || substr(path, {1}) where type = {2}"
-            sql += " and parent_id in (with recursive subtree(i) as (select {3} " \
-                   " union select id from node, subtree where node.parent_id = subtree.i)" \
-                   " select i from subtree)"\
+        group.name = new_path.split("/")[-1]
+        group.path = new_path
+        group.update_record()
+        sql = "update node set path = '{0}' || substr(path, {1}) where type = {2}"
+        sql += " and parent_id in " + select_all_children_of(group.id)
 
-            db.executesql(sql.format(group.path, len(old_path) + 1, NODE_TYPE_GROUP, group["id"]))
+        db.executesql(sql.format(group.path, len(old_path) + 1, NODE_TYPE_GROUP))
 
-            db.commit()
-            return group.as_json()
+        db.commit()
+        return group.as_json()
 
     return ""
 
 
 # for use in CRUD API
 def delete_group(db, user_id, json):
-    name = json.get("name", None)
+    path = json.get("path", None)
 
-    if not name:
+    if not path:
         return ""
 
-    group = get_group(db, user_id, name)
+    group = query_group(db, user_id, path)
 
     if group:
         group.delete_record()
@@ -297,14 +326,11 @@ def add_bookmark(db, user_id, json, commit=True):
     details = json.get("details", None)
     todo_date = json.get("todo_date", None)
 
-    shelf, path = split_path(path)
-
-    shelf = get_shelf(db, user_id, shelf)
-    group = get_group(db, shelf["id"], path)
+    group = get_group(db, user_id, path)
 
     tags = [get_tag(db, user_id, t) for t in split_tags(json) if t]
 
-    id = db.node.insert(shelf_id=shelf["id"], parent_id=group["id"], type=NODE_TYPE_BOOKMARK, name=name, uri=uri,
+    id = db.node.insert(user_id=user_id, parent_id=group["id"], type=NODE_TYPE_BOOKMARK, name=name, uri=uri,
                         icon=icon, date_added=datetime.now(), details=details, todo_date=todo_date)
 
     for t in tags:
@@ -353,34 +379,26 @@ def list_nodes(db, user_id, json):
     depth = json.get("depth", "subtree")
     type = json.get("type", None)
     path = json.get("path", None)
-    shelf = None
-    group = None
 
-    if path:
-        shelf, path = split_path(path)
+    group = query_group(db, user_id, path)
 
-    if shelf:
-        shelf = query_shelf(db, user_id, shelf)
-
-    if path:
-        group = query_group(db, shelf["id"], path)
+    print(group)
 
     tags = [query_tag(db, user_id, t)["id"] for t in split_tags(json) if t]
     if tags:
         tags = "(" + ",".join([str(t) for t in tags]) + ")"
 
-    sql = "select distinct node.*, shelf.name as shelf from node, shelf "
+    if group and depth == "root+subtree":
+        sql = "select distinct * from node where id = {} union ".format(group["id"])
+    else:
+        sql = ""
+
+    sql += "select distinct * from node "
 
     if tags:
         sql += "join tag_to_node on node.id = tag_to_node.node_id "
 
-    sql += " where node.shelf_id = shelf.id "
-
-    if shelf:
-        sql += " and shelf_id = {}".format(shelf["id"])
-    else:
-        sql += " and shelf_id in (select shelf.id from shelf join user on shelf.user_id = user.id where user.id = {})" \
-            .format(user_id)
+    sql += " where node.user_id = {} ".format(user_id)
 
     if type:
         sql += " and type = {}".format(type)
@@ -389,16 +407,11 @@ def list_nodes(db, user_id, json):
         search = search.replace("'", "\\'").replace("_", "\\_").replace("%", "\\%").replace("*", "%")
         sql += " and (upper(node.name) like upper('%{0}%') or upper(node.uri) like upper('%{0}%'))".format(search)
 
-    if type:
-        sql += " and type = {}".format(type)
-
     if group:
         if depth == "group":
             sql += " and parent_id = {}".format(group["id"])
         else:
-            sql += " and parent_id in (with recursive subtree(i) as (select {} " \
-                   " union select id from node, subtree where node.parent_id = subtree.i)" \
-                   " select i from subtree)".format(group["id"])
+            sql += " and parent_id in " + select_all_children_of(group["id"])
 
     if tags:
         sql += " and tag_to_node.tag_id in {}".format(tags)
@@ -417,7 +430,7 @@ def list_nodes(db, user_id, json):
 
 
 def list_shelves(db, user_id):
-    rows = db(db.shelf.user_id == user_id).select()
+    rows = db((db.node.user_id == user_id) & (db.node.type == NODE_TYPE_SHELF)).select()
 
     if rows:
         return rows.as_json()
@@ -426,19 +439,16 @@ def list_shelves(db, user_id):
 
 
 def list_groups(db, user_id):
-    sql = "select distinct node.id, node.path, shelf.name as shelf_name " \
-          "from node join shelf on node.shelf_id = shelf.id " \
-          "where shelf.user_id = {} and node.type = {}".format(user_id, NODE_TYPE_GROUP)
+    sql = "select distinct id, path from node " \
+          "where user_id = {} and type = {}".format(user_id, NODE_TYPE_GROUP)
 
     rows = db.executesql(sql, as_dict=True)
 
     if rows:
         # add shelf name for display in suggestions
         for r in rows:
-            if r["shelf_name"] != DEFAULT_SHELF_NAME:
-                r["path"] = r["shelf_name"] + "/" + r["path"]
-            else:
-                r["path"] = "/" + r["path"]
+            if r["path"].startswith(DEFAULT_SHELF_NAME):
+                r["path"] = r["path"][len(DEFAULT_SHELF_NAME):]
 
         return serializer.dumps([{"path": r["path"]} for r in rows])
     else:
@@ -469,7 +479,6 @@ def copy_nodes(db, user_id, json):
             del node["id"]
             del node["uuid"]
             node["parent_id"] = parent.id
-            node["shelf_id"] = dest_node["shelf_id"]
 
             if node.type == NODE_TYPE_GROUP:
                 node["path"] = parent["path"] + "/" + node["name"]
@@ -504,7 +513,6 @@ def move_nodes(db, user_id, json):
 
         def do_move(node, parent):
             node["parent_id"] = parent["id"]
-            node["shelf_id"] = parent["shelf_id"]
 
             if node.type == NODE_TYPE_GROUP:
                 node["path"] = parent["path"] + "/" + node["name"]
@@ -534,10 +542,7 @@ def delete_nodes(db, user_id, json):
     if nodes:
         for n in db(db.node.uuid.belongs(nodes)).select():
             try:
-                sql = "select * from attachment where node_id in " \
-                      " (with recursive subtree(i) as (select {} " \
-                      " union select id from node, subtree where node.parent_id = subtree.i)" \
-                      " select i from subtree)".format(n.id)
+                sql = "select * from attachment where node_id in " + select_all_children_of(n.id)
 
                 attachments = db.executesql(sql)
 
@@ -549,7 +554,6 @@ def delete_nodes(db, user_id, json):
                 print(e)
 
             db.commit()
-
 
         return "{}"
 
@@ -563,11 +567,8 @@ def todo_nodes(db, user_id, json):
         for n in db(db.node.uuid.belongs(list(nodes.keys()))).select():
             if n.type == NODE_TYPE_GROUP:
                 try:
-                    sql = "update node set todo_state = {} where parent_id in " \
-                          " (with recursive subtree(i) as (select {} " \
-                          " union select id from node, subtree where node.parent_id = subtree.i)" \
-                          " select i from subtree)".format(nodes[n.uuid], n.id)
-
+                    sql = "update node set todo_state = {} where parent_id in ".format(nodes[n.uuid]) \
+                          + select_all_children_of(n.id)
                     db.executesql(sql)
                 except Exception as e:
                     print(e)

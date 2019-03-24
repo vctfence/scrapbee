@@ -3,10 +3,10 @@ import {Backend} from "./backend.js"
 import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
 import {getMainMimeExt} from "./libs/mime.types.js"
 
-const NODE_TYPE_SHELF = 0;
-const NODE_TYPE_GROUP = 1;
-const NODE_TYPE_BOOKMARK = 2;
-const NODE_TYPE_ARCHIVE = 3;
+const NODE_TYPE_SHELF = 1;
+const NODE_TYPE_GROUP = 2;
+const NODE_TYPE_BOOKMARK = 3;
+const NODE_TYPE_ARCHIVE = 4;
 
 const TODO_STATE_TODO = 1;
 const TODO_STATE_DONE = 2;
@@ -14,7 +14,8 @@ const TODO_STATE_WAITING = 3;
 const TODO_STATE_POSTPONED = 4;
 const TODO_STATE_CANCELLED = 5;
 
-const SHELF_NODE_ROOT_ID = "%root%"
+const DEFAULT_SHELF_NAME = "default";
+
 
 var currTree;
 var windowId;
@@ -22,8 +23,6 @@ var windowId;
 var msg_hub = new MsgHub();
 
 let backend = new Backend("http://localhost:31800", "default:default");
-
-const DEFAULT_SHELF_NAME = "default";
 
 
 function isBuiltinShelf(name) {
@@ -463,9 +462,11 @@ function toJsTreeNode(n) {
 
     n.parent = n.parent_id;
     if (!n.parent)
-        n.parent = SHELF_NODE_ROOT_ID;
+        n.parent = "#";
 
-    if (n.type == NODE_TYPE_GROUP)
+    if (n.type == NODE_TYPE_SHELF)
+        n.icon = "/icons/bookmarks.svg";
+    else if (n.type == NODE_TYPE_GROUP)
         n.icon = "/icons/group.svg";
     else if (n.type != NODE_TYPE_SHELF) {
         let uri = "";
@@ -500,20 +501,16 @@ function switchShelf(rdf) {
     let path = $(`#shelfList option[value="${rdf}"]`).text();
 
     backend.httpPost("/api/list/nodes", {
-            path: path
+            path: path,
+            depth: "root+subtree"
         },
         nodes => {
-            let tree = $('#treeview').jstree(true);
-
             nodes.forEach(toJsTreeNode);
 
-            let shelf_data = [{id: SHELF_NODE_ROOT_ID, parent: "#", text: path, icon: "/icons/bookmarks.svg",
-                               type: NODE_TYPE_SHELF}];
-            shelf_data = shelf_data.concat(nodes);
-
-            tree.settings.core.data = shelf_data;
+            let tree = $('#treeview').jstree(true);
+            tree.settings.core.data = nodes;
             tree.refresh();
-            let root_node = tree.get_node(SHELF_NODE_ROOT_ID);
+            let root_node = tree.get_node(nodes.find(n => n.type == NODE_TYPE_SHELF));
             tree.open_node(root_node);
         },
         error => {
@@ -794,7 +791,8 @@ window.onload = function () {
                     backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
                             selectedOption.html(newName);
                             let tree = $("#treeview").jstree(true);
-                            tree.rename_node(tree.get_node(SHELF_NODE_ROOT_ID), newName);
+                            let root_node = tree.get_node(tree.settings.core.data.find(n => n.type == NODE_TYPE_SHELF));
+                            tree.rename_node(root_node, newName);
                         },
                         e => {
                             console.log(e)

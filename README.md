@@ -5,7 +5,7 @@ Hacker's bookmark manager (coming soon)
 Objectives:
 
 * ~~Store data at a database with sexy hierarchical queries (to handle at least 15 years of legacy bookmarks)~~ [DONE]
-* Replace "RDF" tree with jsTree [DONE: context menu partially implemented]
+* Replace "RDF" tree with jsTree [DONE: implemented context menu]
 * Control from [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE: bookmark creation &listing]
 * Import/export from .org [DONE: import only]
 * Import from .rdf 

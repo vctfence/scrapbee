@@ -28,7 +28,8 @@ Content-Type: application/json
 X-Scrapyard-Auth: default:default
 
 {
-    "path": "misk"
+    "path": "misk",
+    "depth": "root+subtree"
 #    ,"tags": "test,example"
 #    ,"type": 2
 }
@@ -58,6 +59,38 @@ X-Scrapyard-Auth: default:default
     "nodes": ["FCBE280D977CCCAB936558B89B584C04"],
     "dest": "20D939B0734E64F9A0818C26DCB61091"
 
+}
+
+###
+
+POST http://localhost:31800/api/rename/shelf
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "name": "test",
+    "new_name": "test1"
+}
+
+###
+
+POST http://localhost:31800/api/create/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test/group"
+}
+
+###
+
+POST http://localhost:31800/api/rename/group
+Content-Type: application/json
+X-Scrapyard-Auth: default:default
+
+{
+    "path": "/my/test",
+    "new_name": "best"
 }
 
 ###
