@@ -31,6 +31,21 @@
     "Folder": {
         "message": "Folder"
     },
+    "Properties": {
+        "message": "Properties"
+    },
+    "Details": {
+        "message": "Details"
+    },
+    "Tags": {
+        "message": "Tags"
+    },
+    "Date": {
+        "message": "Date"
+    },
+    "Added on": {
+        "message": "Added on"
+    },
     "Open Folder": {
         "message": "Open Folder"
     },
@@ -99,6 +114,9 @@
     },
     "Initiate": {
         "message": "Initiate"
+    },
+    "URL": {
+        "message": "URL"
     },
     "History": {
         "message": "History"

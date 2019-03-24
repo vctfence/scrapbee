@@ -58,25 +58,38 @@
                     </div>
                 </div>
             </div>
-            <!--div class="dlg-cover dlg-folder" style="display:none;">
+            <div class="dlg-cover dlg-properties" style="display:none;">
                 <div class="dlg">
                     <div class="dlg-box">
-                        <div class="dlg-title">{New Folder}</div>
-                        <div class="dlg-table" style="overflow:hidden;">
-                            <div class="row">
-                                <div class="cell" style="width:50px;text-align:right;">{Title}</div>
-                                <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
+                        <div class="dlg-title">{Properties}</div>
+                        <div class="dlg-prop-table" style="overflow:hidden;">
+                            <div class="prop-row">
+                                <label for="prop-name" class="cell">{Name}: </label>
+                                <input id="prop-name" class="dialog-input" type="" name="text" value="" style="width:100%"/>
                             </div>
-                            <div class="row">
-                                <div class="cell"></div>
-                                <div class="cell">
-                                    <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
-                                    <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
-                                </div>
+                            <div class="prop-row">
+                                <label for="prop-uri" class="cell">{URL}: </label>
+                                <input id="prop-uri" type="" name="uri" value="" style="width:100%"/>
                             </div>
-                            <div class="row">
-                                <div class="cell"></div>
-                                <div class="cell">
+                            <div class="prop-row">
+                                <label for="prop-details" class="cell">{Details}: </label>
+                                <input id="prop-details" type="" name="details" value="" style="width:100%"/>
+                            </div>
+                            <div class="prop-row">
+                                <label for="prop-tags" class="cell">{Tags}: </label>
+                                <input id="prop-tags" type="" name="tags" value="" style="width:100%"/>
+                            </div>
+                            <div class="prop-row">
+                                <label for="prop-date" class="cell">{Date}: </label>
+                                <input id="prop-date" type="" name="todo_date" value="" style="width:100%"/>
+                            </div>
+                            <div class="prop-row">
+                                <label for="prop-added" class="cell">{Added on}: </label>
+                                <input id="prop-added" type="" name="date_added" value="" style="width:100%"
+                                       disabled/>
+                            </div>
+                            <div class="prop-row">
+                                <div class="cell" style="float:right; margin-top: 10px">
                                     <input type="button" class="button-ok" value="{DLG_OK}"/>
                                     <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
                                 </div>
@@ -84,7 +97,7 @@
                         </div>
                     </div>
                 </div>
-            </div-->
+            </div>
             <div class="dlg-cover dlg-prompt" style="display:none;">
                 <div class="dlg">
                     <div class="dlg-box">
@@ -95,13 +108,12 @@
                                 <div class="cell"><input class="dialog-input" type="" name="title" value=""
                                                          style="width:100%"/></div>
                             </div>
-                            <div class="row"
-                                 style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
-                                <div class="cell"></div>
-                                <div class="cell">
-                                    <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
-                                    <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
-                                </div>
+                        </div>
+                        <div class="row"
+                             style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
+                            <div class="cell" style="float:right">
+                                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
+                                <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
                             </div>
                         </div>
                     </div>

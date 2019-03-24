@@ -347,6 +347,16 @@ function customMenu(ctx_node) { // TODO: i18n
                 switch (ctx_node.original.type) {
                     case NODE_TYPE_BOOKMARK:
                     case NODE_TYPE_ARCHIVE:
+                        showDlg("properties", ctx_node_data).then(data => {
+                            ctx_node_data.name = ctx_node_data.text = data.text;
+                            backend.httpPost("/api/update/bookmark", Object.assign(ctx_node_data, data),
+                                () => {
+                                    tree.rename_node(ctx_node, ctx_node_data.name);
+                                },
+                                e => {
+                                    console.log(e)
+                                });
+                        });
                         break;
                 }
             }
@@ -450,7 +460,6 @@ function loadAll() {
 
 function toJsTreeNode(n) {
     n.text = n.name;
-    delete n.name;
 
     n.parent = n.parent_id;
     if (!n.parent)

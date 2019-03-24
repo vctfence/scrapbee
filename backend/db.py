@@ -22,7 +22,7 @@ def open():
     db.define_table('node', Field('id', type='integer'), Field('uuid', type='text'), Field('type', type='integer'),
                     Field('shelf_id', type='integer'), Field('name'), Field('uri'), Field('path'), Field('icon'),
                     Field('pos', type='integer'), Field('parent_id'), Field('date_added', 'datetime'),
-                    Field('todo_state', type='integer'), Field('todo_date', 'datetime'))
+                    Field('todo_state', type='integer'), Field('todo_date', 'datetime'), Field('details'))
     db.define_table('attachment', Field('id', type='integer'), Field('node_id', type='integer'),
                     Field('uuid', type='text'), Field('name'))
     db.define_table('tag', Field('id', type='integer'), Field('user_id', type='integer'), Field('name'))
@@ -294,6 +294,8 @@ def add_bookmark(db, user_id, json, commit=True):
     path = json.get("path", None)
     uri = json.get("uri", None)
     icon = json.get("icon", None)
+    details = json.get("details", None)
+    todo_date = json.get("todo_date", None)
 
     shelf, path = split_path(path)
 
@@ -303,7 +305,7 @@ def add_bookmark(db, user_id, json, commit=True):
     tags = [get_tag(db, user_id, t) for t in split_tags(json) if t]
 
     id = db.node.insert(shelf_id=shelf["id"], parent_id=group["id"], type=NODE_TYPE_BOOKMARK, name=name, uri=uri,
-                        icon=icon, date_added=datetime.now())
+                        icon=icon, date_added=datetime.now(), details=details, todo_date=todo_date)
 
     for t in tags:
         db.tag_to_node.insert(tag_id=t["id"], node_id=id)
@@ -312,6 +314,37 @@ def add_bookmark(db, user_id, json, commit=True):
         db.commit()
 
     return db(db.node.id == id).select()[0].as_json()
+
+
+def update_bookmark(db, user_id, json):
+    uuid = json.get("uuid", None)
+    name = json.get("name", None)
+    uri = json.get("uri", None)
+    details = json.get("details", None)
+    todo_date = json.get("todo_date", None)
+
+    bookmark = db(db.node.uuid == uuid).select()
+    bookmark = bookmark[0] if bookmark else None
+
+    tags = [get_tag(db, user_id, t) for t in split_tags(json) if t]
+
+    for t in tags:
+        db.tag_to_node.insert(tag_id=t["id"], node_id=bookmark.id)
+
+    if bookmark:
+        bookmark.name = name
+        bookmark.uri = uri
+        bookmark.tags = tags
+        bookmark.details = details
+        if todo_date:
+            try:
+                bookmark.todo_date = todo_date
+            except:
+                pass
+        bookmark.update_record()
+        db.commit()
+
+    return "{}"
 
 
 def list_nodes(db, user_id, json):
@@ -378,7 +411,7 @@ def list_nodes(db, user_id, json):
     rows = db.executesql(sql, as_dict=True)
 
     if rows:
-        return serializer.dumps(rows)
+        return serializer.dumps(rows, default=str)
     else:
         return "[]"
 

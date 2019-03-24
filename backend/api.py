@@ -80,18 +80,60 @@ def get_scrapyard_version():
 @app.route('/api/add/bookmark', methods=["POST"])
 @authenticated
 def add_bookmark():
-    """ Adds a bookmark to database (an URL without attachment).
+    """ Adds a bookmark (an URL without attachment) to database.
 
     Accepts JSON:
 
-    :name:  bookmark name (string)
-    :uri:   bookmark URL (string)
-    :path:  hierarchical node group path, the first item in the path is a name of a shelf (string)
-    :tags:  comma-separated list of tags (string)
+    :name:    bookmark name (string)
+    :uri:     bookmark URL (string)
+    :details: bookmark associated message (string)
+    :todo_date: TODO date (string)
+    :icon:    bookmark icon URL (string)
+    :path:    hierarchical node group path, the first item in the path is a name of a shelf (string)
+    :tags:    comma-separated list of tags (string)
     
     :returns: the original JSON with the inserted DB-record ID added
     """
     return db.add_bookmark(g.db, g.user_id, request.json)
+
+
+@app.route('/api/add/archive', methods=["POST"])
+@authenticated
+def add_archive():
+    """ Adds an archive (a bookmark with saved page) to database.
+
+    Accepts JSON:
+
+    :name:    bookmark name (string)
+    :uri:     bookmark URL (string)
+    :icon:    bookmark icon URL (string)
+    :details: bookmark associated message (string)
+    :todo_date: TODO date (string)
+    :path:    hierarchical node group path, the first item in the path is a name of a shelf (string)
+    :tags:    comma-separated list of tags (string)
+
+    :returns: the original JSON with the inserted DB-record ID added
+    """
+    return db.add_archive(g.db, g.user_id, request.json)
+
+
+@app.route('/api/update/bookmark', methods=["POST"])
+@authenticated
+def update_bookmark():
+    """ Updates properties of abookmark or archive.
+
+    Accepts JSON:
+
+    :uuid:    bookmark or archive UUID
+    :name:    bookmark name (string)
+    :uri:     bookmark URL (string)
+    :details: bookmark associated message (string)
+    :todo_date: TODO date (string)
+    :tags:    comma-separated list of tags (string)
+
+    :returns: the original JSON with the inserted DB-record ID added
+    """
+    return db.update_bookmark(g.db, g.user_id, request.json)
 
 
 @app.route('/api/list/nodes', methods=["POST"])

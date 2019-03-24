@@ -1,5 +1,5 @@
 *{
-    font-family:"WenQuanYi Micro Hei",
+    font-family:
 		"Open Sans",
 		"Fira Sans",
 		"Lucida Sans",
@@ -7,6 +7,7 @@
 		"Trebuchet MS",
 		"Liberation Sans",
 		"Nimbus Sans L",
+        "WenQuanYi Micro Hei",
 		sans-serif;
 }
 html,body{
@@ -136,7 +137,7 @@ html,body{
     /*position:fixed;*/
     background:#fff;
     width:100%;
-    height:50px;
+    /*height:50px;*/
     padding:10px;
     border-bottom:1px solid #999;
     white-space:nowrap;
@@ -177,12 +178,16 @@ html,body{
     width:100%;
     height:100%;
     background:#fff5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .dlg{
-    top:30%;
+    /*top:20%;*/
+    margin: 30px;
     position:absolute;
     background:#ccc;
-    left:10%;
+    /*left:10%;*/
     width:80%;
     padding:15px 20px 20px 20px;
     border-radius:5px;
@@ -203,7 +208,7 @@ html,body{
 }
 .dlg-table .row{
     display:table-row;
-    padding:12px 0 6px 0;
+    padding:12px 5px 6px 5px;
     white-space:nowrap;
     overflow:hidden;
 }
@@ -305,3 +310,21 @@ select{
     margin-top: 5px;
     border-top: 1px solid black;
 }
+
+.dlg-prop-table {
+    display: flex;
+    flex-direction: column;
+}
+
+.dlg-prop-table label {
+    text-align: right;
+    clear: both;
+    float:left;
+    margin-right:15px;
+}
+
+.prop-row {
+    padding: 5px;
+    flex: 0 1 auto;
+}
+
