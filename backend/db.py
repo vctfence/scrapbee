@@ -21,7 +21,8 @@ def open():
                     Field('file'))
     db.define_table('node', Field('id', type='integer'), Field('uuid', type='text'), Field('type', type='integer'),
                     Field('shelf_id', type='integer'), Field('name'), Field('uri'), Field('path'), Field('icon'),
-                    Field('pos', type='integer'), Field('parent_id'), Field('date_added', 'datetime'))
+                    Field('pos', type='integer'), Field('parent_id'), Field('date_added', 'datetime'),
+                    Field('todo_state', type='integer'), Field('todo_date', 'datetime'))
     db.define_table('attachment', Field('id', type='integer'), Field('node_id', type='integer'),
                     Field('uuid', type='text'), Field('name'))
     db.define_table('tag', Field('id', type='integer'), Field('user_id', type='integer'), Field('name'))
@@ -521,3 +522,27 @@ def delete_nodes(db, user_id, json):
 
     return ""
 
+
+def todo_nodes(db, user_id, json):
+    nodes = json.get("nodes", None)
+
+    if nodes:
+        for n in db(db.node.uuid.belongs(list(nodes.keys()))).select():
+            if n.type == NODE_TYPE_GROUP:
+                try:
+                    sql = "update node set todo_state = {} where parent_id in " \
+                          " (with recursive subtree(i) as (select {} " \
+                          " union select id from node, subtree where node.parent_id = subtree.i)" \
+                          " select i from subtree)".format(nodes[n.uuid], n.id)
+
+                    db.executesql(sql)
+                except Exception as e:
+                    print(e)
+            else:
+                n.todo_state = nodes[n.uuid]
+                n.update_record()
+
+        db.commit()
+        return "{}"
+
+    return ""

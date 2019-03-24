@@ -245,6 +245,17 @@ def delete_nodes():
     return db.delete_nodes(g.db, g.user_id, request.json)
 
 
+@app.route('/api/nodes/todo', methods=["POST"])
+@authenticated
+def todo_nodes():
+    """ Sets a TODO status for the specified nodes
+
+        Accepts JSON:
+
+        :nodes: object which maps node UUID to node TODO status (groups are processed recursively)"""
+    return db.todo_nodes(g.db, g.user_id, request.json)
+
+
 class Httpd(threading.Thread):
 
     def __init__(self, app):

@@ -8,6 +8,12 @@ const NODE_TYPE_GROUP = 1;
 const NODE_TYPE_BOOKMARK = 2;
 const NODE_TYPE_ARCHIVE = 3;
 
+const TODO_STATE_TODO = 1;
+const TODO_STATE_DONE = 2;
+const TODO_STATE_WAITING = 3;
+const TODO_STATE_POSTPONED = 4;
+const TODO_STATE_CANCELLED = 5;
+
 const SHELF_NODE_ROOT_ID = "%root%"
 
 var currTree;
@@ -143,6 +149,22 @@ function customMenu(ctx_node) { // TODO: i18n
     let all_nodes = tree.settings.core.data;
     let ctx_node_data = ctx_node.original;
 
+    function setTODOState(state) {
+        let selected_uuids = selected_nodes.map(n => n.original.uuid);
+        let todo_states = {};
+
+        selected_uuids.forEach(u => todo_states[u] = state);
+
+        backend.httpPost("/api/nodes/todo", {
+                nodes: todo_states
+            }, () => {
+                console.log("Todo is set");
+            },
+            e => {
+                console.log(e)
+            });
+    }
+
     let items = {
         openItem: {
             label: "Open",
@@ -264,27 +286,40 @@ function customMenu(ctx_node) { // TODO: i18n
                 todoItem: {
                     label: "TODO",
                     action: function () {
-
+                        setTODOState(TODO_STATE_TODO);
                     }
                 },
                 waitingItem: {
                     label: "WAITING",
                     action: function () {
-
+                        setTODOState(TODO_STATE_WAITING);
                     }
                 },
                 postponedItem: {
                     label: "POSTPONED",
                     action: function () {
-
+                        setTODOState(TODO_STATE_POSTPONED);
+                    }
+                },
+                cancelledItem: {
+                    label: "CANCELLED",
+                    action: function () {
+                        setTODOState(TODO_STATE_CANCELLED);
                     }
                 },
                 doneItem: {
                     label: "DONE",
                     action: function () {
-
+                        setTODOState(TODO_STATE_DONE);
                     }
                 },
+                clearItem: {
+                    separator_before: true,
+                    label: "Clear",
+                    action: function () {
+                        setTODOState(null);
+                    }
+                }
             }
         },
         deleteItem: {
@@ -358,7 +393,6 @@ function customMenu(ctx_node) { // TODO: i18n
             case NODE_TYPE_GROUP:
                 delete items.openItem;
                 delete items.openOriginalItem;
-                delete items.todoItem;
                 delete items.propertiesItem;
                 break;
             case NODE_TYPE_ARCHIVE:
@@ -382,22 +416,12 @@ function customMenu(ctx_node) { // TODO: i18n
         items["renameItem"] && (items["renameItem"]._disabled = true);
         items["openAllItem"] && (items["openAllItem"]._disabled = true);
         items["newFolderItem"] && (items["newFolderItem"]._disabled = true);
+        items["propertiesItem"] && (items["propertiesItem"]._disabled = true);
         items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
     }
 
     return items;
 }
-
-
-
-// var menulistener={};
-// menulistener.onDelete = function(){
-//     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
-// 	currTree.removeItem($(".item.focus"), function(){
-// 	    saveRdf(); // all done (all sub nodes removed)
-// 	});
-//     });
-// }
 
 function loadShelves() {
     var lastRdf = settings.last_rdf;
@@ -417,7 +441,6 @@ function loadShelves() {
     });
 }
 
-/* on page loaded */
 function loadAll() {
     loadShelves();
     $("#shelfList").change(function () {
@@ -558,62 +581,62 @@ function withFocusedWindow(callback) {
     browser.windows.getLastFocused().then((win) => callback(win));
 }
 
-/* receive message from background page */
-browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.type == 'UPDATE_CONTEXTMENU_REQUEST') {
-
-    } else if (request.type == 'SAVE_CONTENT2') {
-        savePage2(request.path, request.title, request.content);
-    } else if (request.type == 'SAVE_CONTENT' && request.windowId == windowId) {
-        savePage(request.itemId, request.content.title, request.content.html,
-            request.content.css, request.content.res, function () {
-                browser.tabs.sendMessage(sender.tab.id, {
-                    type: 'SAVE_CONTENT_FINISHED',
-                    itemId: request.itemId,
-                    title: request.content.title
-                }, null);
-            });
-    } else if (request.type == 'GET_OTHER_INSTANCE_REQUEST') {
-        browser.runtime.sendMessage({session_id: request.session_id});
-    } else if (request.type == 'RDF_EDITED') {
-        if (request.content.rdf == currTree.rdf) {
-            alert("{Warning}", "{SAME_RDF_MODIFIED}").then(function (r) {
-                //loadXml(currTree.rdf);
-            });
-        }
-    } else if (request.type == 'SAVE_PAGE_SELECTION_REQUEST') {
-        if (currTree && currTree.rendered) {
-            withFocusedWindow(function (win) {
-                if (win.id == windowId)
-                    requestPageSaving(genItemId(), 'GET_PAGE_SELECTION_REQUEST');
-            });
-        } else {
-            log.error("rdf have not been loaded")
-        }
-    } else if (request.type == 'SAVE_PAGE_REQUEST') {
-        if (currTree && currTree.rendered) {
-            withFocusedWindow(function (win) {
-                if (win.id == windowId) {
-                    requestPageSaving(genItemId(), 'GET_PAGE_REQUEST');
-                }
-            });
-        } else {
-            log.error("rdf have not been loaded")
-        }
-    } else if (request.type == 'SAVE_URL_REQUEST') {
-        if (currTree && currTree.rendered) {
-            withFocusedWindow(function (win) {
-                if (win.id == windowId)
-                    requestUrlSaving(genItemId());
-            });
-        } else {
-            log.error("rdf have not been loaded")
-        }
-    }
-});
-msg_hub.send('GET_OTHER_INSTANCE_REQUEST', '', function (response) {
-    // alert("Warning", "Found another window")
-});
+// /* receive message from background page */
+// browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+//     if (request.type == 'UPDATE_CONTEXTMENU_REQUEST') {
+//
+//     } else if (request.type == 'SAVE_CONTENT2') {
+//         savePage2(request.path, request.title, request.content);
+//     } else if (request.type == 'SAVE_CONTENT' && request.windowId == windowId) {
+//         savePage(request.itemId, request.content.title, request.content.html,
+//             request.content.css, request.content.res, function () {
+//                 browser.tabs.sendMessage(sender.tab.id, {
+//                     type: 'SAVE_CONTENT_FINISHED',
+//                     itemId: request.itemId,
+//                     title: request.content.title
+//                 }, null);
+//             });
+//     } else if (request.type == 'GET_OTHER_INSTANCE_REQUEST') {
+//         browser.runtime.sendMessage({session_id: request.session_id});
+//     } else if (request.type == 'RDF_EDITED') {
+//         if (request.content.rdf == currTree.rdf) {
+//             alert("{Warning}", "{SAME_RDF_MODIFIED}").then(function (r) {
+//                 //loadXml(currTree.rdf);
+//             });
+//         }
+//     } else if (request.type == 'SAVE_PAGE_SELECTION_REQUEST') {
+//         if (currTree && currTree.rendered) {
+//             withFocusedWindow(function (win) {
+//                 if (win.id == windowId)
+//                     requestPageSaving(genItemId(), 'GET_PAGE_SELECTION_REQUEST');
+//             });
+//         } else {
+//             log.error("rdf have not been loaded")
+//         }
+//     } else if (request.type == 'SAVE_PAGE_REQUEST') {
+//         if (currTree && currTree.rendered) {
+//             withFocusedWindow(function (win) {
+//                 if (win.id == windowId) {
+//                     requestPageSaving(genItemId(), 'GET_PAGE_REQUEST');
+//                 }
+//             });
+//         } else {
+//             log.error("rdf have not been loaded")
+//         }
+//     } else if (request.type == 'SAVE_URL_REQUEST') {
+//         if (currTree && currTree.rendered) {
+//             withFocusedWindow(function (win) {
+//                 if (win.id == windowId)
+//                     requestUrlSaving(genItemId());
+//             });
+//         } else {
+//             log.error("rdf have not been loaded")
+//         }
+//     }
+// });
+// msg_hub.send('GET_OTHER_INSTANCE_REQUEST', '', function (response) {
+//     // alert("Warning", "Found another window")
+// });
 
 function postBlob(url, blob, filename, itemId, onload, onerror) {
     var rdf_path = currTree.rdf_path;
@@ -835,7 +858,7 @@ window.onload = function () {
             show_at_node: false,
             items: customMenu
         }
-    })
+    });
 
     $(document).on("click.jstree", $(".jstree-anchor"), function(e) {
         if(e.button === 0 || e.button === 1) {
@@ -850,6 +873,9 @@ window.onload = function () {
             e.preventDefault();
             return false;
         }
+    }).on("click", function(e) {
+        if (!event.target.matches("#shelf-menu-button"))
+            $(".simple-menu").hide();
     });
 
 
