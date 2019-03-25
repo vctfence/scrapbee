@@ -30,5 +30,6 @@ class Backend {
 
 }
 
+let backend = new Backend("http://localhost:31800", "default:default");
 
-export {Backend};
+export {backend};

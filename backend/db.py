@@ -9,6 +9,7 @@ NODE_TYPE_SHELF = 1
 NODE_TYPE_GROUP = 2
 NODE_TYPE_BOOKMARK = 3
 NODE_TYPE_ARCHIVE = 4
+NODE_TYPE_SEPARATOR = 5
 
 DEFAULT_SHELF_NAME = "default"
 
@@ -318,6 +319,22 @@ def get_tag(db, user_id, name):
         return create_tag(db, user_id, name)
 
 
+def add_separator(db, user_id, json):
+    uuid = json.get("parent", None)
+
+    if uuid:
+        parent = only(db(db.node.uuid == uuid).select())
+
+        if parent:
+            id = db.node.insert(user_id=user_id, parent_id=parent.id, type=NODE_TYPE_SEPARATOR, name="-",
+                                date_added=datetime.now())
+            db.commit()
+
+            return db(db.node.id == id).select()[0].as_json()
+
+    return ""
+
+
 def add_bookmark(db, user_id, json, commit=True):
     name = json.get("name", None)
     path = json.get("path", None)
@@ -379,10 +396,9 @@ def list_nodes(db, user_id, json):
     depth = json.get("depth", "subtree")
     type = json.get("type", None)
     path = json.get("path", None)
+    order = json.get("order", None)
 
     group = query_group(db, user_id, path)
-
-    print(group)
 
     tags = [query_tag(db, user_id, t)["id"] for t in split_tags(json) if t]
     if tags:
@@ -415,6 +431,9 @@ def list_nodes(db, user_id, json):
 
     if tags:
         sql += " and tag_to_node.tag_id in {}".format(tags)
+
+    if order == "custom":
+        sql += " order by pos "
 
     if limit:
         sql += " limit {}".format(limit)
@@ -574,6 +593,20 @@ def todo_nodes(db, user_id, json):
                     print(e)
             else:
                 n.todo_state = nodes[n.uuid]
+                n.update_record()
+
+        db.commit()
+        return "{}"
+
+    return ""
+
+
+def reorder_nodes(db, user_id, json):
+    nodes = json.get("nodes", None)
+
+    if nodes:
+        for n in db(db.node.uuid.belongs(list(nodes.keys()))).select():
+                n.pos = nodes[n.uuid]
                 n.update_record()
 
         db.commit()

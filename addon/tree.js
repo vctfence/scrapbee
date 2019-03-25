@@ -1,595 +1,494 @@
-import {settings} from "./settings.js";
+import {backend} from "./backend.js"
 
-class NodeHTMLBuffer {
-    constructor(start, end) {
-        this.start=start;
-        this.end=end;
-        this.children=[];
-    }
-    appendChild(c) {
-        this.children.push(c)
-    }
-    flattenArray() {
-        var list = [this.start]
-        this.children.forEach(function(c){
-            list = list.concat(c.flattenArray());
-        })
-        list.push(this.end);
-        return list;        
-    }
-    flatten() {
-        // return this.flattenArray().join("");
-        var list = [this.start]
-        this.children.forEach(function(c){
-            list.push(c.flatten());
-        })
-        list.push(this.end);
-        return list.join("");
-    }
-}
+import {
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_SHELF,
+    NODE_TYPE_SEPARATOR,
+    TODO_STATE_CANCELLED,
+    TODO_STATE_DONE,
+    TODO_STATE_POSTPONED,
+    TODO_STATE_TODO,
+    TODO_STATE_WAITING
+} from "./db.js"
 
-class BookTree {
-    constructor(xmlString, rdf_full_file) {
-        var self = this;
-        this.rdf = rdf_full_file;
-        this.rdf_path = rdf_full_file.replace(/[^\/\\]*$/, "");
-        this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
-        this.namespaces = this.getNameSpaces();
-        Object.keys(this.namespaces).forEach(function (k) {
-            var v = self.namespaces[k];
-            if (/^NS\d+$/.test(k))
-                self.MAIN_NS = v;
-            self["NS_" + k] = v;
-        });
-        this.nsResolver=function(prefix) {
-            return self.namespaces[prefix] || null;
-        }
-    }
-    translateResource(r, rdf_path, id) {
-        return r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path).replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
-            return b + "/"
-        });
-    }
-    listenUserEvents() {
-        var self = this;
-        var dragging = false;
-        var $drag_item;
-        var $ref_item;
-        var t;
-        function getItemNode(el) {
-            var $h = $(el);
-            var $p = $h.parent();
-            var $el;
-            if ($h.hasClass("item")) {
-                $el = $h;
-            } else if ($p.hasClass("item")) {
-                $el = $p;
-            }
-            return $el;
-        }
-        $(document.body).unbind('.BookTree');
-        $(document.body).bind("mousedown.BookTree", function (e) {
-            var $el = getItemNode(e.target);
-            if ($el) {
-                if (e.button == 0) {
-                    $drag_item = $el;
-                    $ref_item = $el;
-                    dragging = true;
-                    t = 0;
-                }
-                //this.setCapture(e);
-                $(".item.focus").removeClass("focus");
-                $el.addClass("focus");
-            }
-            var $f = $(".item.focus");
-            if ($f.hasClass("folder")) {
-                $(document.body).attr("contextmenu", "popup-menu-folder");
-            } else if ($f.hasClass("item")) {
-                $(document.body).attr("contextmenu", "popup-menu-link");
-            } else {
-                $(document.body).attr("contextmenu", "popup-menu-body");
-            }
-        });
-        $(document.body).bind("click.BookTree", function (e) {
-            var $el = getItemNode(e.target);
-            if (!$el || !$el.length)
-                return;
-            if ($el.hasClass("folder")) {
-                self.toggleFolder($el);
-            } else if ($el.hasClass("local") || $el.hasClass("bookmark")) {
-                if ($el.attr("disabled"))
-                    return;
-                var url = $el.attr("source");
-                if ($el.hasClass("local") && !$(e.target).hasClass("origin")) {
-                    url = self.getItemIndexPage($el.attr("id")) + "?scrapyard_editing=1&refresh=" + new Date().getTime();
-                }
-                if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey)) {
-                    browser.tabs.update({ url: url }, function (tab) { });
-                } else {
-                    browser.tabs.create({ url: url }, function (tab) { });
-                }
-            }
-        });
-        $(document).bind("mouseup.BookTree", function (e) {
-            if (!dragging) return;
-            dragging = false;
-            $(".drag-mark").remove();
-            if ($ref_item && [1, 2, 3].includes(t)) {
-                if ($drag_item[0] != $ref_item[0]) {
-                    self.moveNode($drag_item, $ref_item, t);
-                }
-            }
-            $ref_item = null;
-            $(".drag-into").removeClass("drag-into");
-        });
-        $(document).bind("mousemove.BookTree", function (e) {
-            if (!dragging) return;
-            // var $el = $ref_item = getItemNode(e.target) || $ref_item;
-            var $el = $ref_item = self.getItemY(e.pageY) || $ref_item;
-            var drag_mark = "<hr class='drag-mark'/>";
-            if ($el) {
-                $(".drag-into").removeClass("drag-into");
-                var parentOffset = $el.offset();
-                var relX = e.pageX - parentOffset.left;
-                var relY = e.pageY - parentOffset.top;
-                /** get drag ref and position */
-                $ref_item = $el;
-                if ($el.hasClass("folder")) {
-                    var $children = $el.next(".folder-content").children(".item");
-                    var expanded_owner = $el.hasClass("expended") && ($children.length);
-                    var single_child = ($children.length == 1 && self.getParentFolderItem($drag_item)[0] == $el[0]);
-                    if ((!expanded_owner || single_child) && relY > $el.height() * 0.6) { // after
-                        t = 2;
-                    } else if (relY < $el.height() * 0.3) { // before
-                        t = 1;
-                    } else {
-                        // self.toggleFolder($el, true);
-                        t = 3; // into
-                    }
-                } else {
-                    t = (relY > $el.height() * 0.5) ? 2 : 1;
-                }
-                /** show mark */
-                $(".drag-mark").remove();
-                if (t == 1) {
-                    $el.before(drag_mark)
-                } else if (t == 2) {
-                    $el.after(drag_mark)
-                } else if (t == 3) {
-                    if ($el.hasClass("expanded")) {
-                        $el.next(".folder-content").prepend(drag_mark)
-                    } else if ($drag_item[0] != $el[0]) {
-                        $el.addClass("drag-into");
-                    }
-                }
-                /** ignore invalid folder dragging */
-                if ($drag_item.hasClass("folder")) {
-                    if ($drag_item[0] == $el[0]) {
-                        t = 0;
-                    } else if ($.contains($drag_item.next(".folder-content")[0], $el[0])) {
-                        t = 0;
-                    }
-                }
-            }
-        });
-    }
-    getItemIndexPage(id) {
-        return (settings.backend_url + "file-service/" + this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/")
-    }
-    toggleFolder($item, on) {
-        if ($item && $item.hasClass("folder")) {
-            if (!$item.hasClass("expended") || on) {
-                $item.addClass("expended");
-                $item.next(".folder-content").show();
-            } else {
-                $item.removeClass("expended");
-                $item.next(".folder-content").hide();
-            }
-        }
-    }
-    getItemY(y) {
-        y -= window.scrollY;
-        var r = null;
-        $(".item:visible").each(function () {
-            var rect = this.getBoundingClientRect();
-            if (rect.top < y && rect.bottom > y) {
-                r = $(this);
-                return;
-            }
-        });
-        return r;
-    }
-    moveNode($item, $ref_item, move_type) {
-        if (![1, 2, 3].includes(move_type))
-            return;
-        var $c = $item.clone();
-        if (move_type == 3)
-            $ref_item.next(".folder-content").prepend($c);
-        else if (move_type == 2)
-            if ($ref_item.hasClass("folder"))
-                $ref_item.next(".folder-content").after($c);
-            else
-                $ref_item.after($c);
-        else if (move_type == 1)
-            $ref_item.before($c);
-        if ($item.hasClass("folder")) {
-            var $cc = $item.next(".folder-content").clone();
-            $c.after($cc);
-            $item.next(".folder-content").remove();
-        }
-        this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
-        $item.remove();
-    }
-    renderTree() {
-        var self = this;
-        // var x = this.xmlDoc.getElementsByTagNameNS(this.NS_RDF, "Seq");
+import {showDlg, alert, confirm} from "./dialog.js"
 
-        this.cacheXmlNode();
+class BookmarkTree {
+    constructor(element) {
+        this._element = element;
 
-        var root_seq = this.getSeqNode("urn:scrapbook:root");
-        var $root_container = $(".root.folder-content");
-        $root_container.html("");
-        var buffers={};
-        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        
-        try{
-            this.iterateNodes(function (json) {
-                var parentId = json.parentId || "urn:scrapbook:root";
-                var bf;
-                switch (json.nodeType) {
-                case "seq":
-                    bf = self.createFolder(null, json.id, null, json.title);
-                    break;
-                case "item":
-                    bf = self.createLink(null, json.type, json.id, null, json.source, json.icon, json.title);
-                    break;
-                case "separator":
-                    bf = self.createSeparator(null, json.id, null);
-                    break;
+        $(element).jstree({
+            plugins: ["wholerow", "contextmenu", "dnd", "types", "state"],
+            core: {
+                worker: false,
+                animation: 0,
+                check_callback: BookmarkTree.checkOperation,
+                themes: {
+                    name: "default",
+                    dots: false,
+                    icons: true,
+                },
+            },
+            contextmenu: {
+                show_at_node: false,
+                items: BookmarkTree.contextMenu
+            },
+            types: {
+                "#": {
+                    "valid_children": [NODE_TYPE_SHELF]
+                },
+                [NODE_TYPE_BOOKMARK]: {
+                    "valid_children": []
+                },
+                [NODE_TYPE_ARCHIVE]: {
+                    "valid_children": []
+                },
+                [NODE_TYPE_SEPARATOR]: {
+                    "valid_children": []
                 }
-                if(bf){
-                    buffers[json.id] = bf;
-                    if(buffers[parentId])
-                        buffers[parentId].appendChild(bf);
-                }
-            });
-            var html = buffers["urn:scrapbook:root"].flatten();
-            $root_container.html(html);
-            this.rendered = true;
-        }catch(e){
-            log.error(e.message)
-        }
-        this.listenUserEvents();
-    }
-    iterateNodes(fn) {
-        var self = this;
-        var x = this.xmlDoc.getElementsByTagNameNS(this.NS_RDF, "Seq");
-        var root_seq = this.getSeqNode("urn:scrapbook:root");
-        function SeqProcesser(seq, parentId) {
-            var seq_id;
-            var about = seq.getAttribute("RDF:about")
-            if (about) {
-                var desc_node = self.getDescNode(about);
-                if (desc_node) {
-                    seq_id = desc_node.getAttributeNS(self.MAIN_NS, "id");
-                    fn({
-                        parentId: parentId,
-                        nodeType: 'seq',
-                        id: seq_id,
-                        title: desc_node.getAttributeNS(self.MAIN_NS, "title")
+            },
+            state: {}
+        }).on("move_node.jstree", BookmarkTree.moveNode);
+
+        this._inst = $(element).jstree(true);
+
+        $(document).on("click.jstree", $(".jstree-anchor"), function (e) {
+            if (e.button === 0 || e.button === 1) {
+                let clickable = e.target.getAttribute("data-clickable");
+                let uri = e.target.getAttribute("data-uri");
+                if (clickable && !e.ctrlKey)
+                    browser.tabs.create({
+                        "url": uri
                     });
-                } else {
-                    // this is root (hidden)
-                }
+                e.preventDefault();
+                return false;
             }
-            for (let child of seq.children) {
-                try {
-                    var seq_node = self.getSeqNode(child.getAttribute("RDF:resource"));
-                    if (seq_node) { // folder
-                        SeqProcesser(seq_node, seq_id);
-                    } else {
-                        var separator = self.getSeparatorNode(child.getAttribute("RDF:resource"));
-                        if(separator) {
-                            var id = child.getAttribute("RDF:resource").replace("urn:scrapbook:item", "");
-                            fn({ nodeType: 'separator', id: id, parentId: seq_id });
-                        } else {   // child
-                            var node = self.getDescNode(child.getAttribute("RDF:resource"));
-                            if (node) {
-                                var type = node.getAttributeNS(self.MAIN_NS, "type");
-                                if (!(["local", "bookmark"].includes(type))) type = "local"
-                                fn({
-                                    parentId: seq_id,
-                                    nodeType: "item",
-                                    id: node.getAttributeNS(self.MAIN_NS, "id"),
-                                    type: type,
-                                    source: node.getAttributeNS(self.MAIN_NS, "source"),
-                                    icon: node.getAttributeNS(self.MAIN_NS, "icon"),
-                                    title: node.getAttributeNS(self.MAIN_NS, "title")
+        })
+    }
+
+    static toJsTreeNode(n) {
+        n.text = n.name;
+
+        n.parent = n.parent_id;
+        if (!n.parent)
+            n.parent = "#";
+
+        if (n.type == NODE_TYPE_SHELF)
+            n.icon = "/icons/bookmarks.svg";
+        else if (n.type == NODE_TYPE_GROUP)
+            n.icon = "/icons/group.svg";
+        else if (n.type == NODE_TYPE_SEPARATOR) {
+            n.text = "─".repeat(30);
+            n.a_attr = {
+                "class": "separator-node"
+            };
+        }
+        else if (n.type != NODE_TYPE_SHELF) {
+            let uri = "";
+            if (n.uri)
+                uri = false //n.uri.length > 60
+                    ? "\x0A" + n.uri.substring(0, 60) + "..."
+                    : ("\x0A" + n.uri);
+
+            n.li_attr = {
+                "class": "show_tooltip",
+                "title": `${n.text}${uri}`
+            };
+
+            n.a_attr = {
+                "data-uri": n.uri,
+                "data-clickable": "true"
+            };
+
+            if (!n.icon)
+                n.icon = "/icons/homepage.png";
+        }
+
+        n.data = {};
+        n.data.uuid = n.uuid;
+
+        return n;
+    }
+
+    set data(nodes) {
+        this._inst.settings.core.data = nodes;
+    }
+
+    get data() {
+        return this._inst.settings.core.data
+    }
+
+    update(nodes) {
+        nodes.forEach(BookmarkTree.toJsTreeNode);
+        this.data = nodes;
+
+        let state;
+
+        let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
+        if (shelves.length === 1) {
+            this._inst.settings.state.key = shelves[0].name;
+            state = JSON.parse(localStorage.getItem(shelves[0].name));
+        }
+
+        this._inst.refresh(true, () => state? state.state: null);
+        // let root_node = this._inst.get_node(nodes.find(n => n.type == NODE_TYPE_SHELF));
+        // this._inst.open_node(root_node);
+    }
+
+    renameRoot(name) {
+        let root_node = this._inst.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
+        this._inst.rename_node(root_node, name);
+    }
+
+    static checkOperation(operation, node, parent, position, more) {
+        // disable dnd copy
+        if (operation === "copy_node") {
+            return false;
+        } else if (operation === "move_node") {
+        }
+        return true;
+    }
+
+    static moveNode(_, data) {
+        let tree = $(this).jstree(true);
+        let parent = tree.get_node(data.parent);
+
+        if (data.parent != data.old_parent) {
+            let node = tree.get_node(data.node);
+
+            backend.httpPost("/api/nodes/move", {
+                nodes: [node.original.uuid],
+                dest: parent.original.uuid
+            }, new_nodes => {
+                //console.log("Nodes moved: "  + node.original.uuid);
+                BookmarkTree.reorderNodes(tree, parent);
+            });
+        }
+        else {
+            BookmarkTree.reorderNodes(tree, parent);
+        }
+    }
+
+    static reorderNodes(tree, parent) {
+        let siblings = parent.children.map(c => tree.get_node(c));
+
+        let positions = {};
+        for (let i = 0; i < siblings.length; ++i)
+            positions[siblings[i].original.uuid] = i + 1;
+
+        backend.httpPost("/api/nodes/reorder", {
+            nodes: positions
+        }, () => {
+            //console.log("Nodes reordered");
+        });
+    }
+
+
+    /* context menu listener */
+    static contextMenu(ctx_node) { // TODO: i18n
+        let tree = this;
+        let selected_nodes = tree.get_selected(true) || [];
+        let multiselect = selected_nodes && selected_nodes.length > 1;
+        let all_nodes = tree.settings.core.data;
+        let ctx_node_data = ctx_node.original;
+
+        function setTODOState(state) {
+            let selected_uuids = selected_nodes.map(n => n.original.uuid);
+            let todo_states = {};
+
+            selected_uuids.forEach(u => todo_states[u] = state);
+
+            backend.httpPost("/api/nodes/todo", {
+                    nodes: todo_states
+                }, () => {
+                    console.log("Todo is set");
+                },
+                e => {
+                    console.log(e)
+                });
+        }
+
+        let items = {
+            openItem: {
+                label: "Open",
+                action: function () {
+                    for (let n of selected_nodes) {
+                        switch (n.original.type) {
+                            case NODE_TYPE_BOOKMARK:
+                                browser.tabs.create({
+                                    "url": n.original.uri
                                 });
-                            }
+                                break;
                         }
                     }
-                } catch(e) {
-                    log.error(e.message)
+                }
+            },
+            openAllItem: {
+                label: "Open All",
+                action: function () {
+                    let children = all_nodes.filter(n => ctx_node.children.some(id => id == n.id));
+                    children.forEach(c =>  browser.tabs.create({
+                        "url": c.uri
+                    }))
+                }
+            },
+            sortItem: {
+                label: "Sort by Name",
+                action: function () {
+                    let children = ctx_node.children.map(c => tree.get_node(c));
+                    children.sort((a, b) => a.text.localeCompare(b.text));
+                    ctx_node.children = children.map(c => c.id);
+
+                    tree.redraw_node(ctx_node, true, false, true);
+                    BookmarkTree.reorderNodes(tree, ctx_node);
+                }
+            },
+            openOriginalItem: {
+                label: "Open the Original Link",
+                action: function () {
+                    browser.tabs.create({
+                        "url": ctx_node_data.uri
+                    });
+                }
+            },
+            newFolderItem: {
+                label: "New Folder...",
+                action: function () {
+                    // TODO: i18n
+                    showDlg("prompt", {caption: "Create Folder", label: "Name"}).then(dlg_data => {
+                        let name;
+                        if (name = dlg_data.title) {
+                            let selectedOption = $("#shelfList option:selected");
+                            let shelf = selectedOption.text();
+
+                            if (/*!isBuiltinShelf(shelf)*/true) {
+                                let parents = ctx_node.parents
+                                    .filter(p => p !== "#")
+                                    .map(p => tree.get_node(p).text).reverse();
+
+                                let path = (parents.length? (parents.join("/") + "/"): "") + ctx_node.text + "/" + name;
+
+                                backend.httpPost("/api/create/group", {"path": path}, group => {
+                                    if (group) {
+                                        BookmarkTree.toJsTreeNode(group);
+                                        tree.deselect_all(true);
+                                        tree.select_node(tree.create_node(ctx_node, group));
+                                    }
+                                });
+                            }
+                            else {
+                                alert("{Error}", `Can not create folder in a built-in shelf.`);
+                                return;
+                            }
+                        }
+                    });
+                }
+            },
+            newSeparatorItem: {
+                label: "New Separator",
+                action: function () {
+                    let parent = tree.get_node(ctx_node.parent);
+                    backend.httpPost("/api/add/separator", {
+                            parent:  parent.original.uuid
+                        }, separator => {
+                            let position = $.inArray(ctx_node.id, parent.children);
+                            tree.create_node(parent, BookmarkTree.toJsTreeNode(separator), position + 1);
+                            BookmarkTree.reorderNodes(tree, parent);
+                        });
+                }
+            },
+            cutItem: {
+                separator_before: true,
+                label: "Cut",
+                action: function () {
+                    tree.cut(selected_nodes);
+                }
+            },
+            copyItem: {
+                label: "Copy",
+                action: function () {
+                    tree.copy(selected_nodes);
+                }
+            },
+            pasteItem: {
+                label: "Paste",
+                _disabled: !(tree.can_paste() && (ctx_node_data.type == NODE_TYPE_GROUP
+                    || ctx_node_data.type == NODE_TYPE_SHELF)),
+                action: function () {
+                    let buffer = tree.get_buffer();
+                    let selection =  Array.isArray(buffer.node)
+                        ? buffer.node.map(n => n.original.uuid)
+                        : [buffer.node.original.uuid];
+                    backend.httpPost("/api/nodes/" + buffer.mode.split("_")[0], {
+                        nodes: selection,
+                        dest: ctx_node_data.uuid
+                    }, new_nodes => {
+                        switch (buffer.mode) {
+                            case "copy_node":
+                                break;
+                            case "move_node":
+                                for (let s of selection)
+                                    tree.delete_node(s);
+                                break;
+                        }
+
+                        for (let n of new_nodes) {
+                            let parent = tree.get_node(n.parent_id);
+                            tree.create_node(parent, BookmarkTree.toJsTreeNode(n), "last");
+                        }
+
+                        tree.clear_buffer();
+                    });
+                }
+            },
+            todoItem: {
+                separator_before: true,
+                label: "TODO",
+                submenu: {
+                    todoItem: {
+                        label: "TODO",
+                        action: function () {
+                            setTODOState(TODO_STATE_TODO);
+                        }
+                    },
+                    waitingItem: {
+                        label: "WAITING",
+                        action: function () {
+                            setTODOState(TODO_STATE_WAITING);
+                        }
+                    },
+                    postponedItem: {
+                        label: "POSTPONED",
+                        action: function () {
+                            setTODOState(TODO_STATE_POSTPONED);
+                        }
+                    },
+                    cancelledItem: {
+                        label: "CANCELLED",
+                        action: function () {
+                            setTODOState(TODO_STATE_CANCELLED);
+                        }
+                    },
+                    doneItem: {
+                        label: "DONE",
+                        action: function () {
+                            setTODOState(TODO_STATE_DONE);
+                        }
+                    },
+                    clearItem: {
+                        separator_before: true,
+                        label: "Clear",
+                        action: function () {
+                            setTODOState(null);
+                        }
+                    }
+                }
+            },
+            deleteItem: {
+                separator_before: true,
+                label: "Delete",
+                action: function () {
+                    confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
+                        let selected_uuids = selected_nodes.map(n => n.original.uuid);
+
+                        backend.httpPost("/api/nodes/delete", {
+                                nodes: selected_uuids
+                            }, group => {
+                                tree.delete_node(selected_nodes);
+                            });
+                    });
+                }
+            },
+            propertiesItem: {
+                separator_before: true,
+                label: "Properties...",
+                action: function () {
+                    switch (ctx_node.original.type) {
+                        case NODE_TYPE_BOOKMARK:
+                        case NODE_TYPE_ARCHIVE:
+                            showDlg("properties", ctx_node_data).then(data => {
+                                ctx_node_data.name = ctx_node_data.text = data.text;
+                                backend.httpPost("/api/update/bookmark", Object.assign(ctx_node_data, data),
+                                    () => {
+                                        tree.rename_node(ctx_node, ctx_node_data.name);
+                                    });
+                            });
+                            break;
+                    }
+                }
+            },
+            renameItem: {
+                label: "Rename",
+                action: function () {
+                    switch (ctx_node.original.type) {
+                        case NODE_TYPE_SHELF:
+                            $("#shelf-menu-rename").click();
+                            break;
+                        case NODE_TYPE_GROUP:
+                            showDlg("prompt", {caption: "Rename",
+                                label: "Name", title: ctx_node_data.text}).then(data => {
+                                let new_name;
+                                if (new_name = data.title) {
+                                    let parents = ctx_node.parents
+                                        .filter(p => p !== "#")
+                                        .map(p => tree.get_node(p).text).reverse();
+
+                                    let path = parents.join("/") + "/" + ctx_node.text;
+
+                                    backend.httpPost("/api/rename/group", {
+                                            "path": path,
+                                            "new_name": new_name
+                                        }, group => {
+                                            ctx_node_data.text = new_name;
+                                            ctx_node_data.path = group.path;
+                                            tree.rename_node(tree.get_node(ctx_node), new_name);
+                                        });
+                                }
+                            });
+                            break;
+                    }
                 }
             }
-        }
-        SeqProcesser(root_seq);
-    }
-    updateItemIcon($item, icon) {
-        var id = $item.attr("id");
-        $item.css("background-image", "url(" + this.translateResource(icon, this.rdf_path, id) + ")");
-        var node = this.getDescNode("urn:scrapbook:item" + id);
-        if (node) node.setAttributeNS(this.MAIN_NS, "icon", icon);
-    }
-    renameItem($item, title, callback) {
-        var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
-        title = $.trim(title);
-        if (desc_node) {
-            desc_node.setAttributeNS(this.MAIN_NS, "title", title);
-            $item.find("label").html(title || "--untitled--");
-            $item.attr("title", title);
-            callback && callback();
-        }
-    }
-    getParentFolderItem($item) {
-        if (!$item.length)
-            return null;
-        return $item.parent(".folder-content").prev(".item.folder");
-    }
-    getContainerFolderId($container) {
-        if (!$container.length)
-            return "";
-        return $container.prev(".item.folder").attr("id");
-    }
-    createLink($container, type, id, ref_id, source, icon, title, wait, is_new_node) {
-        title = $.trim(title);
-        if (wait) icon = "icons/loading.gif";
-        /** create item element */
-        var label = title || "?";
-        var style="";
-        /** show icon */
-        if (icon) {
-            style = "background-image:url(" + this.translateResource(icon, this.rdf_path, id) + ");";
-        }
-        var bf = new NodeHTMLBuffer(
-            `<div id='${id}' class='item ${type}' title='${title}' style='${style}' source='${source}' draggable='true'><label>${label}</label>`,
-            (type == "local" ? "<div class='origin'></div>" : "") + "</div>");
-        if (is_new_node) {
-            /** append to dom */
-            if(!$container.length)
-                $container = $(".folder.root");
-            var $item = $(bf.flatten());
-            if (ref_id) {
-                $item.insertAfter($("#" + ref_id));
-            } else {
-                $item.appendTo($container);
+        };
+
+        if (ctx_node.original.type !== NODE_TYPE_SHELF) {
+            switch (ctx_node.original.type) {
+                case NODE_TYPE_GROUP:
+                    delete items.openItem;
+                    delete items.openOriginalItem;
+                    delete items.propertiesItem;
+                    break;
+                case NODE_TYPE_ARCHIVE:
+                case NODE_TYPE_BOOKMARK:
+                    delete items.openAllItem;
+                    delete items.sortItem;
+                    delete items.openOriginalItem;
+                    delete items.newFolderItem;
+                    delete items.renameItem;
+                    break;
             }
-            /** clicking-lock on waiting item */
-            if (wait) $item.attr("disabled", "1");
-            /** add new node to doc */    
-            var folder_id = this.getContainerFolderId($container);
-            this.createLinkXml(folder_id, type, id, ref_id, title, source, icon);
         }
-        return bf;
-    }
-    createFolder($container, id, ref_id, title, is_new_node) {
-        title = $.trim(title);
-        var label = title || "?";
-        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title}' draggable='true'><label>${label}</label></div><div class='folder-content'>`,"</div>");
-        if (is_new_node) {
-            var $folder = $(bf.flatten());
-            if (ref_id) {
-                $folder.insertAfter($("#" + ref_id));
-            } else {
-                $folder.appendTo($container);
-            }
-            var folder_id = this.getContainerFolderId($container);
-            this.createFolderXml(folder_id, id, ref_id, title);
-        }        
-        return bf;
-    }
-    createSeparator($container, id, ref_id, is_new_node) {
-        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item separator'/>`, "");
-        if (is_new_node) {
-            var $hr = $(bf.flatten());
-            if (ref_id) {
-                $hr.insertAfter($("#" + ref_id)).attr("id", id);
-            } else {
-                $hr.appendTo($container).attr("id", id);
-            }
-            var folder_id = this.getContainerFolderId($container);
-            this.createSeparatorXml(folder_id, id, ref_id);
+        else {
+            for (let k in items)
+                if (!["newFolderItem", "renameItem", "pasteItem"].find(s => s === k))
+                    delete items[k];
         }
-        return bf;
-    }
-    removeItem($item, callback) {
-        var self = this;
-        var id = $item.attr("id");
-        if ($item.hasClass("folder")) {
-            $item.next(".folder-content").children(".item").each(function () {
-                self.removeItem($(this));
-            });
-            $item.next(".folder-content").remove();
+
+        if (multiselect) {
+            items["sortItem"] && (items["sortItem"]._disabled = true);
+            items["renameItem"] && (items["renameItem"]._disabled = true);
+            items["openAllItem"] && (items["openAllItem"]._disabled = true);
+            items["newFolderItem"] && (items["newFolderItem"]._disabled = true);
+            items["propertiesItem"] && (items["propertiesItem"]._disabled = true);
+            items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
         }
-        $item.remove();
-        if ($item.hasClass("local") || $item.hasClass("bookmark")) {
-            this.onItemRemoved && this.onItemRemoved(id);
-        }
-        this.removeItemXml(id);
-        callback && callback();
-    }    
-    /** =============== xml part =============== */
-    moveItemXml(id, folder_id, ref_id, move_type) {
-        var node = this.getLiNode("urn:scrapbook:item" + id);
-        if (node) {
-            var nn = node.cloneNode();
-            var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
-            var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-            if (move_type == 1) {
-                seq_node.insertBefore(nn, ref_node);
-            } else if (move_type == 2) {
-                seq_node.insertBefore(nn, ref_node.nextSibling);
-            } else if (move_type == 3) {
-                seq_node.appendChild(nn);
-            }
-            node.parentNode.removeChild(node);
-            this.onXmlChanged && this.onXmlChanged();
-        }
+
+        return items;
     }
-    removeItemXml(id) {
-        var about = "urn:scrapbook:item" + id;
-        var node = this.desc_node_cache[about]
-            || this.separator_node_cache[about]
-            || this.seq_node_cache[about]
-            || this.getLiNode(about);
-        
-        if(node){
-            node.parentNode.removeChild(node);
-            delete this.desc_node_cache[about]
-            delete this.seq_node_cache[about]
-            delete this.separator_node_cache[about]
-        }
-        
-        // var node = this.getLiNode("urn:scrapbook:item" + id);
-        // if (node) node.parentNode.removeChild(node);
-        // var node = this.getSeqNode("urn:scrapbook:item" + id);
-        // if (node) node.parentNode.removeChild(node);
-        // var node = this.getDescNode("urn:scrapbook:item" + id);
-        // if (node) node.parentNode.removeChild(node);
-        // var node = this.getSeparatorNode("urn:scrapbook:item" + id);
-        // if (node) node.parentNode.removeChild(node);
-    }
-    createSeparatorXml(folder_id, id, ref_id) {
-        var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
-        if (seq_node) {
-            var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
-            node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
-            if (ref_id) {
-                var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-                seq_node.insertBefore(node, ref_node.nextSibling);
-            } else {
-                seq_node.appendChild(node);
-            }
-            var node = this.xmlDoc.createElementNS(this.NS_NC, "BookmarkSeparator");
-            node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            node.setAttributeNS(this.MAIN_NS, "id", id);
-            node.setAttributeNS(this.MAIN_NS, "type", "separator");
-            this.xmlDoc.documentElement.appendChild(node);
-            this.separator_node_cache["urn:scrapbook:item" + id] = node;
-            this.onXmlChanged && this.onXmlChanged();
-        }
-    }
-    createLinkXml(folder_id, type, id, ref_id, title, source, icon) {
-        var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
-        if (seq_node) {
-            var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
-            node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
-            if (ref_id) {
-                var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-                seq_node.insertBefore(node, ref_node.nextSibling);
-            } else {
-                seq_node.appendChild(node);
-            }
-            var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
-            node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            node.setAttributeNS(this.MAIN_NS, "id", id);
-            node.setAttributeNS(this.MAIN_NS, "type", type);
-            node.setAttributeNS(this.MAIN_NS, "title", title);
-            node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
-            node.setAttributeNS(this.MAIN_NS, "comment", "");
-            node.setAttributeNS(this.MAIN_NS, "source", source);
-            node.setAttributeNS(this.MAIN_NS, "icon", icon);
-            this.xmlDoc.documentElement.appendChild(node);
-            this.desc_node_cache["urn:scrapbook:item" + id] = node;
-        }
-    }
-    createFolderXml(folder_id, id, ref_id, title) {
-        var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
-        if (seq_node) {
-            var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
-            node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
-            if (ref_id) {
-                var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-                seq_node.insertBefore(node, ref_node.nextSibling);
-            } else {
-                seq_node.appendChild(node);
-            }
-            var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
-            node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            node.setAttributeNS(this.MAIN_NS, "id", id);
-            node.setAttributeNS(this.MAIN_NS, "type", "folder");
-            node.setAttributeNS(this.MAIN_NS, "title", title);
-            node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
-            node.setAttributeNS(this.MAIN_NS, "comment", "");
-            this.xmlDoc.documentElement.appendChild(node);
-            var node = this.xmlDoc.createElementNS(this.NS_RDF, "Seq");
-            node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            this.xmlDoc.documentElement.appendChild(node);
-            this.seq_node_cache["urn:scrapbook:item" + id] = node;
-        }
-    }
-    xmlSerialized() {
-        var serializer = new XMLSerializer();
-        return serializer.serializeToString(this.xmlDoc);
-    }
-    getLiNode(about) {
-        var search = `//RDF:li[@RDF:resource='${about}']`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        return result.singleNodeValue;
-    }
-    cacheXmlNode() {
-        var search = `/RDF:RDF/RDF:Description`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-        this.desc_node_cache={}
-        var n;
-        while(n = result.iterateNext()){
-            this.desc_node_cache[n.getAttribute("RDF:about")] = n;
-        }
-        var search = `/RDF:RDF/RDF:Seq`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-        this.seq_node_cache={}
-        var n;
-        while(n = result.iterateNext()){
-            this.seq_node_cache[n.getAttribute("RDF:about")] = n;
-        }
-        var search = `/RDF:RDF/NC:BookmarkSeparator`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-        this.separator_node_cache={}
-        var n;
-        while(n = result.iterateNext()){
-            this.separator_node_cache[n.getAttribute("RDF:about")] = n;
-        }
-    }
-    getDescNode(about) {
-        if(this.desc_node_cache[about])
-            return this.desc_node_cache[about];
-        // var search = `/RDF:RDF/RDF:Description[@RDF:about='${about}']`;
-        // var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        // return result.singleNodeValue;
-    }
-    getSeqNode(about) {
-       if(this.seq_node_cache[about])
-            return this.seq_node_cache[about];
-        // var search = `/RDF:RDF/RDF:Seq[@RDF:about='${about}']`;
-        // var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        // return result.singleNodeValue;
-    }
-    getSeparatorNode(about) {
-       if(this.separator_node_cache[about])
-            return this.separator_node_cache[about];
-        // var search = `/RDF:RDF/NC:BookmarkSeparator[@RDF:about='${about}']`;
-        // var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        // return result.singleNodeValue;
-    }
-    getNameSpaces() {
-        var r = {};
-        var k;
-        for (k in this.xmlDoc.documentElement.attributes) {
-            var a = this.xmlDoc.documentElement.attributes[k];
-            if (a.prefix == "xmlns")
-                r[a.localName] = a.value;
-        }
-        return r;
-    }
+
 }
-export { BookTree };
+
+
+export {BookmarkTree};

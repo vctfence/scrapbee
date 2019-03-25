@@ -1,0 +1,11 @@
+export const NODE_TYPE_SHELF = 1;
+export const NODE_TYPE_GROUP = 2;
+export const NODE_TYPE_BOOKMARK = 3;
+export const NODE_TYPE_ARCHIVE = 4;
+export const NODE_TYPE_SEPARATOR = 5;
+export const TODO_STATE_TODO = 1;
+export const TODO_STATE_DONE = 2;
+export const TODO_STATE_WAITING = 3;
+export const TODO_STATE_POSTPONED = 4;
+export const TODO_STATE_CANCELLED = 5;
+export const DEFAULT_SHELF_NAME = "default";

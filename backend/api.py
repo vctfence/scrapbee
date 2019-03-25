@@ -77,6 +77,17 @@ def get_scrapyard_version():
     return config.SCRAPYARD_VERSION
 
 
+@app.route('/api/add/separator', methods=["POST"])
+@authenticated
+def add_separator():
+    """ Inserts new separator node under the specified one
+
+    Accepts JSON:
+
+    :parent:  UUID of the node to add separator as a child (string)"""
+    return db.add_separator(g.db, g.user_id, request.json)
+
+
 @app.route('/api/add/bookmark', methods=["POST"])
 @authenticated
 def add_bookmark():
@@ -149,6 +160,7 @@ def list_nodes():
         :type:   filter for node type (integer)
         :limit:  limit for the returned record number (integer)
         :depth:  specify depth of search (string): "group", "subtree" or "root+subtree"
+        :order:  order mode to sord the output if specified (string): "custom", "todo"
 
         :returns: list of filtered node database records
     """
@@ -296,6 +308,17 @@ def todo_nodes():
 
         :nodes: object which maps node UUID to node TODO status (groups are processed recursively)"""
     return db.todo_nodes(g.db, g.user_id, request.json)
+
+
+@app.route('/api/nodes/reorder', methods=["POST"])
+@authenticated
+def reorder_nodes():
+    """ Reorders the specified nodes
+
+        Accepts JSON:
+
+        :nodes: object which maps node UUID to node new order """
+    return db.reorder_nodes(g.db, g.user_id, request.json)
 
 
 class Httpd(threading.Thread):
