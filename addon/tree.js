@@ -254,7 +254,7 @@ class BookmarkTree {
                 }
             },
             newFolderItem: {
-                label: "New Folder...",
+                label: "New Folder",
                 action: function () {
                     // TODO: i18n
                     showDlg("prompt", {caption: "Create Folder", label: "Name"}).then(dlg_data => {

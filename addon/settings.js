@@ -55,6 +55,6 @@ settings.pathJoin=function(){
     return arr.join(settings.fs_path_separator);
 }
 settings.getLastRdfPath=function(){
-    return settings.last_rdf.replace(/[^\/\\]*$/, "")
+    return settings.last_shelf.replace(/[^\/\\]*$/, "")
 }
 export {settings}

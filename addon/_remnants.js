@@ -7,6 +7,16 @@ var msg_hub = new MsgHub();
 
 var windowId;
 
+/* show members of an object */
+function dir(o, delimiter) {
+    var a = [];
+    for (let i in o) {
+        a.push(i)
+    }
+    return a.join(delimiter || "\n");
+}
+
+
 
 function withCurrTab(fn) {
     browser.tabs.query({currentWindow: true, active: true}).then(function (tabs) {

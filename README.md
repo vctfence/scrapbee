@@ -9,7 +9,7 @@ Objectives:
 * Add fancy user-action popup with tree of directories to add bookmarks to
 * Add search text input on toolbar; search by tags, title, content and in Firefox bookmarks
 * Save web-pages as a single page, but retain compatibility with multi-file saves
-* Store index of downloaded html documents in database 
+* Store indexed content of downloaded html documents in database 
 * Control from [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE: bookmark creation &listing]
 * Basic TODO functionality a la [unmark](https://github.com/cdevroe/unmark) [DONE: todo status setting]
 * Zero configuration on Windows

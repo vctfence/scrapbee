@@ -2,22 +2,14 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {DEFAULT_SHELF_NAME} from "./db.js";
+import {showDlg, alert, confirm} from "./dialog.js"
 
 
-let tree;
+function loadShelves(tree) {
+    var lastShelf = settings.last_shelf;
+    if (!lastShelf)
+        lastShelf = 1;
 
-
-/* show members of an object */
-function dir(o, delimiter) {
-    var a = [];
-    for (let i in o) {
-        a.push(i)
-    }
-    return a.join(delimiter || "\n");
-}
-
-function loadShelves() {
-    var lastRdf = settings.last_rdf;
     $("#shelfList").html("");
     var saw = false;
 
@@ -25,24 +17,24 @@ function loadShelves() {
         $("#shelfList").find("option").remove()
         for (let shelf of shelves) {
             var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
-            if (!saw && typeof lastRdf != "undefined" && shelf.id == lastRdf) {
+            if (!saw && typeof lastShelf != "undefined" && shelf.id == lastShelf) {
                 saw = true;
                 $opt.attr("selected", true);
             }
         }
-        switchShelf($("#shelfList").val());
+        switchShelf(tree, $("#shelfList").val());
     });
 }
 
-function loadAll() {
-    loadShelves();
+function loadAll(tree) {
+    loadShelves(tree);
     $("#shelfList").change(function () {
-        switchShelf(this.value);
+        switchShelf(tree, this.value);
     });
 }
 
-function switchShelf(rdf) {
-    settings.set('last_rdf', rdf);
+function switchShelf(tree, rdf) {
+    settings.set('last_shelf', rdf);
 
     let path = $(`#shelfList option[value="${rdf}"]`).text();
 
@@ -67,7 +59,7 @@ window.onload = function () {
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    tree = new BookmarkTree("#treeview");
+    let tree = new BookmarkTree("#treeview");
 
     var btn = document.getElementById("btnLoad");
     btn.onclick = function () {
@@ -117,7 +109,7 @@ window.onload = function () {
                                 .attr("value", shelf.id)
                                 .attr("selected", true);
 
-                            switchShelf(shelf.id);
+                            switchShelf(tree, shelf.id);
                         }
                     });
                 }
@@ -159,29 +151,14 @@ window.onload = function () {
 
         // TODO: 118n
         confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
-            if (name && name !== DEFAULT_SHELF_NAME) {
+            if (name) {
                 backend.httpPost("/api/delete/shelf", {"name": name}, () => {
-                        let prevItem = null;
-                        let found = false;
-                        $("#shelfList option").each((i, o) => {
-                            if (found) {
-                                return;
-                            }
+                    let prevItem = null;
+                    let found = false;
 
-                            if (o.value === selectedOption.val()) {
-                                found = true;
-                                return;
-                            }
-                            prevItem = o;
-                        });
-
-                        selectedOption.removeAttr("selected");
-                        if (prevItem) {
-                            $(prevItem).attr("selected", true);
-                            switchShelf(prevItem.value);
-                        }
-                        selectedOption.remove();
-                    });
+                    switchShelf(tree, 1);
+                    selectedOption.remove();
+                });
             }
         });
     });
@@ -193,7 +170,7 @@ window.onload = function () {
     });
 
 
-    loadAll();
+    loadAll(tree);
 };
 
-console.log("==> main.js loaded");
+console.log("==> sidebar.js loaded");

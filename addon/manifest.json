@@ -34,7 +34,7 @@
     },
     "sidebar_action": {
         "default_title": "Scrapyard",
-        "default_panel": "main.html",
+        "default_panel": "sidebar.html",
         "default_icon": "icons/scrapyard.svg"
     },
     "background": {
