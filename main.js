@@ -157,23 +157,26 @@ menulistener.onRename = function(){
 var drop;
 function showRdfList(){
     var lastRdf = settings.last_rdf;
-    var names = settings.rdf_path_names;
     var saw = false;
     var paths = settings.getRdfPaths();
     drop = drop || new SimpleDropdown($(".drop-button")[0], [])
     drop.clear()
     drop.onchange=(function(title, value){
-        $(".drop-button .label").html(title)
+        $(".drop-button .label").html(title || "")
 	switchRdf(value);  // switch rdf and notify other side bar.
     });
     if(paths){
-	settings.getRdfPathNames().forEach(function(n, i){
+        var names = settings.getRdfPathNames(); 
+	names.forEach(function(n, i){
 	    if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
 		saw = true;
                 drop.select(n, paths[i])
 	    }
             drop.addItem(n, paths[i]);
 	});
+        if(!saw){
+            drop.select(names[0], paths[0])
+        }
     }
 }
 function applyColor(){
@@ -295,8 +298,10 @@ class SimpleDropdown{
         this.value=null;
     }
     clear(){
+        this.$menu.hide();
         this.$menu.html("");
         this.value=null;
+        this.onchange && this.onchange(null, null);
     }
     addItem(title, value){
         $(`<div class='simple-menu-item' value='${value}'>${title}</div>`).appendTo(this.$menu);
