@@ -191,7 +191,7 @@
         "message": "点击条目时，ScrapBook默认在新标签页中打开{Scrap}，<br>如果按住Control(苹果系统中使用Meta)，则在当前标签中打开，<br>你可以通过此选项来切换两种操作"
     },
     "DONATE_WORDS":{
-        "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!<br><i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>如果您喜欢ScrapBee, 请评个5星</i></a>"
+        "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!<br><i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>如果您喜欢ScrapBee, 请评5颗星</i></a>"
     },
     "MORE_DONATE_WAY_TOGGLE":{
         "message": "其它方式"
