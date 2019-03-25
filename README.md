@@ -7,8 +7,8 @@ Objectives:
 * ~~Store data at a database with sexy hierarchical queries (to handle at least 15 years of legacy bookmarks)~~ [DONE]
 * ~~Replace "RDF" tree with jsTree~~ [DONE]
 * Add fancy user-action popup with tree of directories to add bookmarks to
-* Att search text input on toolbar, search by tags, title, content and in Firefox bookmarks
-* Save pages as single page, but retain compatibility with multifile saves
+* Add search text input on toolbar; search by tags, title, content and in Firefox bookmarks
+* Save web-pages as a single page, but retain compatibility with multi-file saves
 * Store index of downloaded html documents in database 
 * Control from [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE: bookmark creation &listing]
 * Basic TODO functionality a la [unmark](https://github.com/cdevroe/unmark) [DONE: todo status setting]
