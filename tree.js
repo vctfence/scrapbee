@@ -44,6 +44,7 @@ class BookTree {
         this.nsResolver=function(prefix) {
             return self.namespaces[prefix] || null;
         }
+        this.cacheXmlNode();
     }
     translateResource(r, rdf_path, id) {
         return r.replace(/^resource\:\/\/scrapbook/, settings.backend_url + "file-service/" + rdf_path).replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
@@ -223,9 +224,6 @@ class BookTree {
     renderTree() {
         var self = this;
         // var x = this.xmlDoc.getElementsByTagNameNS(this.NS_RDF, "Seq");
-
-        this.cacheXmlNode();
-
         var root_seq = this.getSeqNode("urn:scrapbook:root");
         var $root_container = $(".root.folder-content");
         $root_container.html("");
