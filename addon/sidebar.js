@@ -1,7 +1,7 @@
 import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
-import {DEFAULT_SHELF_NAME} from "./db.js";
+import {DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./db.js";
 import {showDlg, alert, confirm} from "./dialog.js"
 
 
@@ -13,7 +13,7 @@ function loadShelves(tree) {
     $("#shelfList").html("");
     var saw = false;
 
-    backend.httpGet("/api/list/shelves", (shelves) => {
+    backend.listShelves().then(shelves => {
         $("#shelfList").find("option").remove()
         for (let shelf of shelves) {
             var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
@@ -26,26 +26,25 @@ function loadShelves(tree) {
     });
 }
 
+function switchShelf(tree, shelf_id) {
+    settings.set('last_shelf', shelf_id);
+
+    let path = $(`#shelfList option[value="${shelf_id}"]`).text();
+
+    backend.listNodes({
+            path: path,
+            depth: "root+subtree",
+            order: "custom"
+        }).then(nodes => {
+            tree.update(nodes);
+        });
+}
+
 function loadAll(tree) {
     loadShelves(tree);
     $("#shelfList").change(function () {
         switchShelf(tree, this.value);
     });
-}
-
-function switchShelf(tree, rdf) {
-    settings.set('last_shelf', rdf);
-
-    let path = $(`#shelfList option[value="${rdf}"]`).text();
-
-    backend.httpPost("/api/list/nodes", {
-            path: path,
-            depth: "root+subtree",
-            order: "custom"
-        },
-        nodes => {
-            tree.update(nodes);
-        });
 }
 
 document.addEventListener('contextmenu', function (event) {
@@ -101,7 +100,7 @@ window.onload = function () {
                 }
 
                 if (name !== DEFAULT_SHELF_NAME) {
-                    backend.httpPost("/api/create/shelf", {"name": name}, (shelf) => {
+                    backend.createGroup(null, name, NODE_TYPE_SHELF).then(shelf => {
                         if (shelf) {
                             selectedOption.removeAttr("selected");
                             $("<option></option>").appendTo($("#shelfList"))
@@ -119,6 +118,7 @@ window.onload = function () {
 
     $("#shelf-menu-rename").click(() => {
         let selectedOption = $("#shelfList option:selected");
+        let id = parseInt(selectedOption.val());
         let name = selectedOption.text();
 
         if (name && name !== DEFAULT_SHELF_NAME) {
@@ -126,7 +126,7 @@ window.onload = function () {
             showDlg("prompt", {caption: "Rename", label: "Name", title: name}).then(data => {
                 let newName;
                 if (newName = data.title) {
-                    backend.httpPost("/api/rename/shelf", {"name": name, "new_name": newName}, () => {
+                    backend.renameGroup(id, newName).then(() => {
                             selectedOption.html(newName);
                             tree.renameRoot(newName)
                         });
@@ -141,6 +141,7 @@ window.onload = function () {
 
     $("#shelf-menu-delete").click(() => {
         let selectedOption = $("#shelfList option:selected");
+        let id = parseInt(selectedOption.val());
         let name = selectedOption.text();
 
         if (name === DEFAULT_SHELF_NAME) {
@@ -152,10 +153,7 @@ window.onload = function () {
         // TODO: 118n
         confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
             if (name) {
-                backend.httpPost("/api/delete/shelf", {"name": name}, () => {
-                    let prevItem = null;
-                    let found = false;
-
+                backend.deleteNodes(id).then(() => {
                     switchShelf(tree, 1);
                     selectedOption.remove();
                 });

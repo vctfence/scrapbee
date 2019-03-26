@@ -1,5 +1,8 @@
 import {settings} from "./settings.js"
 
+import {backend} from "./backend.js"
+
+
 var msg_hub = new MsgHub();
 
 function getAsync(file) {
@@ -227,4 +230,28 @@ pause`
         var $div = $("#div-log .console");
         $("<div/>").appendTo($div).html(response.logs.replace(/\n/g, "<br/>"));
     });
+
+
+
+
+
+
+    $("#file-picker").change((e) => {
+        if (e.target.files.length > 0) {
+            let reader = new FileReader();
+            reader.onload = function(re) {
+
+                let bookmarks = JSON.parse(re.target.result);
+
+                async function storeBookmarks() {
+                    for (let bm of bookmarks)
+                        await backend.addBookmark(bm);
+                }
+
+                storeBookmarks().then();
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+    });
+
 }

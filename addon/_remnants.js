@@ -1,6 +1,6 @@
 import {scriptsAllowed, showNotification} from "./utils";
 import {settings} from "./settings";
-import {getMainMimeExt} from "./libs/mime.types";
+import {getMainMimeExt} from "./lib/mime.types";
 
 var currTree;
 var msg_hub = new MsgHub();

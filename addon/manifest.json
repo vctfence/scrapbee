@@ -55,8 +55,8 @@
                 "content_script.css"
             ],
             "js": [
-                "libs/jquery-3.3.1.js",
-                "libs/md5.js",
+                "lib/jquery-3.3.1.js",
+                "lib/md5.js",
                 "proto.js",
                 "marker.js",
                 "message.js",

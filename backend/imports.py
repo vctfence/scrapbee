@@ -2,7 +2,7 @@ import db
 import PyOrgMode
 
 import re
-
+import json
 
 def import_org(user, shelf, content):
     data = db.open()
@@ -44,4 +44,40 @@ def import_org(user, shelf, content):
         print("User '" + user + "' not found.")
 
 
+def import_org_as_json(shelf, content):
+    result = {"content": "["}
+
+    def import_group(path, node):
+        import_nodes(path + "/" + node.heading, node.content)
+
+    def import_link(path, node):
+        match = re.search(r"\[\[([^\]]*)\]\[([^\]]*)\]\]", node.heading)
+        name = match.group(2)
+        uri = match.group(1)
+
+        result["content"] += json.dumps({
+            "name": name,
+            "uri": uri,
+            "path": path,
+            #"tags": node.tags
+        })
+        result["content"] += "\n,"
+        print(path + "/" + name)
+
+    def import_nodes(path, nodes):
+        for n in nodes:
+            if hasattr(n, "heading"):
+                if n.heading.startswith("[["):
+                    import_link(path, n)
+                else:
+                    import_group(path, n)
+
+    tree = PyOrgMode.OrgDataStructure()
+    tree.load_from_string(content)
+    import_nodes(shelf, tree.root.content)
+
+    result["content"] = result["content"][:-1] + "]"
+
+    with open("d:/tmp/" + shelf + ".org", "w") as out:
+        out.write(result["content"])
 

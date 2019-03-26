@@ -35,10 +35,10 @@ if __name__ == "__main__":
                 print("No file specified.")
                 sys.exit(-1)
 
-            user = args.user
+            #user = args.user
             file, ext = os.path.splitext(os.path.basename(args.file))
 
             if ".org" == ext:
                 with open(args.file, 'r', encoding="utf-8") as org:
-                    imports.import_org(args.user, file, org.read())
+                    imports.import_org_as_json(file, org.read())
 

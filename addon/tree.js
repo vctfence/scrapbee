@@ -54,15 +54,23 @@ class BookmarkTree {
 
         this._inst = $(element).jstree(true);
 
-        $(document).on("click.jstree", $(".jstree-anchor"), function (e) {
+        $(document).on("click.jstree", $(".jstree-anchor"), (e) => {
             if (e.button === 0 || e.button === 1) {
-                let clickable = e.target.getAttribute("data-clickable");
-                let uri = e.target.getAttribute("data-uri");
-                if (clickable && !e.ctrlKey)
-                    browser.tabs.create({
-                        "url": uri
-                    });
                 e.preventDefault();
+                let clickable = e.target.getAttribute("data-clickable");
+                let id = e.target.getAttribute("data-id");
+                if (clickable && !e.ctrlKey) {
+                    let node = this.data.find(n => n.id == id);
+
+                    console.log(this.data)
+                    console.log(id);
+                    console.log(node);
+                    if (node) {
+                        browser.tabs.create({
+                            "url": node.uri
+                        });
+                    }
+                }
                 return false;
             }
         })
@@ -98,7 +106,7 @@ class BookmarkTree {
             };
 
             n.a_attr = {
-                "data-uri": n.uri,
+                "data-id": n.id,
                 "data-clickable": "true"
             };
 
@@ -158,10 +166,7 @@ class BookmarkTree {
         if (data.parent != data.old_parent) {
             let node = tree.get_node(data.node);
 
-            backend.httpPost("/api/nodes/move", {
-                nodes: [node.original.uuid],
-                dest: parent.original.uuid
-            }, new_nodes => {
+            backend.moveNodes([node.original.id], parent.original.id).then(new_nodes => {
                 //console.log("Nodes moved: "  + node.original.uuid);
                 BookmarkTree.reorderNodes(tree, parent);
             });
@@ -174,15 +179,15 @@ class BookmarkTree {
     static reorderNodes(tree, parent) {
         let siblings = parent.children.map(c => tree.get_node(c));
 
-        let positions = {};
-        for (let i = 0; i < siblings.length; ++i)
-            positions[siblings[i].original.uuid] = i + 1;
+        let positions = [];
+        for (let i = 0; i < siblings.length; ++i) {
+            let node = {};
+            node.id = siblings[i].original.id;
+            node.pos = i + 1;
+            positions.push(node);
+        }
 
-        backend.httpPost("/api/nodes/reorder", {
-            nodes: positions
-        }, () => {
-            //console.log("Nodes reordered");
-        });
+        backend.reorderNodes(positions);
     }
 
 
@@ -195,18 +200,13 @@ class BookmarkTree {
         let ctx_node_data = ctx_node.original;
 
         function setTODOState(state) {
-            let selected_uuids = selected_nodes.map(n => n.original.uuid);
-            let todo_states = {};
+            let selected_ids = selected_nodes.map(n => n.original.id);
+            let todo_states = [];
 
-            selected_uuids.forEach(u => todo_states[u] = state);
+            selected_ids.forEach(n => todo_states.push({id: n, todo_state: state}));
 
-            backend.httpPost("/api/nodes/todo", {
-                    nodes: todo_states
-                }, () => {
+            backend.setTODOState(todo_states).then(() => {
                     console.log("Todo is set");
-                },
-                e => {
-                    console.log(e)
                 });
         }
 
@@ -264,17 +264,12 @@ class BookmarkTree {
                             let shelf = selectedOption.text();
 
                             if (/*!isBuiltinShelf(shelf)*/true) {
-                                let parents = ctx_node.parents
-                                    .filter(p => p !== "#")
-                                    .map(p => tree.get_node(p).text).reverse();
-
-                                let path = (parents.length? (parents.join("/") + "/"): "") + ctx_node.text + "/" + name;
-
-                                backend.httpPost("/api/create/group", {"path": path}, group => {
+                                backend.createGroup(ctx_node_data.id, name).then(group => {
                                     if (group) {
                                         BookmarkTree.toJsTreeNode(group);
                                         tree.deselect_all(true);
                                         tree.select_node(tree.create_node(ctx_node, group));
+                                        BookmarkTree.reorderNodes(tree, ctx_node);
                                     }
                                 });
                             }
@@ -290,9 +285,7 @@ class BookmarkTree {
                 label: "New Separator",
                 action: function () {
                     let parent = tree.get_node(ctx_node.parent);
-                    backend.httpPost("/api/add/separator", {
-                            parent:  parent.original.uuid
-                        }, separator => {
+                    backend.addSeparator(parent.original.id).then(separator => {
                             let position = $.inArray(ctx_node.id, parent.children);
                             tree.create_node(parent, BookmarkTree.toJsTreeNode(separator), position + 1);
                             BookmarkTree.reorderNodes(tree, parent);
@@ -319,28 +312,31 @@ class BookmarkTree {
                 action: function () {
                     let buffer = tree.get_buffer();
                     let selection =  Array.isArray(buffer.node)
-                        ? buffer.node.map(n => n.original.uuid)
-                        : [buffer.node.original.uuid];
-                    backend.httpPost("/api/nodes/" + buffer.mode.split("_")[0], {
-                        nodes: selection,
-                        dest: ctx_node_data.uuid
-                    }, new_nodes => {
-                        switch (buffer.mode) {
-                            case "copy_node":
-                                break;
-                            case "move_node":
-                                for (let s of selection)
-                                    tree.delete_node(s);
-                                break;
-                        }
+                        ? buffer.node.map(n => n.original.id)
+                        : [buffer.node.original.id];
 
-                        for (let n of new_nodes) {
-                            let parent = tree.get_node(n.parent_id);
-                            tree.create_node(parent, BookmarkTree.toJsTreeNode(n), "last");
-                        }
+                    (buffer.mode == "copy_node"
+                        ? backend.copyNodes(selection, ctx_node_data.id)
+                        : backend.moveNodes(selection, ctx_node_data.id))
+                        .then(new_nodes => {
+                            switch (buffer.mode) {
+                                case "copy_node":
+                                    break;
+                                case "move_node":
+                                    for (let s of selection)
+                                        tree.delete_node(s);
+                                    break;
+                            }
 
-                        tree.clear_buffer();
-                    });
+                            for (let n of new_nodes) {
+                                let parent = tree.get_node(n.parent_id);
+                                tree.create_node(parent, BookmarkTree.toJsTreeNode(n), "last");
+                            }
+
+                            BookmarkTree.reorderNodes(tree, ctx_node);
+
+                            tree.clear_buffer();
+                        });
                 }
             },
             todoItem: {
@@ -391,11 +387,9 @@ class BookmarkTree {
                 label: "Delete",
                 action: function () {
                     confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
-                        let selected_uuids = selected_nodes.map(n => n.original.uuid);
+                        let selected_ids = selected_nodes.map(n => n.original.id);
 
-                        backend.httpPost("/api/nodes/delete", {
-                                nodes: selected_uuids
-                            }, group => {
+                        backend.deleteNodes(selected_ids).then(() => {
                                 tree.delete_node(selected_nodes);
                             });
                     });
@@ -409,10 +403,11 @@ class BookmarkTree {
                         case NODE_TYPE_BOOKMARK:
                         case NODE_TYPE_ARCHIVE:
                             showDlg("properties", ctx_node_data).then(data => {
-                                ctx_node_data.name = ctx_node_data.text = data.text;
-                                backend.httpPost("/api/update/bookmark", Object.assign(ctx_node_data, data),
-                                    () => {
-                                        tree.rename_node(ctx_node, ctx_node_data.name);
+                                let original_node_data = all_nodes.find(n => n.id == ctx_node.id);
+                                Object.assign(original_node_data, data);
+                                original_node_data.name = ctx_node_data.text = data.text;
+                                backend.updateBookmark(Object.assign(ctx_node_data, original_node_data)).then(() => {
+                                        tree.rename_node(ctx_node, ctx_node_data.text);
                                     });
                             });
                             break;
@@ -431,16 +426,7 @@ class BookmarkTree {
                                 label: "Name", title: ctx_node_data.text}).then(data => {
                                 let new_name;
                                 if (new_name = data.title) {
-                                    let parents = ctx_node.parents
-                                        .filter(p => p !== "#")
-                                        .map(p => tree.get_node(p).text).reverse();
-
-                                    let path = parents.join("/") + "/" + ctx_node.text;
-
-                                    backend.httpPost("/api/rename/group", {
-                                            "path": path,
-                                            "new_name": new_name
-                                        }, group => {
+                                    backend.renameGroup(ctx_node_data.id, new_name).then(group => {
                                             ctx_node_data.text = new_name;
                                             ctx_node_data.path = group.path;
                                             tree.rename_node(tree.get_node(ctx_node), new_name);
