@@ -1,0 +1,107 @@
+/* CSS Document */
+
+body {
+	font-family: Gotham, 'Helvetica Neue', Helvetica, Arial, 'sans-serif';
+}
+
+#content {
+	min-width: 330px;
+}
+
+#heading {
+	display: table;
+}
+
+#title {
+	line-height: 32px;
+	display: table-cell;
+	vertical-align: middle;
+	padding-left: 8px;
+	font-weight: bold;
+	font-size: 22px;
+}
+
+#logo {
+	height: 32px;
+	width: 32px;
+}
+
+#properties label {
+	width: 3em;
+	display: inline-block;
+}
+
+.property-row {
+	display: flex;
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+
+.property-row label {
+	flex: 0 1 auto;
+	margin-right: 4px;
+}
+
+.property-row input, .property-row select {
+	flex: 1 1 auto;
+}
+
+/*#bookmark-folder,  #bookmark-folder option {*/
+    /*font-family: 'FontAwesome', 'Arial', 'Helvetica', sans-serif;*/
+/*}*/
+
+.tree-container {
+	width: 100%;
+	height: 200px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+#treeview {
+	width: 100%;
+	height: 100%;
+    border: 1px solid #777;
+}
+
+#new-folder {
+	margin-left: 4px;
+	flex: 0 1 auto;
+}
+
+#buttons {
+	margin-top: 8px;
+	display: flex;
+	width: 100%;
+}
+
+#buttons input {
+	height: 50px;
+	flex: 1 1 auto;
+	width: 50%;
+	appearance: none;
+    -moz-appearance: none;
+    border:none;
+    color:#fff;
+    cursor:pointer;
+	font-size: 12pt;
+	/*border: 1px solid #002d3e;*/
+}
+
+#create-bookmark {
+	background: #008ea4;
+	margin-right: 2px;
+}
+
+#create-bookmark:hover {
+	background: #00AAC5;	
+}
+
+
+#create-archive {
+	margin-left: 2px;
+	background: #FF9D33;
+}
+
+#create-archive:hover {
+	background: #FFAD57;	
+}

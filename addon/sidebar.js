@@ -3,6 +3,7 @@ import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./db.js";
 import {showDlg, alert, confirm} from "./dialog.js"
+import {importOrg} from "./import.js";
 
 
 function loadShelves(tree) {
@@ -91,7 +92,7 @@ window.onload = function () {
     });
     $("#shelf-menu-create").click(() => {
         // TODO: i18n
-        showDlg("prompt", {caption: "Create shelf", label: "Name"}).then(data => {
+        showDlg("prompt", {caption: "Create Shelf", label: "Name"}).then(data => {
             let name;
             if (name = data.title) {
                 let existingOption = $(`#shelfList option:contains("${name}")`);
@@ -149,7 +150,7 @@ window.onload = function () {
 
         if (name === DEFAULT_SHELF_NAME) {
             // TODO: i18n
-            alert("{Error}", "The 'default' shelf could not be deleted.")
+            alert("{Error}", "The shelf 'default' could not be deleted.")
             return;
         }
 
@@ -164,6 +165,41 @@ window.onload = function () {
         });
     });
 
+    $("#shelf-menu-import").click(() => {
+        $("#file-picker").click();
+    });
+
+    $("#file-picker").change((e) => {
+        if (e.target.files.length > 0) {
+            let reader = new FileReader();
+            reader.onload = function (re) {
+                let fullPath = $("#file-picker").val();
+                $("#file-picker").val("");
+                let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+                let dotIndex = fullPath.lastIndexOf('.');
+                let filename = fullPath.substring(startIndex, dotIndex);
+                if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
+                    filename = filename.substring(1);
+                }
+                importOrg(filename, re.target.result).then(() => {
+                    loadShelves(tree).then(() => {
+                        let existingOption = $(`#shelfList option:contains("${filename}")`);
+                        let selectedOption = $("#shelfList option:selected");
+
+                        if (existingOption.length) {
+                            selectedOption.removeAttr("selected");
+                            existingOption.attr("selected", true);
+                        }
+                        switchShelf(tree, existingOption.val()).then(() => {
+                            tree.openRoot();
+                        });
+                    });
+                });
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+    });
+
 
     $(document).on("click", function(e) {
         if (!event.target.matches("#shelf-menu-button"))
@@ -176,20 +212,7 @@ window.onload = function () {
 
 function handleMessage(request, sender, sendResponse) {
     if (request.id === "NEW_IMPORT") {
-        console.log("jjj")
-        loadShelves(tree).then(() => {
-            console.log("uuu")
-            let existingOption = $(`#shelfList option:contains("${request.shelf}")`);
-            let selectedOption = $("#shelfList option:selected");
 
-            if (existingOption.length) {
-                selectedOption.removeAttr("selected");
-                existingOption.attr("selected", true);
-            }
-            switchShelf(tree, existingOption.val()).then(() => {
-                tree.openRoot();
-            });
-        });
     }
 }
 

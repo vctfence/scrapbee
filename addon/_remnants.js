@@ -18,11 +18,6 @@ function dir(o, delimiter) {
 
 
 
-function withCurrTab(fn) {
-    browser.tabs.query({currentWindow: true, active: true}).then(function (tabs) {
-        fn.apply(null, [tabs[0]]);
-    });
-}
 
 
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {

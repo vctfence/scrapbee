@@ -16,15 +16,25 @@ import {
 import {showDlg, alert, confirm} from "./dialog.js"
 import {DEFAULT_SHELF_NAME} from "./db.js";
 
+const EVERYTHING_KEY = "everyting";
+
 class BookmarkTree {
-    constructor(element) {
+    constructor(element, inline=false) {
         this._element = element;
+        this._inline = inline;
+
+        let plugins = ["wholerow", "types", "state"];
+
+        if (!inline) {
+            plugins = plugins.concat(["contextmenu", "dnd"]);
+        }
 
         $(element).jstree({
-            plugins: ["wholerow", "contextmenu", "dnd", "types", "state"],
+            plugins: plugins,
             core: {
                 worker: false,
                 animation: 0,
+                multiple: !inline,
                 check_callback: BookmarkTree.checkOperation,
                 themes: {
                     name: "default",
@@ -50,7 +60,7 @@ class BookmarkTree {
                     "valid_children": []
                 }
             },
-            state: {}
+            state: {key: inline? EVERYTHING_KEY: undefined}
         }).on("move_node.jstree", BookmarkTree.moveNode);
 
         this._inst = $(element).jstree(true);
@@ -137,8 +147,12 @@ class BookmarkTree {
 
         let state;
 
-        let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
-        if (shelves.length === 1) {
+        if (this._inline) {
+            this._inst.settings.state.key = EVERYTHING_KEY;
+            state = JSON.parse(localStorage.getItem(EVERYTHING_KEY));
+        }
+        else {
+            let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
             this._inst.settings.state.key = shelves[0].name;
             state = JSON.parse(localStorage.getItem(shelves[0].name));
         }
@@ -184,7 +198,7 @@ class BookmarkTree {
     }
 
     static reorderNodes(tree, parent) {
-        let siblings = parent.children.map(c => tree.get_node(c));
+        let siblings = parent.children.map(c => tree._inst.get_node(c));
 
         let positions = [];
         for (let i = 0; i < siblings.length; ++i) {
@@ -196,7 +210,6 @@ class BookmarkTree {
 
         backend.reorderNodes(positions);
     }
-
 
     /* context menu listener */
     static contextMenu(ctx_node) { // TODO: i18n
@@ -260,6 +273,12 @@ class BookmarkTree {
                     });
                 }
             },
+            copyLinkItem: {
+                label: "Copy Link",
+                action: function () {
+                    navigator.clipboard.writeText(ctx_node_data.uri);
+                }
+            },
             newFolderItem: {
                 label: "New Folder",
                 action: function () {
@@ -267,10 +286,7 @@ class BookmarkTree {
                     showDlg("prompt", {caption: "Create Folder", label: "Name"}).then(dlg_data => {
                         let name;
                         if (name = dlg_data.title) {
-                            let selectedOption = $("#shelfList option:selected");
-                            let shelf = selectedOption.text();
-
-                            if (/*!isBuiltinShelf(shelf)*/true) {
+                              if (/*!isBuiltinShelf(shelf)*/true) {
                                 backend.createGroup(ctx_node_data.id, name).then(group => {
                                     if (group) {
                                         BookmarkTree.toJsTreeNode(group);
@@ -448,6 +464,7 @@ class BookmarkTree {
                     delete items.openItem;
                     delete items.openOriginalItem;
                     delete items.propertiesItem;
+                    delete items.copyLinkItem;
                     break;
                 case NODE_TYPE_ARCHIVE:
                 case NODE_TYPE_BOOKMARK:
@@ -462,6 +479,12 @@ class BookmarkTree {
         else {
             for (let k in items)
                 if (!["newFolderItem", "renameItem", "pasteItem"].find(s => s === k))
+                    delete items[k];
+        }
+
+        if (ctx_node.original.type === NODE_TYPE_SEPARATOR) {
+            for (let k in items)
+                if (!["deleteItem"].find(s => s === k))
                     delete items[k];
         }
 

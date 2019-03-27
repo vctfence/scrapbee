@@ -931,7 +931,8 @@ Parser.prototype = {
 
     parseProperty: function () {
         var propertyToken = this.lexer.getNextToken();
-        var match = /^(\s*):([^:]*):\s*(\w*)$/.exec(propertyToken.content);
+        console.log(propertyToken.content);
+        var match = /^(\s*):([^:]*):\s*([^\s]*)$/.exec(propertyToken.content);
         var whole = match[0];
         var name = match[2];
         var value = match[3];

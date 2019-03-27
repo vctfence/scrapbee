@@ -36,8 +36,9 @@ export async function importOrg(shelf, text) {
                 path.push(subnodes[1].value);
             }
             else if (subnodes[0].level < level) {
-                level -= 1;
-                path.pop()
+                for (let i = subnodes[0].level; i < level; ++i)
+                    path.pop();
+                level = subnodes[0].level;
             }
             else {
                 path[path.length - 1] = subnodes[1].value;
@@ -45,10 +46,11 @@ export async function importOrg(shelf, text) {
         }
 
         let link = subnodes.find(n => n.type === "link");
-        if (link) {
-            if (subnodes[0].level === level) {
-                level -= 1;
-                path.pop()
+        if (link && subnodes[0].type == "header") {
+            if (subnodes[0].level <= level) {
+                for (let i = subnodes[0].level; i <= level; ++i)
+                    path.pop();
+                level = subnodes[0].level - 1;
             }
             let index = subnodes.indexOf(link);
             await backend.addBookmark({
