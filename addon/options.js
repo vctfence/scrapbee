@@ -1,7 +1,7 @@
 import {settings} from "./settings.js"
 
 import {backend} from "./backend.js"
-
+import {importOrg} from "./import.js"
 
 var msg_hub = new MsgHub();
 
@@ -239,16 +239,20 @@ pause`
     $("#file-picker").change((e) => {
         if (e.target.files.length > 0) {
             let reader = new FileReader();
-            reader.onload = function(re) {
-
-                let bookmarks = JSON.parse(re.target.result);
-
-                async function storeBookmarks() {
-                    for (let bm of bookmarks)
-                        await backend.addBookmark(bm);
+            reader.onload = function (re) {
+                let fullPath = $("#file-picker").val();
+                let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+                let dotIndex = fullPath.lastIndexOf('.');
+                let filename = fullPath.substring(startIndex, dotIndex);
+                if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
+                    filename = filename.substring(1);
                 }
-
-                storeBookmarks().then();
+                importOrg(filename, re.target.result).then(() => {
+                    browser.runtime.sendMessage({
+                        id: "NEW_IMPORT",
+                        shelf: filename
+                    });
+                });
             };
             reader.readAsText(e.target.files[0]);
         }

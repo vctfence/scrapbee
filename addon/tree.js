@@ -14,6 +14,7 @@ import {
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
+import {DEFAULT_SHELF_NAME} from "./db.js";
 
 class BookmarkTree {
     constructor(element) {
@@ -61,14 +62,16 @@ class BookmarkTree {
                 let id = e.target.getAttribute("data-id");
                 if (clickable && !e.ctrlKey) {
                     let node = this.data.find(n => n.id == id);
-
-                    console.log(this.data)
-                    console.log(id);
-                    console.log(node);
                     if (node) {
-                        browser.tabs.create({
-                            "url": node.uri
-                        });
+                        let url = node.uri;
+                        if (url) {
+                            if (url.indexOf("://") < 0)
+                                url = "http://" + url;
+
+                            browser.tabs.create({
+                                "url": url
+                            });
+                        }
                     }
                 }
                 return false;
@@ -141,13 +144,17 @@ class BookmarkTree {
         }
 
         this._inst.refresh(true, () => state? state.state: null);
-        // let root_node = this._inst.get_node(nodes.find(n => n.type == NODE_TYPE_SHELF));
-        // this._inst.open_node(root_node);
     }
 
     renameRoot(name) {
         let root_node = this._inst.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
         this._inst.rename_node(root_node, name);
+    }
+
+    openRoot() {
+        let root_node = this._inst.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
+        this._inst.open_node(root_node);
+        this._inst.deselect_all(true);
     }
 
     static checkOperation(operation, node, parent, position, more) {
@@ -422,16 +429,12 @@ class BookmarkTree {
                             $("#shelf-menu-rename").click();
                             break;
                         case NODE_TYPE_GROUP:
-                            showDlg("prompt", {caption: "Rename",
-                                label: "Name", title: ctx_node_data.text}).then(data => {
-                                let new_name;
-                                if (new_name = data.title) {
-                                    backend.renameGroup(ctx_node_data.id, new_name).then(group => {
-                                            ctx_node_data.text = new_name;
-                                            ctx_node_data.path = group.path;
-                                            tree.rename_node(tree.get_node(ctx_node), new_name);
-                                        });
-                                }
+                            tree.edit(ctx_node, null, (node, success, cancelled) => {
+                                if (success && !cancelled)
+                                    backend.renameGroup(ctx_node_data.id, node.text).then(group => {
+                                        ctx_node_data.name = ctx_node_data.text = group.name;
+                                        tree.rename_node(ctx_node, group.name);
+                                    });
                             });
                             break;
                     }

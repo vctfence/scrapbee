@@ -145,7 +145,7 @@ class IDBBackend {
         let original = name;
         let n = 1;
 
-        while (children.some(c => c.toLocaleUpperCase() === name.toLocaleUpperCase())) {
+        while (children.filter(c => !!c).some(c => c.toLocaleUpperCase() === name.toLocaleUpperCase())) {
             name = original + " (" + n + ")";
             n += 1
         }
@@ -165,8 +165,6 @@ class IDBBackend {
 
     async renameGroup(id, new_name) {
         let group = await this.db.getNode(id);
-        console.log(id);
-        console.log(group);
         if (group.name !== new_name) {
             group.name = await this._ensureUnique(group.parent_id, new_name);
             await this.db.updateNode(group);

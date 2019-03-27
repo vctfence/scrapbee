@@ -13,7 +13,7 @@ function loadShelves(tree) {
     $("#shelfList").html("");
     var saw = false;
 
-    backend.listShelves().then(shelves => {
+    return backend.listShelves().then(shelves => {
         $("#shelfList").find("option").remove()
         for (let shelf of shelves) {
             var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
@@ -22,7 +22,7 @@ function loadShelves(tree) {
                 $opt.attr("selected", true);
             }
         }
-        switchShelf(tree, $("#shelfList").val());
+        return switchShelf(tree, $("#shelfList").val());
     });
 }
 
@@ -31,7 +31,7 @@ function switchShelf(tree, shelf_id) {
 
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
 
-    backend.listNodes({
+    return backend.listNodes({
             path: path,
             depth: "root+subtree",
             order: "custom"
@@ -41,10 +41,7 @@ function switchShelf(tree, shelf_id) {
 }
 
 function loadAll(tree) {
-    loadShelves(tree);
-    $("#shelfList").change(function () {
-        switchShelf(tree, this.value);
-    });
+    return loadShelves(tree);
 }
 
 document.addEventListener('contextmenu', function (event) {
@@ -53,17 +50,25 @@ document.addEventListener('contextmenu', function (event) {
     return false;
 });
 
+let tree;
+
 window.onload = function () {
     /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    let tree = new BookmarkTree("#treeview");
+    tree = new BookmarkTree("#treeview");
 
-    var btn = document.getElementById("btnLoad");
-    btn.onclick = function () {
-        loadShelves();
-    };
+    // var btn = document.getElementById("btnLoad");
+    // btn.onclick = function () {
+    //     loadShelves();
+    // };
+    // var btn = document.getElementById("btnSearch");
+    // btn.onclick = function () {
+    //     browser.tabs.create({
+    //         "url": "search.html"
+    //     });
+    // }
     var btn = document.getElementById("btnSet");
     btn.onclick = function () {
         browser.tabs.create({
@@ -76,12 +81,10 @@ window.onload = function () {
             "url": "options.html#help"
         });
     }
-    var btn = document.getElementById("btnSearch");
-    btn.onclick = function () {
-        browser.tabs.create({
-            "url": "search.html"
-        });
-    }
+
+    $("#shelfList").change(function () {
+        switchShelf(tree, this.value);
+    });
 
     $("#shelf-menu-button").click(() => {
         $("#shelf-menu").toggle()
@@ -170,5 +173,26 @@ window.onload = function () {
 
     loadAll(tree);
 };
+
+function handleMessage(request, sender, sendResponse) {
+    if (request.id === "NEW_IMPORT") {
+        console.log("jjj")
+        loadShelves(tree).then(() => {
+            console.log("uuu")
+            let existingOption = $(`#shelfList option:contains("${request.shelf}")`);
+            let selectedOption = $("#shelfList option:selected");
+
+            if (existingOption.length) {
+                selectedOption.removeAttr("selected");
+                existingOption.attr("selected", true);
+            }
+            switchShelf(tree, existingOption.val()).then(() => {
+                tree.openRoot();
+            });
+        });
+    }
+}
+
+browser.runtime.onMessage.addListener(handleMessage);
 
 console.log("==> sidebar.js loaded");
