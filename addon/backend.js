@@ -219,12 +219,21 @@ class IDBBackend {
         return this.db.deleteNodes(all_nodes.map(n => n.id));
     }
 
-    async addBookmark(data) {
-        let group = await this._getGroup(data.path);
+    async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
+        let group;
 
-        delete data.path;
-        data.parent_id = group.id;
-        data.type = NODE_TYPE_BOOKMARK;
+        if (data.parent_id) {
+            data.parent_id = parseInt(data.parent_id);
+        }
+        else {
+            group = await this._getGroup(data.path);
+            data.parent_id = group.id;
+            delete data.path;
+        }
+
+        data.name = await this._ensureUnique(data.parent_id, data.name);
+
+        data.type = node_type;
         data.tags = this._splitTags(data.tags);
 
         return this.db.addNode(data);

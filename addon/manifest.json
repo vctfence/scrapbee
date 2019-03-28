@@ -38,7 +38,7 @@
         "default_icon": "icons/scrapyard.svg"
     },
     "background": {
-        "scripts": ["background.js"]
+        "page": "background.html"
     },
     "browser_action": {
         "default_icon": {
@@ -47,27 +47,28 @@
         "default_title": "Scrapyard",
         "default_popup": "popup.html"
     },
-    "content_scripts": [
-        {
-            "matches": [
-                "http://*/*",
-                "https://*/*"
-            ],
-            "css": [
-                "content_script.css"
-            ],
-            "js": [
-                "lib/jquery-3.3.1.js",
-                "lib/md5.js",
-                "proto.js",
-                "marker.js",
-                "message.js",
-                "content_script.js"
-            ]
-        }
-    ],
+//    "content_scripts": [
+//        {
+//            "matches": [
+//                "http://*/*",
+//                "https://*/*"
+//            ],
+//            "css": [
+//                "content_script.css"
+//            ],
+//            "js": [
+//                "lib/jquery-3.3.1.js",
+//                "lib/md5.js",
+//                "proto.js",
+//                "marker.js",
+//                "message.js",
+//                "content_script.js"
+//            ]
+//        }
+//    ],
     "options_ui": {
         "open_in_tab": true,
         "page": "options.html"
-    }
+    },
+    "web_accessible_resources" : ["savepage/pageloader.js" ]
 }

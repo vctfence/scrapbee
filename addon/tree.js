@@ -13,15 +13,18 @@ import {
     TODO_STATE_WAITING
 } from "./db.js"
 
+import Storage from "./db.js"
 import {showDlg, alert, confirm} from "./dialog.js"
 import {DEFAULT_SHELF_NAME} from "./db.js";
 
-const EVERYTHING_KEY = "everyting";
+const EVERYTHING = "everyting";
+const TREE_STATE_PREFIX = "tree-state-";
 
 class BookmarkTree {
     constructor(element, inline=false) {
         this._element = element;
         this._inline = inline;
+        this.db = new Storage();
 
         let plugins = ["wholerow", "types", "state"];
 
@@ -60,7 +63,9 @@ class BookmarkTree {
                     "valid_children": []
                 }
             },
-            state: {key: inline? EVERYTHING_KEY: undefined}
+            state: {
+                key: inline? TREE_STATE_PREFIX + EVERYTHING: undefined
+            }
         }).on("move_node.jstree", BookmarkTree.moveNode);
 
         this._inst = $(element).jstree(true);
@@ -68,18 +73,47 @@ class BookmarkTree {
         $(document).on("click.jstree", $(".jstree-anchor"), (e) => {
             if (e.button === 0 || e.button === 1) {
                 e.preventDefault();
+
                 let clickable = e.target.getAttribute("data-clickable");
                 let id = e.target.getAttribute("data-id");
+
                 if (clickable && !e.ctrlKey) {
                     let node = this.data.find(n => n.id == id);
+
                     if (node) {
-                        let url = node.uri;
-                        if (url) {
-                            if (url.indexOf("://") < 0)
-                                url = "http://" + url;
+                        if (node.type === NODE_TYPE_BOOKMARK) {
+
+                            let url = node.uri;
+                            if (url) {
+                                if (url.indexOf("://") < 0)
+                                    url = "http://" + url;
+                            }
 
                             browser.tabs.create({
                                 "url": url
+                            })
+                        }
+                        else if (node.type === NODE_TYPE_ARCHIVE) {
+                            this.db.fetchBlob(node.id).then(blob => {
+                                if (blob) {
+                                    let htmlBlob = new Blob([blob.data], {type: "text/html"});
+                                    let objectURL = URL.createObjectURL(htmlBlob);
+
+                                    setTimeout(() => {
+                                        URL.revokeObjectURL(objectURL);
+                                    }, 10000);
+
+                                    browser.tabs.create({
+                                        "url": objectURL
+                                    }).then(tab => {
+                                        browser.tabs.executeScript(tab.id, {
+                                            file: "content.js",
+                                            runAt: 'document_end'
+                                        });
+                                    });
+                                }
+                                else
+                                    console.log("Error: no blob is stored");
                             });
                         }
                     }
@@ -127,6 +161,9 @@ class BookmarkTree {
                 n.icon = "/icons/homepage.png";
         }
 
+        if (n.type == NODE_TYPE_ARCHIVE)
+            n.a_attr.class = "archive-node";
+
         n.data = {};
         n.data.uuid = n.uuid;
 
@@ -141,6 +178,10 @@ class BookmarkTree {
         return this._inst.settings.core.data
     }
 
+    get selected() {
+        return this._inst.get_node(this._inst.get_selected())
+    }
+
     update(nodes) {
         nodes.forEach(BookmarkTree.toJsTreeNode);
         this.data = nodes;
@@ -148,13 +189,13 @@ class BookmarkTree {
         let state;
 
         if (this._inline) {
-            this._inst.settings.state.key = EVERYTHING_KEY;
-            state = JSON.parse(localStorage.getItem(EVERYTHING_KEY));
+            this._inst.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
+            state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING));
         }
         else {
             let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
-            this._inst.settings.state.key = shelves[0].name;
-            state = JSON.parse(localStorage.getItem(shelves[0].name));
+            this._inst.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
+            state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + shelves[0].name));
         }
 
         this._inst.refresh(true, () => state? state.state: null);

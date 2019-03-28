@@ -211,8 +211,8 @@ window.onload = function () {
 };
 
 function handleMessage(request, sender, sendResponse) {
-    if (request.id === "NEW_IMPORT") {
-
+    if (request.type === "NEW_BOOKMARK") {
+        loadShelves(tree);
     }
 }
 

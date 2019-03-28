@@ -17,7 +17,9 @@ import Dexie from "./lib/dexie.es.js"
 const db = new Dexie("scrapyard");
 
 db.version(1).stores({
-    nodes: `++id,&uuid,parent_id,type,name,uri,*tags,pos,date_added,date_modified,todo_state,todo_date,todo_pos`
+    nodes: `++id,&uuid,parent_id,type,name,uri,*tags,pos,date_added,date_modified,todo_state,todo_date,todo_pos`,
+    blobs: `++id,&node_id`,
+    index: `++id,&node_id,*words`
 });
 
 db.on('populate', () => {
@@ -161,10 +163,12 @@ class Storage {
         return nodes;
     }
 
-    deleteNodes(nodes) {
+    async deleteNodes(nodes) {
         if (!Array.isArray)
             nodes = [nodes];
 
+        await db.blobs.where("node_id").anyOf(nodes).delete();
+        await db.index.where("node_id").anyOf(nodes).delete();
         return db.nodes.bulkDelete(nodes);
     }
 
@@ -184,7 +188,24 @@ class Storage {
            .first();
     }
 
+    async storeBlob(node_id, data) {
+        let node = await this.getNode(node_id);
 
+        if (node)
+            return db.blobs.add({
+                node_id: node.id,
+                data: data
+            });
+    }
+
+    async fetchBlob(node_id, is_uuid = false) {
+        if (is_uuid) {
+            let node = await db.nodes.where("uuid").equals(node_id).first();
+            if (node)
+                node_id = node.id;
+        }
+        return db.blobs.where("node_id").equals(node_id).first();
+    }
 }
 
 

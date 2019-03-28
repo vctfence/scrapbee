@@ -7,7 +7,7 @@ Objectives:
 * ~~Store data at IndexedDB~~ [DONE]
 * ~~Replace "RDF" tree with jsTree~~ [DONE]
 * ~~Add fancy user-action popup with tree of directories to add bookmarks to~~ [DONE]
-* Store archived web-pages as single file in a DB-record a la SavePageWE
+* ~~Store archived web-pages as single file in a DB-record a la SavePageWE~~ [DONE]
 * Store indexed content of downloaded html documents in the database
 * Add search text input on toolbar; search by tags, title, content and in Firefox bookmarks
 * Control from [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE: bookmark creation &listing]

@@ -260,3 +260,6 @@ select{
     display: none;
 }
 
+.archive-node {
+    font-weight: bold;
+}
