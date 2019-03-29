@@ -107,7 +107,7 @@ class BookmarkTree {
                                         "url": objectURL
                                     }).then(tab => {
                                         browser.tabs.executeScript(tab.id, {
-                                            file: "content.js",
+                                            file: "savepage/content-pageloader.js",
                                             runAt: 'document_end'
                                         });
                                     });
@@ -307,7 +307,7 @@ class BookmarkTree {
                 }
             },
             openOriginalItem: {
-                label: "Open the Original Link",
+                label: "Open Original URL",
                 action: function () {
                     browser.tabs.create({
                         "url": ctx_node_data.uri
@@ -507,11 +507,11 @@ class BookmarkTree {
                     delete items.propertiesItem;
                     delete items.copyLinkItem;
                     break;
-                case NODE_TYPE_ARCHIVE:
                 case NODE_TYPE_BOOKMARK:
+                    delete items.openOriginalItem;
+                case NODE_TYPE_ARCHIVE:
                     delete items.openAllItem;
                     delete items.sortItem;
-                    delete items.openOriginalItem;
                     delete items.newFolderItem;
                     delete items.renameItem;
                     break;

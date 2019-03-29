@@ -93,6 +93,33 @@ var pageInfoBarText,pageLoaderText,enteredComments;
 
 var payload;
 
+var selectionElement;
+var skipIfSelected;
+
+function lockDocument() {
+    // let lock = document.createElement("div");
+    // lock.id = "scrapyard-waiting";
+    //
+    // lock.style.width = lock.style.height = "100%";
+    // lock.style.backgroundColor = "#9995";
+    // lock.style.zIndex = 2147483647;
+    // lock.style.position = "fixed";
+    // lock.style.left = lock.style.right = "0";
+    // lock.style.backgroundRepeat = "no-repeat";
+    // lock.style.backgroundPosition = "center center";
+    // lock.style.backgroundImage = "url(" + browser.extension.getURL("icons/lock.svg") + ")";
+    //
+    // if (document.body.firstChild)
+    //     document.body.insertBefore(lock, document.body.firstChild);
+}
+
+function unlockDocument() {
+    // let lock = document.getElementById("scrapyard-waiting");
+    // if (lock)
+    //     document.body.removeChild(lock);
+}
+
+
 /************************************************************************/
 
 /* Initialize on script load */
@@ -255,7 +282,19 @@ function addListeners()
                 swapDevices = message.swapdevices;
 
                 payload = message.payload;
-                
+
+                if (message.selection) {
+                    selectionElement = document.createElement("div");
+                    selectionElement.style.display = "none";
+                    selectionElement.innerHTML = message.selection;
+
+                    document.body.appendChild(selectionElement);
+
+                    let frames = selectionElement.querySelectorAll("iframe, frame");
+                    for (let frame of frames)
+                        frame.src = frame.src + "#" + Math.floor((Math.random() * 1000000) + 1)
+                }
+
                 /* Check if Print Edit WE is in editing mode */
                 
                 if (document.getElementById("printedit-gui-container") != null)
@@ -296,14 +335,16 @@ function addListeners()
                 if (bar != null) document.documentElement.removeChild(bar);
                 
                 /* Wait for page to complete loading */
-                
+
+                lockDocument();
+
                 if (document.readyState == "complete")
                 {
                     window.setTimeout(
                     function()
                     {
                         performAction(message.srcurl);
-                    },50);
+                    },200);
                 }
                 else
                 {
@@ -368,7 +409,7 @@ function performAction(srcurl)
                     window.setTimeout(function(y) { window.scrollTo(0,y); },delay,scrolly);
                     delay += 200;  /* 200ms for each step */
                 }
-                
+
                 window.setTimeout(function() { window.scrollTo(0,0); initializeResources(); },delay+300);  /* 500ms for last step */
             }
             else initializeResources();
@@ -649,6 +690,8 @@ function gatherOtherResources()
     });
     
     findOtherResources(0,window,document.documentElement,false,false,loadedfonts);
+
+    skipIfSelected = false;
     
     timeFinish[2] = performance.now();
     
@@ -659,7 +702,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
 {
     var i,j,displayed,style,csstext,baseuri,charset,currentsrc,passive,regex,location,parser,framedoc;
     var matches = new Array();
-    
+
     if (crossorigin)
     {
         /* In a cross-origin frame, the document created by DOMParser */
@@ -673,7 +716,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
     else if ((style = frame.getComputedStyle(element)) == null) displayed = true;  /* should not happen */
     else
     {
-        displayed = (style.getPropertyValue("display") != "none");
+        displayed = (style.getPropertyValue("display") != "none") && element.id !== "scrapyard-waiting";
         
         /* External images referenced in any element's computed style */
         
@@ -1549,7 +1592,7 @@ function loadPageLoader()
     // var xhr;
     //
     if (usePageLoader && !savedPage)
-    // {
+    {
     //     xhr = new XMLHttpRequest();
     //     xhr.overrideMimeType("application/javascript");
     //     xhr.open("GET",chrome.runtime.getURL("lib/savepage/pageloader-compressed.js"),true);
@@ -1566,7 +1609,7 @@ function loadPageLoader()
 
             checkResources();
     //     }
-    // }
+    }
 }
 
 /************************************************************************/
@@ -2090,6 +2133,9 @@ function generateHTML()
     pageInfoBarText = "";
     pageLoaderText = "";
     enteredComments = "";
+
+    selectionElement = null;
+    skipIfSelected = false;
     
     /* Code to test large saved file sizes */
     
@@ -2110,48 +2156,14 @@ function generateHTML()
     // }
     
     // alert(Math.trunc(size/(1024*1024))+"MB");
-    
-    /* Save to file using HTML5 download attribute */
-    
-    //filename = getSavedFileName(document.baseURI,document.title,false);
-    
-    //htmlBlob = new Blob(htmlStrings, { type : "text/html" });
-    
-    //objectURL = window.URL.createObjectURL(htmlBlob);
 
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
-
     chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: htmlStrings.join("\n"), payload: payload });
+
+    unlockDocument();
 
     htmlStrings.length = 0;
 
-    // link = document.createElement("a");
-    // link.id = "savepage-download-link";
-    // link.download = filename;
-    // link.href = objectURL;
-    //
-    // link.setAttribute("class","ajaxfree");  /* workaround to avoid 'Error Loading Page' message for spark.ru pages */
-    //
-    // document.body.appendChild(link);
-    //
-    // link.addEventListener("click",handleClick,true);
-    //
-    // link.click();  /* save page as .html file */
-    //
-    // link.removeEventListener("click",handleClick,true);
-    //
-    // document.body.removeChild(link);
-    //
-    // window.setTimeout(
-    // function()
-    // {
-    //     window.URL.revokeObjectURL(objectURL);
-    //
-    //     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
-    //
-    //     if (externalSave) chrome.runtime.sendMessage({ type: "saveDone", success: true });
-    // },100);
-    
     function handleClick(event)
     {
         event.stopPropagation();
@@ -2205,7 +2217,24 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         }
     }
     else preserve = 0;
-    
+
+
+    if (element.id === "scrapyard-waiting")
+        return;
+
+    // if we have selection, skip HTML generation of all body elements, replace with selection
+    if (depth == 0 && selectionElement && element.parentElement && element.parentElement.localName === "body") {
+        if (skipIfSelected) {
+            return;
+        } else {
+            for (let i = 0; i < selectionElement.children.length; ++i)
+                extractHTML(0,window,selectionElement.children[i],crossorigin,nosource,preserve,indent+2);
+
+            skipIfSelected = true;
+            return;
+        }
+    }
+
     /* Purge elements that have been collapsed by the page, page editors or content blockers - so are not displayed */
     
     if (purgeElements)
@@ -2812,13 +2841,13 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         if (depth < maxFrameDepth)
         {
             nosource = nosource || (element.src == "" && element.srcdoc == "");
-            
+
             try
             {
                 if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before extracting */
                 {
                     startindex = htmlStrings.length;
-                    
+
                     extractHTML(depth+1,element.contentWindow,element.contentDocument.documentElement,crossorigin,nosource,preserve,indent+2);
                     
                     endindex = htmlStrings.length;

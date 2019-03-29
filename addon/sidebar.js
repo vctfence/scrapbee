@@ -178,9 +178,11 @@ window.onload = function () {
                 let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
                 let dotIndex = fullPath.lastIndexOf('.');
                 let filename = fullPath.substring(startIndex, dotIndex);
+
                 if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
                     filename = filename.substring(1);
                 }
+
                 importOrg(filename, re.target.result).then(() => {
                     loadShelves(tree).then(() => {
                         let existingOption = $(`#shelfList option:contains("${filename}")`);
@@ -211,7 +213,7 @@ window.onload = function () {
 };
 
 function handleMessage(request, sender, sendResponse) {
-    if (request.type === "NEW_BOOKMARK") {
+    if (request.type === "BOOKMARK_CREATED") {
         loadShelves(tree);
     }
 }

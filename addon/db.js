@@ -43,18 +43,6 @@ class Storage {
         return datum;
     }
 
-    // addNodes(data) {
-    //     db.transaction('rw', db.nodes, () => {
-    //         for (const n of nodes) {
-    //             n.uuid = UUID.numeric();
-    //             node.date_added = new Date();
-    //             db.nodes.add(n);
-    //         }
-    //     }).catch(function (e) {
-    //         console.log("Error adding nodes");
-    //     });
-    // }
-
     getNode(id) {
         return db.nodes.where("id").equals(id).first();
     }

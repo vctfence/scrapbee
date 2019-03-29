@@ -383,6 +383,8 @@
 /************************************************************************/
 
 import Storage from "../db.js"
+import {backend} from "../backend.js";
+import {NODE_TYPE_ARCHIVE} from "../db.js";
 
 "use strict";
 
@@ -633,22 +635,24 @@ function addListeners()
     {
         var safeContent,mixedContent,refererURL,refererKey,originKey,receiverId;
         var xhr = new Object();
-        
+
         switch (message.type)
         {
-            case "SAVE_CURRENT_TAB":
-                chrome.tabs.query({ lastFocusedWindow: true, active: true },
-                    function(tabs)
-                    {
-                        initiateAction(tabs[0],buttonAction,null,false,false,
-                            message.node);
-                    });
+            case "CREATE_ARCHIVE":
+                backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
+                    chrome.tabs.query({ lastFocusedWindow: true, active: true },
+                        function(tabs)
+                        {
+                            initiateAction(tabs[0],buttonAction,null,false,false,
+                                bookmark);
+                        });
+                });
                 break;
 
             case "STORE_PAGE_HTML":
                 new Storage().storeBlob(message.payload.id, message.data);
 
-                browser.runtime.sendMessage({type: "NEW_BOOKMARK", node: message.payload});
+                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
 
                 alertNotify("Successfully archived page.");
 
@@ -916,35 +920,50 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
     }
     else  /* normal page - save operations allowed, saved page - all operations allowed */
     {
-        chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
-                                         externalsave: externalsave, swapdevices: swapdevices, payload: payload },
-        function(response)
-        {
-            if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script not loaded in active tab */
-            {
-                chrome.tabs.executeScript(tab.id,{ file: "savepage/content.js" },
-                function()
-                {
-                    window.setTimeout(  /* allow time for content script to be initialized */
-                    function()
-                    {
-                        chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
-                                                         externalsave: externalsave, swapdevices: swapdevices, payload: payload },
-                        function(response)
-                        {
-                            if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
-                            {
-                                alertNotify("Cannot be used with this page.");
-                            }
-                            else
-                            {
-                                chrome.tabs.executeScript(tab.id,{ file: "savepage/content-frame.js", allFrames: true });
+        browser.webNavigation.getAllFrames({tabId: tab.id}).then(async frames => {
+            let selectedHtml;
+
+            for (let frame of frames) {
+                try {
+                    await browser.tabs.executeScript(tab.id, {
+                        file: "savepage/selection.js",
+                        frameId: frame.frameId
+                    }).then(selection => {
+                            if (selection && selection.length && selection[0]) {
+                                selectedHtml = selection[0];
                             }
                         });
-                    },50);
-                });
+                } catch (e) {
+                    console.error(e);
+                }
             }
+
+            return selectedHtml;
+        }).then(selection => {
+            chrome.tabs.executeScript(tab.id,{ file: "savepage/content.js" },
+                    function()
+                    {
+                        window.setTimeout(  /* allow time for content script to be initialized */
+                        function()
+                        {
+                            chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
+                                                             externalsave: externalsave, swapdevices: swapdevices,
+                                                             selection: selection, payload: payload },
+                            function(response)
+                            {
+                                // if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
+                                // {
+                                //     alertNotify("Cannot be used with this page.");
+                                // }
+                                // else
+                                // {
+                                    chrome.tabs.executeScript(tab.id,{ file: "savepage/content-frame.js", allFrames: true });
+                                // }
+                            });
+                        },50);
+                    });
         });
+
     }
 }
 
@@ -999,3 +1018,5 @@ function updateBrowserAction() {
 function updateContextMenus() {
 
 }
+
+console.log("==> savepage/background.js loaded");

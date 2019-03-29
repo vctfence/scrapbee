@@ -54,7 +54,7 @@
 //                "https://*/*"
 //            ],
 //            "css": [
-//                "content_script.css"
+//                "content-script.css"
 //            ],
 //            "js": [
 //                "lib/jquery-3.3.1.js",

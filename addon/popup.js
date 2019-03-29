@@ -103,30 +103,31 @@ window.onload = function () {
         });
     });
 
-    function addBookmark(node_type = NODE_TYPE_BOOKMARK) {
+    function addBookmark(node_type) {
         let seleted_option = $("#bookmark-folder option:selected");
         let node = tree._inst.get_node(seleted_option.val());
 
         saveHistory(node, folder_history);
 
-        return backend.addBookmark({
-            name: $("#bookmark-name").val(),
-            uri:  $("#bookmark-url").val(),
-            tags: $("#bookmark-tags").val(),
-            parent_id: node.original.id
-        }, node_type);
+        browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
+                                            ? "CREATE_BOOKMARK"
+                                            : "CREATE_ARCHIVE",
+                                     data: {
+                                        name: $("#bookmark-name").val(),
+                                        uri:  $("#bookmark-url").val(),
+                                        tags: $("#bookmark-tags").val(),
+                                        parent_id: node.original.id
+                                    }});
     }
 
     $("#create-bookmark").on("click", (e) => {
-        addBookmark().then(bookmark => {
-            browser.runtime.sendMessage({type: "NEW_BOOKMARK", node: bookmark});
-        });
+        addBookmark(NODE_TYPE_BOOKMARK);
+        window.close();
     });
 
     $("#create-archive").on("click", (e) => {
-        addBookmark(NODE_TYPE_ARCHIVE).then(bookmark => {
-            browser.runtime.sendMessage({type: "SAVE_CURRENT_TAB", node: bookmark});
-        })
+        addBookmark(NODE_TYPE_ARCHIVE);
+        window.close();
     });
 };
 
