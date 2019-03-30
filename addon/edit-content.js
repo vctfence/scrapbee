@@ -89,7 +89,7 @@ class EditToolBar {
         img.className = "scrapyard-icon"
         img.src = `moz-extension://${extension_id}/icons/scrapyard.svg`;
         div.appendChild(img);
-        div.innerHTML += " <b>Scrapyard</b>&nbsp;&nbsp;";
+        div.innerHTML += " <b class='brand'>Scrapyard</b>&nbsp;&nbsp;";
 
         /** body */
         document.body.style.marginBottom = "100px";
@@ -197,15 +197,28 @@ class EditToolBar {
         });
         this.menu = $m[0];
 
-        /** reload button */
+        /* original url input */
+        var txt = document.createElement("input");
+        txt.type = "text";
+        txt.className = "original-url-text";
+        $(txt).attr("readonly", "true")
+        txt.value = $("meta[name='savepage-url']").attr("content");
+        div.appendChild(txt);
+        // btn.addEventListener("click", function () {
+        //     $(".scrapyard-edit-bar").remove();
+        // });
+
+        /** hide button */
         var btn = document.createElement("input");
         btn.type = "button";
-        btn.className = "blue-button"
+        btn.className = "blue-button hide-button"
         btn.value = chrome.i18n.getMessage("Hide");
         div.appendChild(btn);
         btn.addEventListener("click", function () {
             $(".scrapyard-edit-bar").remove();
         });
+
+
     }
 }
 

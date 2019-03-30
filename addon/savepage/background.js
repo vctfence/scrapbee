@@ -386,7 +386,7 @@ import Storage from "../db.js"
 import {backend} from "../backend.js";
 import {NODE_TYPE_ARCHIVE} from "../db.js";
 
-"use strict";
+let storage = new Storage();
 
 /************************************************************************/
 
@@ -650,11 +650,11 @@ function addListeners()
                 break;
 
             case "SAVE_ARCHIVE":
-                new Storage().updateBlob(message.id, message.data);
+                storage.updateBlob(message.id, message.data);
+                storage.updateIndex(message.payload.id, message.data.indexWords());
                 break;
 
             case "STORE_PAGE_HTML":
-                let storage = new Storage();
                 storage.storeBlob(message.payload.id, message.data);
                 storage.storeIndex(message.payload.id, message.data.indexWords());
 
@@ -950,28 +950,36 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
             return selectedHtml;
 
         }).then(selection => { // load content-script
-            chrome.tabs.executeScript(tab.id,{ file: "savepage/content.js" },
-                    function()
+            chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
+                    externalsave: externalsave, swapdevices: swapdevices,
+                    selection: selection, payload: payload },
+                function(response) {
+                    if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script not loaded in active tab */
                     {
-                        window.setTimeout(  /* allow time for content script to be initialized */
-                        function()
-                        {
-                            chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
-                                                             externalsave: externalsave, swapdevices: swapdevices,
-                                                             selection: selection, payload: payload },
-                            function(response)
-                            {
-                                // if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
-                                // {
-                                //     alertNotify("Cannot be used with this page.");
-                                // }
-                                // else
-                                // {
-                                    chrome.tabs.executeScript(tab.id,{ file: "savepage/content-frame.js", allFrames: true });
-                                // }
+                        chrome.tabs.executeScript(tab.id, {file: "savepage/content.js"},
+                            function () {
+                                window.setTimeout(  /* allow time for content script to be initialized */
+                                    function () {
+                                        chrome.tabs.sendMessage(tab.id, {
+                                                type: "performAction", menuaction: menuaction, srcurl: srcurl,
+                                                externalsave: externalsave, swapdevices: swapdevices,
+                                                selection: selection, payload: payload
+                                            },
+                                            function (response) {
+                                                if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
+                                                {
+                                                    alertNotify("Cannot be used with this page.");
+                                                } else {
+                                                    chrome.tabs.executeScript(tab.id, {
+                                                        file: "savepage/content-frame.js",
+                                                        allFrames: true
+                                                    });
+                                                }
+                                            });
+                                    }, 50);
                             });
-                        },50);
-                    });
+                    }
+                });
         });
 
     }

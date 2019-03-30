@@ -21,15 +21,15 @@ browser.runtime.onMessage.addListener(message => {
 
                     setTimeout(() => {
                         URL.revokeObjectURL(objectURL);
-                    }, 200000);
+                    }, 300000);
 
                     browser.tabs.create({
                         "url": archiveURL
                     }).then(tab => {
-                        browser.tabs.executeScript(tab.id, {
+                        return browser.tabs.executeScript(tab.id, {
                             file: "edit-bootstrap.js",
                             runAt: 'document_end'
-                        });
+                        })
                     });
                 }
                 else

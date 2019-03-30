@@ -2,29 +2,49 @@
     background: #aaa;
     border-top: 1px solid #999;
     width: 100%;
-    height: 40px;
+    /*height: 40px;*/
     position: fixed;
     vertical-align: middle;
-    line-height: 40px;
+    /*line-height: 40px;*/
     bottom: 0;
     z-index: 2147483647;
     text-align:left;
+    display: flex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+.scrapyard-edit-bar * {
+    flex: 0 1 auto;
+}
+.original-url-text {
+    flex: 1 1 auto;
+    margin-left: 16px;
+    margin-right: 16px;
+    height: 16px;
+    margin-top: 2px;
 }
 .scrapyard-icon{
     vertical-Align:middle;
     margin-Left:10px;
+    margin-top:2px;
     width :20px;
     height : 20px;
 }
+.brand {
+    margin-top: 5px;
+    margin-left: 5px;
+}
 .scrapyard-edit-bar,  .scrapyard-edit-bar *{
-    font-family:"WenQuanYi Micro Hei",
-		"Open Sans",
-		"Fira Sans",
-		"Lucida Sans",
-		"Lucida Sans Unicode",
-		"Trebuchet MS",
-		"Liberation Sans",
-		"Nimbus Sans L",
+    font-family:
+        "Helvetica",
+        "Lucida Sans Unicode",
+        "Lucida Sans",
+        "Trebuchet MS",
+        "Open Sans",
+        "Fira Sans",
+        "Liberation Sans",
+        "Nimbus Sans L",
+        "WenQuanYi Micro Hei",
 		sans-serif;
     font-size:12px;
     box-sizing: content-box;
@@ -53,7 +73,10 @@
 .scrapyard-menu-item{
     text-align:center;
 }
-
+.hide-button {
+    margin-right: 8px;
+    margin-left: 0 !important;
+}
 
 
 .scrapyard-marker-1{
