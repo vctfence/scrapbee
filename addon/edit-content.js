@@ -208,6 +208,22 @@ class EditToolBar {
         //     $(".scrapyard-edit-bar").remove();
         // });
 
+        /** go button */
+        var link = document.createElement("a");
+        link.href = txt.value;
+        $(link).attr("target", "_blank");
+        div.appendChild(link);
+
+        var btn = document.createElement("input");
+        btn.type = "button";
+        btn.className = "blue-button go-button"
+        btn.value = chrome.i18n.getMessage("Go");
+        div.appendChild(btn);
+        btn.addEventListener("click", function () {
+            $(link)[0].click();
+        });
+
+
         /** hide button */
         var btn = document.createElement("input");
         btn.type = "button";

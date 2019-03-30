@@ -26,19 +26,7 @@ function saveHistory(node, history) {
 
 window.onload = function () {
 
-    let folder_history = localStorage.getItem("popup-folder-history");
-
-    if (folder_history != null && folder_history !== "null") {
-        folder_history = JSON.parse(folder_history);
-
-        for (let item of folder_history) {
-            $("#bookmark-folder").append(`<option value='${item.id}'>${item.text}</option>`)
-        }
-    }
-    else {
-        folder_history = [];
-        $("#bookmark-folder").append(`<option value='1'>${DEFAULT_SHELF_NAME}</option>`)
-    }
+    let folder_history;
 
     tree = new BookmarkTree("#treeview", true);
 
@@ -46,8 +34,26 @@ window.onload = function () {
         types: [NODE_TYPE_SHELF, NODE_TYPE_GROUP],
         order: "custom"
     }).then(nodes => {
+        folder_history = localStorage.getItem("popup-folder-history");
+
+        if (folder_history != null && folder_history !== "null") {
+            folder_history = JSON.parse(folder_history).filter(h => nodes.some(n => n.id == h.id));
+
+            if (folder_history && folder_history.length) {
+                for (let item of folder_history) {
+                    $("#bookmark-folder").append(`<option value='${item.id}'>${item.text}</option>`)
+                }
+            }
+        }
+
+        if (!folder_history || folder_history === "null" || !folder_history.length) {
+            folder_history = [];
+            $("#bookmark-folder").append(`<option value='1'>${DEFAULT_SHELF_NAME}</option>`)
+        }
+
         tree.update(nodes);
     });
+
 
     withCurrTab((tab) => {
         $("#bookmark-name").val(tab.title);
@@ -57,7 +63,11 @@ window.onload = function () {
     $("#bookmark-tags").focus();
 
     $("#treeview").on("select_node.jstree", (e, {node}) => {
+        console.log(`#bookmark-folder option[value='${node.original.id}']`);
         let existing = $(`#bookmark-folder option[value='${node.original.id}']`);
+
+        console.log(existing)
+
         if (!existing.length) {
             $(`#bookmark-folder option:selected`).removeAttr("selected");
             $("#bookmark-folder option[data-tentative='true']").remove();
