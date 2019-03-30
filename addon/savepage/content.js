@@ -97,26 +97,29 @@ var selectionElement;
 var skipIfSelected;
 
 function lockDocument() {
-    // let lock = document.createElement("div");
-    // lock.id = "scrapyard-waiting";
-    //
-    // lock.style.width = lock.style.height = "100%";
-    // lock.style.backgroundColor = "#9995";
-    // lock.style.zIndex = 2147483647;
-    // lock.style.position = "fixed";
-    // lock.style.left = lock.style.right = "0";
-    // lock.style.backgroundRepeat = "no-repeat";
-    // lock.style.backgroundPosition = "center center";
-    // lock.style.backgroundImage = "url(" + browser.extension.getURL("icons/lock.svg") + ")";
-    //
-    // if (document.body.firstChild)
-    //     document.body.insertBefore(lock, document.body.firstChild);
+    if (document.body.firstChild && document.body.firstChild.id !== "scrapyard-waiting") {
+        let lock = document.createElement("div");
+        lock.id = "scrapyard-waiting";
+
+        lock.style.width = lock.style.height = "100%";
+        lock.style.backgroundColor = "#9995";
+        lock.style.zIndex = 2147483647;
+        lock.style.position = "fixed";
+        lock.style.left = lock.style.right = "0";
+        lock.style.backgroundRepeat = "no-repeat";
+        lock.style.backgroundPosition = "center center";
+        lock.style.backgroundImage = "url(" + browser.extension.getURL("icons/lock.svg") + ")";
+
+        document.body.insertBefore(lock, document.body.firstChild);
+    }
 }
 
 function unlockDocument() {
-    // let lock = document.getElementById("scrapyard-waiting");
-    // if (lock)
-    //     document.body.removeChild(lock);
+
+    let lock = document.getElementById("scrapyard-waiting");
+
+    if (lock)
+        document.body.removeChild(lock);
 }
 
 
@@ -336,7 +339,8 @@ function addListeners()
                 
                 /* Wait for page to complete loading */
 
-                lockDocument();
+                if (menuAction <= 2)
+                    lockDocument();
 
                 if (document.readyState == "complete")
                 {
@@ -1372,7 +1376,7 @@ function loadSuccess(index,content,contenttype,alloworigin)
     else charset = "";
     
     /* Process file based on expected MIME type */
-    
+
     switch (resourceMimeType[index].toLowerCase())  /* expected MIME type */
     {
         case "application/font-woff":  /* font file */
@@ -1662,10 +1666,11 @@ function generateHTML()
     
     // alert(Math.trunc(size/(1024*1024))+"MB");
 
+    console.log("jjj");
+    unlockDocument();
+
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
     chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: htmlStrings.join("\n"), payload: payload });
-
-    unlockDocument();
 
     htmlStrings.length = 0;
 }
@@ -1718,10 +1723,6 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
     }
     else preserve = 0;
 
-
-    if (element.id === "scrapyard-waiting" || element.id === "scrapyard-edit-bar")
-        return;
-
     // if we have selection, skip HTML generation of all body elements, replace with selection
     if (depth == 0 && selectionElement && element.parentElement && element.parentElement.localName === "body") {
         if (skipIfSelected) {
@@ -1734,6 +1735,9 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             return;
         }
     }
+
+    if (element.id === "scrapyard-waiting" || element.id === "scrapyard-edit-bar")
+        return;
 
     /* Purge elements that have been collapsed by the page, page editors or content blockers - so are not displayed */
     
