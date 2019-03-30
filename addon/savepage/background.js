@@ -654,7 +654,9 @@ function addListeners()
                 break;
 
             case "STORE_PAGE_HTML":
-                new Storage().storeBlob(message.payload.id, message.data);
+                let storage = new Storage();
+                storage.storeBlob(message.payload.id, message.data);
+                storage.storeIndex(message.payload.id, message.data.indexWords());
 
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
 

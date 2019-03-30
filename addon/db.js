@@ -219,6 +219,19 @@ class Storage {
 
         return blob;
     }
+
+    async storeIndex(node_id, words) {
+        return db.index.add({
+            node_id: node_id,
+            words: words
+        });
+    }
+
+    async updateIndex(node_id, words) {
+        return db.index.where("node_id").equals(node_id).modify({
+            words: words
+        });
+    }
 }
 
 
