@@ -1,13 +1,3 @@
-
-/* .scrapyard-edit-bar{ */
-/*     background:#f00; */
-/*     height:100px; */
-/*     left:0; */
-/*     right:0; */
-/*     bottom:0px; */
-/*     position:fixed; */
-/*     z-index:2147483647;    */
-/* } */
 .scrapyard-edit-bar{
     background: #aaa;
     border-top: 1px solid #999;
@@ -62,4 +52,37 @@
 }
 .scrapyard-menu-item{
     text-align:center;
+}
+
+
+
+.scrapyard-marker-1{
+    color:#fff;
+    background:#bf00ff;
+}
+
+.scrapyard-marker-2{
+    color:#fff;
+    background: #f00;
+    color:#fff
+}
+.scrapyard-marker-3{
+    color:#000;
+    background:#0f0 ;
+}
+.scrapyard-marker-4{
+    color:#000;
+    background:#fd0 ;
+}
+.scrapyard-marker-5{
+    border-bottom:2px solid #bf00ff;
+}
+.scrapyard-marker-6{
+    border-bottom:2px solid #f00;
+}
+.scrapyard-marker-7{
+    border-bottom:2px dotted #bf00ff;
+}
+.scrapyard-marker-8{
+    border-bottom:2px dotted #f00;
 }

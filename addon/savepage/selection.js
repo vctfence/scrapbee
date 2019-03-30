@@ -1,5 +1,5 @@
-let root = null;
-let sel = window.getSelection();
+var root = null;
+var sel = window.getSelection();
 
 if (sel && !sel.isCollapsed) {
     let id = 1;

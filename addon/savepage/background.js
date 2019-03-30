@@ -649,6 +649,10 @@ function addListeners()
                 });
                 break;
 
+            case "SAVE_ARCHIVE":
+                new Storage().updateBlob(message.id, message.data);
+                break;
+
             case "STORE_PAGE_HTML":
                 new Storage().storeBlob(message.payload.id, message.data);
 
@@ -914,32 +918,36 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                     "https://chrome.google.com/webstore,\n" +
                     "view-source:");
     }
-    else if (tab.url.substr(0,5) != "file:" && menuaction >= 3)  /* probably not saved page - view saved page info and extract media operations not allowed */
-    {
-        alertNotify("Cannot view saved page information or extract media files for unsaved pages.");
-    }
+    // else if (tab.url.substr(0,5) != "file:" && menuaction >= 3)  /* probably not saved page - view saved page info and extract media operations not allowed */
+    // {
+    //     alertNotify("Cannot view saved page information or extract media files for unsaved pages.");
+    // }
     else  /* normal page - save operations allowed, saved page - all operations allowed */
     {
-        browser.webNavigation.getAllFrames({tabId: tab.id}).then(async frames => {
+        // Acquire selection html, if present
+        return browser.webNavigation.getAllFrames({tabId: tab.id}).then(async frames => {
             let selectedHtml;
 
-            for (let frame of frames) {
-                try {
-                    await browser.tabs.executeScript(tab.id, {
-                        file: "savepage/selection.js",
-                        frameId: frame.frameId
-                    }).then(selection => {
+            if (menuaction <= 2) {
+                for (let frame of frames) {
+                    try {
+                        await browser.tabs.executeScript(tab.id, {
+                            file: "savepage/selection.js",
+                            frameId: frame.frameId
+                        }).then(selection => {
                             if (selection && selection.length && selection[0]) {
                                 selectedHtml = selection[0];
                             }
                         });
-                } catch (e) {
-                    console.error(e);
+                    } catch (e) {
+                        console.error(e);
+                    }
                 }
             }
 
             return selectedHtml;
-        }).then(selection => {
+
+        }).then(selection => { // load content-script
             chrome.tabs.executeScript(tab.id,{ file: "savepage/content.js" },
                     function()
                     {
@@ -997,7 +1005,7 @@ function checkError()
 
 function alertNotify(message)
 {
-    chrome.notifications.create("alert",{ type: "basic", iconUrl: "icons/scrapyard200.svg", title: "Scrapyard", message: "" + message });
+    chrome.notifications.create("alert",{ type: "basic", iconUrl: "icons/scrapyard.svg", title: "Scrapyard", message: "" + message });
 }
 
 /************************************************************************/
@@ -1006,7 +1014,7 @@ function alertNotify(message)
 
 function debugNotify(message)
 {
-    chrome.notifications.create("debug",{ type: "basic", iconUrl: "icons/scrapyard200.svg", title: "Scrapyard - DEBUG", message: "" + message });
+    chrome.notifications.create("debug",{ type: "basic", iconUrl: "icons/scrapyard.svg", title: "Scrapyard - DEBUG", message: "" + message });
 }
 
 /************************************************************************/

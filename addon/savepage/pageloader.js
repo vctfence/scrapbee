@@ -56,10 +56,10 @@ function createBlobURLs()
     var i,j,binaryString,blobData;
     var binaryData = new Array();
 
-    maxframedepth = document.getElementById("savepage-max-frame-depth")
+    maxframedepth = document.getElementById("savepage-pageloader-max-frame-depth")
         .getAttribute("content")
 
-    var meta = document.querySelectorAll(".savepage-resource-data");
+    var meta = document.querySelectorAll(".savepage-pageloader-resource-data");
 
     meta.forEach(function(m)
     {

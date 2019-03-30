@@ -22,6 +22,9 @@
     "Reload": {
         "message": "Reload"
     },
+    "Hide": {
+        "message": "Hide"
+    },
     "Search": {
         "message": "Search"
     },
@@ -71,7 +74,7 @@
         "message": "Stop Page Cleaning"
     },
     "MARK_PEN": {
-        "message": "Mark Pen"
+        "message": "Marker Pen"
     },
     "File": {
         "message": "File"
@@ -254,6 +257,6 @@
         "message": "Same rdf modified, click OK to refresh"
     },
     "NO_SELECTION_ACTIVATED": {
-        "message": "No selection activated"
+        "message": "No active selection."
     }
 }

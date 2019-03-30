@@ -13,9 +13,7 @@ import {
     TODO_STATE_WAITING
 } from "./db.js"
 
-import Storage from "./db.js"
 import {showDlg, alert, confirm} from "./dialog.js"
-import {DEFAULT_SHELF_NAME} from "./db.js";
 
 const EVERYTHING = "everyting";
 const TREE_STATE_PREFIX = "tree-state-";
@@ -24,9 +22,8 @@ class BookmarkTree {
     constructor(element, inline=false) {
         this._element = element;
         this._inline = inline;
-        this.db = new Storage();
 
-        let plugins = ["wholerow", "types", "state"];
+        let plugins = ["wholerow", "types", "state", "unique"];
 
         if (!inline) {
             plugins = plugins.concat(["contextmenu", "dnd"]);
@@ -94,27 +91,7 @@ class BookmarkTree {
                             })
                         }
                         else if (node.type === NODE_TYPE_ARCHIVE) {
-                            this.db.fetchBlob(node.id).then(blob => {
-                                if (blob) {
-                                    let htmlBlob = new Blob([blob.data], {type: "text/html"});
-                                    let objectURL = URL.createObjectURL(htmlBlob);
-
-                                    setTimeout(() => {
-                                        URL.revokeObjectURL(objectURL);
-                                    }, 10000);
-
-                                    browser.tabs.create({
-                                        "url": objectURL
-                                    }).then(tab => {
-                                        browser.tabs.executeScript(tab.id, {
-                                            file: "savepage/content-pageloader.js",
-                                            runAt: 'document_end'
-                                        });
-                                    });
-                                }
-                                else
-                                    console.log("Error: no blob is stored");
-                            });
+                            browser.runtime.sendMessage({type: "OPEN_ARCHIVE", node: node});
                         }
                     }
                 }

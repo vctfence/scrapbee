@@ -47,28 +47,9 @@
         "default_title": "Scrapyard",
         "default_popup": "popup.html"
     },
-//    "content_scripts": [
-//        {
-//            "matches": [
-//                "http://*/*",
-//                "https://*/*"
-//            ],
-//            "css": [
-//                "content-script.css"
-//            ],
-//            "js": [
-//                "lib/jquery-3.3.1.js",
-//                "lib/md5.js",
-//                "proto.js",
-//                "marker.js",
-//                "message.js",
-//                "content_script.js"
-//            ]
-//        }
-//    ],
     "options_ui": {
         "open_in_tab": true,
         "page": "options.html"
     },
-    "web_accessible_resources" : ["savepage/pageloader.js" ]
+    "web_accessible_resources" : ["edit-content.js" ]
 }
