@@ -1,6 +1,5 @@
 *{
-    font-family:
-        "Helvetica",
+    font-family: "Helvetica",
         "Lucida Sans Unicode",
         "Lucida Sans",
         "Trebuchet MS",
@@ -219,6 +218,7 @@ select{
     right: 10px;
     margin-top: 5px;
     border: solid 1px black;
+	z-index: 10000;
 }
 .simple-menu div{
     color:#000;
@@ -263,3 +263,80 @@ select{
 .archive-node {
     font-weight: bold;
 }
+
+#main-controls {
+	width: 100%;
+	display:flex;
+}
+
+#main-buttons {
+	flex: 1 1 auto;
+}
+
+#shelf-selector-container {
+	flex: 0 1 auto;
+}
+
+#search-controls {
+	width: 100%;
+	display: flex;
+	margin-top: 6px;
+}
+
+#search-mode-menu {
+    margin-top: 20px;
+    right: 12px;
+}
+
+.search-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    margin-left: 4px;
+    margin-top: 4px;
+    float: left;
+}
+
+#search-mode-switch {
+	flex: 0 1 auto;
+	width: 16px;
+	height: 16px;
+	margin-right: 4px;
+    cursor: pointer;
+}
+
+#search-input-container {
+	flex: 1 1 auto;
+	padding-right: 6px;
+	padding-left: 2px;
+    position: relative;
+}
+
+#search-input-container::before {
+	position: absolute;
+    transform: translate(0,-50%);
+    left: 6px;
+    top: 50%;
+    font-family: "FontAwesome";
+    content: "\f002";
+}
+#search-input-clear {
+    position: absolute;
+    transform: translate(0,-50%);
+    right: 10px;
+    top: 50%;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    cursor: pointer;
+    display: none;
+}
+#search-input {
+	border-radius: 4px;
+	height: 18px;
+	width: 100%;
+	font-size: 12px;
+	border: 1px solid #777;
+	padding-left: 16px;
+}
+

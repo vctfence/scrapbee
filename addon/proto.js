@@ -204,3 +204,19 @@ String.prototype.indexWords = function () {
         .map(s => s.toLocaleUpperCase())
     ));
 };
+
+Array.prototype.removeDups = function(field) {
+    if (field) {
+        var seen = new Set();
+        return this.filter(function(x) {
+            var key = x[field], isNew = !seen.has(key);
+            if (isNew) seen.add(key);
+            return isNew;
+        });
+    }
+
+    var local_array = this;
+    return local_array.filter(function(elem, pos) {
+        return local_array.indexOf(elem) === pos;
+    });
+};

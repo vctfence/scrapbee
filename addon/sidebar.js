@@ -1,12 +1,58 @@
 import {settings} from "./settings.js"
 import {backend} from "./backend.js"
-import {BookmarkTree} from "./tree.js"
-import {DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./db.js";
+import {BookmarkTree, TREE_STATE_PREFIX} from "./tree.js"
 import {showDlg, alert, confirm} from "./dialog.js"
 import {importOrg} from "./import.js";
 
+import {
+    EVERYTHING,
+    DEFAULT_SHELF_NAME,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_SHELF
+} from "./db.js";
 
-function loadShelves(tree) {
+import {
+    SEARCH_MODE_SCRAPYARD,
+    SEARCH_MODE_TITLE,
+    SEARCH_MODE_TAGS,
+    SEARCH_MODE_CONTENT,
+    SEARCH_MODE_FIREFOX,
+    SearchContext
+
+} from "./search.js";
+
+
+const INPUT_TIMEOUT = 1000;
+
+function validSearchInput(input) {
+    return input && input.length > 2;
+}
+
+function canSearch() {
+    let input = $("#search-input").val();
+
+    return validSearchInput(input);
+}
+
+async function performSearch(context, tree) {
+    let input = $("#search-input").val();
+
+    if (validSearchInput(input) && !context._previous_input) {
+        context.save();
+    }
+    else if (!validSearchInput(input) && context._previous_input) {
+        context.restore();
+    }
+
+    context._previous_input = input;
+
+    if (validSearchInput(input))
+        return context.search(input).then(nodes => {
+            tree.list(nodes);
+        });
+}
+
+function loadShelves(context, tree) {
     var lastShelf = settings.last_shelf;
     if (!lastShelf)
         lastShelf = 1;
@@ -23,26 +69,27 @@ function loadShelves(tree) {
                 $opt.attr("selected", true);
             }
         }
-        return switchShelf(tree, $("#shelfList").val());
+        return switchShelf(context, tree, $("#shelfList").val());
     });
 }
 
-function switchShelf(tree, shelf_id) {
-    settings.set('last_shelf', shelf_id);
-
+function switchShelf(context, tree, shelf_id) {
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
 
-    return backend.listNodes({
-            path: path,
-            depth: "root+subtree",
-            order: "custom"
-        }).then(nodes => {
-            tree.update(nodes);
-        });
-}
+    settings.set('last_shelf', shelf_id);
 
-function loadAll(tree) {
-    return loadShelves(tree);
+    context.shelfName = path;
+
+    if (canSearch())
+        return performSearch(context, tree);
+    else
+        return backend.listNodes({
+                path: path,
+                depth: "root+subtree",
+                order: "custom"
+            }).then(nodes => {
+                tree.update(nodes);
+            });
 }
 
 document.addEventListener('contextmenu', function (event) {
@@ -51,44 +98,44 @@ document.addEventListener('contextmenu', function (event) {
     return false;
 });
 
-let tree;
+function getCurrentShelf() {
+    let selectedOption = $("#shelfList option:selected");
+    return {
+        id: parseInt(selectedOption.val()),
+        name: selectedOption.text()
+    };
+}
 
 window.onload = function () {
     /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    tree = new BookmarkTree("#treeview");
+    let tree = new BookmarkTree("#treeview");
+    let context = new SearchContext(tree);
 
-    // var btn = document.getElementById("btnLoad");
-    // btn.onclick = function () {
-    //     loadShelves();
-    // };
-    // var btn = document.getElementById("btnSearch");
-    // btn.onclick = function () {
-    //     browser.tabs.create({
-    //         "url": "search.html"
-    //     });
-    // }
+
     var btn = document.getElementById("btnSet");
     btn.onclick = function () {
         browser.tabs.create({
             "url": "options.html"
         });
-    }
+    };
+
     var btn = document.getElementById("btnHelp");
     btn.onclick = function () {
         browser.tabs.create({
             "url": "options.html#help"
         });
-    }
+    };
 
     $("#shelfList").change(function () {
-        switchShelf(tree, this.value);
+        switchShelf(context, tree, this.value);
     });
 
     $("#shelf-menu-button").click(() => {
-        $("#shelf-menu").toggle()
+        $("#search-mode-menu").hide();
+        $("#shelf-menu").toggle();
     });
     $("#shelf-menu-create").click(() => {
         // TODO: i18n
@@ -112,7 +159,7 @@ window.onload = function () {
                                 .attr("value", shelf.id)
                                 .attr("selected", true);
 
-                            switchShelf(tree, shelf.id);
+                            switchShelf(context, tree, shelf.id);
                         }
                     });
                 }
@@ -144,9 +191,7 @@ window.onload = function () {
     });
 
     $("#shelf-menu-delete").click(() => {
-        let selectedOption = $("#shelfList option:selected");
-        let id = parseInt(selectedOption.val());
-        let name = selectedOption.text();
+        let {id, name} = getCurrentShelf();
 
         if (name === DEFAULT_SHELF_NAME) {
             // TODO: i18n
@@ -158,8 +203,8 @@ window.onload = function () {
         confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
             if (name) {
                 backend.deleteNodes(id).then(() => {
-                    switchShelf(tree, 1);
-                    selectedOption.remove();
+                    switchShelf(context, tree, 1);
+                    $(`#shelfList option[value="${id}"]`).remove();
                 });
             }
         });
@@ -184,7 +229,7 @@ window.onload = function () {
                 }
 
                 importOrg(filename, re.target.result).then(() => {
-                    loadShelves(tree).then(() => {
+                    loadShelves(context, tree).then(() => {
                         let existingOption = $(`#shelfList option:contains("${filename}")`);
                         let selectedOption = $("#shelfList option:selected");
 
@@ -192,7 +237,8 @@ window.onload = function () {
                             selectedOption.removeAttr("selected");
                             existingOption.attr("selected", true);
                         }
-                        switchShelf(tree, existingOption.val()).then(() => {
+                        console.log(tree)
+                        switchShelf(context, tree, existingOption.val()).then(() => {
                             tree.openRoot();
                         });
                     });
@@ -203,21 +249,77 @@ window.onload = function () {
     });
 
 
+    $("#search-mode-switch").click(() => {
+        $("#shelf-menu").hide();
+        $("#search-mode-menu").toggle();
+    });
+
+
+    $("#shelf-menu-search-everything").click(() => {
+        $("#search-mode-switch").prop("src", "icons/catalogue.svg");
+        context.setMode(SEARCH_MODE_SCRAPYARD, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
+    $("#shelf-menu-search-title").click(() => {
+        $("#search-mode-switch").prop("src", "icons/items.svg");
+        context.setMode(SEARCH_MODE_TITLE, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
+    $("#shelf-menu-search-content").click(() => {
+        $("#search-mode-switch").prop("src", "icons/text.svg");
+        context.setMode(SEARCH_MODE_CONTENT, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
+    $("#shelf-menu-search-tags").click(() => {
+        $("#search-mode-switch").prop("src", "icons/tags.svg");
+        context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
+    $("#shelf-menu-search-firefox").click(() => {
+        $("#search-mode-switch").prop("src", "icons/firefox.svg");
+        context.setMode(SEARCH_MODE_FIREFOX, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
+    let timeout;
+    $("#search-input").on("input", e => {
+        if (e.target.value)
+            $("#search-input-clear").show();
+        else
+            $("#search-input-clear").hide();
+
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            performSearch(context, tree);
+        }, INPUT_TIMEOUT);
+    });
+
+    $("#search-input-clear").click(e => {
+        $("#search-input").val("");
+        $("#search-input-clear").hide();
+        performSearch(context, tree);
+    });
+
     $(document).on("click", function(e) {
-        if (!event.target.matches("#shelf-menu-button"))
+        if (!event.target.matches("#shelf-menu-button")
+               && !event.target.matches("#search-mode-switch"))
             $(".simple-menu").hide();
     });
 
 
-    loadAll(tree);
-};
-
-function handleMessage(request, sender, sendResponse) {
-    if (request.type === "BOOKMARK_CREATED") {
-        loadShelves(tree);
+    function handleMessage(request, sender, sendResponse) {
+        if (request.type === "BOOKMARK_CREATED") {
+            loadShelves(context, tree);
+        }
     }
-}
 
-browser.runtime.onMessage.addListener(handleMessage);
+    browser.runtime.onMessage.addListener(handleMessage);
+
+    loadShelves(context, tree);
+};
 
 console.log("==> sidebar.js loaded");

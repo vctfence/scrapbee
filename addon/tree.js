@@ -10,13 +10,13 @@ import {
     TODO_STATE_DONE,
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
-    TODO_STATE_WAITING
+    TODO_STATE_WAITING,
+    EVERYTHING
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
 
-const EVERYTHING = "everyting";
-const TREE_STATE_PREFIX = "tree-state-";
+export const TREE_STATE_PREFIX = "tree-state-";
 
 class BookmarkTree {
     constructor(element, inline=false) {
@@ -155,6 +155,14 @@ class BookmarkTree {
         return this._inst.settings.core.data
     }
 
+    get stateKey() {
+        return this._inst.settings.state.key;
+    }
+
+    set stateKey(key) {
+        this._inst.settings.state.key = key;
+    }
+
     get selected() {
         return this._inst.get_node(this._inst.get_selected())
     }
@@ -176,6 +184,14 @@ class BookmarkTree {
         }
 
         this._inst.refresh(true, () => state? state.state: null);
+    }
+
+    list(nodes) {
+        nodes.forEach(BookmarkTree.toJsTreeNode);
+        nodes.forEach(n => n.parent = "#");
+
+        this.data = nodes;
+        this._inst.refresh(true);
     }
 
     renameRoot(name) {

@@ -3,12 +3,14 @@ export const NODE_TYPE_GROUP = 2;
 export const NODE_TYPE_BOOKMARK = 3;
 export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
+export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK];
 export const TODO_STATE_TODO = 1;
 export const TODO_STATE_DONE = 2;
 export const TODO_STATE_WAITING = 3;
 export const TODO_STATE_POSTPONED = 4;
 export const TODO_STATE_CANCELLED = 5;
 export const DEFAULT_SHELF_NAME = "default";
+export const EVERYTHING = "everything";
 
 
 import UUID from "./lib/uuid.js"
@@ -18,7 +20,7 @@ import LZString from "./lib/lz-string.js"
 const db = new Dexie("scrapyard");
 
 db.version(1).stores({
-    nodes: `++id,&uuid,parent_id,type,name,uri,*tags,pos,date_added,date_modified,todo_state,todo_date,todo_pos`,
+    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,pos,date_added,date_modified,todo_state,todo_date,todo_pos`,
     blobs: `++id,&node_id`,
     index: `++id,&node_id,*words`
 });
@@ -135,8 +137,8 @@ class Storage {
                 result = result && (subtree.has(node.id) || node.id === group.id);
 
             if (tags) {
-                if (node.tags) {
-                    let intersection = tags.filter(value => node.tags.includes(value))
+                if (node.tag_list) {
+                    let intersection = tags.filter(value => node.tag_list.some(t => t.startsWith(value)));
                     result = result && intersection.length > 0;
                 }
                 else
@@ -150,6 +152,29 @@ class Storage {
             nodes.sort((a, b) => a.pos - b.pos);
 
         return nodes;
+    }
+
+    // returns nodes containing only all given words
+    async filterByContent(nodes, words) {
+        let matches = {};
+        let all_matched_nodes = [];
+        let word_count = {};
+
+        for (let word of words) {
+            matches[word] = (await db.index.where("words").startsWith(word).toArray()).map(n => n.node_id);
+            all_matched_nodes = all_matched_nodes.concat(matches[word]).filter((v, i, a) => a.indexOf(v) === i);
+        }
+
+        for (let n of all_matched_nodes) {
+            word_count[n] = 0;
+
+            for (let word of words) {
+                if (matches[word].some(i => i === n))
+                    word_count[n] += 1;
+            }
+        }
+
+        return nodes.filter(n => word_count[n.id] === words.length);
     }
 
     async deleteNodes(nodes) {

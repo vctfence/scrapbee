@@ -33,9 +33,14 @@ class IDBBackend {
         return this._normalizePath(path).split("/").filter(n => !!n);
     }
 
-    _splitTags(tags) {
-        if (tags)
-            return tags.split(",").filter(t => !!t);
+    _splitTags(tags, separator = ",") {
+        if (tags && typeof tags === "string")
+            return tags.split(separator)
+                .filter(t => !!t)
+                .map(t => t.trim())
+                .map(t => t.toLocaleUpperCase());
+
+        return tags;
     }
 
     listShelves() {
@@ -44,17 +49,26 @@ class IDBBackend {
 
     async listNodes(options //{search, // filter by node name or URL
                       // path,   // filter by hierarchical node group path, the first item in the path is a name of a shelf
-                      // tags,   // filter for node tags (string array)
+                      // tags,   // filter for node tags (string, containing comma separated list)
                       // types,  // filter for node types (array of integers)
                       // limit,  // limit for the returned record number
                       // depth,  // specify depth of search: "group", "subtree" or "root+subtree"
                       // order   // order mode to sort the output if specified: "custom", "todo"
+                      // content // search in content instead of node name (boolean)
                       //}
               ) {
         let group = options.path? await this._queryGroup(options.path): null;
 
         if (options.tags)
             options.tags = this._splitTags(options.tags);
+
+        if (options.content && options.search) {
+            let search = this._splitTags(options.search, /\s+/);
+            delete options.search;
+
+            let nodes = await this.db.queryNodes(group, options);
+            return await this.db.filterByContent(nodes, search);
+        }
 
         return await this.db.queryNodes(group, options);
     }
@@ -234,12 +248,13 @@ class IDBBackend {
         data.name = await this._ensureUnique(data.parent_id, data.name);
 
         data.type = node_type;
-        data.tags = this._splitTags(data.tags);
+        data.tag_list = this._splitTags(data.tags);
 
         return this.db.addNode(data);
     }
 
-    updateBookmark(data) {
+    async updateBookmark(data) {
+        data.tag_list = this._splitTags(data.tags);
         return this.db.updateNode(data);
     }
 }
