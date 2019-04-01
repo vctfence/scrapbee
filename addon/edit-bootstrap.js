@@ -29,7 +29,7 @@ script.addEventListener("load", e => {
 document.head.appendChild(script);
 
 function receiveMessage(event) {
-    if (event.data.type === "SAVE_ARCHIVE") {
+    if (event.data.type === "UPDATE_ARCHIVE") {
         let doc = document.documentElement.cloneNode(true)
         let bar = doc.querySelector(".scrapyard-edit-bar");
 
@@ -37,7 +37,7 @@ function receiveMessage(event) {
             bar.parentNode.removeChild(bar);
 
         browser.runtime.sendMessage({
-            type: 'SAVE_ARCHIVE',
+            type: 'UPDATE_ARCHIVE',
             id: parseInt(location.hash.split(":")[1]),
             data: "<!DOCTYPE html>" + doc.outerHTML
         });

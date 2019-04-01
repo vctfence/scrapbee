@@ -1,8 +1,10 @@
 import Storage from "./db.js"
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./db.js";
+import {NODE_TYPE_GROUP, NODE_TYPE_SHELF, NODE_TYPE_BOOKMARK, DEFAULT_SHELF_NAME} from "./db.js";
 import {backend} from "./backend.js";
 
 let storage = new Storage();
+
+/* Internal message listener */
 
 browser.runtime.onMessage.addListener(message => {
     switch (message.type) {
@@ -12,31 +14,11 @@ browser.runtime.onMessage.addListener(message => {
             });
             break;
 
-        case "OPEN_ARCHIVE":
-            storage.fetchBlob(message.node.id).then(blob => {
-                if (blob) {
-                    let htmlBlob = new Blob([blob.data], {type: "text/html"});
-                    let objectURL = URL.createObjectURL(htmlBlob);
-                    let archiveURL = objectURL + "#" + message.node.uuid + ":" + message.node.id;
-
-                    setTimeout(() => {
-                        URL.revokeObjectURL(objectURL);
-                    }, 300000);
-
-                    browser.tabs.create({
-                        "url": archiveURL
-                    }).then(tab => {
-                        return browser.tabs.executeScript(tab.id, {
-                            file: "edit-bootstrap.js",
-                            runAt: 'document_end'
-                        })
-                    });
-                }
-                else
-                    console.log("Error: no blob is stored");
-            });
+        case "BROWSE_ARCHIVE":
+            backend.browseArchive(message.node);
             break;
     }
 });
 
-console.log("==> background.js loaded")
+
+console.log("==> background.js loaded");

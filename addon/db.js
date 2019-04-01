@@ -22,7 +22,8 @@ const db = new Dexie("scrapyard");
 db.version(1).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,pos,date_added,date_modified,todo_state,todo_date,todo_pos`,
     blobs: `++id,&node_id`,
-    index: `++id,&node_id,*words`
+    index: `++id,&node_id,*words`,
+    tags: `++id,name`,
 });
 
 db.on('populate', () => {
@@ -46,7 +47,10 @@ class Storage {
         return datum;
     }
 
-    getNode(id) {
+    getNode(id, is_uuid = false) {
+        if (is_uuid)
+            return db.nodes.where("uuid").equals(id).first();
+
         return db.nodes.where("id").equals(id).first();
     }
 
@@ -256,6 +260,20 @@ class Storage {
         return db.index.where("node_id").equals(node_id).modify({
             words: words
         });
+    }
+
+    async addTags(tags) {
+        if (tags)
+            for (let tag of tags) {
+                let exists = await db.tags.where("name").equals(tag).count();
+
+                if (!exists)
+                    return db.tags.add({name: tag});
+            }
+    }
+
+    async listTags() {
+        return db.tags.toArray();
     }
 }
 

@@ -59,6 +59,9 @@ class IDBBackend {
               ) {
         let group = options.path? await this._queryGroup(options.path): null;
 
+        if (!options.depth)
+            options.depth = "subtree";
+
         if (options.tags)
             options.tags = this._splitTags(options.tags);
 
@@ -249,13 +252,41 @@ class IDBBackend {
 
         data.type = node_type;
         data.tag_list = this._splitTags(data.tags);
+        this.db.addTags(data.tag_list);
 
         return this.db.addNode(data);
     }
 
     async updateBookmark(data) {
         data.tag_list = this._splitTags(data.tags);
+        this.db.addTags(data.tag_list);
+
         return this.db.updateNode(data);
+    }
+
+    browseArchive(node) {
+        return this.db.fetchBlob(node.id).then(blob => {
+            if (blob) {
+                let htmlBlob = new Blob([blob.data], {type: "text/html"});
+                let objectURL = URL.createObjectURL(htmlBlob);
+                let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
+
+                setTimeout(() => {
+                    URL.revokeObjectURL(objectURL);
+                }, 300000);
+
+                browser.tabs.create({
+                    "url": archiveURL
+                }).then(tab => {
+                    return browser.tabs.executeScript(tab.id, {
+                        file: "edit-bootstrap.js",
+                        runAt: 'document_end'
+                    })
+                });
+            }
+            else
+                console.log("Error: no blob is stored");
+        });
     }
 }
 

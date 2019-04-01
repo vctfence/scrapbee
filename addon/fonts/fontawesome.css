@@ -1,0 +1,17 @@
+@font-face {
+ font-family:'FontAwesome';
+ src:url('fontawesome.woff2') format('woff2');
+ font-weight:normal;
+ font-style:normal
+}
+
+.u-link-magnet:before {
+ font-family: FontAwesome;
+ content:"\f076";
+}
+.u-link-download:before {
+ text-decoration: none;
+ font-weight: normal;
+ font-family: FontAwesome;
+ content:"\f0ed"
+}

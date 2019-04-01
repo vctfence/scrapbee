@@ -68,7 +68,7 @@ class EditToolBar {
 
     saveDoc() {
         window.postMessage({
-            type: "SAVE_ARCHIVE"
+            type: "UPDATE_ARCHIVE"
         });
     }
 

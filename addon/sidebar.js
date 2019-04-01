@@ -114,6 +114,10 @@ window.onload = function () {
     let tree = new BookmarkTree("#treeview");
     let context = new SearchContext(tree);
 
+    var btn = document.getElementById("btnLoad");
+    btn.onclick = function () {
+        loadShelves();
+    };
 
     var btn = document.getElementById("btnSet");
     btn.onclick = function () {
@@ -255,14 +259,14 @@ window.onload = function () {
     });
 
 
-    $("#shelf-menu-search-everything").click(() => {
-        $("#search-mode-switch").prop("src", "icons/catalogue.svg");
-        context.setMode(SEARCH_MODE_SCRAPYARD, getCurrentShelf().name);
-        performSearch(context, tree);
-    });
+    // $("#shelf-menu-search-everything").click(() => {
+    //     $("#search-mode-switch").prop("src", "icons/catalogue.svg");
+    //     context.setMode(SEARCH_MODE_SCRAPYARD, getCurrentShelf().name);
+    //     performSearch(context, tree);
+    // });
 
     $("#shelf-menu-search-title").click(() => {
-        $("#search-mode-switch").prop("src", "icons/items.svg");
+        $("#search-mode-switch").prop("src", "icons/bookmark.svg");
         context.setMode(SEARCH_MODE_TITLE, getCurrentShelf().name);
         performSearch(context, tree);
     });

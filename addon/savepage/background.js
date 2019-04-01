@@ -384,7 +384,7 @@
 
 import Storage from "../db.js"
 import {backend} from "../backend.js";
-import {NODE_TYPE_ARCHIVE} from "../db.js";
+import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
 
 let storage = new Storage();
 
@@ -649,7 +649,7 @@ function addListeners()
                 });
                 break;
 
-            case "SAVE_ARCHIVE":
+            case "UPDATE_ARCHIVE":
                 storage.updateBlob(message.id, message.data);
                 storage.updateIndex(message.payload.id, message.data.indexWords());
                 break;
@@ -852,57 +852,117 @@ function addListeners()
                 }
                 
                 break;
-                
-            // case "saveDone":
-            //
-            //     if (!isFirefox || ffVersion >= 54)
-            //     {
-            //         receiverId = isFirefox ? ffPrintEditId : gcPrintEditId;
-            //
-            //         chrome.runtime.sendMessage(receiverId,{ type: "externalSaveDone", success: message.success },checkError);
-            //     }
-            //
-            //     break;
+
+            case "saveDone":
+
+                break;
         }
     });
-    
-    // /* External message received listener */
-    //
-    // if (!isFirefox || ffVersion >= 54)
-    // {
-    //     chrome.runtime.onMessageExternal.addListener(
-    //     function(message,sender,sendResponse)
-    //     {
-    //         switch (message.type)
-    //         {
-    //             /* Messages from another add-on */
-    //
-    //             case "externalSaveStart":
-    //
-    //                 if (sender.id == ffPrintEditId || sender.id == gcPrintEditId)
-    //                 {
-    //                     sendResponse({ });
-    //
-    //                     chrome.tabs.query({ lastFocusedWindow: true, active: true },
-    //                     function(tabs)
-    //                     {
-    //                         initiateAction(tabs[0],message.action,null,true,message.swapdevices);
-    //                     });
-    //                 }
-    //
-    //                 break;
-    //
-    //             case "externalSaveCheck":
-    //
-    //                 if (sender.id == ffPrintEditId || sender.id == gcPrintEditId)
-    //                 {
-    //                     sendResponse({ });
-    //                 }
-    //
-    //                 break;
-    //         }
-    //     });
-    // }
+
+    function computePath(node, all_nodes) {
+        let path = [];
+        let parent = node;
+
+        while (parent) {
+            path.push(parent);
+            parent = all_nodes.find(n => n.id === parent.parent_id);
+        }
+
+        if (path[path.length - 1].name === DEFAULT_SHELF_NAME) {
+            path[path.length - 1].name = "~";
+        }
+
+        node.path = path.reverse().map(n => n.name).join("/");
+    }
+
+    /* External message listener */
+
+    browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+
+        switch (message.type) {
+            case "SCRAPYARD_GET_VERSION":
+                sendResponse(browser.runtime.getManifest().version);
+                break;
+
+            case "SCRAPYARD_LIST_GROUPS":
+                if (sender.extensionId !== "ubiquitywe@firefox")
+                    return;
+
+                sendResponse(backend.listNodes({
+                    types: [NODE_TYPE_SHELF, NODE_TYPE_GROUP]
+                }).then(nodes => {
+                    nodes.forEach(n => computePath(n, nodes));
+                    return nodes.map(n => ({name: n.name, path: n.path}))
+                }));
+                break;
+
+            case "SCRAPYARD_LIST_TAGS":
+                if (sender.extensionId !== "ubiquitywe@firefox")
+                    return;
+
+                sendResponse(storage.listTags().then(tags => {
+                    return tags.map(t => ({name: t.name.toLocaleLowerCase()}))
+                }));
+                break;
+
+            case "SCRAPYARD_LIST_NODES":
+                if (sender.extensionId !== "ubiquitywe@firefox")
+                    return;
+
+                delete message.type;
+
+                let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);
+
+                if (message.types) {
+                    message.types = message.types.concat([NODE_TYPE_SHELF]);
+                }
+
+                if (message.path && message.path.startsWith("~"))
+                    message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+
+                sendResponse(backend.listNodes(message).then(nodes => {
+                    for (let node of nodes) {
+                        if (node.type === NODE_TYPE_GROUP) {
+                            computePath(node, nodes);
+                        }
+                    }
+                    if (no_shelves)
+                        return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
+                    else
+                        return nodes;
+                }));
+                break;
+
+            case "SCRAPYARD_ADD_BOOKMARK":
+                if (message.path && message.path.startsWith("~"))
+                    message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+
+                backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
+                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                    sendResponse(bookmark);
+                });
+                break;
+
+            case "SCRAPYARD_ADD_ARCHIVE":
+                if (message.path && message.path.startsWith("~"))
+                    message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+
+                backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
+                    chrome.tabs.query({ lastFocusedWindow: true, active: true },
+                        function(tabs)
+                        {
+                            initiateAction(tabs[0],buttonAction,null,false,false,
+                                bookmark);
+                        });
+                });
+                break;
+
+            case "SCRAPYARD_BROWSE_ARCHIVE":
+                storage.getNode(message.uuid, true).then(node => backend.browseArchive(node));
+                break;
+
+        }
+    });
 }
 
 /************************************************************************/

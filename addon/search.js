@@ -132,8 +132,8 @@ export class SearchContext {
     constructor(tree) {
         this.tree = tree;
         this._previous_input = "";
-        this.search_mode = SEARCH_MODE_SCRAPYARD;
-        this.provider = new ScrapyardSearchProvider(EVERYTHING);
+        this.search_mode = SEARCH_MODE_TITLE;
+        this.provider = new TitleSearchProvider(EVERYTHING);
     }
 
     save() {

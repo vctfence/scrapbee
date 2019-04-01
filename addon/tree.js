@@ -91,7 +91,7 @@ class BookmarkTree {
                             })
                         }
                         else if (node.type === NODE_TYPE_ARCHIVE) {
-                            browser.runtime.sendMessage({type: "OPEN_ARCHIVE", node: node});
+                            browser.runtime.sendMessage({type: "BROWSE_ARCHIVE", node: node});
                         }
                     }
                 }
