@@ -9,8 +9,11 @@ export const TODO_STATE_DONE = 2;
 export const TODO_STATE_WAITING = 3;
 export const TODO_STATE_POSTPONED = 4;
 export const TODO_STATE_CANCELLED = 5;
-export const DEFAULT_SHELF_NAME = "default";
+export const TODO_SHELF = -3;
+export const DONE_SHELF = -2;
+export const EVERYTHING_SHELF = -1;
 export const EVERYTHING = "everything";
+export const DEFAULT_SHELF_NAME = "default";
 
 
 import UUID from "./lib/uuid.js"

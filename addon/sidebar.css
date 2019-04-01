@@ -227,7 +227,17 @@ select{
 }
 
 .simple-menu div:hover{
-    background: #ccc;
+    background: #ddd;
+}
+
+#shelves-icon {
+    width: 16px;
+    height: 16px;
+}
+
+#shelf-menu-button {
+    width: 23px;
+    margin-top: 1px;
 }
 
 #shelf-menu-create-folder {
@@ -275,6 +285,15 @@ select{
 
 #shelf-selector-container {
 	flex: 0 1 auto;
+}
+
+#shelf-selector-container > div:first-child, #shelf-selector-container > div:last-child {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#shelf-selector-container > div:first-child {
+    padding-top: 2px;
 }
 
 #search-controls {
@@ -336,7 +355,15 @@ select{
 	height: 18px;
 	width: 100%;
 	font-size: 12px;
-	border: 1px solid #777;
+	border: 1px solid black;
 	padding-left: 16px;
+}
+
+.option-builtin {
+    font-weight: bold;
+}
+
+.divide {
+    border-bottom: 1px solid black;
 }
 

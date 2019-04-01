@@ -100,6 +100,29 @@ class BookmarkTree {
         })
     }
 
+    static _todoColor(todo_state) {
+        switch (todo_state) {
+            case TODO_STATE_TODO:
+                return "#fc6dac";
+            case TODO_STATE_WAITING:
+                return"#ff8a00";
+            case TODO_STATE_POSTPONED:
+                return "#00c3ff";
+            case TODO_STATE_CANCELLED:
+                return "#ff4d26";
+            case TODO_STATE_DONE:
+                return "#00d30e";
+        }
+        return "";
+    }
+
+    static _styleTODO(todo_state) {
+        if (todo_state)
+            return "color: " + BookmarkTree._todoColor(todo_state) + "; font-weight: bold;";
+
+        return "";
+    }
+
     static toJsTreeNode(n) {
         n.text = n.name;
 
@@ -108,7 +131,7 @@ class BookmarkTree {
             n.parent = "#";
 
         if (n.type == NODE_TYPE_SHELF)
-            n.icon = "/icons/bookmarks.svg";
+            n.icon = "/icons/shelf.svg";
         else if (n.type == NODE_TYPE_GROUP)
             n.icon = "/icons/group.svg";
         else if (n.type == NODE_TYPE_SEPARATOR) {
@@ -133,6 +156,9 @@ class BookmarkTree {
                 "data-id": n.id,
                 "data-clickable": "true"
             };
+
+            if (n.todo_state)
+                n.a_attr.style = BookmarkTree._styleTODO(n.todo_state);
 
             if (!n.icon)
                 n.icon = "/icons/homepage.png";
@@ -167,13 +193,13 @@ class BookmarkTree {
         return this._inst.get_node(this._inst.get_selected())
     }
 
-    update(nodes) {
+    update(nodes, everything = false) {
         nodes.forEach(BookmarkTree.toJsTreeNode);
         this.data = nodes;
 
         let state;
 
-        if (this._inline) {
+        if (this._inline || everything) {
             this._inst.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING));
         }
@@ -262,6 +288,12 @@ class BookmarkTree {
             backend.setTODOState(todo_states).then(() => {
                     console.log("Todo is set");
                 });
+
+            selected_ids.forEach(n => {
+                let node = tree.get_node(n);
+                node.a_attr.style = BookmarkTree._styleTODO(state);
+                tree.redraw_node(node);
+            });
         }
 
         let items = {
@@ -402,30 +434,35 @@ class BookmarkTree {
                 submenu: {
                     todoItem: {
                         label: "TODO",
+                        icon: "icons/todo.svg",
                         action: function () {
                             setTODOState(TODO_STATE_TODO);
                         }
                     },
                     waitingItem: {
                         label: "WAITING",
+                        icon: "icons/waiting.svg",
                         action: function () {
                             setTODOState(TODO_STATE_WAITING);
                         }
                     },
                     postponedItem: {
                         label: "POSTPONED",
+                        icon: "icons/postponed.svg",
                         action: function () {
                             setTODOState(TODO_STATE_POSTPONED);
                         }
                     },
                     cancelledItem: {
                         label: "CANCELLED",
+                        icon: "icons/cancelled.svg",
                         action: function () {
                             setTODOState(TODO_STATE_CANCELLED);
                         }
                     },
                     doneItem: {
                         label: "DONE",
+                        icon: "icons/done.svg",
                         action: function () {
                             setTODOState(TODO_STATE_DONE);
                         }

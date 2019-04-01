@@ -8,7 +8,10 @@ import {
     EVERYTHING,
     DEFAULT_SHELF_NAME,
     NODE_TYPE_GROUP,
-    NODE_TYPE_SHELF
+    NODE_TYPE_SHELF,
+    TODO_SHELF,
+    DONE_SHELF,
+    EVERYTHING_SHELF
 } from "./db.js";
 
 import {
@@ -57,11 +60,14 @@ function loadShelves(context, tree) {
     if (!lastShelf)
         lastShelf = 1;
 
-    $("#shelfList").html("");
+    $("#shelfList").html(`
+        <option class="option-builtin" value="${TODO_SHELF}">TODO</option>
+        <option class="option-builtin" value="${DONE_SHELF}">DONE</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">everything</option>
+    `);
     var saw = false;
 
     return backend.listShelves().then(shelves => {
-        $("#shelfList").find("option").remove()
         for (let shelf of shelves) {
             var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
             if (!saw && typeof lastShelf != "undefined" && shelf.id == lastShelf) {
@@ -69,6 +75,7 @@ function loadShelves(context, tree) {
                 $opt.attr("selected", true);
             }
         }
+        $("#shelfList").selectric('refresh');
         return switchShelf(context, tree, $("#shelfList").val());
     });
 }
@@ -80,9 +87,18 @@ function switchShelf(context, tree, shelf_id) {
 
     context.shelfName = path;
 
+    console.log(shelf_id);
+
     if (canSearch())
         return performSearch(context, tree);
-    else
+    else {
+        if (shelf_id == EVERYTHING_SHELF)
+            return backend.listNodes({
+                order: "custom"
+            }).then(nodes => {
+                tree.update(nodes, true);
+            });
+        else
         return backend.listNodes({
                 path: path,
                 depth: "root+subtree",
@@ -90,6 +106,7 @@ function switchShelf(context, tree, shelf_id) {
             }).then(nodes => {
                 tree.update(nodes);
             });
+    }
 }
 
 document.addEventListener('contextmenu', function (event) {
@@ -114,9 +131,11 @@ window.onload = function () {
     let tree = new BookmarkTree("#treeview");
     let context = new SearchContext(tree);
 
+    $("#shelfList").selectric({inheritOriginalWidth: true});
+
     var btn = document.getElementById("btnLoad");
     btn.onclick = function () {
-        loadShelves();
+        loadShelves(context, tree);
     };
 
     var btn = document.getElementById("btnSet");
@@ -163,6 +182,7 @@ window.onload = function () {
                                 .attr("value", shelf.id)
                                 .attr("selected", true);
 
+                            $("#shelfList").selectric('refresh');
                             switchShelf(context, tree, shelf.id);
                         }
                     });
@@ -176,7 +196,7 @@ window.onload = function () {
         let id = parseInt(selectedOption.val());
         let name = selectedOption.text();
 
-        if (name && name !== DEFAULT_SHELF_NAME) {
+        if (name && name !== DEFAULT_SHELF_NAME && id > 0) {
             // TODO: 118n
             showDlg("prompt", {caption: "Rename", label: "Name", title: name}).then(data => {
                 let newName;
@@ -184,12 +204,14 @@ window.onload = function () {
                     backend.renameGroup(id, newName).then(() => {
                             selectedOption.html(newName);
                             tree.renameRoot(newName)
+
+                            $("#shelfList").selectric('refresh');
                         });
                 }
             });
         } else if (name === DEFAULT_SHELF_NAME) {
             // TODO: i18n
-            alert("{Error}", "The shelf 'default' could not be renamed.")
+            alert("{Error}", "A builtin shelf could not be renamed.")
         }
 
     });
@@ -197,9 +219,9 @@ window.onload = function () {
     $("#shelf-menu-delete").click(() => {
         let {id, name} = getCurrentShelf();
 
-        if (name === DEFAULT_SHELF_NAME) {
+        if (name === DEFAULT_SHELF_NAME || id < 0) {
             // TODO: i18n
-            alert("{Error}", "The shelf 'default' could not be deleted.")
+            alert("{Error}", "A builtin shelf could not be deleted.")
             return;
         }
 
@@ -208,7 +230,9 @@ window.onload = function () {
             if (name) {
                 backend.deleteNodes(id).then(() => {
                     switchShelf(context, tree, 1);
+
                     $(`#shelfList option[value="${id}"]`).remove();
+                    $("#shelfList").selectric('refresh');
                 });
             }
         });
