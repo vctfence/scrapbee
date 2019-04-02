@@ -16,6 +16,7 @@ html,body{
     /* height:100%; */
     /* width:100%; */
      min-height: 100vh;
+    overflow-x: hidden;
 }
 #main-container {
     display: flex;
@@ -35,6 +36,7 @@ html,body{
 
     /* for Firefox */
     min-height: 0;
+
 }
 #treeview-container {
     flex-grow: 1;
@@ -44,6 +46,10 @@ html,body{
     padding-top: 5px;
     /* for Firefox */
     min-height: 0;
+}
+
+#treeview {
+    height: 100%;
 }
 
 .box{
@@ -271,7 +277,7 @@ select{
 }
 
 .archive-node {
-    font-weight: bold;
+    font-style: italic;
 }
 
 #main-controls {

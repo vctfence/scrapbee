@@ -1,4 +1,4 @@
-import Storage from "./db.js"
+import Storage, {DONE_NAME, TODO_NAME} from "./db.js"
 import {backend} from "./backend.js"
 import {EVERYTHING, NODE_TYPE_BOOKMARK, ENDPOINT_TYPES} from "./db.js";
 import {TREE_STATE_PREFIX} from "./tree.js";
@@ -131,23 +131,18 @@ export class ScrapyardSearchProvider extends SearchProvider {
 export class SearchContext {
     constructor(tree) {
         this.tree = tree;
-        this._previous_input = "";
-        this.search_mode = SEARCH_MODE_TITLE;
+        this._previousInput = "";
+        this.searchMode = SEARCH_MODE_TITLE;
         this.provider = new TitleSearchProvider(EVERYTHING);
     }
 
-    save() {
-        this.tree._inst.save_state();
-        this.savedNodes = this.tree.data;
-        this.shelfKey = this.tree.stateKey;
-
-        this.tree.stateKey = TREE_STATE_PREFIX + "search-" + this.search_mode;
+    inSearch() {
+        this.isInSearch = true;
+        this.tree.stateKey = TREE_STATE_PREFIX + "search-" + this.searchMode;
     }
 
-    restore() {
-        this._previous_input = "";
-        this.tree.stateKey = this.shelfKey;
-        this.tree.update(this.savedNodes);
+    outOfSearch() {
+        this.isInSearch = false;
     }
 
     get shelfName() {
@@ -156,11 +151,11 @@ export class SearchContext {
 
     set shelfName(shelf) {
         this.shelf = shelf;
-        this.setMode(this.search_mode, shelf);
+        this.setMode(this.searchMode, shelf);
     }
 
     setMode(search_mode, shelf) {
-        this.search_mode = search_mode;
+        this.searchMode = search_mode;
         this.shelf = shelf;
 
         switch (search_mode) {

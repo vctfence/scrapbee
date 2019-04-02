@@ -4,7 +4,9 @@ import {
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF,
     NODE_TYPE_SEPARATOR,
-    DEFAULT_SHELF_NAME
+    DEFAULT_SHELF_NAME,
+    TODO_NAME,
+    DONE_NAME
 } from "./db.js"
 
 import Storage from "./db.js"
@@ -48,7 +50,7 @@ class IDBBackend {
     }
 
     async listNodes(options //{search, // filter by node name or URL
-                      // path,   // filter by hierarchical node group path, the first item in the path is a name of a shelf
+                      // path,   // filter by hierarchical node group path (string), the first item in the path is a name of a shelf
                       // tags,   // filter for node tags (string, containing comma separated list)
                       // types,  // filter for node types (array of integers)
                       // limit,  // limit for the returned record number
@@ -57,7 +59,9 @@ class IDBBackend {
                       // content // search in content instead of node name (boolean)
                       //}
               ) {
-        let group = options.path? await this._queryGroup(options.path): null;
+        let group = options.path && options.path !== TODO_NAME && options.path !== DONE_NAME
+            ? await this._queryGroup(options.path)
+            : null;
 
         if (!options.depth)
             options.depth = "subtree";
@@ -73,7 +77,21 @@ class IDBBackend {
             return await this.db.filterByContent(nodes, search);
         }
 
-        return await this.db.queryNodes(group, options);
+        let result = await this.db.queryNodes(group, options);
+
+        if (options.path && (options.path === TODO_NAME || options.path === DONE_NAME)) {
+            for (let node of result) {
+                node._extended_todo = true;
+                let path = await this.db.computePath(node.id);
+
+                node._path = [];
+                for (let i = 0; i < path.length - 1; ++i) {
+                    node._path.push(path[i].name)
+                }
+            }
+        }
+
+        return result;
     }
 
     reorderNodes(positions) {
@@ -82,6 +100,55 @@ class IDBBackend {
 
     setTODOState(states) {
         return this.db.updateNodes(states);
+    }
+
+    async listTODO() {
+        let todo = await this.db.queryTODO();
+
+        let now = new Date();
+        now.setUTCHours(0, 0, 0, 0);
+
+        for (let node of todo) {
+            let todo_date;
+
+            if (node.todo_date)
+                try {
+                    todo_date = new Date(node.todo_date);
+                    todo_date.setUTCHours(0, 0, 0, 0);
+                } catch (e) {
+                }
+
+            if (todo_date && now >= todo_date)
+                node._overdue = true;
+
+            let path = await this.db.computePath(node.id);
+
+            node._path = [];
+            for (let i = 0; i < path.length - 1; ++i) {
+                node._path.push(path[i].name)
+            }
+
+            node._extended_todo = true;
+        }
+
+        return todo.filter(n => n._overdue).concat(todo.filter(n => !n._overdue));
+    }
+
+    async listDONE() {
+        let done = await this.db.queryDONE();
+
+        for (let node of done) {
+            let path = await this.db.computePath(node.id);
+
+            node._path = [];
+            for (let i = 0; i < path.length - 1; ++i) {
+                node._path.push(path[i].name)
+            }
+
+            node._extended_todo = true;
+        }
+
+        return done;
     }
 
     // returns map of groups the function was able to find in the path
@@ -258,10 +325,22 @@ class IDBBackend {
     }
 
     async updateBookmark(data) {
-        data.tag_list = this._splitTags(data.tags);
-        this.db.addTags(data.tag_list);
+        let update = {};
 
-        return this.db.updateNode(data);
+        Object.assign(update, data);
+
+        delete update.text;
+        delete update.data;
+        delete update._path;
+        delete update.a_attr;
+        delete update.parent;
+        delete update.li_attr;
+        delete update._extended_todo;
+
+        update.tag_list = this._splitTags(update.tags);
+        this.db.addTags(update.tag_list);
+
+        return this.db.updateNode(update);
     }
 
     browseArchive(node) {

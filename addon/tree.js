@@ -1,6 +1,7 @@
 import {backend} from "./backend.js"
 
 import {
+    ENDPOINT_TYPES,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -67,16 +68,20 @@ class BookmarkTree {
 
         this._inst = $(element).jstree(true);
 
-        $(document).on("click.jstree", $(".jstree-anchor"), (e) => {
-            if (e.button === 0 || e.button === 1) {
+        $(document).on("click", ".jstree-anchor", (e) => {
+            if (e.button === undefined || e.button === 0 || e.button === 1) {
                 e.preventDefault();
 
-                let clickable = e.target.getAttribute("data-clickable");
-                let id = e.target.getAttribute("data-id");
+                let element = e.target;
+                while (element && !$(element).hasClass("jstree-anchor")) {
+                    element = element.parentNode;
+                }
+
+                let clickable = element.getAttribute("data-clickable");
+                let id = element.getAttribute("data-id");
 
                 if (clickable && !e.ctrlKey) {
                     let node = this.data.find(n => n.id == id);
-
                     if (node) {
                         if (node.type === NODE_TYPE_BOOKMARK) {
 
@@ -107,20 +112,45 @@ class BookmarkTree {
             case TODO_STATE_WAITING:
                 return"#ff8a00";
             case TODO_STATE_POSTPONED:
-                return "#00c3ff";
+                return "#00b7ee";
             case TODO_STATE_CANCELLED:
                 return "#ff4d26";
             case TODO_STATE_DONE:
-                return "#00d30e";
+                return "#00b60e";
         }
         return "";
     }
 
-    static _styleTODO(todo_state) {
-        if (todo_state)
-            return "color: " + BookmarkTree._todoColor(todo_state) + "; font-weight: bold;";
+    static _styleTODO(node) {
+        if (node.todo_state)
+            return "color: " + (node._overdue
+                ? BookmarkTree._todoColor(TODO_STATE_CANCELLED)
+                : BookmarkTree._todoColor(node.todo_state))
+            + "; font-weight: bold;";
 
         return "";
+    }
+
+    static _formatTODO(node) {
+        let text = "<div><span class='todo-path'>";
+
+        for (let i = 0; i < node._path.length; ++i) {
+            text += node._path[i];
+
+            if (i !== node._path.length - 1)
+                text += " &#187; "
+        }
+
+        if (node.todo_date)
+            text += " | " + "<span style='" + BookmarkTree._styleTODO(node) + "'>" + node.todo_date + "</span>";
+
+        if (node.details)
+            text += " | " + "<span class='todo-details'>" + node.details + "</span>";
+
+        text += "</span><br/>";
+        text += "<span class='todo-text'>" + node.name + "</span></div>";
+
+        return text;
     }
 
     static toJsTreeNode(n) {
@@ -152,20 +182,26 @@ class BookmarkTree {
                 "title": `${n.text}${uri}`
             };
 
+            if (n.type == NODE_TYPE_ARCHIVE)
+                n.li_attr.class += " archive-node";
+
             n.a_attr = {
                 "data-id": n.id,
                 "data-clickable": "true"
             };
 
-            if (n.todo_state)
-                n.a_attr.style = BookmarkTree._styleTODO(n.todo_state);
+            if (n.todo_state) {
+                n.a_attr.style = BookmarkTree._styleTODO(n);
+
+                if (n._extended_todo) {
+                    n.li_attr.class += " extended-todo";
+                    n.text = BookmarkTree._formatTODO(n);
+                }
+            }
 
             if (!n.icon)
                 n.icon = "/icons/homepage.png";
         }
-
-        if (n.type == NODE_TYPE_ARCHIVE)
-            n.a_attr.class = "archive-node";
 
         n.data = {};
         n.data.uuid = n.uuid;
@@ -280,19 +316,24 @@ class BookmarkTree {
         let ctx_node_data = ctx_node.original;
 
         function setTODOState(state) {
-            let selected_ids = selected_nodes.map(n => n.original.id);
+            let selected_ids = selected_nodes.map(n => n.original.type === NODE_TYPE_GROUP
+                                                        ? n.children
+                                                        : n.original.id);
             let todo_states = [];
+            let marked_nodes = selected_ids.flat().map(id => tree.get_node(id));
+
+            selected_ids = marked_nodes.filter(n => ENDPOINT_TYPES.some(t => t == n.original.type))
+                .map(n => parseInt(n.id));
 
             selected_ids.forEach(n => todo_states.push({id: n, todo_state: state}));
 
             backend.setTODOState(todo_states).then(() => {
-                    console.log("Todo is set");
+                selected_ids.forEach(id => {
+                    let node = tree.get_node(id);
+                    node.original.todo_state = state;
+                    node.a_attr.style = BookmarkTree._styleTODO(node.original);
+                    tree.redraw_node(node);
                 });
-
-            selected_ids.forEach(n => {
-                let node = tree.get_node(n);
-                node.a_attr.style = BookmarkTree._styleTODO(state);
-                tree.redraw_node(node);
             });
         }
 
@@ -498,11 +539,16 @@ class BookmarkTree {
                         case NODE_TYPE_ARCHIVE:
                             showDlg("properties", ctx_node_data).then(data => {
                                 let original_node_data = all_nodes.find(n => n.id == ctx_node.id);
-                                Object.assign(original_node_data, data);
-                                original_node_data.name = ctx_node_data.text = data.text;
-                                backend.updateBookmark(Object.assign(ctx_node_data, original_node_data)).then(() => {
-                                        tree.rename_node(ctx_node, ctx_node_data.text);
-                                    });
+
+                                backend.updateBookmark(Object.assign(original_node_data, data)).then(() => {
+                                    if (!ctx_node_data._extended_todo) {
+                                        tree.rename_node(ctx_node, ctx_node_data.name);
+                                    }
+                                    else {
+                                        tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
+                                    }
+                                    tree.redraw_node(ctx_node);
+                                });
                             });
                             break;
                     }
@@ -557,6 +603,10 @@ class BookmarkTree {
             for (let k in items)
                 if (!["deleteItem"].find(s => s === k))
                     delete items[k];
+        }
+
+        if (ctx_node.original._extended_todo) {
+            delete items.newSeparatorItem;
         }
 
         if (multiselect) {

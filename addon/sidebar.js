@@ -11,11 +11,12 @@ import {
     NODE_TYPE_SHELF,
     TODO_SHELF,
     DONE_SHELF,
-    EVERYTHING_SHELF
+    EVERYTHING_SHELF,
+    TODO_NAME,
+    DONE_NAME
 } from "./db.js";
 
 import {
-    SEARCH_MODE_SCRAPYARD,
     SEARCH_MODE_TITLE,
     SEARCH_MODE_TAGS,
     SEARCH_MODE_CONTENT,
@@ -26,6 +27,15 @@ import {
 
 
 const INPUT_TIMEOUT = 1000;
+
+function isSpecialShelf(name) {
+    name = name.toLocaleUpperCase();
+    return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
+        || name === EVERYTHING.toLocaleUpperCase()
+        || name === TODO_NAME
+        || name === DONE_NAME;
+}
+
 
 function validSearchInput(input) {
     return input && input.length > 2;
@@ -40,14 +50,13 @@ function canSearch() {
 async function performSearch(context, tree) {
     let input = $("#search-input").val();
 
-    if (validSearchInput(input) && !context._previous_input) {
-        context.save();
+    if (validSearchInput(input) && !context.isInSearch) {
+        context.inSearch();
     }
-    else if (!validSearchInput(input) && context._previous_input) {
-        context.restore();
+    else if (!validSearchInput(input) && context.isInSearch) {
+        context.outOfSearch();
+        switchShelf(context, tree, $(`#shelfList option:contains("${context.shelfName}")`).val());
     }
-
-    context._previous_input = input;
 
     if (validSearchInput(input))
         return context.search(input).then(nodes => {
@@ -56,26 +65,27 @@ async function performSearch(context, tree) {
 }
 
 function loadShelves(context, tree) {
-    var lastShelf = settings.last_shelf;
-    if (!lastShelf)
-        lastShelf = 1;
-
     $("#shelfList").html(`
-        <option class="option-builtin" value="${TODO_SHELF}">TODO</option>
-        <option class="option-builtin" value="${DONE_SHELF}">DONE</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">everything</option>
+        <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
+        <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
     `);
-    var saw = false;
 
     return backend.listShelves().then(shelves => {
-        for (let shelf of shelves) {
+        for (let shelf of shelves)
             var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
-            if (!saw && typeof lastShelf != "undefined" && shelf.id == lastShelf) {
-                saw = true;
-                $opt.attr("selected", true);
-            }
-        }
+
+        var last_shelf_id = settings.last_shelf;
+
+        if (!last_shelf_id)
+            last_shelf_id = 1;
+
+        let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
+        last_shelf = last_shelf? last_shelf: $(`#shelfList option[value="1"]`);
+        last_shelf.attr("selected", true);
+
         $("#shelfList").selectric('refresh');
+
         return switchShelf(context, tree, $("#shelfList").val());
     });
 }
@@ -87,25 +97,37 @@ function switchShelf(context, tree, shelf_id) {
 
     context.shelfName = path;
 
-    console.log(shelf_id);
-
     if (canSearch())
         return performSearch(context, tree);
     else {
-        if (shelf_id == EVERYTHING_SHELF)
+        if (shelf_id == TODO_SHELF) {
+            tree.stateKey = TREE_STATE_PREFIX + TODO_NAME;
+            return backend.listTODO().then(nodes => {
+                tree.list(nodes);
+            });
+        }
+        else if (shelf_id == DONE_SHELF) {
+            tree.stateKey = TREE_STATE_PREFIX + DONE_NAME;
+            return backend.listDONE().then(nodes => {
+                tree.list(nodes);
+            });
+        }
+        else if (shelf_id == EVERYTHING_SHELF) {
             return backend.listNodes({
                 order: "custom"
             }).then(nodes => {
                 tree.update(nodes, true);
             });
-        else
-        return backend.listNodes({
+        }
+        else {
+            return backend.listNodes({
                 path: path,
                 depth: "root+subtree",
                 order: "custom"
             }).then(nodes => {
                 tree.update(nodes);
             });
+        }
     }
 }
 
@@ -116,10 +138,10 @@ document.addEventListener('contextmenu', function (event) {
 });
 
 function getCurrentShelf() {
-    let selectedOption = $("#shelfList option:selected");
+    let select = $("#shelfList");
     return {
-        id: parseInt(selectedOption.val()),
-        name: selectedOption.text()
+        id: parseInt(select.val()),
+        name: select.text()
     };
 }
 
@@ -165,15 +187,10 @@ window.onload = function () {
         showDlg("prompt", {caption: "Create Shelf", label: "Name"}).then(data => {
             let name;
             if (name = data.title) {
-                let existingOption = $(`#shelfList option:contains("${name}")`);
-                let selectedOption = $("#shelfList option:selected");
+               // let existingOption = $(`#shelfList option:contains("${name}")`);
+                let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
 
-                if (existingOption.length) {
-                    selectedOption.removeAttr("selected");
-                    existingOption.attr("selected", true);
-                }
-
-                if (name !== DEFAULT_SHELF_NAME) {
+                if (!isSpecialShelf(name)) {
                     backend.createGroup(null, name, NODE_TYPE_SHELF).then(shelf => {
                         if (shelf) {
                             selectedOption.removeAttr("selected");
@@ -187,12 +204,15 @@ window.onload = function () {
                         }
                     });
                 }
+                else {
+                    alert("{Error}", "Can not create shelf with this name.")
+                }
             }
         });
     });
 
     $("#shelf-menu-rename").click(() => {
-        let selectedOption = $("#shelfList option:selected");
+        let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
         let id = parseInt(selectedOption.val());
         let name = selectedOption.text();
 
@@ -232,6 +252,8 @@ window.onload = function () {
                     switchShelf(context, tree, 1);
 
                     $(`#shelfList option[value="${id}"]`).remove();
+                    $(`#shelfList option[value='1']`).attr("selected", "true");
+
                     $("#shelfList").selectric('refresh');
                 });
             }
@@ -256,21 +278,20 @@ window.onload = function () {
                     filename = filename.substring(1);
                 }
 
-                importOrg(filename, re.target.result).then(() => {
-                    loadShelves(context, tree).then(() => {
-                        let existingOption = $(`#shelfList option:contains("${filename}")`);
-                        let selectedOption = $("#shelfList option:selected");
-
-                        if (existingOption.length) {
-                            selectedOption.removeAttr("selected");
-                            existingOption.attr("selected", true);
-                        }
-                        console.log(tree)
-                        switchShelf(context, tree, existingOption.val()).then(() => {
-                            tree.openRoot();
-                        });
-                    });
-                });
+                // importOrg(filename, re.target.result).then(() => {
+                //     loadShelves(context, tree).then(() => {
+                //         let existingOption = $(`#shelfList option:contains("${filename}")`);
+                //         let selectedOption = $("#shelfList option:selected");
+                //
+                //         if (existingOption.length) {
+                //             selectedOption.removeAttr("selected");
+                //             existingOption.attr("selected", true);
+                //         }
+                //         switchShelf(context, tree, existingOption.val()).then(() => {
+                //             tree.openRoot();
+                //         });
+                //     });
+                // });
             };
             reader.readAsText(e.target.files[0]);
         }
@@ -315,21 +336,25 @@ window.onload = function () {
 
     let timeout;
     $("#search-input").on("input", e => {
-        if (e.target.value)
-            $("#search-input-clear").show();
-        else
-            $("#search-input-clear").hide();
-
         clearTimeout(timeout);
-        timeout = setTimeout(() => {
+
+        if (e.target.value) {
+            $("#search-input-clear").show();
+            timeout = setTimeout(() => {
+                performSearch(context, tree);
+            }, INPUT_TIMEOUT);
+        }
+        else {
+            timeout = null;
             performSearch(context, tree);
-        }, INPUT_TIMEOUT);
+            $("#search-input-clear").hide();
+        }
     });
 
     $("#search-input-clear").click(e => {
         $("#search-input").val("");
         $("#search-input-clear").hide();
-        performSearch(context, tree);
+        $("#search-input").trigger("input");
     });
 
     $(document).on("click", function(e) {

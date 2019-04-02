@@ -4,17 +4,21 @@ export const NODE_TYPE_BOOKMARK = 3;
 export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
 export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK];
+
 export const TODO_STATE_TODO = 1;
-export const TODO_STATE_DONE = 2;
-export const TODO_STATE_WAITING = 3;
-export const TODO_STATE_POSTPONED = 4;
+export const TODO_STATE_DONE = 4;
+export const TODO_STATE_WAITING = 2;
+export const TODO_STATE_POSTPONED = 3;
 export const TODO_STATE_CANCELLED = 5;
+
 export const TODO_SHELF = -3;
 export const DONE_SHELF = -2;
 export const EVERYTHING_SHELF = -1;
-export const EVERYTHING = "everything";
-export const DEFAULT_SHELF_NAME = "default";
 
+export const TODO_NAME = "TODO";
+export const DONE_NAME = "DONE";
+export const DEFAULT_SHELF_NAME = "default";
+export const EVERYTHING = "everything";
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.es.js"
@@ -128,7 +132,7 @@ class Storage {
         }
 
         let nodes = await where.filter(node => {
-            let result = path? !!group: true;
+            let result = path && path !== TODO_NAME && path !== DONE_NAME? !!group: true;
 
             if (types)
                 result = result && types.some(t => t == node.type);
@@ -142,6 +146,10 @@ class Storage {
                 result = result && subtree.has(node.id);
             else if (group && depth === "root+subtree")
                 result = result && (subtree.has(node.id) || node.id === group.id);
+            else if (path === TODO_NAME)
+                result = result && node.todo_state && node.todo_state < TODO_STATE_DONE;
+            else if (path === DONE_NAME)
+                result = result && node.todo_state && node.todo_state >= TODO_STATE_DONE;
 
             if (tags) {
                 if (node.tag_list) {
@@ -159,6 +167,14 @@ class Storage {
             nodes.sort((a, b) => a.pos - b.pos);
 
         return nodes;
+    }
+
+    queryTODO() {
+        return db.nodes.where("todo_state").below(TODO_STATE_DONE).sortBy("todo_state");
+    }
+
+    queryDONE() {
+        return db.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
     }
 
     // returns nodes containing only all given words
@@ -275,8 +291,23 @@ class Storage {
             }
     }
 
-    async listTags() {
+    async queryTags() {
         return db.tags.toArray();
+    }
+
+    async computePath(id, is_uuid = false) {
+        let path = [];
+        let node = await this.getNode(id, is_uuid);
+
+        while (node) {
+            path.push(node);
+            if (node.parent_id)
+                node = await this.getNode(node.parent_id);
+            else
+                node = null;
+        }
+
+        return path.reverse();
     }
 }
 

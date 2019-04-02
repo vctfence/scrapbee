@@ -174,4 +174,28 @@
     background: #ddd;
 }
 
+.jstree-default .extended-todo {
+    margin-top: 4px;
+}
 
+.jstree-default .extended-todo .jstree-themeicon {
+    float: left;
+}
+
+.jstree-default .extended-todo .jstree-anchor {
+    display: inline-block;
+    line-height: normal;
+    height: auto;
+    font-size: 98%;
+}
+
+.jstree-default .extended-todo .todo-path {
+    font-size: 80%;
+    font-weight: normal;
+    color: #777;
+    white-space: nowrap;
+}
+
+.jstree-default .extended-todo .todo-details {
+    color: black;
+}

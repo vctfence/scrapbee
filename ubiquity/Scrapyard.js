@@ -121,7 +121,10 @@
             path:  args.time && args.time.text? args.time.text: null,
             tags:  args.alias && args.alias.text? args.alias.text: null,
             limit: args.cause && args.cause.text? args.cause.text: null,
-            types:  args.format && args.format.text? args.format.data: null,
+            types: args.format && args.format.text? args.format.data: null,
+            todo_state: args.instrument && args.instrument.text? args.instrument.data: null,
+            todo_date:  args.goal && args.goal.text? args.goal.text: null,
+            details:  args.subject && args.subject.text? args.subject.text: null,
         };
 
         if (!result.limit)
@@ -285,15 +288,21 @@
         }
     });
 
+    let todo_states = {
+        [TODO_STATE_TODO]: "TODO",
+        [TODO_STATE_WAITING]: "WAITING",
+        [TODO_STATE_POSTPONED]: "POSTPONED",
+        [TODO_STATE_CANCELLED]: "CANCELLED",
+        [TODO_STATE_DONE]: "DONE"
+    };
 
     function bookmarkingCommandPreview(node_type) {
         return function(pblock, args, {Bin}) {
-            let {search, path, tags} = unpackArgs(args);
+            let {search, path, tags, todo_state, todo_date, details} = unpackArgs(args);
 
-            let title = //search
-                //? search
-                //:
-                (CmdUtils.active_tab
+            let title = !CmdUtils.getSelection()
+                ? search
+                : (CmdUtils.active_tab
                     ? CmdUtils.active_tab.title
                     : null);
 
@@ -306,7 +315,17 @@
                 html += "Group: <span style='color: #FD7221;'>" + path + "</span><br>";
 
             if (tags)
-                html += "Tags: <span style='color: #7DE22E;'>" + tags + "</span>";
+                html += "Tags: <span style='color: #7DE22E;'>" + tags + "</span><br>";
+
+            if (todo_state)
+                html += "ToDo state: " + todo_states[todo_state] + "<br>";
+
+            if (todo_date)
+                html += "ToDo date: " + todo_date + "<br>";
+
+            if (details)
+                html += "Details: " + details + "<br>";
+
 
             if (html)
                 pblock.innerHTML = html;
@@ -353,16 +372,53 @@
         };
     }
 
+    let noun_type_date = {
+        label: "date",
+        noExternalCalls: true,
+        cacheTime: -1,
+        suggest: function (text, html, cb, selectionIndices) {
+            let matcher = new RegExp(text, "i");
+            let suggs;
+
+            function addZero(text) {
+                return (("" + text).length === 1? "0": "") + text;
+            }
+
+            suggs = [];
+
+            if (/\d{4}-d{1,2}-d{1,2}/.test(text)) {
+                suggs.push(CmdUtils.makeSugg(text, text, null, CmdUtils.matchScore(p.match), selectionIndices));
+            }
+            else if (/\d{1,2}-\d{1,2}/.test(text)) {
+                let now = new Date();
+                let [month, day] = text.split("-");
+                let date = now.getFullYear() + "-" + addZero(month) + "-" + addZero(day);
+                suggs.push(CmdUtils.makeSugg(date, date, null, 1, selectionIndices));
+            }
+            else if (/\d{1,2}/.test(text)) {
+                let now = new Date();
+                let date = now.getFullYear() + "-" + addZero(now.getMonth() + 1) + "-" + addZero(text);
+                suggs.push(CmdUtils.makeSugg(date, date, null, 1, selectionIndices));
+            }
+
+            return suggs;
+        }
+    };
+
     CmdUtils.CreateCommand({
         name: "bookmark",
         uuid: "520F182C-34D0-4837-B42A-64A7E859D3D5",
         arguments: [{role: "object",     nountype: noun_arb_text, label: "text"},
-            //{role: "subject",    nountype: noun_arb_text, label: "text"}, // for
-            //{role: "goal",       nountype: noun_arb_text, label: "text"}, // to
+            {role: "subject",    nountype: noun_arb_text, label: "text"}, // for
+            {role: "goal",       nountype: noun_type_date, label: "due"}, // to
             //{role: "source",     nountype: ["group", "subtree"], label: "depth"}, // from
             //{role: "location",   nountype: noun_arb_text, label: "text"}, // near
             {role: "time",       nountype: noun_scrapyard_group, label: "path"}, // at
-            //{role: "instrument", nountype: noun_arb_text, label: "text"}, // with
+            {role: "instrument", nountype: {"TODO": TODO_STATE_TODO,
+                    "WAITING": TODO_STATE_WAITING,
+                    "POSTPONED": TODO_STATE_POSTPONED,
+                    "CANCELLED": TODO_STATE_CANCELLED,
+                    "DONE": TODO_STATE_DONE}, label: "todo"}, // with
             //{role: "format",     nountype: noun_arb_text, label: "text"}, // in
             //{role: "modifier",   nountype: noun_arb_text, label: "text"}, // of
             {role: "alias",      nountype: noun_scrapyard_tag, label: "tags"}, // as
@@ -385,12 +441,16 @@
         name: "archive",
         uuid: "2CFD7052-84E2-465C-A450-45BFFE3C6C80",
         arguments: [{role: "object",     nountype: noun_arb_text, label: "text"},
-            //{role: "subject",    nountype: noun_arb_text, label: "text"}, // for
-            //{role: "goal",       nountype: noun_arb_text, label: "text"}, // to
+            {role: "subject",    nountype: noun_arb_text, label: "text"}, // for
+            {role: "goal",       nountype: noun_type_date, label: "due"}, // to
             //{role: "source",     nountype: ["group", "subtree"], label: "depth"}, // from
             //{role: "location",   nountype: noun_arb_text, label: "text"}, // near
             {role: "time",       nountype: noun_scrapyard_group, label: "path"}, // at
-            //{role: "instrument", nountype: noun_arb_text, label: "text"}, // with
+            {role: "instrument", nountype: {"TODO": TODO_STATE_TODO,
+                    "WAITING": TODO_STATE_WAITING,
+                    "POSTPONED": TODO_STATE_POSTPONED,
+                    "CANCELLED": TODO_STATE_CANCELLED,
+                    "DONE": TODO_STATE_DONE}, label: "todo"}, // with
             //{role: "format",     nountype: noun_arb_text, label: "text"}, // in
             //{role: "modifier",   nountype: noun_arb_text, label: "text"}, // of
             {role: "alias",      nountype: noun_scrapyard_tag, label: "tags"}, // as

@@ -382,11 +382,8 @@
 /*                                                                      */
 /************************************************************************/
 
-import Storage from "../db.js"
 import {backend} from "../backend.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
-
-let storage = new Storage();
 
 /************************************************************************/
 
@@ -650,13 +647,13 @@ function addListeners()
                 break;
 
             case "UPDATE_ARCHIVE":
-                storage.updateBlob(message.id, message.data);
-                storage.updateIndex(message.payload.id, message.data.indexWords());
+                backend.db.updateBlob(message.id, message.data);
+                backend.db.updateIndex(message.payload.id, message.data.indexWords());
                 break;
 
             case "STORE_PAGE_HTML":
-                storage.storeBlob(message.payload.id, message.data);
-                storage.storeIndex(message.payload.id, message.data.indexWords());
+                backend.db.storeBlob(message.payload.id, message.data);
+                backend.db.storeIndex(message.payload.id, message.data.indexWords());
 
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
 
@@ -900,7 +897,7 @@ function addListeners()
                 if (sender.extensionId !== "ubiquitywe@firefox")
                     return;
 
-                sendResponse(storage.listTags().then(tags => {
+                sendResponse(backend.db.queryTags().then(tags => {
                     return tags.map(t => ({name: t.name.toLocaleLowerCase()}))
                 }));
                 break;
@@ -958,7 +955,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_BROWSE_ARCHIVE":
-                storage.getNode(message.uuid, true).then(node => backend.browseArchive(node));
+                backend.db.getNode(message.uuid, true).then(node => backend.browseArchive(node));
                 break;
 
         }
