@@ -82,7 +82,7 @@ function performImport(context, tree, file, file_name, file_ext) {
             if (importF)
                 importF().then(() => {
                     backend.db.queryShelf(file_name).then(shelf => {
-                        settings.set('last_shelf', shelf.id);
+                        settings.last_shelf(shelf.id);
                         loadShelves(context, tree).then(() => {
                             tree.openRoot();
                             resolve();
@@ -97,9 +97,18 @@ function performImport(context, tree, file, file_name, file_ext) {
 
 function performExport(context, tree) {
     let {name} = getCurrentShelf();
-    return exportOrg(tree, name).then(url => {
+    return exportOrg(tree, name, settings.shallow_export()).then(url => {
         browser.downloads.download({url: url, filename: name + ".org", saveAs: false});
     });
+}
+
+function styleBuiltinShelf() {
+    let {id, name} = getCurrentShelf();
+
+    if (isSpecialShelf(name) && name !== DEFAULT_SHELF_NAME)
+        $("div.selectric span.label").addClass("option-builtin");
+    else
+        $("div.selectric span.label").removeClass("option-builtin");
 }
 
 function loadShelves(context, tree) {
@@ -113,17 +122,18 @@ function loadShelves(context, tree) {
 
     return backend.listShelves().then(shelves => {
         for (let shelf of shelves)
-            var $opt = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
+            $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
 
-        var last_shelf_id = settings.last_shelf || 1;
+        let last_shelf_id = settings.last_shelf() || 1;
 
         if (last_shelf_id === "null")
             last_shelf_id = 1;
 
         let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
         last_shelf = last_shelf? last_shelf: $(`#shelfList option[value="1"]`);
-        shelf_list.val(last_shelf.val())
+        shelf_list.val(parseInt(last_shelf.val()))
 
+        styleBuiltinShelf();
         shelf_list.selectric('refresh');
 
         return switchShelf(context, tree, shelf_list.val());
@@ -137,7 +147,7 @@ function loadShelves(context, tree) {
 function switchShelf(context, tree, shelf_id) {
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
 
-    settings.set('last_shelf', shelf_id);
+    settings.last_shelf(shelf_id);
 
     context.shelfName = path;
 
@@ -219,6 +229,7 @@ window.onload = function () {
     };
 
     $("#shelfList").change(function () {
+        styleBuiltinShelf();
         switchShelf(context, tree, this.value);
     });
 
@@ -226,6 +237,7 @@ window.onload = function () {
         $("#search-mode-menu").hide();
         $("#shelf-menu").toggle();
     });
+
     $("#shelf-menu-create").click(() => {
         // TODO: i18n
         showDlg("prompt", {caption: "Create Shelf", label: "Name"}).then(data => {

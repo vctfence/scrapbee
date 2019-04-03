@@ -1,37 +1,15 @@
-import {settings} from "./settings.js"
-
+import {settings, SETTING_KEY} from "./settings.js"
 import {backend} from "./backend.js"
 
-
-var msg_hub = new MsgHub();
-
-function getAsync(file) {
-    var r;
-    var z, i, elmnt, file, xhttp;
-    xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                r=this.response;
-            }
-            if (this.status == 404) {}
-        }
-    }
-    xhttp.open("GET", file, false); // async
-    xhttp.send();
-    return r;
-}
 window.onload=function(){
-    browser.i18n.getAcceptLanguages().then(function(r){
-        var lang = "en";
-        var ui = browser.i18n.getUILanguage();
-        if(r.indexOf(ui) > -1){
-            lang = ui;
-        }
-        $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
-    })
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+
+    fetch("_locales/en/help.html").then(response => {
+        return response.text();
+    }).then(text => {
+        $("#div-help").html(text);
+    });
 
     /** help mark */
     $(".help-mark").hover(function(e){
@@ -40,196 +18,144 @@ window.onload=function(){
         $(this).next(".tips.hide").hide();
     });
 
-    
-    /** more donation */
-    if($.trim($("#divMoreDonateWay>div").text())){
-        $("#divMoreDonateWay").show()
-        $("#divMoreDonateWay>a").click(function(){
-            $("#divMoreDonateWay>div").toggle();
-            return false;
-        });
-    }
-     
-    $("input[name='add']").click(function(){
-        createRdfField("", "");
-    });
-    function createRdfField(k, v){
-        var NAME_I18N = browser.i18n.getMessage("Name");
-        var FILE_I18N = browser.i18n.getMessage("File");
-        var $el = $(`<div>${NAME_I18N} <input type="text" name="name"/> \
-${FILE_I18N} <input type="text" name="value"/> \
-<input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
-        $el.find("input[name=name]").val(k);
-        $el.find("input[name=value]").val(v);
-        $el.find("input[name=del]").click(function(){
-            $(this).parent().remove();
-        });
-    }
-    $("input[name='save']").click(function(){
-        try{
-            var names=[];
-            var paths=[];
-            $("#rdf-area div input:first-child").each(function(){
-                var t = $.trim(this.value);
-                names.push(t+"\n");
-                paths.push($.trim($(this).next("input").val())+"\n");
-            });
-            settings.set('rdf_path_names', names.join(""));
-            settings.set('rdf_paths', paths.join(""));
-            settings.set('backend_port', $("input[name=backend_port]").val());
-            settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""));
-            settings.set('font_color', $("input[name=font_color]").val().replace("#", ""));
-            settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""));
-            settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""));
-            settings.set('font_size', ($("input[name=font_size]").val() / 100) * 12);
-            settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
-            alert("Save success")
-        }catch(e){
-            alert("Save failed")
-        }
-    });
-    var paths = settings.getRdfPaths();
-    if(paths){
-        settings.getRdfPathNames().forEach(function(k, i){
-            createRdfField(k, paths[i]);
-        });
-    }
-    $("input[name=font_size]").bind("input", function(){ // bind 'input' instead of 'change' event
-        $(this).next("span").text((parseInt(this.value)) +"%");
-    });
-    $("input[name=bg_color]").val(settings.bg_color.replace("#", ""));
-    $("input[name=font_color]").val(settings.font_color.replace("#", ""));
-    $("input[name=separator_color]").val(settings.separator_color.replace("#", ""));
-    $("input[name=bookmark_color]").val(settings.bookmark_color.replace("#", ""));
-    $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
-    $("input[name=backend_port]").val(settings.backend_port);
-    $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")
-    if(settings.backend_path){
-        $("#txtBackendPath").show();
-        $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
-    }
-    jscolor.installByClassName("jscolor");
-    function applyArea(){
+    function switchPane(){
         $(".div-area").hide();
         $("a.left-index").removeClass("focus")
-        var m;
-        if(m=location.href.match(/#(\w+)$/)){
-            $("#div-"+m[1]).show();
+
+        let m;
+        if(m = location.href.match(/#(\w+)$/)){
+            $("#div-" + m[1]).show();
             $("a.left-index[href='#" + m[1] + "']").addClass("focus")
         }else{
             $("#div-settings").show();
             $("a.left-index[href='#settings']").addClass("focus")
         }
     }
-    window.onhashchange=()=>applyArea();
-    applyArea()
-    $("#donate").click(()=>window.open('http://PayPal.me/VFence', '_blank'));
-    $("#btnDownloadBackend").click(function(){
-        function Next(){
-            const extRoot = "moz-extension://" + settings.extension_id;
-            var src_exec = "scrapyard_backend";
-            if(settings.platform=="mac")
-                src_exec += "_mac"
-            else if(settings.platform=="linux")
-                src_exec += "_lnx"
-            src_exec += settings.platform=="windows"?".exe":"";
-            var dest_exec = "scrapyard_backend" + (settings.platform=="windows"?".exe":"");
-            /** download backend executable */
-            downloadFile(extRoot + "/bin/" + src_exec, "scrapyard/" + dest_exec, function(id){
-                /*** query really filename of backend executable */
-                browser.downloads.search({id: id}).then((downloads) => {
-                    var filename = downloads[0].filename;
-                    var json = {"allowed_extensions":["scrapyard@scrapyard.org"],
-                                "description":"Scrapyard backend",
-                                "name":"scrapyard_backend",
-                                "path":filename, /** path to downloaded backend executable */
-                                "type":"stdio"}
-                    /*** download json */
-                    var jstr = JSON.stringify(json, null, 2)
-                    downloadText(jstr, "scrapyard/scrapyard_backend.json", function(){
-                        var download_path = filename.replace(/[^\\\/]*$/,"");
-                        function done(){ /** download installation script done */
-                            settings.set('backend_path', download_path);
-                            if(settings.backend_path){
-                                $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
-                            }
-                        }
-                        /** download installation script */
-                        if(settings.platform=="windows")
-                            downloadText(installBat(download_path), "scrapyard/install.bat", done);
-                        else if(settings.platform=="mac")
-                            downloadFile(extRoot + "/install/install_mac.sh", "scrapyard/install.sh", done);
-                        else
-                            downloadFile(extRoot + "/install/install_lnx.sh", "scrapyard/install.sh", done);
-                    });
-                });
-            });
-        }
-        $("#txtBackendPath").show();
-        $("#txtBackendPath").html("Downloading...") // todo: error output
-        setTimeout(Next, 1000);
-    });
-    function installBat(backend_path){
-        return `chcp 65001\r\n\r
-reg delete "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /f\r
-reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /d "${backend_path}\scrapyard_backend.json" /f\r\n\r
-reg delete "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /f\r
-reg add "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapyard_backend" /d "${backend_path}\scrapyard_backend.json" /f\r\n\r
-echo done\r
-pause`
-    }
-    function downloadFile(src, dest, callback){
-        browser.downloads.download({
-            url:src,
-            filename: dest,
-            conflictAction: "overwrite",
-            saveAs: false
-        }).then(function(id){
-            var fn = function(downloadDelta){
-                if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
-                    callback && callback(id)
-                    browser.downloads.onChanged.removeListener(fn);
-                }
-            }
-            browser.downloads.onChanged.addListener(fn);
-        }).catch(function (error) {
-            $("#txtBackendPath").html("error: " + error);
+    window.onhashchange = switchPane;
+    switchPane();
+
+    document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
+    
+    let _ = (v, d) => {return v !== undefined? v: d;}
+
+    chrome.storage.local.get("savepage-settings",
+        function(object)
+        {
+            object = object["savepage-settings"];
+
+            /* General options */
+
+            // document.getElementById("options-newbuttonaction").elements["action"].value = object["options-newbuttonaction"];
+            //
+            // document.getElementById("options-showsubmenu").checked = object["options-showsubmenu"];
+            //document.getElementById("options-showwarning").checked = _(object["options-showwarning"], true);
+            ///document.getElementById("options-showurllist").checked = _(object["options-showurllist"], false);
+            // document.getElementById("options-promptcomments").checked = object["options-promptcomments"];
+            //
+            // document.getElementById("options-usepageloader").checked = object["options-usepageloader"];
+            document.getElementById("options-retaincrossframes").checked = _(object["options-retaincrossframes"], true);
+            document.getElementById("options-removeunsavedurls").checked = _(object["options-removeunsavedurls"], true);
+            // document.getElementById("options-includeinfobar").checked = object["options-includeinfobar"];
+            // document.getElementById("options-includesummary").checked = object["options-includesummary"];
+            // document.getElementById("options-formathtml").checked = object["options-formathtml"];
+            //
+            // document.getElementById("options-savedfilename").value = object["options-savedfilename"];
+            // document.getElementById("options-replacespaces").checked = object["options-replacespaces"];
+            // document.getElementById("options-replacechar").value = object["options-replacechar"];
+            // document.getElementById("options-maxfilenamelength").value = object["options-maxfilenamelength"];
+            //
+            // document.getElementById("options-replacechar").disabled = !document.getElementById("options-replacespaces").checked;
+            //
+            // /* Saved Items options */
+            //
+            document.getElementById("options-savehtmlaudiovideo").checked = _(object["options-savehtmlaudiovideo"], true);
+            document.getElementById("options-savehtmlobjectembed").checked = _(object["options-savehtmlobjectembed"], true);
+            document.getElementById("options-savehtmlimagesall").checked = _(object["options-savehtmlimagesall"], true);
+            document.getElementById("options-savecssimagesall").checked = _(object["options-savecssimagesall"], true);
+            document.getElementById("options-savecssfontswoff").checked = _(object["options-savecssfontswoff"], true);
+            document.getElementById("options-savecssfontsall").checked = _(object["options-savecssfontsall"], true);
+            // document.getElementById("options-savescripts").checked = object["options-savescripts"];
+            //
+            document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
+            //
+            // /* Advanced options */
+            //
+            document.getElementById("options-maxframedepth").value = _(object["options-maxframedepth"], 5);
+            document.getElementById("options-maxresourcesize").value = _(object["options-maxresourcesize"], 5);
+            document.getElementById("options-maxresourcetime").value = _(object["options-maxresourcetime"], 10);
+            document.getElementById("options-allowpassive").checked = _(object["options-allowpassive"], false);
+            document.getElementById("options-refererheader").elements["header"].value = _(object["options-refererheader"], 0);
+            document.getElementById("options-forcelazyloads").checked = _(object["options-forcelazyloads"], false);
+            document.getElementById("options-purgeelements").checked = _(object["options-purgeelements"], false);
         });
-    }
-    function downloadText(text, filename, callback){
-        var blob = new Blob([text], {type : 'text/plain'});
-        var objectURL = URL.createObjectURL(blob);
-        browser.downloads.download({
-            url:objectURL,
-            filename: filename,
-            conflictAction: "overwrite",
-            saveAs: false
-        }).then(function(id){
-            var fn = function(downloadDelta){
-                if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
-                    callback && callback(id)
-                    URL.revokeObjectURL(objectURL);
-                    browser.downloads.onChanged.removeListener(fn);
-                }
-            }
-            browser.downloads.onChanged.addListener(fn);
-        }).catch(function (error) {
-            $("#txtBackendPath").html("error: " + error);
-        });
-    }
-    browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        var $div = $("#div-log .console");
-        if(request.type == 'LOGGING'){
-            var b = Math.abs($div.scrollTop() - ($div[0].scrollHeight - $div.height())) < 100;
-            $("<div/>").appendTo($div).html(request.log.logtype + ": " +request.log.content);
-            if(b)
-                $div.scrollTop($div[0].scrollHeight - $div.height());
-        }
-    });
-    msg_hub.send('GET_ALL_LOG_REQUEST', '', function(response){
-        var $div = $("#div-log .console");
-        $("<div/>").appendTo($div).html(response.logs.replace(/\n/g, "<br/>"));
+
+         document.getElementById("options-savecssfontsall").addEventListener("click", function () {
+         document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
+    },false);
+
+console.log(settings.__key__())
+    chrome.storage.local.get(SETTING_KEY, function (object) {
+        settings.__bin__ = object[SETTING_KEY]? object[SETTING_KEY]: DEFAULT_SETTINGS;
+        document.getElementById("option-shallow-export").checked = settings.shallow_export();
+        document.getElementById("option-revoke-archive-url-after").value = settings.arcive_url_lifetime();
     });
 
 
-}
+    function onClickSave(event)
+    {
+        chrome.storage.local.set({"savepage-settings":
+            {
+                /* General options */
+
+                //"options-showwarning": document.getElementById("options-showwarning").checked,
+                //"options-showurllist": document.getElementById("options-showurllist").checked,
+                //"options-promptcomments": document.getElementById("options-promptcomments").checked,
+
+                //"options-usepageloader": document.getElementById("options-usepageloader").checked,
+                "options-retaincrossframes": document.getElementById("options-retaincrossframes").checked,
+                "options-removeunsavedurls": document.getElementById("options-removeunsavedurls").checked,
+                //"options-includeinfobar": document.getElementById("options-includeinfobar").checked,
+                //"options-includesummary": document.getElementById("options-includesummary").checked,
+                //"options-formathtml": document.getElementById("options-formathtml").checked,
+
+                /* Saved Items options */
+
+                "options-savehtmlaudiovideo": document.getElementById("options-savehtmlaudiovideo").checked,
+                "options-savehtmlobjectembed": document.getElementById("options-savehtmlobjectembed").checked,
+                "options-savehtmlimagesall": document.getElementById("options-savehtmlimagesall").checked,
+                "options-savecssimagesall": document.getElementById("options-savecssimagesall").checked,
+                "options-savecssfontswoff": document.getElementById("options-savecssfontswoff").checked,
+                "options-savecssfontsall": document.getElementById("options-savecssfontsall").checked,
+                //"options-savescripts": document.getElementById("options-savescripts").checked,
+
+                /* Advanced options */
+
+                "options-maxframedepth": +document.getElementById("options-maxframedepth").value,
+                "options-maxresourcesize": +document.getElementById("options-maxresourcesize").value,
+                "options-maxresourcetime": +document.getElementById("options-maxresourcetime").value,
+                "options-allowpassive": document.getElementById("options-allowpassive").checked,
+                "options-refererheader": +document.getElementById("options-refererheader").elements["header"].value,
+                "options-forcelazyloads": document.getElementById("options-forcelazyloads").checked,
+                "options-purgeelements": document.getElementById("options-purgeelements").checked
+            }});
+
+
+        settings.shallow_export(document.getElementById("option-shallow-export").checked);
+        settings.arcive_url_lifetime(document.getElementById("option-revoke-archive-url-after").value);
+
+
+        /* Display saved status for short period */
+
+        document.getElementById("options-save-button").value = "Saved";
+        document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
+
+        setTimeout(function()
+            {
+                document.getElementById("options-save-button").value = "Save";
+                document.getElementById("options-save-button").style.setProperty("font-weight","normal","");
+            }
+            ,1000);
+    }
+
+
+};

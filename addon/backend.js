@@ -11,6 +11,8 @@ import {
 
 import Storage from "./db.js"
 
+import {settings} from "./settings.js"
+
 class IDBBackend {
 
     constructor() {
@@ -367,7 +369,7 @@ class IDBBackend {
 
                 setTimeout(() => {
                     URL.revokeObjectURL(objectURL);
-                }, 300000);
+                }, settings.archive_url_lifetime() * 60 * 1000);
 
                 browser.tabs.create({
                     "url": archiveURL

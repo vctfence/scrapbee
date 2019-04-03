@@ -465,9 +465,11 @@ function(PlatformInfo)
 
 function initialize()
 {
-    chrome.storage.local.get(null,
+    chrome.storage.local.get("savepage-settings",
     function(object)
     {
+        object = object["savepage-settings"];
+
         var contexts = new Array();
         
         /* Initialize or migrate options */
@@ -565,7 +567,7 @@ function initialize()
         
         /* Update stored options */
         
-        chrome.storage.local.set(object);
+        chrome.storage.local.set({"savepage-settings": object});
         
         /* Initialize local options */
         

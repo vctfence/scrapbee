@@ -127,9 +127,10 @@ function unlockDocument() {
 
 /* Initialize on script load */
 
-chrome.storage.local.get(null,
+chrome.storage.local.get("savepage-settings",
 function(object)
 {
+    object = object["savepage-settings"];
     /* Load environment */
     
     isFirefox = object["environment-isfirefox"];
@@ -221,9 +222,11 @@ function addListeners()
     chrome.storage.onChanged.addListener(
     function(changes,areaName)
     {
-        chrome.storage.local.get(null,
+        chrome.storage.local.get("savepage-settings",
         function(object)
         {
+            object = object["savepage-settings"];
+
             showWarning = object["options-showwarning"];
             showURLList = object["options-showurllist"];
             promptComments = object["options-promptcomments"];
@@ -675,6 +678,10 @@ function gatherOtherResources()
 
 function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts)
 {
+    console.log("save embed");
+    console.log(saveHTMLObjectEmbed);
+
+
     var i,j,displayed,style,csstext,baseuri,charset,currentsrc,passive,regex,location,parser,framedoc;
     var matches = new Array();
 

@@ -37,7 +37,7 @@ export async function importOrg(shelf, text) {
             if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let node = await backend.importBookmark(last_object);
 
-                await backend.db.storeBlob(node.id, data);
+                await backend.db.storeBlob(node.id, data, last_object.mime_type);
                 await backend.db.storeIndex(node.id, index);
             }
             else {
@@ -129,8 +129,14 @@ export async function importOrg(shelf, text) {
                 }
 
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
-                    last_object.data = LZString.decompressFromBase64(last_object.data).trim();
-                    last_object.index = JSON.parse(LZString.decompressFromBase64(last_object.index));
+                    if (last_object.data)
+                        last_object.data = LZString.decompressFromBase64(last_object.data).trim();
+
+                    if (last_object.index) {
+                        let index_json = LZString.decompressFromBase64(last_object.index).trim();
+                        if (index_json)
+                            last_object.index = JSON.parse(index_json);
+                    }
                 }
             }
         }
@@ -151,10 +157,15 @@ async function objectToProperties(node) {
 
     if (node.type === NODE_TYPE_ARCHIVE) {
         let blob = await backend.db.fetchBlob(node.id);
-        lines.push(`    :data: ${LZString.compressToBase64(blob.data)}`);
+        if (blob) {
+            if (blob && blob.type)
+                lines.push(`    :mime_type: ${blob.type}`);
+            lines.push(`    :data: ${LZString.compressToBase64(blob.data)}`);
+        }
 
         let index = await backend.db.fetchIndex(node.id);
-        lines.push(`    :index: ${LZString.compressToBase64(JSON.stringify(index.words))}`);
+        if (index)
+            lines.push(`    :index: ${LZString.compressToBase64(JSON.stringify(index.words))}`);
     }
 
     return lines.join("\n");
@@ -172,7 +183,7 @@ export async function exportOrg(tree, shelf, shallow = false) {
 
     if (!shallow)
         org_lines.push(
-`#GENERATOR: Scrapyard
+`#EXPORT: Scrapyard
 #VERSION: ${ORG_EXPORT_VERSION}
 #NAME: ${shelf}
 ${"#UUID: " + (special_shelf? shelf: root.original.uuid)}

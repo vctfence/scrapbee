@@ -187,15 +187,19 @@
     line-height: normal;
     height: auto;
     font-size: 98%;
+    margin-top: -2px;
 }
 
 .jstree-default .extended-todo .todo-path {
     font-size: 80%;
     font-weight: normal;
+    font-style: normal;
     color: #777;
     white-space: nowrap;
 }
 
 .jstree-default .extended-todo .todo-details {
     color: black;
+    font-style: normal;
+    font-weight: normal
 }

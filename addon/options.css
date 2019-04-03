@@ -59,29 +59,9 @@ input[type=button]{
     padding:5px;
     display:none;
 }
-.form-table input[type=button]:hover{
-    background:#080;
-}
-.form-table input[type=button]::-moz-focus-inner{
-    border:none;
-}
-#rdf-area input[type=text]{
-    width:450px;
-}
-.form-table input[type=checkbox]{
-    /* margin-top:8px; */
-}
-.form-table input[type=text]{
-    border-radius:5px;
-    border:1px solid #222;
-    padding:4px 5px;
-    background:#555;
-    color:#fff;
-}
 .form-table>tbody>tr>td:first-child{
     vertical-align:top;
     text-align:right;
-    text-decoration:underline;
     font-weight:bold;
     padding-top:4px;
     font-size:15px;
@@ -125,9 +105,6 @@ div.panel{
 #rdf-area div{
     margin-bottom:3px;
     white-space:nowrap;
-}
-#rdf-area div input:first-child{
-    width:100px;
 }
 .tips{
     border-radius:5px;
@@ -210,4 +187,70 @@ h2{
     background-size: 20px 20px;
     vertical-align:middle;
     display:inline-block;
+}
+
+
+form
+{
+    margin-bottom: 3px;
+}
+
+fieldset {
+    border-radius: 5px;
+    border:1px solid #777;
+}
+
+fieldset > div
+{
+    margin-bottom: 5px;
+}
+
+fieldset > div:last-child
+{
+    margin-bottom: 0px;
+}
+
+fieldset input[type="checkbox"]
+{
+    margin-right: 7px;
+    vertical-align: 0px;
+}
+
+fieldset input[type="radio"]
+{
+    margin-left: 4px;
+    margin-right: 7px;
+    vertical-align: 0px;
+}
+
+fieldset input[type="text"]
+{
+    margin-left: 10px;
+    padding: 1px 3px 1px 3px;
+    vertical-align: 2px;
+}
+
+fieldset input[type="number"]
+{
+    width: 4em;
+    margin-left: 4px;
+    margin-right: 8px;
+    padding: 1px 0px 1px 0px;
+    text-align: center;
+    vertical-align: 2px;
+}
+
+body:not([windows]) fieldset input[type="number"]
+{
+    width: 5em;
+}
+
+fieldset label
+{
+    vertical-align: 2px;
+}
+
+fieldset label:first-child
+{
+    margin-left: 3px;
 }

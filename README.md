@@ -16,16 +16,16 @@ Objectives:
 * ~~Control from~~ [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE]
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
-* Rework settings page
+* ~~Rework settings page~~ [DONE]
 * Write help
 * Dark theme
 * Live link auto checker
-* Editable text notes with org markup
+* A little bit of Wiki functionality: editable notes with cross-references
 * Cloud-synchronization backend possibly with bookmark access through the web
 
 
 TODO: 
 
-* Import from .rdf (a pyhon-based native-messaging backend is required)
+* Import from .rdf (a pyhon-based native-messaging backend is the best option)
 * Import from Firefox/Chrome .html/.json
 * I18N
