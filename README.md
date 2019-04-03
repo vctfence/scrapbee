@@ -26,6 +26,6 @@ Objectives:
 
 TODO: 
 
-* Import from .rdf (a pyhon-based native-messaging backend is the best option)
+* Import from .rdf
 * Import from Firefox/Chrome .html/.json
 * I18N

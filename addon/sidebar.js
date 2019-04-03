@@ -453,7 +453,9 @@ window.onload = function () {
 
     browser.runtime.onMessage.addListener(handleMessage);
 
-    loadShelves(context, tree);
+    settings.load(() => {
+        loadShelves(context, tree);
+    });
 };
 
 console.log("==> sidebar.js loaded");

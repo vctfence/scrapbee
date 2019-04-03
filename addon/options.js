@@ -93,13 +93,10 @@ window.onload=function(){
          document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
     },false);
 
-console.log(settings.__key__())
-    chrome.storage.local.get(SETTING_KEY, function (object) {
-        settings.__bin__ = object[SETTING_KEY]? object[SETTING_KEY]: DEFAULT_SETTINGS;
+    settings.load(() => {
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
         document.getElementById("option-revoke-archive-url-after").value = settings.arcive_url_lifetime();
     });
-
 
     function onClickSave(event)
     {
