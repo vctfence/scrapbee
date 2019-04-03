@@ -244,7 +244,7 @@ class Storage {
            .first();
     }
 
-    async storeBlob(node_id, data, compress = true) {
+    async storeBlob(node_id, data, content_type, compress = true) {
         let node = await this.getNode(node_id);
 
         if (compress) {
@@ -255,7 +255,8 @@ class Storage {
             return db.blobs.add({
                 node_id: node.id,
                 compressed: compress,
-                data: data
+                data: data,
+                type: content_type
             });
     }
 
@@ -281,7 +282,7 @@ class Storage {
         }
         let blob = await db.blobs.where("node_id").equals(node_id).first();
 
-        if (!compressed && blob.compressed)
+        if (!compressed && blob && blob.compressed)
             blob.data = LZString.decompress(blob.data);
 
         return blob;

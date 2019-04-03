@@ -361,7 +361,7 @@ class IDBBackend {
     browseArchive(node) {
         return this.db.fetchBlob(node.id).then(blob => {
             if (blob) {
-                let htmlBlob = new Blob([blob.data], {type: "text/html"});
+                let htmlBlob = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
                 let objectURL = URL.createObjectURL(htmlBlob);
                 let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
 
@@ -378,8 +378,9 @@ class IDBBackend {
                     })
                 });
             }
-            else
-                console.log("Error: no blob is stored");
+            else {
+                browser.tabs.executeScript({code : `alert("Error: no data is stored.");`});
+            }
         });
     }
 }

@@ -70,6 +70,8 @@ window.onload = function () {
             `}).then(icon => {
                 if (icon && icon.length && icon[0])
                     $("#bookmark-icon").val(icon[0]);
+            }).catch(e => {
+                console.log(e)
             });
     });
 

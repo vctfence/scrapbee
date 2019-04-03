@@ -652,7 +652,7 @@ function addListeners()
                 break;
 
             case "STORE_PAGE_HTML":
-                backend.db.storeBlob(message.payload.id, message.data);
+                backend.db.storeBlob(message.payload.id, message.data, "text/html");
                 backend.db.storeIndex(message.payload.id, message.data.indexWords());
 
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
@@ -1013,7 +1013,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                 function(response) {
                     if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script not loaded in active tab */
                     {
-                        chrome.tabs.executeScript(tab.id, {file: "savepage/content.js"},
+                        browser.tabs.executeScript(tab.id, {file: "savepage/content.js"}).then(
                             function () {
                                 window.setTimeout(  /* allow time for content script to be initialized */
                                     function () {
@@ -1034,6 +1034,39 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                                                 }
                                             });
                                     }, 50);
+                            }).catch(e => {
+                                // provisional capture of PDF, etc.
+                                // TODO: rework with the account of savepage settings
+
+                                let xhr = new XMLHttpRequest();
+
+                                xhr.open("GET", tab.url,true);
+                                xhr.setRequestHeader("Cache-Control","no-store");
+
+                                xhr.responseType = "arraybuffer";
+                                xhr.timeout = maxResourceTime * 1000;
+                                xhr.onerror = function (){ console.log(this) };
+                                xhr.onloadend = function() {
+                                    if (this.status == 200)
+                                    {
+                                        let binaryString = "";
+                                        let byteArray = new Uint8Array(this.response);
+                                        for (let i = 0; i < byteArray.byteLength; i++)
+                                            binaryString += String.fromCharCode(byteArray[i]);
+
+                                        let contentType = this.getResponseHeader("Content-Type");
+                                        if (contentType == null)
+                                            contentType = "application/pdf";
+
+                                        backend.db.storeBlob(payload.id, binaryString, contentType,false);
+
+                                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload});
+
+                                        alertNotify("Successfully archived page.");
+                                    }
+                                };
+
+                                xhr.send()
                             });
                     }
                 });
