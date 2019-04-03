@@ -24,7 +24,7 @@ class BookmarkTree {
         this._element = element;
         this._inline = inline;
 
-        let plugins = ["wholerow", "types", "state", "unique"];
+        let plugins = ["wholerow", "types", "state"];
 
         if (!inline) {
             plugins = plugins.concat(["contextmenu", "dnd"]);
@@ -45,7 +45,7 @@ class BookmarkTree {
             },
             contextmenu: {
                 show_at_node: false,
-                items: BookmarkTree.contextMenu
+                items: (node) => {return this.contextMenu(node)}
             },
             types: {
                 "#": {
@@ -165,7 +165,7 @@ class BookmarkTree {
         else if (n.type == NODE_TYPE_GROUP)
             n.icon = "/icons/group.svg";
         else if (n.type == NODE_TYPE_SEPARATOR) {
-            n.text = "─".repeat(30);
+            n.text = "─".repeat(40);
             n.a_attr = {
                 "class": "separator-node"
             };
@@ -236,10 +236,12 @@ class BookmarkTree {
         let state;
 
         if (this._inline || everything) {
+            this._everything = true;
             this._jstree.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING));
         }
         else {
+            this._everything = false;
             let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
             this._jstree.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + shelves[0].name));
@@ -308,8 +310,8 @@ class BookmarkTree {
     }
 
     /* context menu listener */
-    static contextMenu(ctx_node) { // TODO: i18n
-        let tree = this;
+    contextMenu(ctx_node) { // TODO: i18n
+        let tree = this._jstree;
         let selected_nodes = tree.get_selected(true) || [];
         let multiselect = selected_nodes && selected_nodes.length > 1;
         let all_nodes = tree.settings.core.data;
@@ -415,6 +417,7 @@ class BookmarkTree {
                 label: "New Separator",
                 action: function () {
                     let parent = tree.get_node(ctx_node.parent);
+                    console.log(parent);
                     backend.addSeparator(parent.original.id).then(separator => {
                             let position = $.inArray(ctx_node.id, parent.children);
                             tree.create_node(parent, BookmarkTree.toJsTreeNode(separator), position + 1);
@@ -520,14 +523,20 @@ class BookmarkTree {
             deleteItem: {
                 separator_before: true,
                 label: "Delete",
-                action: function () {
-                    confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
-                        let selected_ids = selected_nodes.map(n => n.original.id);
+                action: () => {
+                    if (ctx_node_data.type === NODE_TYPE_SHELF) {
+                        if (this.onDeleteShelf)
+                            this.onDeleteShelf(ctx_node_data);
+                    }
+                    else {
+                        confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
+                            let selected_ids = selected_nodes.map(n => n.original.id);
 
-                        backend.deleteNodes(selected_ids).then(() => {
+                            backend.deleteNodes(selected_ids).then(() => {
                                 tree.delete_node(selected_nodes);
                             });
-                    });
+                        });
+                    }
                 }
             },
             propertiesItem: {
@@ -595,7 +604,7 @@ class BookmarkTree {
         }
         else {
             for (let k in items)
-                if (!["newFolderItem", "renameItem", "pasteItem"].find(s => s === k))
+                if (!["newFolderItem", "renameItem", "pasteItem", "sortItem", "deleteItem"].find(s => s === k))
                     delete items[k];
         }
 

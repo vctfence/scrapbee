@@ -103,7 +103,9 @@ function performExport(context, tree) {
 }
 
 function loadShelves(context, tree) {
-    $("#shelfList").html(`
+    let shelf_list = $("#shelfList");
+
+    shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
@@ -111,20 +113,24 @@ function loadShelves(context, tree) {
 
     return backend.listShelves().then(shelves => {
         for (let shelf of shelves)
-            var $opt = $("<option></option>").appendTo($("#shelfList")).html(shelf.name).attr("value", shelf.id);
+            var $opt = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
 
-        var last_shelf_id = settings.last_shelf;
+        var last_shelf_id = settings.last_shelf || 1;
 
-        if (!last_shelf_id)
+        if (last_shelf_id === "null")
             last_shelf_id = 1;
 
         let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
         last_shelf = last_shelf? last_shelf: $(`#shelfList option[value="1"]`);
-        last_shelf.attr("selected", true);
+        shelf_list.val(last_shelf.val())
 
-        $("#shelfList").selectric('refresh');
+        shelf_list.selectric('refresh');
 
-        return switchShelf(context, tree, $("#shelfList").val());
+        return switchShelf(context, tree, shelf_list.val());
+    }).catch(() => {
+        shelf_list.val(1);
+        shelf_list.selectric('refresh');
+        return switchShelf(context, tree, 1);
     });
 }
 
@@ -254,7 +260,7 @@ window.onload = function () {
         let id = parseInt(selectedOption.val());
         let name = selectedOption.text();
 
-        if (name && name !== DEFAULT_SHELF_NAME && id > 0) {
+        if (name && !isSpecialShelf(name)) {
             // TODO: 118n
             showDlg("prompt", {caption: "Rename", label: "Name", title: name}).then(data => {
                 let newName;
@@ -269,7 +275,7 @@ window.onload = function () {
             });
         } else if (name === DEFAULT_SHELF_NAME) {
             // TODO: i18n
-            alert("{Error}", "A builtin shelf could not be renamed.")
+            alert("{Error}", "A built-in shelf could not be renamed.")
         }
 
     });
@@ -277,9 +283,9 @@ window.onload = function () {
     $("#shelf-menu-delete").click(() => {
         let {id, name} = getCurrentShelf();
 
-        if (name === DEFAULT_SHELF_NAME || id < 0) {
+        if (isSpecialShelf(name)) {
             // TODO: i18n
-            alert("{Error}", "A builtin shelf could not be deleted.")
+            alert("{Error}", "A built-in shelf could not be deleted.")
             return;
         }
 
@@ -287,16 +293,39 @@ window.onload = function () {
         confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
             if (name) {
                 backend.deleteNodes(id).then(() => {
-                    switchShelf(context, tree, 1);
-
                     $(`#shelfList option[value="${id}"]`).remove();
-                    $(`#shelfList option[value='1']`).attr("selected", "true");
 
+                    $("#shelfList").val(1);
                     $("#shelfList").selectric('refresh');
+                    switchShelf(context, tree, 1);
                 });
             }
         });
     });
+
+    tree.onDeleteShelf = node => {
+        if (isSpecialShelf(node.name)) {
+            // TODO: i18n
+            alert("{Error}", "A built-in shelf could not be deleted.")
+            return;
+        }
+
+        // TODO: 118n
+        confirm("{Warning}", "Do you really want to delete '" + node.name + "'?").then(() => {
+            if (node.name) {
+                backend.deleteNodes(node.id).then(() => {
+                    tree._jstree.delete_node(node.id);
+                    $(`#shelfList option[value="${node.id}"]`).remove();
+
+                    if (!tree._everything) {
+                        $("#shelfList").val(1);
+                        $("#shelfList").selectric('refresh');
+                        switchShelf(context, tree, 1);
+                    }
+                });
+            }
+        });
+    };
 
     $("#shelf-menu-import").click(() => {
         $("#file-picker").click();
@@ -319,21 +348,17 @@ window.onload = function () {
                 let existingOption = $(`#shelfList option:contains("${filename}")`);
 
                 if (existingOption.length)
-                    confirm("{Warning}", "This will relpace shelf '" + filename + "'?").then(() => {
+                    confirm("{Warning}", "This will replace '" + filename + "'.").then(() => {
                         backend.deleteNodes(parseInt(existingOption.val())).then(() => {
-                            performImport(context, tree, e.target.files[0], filename, fileext).then(() => {
-                                $("#file-picker").val("");
-                            });
+                            performImport(context, tree, e.target.files[0], filename, fileext);
                         });
                     });
                 else {
-                    performImport(context, tree, e.target.files[0], filename, fileext).then(() => {
-                        $("#file-picker").val("");
-                    });
+                    performImport(context, tree, e.target.files[0], filename, fileext);
                 }
             }
             else
-                alert("{Error}", `Cannot replace '${filename}' shelf.`)
+                alert("{Error}", `Cannot replace '${filename}'.`)
         }
     });
 

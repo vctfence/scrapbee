@@ -36,6 +36,8 @@ export const DONE_NAME = "DONE";
 export const DEFAULT_SHELF_NAME = "default";
 export const EVERYTHING = "everything";
 
+export const DEFAULT_POSITION = 2147483647;
+
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.es.js"
 import LZString from "./lib/lz-string.js"
@@ -43,7 +45,7 @@ import LZString from "./lib/lz-string.js"
 const db = new Dexie("scrapyard");
 
 db.version(1).stores({
-    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,pos,date_added,date_modified,todo_state,todo_date,todo_pos`,
+    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date`,
     blobs: `++id,&node_id`,
     index: `++id,&node_id,*words`,
     tags: `++id,name`,
@@ -61,8 +63,8 @@ class Storage {
 
     async addNode(datum, reset_order = true) {
         if (reset_order) {
-            datum.pos = 1;
-            datum.todo_pos = 1;
+            datum.pos = DEFAULT_POSITION;
+            datum.todo_pos = DEFAULT_POSITION;
         }
         datum.uuid = UUID.numeric();
         datum.date_added = new Date();

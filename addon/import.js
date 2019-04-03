@@ -3,7 +3,7 @@ import {backend} from "./backend.js"
 import LZString from "./lib/lz-string.js"
 import {
     DONE_SHELF, EVERYTHING, NODE_TYPE_SHELF, NODE_TYPE_GROUP, TODO_SHELF, NODE_TYPE_ARCHIVE,
-    TODO_STATES, NODE_TYPE_BOOKMARK
+    TODO_STATES, TODO_NAMES, NODE_TYPE_BOOKMARK, NODE_TYPE_SEPARATOR, DEFAULT_POSITION
 } from "./db.js";
 
 const ORG_EXPORT_VERSION = 1;
@@ -34,14 +34,14 @@ export async function importOrg(shelf, text) {
 
             // UUIDs currently aren't respected
 
-            if (!last_object.type || last_object.type === NODE_TYPE_BOOKMARK) {
-                await backend.importBookmark(last_object);
-            }
-            else if (last_object.type === NODE_TYPE_ARCHIVE) {
+            if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let node = await backend.importBookmark(last_object);
 
                 await backend.db.storeBlob(node.id, data);
                 await backend.db.storeIndex(node.id, index);
+            }
+            else {
+                await backend.importBookmark(last_object);
             }
 
             last_object = null;
@@ -71,6 +71,7 @@ export async function importOrg(shelf, text) {
                 uri: link.src,
                 name: subnodes[index + 1].value,
                 type: NODE_TYPE_BOOKMARK,
+                pos: DEFAULT_POSITION,
                 path: path.join("/")
             };
 
@@ -192,9 +193,9 @@ ${"#UUID: " + (special_shelf? shelf: root.original.uuid)}
             let line = "\n" + "*".repeat(line_level);
 
             if (data.todo_state)
-                line += " " + TODO_STATES[data.todo_state];
+                line += " " + TODO_NAMES[data.todo_state];
 
-            line += " [[" + data.uri + "][" + data.name + "]]";
+            line += " [[" + (data.uri? data.uri: "") + "][" + data.name + "]]";
 
             if (data.tags) {
                 let tag_list = data.tags.split(",").map(t => t.trim());

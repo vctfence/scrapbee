@@ -69,15 +69,12 @@ class IDBBackend {
         if (options.tags)
             options.tags = this._splitTags(options.tags);
 
+        let result = await this.db.queryNodes(group, options);
         if (options.content && options.search) {
             let search = this._splitTags(options.search, /\s+/);
             delete options.search;
-
-            let nodes = await this.db.queryNodes(group, options);
-            return await this.db.filterByContent(nodes, search);
+            result = await this.db.filterByContent(nodes, search);
         }
-
-        let result = await this.db.queryNodes(group, options);
 
         if (options.path && (options.path === TODO_NAME || options.path === DONE_NAME)) {
             for (let node of result) {
@@ -95,6 +92,7 @@ class IDBBackend {
     }
 
     reorderNodes(positions) {
+        console.log(positions)
         return this.db.updateNodes(positions);
     }
 
@@ -258,6 +256,7 @@ class IDBBackend {
 
     async addSeparator(parent_id) {
         let {id} = await this.db.addNode({
+            name: "-",
             type: NODE_TYPE_SEPARATOR,
             parent_id: parent_id
         });

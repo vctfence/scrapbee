@@ -1,6 +1,5 @@
 // UBIQUITY; NAMESPACE: Scrapyard; VERSION: 0.1
 {
-
     const DEFAULT_OUTPUT_LIMIT = 50;
 
     const NODE_TYPE_SHELF = 1;

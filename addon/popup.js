@@ -19,7 +19,7 @@ function saveHistory(node, history) {
         if (existing)
             folder_history.splice(folder_history.indexOf(existing), 1);
 
-        folder_history = [{id: node.original.id, text: node.text}].concat(history).slice(0, 10);
+        folder_history = [{id: node.original.id, text: node.text}, ...folder_history].slice(0, 10);
         localStorage.setItem("popup-folder-history", JSON.stringify(folder_history));
     }
 }
@@ -58,15 +58,25 @@ window.onload = function () {
     withCurrTab((tab) => {
         $("#bookmark-name").val(tab.title);
         $("#bookmark-url").val(tab.url);
+
+        browser.tabs.executeScript(tab.id, {
+            code: `function extractIcon() {
+                let iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+                console.log(iconElt.href);
+                if (iconElt)
+                    return iconElt.href;
+            }
+            extractIcon();
+            `}).then(icon => {
+                if (icon && icon.length && icon[0])
+                    $("#bookmark-icon").val(icon[0]);
+            });
     });
 
     $("#bookmark-tags").focus();
 
     $("#treeview").on("select_node.jstree", (e, {node}) => {
-        console.log(`#bookmark-folder option[value='${node.original.id}']`);
         let existing = $(`#bookmark-folder option[value='${node.original.id}']`);
-
-        console.log(existing)
 
         if (!existing.length) {
             $(`#bookmark-folder option:selected`).removeAttr("selected");
@@ -80,7 +90,7 @@ window.onload = function () {
     });
 
     $("#bookmark-folder").on("change", (e) => {
-        let id = $("#bookmark-folder option:selected").val();
+        let id = $("#bookmark-folder").val();
         tree._jstree.deselect_all(true);
         tree._jstree.select_node(id);
         document.getElementById(id).scrollIntoView();
@@ -114,11 +124,10 @@ window.onload = function () {
     });
 
     function addBookmark(node_type) {
-        let seleted_option = $("#bookmark-folder option:selected");
-        let node = tree._jstree.get_node(seleted_option.val());
+        let node = tree._jstree.get_node($("#bookmark-folder").val());
 
         saveHistory(node, folder_history);
-
+        console.log($("#bookmark-icon").val());
         browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",
@@ -126,6 +135,7 @@ window.onload = function () {
                                         name: $("#bookmark-name").val(),
                                         uri:  $("#bookmark-url").val(),
                                         tags: $("#bookmark-tags").val(),
+                                        icon: $("#bookmark-icon").val(),
                                         parent_id: node.original.id
                                     }});
     }

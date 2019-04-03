@@ -2,6 +2,8 @@
 
 Hacker's bookmark manager (coming soon)
 
+![screen](/media/screen.gif?raw=true)
+
 Objectives:
 
 * ~~Store data at IndexedDB~~ [DONE]
@@ -14,14 +16,16 @@ Objectives:
 * ~~Control from~~ [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE]
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
-* Import from .rdf 
-* Import from Firefox/Chrome .html
 * Rework settings page
 * Write help
 * Dark theme
 * Live link auto checker
-* Editable text nodes with org markup
+* Editable text notes with org markup
 * Cloud-synchronization backend possibly with bookmark access through the web
 
 
-![screen](/media/screen.gif?raw=true)
+TODO: 
+
+* Import from .rdf (a pyhon-based native-messaging backend is required)
+* Import from Firefox/Chrome .html/.json
+* I18N
