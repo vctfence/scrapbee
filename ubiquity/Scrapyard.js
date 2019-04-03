@@ -408,8 +408,8 @@
     CmdUtils.CreateCommand({
         name: "bookmark",
         uuid: "520F182C-34D0-4837-B42A-64A7E859D3D5",
-        arguments: [{role: "object",     nountype: noun_arb_text, label: "text"},
-            {role: "subject",    nountype: noun_arb_text, label: "text"}, // for
+        arguments: [{role: "object",     nountype: noun_arb_text, label: "title"},
+            {role: "subject",    nountype: noun_arb_text, label: "details"}, // for
             {role: "goal",       nountype: noun_type_date, label: "due"}, // to
             //{role: "source",     nountype: ["group", "subtree"], label: "depth"}, // from
             //{role: "location",   nountype: noun_arb_text, label: "text"}, // near
@@ -440,8 +440,8 @@
     CmdUtils.CreateCommand({
         name: "archive",
         uuid: "2CFD7052-84E2-465C-A450-45BFFE3C6C80",
-        arguments: [{role: "object",     nountype: noun_arb_text, label: "text"},
-            {role: "subject",    nountype: noun_arb_text, label: "text"}, // for
+        arguments: [{role: "object",     nountype: noun_arb_text, label: "title"},
+            {role: "subject",    nountype: noun_arb_text, label: "details"}, // for
             {role: "goal",       nountype: noun_type_date, label: "due"}, // to
             //{role: "source",     nountype: ["group", "subtree"], label: "depth"}, // from
             //{role: "location",   nountype: noun_arb_text, label: "text"}, // near

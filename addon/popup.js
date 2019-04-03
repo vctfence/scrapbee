@@ -81,20 +81,20 @@ window.onload = function () {
 
     $("#bookmark-folder").on("change", (e) => {
         let id = $("#bookmark-folder option:selected").val();
-        tree._inst.deselect_all(true);
-        tree._inst.select_node(id);
+        tree._jstree.deselect_all(true);
+        tree._jstree.select_node(id);
         document.getElementById(id).scrollIntoView();
     });
 
     $("#new-folder").on("click", () => {
         let selected_node = tree.selected;
-        let node = tree._inst.create_node(selected_node, {text: "New Folder",
+        let node = tree._jstree.create_node(selected_node, {text: "New Folder",
             type: NODE_TYPE_GROUP, icon: "icons/group.svg"});
-        tree._inst.deselect_node(selected_node);
-        tree._inst.select_node(node);
-        tree._inst.edit(node, null, (node, success, cancelled) => {
+        tree._jstree.deselect_node(selected_node);
+        tree._jstree.select_node(node);
+        tree._jstree.edit(node, null, (node, success, cancelled) => {
             if (cancelled) {
-                tree._inst.delete_node(node);
+                tree._jstree.delete_node(node);
             }
             else {
                 backend.createGroup(selected_node.original.id, node.text).then(group => {
@@ -102,7 +102,7 @@ window.onload = function () {
                         node.original.id = group.id;
                         node.original.uuid = group.uuid;
                         BookmarkTree.toJsTreeNode(group);
-                        BookmarkTree.reorderNodes(tree, selected_node);
+                        BookmarkTree.reorderNodes(tree._jstree, selected_node);
 
                         let new_option = $("#bookmark-folder option:selected");
                         new_option.text(group.name);
@@ -115,7 +115,7 @@ window.onload = function () {
 
     function addBookmark(node_type) {
         let seleted_option = $("#bookmark-folder option:selected");
-        let node = tree._inst.get_node(seleted_option.val());
+        let node = tree._jstree.get_node(seleted_option.val());
 
         saveHistory(node, folder_history);
 

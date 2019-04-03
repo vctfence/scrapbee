@@ -66,7 +66,7 @@ class BookmarkTree {
             }
         }).on("move_node.jstree", BookmarkTree.moveNode);
 
-        this._inst = $(element).jstree(true);
+        this._jstree = $(element).jstree(true);
 
         $(document).on("click", ".jstree-anchor", (e) => {
             if (e.button === undefined || e.button === 0 || e.button === 1) {
@@ -210,23 +210,23 @@ class BookmarkTree {
     }
 
     set data(nodes) {
-        this._inst.settings.core.data = nodes;
+        this._jstree.settings.core.data = nodes;
     }
 
     get data() {
-        return this._inst.settings.core.data
+        return this._jstree.settings.core.data
     }
 
     get stateKey() {
-        return this._inst.settings.state.key;
+        return this._jstree.settings.state.key;
     }
 
     set stateKey(key) {
-        this._inst.settings.state.key = key;
+        this._jstree.settings.state.key = key;
     }
 
     get selected() {
-        return this._inst.get_node(this._inst.get_selected())
+        return this._jstree.get_node(this._jstree.get_selected())
     }
 
     update(nodes, everything = false) {
@@ -236,16 +236,16 @@ class BookmarkTree {
         let state;
 
         if (this._inline || everything) {
-            this._inst.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
+            this._jstree.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING));
         }
         else {
             let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
-            this._inst.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
+            this._jstree.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + shelves[0].name));
         }
 
-        this._inst.refresh(true, () => state? state.state: null);
+        this._jstree.refresh(true, () => state? state.state: null);
     }
 
     list(nodes) {
@@ -253,18 +253,18 @@ class BookmarkTree {
         nodes.forEach(n => n.parent = "#");
 
         this.data = nodes;
-        this._inst.refresh(true);
+        this._jstree.refresh(true);
     }
 
     renameRoot(name) {
-        let root_node = this._inst.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
-        this._inst.rename_node(root_node, name);
+        let root_node = this._jstree.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
+        this._jstree.rename_node(root_node, name);
     }
 
     openRoot() {
-        let root_node = this._inst.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
-        this._inst.open_node(root_node);
-        this._inst.deselect_all(true);
+        let root_node = this._jstree.get_node(this.data.find(n => n.type == NODE_TYPE_SHELF));
+        this._jstree.open_node(root_node);
+        this._jstree.deselect_all(true);
     }
 
     static checkOperation(operation, node, parent, position, more) {
@@ -294,7 +294,7 @@ class BookmarkTree {
     }
 
     static reorderNodes(tree, parent) {
-        let siblings = parent.children.map(c => tree._inst.get_node(c));
+        let siblings = parent.children.map(c => tree.get_node(c));
 
         let positions = [];
         for (let i = 0; i < siblings.length; ++i) {

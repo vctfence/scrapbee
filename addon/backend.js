@@ -300,6 +300,7 @@ class IDBBackend {
 
     async deleteNodes(ids) {
         let all_nodes = await this.db.queryFullSubtree(ids);
+
         return this.db.deleteNodes(all_nodes.map(n => n.id));
     }
 
@@ -322,6 +323,21 @@ class IDBBackend {
         this.db.addTags(data.tag_list);
 
         return this.db.addNode(data);
+    }
+
+    async importBookmark(data) {
+        let group;
+
+        group = await this._getGroup(data.path);
+        data.parent_id = group.id;
+        delete data.path;
+
+        data.name = await this._ensureUnique(data.parent_id, data.name);
+
+        data.tag_list = this._splitTags(data.tags);
+        this.db.addTags(data.tag_list);
+
+        return this.db.addNode(data, false);
     }
 
     async updateBookmark(data) {

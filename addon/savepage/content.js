@@ -1666,7 +1666,6 @@ function generateHTML()
     
     // alert(Math.trunc(size/(1024*1024))+"MB");
 
-    console.log("jjj");
     unlockDocument();
 
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });

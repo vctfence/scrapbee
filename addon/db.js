@@ -11,6 +11,22 @@ export const TODO_STATE_WAITING = 2;
 export const TODO_STATE_POSTPONED = 3;
 export const TODO_STATE_CANCELLED = 5;
 
+export const TODO_NAMES = {
+    [TODO_STATE_TODO]: "TODO",
+    [TODO_STATE_WAITING]: "WAITING",
+    [TODO_STATE_POSTPONED]: "POSTPONED",
+    [TODO_STATE_CANCELLED]: "CANCELLED",
+    [TODO_STATE_DONE]: "DONE"
+};
+
+export const TODO_STATES = {
+    "TODO": TODO_STATE_TODO,
+    "WAITING": TODO_STATE_WAITING,
+    "POSTPONED": TODO_STATE_POSTPONED,
+    "CANCELLED": TODO_STATE_CANCELLED,
+    "DONE": TODO_STATE_DONE
+};
+
 export const TODO_SHELF = -3;
 export const DONE_SHELF = -2;
 export const EVERYTHING_SHELF = -1;
@@ -50,6 +66,7 @@ class Storage {
         }
         datum.uuid = UUID.numeric();
         datum.date_added = new Date();
+        datum.date_modified = datum.date_added;
         datum.id = await db.nodes.add(datum);
         return datum;
     }
@@ -219,8 +236,8 @@ class Storage {
             return await where.toArray();
     }
 
-    async queryGroup(parent_id, name) {
-        return await db.nodes.where("parent_id").equals(parent_id)
+    queryGroup(parent_id, name) {
+        return db.nodes.where("parent_id").equals(parent_id)
            .and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase())
            .first();
     }
@@ -280,6 +297,17 @@ class Storage {
             words: words
         });
     }
+
+    async fetchIndex(node_id, is_uuid = false) {
+        if (is_uuid) {
+            let node = await db.nodes.where("uuid").equals(node_id).first();
+            if (node)
+                node_id = node.id;
+        }
+
+        return db.index.where("node_id").equals(node_id).first();
+    }
+
 
     async addTags(tags) {
         if (tags)

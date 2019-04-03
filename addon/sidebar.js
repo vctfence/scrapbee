@@ -2,7 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree, TREE_STATE_PREFIX} from "./tree.js"
 import {showDlg, alert, confirm} from "./dialog.js"
-import {importOrg} from "./import.js";
+import {importOrg, exportOrg} from "./import.js";
 
 import {
     EVERYTHING,
@@ -62,6 +62,44 @@ async function performSearch(context, tree) {
         return context.search(input).then(nodes => {
             tree.list(nodes);
         });
+}
+
+function performImport(context, tree, file, file_name, file_ext) {
+    let reader = new FileReader();
+
+    return new Promise((resolve, reject) => {
+        reader.onload = function (re) {
+            let importF;
+
+            switch (file_ext.toUpperCase()) {
+                case "ORG":
+                    importF = () => {
+                        return importOrg(file_name, re.target.result)
+                    };
+                    break;
+            }
+
+            if (importF)
+                importF().then(() => {
+                    backend.db.queryShelf(file_name).then(shelf => {
+                        settings.set('last_shelf', shelf.id);
+                        loadShelves(context, tree).then(() => {
+                            tree.openRoot();
+                            resolve();
+                        });
+                    });
+                })
+        };
+
+        reader.readAsText(file);
+    });
+}
+
+function performExport(context, tree) {
+    let {name} = getCurrentShelf();
+    return exportOrg(tree, name).then(url => {
+        browser.downloads.download({url: url, filename: name + ".org", saveAs: false});
+    });
 }
 
 function loadShelves(context, tree) {
@@ -138,10 +176,10 @@ document.addEventListener('contextmenu', function (event) {
 });
 
 function getCurrentShelf() {
-    let select = $("#shelfList");
+    let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
     return {
-        id: parseInt(select.val()),
-        name: select.text()
+        id: parseInt(selectedOption.val()),
+        name: selectedOption.text()
     };
 }
 
@@ -266,35 +304,41 @@ window.onload = function () {
 
     $("#file-picker").change((e) => {
         if (e.target.files.length > 0) {
-            let reader = new FileReader();
-            reader.onload = function (re) {
-                let fullPath = $("#file-picker").val();
-                $("#file-picker").val("");
-                let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
-                let dotIndex = fullPath.lastIndexOf('.');
-                let filename = fullPath.substring(startIndex, dotIndex);
+            let fullPath = $("#file-picker").val();
+            //$("#file-picker").val("");
+            let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+            let dotIndex = fullPath.lastIndexOf('.');
+            let filename = fullPath.substring(startIndex, dotIndex);
+            let fileext = fullPath.substring(dotIndex + 1);
 
-                if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
-                    filename = filename.substring(1);
+            if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
+                filename = filename.substring(1);
+            }
+
+            if (!isSpecialShelf(filename)) {
+                let existingOption = $(`#shelfList option:contains("${filename}")`);
+
+                if (existingOption.length)
+                    confirm("{Warning}", "This will relpace shelf '" + filename + "'?").then(() => {
+                        backend.deleteNodes(parseInt(existingOption.val())).then(() => {
+                            performImport(context, tree, e.target.files[0], filename, fileext).then(() => {
+                                $("#file-picker").val("");
+                            });
+                        });
+                    });
+                else {
+                    performImport(context, tree, e.target.files[0], filename, fileext).then(() => {
+                        $("#file-picker").val("");
+                    });
                 }
-
-                // importOrg(filename, re.target.result).then(() => {
-                //     loadShelves(context, tree).then(() => {
-                //         let existingOption = $(`#shelfList option:contains("${filename}")`);
-                //         let selectedOption = $("#shelfList option:selected");
-                //
-                //         if (existingOption.length) {
-                //             selectedOption.removeAttr("selected");
-                //             existingOption.attr("selected", true);
-                //         }
-                //         switchShelf(context, tree, existingOption.val()).then(() => {
-                //             tree.openRoot();
-                //         });
-                //     });
-                // });
-            };
-            reader.readAsText(e.target.files[0]);
+            }
+            else
+                alert("{Error}", `Cannot replace '${filename}' shelf.`)
         }
+    });
+
+    $("#shelf-menu-export").click(() => {
+        performExport(context, tree);
     });
 
 
