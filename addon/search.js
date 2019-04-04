@@ -1,4 +1,3 @@
-import Storage, {DONE_NAME, TODO_NAME} from "./db.js"
 import {backend} from "./backend.js"
 import {EVERYTHING, NODE_TYPE_BOOKMARK, ENDPOINT_TYPES} from "./db.js";
 import {TREE_STATE_PREFIX} from "./tree.js";

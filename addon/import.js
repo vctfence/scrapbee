@@ -37,8 +37,8 @@ export async function importOrg(shelf, text) {
             if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let node = await backend.importBookmark(last_object);
 
-                await backend.db.storeBlob(node.id, data, last_object.mime_type);
-                await backend.db.storeIndex(node.id, index);
+                await backend.storeBlob(node.id, data, last_object.mime_type);
+                await backend.storeIndex(node.id, index);
             }
             else {
                 await backend.importBookmark(last_object);
@@ -148,7 +148,7 @@ export async function importOrg(shelf, text) {
 async function objectToProperties(node) {
     let lines = [];
 
-    node = await backend.db.getNode(node.id);
+    node = await backend.getNode(node.id);
 
     for (let key of EXPORTED_KEYS) {
         if (node[key])
@@ -156,14 +156,14 @@ async function objectToProperties(node) {
     }
 
     if (node.type === NODE_TYPE_ARCHIVE) {
-        let blob = await backend.db.fetchBlob(node.id);
+        let blob = await backend.fetchBlob(node.id);
         if (blob) {
             if (blob && blob.type)
                 lines.push(`    :mime_type: ${blob.type}`);
             lines.push(`    :data: ${LZString.compressToBase64(blob.data)}`);
         }
 
-        let index = await backend.db.fetchIndex(node.id);
+        let index = await backend.fetchIndex(node.id);
         if (index)
             lines.push(`    :index: ${LZString.compressToBase64(JSON.stringify(index.words))}`);
     }

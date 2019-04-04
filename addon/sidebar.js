@@ -81,7 +81,7 @@ function performImport(context, tree, file, file_name, file_ext) {
 
             if (importF)
                 importF().then(() => {
-                    backend.db.queryShelf(file_name).then(shelf => {
+                    backend.queryShelf(file_name).then(shelf => {
                         settings.last_shelf(shelf.id);
                         loadShelves(context, tree).then(() => {
                             tree.openRoot();

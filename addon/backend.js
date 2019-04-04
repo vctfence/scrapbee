@@ -17,6 +17,16 @@ class IDBBackend {
 
     constructor() {
         this.db = new Storage();
+
+        this.storeBlob = this.db.storeBlob;
+        this.storeIndex = this.db.storeIndex;
+        this.updateBlob = this.db.updateBlob;
+        this.updateIndex = this.db.updateIndex;
+        this.fetchBlob = this.db.fetchBlob;
+        this.fetchIndex = this.db.fetchIndex;
+        this.getNode = this.db.getNode;
+        this.queryShelf = this.db.queryShelf;
+        this.queryTags = this.db.queryTags;
     }
 
     _normalizePath(path) {

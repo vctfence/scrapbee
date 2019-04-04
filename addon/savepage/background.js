@@ -649,13 +649,13 @@ function addListeners()
                 break;
 
             case "UPDATE_ARCHIVE":
-                backend.db.updateBlob(message.id, message.data);
-                backend.db.updateIndex(message.payload.id, message.data.indexWords());
+                backend.updateBlob(message.id, message.data);
+                backend.updateIndex(message.payload.id, message.data.indexWords());
                 break;
 
             case "STORE_PAGE_HTML":
-                backend.db.storeBlob(message.payload.id, message.data, "text/html");
-                backend.db.storeIndex(message.payload.id, message.data.indexWords());
+                backend.storeBlob(message.payload.id, message.data, "text/html");
+                backend.storeIndex(message.payload.id, message.data.indexWords());
 
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
 
@@ -899,7 +899,7 @@ function addListeners()
                 if (sender.extensionId !== "ubiquitywe@firefox")
                     return;
 
-                sendResponse(backend.db.queryTags().then(tags => {
+                sendResponse(backend.queryTags().then(tags => {
                     return tags.map(t => ({name: t.name.toLocaleLowerCase()}))
                 }));
                 break;
@@ -957,7 +957,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_BROWSE_ARCHIVE":
-                backend.db.getNode(message.uuid, true).then(node => backend.browseArchive(node));
+                backend.getNode(message.uuid, true).then(node => backend.browseArchive(node));
                 break;
 
         }
@@ -1060,7 +1060,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                                         if (contentType == null)
                                             contentType = "application/pdf";
 
-                                        backend.db.storeBlob(payload.id, binaryString, contentType,false);
+                                        backend.storeBlob(payload.id, binaryString, contentType,false);
 
                                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload});
 
