@@ -54,6 +54,8 @@ export async function importOrg(shelf, text) {
         subnodes = subnodes.filter(n => !(n.type === "inlineContainer"
             || n.type === "text" && !n.value));
 
+        console.log(subnodes);
+
         if (subnodes[0].type === "header" && subnodes.some(n => n.type === "link")) {
             await importLastObject();
 
@@ -140,6 +142,12 @@ export async function importOrg(shelf, text) {
                 }
             }
         }
+        else if (subnodes[0].type === "text" && /\s*DEADLINE:.*/.test(subnodes[0].value)) {
+            let match = /\s*DEADLINE:\s*<([^>]+)>/.exec(subnodes[0].value);
+
+            if (match && match[1] && last_object)
+                last_object["todo_date"] = match[1];
+        }
     }
 
     await importLastObject();
@@ -212,6 +220,9 @@ ${"#UUID: " + (special_shelf? shelf: root.original.uuid)}
                 let tag_list = data.tags.split(",").map(t => t.trim());
                 line += "    :" + tag_list.join(":") + ":";
             }
+
+            if (data.todo_date)
+                line += "\n    DEADLINE: <" + data.todo_date + ">";
 
             org_lines.push(line);
         }

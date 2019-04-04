@@ -18,11 +18,11 @@ Objectives:
 * ~~Import/export from .org~~ [DONE]
 * ~~Rework settings page~~ [DONE]
 * ~~Dark theme~~ [DONE]
-* Write help
+* ~~Write help~~ [DONE]
 * Automatic CSS-capture patterns for specified URLs
 * A little bit of Wiki functionality: editable notes with cross-references
 * Live link auto checker
-* Cloud-synchronization backend possibly with bookmark access through the web
+* Cloud-synchronization backend (possibly with bookmark access through the web)
 
 
 TODO: 

@@ -254,3 +254,23 @@ fieldset label:first-child
 {
     margin-left: 3px;
 }
+
+#help-content {
+    padding: 0 20%;
+    font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
+}
+
+#help-content p {
+    padding: 0 20px;
+    text-align: justify;
+    font-size: 12pt;
+}
+
+#help-content a {
+    font-size: 12pt;
+    color: #0074D9;
+}
+
+#help-content h2 {
+    padding-top: 20px;
+}
