@@ -1,7 +1,7 @@
+import {DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
+        NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./db.js";
 import {BookmarkTree} from "./tree.js";
 import {backend} from "./backend.js";
-import {DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./db.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./db.js";
 
 let tree;
 

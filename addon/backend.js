@@ -11,22 +11,10 @@ import {
 
 import Storage from "./db.js"
 
-import {settings} from "./settings.js"
-
-class IDBBackend {
+class IDBBackend extends Storage {
 
     constructor() {
-        this.db = new Storage();
-
-        this.storeBlob = this.db.storeBlob;
-        this.storeIndex = this.db.storeIndex;
-        this.updateBlob = this.db.updateBlob;
-        this.updateIndex = this.db.updateIndex;
-        this.fetchBlob = this.db.fetchBlob;
-        this.fetchIndex = this.db.fetchIndex;
-        this.getNode = this.db.getNode;
-        this.queryShelf = this.db.queryShelf;
-        this.queryTags = this.db.queryTags;
+        super();
     }
 
     _normalizePath(path) {
@@ -58,7 +46,7 @@ class IDBBackend {
     }
 
     listShelves() {
-        return this.db.queryShelf();
+        return this.queryShelf();
     }
 
     async listNodes(options //{search, // filter by node name or URL
@@ -81,17 +69,17 @@ class IDBBackend {
         if (options.tags)
             options.tags = this._splitTags(options.tags);
 
-        let result = await this.db.queryNodes(group, options);
+        let result = await this.queryNodes(group, options);
         if (options.content && options.search) {
             let search = this._splitTags(options.search, /\s+/);
             delete options.search;
-            result = await this.db.filterByContent(nodes, search);
+            result = await this.filterByContent(nodes, search);
         }
 
         if (options.path && (options.path === TODO_NAME || options.path === DONE_NAME)) {
             for (let node of result) {
                 node._extended_todo = true;
-                let path = await this.db.computePath(node.id);
+                let path = await this.computePath(node.id);
 
                 node._path = [];
                 for (let i = 0; i < path.length - 1; ++i) {
@@ -104,16 +92,15 @@ class IDBBackend {
     }
 
     reorderNodes(positions) {
-        console.log(positions)
-        return this.db.updateNodes(positions);
+        return this.updateNodes(positions);
     }
 
     setTODOState(states) {
-        return this.db.updateNodes(states);
+        return this.updateNodes(states);
     }
 
     async listTODO() {
-        let todo = await this.db.queryTODO();
+        let todo = await this.queryTODO();
 
         let now = new Date();
         now.setUTCHours(0, 0, 0, 0);
@@ -131,7 +118,7 @@ class IDBBackend {
             if (todo_date && now >= todo_date)
                 node._overdue = true;
 
-            let path = await this.db.computePath(node.id);
+            let path = await this.computePath(node.id);
 
             node._path = [];
             for (let i = 0; i < path.length - 1; ++i) {
@@ -145,10 +132,10 @@ class IDBBackend {
     }
 
     async listDONE() {
-        let done = await this.db.queryDONE();
+        let done = await this.queryDONE();
 
         for (let node of done) {
-            let path = await this.db.computePath(node.id);
+            let path = await this.computePath(node.id);
 
             node._path = [];
             for (let i = 0; i < path.length - 1; ++i) {
@@ -167,7 +154,7 @@ class IDBBackend {
 
         let groups = {};
         let shelf_name = path_list.shift();
-        let shelf = await this.db.queryShelf(shelf_name);
+        let shelf = await this.queryShelf(shelf_name);
 
         if (shelf)
             groups[shelf.name.toLowerCase()] = shelf;
@@ -177,7 +164,7 @@ class IDBBackend {
         let parent = shelf;
         for (let name of path_list) {
             if (parent) {
-                let group = await this.db.queryGroup(parent.id, name);
+                let group = await this.queryGroup(parent.id, name);
                 groups[name.toLowerCase()] = group;
                 parent = group;
             }
@@ -205,7 +192,7 @@ class IDBBackend {
 
 
         if (!parent) {
-            parent = await this.db.addNode({
+            parent = await this.addNode({
                 name: shelf_name,
                 type: NODE_TYPE_SHELF
             });
@@ -218,7 +205,7 @@ class IDBBackend {
                 parent = group;
             }
             else
-                parent = await this.db.addNode({
+                parent = await this.addNode({
                     parent_id: parent.id,
                     name: name,
                     type: NODE_TYPE_GROUP
@@ -232,9 +219,9 @@ class IDBBackend {
         let children;
 
         if (parent_id)
-            children = (await this.db.getChildNodes(parent_id)).map(c => c.name);
+            children = (await this.getChildNodes(parent_id)).map(c => c.name);
         else
-            children = (await this.db.queryShelf()).map(c => c.name);
+            children = (await this.queryShelf()).map(c => c.name);
 
         let original = name;
         let n = 1;
@@ -248,48 +235,48 @@ class IDBBackend {
     }
 
     async createGroup(parent_id, name, node_type = NODE_TYPE_GROUP) {
-        let {id} = await this.db.addNode({
+        let {id} = await this.addNode({
             name: await this._ensureUnique(parent_id, name),
             type: node_type,
             parent_id: parent_id
         });
 
-        return this.db.getNode(id);
+        return this.getNode(id);
     }
 
     async renameGroup(id, new_name) {
-        let group = await this.db.getNode(id);
+        let group = await this.getNode(id);
         if (group.name !== new_name) {
             group.name = await this._ensureUnique(group.parent_id, new_name);
-            await this.db.updateNode(group);
+            await this.updateNode(group);
         }
         return group;
     }
 
     async addSeparator(parent_id) {
-        let {id} = await this.db.addNode({
+        let {id} = await this.addNode({
             name: "-",
             type: NODE_TYPE_SEPARATOR,
             parent_id: parent_id
         });
 
-        return this.db.getNode(id);
+        return this.getNode(id);
     }
 
     async moveNodes(ids, dest_id) {
-        let nodes = await this.db.getNodes(ids);
+        let nodes = await this.getNodes(ids);
 
         for (let n of nodes) {
             n.parent_id = dest_id;
             n.name = await this._ensureUnique(dest_id, n.name);
         }
 
-        await this.db.updateNodes(nodes);
-        return this.db.queryFullSubtree(ids);
+        await this.updateNodes(nodes);
+        return this.queryFullSubtree(ids);
     }
 
     async copyNodes(ids, dest_id) {
-        let all_nodes = await this.db.queryFullSubtree(ids);
+        let all_nodes = await this.queryFullSubtree(ids);
 
         for (let n of all_nodes) {
             let old_id = n.id;
@@ -298,7 +285,7 @@ class IDBBackend {
             n.name = await this._ensureUnique(dest_id, n.name);
             delete n.id;
             delete n.date_modified;
-            await this.db.addNode(n, false);
+            await this.addNode(n, false);
             n.old_id = old_id;
             for (let nn of all_nodes) {
                 if (nn.parent_id === old_id)
@@ -310,9 +297,9 @@ class IDBBackend {
     }
 
     async deleteNodes(ids) {
-        let all_nodes = await this.db.queryFullSubtree(ids);
+        let all_nodes = await this.queryFullSubtree(ids);
 
-        return this.db.deleteNodes(all_nodes.map(n => n.id));
+        return this.deleteNodesInternal(all_nodes.map(n => n.id));
     }
 
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
@@ -331,9 +318,9 @@ class IDBBackend {
 
         data.type = node_type;
         data.tag_list = this._splitTags(data.tags);
-        this.db.addTags(data.tag_list);
+        this.addTags(data.tag_list);
 
-        return this.db.addNode(data);
+        return this.addNode(data);
     }
 
     async importBookmark(data) {
@@ -346,9 +333,9 @@ class IDBBackend {
         data.name = await this._ensureUnique(data.parent_id, data.name);
 
         data.tag_list = this._splitTags(data.tags);
-        this.db.addTags(data.tag_list);
+        this.addTags(data.tag_list);
 
-        return this.db.addNode(data, false);
+        return this.addNode(data, false);
     }
 
     async updateBookmark(data) {
@@ -365,35 +352,9 @@ class IDBBackend {
         delete update._extended_todo;
 
         update.tag_list = this._splitTags(update.tags);
-        this.db.addTags(update.tag_list);
+        this.addTags(update.tag_list);
 
-        return this.db.updateNode(update);
-    }
-
-    browseArchive(node) {
-        return this.db.fetchBlob(node.id).then(blob => {
-            if (blob) {
-                let htmlBlob = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
-                let objectURL = URL.createObjectURL(htmlBlob);
-                let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
-
-                setTimeout(() => {
-                    URL.revokeObjectURL(objectURL);
-                }, settings.archive_url_lifetime() * 60 * 1000);
-
-                browser.tabs.create({
-                    "url": archiveURL
-                }).then(tab => {
-                    return browser.tabs.executeScript(tab.id, {
-                        file: "edit-bootstrap.js",
-                        runAt: 'document_end'
-                    })
-                });
-            }
-            else {
-                browser.tabs.executeScript({code : `alert("Error: no data is stored.");`});
-            }
-        });
+        return this.updateNode(update);
     }
 }
 

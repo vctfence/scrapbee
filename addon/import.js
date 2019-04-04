@@ -2,12 +2,11 @@ import * as org from "./lib/org.js"
 import {backend} from "./backend.js"
 import LZString from "./lib/lz-string.js"
 import {
-    DONE_SHELF, EVERYTHING, NODE_TYPE_SHELF, NODE_TYPE_GROUP, TODO_SHELF, NODE_TYPE_ARCHIVE,
-    TODO_STATES, TODO_NAMES, NODE_TYPE_BOOKMARK, NODE_TYPE_SEPARATOR, DEFAULT_POSITION
+    NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, DEFAULT_POSITION, TODO_STATES, TODO_NAMES
 } from "./db.js";
 
 const ORG_EXPORT_VERSION = 1;
-const EXPORTED_KEYS = ["uuid", "icon", "type", "pos", "todo_pos", "date_added", "date_modified"];
+const EXPORTED_KEYS = ["uuid", "icon", "type", "date_added", "date_modified"];
 
 function traverseOrgNode(node, callback) {
     callback(node);
@@ -53,8 +52,6 @@ export async function importOrg(shelf, text) {
         traverseOrgNode(line, n => subnodes.push(n));
         subnodes = subnodes.filter(n => !(n.type === "inlineContainer"
             || n.type === "text" && !n.value));
-
-        console.log(subnodes);
 
         if (subnodes[0].type === "header" && subnodes.some(n => n.type === "link")) {
             await importLastObject();
@@ -115,8 +112,9 @@ export async function importOrg(shelf, text) {
             if (last_object) {
                 for (let property of subnodes) {
                     switch (property.name) {
-                        case "type":
                         case "pos":
+                            break;
+                        case "type":
                         case "todo_pos":
                         case "todo_state":
                             last_object[property.name] = parseInt(property.value);
@@ -131,11 +129,18 @@ export async function importOrg(shelf, text) {
                 }
 
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
+                    let compressed = last_object["compressed"];
+
                     if (last_object.data)
-                        last_object.data = LZString.decompressFromBase64(last_object.data).trim();
+                        last_object.data = compressed
+                            ? LZString.decompressFromBase64(last_object.data).trim()
+                            : decodeURIComponent(escape(window.atob(last_object.data)));
 
                     if (last_object.index) {
-                        let index_json = LZString.decompressFromBase64(last_object.index).trim();
+                        let index_json = compressed
+                            ? LZString.decompressFromBase64(last_object.index).trim()
+                            : decodeURIComponent(escape(window.atob(last_object.index)));
+
                         if (index_json)
                             last_object.index = JSON.parse(index_json);
                     }
@@ -153,7 +158,7 @@ export async function importOrg(shelf, text) {
     await importLastObject();
 }
 
-async function objectToProperties(node) {
+async function objectToProperties(node, compress) {
     let lines = [];
 
     node = await backend.getNode(node.id);
@@ -168,25 +173,31 @@ async function objectToProperties(node) {
         if (blob) {
             if (blob && blob.type)
                 lines.push(`    :mime_type: ${blob.type}`);
-            lines.push(`    :data: ${LZString.compressToBase64(blob.data)}`);
+
+            let content;
+
+            if (compress) {
+                lines.push(`    :compressed: ${compress}`);
+                content = LZString.compressToBase64(blob.data);
+            }
+            else
+                content = btoa(unescape(encodeURIComponent(blob.data)));
+
+            lines.push(`    :data: ${content}`);
         }
 
         let index = await backend.fetchIndex(node.id);
         if (index)
-            lines.push(`    :index: ${LZString.compressToBase64(JSON.stringify(index.words))}`);
+            if (compress)
+                lines.push(`    :index: ${LZString.compressToBase64(JSON.stringify(index.words))}`);
+            else
+                lines.push(`    :index: ${btoa(unescape(encodeURIComponent(JSON.stringify(index.words))))}`);
     }
 
     return lines.join("\n");
 }
 
-export async function exportOrg(tree, shelf, shallow = false) {
-    let special_shelf = shelf === EVERYTHING || shelf === TODO_SHELF || shelf === DONE_SHELF;
-    let root = special_shelf
-        ? tree._jstree.get_node("#")
-        : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
-    let skip_level = root.parents.length;
-    let level = skip_level;
-
+export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = true) {
     let org_lines = [];
 
     if (!shallow)
@@ -194,35 +205,31 @@ export async function exportOrg(tree, shelf, shallow = false) {
 `#EXPORT: Scrapyard
 #VERSION: ${ORG_EXPORT_VERSION}
 #NAME: ${shelf}
-${"#UUID: " + (special_shelf? shelf: root.original.uuid)}
+${"#UUID: " + uuid}
 `);
 
     org_lines.push("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
 
-    for (let child_id of root.children_d) {
-        let node = tree._jstree.get_node(child_id);
-        let data = node.original;
-        let line_level = node.parents.length - skip_level;
-
-        if (data.type === NODE_TYPE_SHELF || data.type === NODE_TYPE_GROUP) {
-            let line = "\n" + "*".repeat(line_level) + " " + data.name;
+    for (let node of nodes) {
+        if (node.type === NODE_TYPE_SHELF || node.type === NODE_TYPE_GROUP) {
+            let line = "\n" + "*".repeat(node.level) + " " + node.name;
             org_lines.push(line);
         }
         else {
-            let line = "\n" + "*".repeat(line_level);
+            let line = "\n" + "*".repeat(node.level);
 
-            if (data.todo_state)
-                line += " " + TODO_NAMES[data.todo_state];
+            if (node.todo_state)
+                line += " " + TODO_NAMES[node.todo_state];
 
-            line += " [[" + (data.uri? data.uri: "") + "][" + data.name + "]]";
+            line += " [[" + (node.uri? node.uri: "") + "][" + node.name + "]]";
 
-            if (data.tags) {
-                let tag_list = data.tags.split(",").map(t => t.trim());
+            if (node.tags) {
+                let tag_list = node.tags.split(",").map(t => t.trim());
                 line += "    :" + tag_list.join(":") + ":";
             }
 
-            if (data.todo_date)
-                line += "\n    DEADLINE: <" + data.todo_date + ">";
+            if (node.todo_date)
+                line += "\n    DEADLINE: <" + node.todo_date + ">";
 
             org_lines.push(line);
         }
@@ -230,7 +237,7 @@ ${"#UUID: " + (special_shelf? shelf: root.original.uuid)}
         if (!shallow) {
             let props = `
 :PROPERTIES:
-${await objectToProperties(data)}
+${await objectToProperties(node, compress)}
 :END:`;
             org_lines.push(props);
         }

@@ -1,8 +1,7 @@
 import {settings} from "./settings.js"
 import {backend} from "./backend.js"
-import {BookmarkTree, TREE_STATE_PREFIX} from "./tree.js"
+import {BookmarkTree} from "./tree.js"
 import {showDlg, alert, confirm} from "./dialog.js"
-import {importOrg, exportOrg} from "./import.js";
 
 import {
     EVERYTHING,
@@ -24,6 +23,7 @@ import {
     SearchContext
 
 } from "./search.js";
+import {pathToNameExt} from "./utils.js";
 
 
 const INPUT_TIMEOUT = 1000;
@@ -35,7 +35,6 @@ function isSpecialShelf(name) {
         || name === TODO_NAME
         || name === DONE_NAME;
 }
-
 
 function validSearchInput(input) {
     return input && input.length > 2;
@@ -65,40 +64,54 @@ async function performSearch(context, tree) {
 }
 
 function performImport(context, tree, file, file_name, file_ext) {
-    let reader = new FileReader();
 
-    return new Promise((resolve, reject) => {
-        reader.onload = function (re) {
-            let importF;
+    $("#shelf-menu-button").attr("src", "icons/grid.svg");
 
-            switch (file_ext.toUpperCase()) {
-                case "ORG":
-                    importF = () => {
-                        return importOrg(file_name, re.target.result)
-                    };
-                    break;
-            }
+    return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
+        .then(() => {
 
-            if (importF)
-                importF().then(() => {
-                    backend.queryShelf(file_name).then(shelf => {
-                        settings.last_shelf(shelf.id);
-                        loadShelves(context, tree).then(() => {
-                            tree.openRoot();
-                            resolve();
-                        });
-                    });
-                })
-        };
+            $("#shelf-menu-button").attr("src", "icons/menu.svg");
 
-        reader.readAsText(file);
-    });
+            backend.queryShelf(file_name).then(shelf => {
+
+                settings.last_shelf(shelf.id);
+
+                loadShelves(context, tree).then(() => {
+                    tree.openRoot();
+                });
+            });
+        }).catch(() => {
+            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+            alert("{Error}", "The import has failed.")
+        });
 }
 
 function performExport(context, tree) {
-    let {name} = getCurrentShelf();
-    return exportOrg(tree, name, settings.shallow_export()).then(url => {
-        browser.downloads.download({url: url, filename: name + ".org", saveAs: false});
+    let {name: shelf} = getCurrentShelf();
+
+    let special_shelf = shelf === EVERYTHING || shelf === TODO_SHELF || shelf === DONE_SHELF;
+    let root = special_shelf
+        ? tree._jstree.get_node("#")
+        : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
+    let skip_level = root.parents.length;
+    let uuid = special_shelf? shelf: root.original.uuid;
+
+    let nodes = [];
+    tree.traverse(root, node => {
+        let data = Object.assign({}, node.original);
+        data.level = node.parents.length - skip_level;
+        nodes.push(data);
+    });
+
+    nodes.shift();
+
+    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+
+    return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
+            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+    }).catch(() => {
+        $("#shelf-menu-button").attr("src", "icons/menu.svg");
+        alert("{Error}", "The export has failed.")
     });
 }
 
@@ -155,15 +168,13 @@ function switchShelf(context, tree, shelf_id) {
         return performSearch(context, tree);
     else {
         if (shelf_id == TODO_SHELF) {
-            tree.stateKey = TREE_STATE_PREFIX + TODO_NAME;
             return backend.listTODO().then(nodes => {
-                tree.list(nodes);
+                tree.list(nodes, TODO_NAME);
             });
         }
         else if (shelf_id == DONE_SHELF) {
-            tree.stateKey = TREE_STATE_PREFIX + DONE_NAME;
             return backend.listDONE().then(nodes => {
-                tree.list(nodes);
+                tree.list(nodes, DONE_NAME);
             });
         }
         else if (shelf_id == EVERYTHING_SHELF) {
@@ -278,7 +289,7 @@ window.onload = function () {
                 let newName;
                 if (newName = data.title) {
                     backend.renameGroup(id, newName).then(() => {
-                            selectedOption.html(newName);
+                            selectedOption.text(newName);
                             tree.renameRoot(newName)
 
                             $("#shelfList").selectric('refresh');
@@ -315,6 +326,25 @@ window.onload = function () {
         });
     });
 
+    tree.onRenameShelf = node => {
+        if (isSpecialShelf(node.name)) {
+            // TODO: i18n
+            alert("{Error}", "A built-in shelf could not be renamed.")
+            return;
+        }
+
+        let node_id = node.id;
+        tree._jstree.edit(node_id, null, (node, success, cancelled) => {
+            if (success && !cancelled)
+                backend.renameGroup(node_id, node.text).then(() => {
+                    tree._jstree.rename_node(node.id, node.text);
+                    $(`#shelfList option[value="${node_id}"]`).text(node.text);
+
+                    $("#shelfList").selectric('refresh');
+                });
+        });
+    };
+
     tree.onDeleteShelf = node => {
         if (isSpecialShelf(node.name)) {
             // TODO: i18n
@@ -345,32 +375,26 @@ window.onload = function () {
 
     $("#file-picker").change((e) => {
         if (e.target.files.length > 0) {
-            let fullPath = $("#file-picker").val();
-            //$("#file-picker").val("");
-            let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
-            let dotIndex = fullPath.lastIndexOf('.');
-            let filename = fullPath.substring(startIndex, dotIndex);
-            let fileext = fullPath.substring(dotIndex + 1);
+            let {name, ext} = pathToNameExt($("#file-picker").val());
 
-            if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
-                filename = filename.substring(1);
-            }
-
-            if (!isSpecialShelf(filename)) {
-                let existingOption = $(`#shelfList option:contains("${filename}")`);
+            if (!isSpecialShelf(name)) {
+                let existingOption = $(`#shelfList option:contains("${name}")`);
 
                 if (existingOption.length)
-                    confirm("{Warning}", "This will replace '" + filename + "'.").then(() => {
+                    confirm("{Warning}", "This will replace '" + name + "'.").then(() => {
                         backend.deleteNodes(parseInt(existingOption.val())).then(() => {
-                            performImport(context, tree, e.target.files[0], filename, fileext);
+                            performImport(context, tree, e.target.files[0], name, ext).then(() => {
+                                $("#file-picker").val("");
+                            });
                         });
                     });
-                else {
-                    performImport(context, tree, e.target.files[0], filename, fileext);
-                }
+                else
+                    performImport(context, tree, e.target.files[0], name, ext).then(() => {
+                        $("#file-picker").val("");
+                    });
             }
             else
-                alert("{Error}", `Cannot replace '${filename}'.`)
+                alert("{Error}", `Cannot replace '${name}'.`)
         }
     });
 

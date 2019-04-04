@@ -219,7 +219,7 @@ class Storage {
         return nodes.filter(n => word_count[n.id] === words.length);
     }
 
-    async deleteNodes(nodes) {
+    async deleteNodesInternal(nodes) {
         if (!Array.isArray)
             nodes = [nodes];
 

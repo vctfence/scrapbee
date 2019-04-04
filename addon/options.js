@@ -95,6 +95,7 @@ window.onload=function(){
 
     settings.load(() => {
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
+        document.getElementById("option-compress-export").checked = settings.compress_export();
         document.getElementById("option-revoke-archive-url-after").value = settings.arcive_url_lifetime();
     });
 
@@ -138,6 +139,7 @@ window.onload=function(){
 
 
         settings.shallow_export(document.getElementById("option-shallow-export").checked);
+        settings.compress_export(document.getElementById("option-compress-export").checked);
         settings.arcive_url_lifetime(document.getElementById("option-revoke-archive-url-after").value);
 
 

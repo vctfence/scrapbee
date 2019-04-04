@@ -12,7 +12,7 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    EVERYTHING, TODO_NAMES
+    EVERYTHING, TODO_NAMES, TODO_NAME
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -105,21 +105,35 @@ class BookmarkTree {
         })
     }
 
-    static _todoColor(todo_state) {
-        switch (todo_state) {
-            case TODO_STATE_TODO:
-                return "#fc6dac";
-            case TODO_STATE_WAITING:
-                return"#ff8a00";
-            case TODO_STATE_POSTPONED:
-                return "#00b7ee";
-            case TODO_STATE_CANCELLED:
-                return "#ff4d26";
-            case TODO_STATE_DONE:
-                return "#00b60e";
+    traverse(root, visitor) {
+        let _tree = this._jstree;
+        function doTraverse(root) {
+            visitor(root);
+            if (root.children)
+                for (let id of root.children) {
+                    let node = _tree.get_node(id);
+                    doTraverse(node);
+                }
         }
-        return "";
+
+        doTraverse(root);
     }
+
+    // static _todoColor(todo_state) {
+    //     switch (todo_state) {
+    //         case TODO_STATE_TODO:
+    //             return "#fc6dac";
+    //         case TODO_STATE_WAITING:
+    //             return"#ff8a00";
+    //         case TODO_STATE_POSTPONED:
+    //             return "#00b7ee";
+    //         case TODO_STATE_CANCELLED:
+    //             return "#ff4d26";
+    //         case TODO_STATE_DONE:
+    //             return "#00b60e";
+    //     }
+    //     return "";
+    // }
 
     static _styleTODO(node) {
         if (node.todo_state)
@@ -250,7 +264,10 @@ class BookmarkTree {
         this._jstree.refresh(true, () => state? state.state: null);
     }
 
-    list(nodes) {
+    list(nodes, state_key) {
+        if (state_key)
+            this.stateKey = TREE_STATE_PREFIX + state_key;
+
         nodes.forEach(BookmarkTree.toJsTreeNode);
         nodes.forEach(n => n.parent = "#");
 
@@ -565,10 +582,11 @@ class BookmarkTree {
             },
             renameItem: {
                 label: "Rename",
-                action: function () {
+                action: () => {
                     switch (ctx_node.original.type) {
                         case NODE_TYPE_SHELF:
-                            $("#shelf-menu-rename").click();
+                            if (this.onRenameShelf)
+                                this.onRenameShelf(ctx_node_data);
                             break;
                         case NODE_TYPE_GROUP:
                             tree.edit(ctx_node, null, (node, success, cancelled) => {

@@ -678,10 +678,6 @@ function gatherOtherResources()
 
 function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts)
 {
-    console.log("save embed");
-    console.log(saveHTMLObjectEmbed);
-
-
     var i,j,displayed,style,csstext,baseuri,charset,currentsrc,passive,regex,location,parser,framedoc;
     var matches = new Array();
 
