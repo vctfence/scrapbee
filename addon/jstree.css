@@ -167,11 +167,48 @@
 }
 
 
+
+.jstree-default .separator-node::before {
+    content: "──";
+}
+
+.jstree-default .separator-node i {
+    display: none;
+}
+
+
+
 .jstree-default-responsive .jstree-wholerow-hovered, .vakata-context-hover {
     background: #eee;
 }
 .jstree-default-responsive .jstree-wholerow-clicked {
     background: #ddd;
+}
+
+.jstree-default .todo-state-todo {
+    color: #fc6dac;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-waiting {
+    color: #ff8a00;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-postponed {
+    color: #00b7ee;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-cancelled,
+.jstree-default .todo-state-overdue {
+    color: #ff4d26;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-done {
+    color: #00b60e;
+    font-weight: bold;
 }
 
 .jstree-default .extended-todo {
@@ -187,7 +224,11 @@
     line-height: normal;
     height: auto;
     font-size: 98%;
-    margin-top: -2px;
+}
+
+.jstree-default .extended-todo .jstree-wholerow.jstree-wholerow-hovered,
+.jstree-default .extended-todo .jstree-wholerow.jstree-wholerow-clicked {
+    height: 33px;
 }
 
 .jstree-default .extended-todo .todo-path {

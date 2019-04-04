@@ -12,7 +12,7 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    EVERYTHING
+    EVERYTHING, TODO_NAMES
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -123,10 +123,9 @@ class BookmarkTree {
 
     static _styleTODO(node) {
         if (node.todo_state)
-            return "color: " + (node._overdue
-                ? BookmarkTree._todoColor(TODO_STATE_CANCELLED)
-                : BookmarkTree._todoColor(node.todo_state))
-            + "; font-weight: bold;";
+            return " todo-state-" + (node._overdue
+                ? "overdue"
+                : TODO_NAMES[node.todo_state].toLowerCase());
 
         return "";
     }
@@ -142,7 +141,7 @@ class BookmarkTree {
         }
 
         if (node.todo_date)
-            text += " | " + "<span style='" + BookmarkTree._styleTODO(node) + "'>" + node.todo_date + "</span>";
+            text += " | " + "<span class='" + BookmarkTree._styleTODO(node) + "'>" + node.todo_date + "</span>";
 
         if (node.details)
             text += " | " + "<span class='todo-details'>" + node.details + "</span>";
@@ -186,12 +185,13 @@ class BookmarkTree {
                 n.li_attr.class += " archive-node";
 
             n.a_attr = {
+                "class": "",
                 "data-id": n.id,
                 "data-clickable": "true"
             };
 
             if (n.todo_state) {
-                n.a_attr.style = BookmarkTree._styleTODO(n);
+                n.a_attr.class += BookmarkTree._styleTODO(n);
 
                 if (n._extended_todo) {
                     n.li_attr.class += " extended-todo";
@@ -333,7 +333,7 @@ class BookmarkTree {
                 selected_ids.forEach(id => {
                     let node = tree.get_node(id);
                     node.original.todo_state = state;
-                    node.a_attr.style = BookmarkTree._styleTODO(node.original);
+                    node.a_attr.class += BookmarkTree._styleTODO(node.original);
                     tree.redraw_node(node);
                 });
             });

@@ -11,9 +11,12 @@
     <link href="popup.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="jstree.css"/>
 
+
+    <link rel="stylesheet" type="text/css" href="dark.css"/>
+
 </head>
 
-<body>
+<body id="scrapyard-popup">
 	<div id="content">
 		<div id="heading">
 			<img id="logo" src="icons/scrapyard.svg"/>
@@ -21,13 +24,13 @@
 		</div>
 
 		<div id="properties">
-			<div class="property-row">
+			<div class="property-row dlg">
 				<label id="label-name" for="bookmark-name">Name:</label>
 				<input id="bookmark-name" type="text"/>
 			</div>
             <input type="hidden" id="bookmark-url"/>
             <input type="hidden" id="bookmark-icon"/>
-			<div class="property-row">
+			<div class="property-row dlg">
 				<label id="label-folder" for="bookmark-folder">Folder:</label>
 				<select id="bookmark-folder">
                 </select>
@@ -35,7 +38,7 @@
 			<div class="tree-container">
 				<div id="treeview"></div>
 			</div>
-			<div class="property-row">
+			<div class="property-row dlg">
 				<label id="label-tags" for="bookmark-tags">Tags:</label>
 				<input id="bookmark-tags" type="text">
 				<input id="new-folder" type="button" value="New Folder">

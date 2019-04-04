@@ -1,0 +1,146 @@
+@-moz-document url-prefix("moz-extension://scrapyard@firefox/") {
+
+    html, body, .toolbar, .black-button, .simple-menu, .dlg, .dlg * {
+        background: var(--in-content-page-background) !important;
+        border-color: var(--tone-5) !important;
+        color: var(--in-content-page-color)!important;
+    }
+
+    .dlg *,
+    select,
+    .simple-menu div,
+    .jstree-default .jstree-anchor .todo-path,
+    .jstree-default .jstree-anchor .todo-details {
+        color: var(--in-content-page-color)!important;
+    }
+
+    .dlg input, .dlg select {
+        border: 1px solid var(--in-content-box-border-color) !important;
+        border-radius: 3px;
+    }
+
+    .simple-menu div:hover,
+    .selectric-scroll li:hover,
+    .jstree-default .jstree-anchor.jstree-clicked,
+    .jstree-default .jstree-anchor.jstree-clicked .todo-path,
+    .jstree-default .jstree-anchor.jstree-clicked .todo-details {
+        color: var(--tone-9) !important;
+        transition: none !important;
+    }
+
+    .dlg input[type=button] {
+        cursor: pointer;
+    }
+
+    .dlg input[type=button]:hover,
+    .jstree-default .jstree-hovered,
+    .jstree-default .jstree-wholerow-hovered {
+        background: var(--in-content-box-background-hover) !important;
+        transition: none !important;
+    }
+
+    .vakata-context, .vakata-context ul {
+        background: var(--in-content-box-background-hover) !important;
+        border: none !important;
+        padding: 2px !important;
+        color: var(--in-content-page-color)!important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    .vakata-context li > a {
+        color: var(--tone-2) !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    .vakata-context li > a:hover,
+    .vakata-context .vakata-context-hover > a {
+        color: var(--tone-9) !important;
+    }
+
+    .vakata-context .vakata-contextmenu-disabled a,
+    .vakata-context .vakata-contextmenu-disabled a:hover {
+        color: var(--tone-5) !important;
+    }
+
+    .vakata-context .vakata-context-separator > a,
+    .vakata-context .vakata-context-separator > a:hover {
+        border-top: 1px solid var(--tone-7) !important;
+        border-left: none;
+        box-shadow: none !important;
+    }
+
+    .vakata-context li > a .vakata-contextmenu-sep {
+        border-left: 1px solid var(--tone-7) !important;
+        box-shadow: none !important;
+    }
+
+    .vakata-context li > a.vakata-context-parent {
+        background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAHCAYAAADebrddAAAAL3RFWHRDcmVhdGlvbiBUaW1lANCn0YIgNCDQsNC/0YAgMjAxOSAxMTozMDo1NCArMDQwMPSur74AAAAHdElNRQfjBAQHIASxQAQlAAAACXBIWXMAAAsSAAALEgHS3X78AAAABGdBTUEAALGPC/xhBQAAACVJREFUeNpjePv2w38GYgFIMdEaYIqJ0oCsmKAGskwm2s3EBgYAK7o8kRxQo+YAAAAASUVORK5CYII=");
+    }
+
+    .jstree-default .jstree-node,
+    .jstree-default .jstree-icon {
+        background-image: url("lib/jstree/themes/default/32px_dark.png");
+    }
+
+    #jstree-dnd.jstree-default .jstree-ok,
+    #jstree-dnd.jstree-default .jstree-er {
+        background-image: url("lib/jstree/themes/default/32px_dark.png");
+    }
+
+    .jstree-default .jstree-clicked.jstree-hovered,
+    .jstree-default .jstree-wholerow-clicked.jstree-wholerow-hovered {
+        background: var(--tone-3) !important;
+    }
+
+    .selectric-scroll li:hover, .simple-menu div:hover {
+        background-color: var(--tone-2) !important;
+    }
+
+    .jstree-default .jstree-anchor, .jstree-default .jstree-wholerow {
+        transition: none !important;
+    }
+
+    input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-scroll li, .simple-menu div  {
+        background-color: var(--in-content-box-background)!important;
+        border-color: var(--in-content-box-border-color)!important;
+        color: var(--in-content-page-color)!important;
+    }
+
+    .midnight-filter, .midnight-filter-menu {
+        filter: invert(80%) sepia(7%) saturate(52%) hue-rotate(201deg) brightness(90%) contrast(87%);
+    }
+
+    .simple-menu div:hover .midnight-filter-menu {
+        filter: invert(0%) sepia(29%) saturate(2147%) hue-rotate(18deg) brightness(99%) contrast(87%);
+    }
+
+
+    .jstree-default .todo-state-todo.jstree-hovered,
+    .jstree-default .todo-state-todo.jstree-clicked {
+        color: #fc6dac !important;
+    }
+
+    .jstree-default .todo-state-waiting.jstree-hovered,
+    .jstree-default .todo-state-waiting.jstree-clicked {
+        color: #ff8a00 !important;
+    }
+
+    .jstree-default .todo-state-postponed.jstree-hovered,
+    .jstree-default .todo-state-postponed.jstree-clicked {
+        color: #00b7ee !important;
+    }
+
+    .jstree-default .todo-state-cancelled.jstree-hovered,
+    .jstree-default .todo-state-cancelled.jstree-clicked {
+        color: #ff4d26 !important;
+    }
+
+    .jstree-default .todo-state-done.jstree-hovered,
+    .jstree-default .todo-state-done.jstree-clicked {
+        color: #00b60e !important;
+    }
+
+}

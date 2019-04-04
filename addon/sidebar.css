@@ -244,6 +244,7 @@ select{
 #shelf-menu-button {
     width: 23px;
     margin-top: 1px;
+    background: transparent !important;
 }
 
 #shelf-menu-create-folder {
@@ -268,13 +269,6 @@ select{
     flex: 0 1 auto;
 }
 
-.jstree-default .separator-node::before {
-    content: "──";
-}
-
-.jstree-default .separator-node i {
-    display: none;
-}
 
 .archive-node {
     font-style: italic;
@@ -365,6 +359,14 @@ select{
 	padding-left: 16px;
 }
 
+.selectric-scroll li.highlighted, .selectric-scroll li.selected {
+    background: transparent;
+}
+
+.selectric-scroll li.highlighted:hover, .selectric-scroll li.selected:hover {
+    background: #ddd;
+}
+
 .option-builtin {
     font-weight: bold;
 }
@@ -372,4 +374,3 @@ select{
 .divide {
     border-bottom: 1px solid black;
 }
-

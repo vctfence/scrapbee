@@ -17,10 +17,11 @@ Objectives:
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
 * ~~Rework settings page~~ [DONE]
+* ~~Dark theme~~ [DONE]
 * Write help
-* Dark theme
-* Live link auto checker
+* Automatic CSS-capture patterns for specified URLs
 * A little bit of Wiki functionality: editable notes with cross-references
+* Live link auto checker
 * Cloud-synchronization backend possibly with bookmark access through the web
 
 
