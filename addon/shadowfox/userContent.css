@@ -59,7 +59,7 @@
 
     .vakata-context, .vakata-context ul {
         background: var(--in-content-box-background-hover) !important;
-        border: 1px solid var(--tone-7) !important;
+        border: 1px solid var(--in-content-box-border-color) !important;
         padding: 0px !important;
         color: var(--in-content-page-color)!important;
         box-shadow: none !important;
@@ -85,13 +85,13 @@
 
     .vakata-context .vakata-context-separator > a,
     .vakata-context .vakata-context-separator > a:hover {
-        border-top: 1px solid var(--tone-7) !important;
-        border-left: 1px solid var(--tone-7) !important;
+        border-top: 1px solid var(--in-content-box-border-color) !important;
+        border-left: 1px solid var(--in-content-box-border-color) !important;
         box-shadow: none !important;
     }
 
     .vakata-context li > a .vakata-contextmenu-sep {
-        border-left: 1px solid var(--tone-7) !important;
+        border-left: 1px solid var(--in-content-box-border-color) !important;
         box-shadow: none !important;
     }
 
@@ -106,6 +106,16 @@
     #jstree-dnd.jstree-default .jstree-ok,
     #jstree-dnd.jstree-default .jstree-er {
         background-image: url("%%%lib/jstree/themes/default/32px_dark.png") !important;
+    }
+
+    .selectric .label::before,
+    .selectric-items li.folder-label::before,
+    .jstree-default .scrapyard-group > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/group2.svg") !important;
+    }
+
+    .jstree-default .scrapyard-shelf > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/shelf2.svg") !important;
     }
 
     input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-scroll li, .simple-menu div  {
@@ -161,6 +171,14 @@
     .div-area input[type=button]{
         background:#079 !important;
         color:#fff !important;
+    }
+
+    .div-area a, .div-area a:visited {
+        color: #0074D9 !important;
+    }
+
+    .left-index {
+        color: black !important;
     }
 
 }

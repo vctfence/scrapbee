@@ -468,7 +468,7 @@ function initialize()
     chrome.storage.local.get("savepage-settings",
     function(object)
     {
-        object = object["savepage-settings"];
+        object = object["savepage-settings"]? object["savepage-settings"]: {};
 
         var contexts = new Array();
         

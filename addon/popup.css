@@ -115,3 +115,23 @@ body {
     border-radius: initial;
     border: 1px solid WindowFrame;
 }
+
+.selectric .label,
+.selectric-items li.folder-label {
+    padding-left: 22px;
+    position: relative;
+}
+
+.selectric .label::before,
+.selectric-items li.folder-label::before {
+    content: " ";
+    position: absolute;
+    left: 2px;
+    height: 16px;
+    width: 16px;
+    background-image: url("icons/group.svg")
+}
+
+.selectric .label {
+    margin-left: 2px;
+}

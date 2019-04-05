@@ -45,14 +45,14 @@ window.onload = function () {
 
             if (folder_history && folder_history.length) {
                 for (let item of folder_history) {
-                    $("#bookmark-folder").append(`<option value='${item.id}'>${item.text}</option>`)
+                    $("#bookmark-folder").append(`<option class='folder-label' value='${item.id}'>${item.text}</option>`)
                 }
             }
         }
 
         if (!folder_history || folder_history === "null" || !folder_history.length) {
             folder_history = [];
-            $("#bookmark-folder").append(`<option value='1'>${DEFAULT_SHELF_NAME}</option>`)
+            $("#bookmark-folder").append(`<option class='folder-label' value='1'>${DEFAULT_SHELF_NAME}</option>`)
         }
 
         $("#bookmark-folder").selectric("refresh");
@@ -89,7 +89,7 @@ window.onload = function () {
         if (!existing.length) {
             $(`#bookmark-folder option:selected`).removeAttr("selected");
             $("#bookmark-folder option[data-tentative='true']").remove();
-            $("#bookmark-folder").prepend(`<option data-tentative='true' selected value='${node.original.id}'>${node.text}</option>`)
+            $("#bookmark-folder").prepend(`<option  class='folder-label'  data-tentative='true' selected value='${node.original.id}'>${node.text}</option>`)
             $("#bookmark-folder").selectric("refresh");
         }
         else {

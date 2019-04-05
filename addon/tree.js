@@ -173,10 +173,18 @@ class BookmarkTree {
         if (!n.parent)
             n.parent = "#";
 
-        if (n.type == NODE_TYPE_SHELF)
+        if (n.type == NODE_TYPE_SHELF) {
             n.icon = "/icons/shelf.svg";
-        else if (n.type == NODE_TYPE_GROUP)
+            n.li_attr = {
+                "class": "scrapyard-shelf",
+            }
+        }
+        else if (n.type == NODE_TYPE_GROUP) {
             n.icon = "/icons/group.svg";
+            n.li_attr = {
+                "class": "scrapyard-group",
+            }
+        }
         else if (n.type == NODE_TYPE_SEPARATOR) {
             n.text = "─".repeat(40);
             n.a_attr = {
@@ -336,6 +344,7 @@ class BookmarkTree {
 
         function setTODOState(state) {
             let selected_ids = selected_nodes.map(n => n.original.type === NODE_TYPE_GROUP
+                                                            || n.original.type === NODE_TYPE_SHELF
                                                         ? n.children
                                                         : n.original.id);
             let todo_states = [];
@@ -348,10 +357,12 @@ class BookmarkTree {
 
             backend.setTODOState(todo_states).then(() => {
                 selected_ids.forEach(id => {
+
                     let node = tree.get_node(id);
                     node.original.todo_state = state;
+                    node.a_attr.class = node.a_attr.class.replace(/todo-state-[a-zA-Z]+/g, "");
                     node.a_attr.class += BookmarkTree._styleTODO(node.original);
-                    tree.redraw_node(node);
+                    tree.redraw_node(node, true, false, true);
                 });
             });
         }
@@ -366,6 +377,9 @@ class BookmarkTree {
                                 browser.tabs.create({
                                     "url": n.original.uri
                                 });
+                                break;
+                            case NODE_TYPE_ARCHIVE:
+                                browser.runtime.sendMessage({type: "BROWSE_ARCHIVE", node: ctx_node_data});
                                 break;
                         }
                     }
@@ -573,7 +587,7 @@ class BookmarkTree {
                                     else {
                                         tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
                                     }
-                                    tree.redraw_node(ctx_node);
+                                    tree.redraw_node(ctx_node, true, false, true);
                                 });
                             });
                             break;
@@ -622,7 +636,7 @@ class BookmarkTree {
         }
         else {
             for (let k in items)
-                if (!["newFolderItem", "renameItem", "pasteItem", "sortItem", "deleteItem"].find(s => s === k))
+                if (!["newFolderItem", "renameItem", "pasteItem", "sortItem", "todoItem", "deleteItem"].find(s => s === k))
                     delete items[k];
         }
 

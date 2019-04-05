@@ -261,10 +261,18 @@ a, a:visited {
     color: #0074D9;
 }
 
+.left-index {
+    text-decoration: none;
+    font-weight: bold;
+    color: black;
+}
+
+#help-content * {
+    font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
+}
 
 #help-content {
     padding: 0 20%;
-    font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
 }
 
 #help-content p {
@@ -279,5 +287,11 @@ a, a:visited {
 }
 
 #help-content h2 {
+    padding-top: 20px;
+}
+
+#help-content h3 {
+    font-size: 16px;
+    padding: 0 20px;
     padding-top: 20px;
 }

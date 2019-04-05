@@ -108,12 +108,12 @@ class IDBBackend extends Storage {
         for (let node of todo) {
             let todo_date;
 
-            if (node.todo_date)
-                try {
-                    todo_date = new Date(node.todo_date);
-                    todo_date.setUTCHours(0, 0, 0, 0);
-                } catch (e) {
-                }
+            if (node.todo_date && node.todo_date != "")
+            try {
+                todo_date = new Date(node.todo_date);
+                todo_date.setUTCHours(0, 0, 0, 0);
+            } catch (e) {
+            }
 
             if (todo_date && now >= todo_date)
                 node._overdue = true;
@@ -349,6 +349,7 @@ class IDBBackend extends Storage {
         delete update.a_attr;
         delete update.parent;
         delete update.li_attr;
+        delete update._overdue;
         delete update._extended_todo;
 
         update.tag_list = this._splitTags(update.tags);
