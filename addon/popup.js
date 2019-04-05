@@ -66,16 +66,19 @@ window.onload = function () {
         $("#bookmark-url").val(tab.url);
 
         browser.tabs.executeScript(tab.id, {
-            code: `function extractIcon() {
-                let iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-                console.log(iconElt.href);
-                if (iconElt)
-                    return iconElt.href;
-            }
-            extractIcon();
+            code: `let iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+                   iconElt? iconElt.href: null;
             `}).then(icon => {
                 if (icon && icon.length && icon[0])
                     $("#bookmark-icon").val(icon[0]);
+                else {
+                    let favicon = new URL(tab.url).origin + "/favicon.ico";
+                    fetch(favicon, {method: "HEAD"})
+                        .then(response => {
+                            if (response.ok)
+                                $("#bookmark-icon").val(favicon.toString());
+                    })
+                }
             }).catch(e => {
                 console.log(e)
             });
@@ -87,15 +90,13 @@ window.onload = function () {
         let existing = $(`#bookmark-folder option[value='${node.original.id}']`);
 
         if (!existing.length) {
-            $(`#bookmark-folder option:selected`).removeAttr("selected");
             $("#bookmark-folder option[data-tentative='true']").remove();
             $("#bookmark-folder").prepend(`<option  class='folder-label'  data-tentative='true' selected value='${node.original.id}'>${node.text}</option>`)
             $("#bookmark-folder").selectric("refresh");
         }
-        else {
-            $(`#bookmark-folder option:selected`).removeAttr("selected");
-            existing.attr("selected", true);
-        }
+
+        $("#bookmark-folder").val(node.original.id);
+        $("#bookmark-folder").selectric("refresh");
     });
 
     $("#bookmark-folder").on("change", (e) => {
@@ -107,10 +108,17 @@ window.onload = function () {
 
     $("#new-folder").on("click", () => {
         let selected_node = tree.selected;
-        let node = tree._jstree.create_node(selected_node, {text: "New Folder",
-            type: NODE_TYPE_GROUP, icon: "icons/group.svg"});
-        tree._jstree.deselect_node(selected_node);
+        let node = tree._jstree.create_node(selected_node, {
+            id: "$new_node$",
+            text: "New Folder",
+            type: NODE_TYPE_GROUP,
+            icon: "icons/group.svg",
+            li_attr: {"class": "scrapyard-group"}
+        });
+
+        tree._jstree.deselect_all();
         tree._jstree.select_node(node);
+
         tree._jstree.edit(node, null, (node, success, cancelled) => {
             if (cancelled) {
                 tree._jstree.delete_node(node);
@@ -118,14 +126,16 @@ window.onload = function () {
             else {
                 backend.createGroup(selected_node.original.id, node.text).then(group => {
                     if (group) {
-                        node.original.id = group.id;
-                        node.original.uuid = group.uuid;
+                        tree._jstree.set_id(node, group.id);
+                        node.original = group;
                         BookmarkTree.toJsTreeNode(group);
                         BookmarkTree.reorderNodes(tree._jstree, selected_node);
 
-                        let new_option = $("#bookmark-folder option:selected");
+                        let new_option = $(`#bookmark-folder option[value='$new_node$']`);
                         new_option.text(group.name);
                         new_option.val(node.id);
+                        $("#bookmark-folder").val(node.id);
+                        $("#bookmark-folder").selectric("refresh");
                     }
                 });
             }
@@ -133,6 +143,7 @@ window.onload = function () {
     });
 
     function addBookmark(node_type) {
+        console.log($("#bookmark-folder").val());
         let node = tree._jstree.get_node($("#bookmark-folder").val());
 
         saveHistory(node, folder_history);

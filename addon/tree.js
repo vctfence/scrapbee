@@ -579,13 +579,12 @@ class BookmarkTree {
                         case NODE_TYPE_ARCHIVE:
                             showDlg("properties", ctx_node_data).then(data => {
                                 let original_node_data = all_nodes.find(n => n.id == ctx_node.id);
-
                                 backend.updateBookmark(Object.assign(original_node_data, data)).then(() => {
                                     if (!ctx_node_data._extended_todo) {
-                                        tree.rename_node(ctx_node, ctx_node_data.name);
+                                        tree.rename_node(ctx_node, original_node_data.name);
                                     }
                                     else {
-                                        tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
+                                        tree.rename_node(ctx_node, BookmarkTree._formatTODO(original_node_data));
                                     }
                                     tree.redraw_node(ctx_node, true, false, true);
                                 });
