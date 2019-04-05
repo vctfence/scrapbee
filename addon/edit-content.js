@@ -40,7 +40,7 @@ class EditToolBar {
         });
     }
 
-    isSelectionOn() {
+    isSelectionPresent() {
         var selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
             return !selection.getRangeAt(0).collapsed;
@@ -147,7 +147,7 @@ class EditToolBar {
         }).bind("mousedown", e => {
             e.preventDefault()
             $(self.menu).hide();
-            if (self.isSelectionOn()) {
+            if (self.isSelectionPresent()) {
                 clearMarkPen();
                 this.deselect();
             } else {
@@ -173,7 +173,7 @@ class EditToolBar {
             }).bind("mousedown", e => {
                 e.preventDefault()
                 $(self.menu).hide();
-                if (self.isSelectionOn()) {
+                if (self.isSelectionPresent()) {
                     mark(child);
                     this.deselect();
                 } else {
@@ -197,7 +197,28 @@ class EditToolBar {
         });
         this.menu = $m[0];
 
-        /* original url input */
+        /* the original url input */
+        var check = document.createElement("input");
+        check.type = "checkbox";
+        check.id = "auto-open-check";
+        check.name = "auto-open-check";
+        div.appendChild(check);
+
+        document.addEventListener('mouseup', e => {
+            if (check.checked && this.isSelectionPresent()) {
+                $(".mark-pen-btn").click();
+            }
+        });
+        document.addEventListener('mousedown', e => {
+            if (check.checked && this.isSelectionPresent() && $(self.menu).is(":visible")
+                && e.target !== self.menu) {
+                $(self.menu).hide();
+            }
+        });
+
+        $(div).append("<label for='auto-open-check'>Auto open</label>");
+        
+        /* the original url input */
         var txt = document.createElement("input");
         txt.type = "text";
         txt.className = "original-url-text";
