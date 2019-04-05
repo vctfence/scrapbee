@@ -30,10 +30,14 @@ window.onload = function () {
 
     tree = new BookmarkTree("#treeview", true);
 
+    $("#bookmark-folder").selectric({inheritOriginalWidth: true});
+
     backend.listNodes({
         types: [NODE_TYPE_SHELF, NODE_TYPE_GROUP],
         order: "custom"
     }).then(nodes => {
+        $("#bookmark-folder").html("");
+
         folder_history = localStorage.getItem("popup-folder-history");
 
         if (folder_history != null && folder_history !== "null") {
@@ -50,6 +54,8 @@ window.onload = function () {
             folder_history = [];
             $("#bookmark-folder").append(`<option value='1'>${DEFAULT_SHELF_NAME}</option>`)
         }
+
+        $("#bookmark-folder").selectric("refresh");
 
         tree.update(nodes);
     });
@@ -84,6 +90,7 @@ window.onload = function () {
             $(`#bookmark-folder option:selected`).removeAttr("selected");
             $("#bookmark-folder option[data-tentative='true']").remove();
             $("#bookmark-folder").prepend(`<option data-tentative='true' selected value='${node.original.id}'>${node.text}</option>`)
+            $("#bookmark-folder").selectric("refresh");
         }
         else {
             $(`#bookmark-folder option:selected`).removeAttr("selected");

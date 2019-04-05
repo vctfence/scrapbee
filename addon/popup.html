@@ -4,16 +4,15 @@
 <meta charset="utf-8">
 
     <script type="text/javascript" src="lib/jquery.js"></script>
+    <script type="text/javascript" src="lib/selectric/jquery.selectric.js"></script>
     <script type="text/javascript" src="lib/jstree/jstree.js"></script>
     <script type="module" src="popup.js"></script>
 
-    <link rel="stylesheet" href="lib/jstree/themes/default/style.min.css"/>
-    <link href="popup.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="lib/jstree/themes/default/style.css"/>
+    <link rel="stylesheet" href="lib/selectric/selectric.css"/>
     <link rel="stylesheet" href="jstree.css"/>
 
-
-    <link rel="stylesheet" type="text/css" href="dark.css"/>
-
+    <link href="popup.css" rel="stylesheet" type="text/css">
 </head>
 
 <body id="scrapyard-popup">
@@ -33,6 +32,7 @@
 			<div class="property-row dlg">
 				<label id="label-folder" for="bookmark-folder">Folder:</label>
 				<select id="bookmark-folder">
+                    <option></option>
                 </select>
 			</div>
 			<div class="tree-container">

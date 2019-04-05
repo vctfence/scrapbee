@@ -68,7 +68,6 @@ browser.runtime.onMessage.addListener(message => {
                     return browser.downloads.download({url: url, filename: message.shelf + ".org", saveAs: false});
             });
             break;
-
     }
 });
 

@@ -187,6 +187,7 @@ h2{
     background-size: 20px 20px;
     vertical-align:middle;
     display:inline-block;
+
 }
 
 
@@ -198,6 +199,7 @@ form
 fieldset {
     border-radius: 5px;
     border:1px solid #777;
+    vertical-align:middle;
 }
 
 fieldset > div
@@ -213,21 +215,21 @@ fieldset > div:last-child
 fieldset input[type="checkbox"]
 {
     margin-right: 7px;
-    vertical-align: 0px;
+    vertical-align: middle;
 }
 
 fieldset input[type="radio"]
 {
     margin-left: 4px;
     margin-right: 7px;
-    vertical-align: 0px;
+    /*vertical-align: 0px;*/
 }
 
 fieldset input[type="text"]
 {
     margin-left: 10px;
     padding: 1px 3px 1px 3px;
-    vertical-align: 2px;
+    /*vertical-align: 2px;*/
 }
 
 fieldset input[type="number"]
@@ -237,7 +239,7 @@ fieldset input[type="number"]
     margin-right: 8px;
     padding: 1px 0px 1px 0px;
     text-align: center;
-    vertical-align: 2px;
+    /*vertical-align: 2px;*/
 }
 
 body:not([windows]) fieldset input[type="number"]
@@ -247,13 +249,18 @@ body:not([windows]) fieldset input[type="number"]
 
 fieldset label
 {
-    vertical-align: 2px;
+    /*vertical-align: 2px;*/
 }
 
 fieldset label:first-child
 {
     margin-left: 3px;
 }
+
+a, a:visited {
+    color: #0074D9;
+}
+
 
 #help-content {
     padding: 0 20%;
@@ -266,7 +273,7 @@ fieldset label:first-child
     font-size: 12pt;
 }
 
-#help-content a {
+#help-content a, #help-content a:visited {
     font-size: 12pt;
     color: #0074D9;
 }

@@ -228,7 +228,7 @@
 
 .jstree-default .extended-todo .jstree-wholerow.jstree-wholerow-hovered,
 .jstree-default .extended-todo .jstree-wholerow.jstree-wholerow-clicked {
-    height: 33px;
+    /*height: 31px;*/
 }
 
 .jstree-default .extended-todo .todo-path {

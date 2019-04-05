@@ -5,11 +5,7 @@ window.onload=function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    fetch("_locales/en/help.html").then(response => {
-        return response.text();
-    }).then(text => {
-        $("#div-help").html(text);
-    });
+    let darkStyle;
 
     /** help mark */
     $(".help-mark").hover(function(e){
@@ -33,6 +29,8 @@ window.onload=function(){
     }
     window.onhashchange = switchPane;
     switchPane();
+
+    $("#copy-style-link").on("click", onCopyStyle);
 
     document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
     
@@ -99,6 +97,19 @@ window.onload=function(){
         document.getElementById("option-revoke-archive-url-after").value = settings.arcive_url_lifetime();
     });
 
+    fetch("_locales/en/help.html").then(response => {
+        return response.text();
+    }).then(text => {
+        $("#div-help").html(text);
+    });
+
+    fetch("shadowfox/userContent.css").then(response => {
+        return response.text();
+    }).then(text => {
+        darkStyle = text.replace(/%%%/g, browser.runtime.getURL("/"));
+        console.log(darkStyle);
+    });
+
     function onClickSave(event)
     {
         chrome.storage.local.set({"savepage-settings":
@@ -154,6 +165,11 @@ window.onload=function(){
                 document.getElementById("options-save-button").style.setProperty("font-weight","normal","");
             }
             ,1000);
+    }
+
+    function onCopyStyle(e) {
+        navigator.clipboard.writeText(darkStyle);
+
     }
 
 

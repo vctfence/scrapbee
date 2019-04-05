@@ -44,9 +44,12 @@ body {
     vertical-align: middle;
 }
 
-.property-row input, .property-row select {
+
+.property-row input, .property-row select, .selectric-wrapper {
 	flex: 1 1 auto;
 }
+
+
 
 /*#bookmark-folder,  #bookmark-folder option {*/
     /*font-family: 'FontAwesome', 'Arial', 'Helvetica', sans-serif;*/
@@ -106,4 +109,9 @@ body {
 
 #create-archive:hover {
 	background: #FFAD57;	
+}
+
+.selectric {
+    border-radius: initial;
+    border: 1px solid WindowFrame;
 }

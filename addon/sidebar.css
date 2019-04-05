@@ -196,7 +196,7 @@ html,body{
     border:0;
 }
 .black-button {
-    background:#fff;
+    background:transparent;
     color:#000;
 }
 .item.separator{
@@ -242,8 +242,12 @@ select{
 }
 
 #shelf-menu-button {
-    width: 23px;
-    margin-top: 1px;
+    width: 14px;
+    height: 14px;
+    margin-top: 3px;
+    margin-left: 5px;
+    margin-right: 4px;
+    cursor: pointer;
     background: transparent !important;
 }
 
@@ -381,3 +385,6 @@ select{
     margin-top: 2px;
     margin-right: 4px;
 }
+
+
+

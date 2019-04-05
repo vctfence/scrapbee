@@ -179,7 +179,7 @@
                         <form>
                             <fieldset style="border: none;">
                                 <input id="option-revoke-archive-url-after" type="number" min="1"
-                                       value=""/><label for="option-revoke-archive-url-after">Revoke archive URLs after (min)
+                                       value=""/><label for="option-revoke-archive-url-after">Revoke archive URLs after (min)</label>
                                 <i class="help-mark"></i>
                                 <div class="tips hide">Saves memory, but it will not be possible to refresh open archived pages after this amount of time.</div>
 
@@ -188,7 +188,19 @@
                     </div>
                 </td>
             </tr>
-
+            <tr>
+                <td>Style</td>
+                <td>
+                    <div class="panel" id="style" style="display: flex;">
+                        <p>
+                        <a href="#" id="copy-style-link">Copy</a> dark theme code for <span style="color: #333;">userContent.css</span>
+                        (<a href="https://overdodactyl.github.io/ShadowFox/" target="_blank">ShadowFox</a> is required)
+                        <i class="help-mark"></i>
+                        <span class="tips hide">Paste this code into <b>&lt;your Firefox profile directory&gt;/chrome/userContent.css</b></span>
+                        </p>
+                    </div>
+                </td>
+            </tr>
             <tr>
                 <td></td>
                 <td><input id="options-save-button" type="button" name="save" value="{Save}" style="float: right;"/>
