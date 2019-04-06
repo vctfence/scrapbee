@@ -79,6 +79,7 @@ function performImport(context, tree, file, file_name, file_ext) {
                 loadShelves(context, tree).then(() => {
                     tree.openRoot();
                 });
+                invalidateCompletion();
             });
         }).catch(() => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
@@ -122,6 +123,10 @@ function styleBuiltinShelf() {
         $("div.selectric span.label").addClass("option-builtin");
     else
         $("div.selectric span.label").removeClass("option-builtin");
+}
+
+function invalidateCompletion() {
+    browser.runtime.sendMessage("ubiquitywe@firefox", {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
 }
 
 function loadShelves(context, tree) {
@@ -269,6 +274,7 @@ window.onload = function () {
 
                             shelf_list.selectric('refresh');
                             switchShelf(context, tree, shelf.id);
+                            invalidateCompletion();
                         }
                     });
                 }
@@ -294,6 +300,7 @@ window.onload = function () {
                             tree.renameRoot(newName)
 
                             shelf_list.selectric('refresh');
+                            invalidateCompletion()
                         });
                 }
             });
@@ -322,6 +329,7 @@ window.onload = function () {
                     shelf_list.val(1);
                     shelf_list.selectric('refresh');
                     switchShelf(context, tree, 1);
+                    invalidateCompletion();
                 });
             }
         });
@@ -342,6 +350,7 @@ window.onload = function () {
                     $(`#shelfList option[value="${node_id}"]`).text(node.text);
 
                     shelf_list.selectric('refresh');
+                    invalidateCompletion();
                 });
         });
     };
@@ -366,6 +375,7 @@ window.onload = function () {
                         shelf_list.val(1);
                         shelf_list.selectric('refresh');
                         switchShelf(context, tree, 1);
+                        invalidateCompletion();
                     }
                 });
             }
@@ -472,17 +482,51 @@ window.onload = function () {
     });
 
 
-    function handleMessage(request, sender, sendResponse) {
+    browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.type === "BOOKMARK_CREATED") {
             loadShelves(context, tree);
+            invalidateCompletion();
         }
-    }
+    });
 
-    browser.runtime.onMessage.addListener(handleMessage);
+    browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+        switch (message.type) {
+            case "SCRAPYARD_SWITCH_SHELF":
+                backend.queryShelf(message.name).then(shelf => {
+                    if (shelf) {
+                        shelf_list.val(shelf.id);
+                        shelf_list.selectric("refresh");
+                        switchShelf(context, tree, shelf.id);
+                    }
+                    else {
+                        if (!isSpecialShelf(message.name)) {
+                            backend.createGroup(null, message.name, NODE_TYPE_SHELF).then(shelf => {
+                                if (shelf) {
+                                    $("<option></option>").appendTo(shelf_list)
+                                        .html(shelf.name)
+                                        .attr("value", shelf.id)
+                                        .attr("selected", true);
+
+                                    shelf_list.selectric('refresh');
+                                    shelf_list.val(shelf.id);
+                                    switchShelf(context, tree, shelf.id);
+                                }
+                            });
+                        }
+                        else {
+                            alert("{Error}", "Can not create shelf with this name.")
+                        }
+                    }
+                });
+                break;
+        }
+    });
 
     settings.load(() => {
         loadShelves(context, tree);
     });
 };
+
+
 
 console.log("==> sidebar.js loaded");

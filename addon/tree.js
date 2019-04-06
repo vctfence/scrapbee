@@ -265,6 +265,7 @@ class BookmarkTree {
         else {
             this._everything = false;
             let shelves = this.data.filter(n => n.type == NODE_TYPE_SHELF);
+
             this._jstree.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + shelves[0].name));
         }

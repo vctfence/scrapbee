@@ -1,23 +1,11 @@
-var root = null;
-var sel = window.getSelection();
 
-if (sel && !sel.isCollapsed) {
+function captureSelection(options) {
+    let sel = window.getSelection();
+    let root = null;
     let id = 1;
 
-    root = document.createElement("div")
-    root.style.display = "none";
-    //document.body.appendChild(root);
-
-    for (let i = 0; i < sel.rangeCount; ++i) {
-        let range = sel.getRangeAt(i);
-
-        if (range.isCollapsed)
-            continue;
-
-        let clonedContents = range.cloneContents();
-
+    function retainStructure(parent, content) {
         let parents = [];
-        let parent = range.commonAncestorContainer;
 
         // mark all encountered parents including <html>
         while (parent && parent.localName !== "html") {
@@ -54,14 +42,57 @@ if (sel && !sel.isCollapsed) {
                 next = parent;
             }
 
-            next.appendChild(clonedContents);
+            next.appendChild(content);
         }
         else
-            root.appendChild(clonedContents);
+            root.appendChild(content);
     }
+
+
+    if ((!sel || sel.isCollapsed) && (options._selector || options._filter)) {
+        root = document.createElement("div")
+
+        let parts = options._selector
+            ? Array.prototype.slice.call(document.querySelectorAll(options._selector))
+            : Array.prototype.slice.call(document.body.childNodes);
+
+        for (let part of parts) {
+            retainStructure(part.parentNode, part.cloneNode(true));
+        }
+
+        if (options._filter) {
+            let filtered = root.querySelectorAll(options._filter);
+
+            filtered.forEach(n => {
+                n.parentNode.removeChild(n);
+            })
+        }
+    }
+    else if (sel && !sel.isCollapsed) {
+        root = document.createElement("div")
+
+        for (let i = 0; i < sel.rangeCount; ++i) {
+            let range = sel.getRangeAt(i);
+
+            if (range.isCollapsed)
+                continue;
+
+            retainStructure(range.commonAncestorContainer, range.cloneContents());
+        }
+    }
+
+
 
     document.querySelectorAll(`*[savepage-extraction-id]`)
         .forEach(e => e.removeAttribute("savepage-extraction-id"));
+
+    return root ? root.innerHTML : undefined;
 }
 
-root? root.innerHTML: undefined;
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    switch (message.type) {
+        case "CAPTURE_SELECTION":
+            sendResponse(captureSelection(message.options));
+            break;
+    }
+});

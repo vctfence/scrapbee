@@ -184,7 +184,7 @@ class IDBBackend extends Storage {
         let path_list = this._splitPath(path);
         let groups = await this._queryGroups(path_list);
 
-        return groups[path_list[path_list.length - 1]];
+        return groups[path_list[path_list.length - 1].toLowerCase()];
     }
 
     // creates all non-existent groups

@@ -1,4 +1,4 @@
-import {NODE_TYPE_BOOKMARK} from "./db.js";
+import {NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "./db.js";
 import {backend} from "./backend.js";
 import {exportOrg, importOrg} from "./import.js";
 import {settings} from "./settings.js";

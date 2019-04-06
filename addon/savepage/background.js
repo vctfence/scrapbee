@@ -384,6 +384,7 @@
 
 import {backend} from "../backend.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
+import {FirefoxSearchProvider} from "../search.js";
 
 /************************************************************************/
 
@@ -643,7 +644,7 @@ function addListeners()
                         function(tabs)
                         {
                             initiateAction(tabs[0],buttonAction,null,false,false,
-                                bookmark);
+                                {options: {}, bookmark: bookmark});
                         });
                 });
                 break;
@@ -883,6 +884,17 @@ function addListeners()
                 sendResponse(browser.runtime.getManifest().version);
                 break;
 
+            case "SCRAPYARD_LIST_SHELVES":
+                if (sender.extensionId !== "ubiquitywe@firefox")
+                    return;
+
+                sendResponse(backend.listNodes({
+                    types: [NODE_TYPE_SHELF]
+                }).then(nodes => {
+                    return nodes.map(n => ({name: n.name}))
+                }));
+                break;
+
             case "SCRAPYARD_LIST_GROUPS":
                 if (sender.extensionId !== "ubiquitywe@firefox")
                     return;
@@ -910,26 +922,31 @@ function addListeners()
 
                 delete message.type;
 
-                let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);
-
-                if (message.types) {
-                    message.types = message.types.concat([NODE_TYPE_SHELF]);
+                if (message.types === "firefox") {
+                    sendResponse(new FirefoxSearchProvider().search(message.search));
                 }
+                else {
+                    let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);
 
-                if (message.path && message.path.startsWith("~"))
-                    message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
-
-                sendResponse(backend.listNodes(message).then(nodes => {
-                    for (let node of nodes) {
-                        if (node.type === NODE_TYPE_GROUP) {
-                            computePath(node, nodes);
-                        }
+                    if (message.types) {
+                        message.types = message.types.concat([NODE_TYPE_SHELF]);
                     }
-                    if (no_shelves)
-                        return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
-                    else
-                        return nodes;
-                }));
+
+                    if (message.path && message.path.startsWith("~"))
+                        message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+
+                    sendResponse(backend.listNodes(message).then(nodes => {
+                        for (let node of nodes) {
+                            if (node.type === NODE_TYPE_GROUP) {
+                                computePath(node, nodes);
+                            }
+                        }
+                        if (no_shelves)
+                            return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
+                        else
+                            return nodes;
+                    }));
+                }
                 break;
 
             case "SCRAPYARD_ADD_BOOKMARK":
@@ -951,7 +968,7 @@ function addListeners()
                         function(tabs)
                         {
                             initiateAction(tabs[0],buttonAction,null,false,false,
-                                bookmark);
+                                {options: message, bookmark: bookmark});
                         });
                 });
                 break;
@@ -989,9 +1006,9 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                 if (contentType == null)
                     contentType = "application/pdf";
 
-                backend.storeBlob(payload.id, this.response, contentType, true);
+                backend.storeBlob(payload.bookmark.id, this.response, contentType, true);
 
-                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload});
+                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload.bookmark});
 
                 alertNotify("Successfully archived page.");
             }
@@ -1026,11 +1043,13 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                         await browser.tabs.executeScript(tab.id, {
                             file: "savepage/selection.js",
                             frameId: frame.frameId
-                        }).then(selection => {
-                            if (selection && selection.length && selection[0]) {
-                                selectedHtml = selection[0];
-                            }
+                        }).then(() => {
+                            return browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: payload.options})
+                                .then(selection => selectedHtml = selection);
                         });
+
+                        if (selectedHtml)
+                            break;
                     } catch (e) {
                         console.error(e);
                     }
@@ -1042,7 +1061,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
         }).then(selection => { // load content-script
             chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
                     externalsave: externalsave, swapdevices: swapdevices,
-                    selection: selection, payload: payload },
+                    selection: selection, payload: payload.bookmark },
                 function(response) {
                     if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script not loaded in active tab */
                     {
@@ -1053,7 +1072,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                                         chrome.tabs.sendMessage(tab.id, {
                                                 type: "performAction", menuaction: menuaction, srcurl: srcurl,
                                                 externalsave: externalsave, swapdevices: swapdevices,
-                                                selection: selection, payload: payload
+                                                selection: selection, payload: payload.bookmark
                                             },
                                             function (response) {
                                                 if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/

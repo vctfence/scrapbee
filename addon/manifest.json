@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Scrapyard",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -51,5 +51,5 @@
         "open_in_tab": true,
         "page": "options.html"
     },
-    "web_accessible_resources": []
+    "web_accessible_resources": ["icons/lock.svg"]
 }
