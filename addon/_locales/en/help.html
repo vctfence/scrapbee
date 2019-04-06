@@ -1,6 +1,37 @@
+<style>
+    #help-content * {
+        font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
+    }
+
+    #help-content {
+        padding: 0 20%;
+    }
+
+    #help-content p {
+        padding: 0 20px;
+        text-align: justify;
+        font-size: 12pt;
+    }
+
+    #help-content a, #help-content a:visited {
+        font-size: 12pt;
+        color: #0074D9;
+    }
+
+    #help-content h2 {
+        padding-top: 20px;
+    }
+
+    #help-content h3 {
+        font-size: 16px;
+        padding: 0 20px;
+        padding-top: 20px;
+    }
+</style>
+
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
-    <p>Scrapyard is a Firefox extension where you can store and organize bookmarks, page fragments or complete documents
+    <p>Scrapyard is a Firefox extension that resides in sidebar, where you can store and organize bookmarks, page fragments or complete documents
         in unlimited quantities. By utilizing browser local storage Scrapyard does not require
         external tools to operate and allows to import or export data in
         <a href="https://orgmode.org" target="_blank">org-mode</a> format.</p>
@@ -9,37 +40,37 @@
 
     <h3>Capturing Pages</h3>
     <p>
-        To capture a web-page or its fragment select the page part you want to archive, open Scrapyard popup window
+        To capture a web-page or its fragment, select the page part you want to archive, open Scrapyard popup window
         by clicking the icon on browser toolbar, choose the necessary destination folder, and press the "Bookmark"
         or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button stores the
         current selection, the whole page (if there is no active selection) or the whole document, if the opened link
         is not a web-page. <br/><br/>
 
         <div style="text-align: center">
-        <img src="images/capture-popup.png">
+        <img src="_locales/en/images/capture-popup.png">
         </div>
     </p>
 
     <h3>Bookmark Shelves</h3>
     <p>
-        It is possible to create unlimited amount of bookmark shelves in Scrapyard to structure your captures.
+        It is possible to create unlimited amount of bookmark shelves to structure your captures.
         The shelf named "everything" allows to browse and search through all existing shelves. Scrapyard built-in
         shelves are listed in bold font and can not be deleted or renamed (including the "default" one).</p>
 
         <p style="text-align: center">
-            <img src="images/shelves.png">
+            <img src="_locales/en/images/shelves.png">
         </p>
 
     <p>In the bookmark tree archives are marked with italic font, while ordinary bookmarks with the regular one.</p>
 
     <h3>TODO</h3>
-    <p>It may be necessary to prioritize your bookmarks for processing. You may accomplish this by assigning one of
-        the following TODO priorities to a bookmark: TODO, WAITING or POSTPONED. You may find all your prioritized bookmarks
+    <p>It may be convenient to prioritize your bookmarks for processing. The following TODO priorities may be assigned
+        to a bookmark: TODO, WAITING or POSTPONED. You may find all your prioritized bookmarks
         at the built-in "TODO" shelf, sorted in the corresponding order. All bookmarks marked as DONE or CANCELLED
         are displayed at the "DONE" shelf.</p>
 
     <p style="text-align: center">
-        <img src="images/todo.png">
+        <img src="_locales/en/images/todo.png">
     </p>
 
     <p>If the path of a bookmark provides not enough context, it is possible to fill the "Details" and "Date"
@@ -48,32 +79,31 @@
 
     <h3>Markers</h3>
     <p>If you often review your captures, it may be useful to highlight important key points.
-        To make this possible, the editing toolbar at every archived page provides a set of text markers and also allows
+        To make this possible, at every archived page the editing toolbar provides a set of text markers and also allows
         to clean pages of unnecessary elements.</p>
 
     <p style="text-align: center">
-        <img src="images/markers.png">
+        <img src="_locales/en/images/markers.png">
     </p>
 
     <p>The "Auto open" check makes the marker menu to open automatically when some text is selected.</p>
     <p>IMPORTANT: it is necessary to manually save changes after the editing is done.</p>
 
-    <h2>Advanced topics</h2>
+    <h2>Advanced features</h2>
 
     <h3>Natural Language Interface (optional)</h3>
     <p>
         It is possible to issue commands to Scrapyard through the natural language interface offered by
         <a href="https://gchristensen.github.io/ubiquitywe/"  target="_blank">UbiquityWE</a> extension.
-        To operate Scrapyard with text commands just install UbiquityWE. It knows about Scrapyard, but it is necessary
-        to restart Firefox if you installed Ubiquity first.</p>
+        To operate Scrapyard with text commands just install UbiquityWE.</p>
 
     <h3>The "bookmark" and "archive" Commands</h3>
         <p>Use the "bookmark" or "archive" commands with parameters to archive a page into the required destination.
         The folders in the bookmark path will be created automatically if they do not exist. The first folder in the path
-        is always the name of a bookmark shelf. The name of the 'default' shelf can be substituted by '~' character.</p>
+        is always the name of a bookmark shelf. The name of the 'default' shelf may be substituted by '~' character.</p>
 
     <p style="text-align: center">
-        <img src="images/capture-nl.png">
+        <img src="_locales/en/images/capture-nl.png">
     </p>
 
     <h3>The "scrapyard" Command</h3>
@@ -82,7 +112,20 @@
     </p>
 
     <p style="text-align: center">
-        <img src="images/scrapyard-cmd.png">
+        <img src="_locales/en/images/scrapyard-command.png">
+    </p>
+
+    <h3>Creating Custom Capture Commands</h3>
+
+    <p>If you often save bookmarks with similar properties to the same destination, it is possible to create custom
+        capture commands with preset parameters. Link "CAPTURE" at the bottom-right of UbiquityWE command editor allows
+        to insert a template of such command. In addition to preset parameters, custom capture commands allow to
+        specify (comma-separated) CSS selectors for elements that will be captured and deleted automatically.
+        For example, if the ".article-body,.comments" selectors are specified, only contents of these HTML element
+        will be captured.</p>
+
+    <p style="text-align: center">
+        <img src="_locales/en/images/custom-command.png">
     </p>
 
 </div>

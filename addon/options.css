@@ -24,11 +24,11 @@ body{
 }
 #div-page{
     display:table-row;
-    background:#999;
+    background:white;
 }
 #div-form-left {
     display:table-cell;
-    background:#999;
+    background:white;
     padding:0;
     vertical-align:top;
     width:150px;
@@ -100,7 +100,7 @@ div.panel{
 }
 .left-index.focus{
     border-right:3px solid #079;
-    background:#bbb;
+    background:#ddd;
 }
 #rdf-area div{
     margin-bottom:3px;
@@ -261,37 +261,8 @@ a, a:visited {
     color: #0074D9;
 }
 
-.left-index {
+a.left-index, a:visited.left-index {
     text-decoration: none;
     font-weight: bold;
     color: black;
-}
-
-#help-content * {
-    font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
-}
-
-#help-content {
-    padding: 0 20%;
-}
-
-#help-content p {
-    padding: 0 20px;
-    text-align: justify;
-    font-size: 12pt;
-}
-
-#help-content a, #help-content a:visited {
-    font-size: 12pt;
-    color: #0074D9;
-}
-
-#help-content h2 {
-    padding-top: 20px;
-}
-
-#help-content h3 {
-    font-size: 16px;
-    padding: 0 20px;
-    padding-top: 20px;
 }

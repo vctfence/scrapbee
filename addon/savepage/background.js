@@ -529,7 +529,7 @@ function initialize()
         
         if (!("options-savehtmlaudiovideo" in object)) object["options-savehtmlaudiovideo"] = true;
         
-        if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = true;
+        if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = false;
         
         if (!("options-savecssimagesall" in object)) object["options-savecssimagesall"] =
             ("options-saveallcssimages" in object) ? object["options-saveallcssimages"] : true;  /* Version 2.0-3.0 */
@@ -558,7 +558,7 @@ function initialize()
         
         if (!("options-forcelazyloads" in object)) object["options-forcelazyloads"] = false;
         
-        if (!("options-purgeelements" in object)) object["options-purgeelements"] = false;
+        if (!("options-purgeelements" in object)) object["options-purgeelements"] = true;
         
         if (!("options-maxframedepth-9.0" in object))
         {

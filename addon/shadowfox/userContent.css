@@ -1,9 +1,9 @@
 @-moz-document url-prefix("%%%") {
 
-    html, body, .toolbar, .black-button, .simple-menu, .dlg, .dlg * {
+    html, body, .toolbar, .black-button, .simple-menu, .dlg, .dlg *, #div-form-left, .div-area, .div-area * {
         background: var(--in-content-page-background) !important;
         border-color: var(--tone-5) !important;
-        color: var(--in-content-page-color)!important;
+        color: var(--in-content-page-color) !important;
     }
 
     .dlg *,
@@ -16,7 +16,7 @@
 
     .dlg input, .dlg select, .selectric {
         border: 1px solid var(--in-content-box-border-color) !important;
-        border-radius: 3px  !important;
+        border-radius: 3px !important;
         -moz-appearance: none !important;
     }
 
@@ -29,7 +29,7 @@
     }
 
     .dlg input[type=button] {
-        cursor: pointer  !important;
+        cursor: pointer !important;
     }
 
     .simple-menu div:hover,
@@ -61,7 +61,7 @@
         background: var(--in-content-box-background-hover) !important;
         border: 1px solid var(--in-content-box-border-color) !important;
         padding: 0px !important;
-        color: var(--in-content-page-color)!important;
+        color: var(--in-content-page-color) !important;
         box-shadow: none !important;
         text-shadow: none !important;
     }
@@ -119,13 +119,13 @@
     }
 
     input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-scroll li, .simple-menu div  {
-        background-color: var(--in-content-box-background)!important;
-        border-color: var(--in-content-box-border-color)!important;
+        background-color: var(--in-content-box-background) !important;
+        border-color: var(--in-content-box-border-color) !important;
         color: var(--in-content-page-color)!important;
     }
 
     .selectric .label {
-        background-color: var(--in-content-box-background)!important;
+        background-color: var(--in-content-box-background) !important;
     }
 
     .midnight-filter, .midnight-filter-menu {
@@ -164,21 +164,31 @@
         color: #00b60e !important;
     }
 
-    .div-area, .div-area * {
-        color: black !important;
-    }
-
-    .div-area input[type=button]{
-        background:#079 !important;
-        color:#fff !important;
-    }
-
-    .div-area a, .div-area a:visited {
-        color: #0074D9 !important;
-    }
-
     .left-index {
+        color: var(--in-content-page-color) !important;
+    }
+
+    .left-index.focus{
+        border-right:3px solid var(--tone-8) !important;
+        background:#ddd !important;
         color: black !important;
     }
+
+    .div-area input[type=number] {
+        color: black !important;
+    }
+
+
+    .div-area input[type=button] {
+        border: 1px solid var(--in-content-box-border-color) !important;
+        border-radius: 3px  !important;
+        -moz-appearance: none !important;
+        cursor: pointer  !important;
+    }
+
+    .div-area input[type=button]:hover {
+        background: var(--in-content-box-background-hover) !important;
+    }
+
 
 }
