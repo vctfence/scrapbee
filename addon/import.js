@@ -25,19 +25,24 @@ export async function importOrg(shelf, text) {
 
     async function importLastObject() {
         if (last_object) {
-            let data = last_object.data;
-            delete last_object.data;
-
-            let index = last_object.index;
-            delete last_object.index;
-
             // UUIDs currently aren't respected
 
             if (last_object.type === NODE_TYPE_ARCHIVE) {
+                let data = last_object.data;
+                let binary = !!last_object.byte_length;
+
+                delete last_object.data;
+                delete last_object.byte_length;
+                delete last_object.compressed;
+
                 let node = await backend.importBookmark(last_object);
 
-                await backend.storeBlob(node.id, data, last_object.mime_type);
-                await backend.storeIndex(node.id, index);
+                if (data) {
+                    await backend.storeBlob(node.id, data, last_object.mime_type);
+
+                    if (!binary)
+                        await backend.storeIndex(node.id, data.indexWords());
+                }
             }
             else {
                 await backend.importBookmark(last_object);
@@ -80,8 +85,8 @@ export async function importOrg(shelf, text) {
                     last_object.todo_state = TODO_STATES[todo];
             }
 
-            if (subnodes[subnodes.length - 1].type === "text"
-                    && subnodes[subnodes.length - 1].value.indexOf(":") >= 0) {
+            if (subnodes.length > 3 && subnodes[subnodes.length - 1].type === "text"
+                    && /^:.*:$/.test(subnodes[subnodes.length - 1].value.trim())) {
 
                 last_object.tags = subnodes[subnodes.length - 1].value.trim()
                     .split(":")
@@ -117,32 +122,36 @@ export async function importOrg(shelf, text) {
                         case "type":
                         case "todo_pos":
                         case "todo_state":
-                            last_object[property.name] = parseInt(property.value);
+                        case "byte_length":
+                            if (property.value)
+                                last_object[property.name] = parseInt(property.value);
                             break;
                         case "date_added":
                         case "date_modified":
-                            last_object[property.name] = new Date(property.value);
+                            if (property.value)
+                                last_object[property.name] = new Date(property.value);
                             break;
                         default:
-                            last_object[property.name] = property.value;
+                            if (property.value)
+                                last_object[property.name] = property.value.trim();
                     }
                 }
 
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
                     let compressed = last_object["compressed"];
 
-                    if (last_object.data)
+                    if (last_object.data) {
                         last_object.data = compressed
-                            ? LZString.decompressFromBase64(last_object.data).trim()
-                            : decodeURIComponent(escape(window.atob(last_object.data)));
+                            ? LZString.decompressFromBase64(last_object.data)
+                            : JSON.parse(last_object.data);
 
-                    if (last_object.index) {
-                        let index_json = compressed
-                            ? LZString.decompressFromBase64(last_object.index).trim()
-                            : decodeURIComponent(escape(window.atob(last_object.index)));
+                        if (last_object.byte_length) {
+                            let byteArray = new Uint8Array(last_object.byte_length);
+                            for (let i = 0; i < last_object.data.length; ++i)
+                                byteArray[i] = last_object.data.charCodeAt(i);
 
-                        if (index_json)
-                            last_object.index = JSON.parse(index_json);
+                            last_object.data = byteArray;
+                        }
                     }
                 }
             }
@@ -171,8 +180,11 @@ async function objectToProperties(node, compress) {
     if (node.type === NODE_TYPE_ARCHIVE) {
         let blob = await backend.fetchBlob(node.id);
         if (blob) {
-            if (blob && blob.type)
+            if (blob.type)
                 lines.push(`    :mime_type: ${blob.type}`);
+
+            if (blob.byte_length)
+                lines.push(`    :byte_length: ${blob.byte_length}`);
 
             let content;
 
@@ -181,17 +193,10 @@ async function objectToProperties(node, compress) {
                 content = LZString.compressToBase64(blob.data);
             }
             else
-                content = btoa(unescape(encodeURIComponent(blob.data)));
+                content = JSON.stringify(blob.data);
 
             lines.push(`    :data: ${content}`);
         }
-
-        let index = await backend.fetchIndex(node.id);
-        if (index)
-            if (compress)
-                lines.push(`    :index: ${LZString.compressToBase64(JSON.stringify(index.words))}`);
-            else
-                lines.push(`    :index: ${btoa(unescape(encodeURIComponent(JSON.stringify(index.words))))}`);
     }
 
     return lines.join("\n");

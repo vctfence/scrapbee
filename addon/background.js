@@ -2,6 +2,7 @@ import {NODE_TYPE_BOOKMARK} from "./db.js";
 import {backend} from "./backend.js";
 import {exportOrg, importOrg} from "./import.js";
 import {settings} from "./settings.js";
+import {showNotification} from "./utils.js";
 
 /* Internal message listener */
 
@@ -16,8 +17,17 @@ browser.runtime.onMessage.addListener(message => {
         case "BROWSE_ARCHIVE":
             return backend.fetchBlob(message.node.id).then(blob => {
                 if (blob) {
-                    let htmlBlob = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
-                    let objectURL = URL.createObjectURL(htmlBlob);
+
+                    if (blob.byte_length) {
+                        let byteArray = new Uint8Array(blob.byte_length);
+                        for (let i = 0; i < blob.data.length; ++i)
+                            byteArray[i] = blob.data.charCodeAt(i);
+
+                        blob.data = byteArray;
+                    }
+
+                    let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
+                    let objectURL = URL.createObjectURL(object);
                     let archiveURL = objectURL + "#" + message.node.uuid + ":" + message.node.id;
 
                     setTimeout(() => {
@@ -34,7 +44,7 @@ browser.runtime.onMessage.addListener(message => {
                     });
                 }
                 else {
-                    browser.tabs.executeScript({code : `alert("Error: no data is stored.");`});
+                    showNotification({message: "No data is stored", title: "Error"});
                 }
             });
             break;

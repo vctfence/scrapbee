@@ -107,7 +107,6 @@ window.onload=function(){
         return response.text();
     }).then(text => {
         darkStyle = text.replace(/%%%/g, browser.runtime.getURL("/"));
-        console.log(darkStyle);
     });
 
     function onClickSave(event)

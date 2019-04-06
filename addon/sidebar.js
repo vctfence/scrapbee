@@ -217,8 +217,9 @@ window.onload = function () {
 
     let tree = new BookmarkTree("#treeview");
     let context = new SearchContext(tree);
+    let shelf_list = $("#shelfList");
 
-    $("#shelfList").selectric({inheritOriginalWidth: true});
+    shelf_list.selectric({inheritOriginalWidth: true});
 
     var btn = document.getElementById("btnLoad");
     btn.onclick = function () {
@@ -239,7 +240,7 @@ window.onload = function () {
         });
     };
 
-    $("#shelfList").change(function () {
+    shelf_list.change(function () {
         styleBuiltinShelf();
         switchShelf(context, tree, this.value);
     });
@@ -255,18 +256,18 @@ window.onload = function () {
             let name;
             if (name = data.title) {
                // let existingOption = $(`#shelfList option:contains("${name}")`);
-                let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
+                let selectedOption = $(`#shelfList option[value='${shelf_list.val()}']`);
 
                 if (!isSpecialShelf(name)) {
                     backend.createGroup(null, name, NODE_TYPE_SHELF).then(shelf => {
                         if (shelf) {
                             selectedOption.removeAttr("selected");
-                            $("<option></option>").appendTo($("#shelfList"))
+                            $("<option></option>").appendTo(shelf_list)
                                 .html(shelf.name)
                                 .attr("value", shelf.id)
                                 .attr("selected", true);
 
-                            $("#shelfList").selectric('refresh');
+                            shelf_list.selectric('refresh');
                             switchShelf(context, tree, shelf.id);
                         }
                     });
@@ -279,7 +280,7 @@ window.onload = function () {
     });
 
     $("#shelf-menu-rename").click(() => {
-        let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
+        let selectedOption = $(`#shelfList option[value='${shelf_list.val()}']`);
         let id = parseInt(selectedOption.val());
         let name = selectedOption.text();
 
@@ -292,7 +293,7 @@ window.onload = function () {
                             selectedOption.text(newName);
                             tree.renameRoot(newName)
 
-                            $("#shelfList").selectric('refresh');
+                            shelf_list.selectric('refresh');
                         });
                 }
             });
@@ -318,8 +319,8 @@ window.onload = function () {
                 backend.deleteNodes(id).then(() => {
                     $(`#shelfList option[value="${id}"]`).remove();
 
-                    $("#shelfList").val(1);
-                    $("#shelfList").selectric('refresh');
+                    shelf_list.val(1);
+                    shelf_list.selectric('refresh');
                     switchShelf(context, tree, 1);
                 });
             }
@@ -340,7 +341,7 @@ window.onload = function () {
                     tree._jstree.rename_node(node.id, node.text);
                     $(`#shelfList option[value="${node_id}"]`).text(node.text);
 
-                    $("#shelfList").selectric('refresh');
+                    shelf_list.selectric('refresh');
                 });
         });
     };
@@ -357,11 +358,13 @@ window.onload = function () {
             if (node.name) {
                 backend.deleteNodes(node.id).then(() => {
                     tree._jstree.delete_node(node.id);
+                    
                     $(`#shelfList option[value="${node.id}"]`).remove();
+                    shelf_list.selectric('refresh'); 
 
                     if (!tree._everything) {
-                        $("#shelfList").val(1);
-                        $("#shelfList").selectric('refresh');
+                        shelf_list.val(1);
+                        shelf_list.selectric('refresh');
                         switchShelf(context, tree, 1);
                     }
                 });

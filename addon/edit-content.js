@@ -200,7 +200,7 @@ class EditToolBar {
         /* the original url input */
         var check = document.createElement("input");
         check.type = "checkbox";
-        check.id = "auto-open-check";
+        check.id = "scrapyard-auto-open-check";
         check.name = "auto-open-check";
         div.appendChild(check);
 
@@ -216,7 +216,7 @@ class EditToolBar {
             }
         });
 
-        $(div).append("<label for='auto-open-check'>Auto open</label>");
+        $(div).append("<label for='scrapyard-auto-open-check'>Auto open</label>");
         
         /* the original url input */
         var txt = document.createElement("input");

@@ -524,19 +524,19 @@ function initialize()
         /* Saved Items options */
         
         if (!("options-savehtmlimagesall" in object)) object["options-savehtmlimagesall"] =
-            ("options-saveallhtmlimages" in object) ? object["options-saveallhtmlimages"] : false;  /* Version 2.0-3.0 */
+            ("options-saveallhtmlimages" in object) ? object["options-saveallhtmlimages"] : true;  /* Version 2.0-3.0 */
         
-        if (!("options-savehtmlaudiovideo" in object)) object["options-savehtmlaudiovideo"] = false;
+        if (!("options-savehtmlaudiovideo" in object)) object["options-savehtmlaudiovideo"] = true;
         
-        if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = false;
+        if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = true;
         
         if (!("options-savecssimagesall" in object)) object["options-savecssimagesall"] =
-            ("options-saveallcssimages" in object) ? object["options-saveallcssimages"] : false;  /* Version 2.0-3.0 */
+            ("options-saveallcssimages" in object) ? object["options-saveallcssimages"] : true;  /* Version 2.0-3.0 */
         
         if (!("options-savecssfontswoff" in object)) object["options-savecssfontswoff"] =
-            ("options-saveallcustomfonts" in object) ? object["options-saveallcustomfonts"] : false;  /* Version 2.0-3.0 */
+            ("options-saveallcustomfonts" in object) ? object["options-saveallcustomfonts"] : true;  /* Version 2.0-3.0 */
         
-        if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = false;
+        if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = true;
         
         if (!("options-savescripts" in object)) object["options-savescripts"] =
             ("options-saveallscripts" in object) ? object["options-saveallscripts"] : false;  /* Version 2.0-3.0 */
@@ -571,7 +571,7 @@ function initialize()
         
         /* Initialize local options */
         
-        buttonAction = object["options-newbuttonaction"];
+        buttonAction = 2; //object["options-newbuttonaction"];
         
         showSubmenu = object["options-showsubmenu"];
         
@@ -714,50 +714,50 @@ function addListeners()
                         xhr = new XMLHttpRequest();
                         
                         xhr.open("GET",message.location,true);
-                        
+
                         refererURL = new URL(message.referer);
-                        
+
                         /* Referer Header must not be set if http: resource in https: page or https: referer */
                         /* Referer Header must not be set if file: or data: resource */
                         /* Referer Header only set if allowed by user option */
                         /* Referer Header has restricted referer URL */
-                        
+
                         if (safeContent && message.referer.substr(0,5) != "file:" && message.referer.substr(0,5) != "data:")
                         {
                             if (refererHeader > 0)
-                            {                                
+                            {
                                 refererKey = Math.trunc(Math.random()*1000000000);
-                                
+
                                 refererKeys.push(refererKey);
-                                
+
                                 if (refererHeader == 1) refererValues.push(refererURL.origin);  /* referer URL restricted to origin */
                                 else if (refererHeader == 2)
                                 {
                                     if (sender.tab.incognito) refererValues.push(refererURL.origin);  /* referer URL restricted to origin */
                                     else refererValues.push(refererURL.origin + refererURL.pathname);  /* referer URL restricted to origin and path */
                                 }
-                                
+
                                 xhr.setRequestHeader("savepage-referer",refererKey);
-                                
+
                                 xhr._refererkey = refererKey;
                             }
                         }
-                        
+
                         /* Origin Header must be set for CORS to operate */
-                        
+
                         if (message.usecors)
                         {
                             originKey = Math.trunc(Math.random()*1000000000);
-                            
+
                             originKeys.push(originKey);
-                            
+
                             originValues.push(refererURL.origin);
-                            
+
                             xhr.setRequestHeader("savepage-origin",originKey);
-                            
+
                             xhr._originkey = originKey;
                         }
-                        
+
                         xhr.setRequestHeader("Cache-Control","no-store");
                         
                         xhr.responseType = "arraybuffer";
@@ -970,6 +970,37 @@ function addListeners()
 
 function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
 {
+    function loadDocument() {
+        // provisional capture of PDF, etc.
+        // TODO: rework with the account of savepage settings
+
+        let xhr = new XMLHttpRequest();
+
+        xhr.open("GET", tab.url,true);
+        xhr.setRequestHeader("Cache-Control","no-store");
+
+        xhr.responseType = "arraybuffer";
+        xhr.timeout = maxResourceTime * 1000;
+        xhr.onerror = function (){ console.log(this) };
+        xhr.onloadend = function() {
+            if (this.status === 200)
+            {
+                let contentType = this.getResponseHeader("Content-Type");
+                if (contentType == null)
+                    contentType = "application/pdf";
+
+                backend.storeBlob(payload.id, this.response, contentType, true);
+
+                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload});
+
+                alertNotify("Successfully archived page.");
+            }
+        };
+
+        xhr.send()
+    }
+
+
     if (specialPage(tab.url))  /* special page - no operations allowed */
     {
         alertNotify("Cannot be used with these special pages:\n" +
@@ -1027,7 +1058,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                                             function (response) {
                                                 if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
                                                 {
-                                                    alertNotify("Cannot be used with this page.");
+                                                    alertNotify("Some problems occurred.");
                                                 } else {
                                                     chrome.tabs.executeScript(tab.id, {
                                                         file: "savepage/content-frame.js",
@@ -1037,38 +1068,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                                             });
                                     }, 50);
                             }).catch(e => {
-                                // provisional capture of PDF, etc.
-                                // TODO: rework with the account of savepage settings
-
-                                let xhr = new XMLHttpRequest();
-
-                                xhr.open("GET", tab.url,true);
-                                xhr.setRequestHeader("Cache-Control","no-store");
-
-                                xhr.responseType = "arraybuffer";
-                                xhr.timeout = maxResourceTime * 1000;
-                                xhr.onerror = function (){ console.log(this) };
-                                xhr.onloadend = function() {
-                                    if (this.status == 200)
-                                    {
-                                        let binaryString = "";
-                                        let byteArray = new Uint8Array(this.response);
-                                        for (let i = 0; i < byteArray.byteLength; i++)
-                                            binaryString += String.fromCharCode(byteArray[i]);
-
-                                        let contentType = this.getResponseHeader("Content-Type");
-                                        if (contentType == null)
-                                            contentType = "application/pdf";
-
-                                        backend.storeBlob(payload.id, binaryString, contentType,false);
-
-                                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload});
-
-                                        alertNotify("Successfully archived page.");
-                                    }
-                                };
-
-                                xhr.send()
+                                loadDocument();
                             });
                     }
                 });

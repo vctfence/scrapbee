@@ -79,12 +79,13 @@
 .go-button {
     margin-left: 0 !important;
 }
-#auto-open-check {
+#scrapyard-auto-open-check {
     margin-left: 5px;
 }
-#auto-open-check ~ label {
+#scrapyard-auto-open-check ~ label {
     padding-left: 2px;
     padding-top: 5px;
+    color: black !important;
 }
 
 .scrapyard-marker-1{

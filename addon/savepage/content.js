@@ -1062,7 +1062,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
                     baseuri = element.ownerDocument.baseURI;
-                    
+
                     rememberURL(element.src,baseuri,"application/octet-stream","",false);
                 }
             }
@@ -1348,7 +1348,7 @@ function loadResources()
             documentURL = new URL(document.baseURI);
             
             useCORS = (resourceMimeType[i] == "application/font-woff");
-            
+
             chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
                                          passive: resourcePassive[i], pagescheme: documentURL.protocol, usecors: useCORS });
         }

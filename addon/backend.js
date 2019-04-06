@@ -69,12 +69,16 @@ class IDBBackend extends Storage {
         if (options.tags)
             options.tags = this._splitTags(options.tags);
 
-        let result = await this.queryNodes(group, options);
+        let result;
+
         if (options.content && options.search) {
             let search = this._splitTags(options.search, /\s+/);
             delete options.search;
-            result = await this.filterByContent(nodes, search);
+            result = await this.queryNodes(group, options);
+            result = await this.filterByContent(result, search);
         }
+        else
+            result = await this.queryNodes(group, options);
 
         if (options.path && (options.path === TODO_NAME || options.path === DONE_NAME)) {
             for (let node of result) {

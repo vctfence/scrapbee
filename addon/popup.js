@@ -66,7 +66,7 @@ window.onload = function () {
         $("#bookmark-url").val(tab.url);
 
         browser.tabs.executeScript(tab.id, {
-            code: `let iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+            code: `var iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
                    iconElt? iconElt.href: null;
             `}).then(icon => {
                 if (icon && icon.length && icon[0])
@@ -143,11 +143,9 @@ window.onload = function () {
     });
 
     function addBookmark(node_type) {
-        console.log($("#bookmark-folder").val());
         let node = tree._jstree.get_node($("#bookmark-folder").val());
 
         saveHistory(node, folder_history);
-        console.log($("#bookmark-icon").val());
         browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",

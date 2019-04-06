@@ -46,7 +46,7 @@ const db = new Dexie("scrapyard");
 
 db.version(1).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date`,
-    blobs: `++id,&node_id`,
+    blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
     tags: `++id,name`,
 });
@@ -201,7 +201,6 @@ class Storage {
         let matches = {};
         let all_matched_nodes = [];
         let word_count = {};
-
         for (let word of words) {
             matches[word] = (await db.index.where("words").startsWith(word).toArray()).map(n => n.node_id);
             all_matched_nodes = all_matched_nodes.concat(matches[word]).filter((v, i, a) => a.indexOf(v) === i);
@@ -247,6 +246,18 @@ class Storage {
     async storeBlob(node_id, data, content_type, compress = true) {
         let node = await this.getNode(node_id);
 
+        let byte_length;
+        if (typeof data !== "string") {
+            let binaryString = "";
+            let byteArray = new Uint8Array(data);
+
+            for (let i = 0; i < byteArray.byteLength; i++)
+                binaryString += String.fromCharCode(byteArray[i]);
+
+            byte_length = byteArray.byteLength;
+            data = binaryString;
+        }
+
         if (compress) {
             data = LZString.compress(data);
         }
@@ -256,6 +267,7 @@ class Storage {
                 node_id: node.id,
                 compressed: compress,
                 data: data,
+                byte_length: byte_length,
                 type: content_type
             });
     }
