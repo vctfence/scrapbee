@@ -103,6 +103,7 @@ class EditToolBar {
         btn.value = chrome.i18n.getMessage("save");
         div.appendChild(btn);
         btn.addEventListener("click", function () {
+            self._unsavedChanges = false;
             self.saveDoc();
         });
 
@@ -175,6 +176,7 @@ class EditToolBar {
                 $(self.menu).hide();
                 if (self.isSelectionPresent()) {
                     mark(child);
+                    self._unsavedChanges = true;
                     this.deselect();
                 } else {
                     alert("{NO_SELECTION_ACTIVATED}".translate());
@@ -260,7 +262,12 @@ class EditToolBar {
 }
 
 $(document).ready(function () {
-    new EditToolBar();
+    var toolbar = new EditToolBar();
+
+    $(window).on("beforeunload", e => {
+        if (toolbar._unsavedChanges)
+            e.preventDefault();
+    })
 });
 
 function getTextNodesBetween(rootNode, startNode, endNode) {

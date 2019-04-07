@@ -484,7 +484,15 @@ window.onload = function () {
 
     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.type === "BOOKMARK_CREATED") {
-            loadShelves(context, tree);
+            backend.computePath(request.node.id).then(path => {
+                settings.last_shelf(path[0].id);
+                loadShelves(context, tree).then(() => {
+                    tree._jstree.deselect_all(true);
+                    tree._jstree.select_node(request.node.id);
+                });
+
+            });
+
             invalidateCompletion();
         }
     });

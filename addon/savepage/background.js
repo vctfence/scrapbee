@@ -385,6 +385,7 @@
 import {backend} from "../backend.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
 import {FirefoxSearchProvider} from "../search.js";
+import {browseArchive} from "../background.js";
 
 /************************************************************************/
 
@@ -651,7 +652,7 @@ function addListeners()
 
             case "UPDATE_ARCHIVE":
                 backend.updateBlob(message.id, message.data);
-                backend.updateIndex(message.payload.id, message.data.indexWords());
+                backend.updateIndex(message.id, message.data.indexWords());
                 break;
 
             case "STORE_PAGE_HTML":
@@ -974,7 +975,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_BROWSE_ARCHIVE":
-                backend.getNode(message.uuid, true).then(node => backend.browseArchive(node));
+                backend.getNode(message.uuid, true).then(node => browseArchive(node));
                 break;
 
         }
@@ -985,7 +986,7 @@ function addListeners()
 
 /* Initiate action function */
 
-function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
+function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
 {
     function loadDocument() {
         // provisional capture of PDF, etc.
@@ -1006,9 +1007,9 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                 if (contentType == null)
                     contentType = "application/pdf";
 
-                backend.storeBlob(payload.bookmark.id, this.response, contentType, true);
+                backend.storeBlob(userdata.bookmark.id, this.response, contentType, true);
 
-                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: payload.bookmark});
+                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 
                 alertNotify("Successfully archived page.");
             }
@@ -1044,7 +1045,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                             file: "savepage/selection.js",
                             frameId: frame.frameId
                         }).then(() => {
-                            return browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: payload.options})
+                            return browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: userdata.options})
                                 .then(selection => selectedHtml = selection);
                         });
 
@@ -1061,7 +1062,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
         }).then(selection => { // load content-script
             chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
                     externalsave: externalsave, swapdevices: swapdevices,
-                    selection: selection, payload: payload.bookmark },
+                    selection: selection, payload: userdata.bookmark },
                 function(response) {
                     if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script not loaded in active tab */
                     {
@@ -1072,7 +1073,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,payload)
                                         chrome.tabs.sendMessage(tab.id, {
                                                 type: "performAction", menuaction: menuaction, srcurl: srcurl,
                                                 externalsave: externalsave, swapdevices: swapdevices,
-                                                selection: selection, payload: payload.bookmark
+                                                selection: selection, payload: userdata.bookmark
                                             },
                                             function (response) {
                                                 if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
