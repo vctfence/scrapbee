@@ -19,9 +19,9 @@ Objectives:
 * ~~Rework settings page~~ [DONE]
 * ~~Dark theme~~ [DONE]
 * ~~Write help~~ [DONE]
-* A little bit of Wiki functionality: editable notes with cross-references
+* A little bit of Wiki functionality: editable notes in org markup
 * Live link auto checker
-* Cloud-synchronization backend (possibly with bookmark access through the web)
+* Self-hosted cloud-synchronization backend (possibly with bookmark access through the web)
 
 
 TODO: 

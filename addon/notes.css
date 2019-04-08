@@ -1,0 +1,137 @@
+* {
+    font-family:
+    "Helvetica",
+    "Arial",
+    "Lucida Sans Unicode",
+    "Lucida Sans",
+    "Trebuchet MS",
+    "Open Sans",
+    "Fira Sans",
+    "Liberation Sans",
+    "Nimbus Sans L",
+    "WenQuanYi Micro Hei",
+    sans-serif;
+}
+
+body, div, p, span, pre, code, blockquote, li, dt, dd, td, th, h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+}
+
+#root-container {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    font-size: 12pt;
+    min-height: 0;
+    background: white;
+}
+
+#full-width-container {
+    display: none;
+}
+
+#tabbar {
+    height: 38px;
+    flex: 0 1 auto;
+    display: flex;
+    border-bottom: 1px solid #777;
+    line-height: 37px;
+}
+
+a#notes-button, a#edit-button {
+    outline: none;
+    padding: 0px 15px;
+    font-size: 14px;
+    text-align: center;
+    height:100%;
+    width: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    color: black;
+    flex: 0 1 auto;
+}
+
+a#notes-button.focus, a#edit-button.focus{
+    border-bottom: 3px solid #079;
+    background: #ddd;
+}
+
+#notes-for, .notes-title {
+    font-weight: bold;
+}
+
+#notes-for {
+    display: none;
+}
+
+.source-url {
+    color: #0074D9;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#content {
+    padding: 16px;
+    display: flex;
+    align-items: stretch;
+    min-height: 0;
+    flex-grow: 1;
+    overflow: auto;
+}
+
+#notes > ul#toc {
+    padding-left: 0;
+    margin-top: 0;
+}
+
+#content-notes-button, #content-edit-button {
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+#content-edit-button {
+    display: none;
+}
+
+#editor {
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    font-size: 12pt;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+#bottomline {
+    flex: 0 1 auto;
+    display: flex;
+    border-top: 1px solid #777;
+    line-height: 24px;
+    padding: 4px 8px;
+}
+
+#bottomline * {
+    flex: 0 1 auto;
+}
+
+#tabbar .spacer, #bottomline .spacer {
+    flex: 1 1 auto;
+}
+
+#insert-example {
+    display: none;
+}
+
+#close-button {
+    display: none;
+    background: #09c;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 3px 15px;
+    border: none;
+    line-height: 20px;
+    margin-left: 5px;
+}

@@ -3,7 +3,9 @@ export const NODE_TYPE_GROUP = 2;
 export const NODE_TYPE_BOOKMARK = 3;
 export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
-export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK];
+export const NODE_TYPE_NOTES = 6;
+export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
+export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_SHELF];
 
 export const TODO_STATE_TODO = 1;
 export const TODO_STATE_DONE = 4;
@@ -48,6 +50,7 @@ db.version(1).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date`,
     blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
+    notes: `++id,&node_id`,
     tags: `++id,name`,
 });
 
@@ -224,6 +227,7 @@ class Storage {
 
         await db.blobs.where("node_id").anyOf(nodes).delete();
         await db.index.where("node_id").anyOf(nodes).delete();
+        await db.notes.where("node_id").anyOf(nodes).delete();
         return db.nodes.bulkDelete(nodes);
     }
 
@@ -323,6 +327,39 @@ class Storage {
         return db.index.where("node_id").equals(node_id).first();
     }
 
+    addNotes(parent_id, name) {
+        return this.addNode({
+            parent_id: parent_id,
+            name: name,
+            type: NODE_TYPE_NOTES
+        });
+    }
+
+    async storeNotes(node_id, notes) {
+        let exists = await db.notes.where("node_id").equals(node_id).count();
+
+        if (exists) {
+            return db.notes.where("node_id").equals(node_id).modify({
+                content: notes
+            });
+        }
+        else {
+            return db.notes.add({
+                node_id: node_id,
+                content: notes
+            });
+        }
+    }
+
+    async fetchNotes(node_id, is_uuid = false) {
+        if (is_uuid) {
+            let node = await db.nodes.where("uuid").equals(node_id).first();
+            if (node)
+                node_id = node.id;
+        }
+
+        return db.notes.where("node_id").equals(node_id).first();
+    }
 
     async addTags(tags) {
         if (tags)

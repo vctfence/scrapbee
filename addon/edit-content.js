@@ -11,6 +11,7 @@ class EditToolBar {
                     e.preventDefault();
                     self.last.parentNode.removeChild(self.last);
                     self.last = null;
+                    toolbar._unsavedChanges = true;
                 }
                 /** hide marker-pen menu when click somewhere */
                 if (!$(e.target).hasClass("mark-pen-btn")) {
@@ -199,7 +200,7 @@ class EditToolBar {
         });
         this.menu = $m[0];
 
-        /* the original url input */
+        /** auto-open check */
         var check = document.createElement("input");
         check.type = "checkbox";
         check.id = "scrapyard-auto-open-check";
@@ -219,8 +220,40 @@ class EditToolBar {
         });
 
         $(div).append("<label for='scrapyard-auto-open-check'>Auto open</label>");
+
+
+        /** notes button */
+        var btn = document.createElement("input");
+        btn.type = "button";
+        btn.id = "view-notes";
+        btn.className = "blue-button";
+        btn.value = chrome.i18n.getMessage("NOTES");
+        div.appendChild(btn);
+        btn.addEventListener("click", function () {
+            var ifrm = $("#notes-ifrm");
+            if (ifrm.length) {
+                ifrm.remove();
+                $("#notes-container").remove();
+                $(document.body).removeClass("scrapyard-no-overflow");
+            }
+            else {
+                let notes_page = location.origin.replace(/^blob:/, "") + "/notes.html?i"
+
+                $(document.body).prepend(`<iframe id="notes-ifrm" frameborder="0" src="${notes_page}${location.hash}"/>
+                                            <div id="notes-container"></div>`)
+                    .addClass("scrapyard-no-overflow");
+            }
+        });
+
+        window.addEventListener("message", e => {
+            if (e.data === "SCRAPYARD_CLOSE_NOTES") {
+                $("#notes-ifrm").remove();
+                $("#notes-container").remove();
+                $(document.body).removeClass("scrapyard-no-overflow");
+            }
+        }, false);
         
-        /* the original url input */
+        /** the original url input */
         var txt = document.createElement("input");
         txt.type = "text";
         txt.className = "original-url-text";

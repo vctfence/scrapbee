@@ -7,7 +7,7 @@
     vertical-align: middle;
     /*line-height: 40px;*/
     bottom: 0;
-    z-index: 2147483647;
+    z-index: 1000000;
     text-align:left;
     display: flex;
     padding-top: 8px;
@@ -112,4 +112,29 @@
 }
 .scrapyard-marker-8{
     border-bottom:2px dotted #f00;
+}
+
+
+.scrapyard-no-overflow {
+    overflow: hidden;
+}
+
+#notes-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #777;
+    opacity: 0.5;
+    z-index: 2000000;
+}
+
+#notes-ifrm {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    z-index: 2000001;
 }

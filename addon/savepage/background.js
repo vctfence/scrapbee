@@ -385,7 +385,7 @@
 import {backend} from "../backend.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
 import {FirefoxSearchProvider} from "../search.js";
-import {browseArchive} from "../background.js";
+import {browseNode} from "../background.js";
 
 /************************************************************************/
 
@@ -410,9 +410,6 @@ var refererHeader;
 
 var tabPageTypes = new Array();  /* undefined or 0 = normal, 1 = saved page, 2 = page loader, 3= saved page with page loader */
 var tabSaveStates = new Array();  /* undefined or 0 = idle, 1 = lazy loads, 2 = first pass, 3 = second pass, 4 = third pass, 5 = remove page loader, 6 = extract image/audio/video */
-
-var saveStateTexts = new Array("","SAVE","SAVE","SAVE","SAVE","REM","EXT");
-var saveStateColors = new Array("#000000","#606060","#E00000","#A000D0","#0000E0","#A06000","#008000");
 
 var refererKeys = new Array();
 var refererValues = new Array();
@@ -974,8 +971,8 @@ function addListeners()
                 });
                 break;
 
-            case "SCRAPYARD_BROWSE_ARCHIVE":
-                backend.getNode(message.uuid, true).then(node => browseArchive(node));
+            case "SCRAPYARD_BROWSE_NODE":
+                backend.getNode(message.uuid, true).then(node => browseNode(node));
                 break;
 
         }

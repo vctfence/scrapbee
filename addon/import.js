@@ -1,4 +1,4 @@
-import * as org from "./lib/org.js"
+import * as org from "./org.js"
 import {backend} from "./backend.js"
 import LZString from "./lib/lz-string.js"
 import {
@@ -10,13 +10,14 @@ const EXPORTED_KEYS = ["uuid", "icon", "type", "date_added", "date_modified"];
 
 function traverseOrgNode(node, callback) {
     callback(node);
-    if (node.children.length)
+    if (node.children && node.children.length)
         for (let c of node.children)
             traverseOrgNode(c, callback);
 }
 
 export async function importOrg(shelf, text) {
     let org_lines = new org.Parser().parse(text);
+    let compressed = org_lines.directiveValues["compressed:"] && org_lines.directiveValues["compressed:"] === "t";
 
     let path = [shelf];
     let level = 0;
@@ -27,15 +28,22 @@ export async function importOrg(shelf, text) {
         if (last_object) {
             // UUIDs currently aren't respected
 
+            let node;
+
+            let notes = last_object.notes;
+            delete last_object.notes;
+
+            let note_lines = last_object.note_lines;
+            delete last_object.note_lines;
+
             if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let data = last_object.data;
                 let binary = !!last_object.byte_length;
 
                 delete last_object.data;
                 delete last_object.byte_length;
-                delete last_object.compressed;
 
-                let node = await backend.importBookmark(last_object);
+                node = await backend.importBookmark(last_object);
 
                 if (data) {
                     await backend.storeBlob(node.id, data, last_object.mime_type);
@@ -45,7 +53,14 @@ export async function importOrg(shelf, text) {
                 }
             }
             else {
-                await backend.importBookmark(last_object);
+                node = await backend.importBookmark(last_object);
+            }
+
+            if (notes) {
+                backend.storeNotes(node.id, notes);
+            }
+            else if (note_lines.length) {
+                backend.storeNotes(node.id, note_lines.join("\n"));
             }
 
             last_object = null;
@@ -58,7 +73,9 @@ export async function importOrg(shelf, text) {
         subnodes = subnodes.filter(n => !(n.type === "inlineContainer"
             || n.type === "text" && !n.value));
 
-        if (subnodes[0].type === "header" && subnodes.some(n => n.type === "link")) {
+        //console.log(subnodes)
+
+        if (subnodes.length && subnodes[0].type === "header" && subnodes.some(n => n.type === "link")) {
             await importLastObject();
 
             if (level >= subnodes[0].level) {
@@ -76,7 +93,8 @@ export async function importOrg(shelf, text) {
                 name: subnodes[index + 1].value,
                 type: NODE_TYPE_BOOKMARK,
                 pos: DEFAULT_POSITION,
-                path: path.join("/")
+                path: path.join("/"),
+                note_lines: []
             };
 
             if (subnodes[1].type === "text") {
@@ -111,7 +129,7 @@ export async function importOrg(shelf, text) {
                 path.push(subnodes[1].value);
             }
         }
-        else if (subnodes[0].type === "drawer" && subnodes[0].name === "PROPERTIES") {
+        else if (subnodes.length && subnodes[0].type === "drawer" && subnodes[0].name === "PROPERTIES") {
             subnodes.shift();
 
             if (last_object) {
@@ -138,8 +156,6 @@ export async function importOrg(shelf, text) {
                 }
 
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
-                    let compressed = last_object["compressed"];
-
                     if (last_object.data) {
                         last_object.data = compressed
                             ? LZString.decompressFromBase64(last_object.data)
@@ -154,13 +170,25 @@ export async function importOrg(shelf, text) {
                         }
                     }
                 }
+
+                if (last_object.notes) {
+                    last_object.notes = compressed
+                        ? LZString.decompressFromBase64(last_object.notes)
+                        : JSON.parse(last_object.notes);
+                }
             }
         }
-        else if (subnodes[0].type === "text" && /\s*DEADLINE:.*/.test(subnodes[0].value)) {
+        else if (subnodes.length > 1 && subnodes[0].type === "paragraph" && subnodes[1].type === "text"
+                && /\s*DEADLINE:.*/.test(subnodes[0].value)) {
+
             let match = /\s*DEADLINE:\s*<([^>]+)>/.exec(subnodes[0].value);
 
             if (match && match[1] && last_object)
                 last_object["todo_date"] = match[1];
+        }
+        else if (subnodes.length > 1 && subnodes[0].type === "paragraph" && subnodes[1].type === "text") {
+            if (last_object)
+                last_object.note_lines.push(subnodes[1].value);
         }
     }
 
@@ -186,17 +214,21 @@ async function objectToProperties(node, compress) {
             if (blob.byte_length)
                 lines.push(`    :byte_length: ${blob.byte_length}`);
 
-            let content;
-
-            if (compress) {
-                lines.push(`    :compressed: ${compress}`);
-                content = LZString.compressToBase64(blob.data);
-            }
-            else
-                content = JSON.stringify(blob.data);
+            let content = compress
+                ? LZString.compressToBase64(blob.data)
+                : JSON.stringify(blob.data);
 
             lines.push(`    :data: ${content}`);
         }
+    }
+
+    let notes = await backend.fetchNotes(node.id);
+    if (notes && notes.content) {
+        let content = compress
+            ? LZString.compressToBase64(notes.content)
+            : JSON.stringify(notes.content);
+
+        lines.push(`    :notes: ${content}`);
     }
 
     return lines.join("\n");
@@ -207,11 +239,14 @@ export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = 
 
     if (!shallow)
         org_lines.push(
-`#EXPORT: Scrapyard
-#VERSION: ${ORG_EXPORT_VERSION}
-#NAME: ${shelf}
-${"#UUID: " + uuid}
+`#+EXPORT: Scrapyard
+#+VERSION: ${ORG_EXPORT_VERSION}
+#+NAME: ${shelf}
+${"#+UUID: " + uuid}
 `);
+
+    if (compress)
+        org_lines.push("#+COMPRESSED: t\n");
 
     org_lines.push("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
 

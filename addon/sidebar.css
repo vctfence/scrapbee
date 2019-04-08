@@ -1,14 +1,15 @@
 *{
     font-family: "Helvetica",
-        "Lucida Sans Unicode",
-        "Lucida Sans",
-        "Trebuchet MS",
-        "Open Sans",
-        "Fira Sans",
-		"Liberation Sans",
-		"Nimbus Sans L",
-        "WenQuanYi Micro Hei",
-		sans-serif;
+    "Arial",
+    "Lucida Sans Unicode",
+    "Lucida Sans",
+    "Trebuchet MS",
+    "Open Sans",
+    "Fira Sans",
+    "Liberation Sans",
+    "Nimbus Sans L",
+    "WenQuanYi Micro Hei",
+    sans-serif;
 }
 html,body{
     margin:0;

@@ -377,8 +377,8 @@ Parser.prototype = {
         this.lexer = new Lexer(stream);
         this.nodes = [];
         this.options = {
-            toc: true,
-            num: true,
+            toc: false,
+            num: false,
             "^": "{}",
             multilineCell: false
         };
@@ -432,7 +432,7 @@ Parser.prototype = {
     // ------------------------------------------------------------
 
     parseDocument: function () {
-        this.parseTitle();
+        //this.parseTitle();
         this.parseNodes();
     },
 
@@ -476,7 +476,8 @@ Parser.prototype = {
                 element = this.parseList();
                 break;
             case Lexer.tokens.line:
-                element = this.parseText();
+                //element = this.parseText();
+                element = this.parseParagraph();
                 break;
             case Lexer.tokens.tableRow:
             case Lexer.tokens.tableSeparator:
@@ -863,16 +864,16 @@ Parser.prototype = {
     // ------------------------------------------------------------
 
     parseParagraph: function () {
-        var paragraphFisrtToken = this.lexer.peekNextToken();
+        var paragraphFirstToken = this.lexer.peekNextToken();
         var paragraph = Node.createParagraph([]);
-        this.setNodeOriginFromToken(paragraph, paragraphFisrtToken);
+        this.setNodeOriginFromToken(paragraph, paragraphFirstToken);
 
         var textContents = [];
 
         while (this.lexer.hasNext()) {
             var nextToken = this.lexer.peekNextToken();
             if (nextToken.type !== Lexer.tokens.line
-                || nextToken.indentation < paragraphFisrtToken.indentation)
+                || nextToken.indentation < paragraphFirstToken.indentation)
                 break;
             this.lexer.getNextToken();
             textContents.push(nextToken.content);
@@ -931,15 +932,19 @@ Parser.prototype = {
 
     parseProperty: function () {
         var propertyToken = this.lexer.getNextToken();
-        var match = /^(\s*):([^:]*):\s*(.*)$/.exec(propertyToken.content);
-        var whole = match[0];
-        var name = match[2];
-        var value = match[3];
+        var match = /^(\s*):([^:]*):(?:\s*(.*))?$/.exec(propertyToken.content);
+        if (match) {
+            var whole = match[0];
+            var name = match[2];
+            var value = match[3];
 
-        var property = Node.createProperty([], {name: name, value: value});
-        this.setNodeOriginFromToken(property, propertyToken);
+            var property = Node.createProperty([], {name: name, value: value});
+            this.setNodeOriginFromToken(property, propertyToken);
 
-        return property;
+            return property;
+        }
+        else
+            return {};
     },
 };
 Parser.prototype.originalParseElement = Parser.prototype.parseElement;
@@ -1098,7 +1103,7 @@ Converter.prototype = {
         customDirectiveHandler: null,
         // e.g., "org-js-"
         htmlClassPrefix: null,
-        htmlIdPrefix: null
+        htmlIdPrefix: null,
     },
 
     untitled: "Untitled",
@@ -1314,6 +1319,9 @@ Converter.prototype = {
                 break;
             case Node.types.text:
                 text = this.convertText(node.value, insideCodeElement);
+                break;
+            case Node.types.drawer:
+            case Node.types.property:
                 break;
             default:
                 throw Error("Unknown node type: " + node.type);
@@ -1566,8 +1574,9 @@ ConverterHTML.prototype = {
         }
 
         if (sectionNumberText) {
-            childText = this.inlineTag("span", sectionNumberText, {
-                "class": "section-number"
+            childText = this.inlineTag("span", (this.documentOptions.num? sectionNumberText: ""), {
+                "class": "section-number",
+                "style": (this.documentOptions.num? "display: inline": "display: none")
             }) + childText;
             headerAttributes["id"] = "header-" + sectionNumberText.replace(/\./g, "-");
         }

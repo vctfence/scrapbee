@@ -1,44 +1,61 @@
-import {NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "./db.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
 import {backend} from "./backend.js";
 import {exportOrg, importOrg} from "./import.js";
 import {settings} from "./settings.js";
 import {showNotification} from "./utils.js";
 
-export function browseArchive(node) {
-    return backend.fetchBlob(node.id).then(blob => {
-        if (blob) {
-
-            if (blob.byte_length) {
-                let byteArray = new Uint8Array(blob.byte_length);
-                for (let i = 0; i < blob.data.length; ++i)
-                    byteArray[i] = blob.data.charCodeAt(i);
-
-                blob.data = byteArray;
+export function browseNode(node) {
+    switch (node.type) {
+        case NODE_TYPE_BOOKMARK:
+            let url = node.uri;
+            if (url) {
+                if (url.indexOf("://") < 0)
+                    url = "http://" + url;
             }
 
-            let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
-            let objectURL = URL.createObjectURL(object);
-            let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
+            return browser.tabs.create({"url": url});
+            break;
+        case NODE_TYPE_ARCHIVE:
+            return backend.fetchBlob(node.id).then(blob => {
+                if (blob) {
 
-            setTimeout(() => {
-                URL.revokeObjectURL(objectURL);
-            }, settings.archive_url_lifetime() * 60 * 1000);
+                    if (blob.byte_length) {
+                        let byteArray = new Uint8Array(blob.byte_length);
+                        for (let i = 0; i < blob.data.length; ++i)
+                            byteArray[i] = blob.data.charCodeAt(i);
 
-            browser.tabs.create({
-                "url": archiveURL
-            }).then(tab => {
-                return browser.tabs.executeScript(tab.id, {
-                    file: "edit-bootstrap.js",
-                    runAt: 'document_end'
-                })
+                        blob.data = byteArray;
+                    }
+
+                    let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
+                    let objectURL = URL.createObjectURL(object);
+                    let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
+
+                    setTimeout(() => {
+                        URL.revokeObjectURL(objectURL);
+                    }, settings.archive_url_lifetime() * 60 * 1000);
+
+                    browser.tabs.create({
+                        "url": archiveURL
+                    }).then(tab => {
+                        return browser.tabs.executeScript(tab.id, {
+                            file: "edit-bootstrap.js",
+                            runAt: 'document_end'
+                        })
+                    });
+                }
+                else {
+                    showNotification({message: "No data is stored", title: "Error"});
+                }
             });
-        }
-        else {
-            showNotification({message: "No data is stored", title: "Error"});
-        }
-    });
+            break;
+        case NODE_TYPE_NOTES:
+            browser.tabs.create({
+                "url": "notes.html#" + node.uuid + ":" + node.id
+            });
+            break;
+    }
 }
-
 
 
 /* Internal message listener */
@@ -51,8 +68,14 @@ browser.runtime.onMessage.addListener(message => {
             });
             break;
 
-        case "BROWSE_ARCHIVE":
-            browseArchive(message.node);
+        case "BROWSE_NODE":
+            browseNode(message.node);
+            break;
+
+        case "BROWSE_NOTES":
+            browser.tabs.create({
+                "url": "notes.html#" + message.node.uuid + ":" + message.node.id
+            });
             break;
 
         case "IMPORT_FILE":

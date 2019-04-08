@@ -164,14 +164,16 @@
         color: #00b60e !important;
     }
 
-    .left-index {
+    a.left-index {
         color: var(--in-content-page-color) !important;
     }
 
-    .left-index.focus{
-        border-right:3px solid var(--tone-8) !important;
+    a.left-index.focus{
+        border-right:3px solid var(--tone-5) !important;
         background:#ddd !important;
         color: black !important;
+        position: relative;
+        z-index: 10000;
     }
 
     .div-area input[type=number] {
@@ -191,4 +193,27 @@
     }
 
 
+    code {
+        color: rgba(0, 0, 0, 0.75) !important;
+    }
+
+    span.task-status {
+        color: white !important;
+    }
+
+    span.task-status.todo {
+        color: white !important;
+    }
+
+    span.task-status.done {
+        color: white !important;
+    }
+
+    .section-number {
+        color: rgb(0, 90, 190) !important;
+    }
+
+    .source-url {
+        color: #0074D9 !important;
+    }
 }

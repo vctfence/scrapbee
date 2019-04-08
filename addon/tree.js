@@ -7,6 +7,7 @@ import {
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF,
     NODE_TYPE_SEPARATOR,
+    NODE_TYPE_NOTES,
     TODO_STATE_CANCELLED,
     TODO_STATE_DONE,
     TODO_STATE_POSTPONED,
@@ -82,23 +83,8 @@ class BookmarkTree {
 
                 if (clickable && !e.ctrlKey) {
                     let node = this.data.find(n => n.id == id);
-                    if (node) {
-                        if (node.type === NODE_TYPE_BOOKMARK) {
-
-                            let url = node.uri;
-                            if (url) {
-                                if (url.indexOf("://") < 0)
-                                    url = "http://" + url;
-                            }
-
-                            browser.tabs.create({
-                                "url": url
-                            })
-                        }
-                        else if (node.type === NODE_TYPE_ARCHIVE) {
-                            browser.runtime.sendMessage({type: "BROWSE_ARCHIVE", node: node});
-                        }
-                    }
+                    if (node)
+                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
                 }
                 return false;
             }
@@ -219,6 +205,11 @@ class BookmarkTree {
                     n.li_attr.class += " extended-todo";
                     n.text = BookmarkTree._formatTODO(n);
                 }
+            }
+
+            if (n.type == NODE_TYPE_NOTES) {
+                n.icon = "/icons/notes.png";
+                n.li_attr.class += " scrapyard-notes";
             }
 
             if (!n.icon)
@@ -373,26 +364,16 @@ class BookmarkTree {
                 label: "Open",
                 action: function () {
                     for (let n of selected_nodes) {
-                        switch (n.original.type) {
-                            case NODE_TYPE_BOOKMARK:
-                                browser.tabs.create({
-                                    "url": n.original.uri
-                                });
-                                break;
-                            case NODE_TYPE_ARCHIVE:
-                                browser.runtime.sendMessage({type: "BROWSE_ARCHIVE", node: ctx_node_data});
-                                break;
-                        }
+                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: n.original});
                     }
                 }
             },
             openAllItem: {
                 label: "Open All",
                 action: function () {
-                    let children = all_nodes.filter(n => ctx_node.children.some(id => id == n.id));
-                    children.forEach(c =>  browser.tabs.create({
-                        "url": c.uri
-                    }))
+                    let children = all_nodes.filter(n => ctx_node.children.some(id => id == n.id)
+                            && ENDPOINT_TYPES.some(t => t === n.type));
+                    children.forEach(c => browser.runtime.sendMessage({type: "BROWSE_NODE", node: c}))
                 }
             },
             sortItem: {
@@ -423,25 +404,22 @@ class BookmarkTree {
             newFolderItem: {
                 label: "New Folder",
                 action: function () {
-                    // TODO: i18n
-                    showDlg("prompt", {caption: "Create Folder", label: "Name"}).then(dlg_data => {
-                        let name;
-                        if (name = dlg_data.title) {
-                              if (/*!isBuiltinShelf(shelf)*/true) {
-                                backend.createGroup(ctx_node_data.id, name).then(group => {
-                                    if (group) {
-                                        BookmarkTree.toJsTreeNode(group);
-                                        tree.deselect_all(true);
-                                        tree.select_node(tree.create_node(ctx_node, group));
-                                        BookmarkTree.reorderNodes(tree, ctx_node);
-                                    }
+                    backend.createGroup(ctx_node_data.id, "New Folder").then(group => {
+                        BookmarkTree.toJsTreeNode(group);
+                        tree.deselect_all(true);
+
+                        let group_node = tree.get_node(tree.create_node(ctx_node, group));
+                        tree.select_node(group_node);
+
+                        BookmarkTree.reorderNodes(tree, ctx_node);
+
+                        tree.edit(group_node, null, (node, success, cancelled) => {
+                            if (success && !cancelled)
+                                backend.renameGroup(group.id, node.text).then(group => {
+                                    group_node.original.name = group_node.original.text = group.name;
+                                    tree.rename_node(group_node, group.name);
                                 });
-                            }
-                            else {
-                                alert("{Error}", `Can not create folder in a built-in shelf.`);
-                                return;
-                            }
-                        }
+                        });
                     });
                 }
             },
@@ -449,12 +427,33 @@ class BookmarkTree {
                 label: "New Separator",
                 action: function () {
                     let parent = tree.get_node(ctx_node.parent);
-                    console.log(parent);
+
                     backend.addSeparator(parent.original.id).then(separator => {
                             let position = $.inArray(ctx_node.id, parent.children);
                             tree.create_node(parent, BookmarkTree.toJsTreeNode(separator), position + 1);
                             BookmarkTree.reorderNodes(tree, parent);
                         });
+                }
+            },
+            newNotesItem: {
+                label: "New Notes",
+                action: function () {
+                    backend.addNotes(ctx_node_data.id, "New Notes").then(notes => {
+                        BookmarkTree.toJsTreeNode(notes);
+                        tree.deselect_all(true);
+
+                        let notes_node = tree.get_node(tree.create_node(ctx_node, notes));
+                        tree.select_node(notes_node);
+
+                        BookmarkTree.reorderNodes(tree, ctx_node);
+
+                        tree.edit(notes_node, null, (node, success, cancelled) => {
+                            if (success && !cancelled)
+                                backend.updateNode({id: notes.id, name: node.text}).then(() => {
+                                    notes_node.original.name = node.text;
+                                });
+                        });
+                    });
                 }
             },
             cutItem: {
@@ -472,6 +471,7 @@ class BookmarkTree {
             },
             pasteItem: {
                 label: "Paste",
+                separator_before: ctx_node.original.type === NODE_TYPE_SHELF,
                 _disabled: !(tree.can_paste() && (ctx_node_data.type == NODE_TYPE_GROUP
                     || ctx_node_data.type == NODE_TYPE_SHELF)),
                 action: function () {
@@ -502,6 +502,13 @@ class BookmarkTree {
 
                             tree.clear_buffer();
                         });
+                }
+            },
+            viewNotesItem: {
+                separator_before: true,
+                label: "Open Notes",
+                action: () => {
+                    browser.runtime.sendMessage({type: "BROWSE_NOTES", node: ctx_node_data});
                 }
             },
             todoItem: {
@@ -616,34 +623,38 @@ class BookmarkTree {
             }
         };
 
-        if (ctx_node.original.type !== NODE_TYPE_SHELF) {
-            switch (ctx_node.original.type) {
-                case NODE_TYPE_GROUP:
-                    delete items.openItem;
-                    delete items.openOriginalItem;
-                    delete items.propertiesItem;
-                    delete items.copyLinkItem;
-                    break;
-                case NODE_TYPE_BOOKMARK:
-                    delete items.openOriginalItem;
-                case NODE_TYPE_ARCHIVE:
-                    delete items.openAllItem;
-                    delete items.sortItem;
-                    delete items.newFolderItem;
-                    delete items.renameItem;
-                    break;
-            }
-        }
-        else {
-            for (let k in items)
-                if (!["newFolderItem", "renameItem", "pasteItem", "sortItem", "todoItem", "deleteItem"].find(s => s === k))
-                    delete items[k];
+
+        switch (ctx_node.original.type) {
+            case NODE_TYPE_SHELF:
+                delete items.cutItem;
+                delete items.copyItem;
+            case NODE_TYPE_GROUP:
+                delete items.newSeparatorItem;
+                delete items.openItem;
+                delete items.openOriginalItem;
+                delete items.propertiesItem;
+                delete items.copyLinkItem;
+                break;
+            case NODE_TYPE_NOTES:
+            case NODE_TYPE_BOOKMARK:
+                delete items.openOriginalItem;
+            case NODE_TYPE_ARCHIVE:
+                delete items.newNotesItem;
+                delete items.openAllItem;
+                delete items.sortItem;
+                delete items.newFolderItem;
+                delete items.renameItem;
+                break;
         }
 
         if (ctx_node.original.type === NODE_TYPE_SEPARATOR) {
             for (let k in items)
                 if (!["deleteItem"].find(s => s === k))
                     delete items[k];
+        }
+
+        if (!ENDPOINT_TYPES.some(t => t == ctx_node.original.type)) {
+            delete items.viewNotesItem;
         }
 
         if (ctx_node.original._extended_todo) {
@@ -654,8 +665,11 @@ class BookmarkTree {
             items["sortItem"] && (items["sortItem"]._disabled = true);
             items["renameItem"] && (items["renameItem"]._disabled = true);
             items["openAllItem"] && (items["openAllItem"]._disabled = true);
+            items["copyLinkItem"] && (items["copyLinkItem"]._disabled = true);
             items["newFolderItem"] && (items["newFolderItem"]._disabled = true);
+            items["viewNotesItem"] && (items["viewNotesItem"]._disabled = true);
             items["propertiesItem"] && (items["propertiesItem"]._disabled = true);
+            items["newSeparatorItem"] && (items["newSeparatorItem"]._disabled = true);
             items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
         }
 

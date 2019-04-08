@@ -79,6 +79,9 @@
     "MARK_PEN": {
         "message": "Marker Pen"
     },
+    "NOTES": {
+        "message": "Notes"
+    },
     "File": {
         "message": "File"
     },
