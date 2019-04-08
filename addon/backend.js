@@ -306,6 +306,12 @@ class IDBBackend extends Storage {
         return this.deleteNodesInternal(all_nodes.map(n => n.id));
     }
 
+    async deleteChildNodes(id) {
+        let all_nodes = await this.queryFullSubtree(id);
+
+        return this.deleteNodesInternal(all_nodes.map(n => n.id).filter(i => i !== id));
+    }
+
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
         let group;
 

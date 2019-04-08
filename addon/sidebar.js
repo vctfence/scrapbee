@@ -88,9 +88,9 @@ function performImport(context, tree, file, file_name, file_ext) {
 }
 
 function performExport(context, tree) {
-    let {name: shelf} = getCurrentShelf();
+    let {id: shelf_id, name: shelf} = getCurrentShelf();
 
-    let special_shelf = shelf === EVERYTHING || shelf === TODO_SHELF || shelf === DONE_SHELF;
+    let special_shelf = shelf_id === EVERYTHING || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
     let root = special_shelf
         ? tree._jstree.get_node("#")
         : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
@@ -99,7 +99,14 @@ function performExport(context, tree) {
 
     let nodes = [];
     tree.traverse(root, node => {
-        let data = Object.assign({}, node.original);
+        let data = Object.assign({}, node.original)
+
+        delete data._path;
+        delete data.a_attr;
+        delete data.li_attr;
+        delete data.state;
+        delete data.text;
+
         data.level = node.parents.length - skip_level;
         nodes.push(data);
     });
@@ -110,7 +117,8 @@ function performExport(context, tree) {
 
     return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
-    }).catch(() => {
+    }).catch(e => {
+        console.log(e);
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
         alert("{Error}", "The export has failed.")
     });
@@ -390,12 +398,12 @@ window.onload = function () {
         if (e.target.files.length > 0) {
             let {name, ext} = pathToNameExt($("#file-picker").val());
 
-            if (!isSpecialShelf(name)) {
+            if (name === DEFAULT_SHELF_NAME || !isSpecialShelf(name)) {
                 let existingOption = $(`#shelfList option:contains("${name}")`);
 
                 if (existingOption.length)
                     confirm("{Warning}", "This will replace '" + name + "'.").then(() => {
-                        backend.deleteNodes(parseInt(existingOption.val())).then(() => {
+                        backend.deleteChildNodes(parseInt(existingOption.val())).then(() => {
                             performImport(context, tree, e.target.files[0], name, ext).then(() => {
                                 $("#file-picker").val("");
                             });
