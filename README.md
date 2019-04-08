@@ -19,7 +19,7 @@ Objectives:
 * ~~Rework settings page~~ [DONE]
 * ~~Dark theme~~ [DONE]
 * ~~Write help~~ [DONE]
-* A little bit of Wiki functionality: editable notes in org markup
+* ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
 * Live link auto checker
 * Self-hosted cloud-synchronization backend (possibly with bookmark access through the web)
 
