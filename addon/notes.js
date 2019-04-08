@@ -111,8 +111,8 @@ window.onload = function() {
     inline = inline.length > 1 && inline[1].startsWith("i#");
 
     if (inline)
-        $("#tabbar").html(`<a id="notes" class="focus" href="#">Notes</a>
-                                 <a id="edit" href="#">Edit</a>`);
+        $("#tabbar").html(`<a id="notes-button" class="focus" href="#">Notes</a>
+                                 <a id="edit-button" href="#">Edit</a>`);
     else
         $("#tabbar").html(`<div style="margin-left: 20px;">
                                     <span id="notes-for">Notes for: </span>

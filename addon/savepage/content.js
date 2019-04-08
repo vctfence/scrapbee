@@ -779,7 +779,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
     
     /* External script referenced in <script> element */
     
-    if (element.localName == "script")
+    if (false && element.localName == "script")
     {
         if (element.src != "")
         {
@@ -1681,7 +1681,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
 {
     var i,j,style,inline,preserve,property,displayed,startTag,endTag,textContent,baseuri,location,csstext,origurl,datauri,origstr;
     var visible,width,height,currentsrc,htmltext,startindex,endindex,origdoc,parser,framedoc,doctype,target,text,date,state;
-    var retainElements = new Array("html","head","body","base","command","link","meta","noscript","script","style","template","title");
+    var retainElements = new Array("html","head","body","base","command","link","meta","noscript"/*,"script"*/,"style","template","title");
     var voidElements = new Array("area","base","br","col","command","embed","frame","hr","img","input","keygen","link","menuitem","meta","param","source","track","wbr");
     var htmlFrameStrings = new Array();
     var matches = new Array();
@@ -1801,7 +1801,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
     /* Internal script in <script> element */
     /* External script in <script> element */
     
-    if (element.localName == "script")
+    if (false && element.localName == "script")
     {
         if (element.src == "")  /* internal script */
         {
