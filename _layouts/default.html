@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {% seo %}
+    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
+    <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <h1><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
+
+        {% if site.logo %}
+        <img src="{{site.logo | relative_url}}" alt="Logo" />
+        {% endif %}
+
+        <p>{{ site.description | default: site.github.project_tagline }}</p>
+
+        {% if site.github.is_project_page %}
+        <p class="view"><a href="{{ site.github.repository_url }}" target="_blank">View the Project on GitHub <small>{{ site.github.repository_nwo }}</small></a></p>
+        {% endif %}
+
+        <p class="view"><a href="/" target="_blank">Software by g/christensen <small>gchristensen.github.io</small></a></p>
+
+        {% if site.github.is_user_page %}
+        <p class="view"><a href="{{ site.github.owner_url }}">View My GitHub Profile</a></p>
+        {% endif %}
+
+        {% if site.show_downloads %}
+        <ul class="downloads">
+            <li><a href="{{ site.github.zip_url }}">Download <strong>ZIP File</strong></a></li>
+            <li><a href="{{ site.github.tar_url }}">Download <strong>TAR Ball</strong></a></li>
+            <li><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
+        </ul>
+        {% endif %}
+    </header>
+    <section>
+
+        <h1 id="add-torrent">Scrapyard</h1>
+
+        <p><img height="16px" width="16px" src="/firefox.png" alt="Firefox"/>
+            <a id="xpi-link" href="#">Coming soon</a>
+            <!-- :: <img height="16px" width="16px" src="/chrome.png" alt="Chrome"/>
+            <a href="https://chrome.google.com/webstore/detail/ubiquity-webextension/pideamopjihhbgieeeeamcbfllmgjfkb">Chrome
+                Extension</a>
+            :: <img height="16px" width="16px" src="/youtube.png" alt="Youtube" style="max-width:100%;">
+            <a href="https://youtu.be/YEdsVDZhcoQ" rel="nofollow" target="_blank">Video Manual</a-->
+        </p>
+
+        <script>
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var release = JSON.parse(this.responseText);
+                    var link = document.getElementById("xpi-link");
+                    link.href = release.assets[0].browser_download_url;
+                }
+            };
+            xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
+            xhr.send();
+
+            function watch() {
+                document.getElementById('placeholder').style.display='none';
+                document.getElementById('webm').style.display='block';
+                var video = document.querySelector('#webm video');
+                video.play();
+                setTimeout(function () {
+                    document.getElementById('webm').style.display = 'none';
+                    document.getElementById('placeholder').style.display = 'block';
+                }, 20000);
+            }
+
+            setTimeout(function() {
+                if (navigator.userAgent.search("Chrome") >= 0
+                    || navigator.userAgent.search("Firefox") >= 0) {
+
+                    watch();
+                }
+            }, 1000);
+        </script>
+
+        <div id="placeholder" style="display: block;">
+            <div style="position: relative; display: table;" onclick="watch()">
+                <!--img title="Watch on Youtube" style="cursor: pointer;" src="/enso-portable/screen.jpg" alt="screen" /-->
+                <img style="cursor: pointer;" src="/scrapyard/screen.png" alt="screen"/>
+                <div style="position: absolute; right: 10px; bottom: 10px; color: white; font-weight: bold; cursor: pointer;" onclick="watch()"
+                ><img src="/play_video.png" style="vertical-align: middle; cursor: pointer;"></div>
+            </div>
+        </div>
+
+        <div id="webm" style="display: none;">
+            <video src="/scrapyard/media/scrapyard.webm" width="500px" height="280px" type="video/webm" muted />
+        </div>
+
+
+        <p>SEE ALSO: <a href="https://gchristensen.github.io/ubiquitywe/">UbiquityWE</a></p>
+        <h4><a id="user-content-description" class="anchor" aria-hidden="true" href="#description">
+        </a>Description
+        </h4>
+        <p style="text-align: justify;">Scrapyard is a Firefox extension that resides in sidebar, where you can store and organize bookmarks,
+            page fragments or complete documents
+            in unlimited quantities. By utilizing browser local storage Scrapyard does not require
+            external tools to operate and allows to import or export data in
+            <a href="https://orgmode.org" target="_blank">org-mode</a> format.</p>
+        <h4><a id="features" class="anchor" aria-hidden="true" href="#description">
+        </a>Features
+        </h4>
+
+        <p style="text-align: justify;">
+            <ul>
+                <li>Ability to save page fragments and PDF-documents</li>
+                <li>Import/export from org-mode files and Firefox/Chrome HTML-bookmarks</li>
+                <li>No external tools needed</li>
+                <li>Multiple bookmark shelves</li>
+                <li>TODO functionality</li>
+                <li>It is possible to attach text notes to any bookmark</li>
+                <li><a href="https://gchristensen.github.io/ubiquitywe/">UbiquityWE</a> integration</li>
+            </ul>
+        </p>
+    </section>
+    <footer>
+    </footer>
+</div>
+<script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
+</body>
+</html>
