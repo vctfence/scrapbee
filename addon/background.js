@@ -1,6 +1,6 @@
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
 import {backend} from "./backend.js";
-import {exportOrg, importOrg} from "./import.js";
+import {exportOrg, importOrg, importHtml} from "./import.js";
 import {settings} from "./settings.js";
 import {showNotification} from "./utils.js";
 
@@ -89,6 +89,11 @@ browser.runtime.onMessage.addListener(message => {
                         case "ORG":
                             importF = () => {
                                 return importOrg(message.file_name, re.target.result);
+                            };
+                            break;
+                        case "HTML":
+                            importF = () => {
+                                return importHtml(message.file_name, re.target.result);
                             };
                             break;
                     }

@@ -16,16 +16,10 @@ Objectives:
 * ~~Control from~~ [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE]
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
+* ~~Import from Firefox/Chrome .html~~
 * ~~Rework settings page~~ [DONE]
 * ~~Dark theme~~ [DONE]
 * ~~Write help~~ [DONE]
 * ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
 * Live link auto checker
 * Self-hosted cloud-synchronization backend (possibly with bookmark access through the web)
-
-
-TODO: 
-
-* Import from .rdf
-* Import from Firefox/Chrome .html/.json
-* I18N

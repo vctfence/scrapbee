@@ -181,14 +181,13 @@ h2{
     border: 0;
 }
 .help-mark{
-    width:20px;
-    height:20px;
-    
-    background:url(icons/help-mark.svg);
-    background-size: 20px 20px;
+    width:16px;
+    height:16px;
+
+    background-image: url(icons/help-mark.svg);
+    background-size: 16px 16px;
     vertical-align:middle;
     display:inline-block;
-
 }
 
 

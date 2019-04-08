@@ -82,7 +82,6 @@ function captureSelection(options) {
     }
 
 
-
     document.querySelectorAll(`*[savepage-extraction-id]`)
         .forEach(e => e.removeAttribute("savepage-extraction-id"));
 

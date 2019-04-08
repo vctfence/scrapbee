@@ -26,6 +26,7 @@
     .jstree-default .jstree-anchor.jstree-clicked .todo-details {
         color: var(--tone-3) !important;
         transition: none !important;
+        background: transparent !important;
     }
 
     .dlg input[type=button] {
@@ -192,6 +193,9 @@
         background: var(--in-content-box-background-hover) !important;
     }
 
+    .help-mark {
+        background-image: url("%%%icons/help-mark2.svg") !important;
+    }
 
     code {
         color: rgba(0, 0, 0, 0.75) !important;
