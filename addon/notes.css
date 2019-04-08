@@ -86,6 +86,7 @@ a#notes-button.focus, a#edit-button.focus{
 #notes > ul#toc {
     padding-left: 0;
     margin-top: 0;
+    list-style: none;
 }
 
 #content-notes-button, #content-edit-button {

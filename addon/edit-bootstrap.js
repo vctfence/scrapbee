@@ -36,6 +36,10 @@ function receiveMessage(event) {
         if (bar)
             bar.parentNode.removeChild(bar);
 
+        let bootstrap_nodes = doc.querySelectorAll("*[id^='scrapyard-archive']");
+        for (let node of bootstrap_nodes)
+            node.parentNode.removeChild(node);
+
         browser.runtime.sendMessage({
             type: 'UPDATE_ARCHIVE',
             id: parseInt(location.hash.split(":")[1]),

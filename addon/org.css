@@ -234,11 +234,11 @@ span.task-status.done {
     font-size : 80%;
 }
 
-#content ul {
+#toc ul {
     list-style: none;
     padding-left: 20px;
 }
 
-#content a {
+#toc a {
     text-decoration: none;
 }

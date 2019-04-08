@@ -5,7 +5,7 @@ import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
 const INPUT_TIMEOUT = 1000;
 
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
-#+CSS: #notes {width: 600px;} p {text-align: justify;}
+#+CSS: .notes {width: 600px;} p {text-align: justify;}
 
 Supported [[http://orgmode.org/][org-mode]] markup features:
 
