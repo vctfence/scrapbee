@@ -1,7 +1,7 @@
 import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
-import {showDlg, alert, confirm} from "./dialog.js"
+import {showDlg, confirm} from "./dialog.js"
 
 import {
     EVERYTHING,
@@ -23,7 +23,7 @@ import {
     SearchContext
 
 } from "./search.js";
-import {pathToNameExt} from "./utils.js";
+import {pathToNameExt, showNotification} from "./utils.js";
 
 
 const INPUT_TIMEOUT = 1000;
@@ -72,25 +72,34 @@ function performImport(context, tree, file, file_name, file_ext) {
 
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
 
-            backend.queryShelf(file_name).then(shelf => {
-
-                settings.last_shelf(shelf.id);
+            if (file_name === EVERYTHING) {
+                settings.last_shelf(EVERYTHING_SHELF);
 
                 loadShelves(context, tree).then(() => {
                     tree.openRoot();
                 });
                 invalidateCompletion();
-            });
+            }
+            else
+                backend.queryShelf(file_name).then(shelf => {
+
+                    settings.last_shelf(shelf.id);
+
+                    loadShelves(context, tree).then(() => {
+                        tree.openRoot();
+                    });
+                    invalidateCompletion();
+                });
         }).catch(() => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
-            alert("{Error}", "The import has failed.")
+            showNotification({message: "The import has failed."});
         });
 }
 
 function performExport(context, tree) {
     let {id: shelf_id, name: shelf} = getCurrentShelf();
 
-    let special_shelf = shelf_id === EVERYTHING || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
+    let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
     let root = special_shelf
         ? tree._jstree.get_node("#")
         : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
@@ -120,7 +129,7 @@ function performExport(context, tree) {
     }).catch(e => {
         console.log(e);
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
-        alert("{Error}", "The export has failed.")
+        showNotification({message: "The export has failed."});
     });
 }
 
@@ -287,7 +296,7 @@ window.onload = function () {
                     });
                 }
                 else {
-                    alert("{Error}", "Can not create shelf with this name.")
+                    showNotification({message: "Can not create shelf with this name."})
                 }
             }
         });
@@ -314,7 +323,7 @@ window.onload = function () {
             });
         } else if (name === DEFAULT_SHELF_NAME) {
             // TODO: i18n
-            alert("{Error}", "A built-in shelf could not be renamed.")
+            showNotification({message: "A built-in shelf could not be renamed."});
         }
 
     });
@@ -324,7 +333,7 @@ window.onload = function () {
 
         if (isSpecialShelf(name)) {
             // TODO: i18n
-            alert("{Error}", "A built-in shelf could not be deleted.")
+            showNotification({message: "A built-in shelf could not be deleted."})
             return;
         }
 
@@ -346,7 +355,7 @@ window.onload = function () {
     tree.onRenameShelf = node => {
         if (isSpecialShelf(node.name)) {
             // TODO: i18n
-            alert("{Error}", "A built-in shelf could not be renamed.")
+            showNotification({message: "A built-in shelf could not be renamed."});
             return;
         }
 
@@ -366,7 +375,7 @@ window.onload = function () {
     tree.onDeleteShelf = node => {
         if (isSpecialShelf(node.name)) {
             // TODO: i18n
-            alert("{Error}", "A built-in shelf could not be deleted.")
+            showNotification({message: "A built-in shelf could not be deleted."});
             return;
         }
 
@@ -398,15 +407,21 @@ window.onload = function () {
         if (e.target.files.length > 0) {
             let {name, ext} = pathToNameExt($("#file-picker").val());
 
-            if (name === DEFAULT_SHELF_NAME || !isSpecialShelf(name)) {
+            if (name === DEFAULT_SHELF_NAME || name === EVERYTHING || !isSpecialShelf(name)) {
                 let existingOption = $(`#shelfList option:contains("${name}")`);
 
                 if (existingOption.length)
                     confirm("{Warning}", "This will replace '" + name + "'.").then(() => {
-                        backend.deleteChildNodes(parseInt(existingOption.val())).then(() => {
-                            performImport(context, tree, e.target.files[0], name, ext).then(() => {
-                                $("#file-picker").val("");
-                            });
+                        (name === EVERYTHING
+                            ? backend.wipeEveritying()
+                            : (name === DEFAULT_SHELF_NAME
+                                ? backend.deleteChildNodes(parseInt(existingOption.val()))
+                                : backend.deleteNodes(parseInt(existingOption.val()))))
+
+                            .then(() => {
+                                performImport(context, tree, e.target.files[0], name, ext).then(() => {
+                                    $("#file-picker").val("");
+                                });
                         });
                     });
                 else
@@ -415,7 +430,7 @@ window.onload = function () {
                     });
             }
             else
-                alert("{Error}", `Cannot replace '${name}'.`)
+                showNotification({message: `Cannot replace '${name}'.`});
         }
     });
 
@@ -530,7 +545,7 @@ window.onload = function () {
                             });
                         }
                         else {
-                            alert("{Error}", "Can not create shelf with this name.")
+                            showNotification({message: "Can not create shelf with this name."});
                         }
                     }
                 });

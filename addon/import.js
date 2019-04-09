@@ -2,7 +2,14 @@ import * as org from "./org.js"
 import {backend} from "./backend.js"
 import LZString from "./lib/lz-string.js"
 import {
-    NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, DEFAULT_POSITION, TODO_STATES, TODO_NAMES
+    NODE_TYPE_SHELF,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    DEFAULT_POSITION,
+    TODO_STATES,
+    TODO_NAMES,
+    EVERYTHING
 } from "./db.js";
 
 const ORG_EXPORT_VERSION = 1;
@@ -19,7 +26,7 @@ export async function importOrg(shelf, text) {
     let org_lines = new org.Parser().parse(text);
     let compressed = org_lines.directiveValues["compressed:"] && org_lines.directiveValues["compressed:"] === "t";
 
-    let path = [shelf];
+    let path = shelf === EVERYTHING? []: [shelf];
     let level = 0;
 
     let last_object;

@@ -45,7 +45,7 @@ export function browseNode(node) {
                     });
                 }
                 else {
-                    showNotification({message: "No data is stored", title: "Error"});
+                    showNotification({message: "No data is stored."});
                 }
             });
             break;

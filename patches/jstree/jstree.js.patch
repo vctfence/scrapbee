@@ -1,0 +1,11 @@
+--- ./original/jstree.js	2018-11-07 01:15:47.000000000 +0400
++++ jstree.js	2019-04-10 09:17:46.893672800 +0400
+@@ -2544,7 +2544,7 @@
+ 				else {
+ 					node.childNodes[1].childNodes[0].style.backgroundImage = 'url("'+obj.icon+'")';
+ 					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
+-					node.childNodes[1].childNodes[0].style.backgroundSize = 'auto';
++					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
+ 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
+ 				}
+ 			}

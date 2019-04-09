@@ -15,7 +15,13 @@ I decided to rewrite ScrapBee from scratch to obtain the desired features.
 
 Although it is possible in principle (for example, through an external python/flask
 based utility which will  serve saved Scrapbook files), this is not in author's 
-set of priorities, but you may contribute. 
+set of priorities. But you may try to automate this. The call: 
+
+```javascript
+browser.runtime.sendMessage("scrapyard@firefox", {type: "SCRAPYARD_ADD_ARCHIVE"});
+``` 
+
+will add the page at the opened tab as an archive to Scrapyard.
 
 ### Objectives
 

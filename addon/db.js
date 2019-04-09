@@ -231,6 +231,14 @@ class Storage {
         return db.nodes.bulkDelete(nodes);
     }
 
+    async wipeEveritying() {
+        await db.blobs.clear();
+        await db.index.clear();
+        await db.notes.clear();
+        await db.tags.clear();
+        return db.nodes.where("id").notEqual(1).delete();
+    }
+
     async queryShelf(name) {
         let where = db.nodes.where("type").equals(NODE_TYPE_SHELF);
 

@@ -1,0 +1,59 @@
+--- ./original/dexie.js	2019-04-10 09:21:09.098028000 +0400
++++ dexie.js	2019-04-10 09:25:39.667674700 +0400
+@@ -11,11 +11,7 @@
+  * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/
+  */
+  
+-(function (global, factory) {
+-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+-	typeof define === 'function' && define.amd ? define(factory) :
+-	(global.Dexie = factory());
+-}(this, (function () { 'use strict';
++export default Dexie;
+ 
+ var keys = Object.keys;
+ var isArray = Array.isArray;
+@@ -308,7 +304,7 @@
+             // If we'd just throw new Error() here, IE's debugger's exception settings
+             // will just consider it as "exception thrown by javascript code" which is
+             // something you wouldn't want it to ignore.
+-            getErrorWithStack.arguments;
++//            getErrorWithStack.arguments;
+             throw new Error(); // Fallback if above line don't throw.
+         }
+         catch (e) {
+@@ -625,16 +621,16 @@
+ var MAX_LONG_STACKS = 20;
+ var ZONE_ECHO_LIMIT = 7;
+ var nativePromiseInstanceAndProto = (function () {
+-    try {
+-        // Be able to patch native async functions
+-        return new Function("let F=async ()=>{},p=F();return [p,Object.getPrototypeOf(p),Promise.resolve(),F.constructor];")();
+-    }
+-    catch (e) {
++//    try {
++//        // Be able to patch native async functions
++//        return new Function("let F=async ()=>{},p=F();return [p,Object.getPrototypeOf(p),Promise.resolve(),F.constructor];")();
++//    }
++//    catch (e) {
+         var P = _global.Promise;
+         return P ?
+             [P.resolve(), P.prototype, P.resolve()] :
+             [];
+-    }
++//    }
+ })();
+ var resolvedNativePromise = nativePromiseInstanceAndProto[0];
+ var nativePromiseProto = nativePromiseInstanceAndProto[1];
+@@ -4466,9 +4462,4 @@
+         }
+     }
+     catch (_e) { }
+-})();
+-
+-return Dexie;
+-
+-})));
+-//# sourceMappingURL=dexie.js.map
++})();
+\ No newline at end of file

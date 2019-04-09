@@ -9,7 +9,7 @@ async function scriptsAllowed(tabId, frameId = 0) {
     } catch (e) {}
 }
 
-function showNotification({message, title='', type = 'info'}) {
+function showNotification({message, title='Scrapyard', type = 'info'}) {
     return browser.notifications.create(`sbi-notification-${type}`, {
         type: 'basic',
         title: title,
