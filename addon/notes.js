@@ -150,7 +150,7 @@ window.onload = function() {
         let output = "";
 
         if (doc.directiveValues["css:"])
-            output += `<style>${doc.directiveValues["css:"]}</style>`
+            output += `<style>${escapeHtml(doc.directiveValues["css:"])}</style>`;
 
         if (doc.options.toc) {
             output += html.tocHTML.replace("<ul", "<ul id='toc'") + html.contentHTML;

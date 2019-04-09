@@ -32,4 +32,21 @@ function pathToNameExt(fullPath) {
     return {name: file_name, ext: file_ext};
 }
 
-export{scriptsAllowed, showNotification, pathToNameExt};
+var entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+    '`': '&#x60;',
+    '=': '&#x3D;'
+};
+
+function escapeHtml (string) {
+    return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+        return entityMap[s];
+    });
+}
+
+export{scriptsAllowed, showNotification, pathToNameExt, escapeHtml};
