@@ -13,7 +13,7 @@ import {
 } from "./db.js";
 
 const ORG_EXPORT_VERSION = 1;
-const EXPORTED_KEYS = ["uuid", "icon", "type", "date_added", "date_modified"];
+const EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified"];
 
 function traverseOrgNode(node, callback) {
     callback(node);
@@ -335,7 +335,7 @@ export async function importHtml(shelf, text) {
                 }
             }
             else if (child.localName === "dl") {
-                await traverseHtml(child, path, level);
+                await traverseHtml(child, path);
             }
         }
     }

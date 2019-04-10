@@ -52,6 +52,12 @@ class BookmarkTree {
                 "#": {
                     "valid_children": [NODE_TYPE_SHELF]
                 },
+                [NODE_TYPE_SHELF]: {
+                    "valid_children": [NODE_TYPE_GROUP, ...ENDPOINT_TYPES, NODE_TYPE_SEPARATOR]
+                },
+                [NODE_TYPE_GROUP]: {
+                    "valid_children": [NODE_TYPE_GROUP, ...ENDPOINT_TYPES, NODE_TYPE_SEPARATOR]
+                },
                 [NODE_TYPE_BOOKMARK]: {
                     "valid_children": []
                 },
@@ -69,26 +75,49 @@ class BookmarkTree {
 
         this._jstree = $(element).jstree(true);
 
-        $(document).on("click", ".jstree-anchor", (e) => {
-            if (e.button === undefined || e.button === 0 || e.button === 1) {
-                e.preventDefault();
+        $(document).on("mousedown", ".jstree-node", e => this.handleMouseClick(e));
+        $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
+        // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
+    }
 
-                let element = e.target;
-                while (element && !$(element).hasClass("jstree-anchor")) {
-                    element = element.parentNode;
-                }
+    handleMouseClick(e) {
+        if (e.type === "click" && e.target._mousedown_fired) {
+            e.target._mousedown_fired = false;
+            return;
+        }
 
-                let clickable = element.getAttribute("data-clickable");
-                let id = element.getAttribute("data-id");
+        if (e.button === undefined || e.button === 0 || e.button === 1) {
+            e.preventDefault();
 
-                if (clickable && !e.ctrlKey) {
-                    let node = this.data.find(n => n.id == id);
-                    if (node)
-                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
-                }
-                return false;
+            if (e.type === "mousedown")
+                e.target._mousedown_fired = true;
+
+            let element = e.target;
+            while (element && !$(element).hasClass("jstree-node")) {
+                element = element.parentNode;
             }
-        })
+
+            if (e.type === "mousedown" && e.button === 0 && $(e.target).hasClass("jstree-wholerow")) {
+                let anchor = $(element).find(".jstree-anchor");
+                if (anchor.length)
+                    anchor [0]._mousedown_fired = true;
+            }
+            if (e.type === "mousedown" && e.button === 1 && $(e.target).hasClass("jstree-anchor")) {
+                let anchor = $(element).find(".jstree-anchor");
+                if (anchor.length)
+                    anchor[0]._mousedown_fired = false;
+            }
+
+            let clickable = element.getAttribute("data-clickable");
+            let id = element.getAttribute("data-id");
+
+            if (clickable && !e.ctrlKey) {
+                let node = this.data.find(n => n.id == id);
+                if (node)
+                    browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+            }
+            return false;
+        }
     }
 
     traverse(root, visitor) {
@@ -186,16 +215,16 @@ class BookmarkTree {
 
             n.li_attr = {
                 "class": "show_tooltip",
-                "title": `${n.text}${uri}`
+                "title": `${n.text}${uri}`,
+                "data-id": n.id,
+                "data-clickable": "true"
             };
 
             if (n.type == NODE_TYPE_ARCHIVE)
                 n.li_attr.class += " archive-node";
 
             n.a_attr = {
-                "class": "",
-                "data-id": n.id,
-                "data-clickable": "true"
+                "class": ""
             };
 
             if (n.todo_state) {

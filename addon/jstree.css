@@ -219,6 +219,10 @@
     float: left;
 }
 
+.jstree-default .jstree-anchor {
+    cursor: pointer;
+}
+
 .jstree-default .extended-todo .jstree-anchor {
     display: inline-block;
     line-height: normal;

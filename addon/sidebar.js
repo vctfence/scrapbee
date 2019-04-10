@@ -115,6 +115,7 @@ function performExport(context, tree) {
         delete data.li_attr;
         delete data.state;
         delete data.text;
+        delete data.tag_list;
 
         data.level = node.parents.length - skip_level;
         nodes.push(data);
@@ -127,7 +128,7 @@ function performExport(context, tree) {
     return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
     }).catch(e => {
-        console.log(e);
+        console.log(e.message);
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
         showNotification({message: "The export has failed."});
     });
@@ -136,7 +137,7 @@ function performExport(context, tree) {
 function styleBuiltinShelf() {
     let {id, name} = getCurrentShelf();
 
-    if (isSpecialShelf(name) && name !== DEFAULT_SHELF_NAME)
+    if (isSpecialShelf(name))
         $("div.selectric span.label").addClass("option-builtin");
     else
         $("div.selectric span.label").removeClass("option-builtin");
@@ -152,7 +153,7 @@ function loadShelves(context, tree) {
     shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
-        <option class="option-builtin" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
     `);
 
     return backend.listShelves().then(shelves => {
@@ -172,8 +173,8 @@ function loadShelves(context, tree) {
         for (let shelf of shelves) {
             let option = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
 
-            if (shelf.name == DEFAULT_SHELF_NAME)
-                option.addClass("divide");
+            if (shelf.name === DEFAULT_SHELF_NAME)
+                option.addClass("option-builtin");
         }
 
 
@@ -259,7 +260,7 @@ window.onload = function () {
     let context = new SearchContext(tree);
     let shelf_list = $("#shelfList");
 
-    shelf_list.selectric({inheritOriginalWidth: true});
+    shelf_list.selectric({maxHeight: 600, inheritOriginalWidth: true});
 
     var btn = document.getElementById("btnLoad");
     btn.onclick = function () {
@@ -339,7 +340,7 @@ window.onload = function () {
                         });
                 }
             });
-        } else if (name === DEFAULT_SHELF_NAME) {
+        } else {
             // TODO: i18n
             showNotification({message: "A built-in shelf could not be renamed."});
         }

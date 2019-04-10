@@ -1,12 +1,27 @@
-String.prototype.htmlEncode = function (ignoreAmp) {
+String.prototype.htmlEncode = function (ignoreAmp, ignoreQuotes) {
     var s = this;
     if (!ignoreAmp) s = s.replace(/&/g, '&amp;')
+
+    if (!ignoreQuotes) {
+        s.replace(/\"/g, '&quot;')
+         .replace(/\'/g, '&#39;');
+    }
+
     return s.replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\"/g, '&quot;')
-        .replace(/ /g, '&nbsp;')
-        .replace(/\'/g, '&#39;');
-}
+            .replace(/>/g, '&gt;')
+          //.replace(/ /g, '&nbsp;')
+        ;
+};
+
+String.prototype.htmlDecode = function () {
+    return this.replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '\"')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#39;/g, "'");
+};
+
 String.prototype.translate = function () {
     return this.fillData(function (s) {
         try {
@@ -15,15 +30,8 @@ String.prototype.translate = function () {
             return s;
         }
     });
-}
-String.prototype.htmlDecode = function () {
-    return this.replace(/&amp;/g, '&')
-        .replace(/&quot;/g, '\"')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&#39;/g, "'");
-}
+};
+
 /*
   html style escape characters
   @chars: chars be escaped

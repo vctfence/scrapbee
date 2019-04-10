@@ -105,6 +105,9 @@ class IDBBackend extends Storage {
 
     async listTODO() {
         let todo = await this.queryTODO();
+        todo.reverse();
+        todo.sort((a, b) => a.todo_state - b.todo_state);
+
 
         let now = new Date();
         now.setUTCHours(0, 0, 0, 0);
@@ -334,6 +337,9 @@ class IDBBackend extends Storage {
     }
 
     async importBookmark(data) {
+        if (data.uuid === "1")
+            return;
+
         let group;
 
         group = await this._getGroup(data.path);

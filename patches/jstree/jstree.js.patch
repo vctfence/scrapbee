@@ -1,5 +1,68 @@
 --- ./original/jstree.js	2018-11-07 01:15:47.000000000 +0400
-+++ jstree.js	2019-04-10 09:17:46.893672800 +0400
++++ jstree.js	2019-04-10 14:55:11.547493500 +0400
+@@ -593,7 +593,7 @@
+ 					return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue));
+ 				})
+ 				.remove();
+-			this.element.html("<"+"ul class='jstree-container-ul jstree-children' role='group'><"+"li id='j"+this._id+"_loading' class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='tree-item'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor' href='#'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
++			this.element.html("<"+"ul class='jstree-container-ul jstree-children' role='group'><"+"li id='j"+this._id+"_loading' class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='tree-item'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
+ 			this.element.attr('aria-activedescendant','j' + this._id + '_loading');
+ 			this._data.core.li_height = this.get_container_ul().children("li").first().outerHeight() || 24;
+ 			this._data.core.node = this._create_prototype_node();
+@@ -641,7 +641,7 @@
+ 			_node.appendChild(_temp1);
+ 			_temp1 = document.createElement('A');
+ 			_temp1.className = 'jstree-anchor';
+-			_temp1.setAttribute('href','#');
++//			_temp1.setAttribute('href','#');
+ 			_temp1.setAttribute('tabindex','-1');
+ 			_temp2 = document.createElement('I');
+ 			_temp2.className = 'jstree-icon jstree-themeicon';
+@@ -1636,7 +1636,7 @@
+ 									data		: d.data,
+ 									state		: { },
+ 									li_attr		: { id : false },
+-									a_attr		: { href : '#' },
++									a_attr		: { /*href : '#'*/ },
+ 									original	: false
+ 								};
+ 							for(i in df) {
+@@ -1726,7 +1726,7 @@
+ 								data		: null,
+ 								state		: { },
+ 								li_attr		: { id : false },
+-								a_attr		: { href : '#' },
++								a_attr		: { /*href : '#'*/ },
+ 								original	: false
+ 							};
+ 							for(i in df) {
+@@ -2012,7 +2012,7 @@
+ 					data		: null,
+ 					state		: { },
+ 					li_attr		: { id : false },
+-					a_attr		: { href : '#' },
++					a_attr		: { /*href : '#'*/ },
+ 					original	: false
+ 				}, i, tmp, tid;
+ 			for(i in this._model.default_state) {
+@@ -2127,7 +2127,7 @@
+ 					data		: d.data,
+ 					state		: { },
+ 					li_attr		: { id : false },
+-					a_attr		: { href : '#' },
++					a_attr		: { /*href : '#'*/ },
+ 					original	: false
+ 				};
+ 			for(i in df) {
+@@ -2226,7 +2226,7 @@
+ 				data		: null,
+ 				state		: { },
+ 				li_attr		: { id : false },
+-				a_attr		: { href : '#' },
++				a_attr		: { /*href : '#'*/ },
+ 				original	: false
+ 			};
+ 			for(i in df) {
 @@ -2544,7 +2544,7 @@
  				else {
  					node.childNodes[1].childNodes[0].style.backgroundImage = 'url("'+obj.icon+'")';
@@ -9,3 +72,12 @@
  					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
  				}
  			}
+@@ -3584,7 +3584,7 @@
+ 
+ 			var c = this.get_container_ul()[0].className;
+ 			if(!skip_loading) {
+-				this.element.html("<"+"ul class='"+c+"' role='group'><"+"li class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='treeitem' id='j"+this._id+"_loading'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor' href='#'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
++				this.element.html("<"+"ul class='"+c+"' role='group'><"+"li class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='treeitem' id='j"+this._id+"_loading'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
+ 				this.element.attr('aria-activedescendant','j'+this._id+'_loading');
+ 			}
+ 			this.load_node($.jstree.root, function (o, s) {

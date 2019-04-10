@@ -41,7 +41,7 @@ export const EVERYTHING = "everything";
 export const DEFAULT_POSITION = 2147483647;
 
 import UUID from "./lib/uuid.js"
-import Dexie from "./lib/dexie.es.js"
+import Dexie from "./lib/dexie.js"
 import LZString from "./lib/lz-string.js"
 
 const db = new Dexie("scrapyard");
@@ -192,7 +192,7 @@ class Storage {
     }
 
     queryTODO() {
-        return db.nodes.where("todo_state").below(TODO_STATE_DONE).sortBy("todo_state");
+        return db.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
     }
 
     queryDONE() {
@@ -225,17 +225,31 @@ class Storage {
         if (!Array.isArray)
             nodes = [nodes];
 
-        await db.blobs.where("node_id").anyOf(nodes).delete();
-        await db.index.where("node_id").anyOf(nodes).delete();
-        await db.notes.where("node_id").anyOf(nodes).delete();
+        if (db.tables.some(t => t.name === "blobs"))
+            await db.blobs.where("node_id").anyOf(nodes).delete();
+
+        if (db.tables.some(t => t.name === "index"))
+            await db.index.where("node_id").anyOf(nodes).delete();
+
+        if (db.tables.some(t => t.name === "notes"))
+            await db.notes.where("node_id").anyOf(nodes).delete();
+
         return db.nodes.bulkDelete(nodes);
     }
 
     async wipeEveritying() {
-        await db.blobs.clear();
-        await db.index.clear();
-        await db.notes.clear();
-        await db.tags.clear();
+        if (db.tables.some(t => t.name === "blobs"))
+            await db.blobs.clear();
+
+        if (db.tables.some(t => t.name === "index"))
+            await db.index.clear();
+
+        if (db.tables.some(t => t.name === "notes"))
+            await db.notes.clear();
+
+        if (db.tables.some(t => t.name === "tags"))
+            await db.tags.clear();
+
         return db.nodes.where("id").notEqual(1).delete();
     }
 

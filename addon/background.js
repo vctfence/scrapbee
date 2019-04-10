@@ -5,6 +5,7 @@ import {settings} from "./settings.js";
 import {showNotification} from "./utils.js";
 
 export function browseNode(node) {
+
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
             let url = node.uri;
@@ -15,6 +16,7 @@ export function browseNode(node) {
 
             return browser.tabs.create({"url": url});
             break;
+
         case NODE_TYPE_ARCHIVE:
             return backend.fetchBlob(node.id).then(blob => {
                 if (blob) {
@@ -49,8 +51,9 @@ export function browseNode(node) {
                 }
             });
             break;
+
         case NODE_TYPE_NOTES:
-            browser.tabs.create({
+            return browser.tabs.create({
                 "url": "notes.html#" + node.uuid + ":" + node.id
             });
             break;

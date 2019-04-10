@@ -217,7 +217,7 @@
         color: rgb(0, 90, 190) !important;
     }
 
-    .source-url {
+    #source-url {
         color: #0074D9 !important;
     }
 }

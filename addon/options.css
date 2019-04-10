@@ -43,6 +43,9 @@ body{
     padding:15px;
     overflow:scroll;
 }
+/*.div-area-placeholder{*/
+/*    width: 100%;*/
+/*}*/
 input[type=button]{
     padding:5px 20px;
     appearance: none;

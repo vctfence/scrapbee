@@ -150,7 +150,9 @@ window.onload = function() {
         let output = "";
 
         if (doc.directiveValues["css:"])
-            output += `<style>${escapeHtml(doc.directiveValues["css:"])}</style>`;
+            $("#notes-style").text(doc.directiveValues["css:"].htmlEncode(true, true));
+        else
+            $("#notes-style").text("");
 
         if (doc.options.toc) {
             output += html.tocHTML.replace("<ul", "<ul id='toc'") + html.contentHTML;

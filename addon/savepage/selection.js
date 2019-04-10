@@ -7,6 +7,9 @@ function captureSelection(options) {
     function retainStructure(parent, content) {
         let parents = [];
 
+        if (parent.nodeType === 3)
+            parent = parent.parentNode;
+
         // mark all encountered parents including <html>
         while (parent && parent.localName !== "html") {
             let parentId = parent.getAttribute("savepage-extraction-id");
