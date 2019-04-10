@@ -653,12 +653,16 @@ function addListeners()
                 break;
 
             case "STORE_PAGE_HTML":
-                backend.storeBlob(message.payload.id, message.data, "text/html");
+                backend.storeBlob(message.payload.id, message.data, "text/html")
+                    .then(() => {
+                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
+
+                        alertNotify("Successfully archived page.");
+                    })
+                    .catch(e => {
+                        console.log(e);
+                    });
                 backend.storeIndex(message.payload.id, message.data.indexWords());
-
-                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
-
-                alertNotify("Successfully archived page.");
 
                 break;
 
@@ -1083,7 +1087,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
                                                     });
                                                 }
                                             });
-                                    }, 50);
+                                    }, 100);
                             }).catch(e => {
                                 loadDocument();
                             });

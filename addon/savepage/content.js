@@ -101,14 +101,14 @@ function lockDocument() {
         let lock = document.createElement("div");
         lock.id = "scrapyard-waiting";
 
-        lock.style.width = lock.style.height = "100%";
         lock.style.backgroundColor = "#9995";
         lock.style.zIndex = 2147483647;
         lock.style.position = "fixed";
         lock.style.left = lock.style.right = "0";
+        lock.style.bottom = lock.style.top = "0";
+        lock.style.backgroundImage = "url(" + browser.extension.getURL("icons/lock.svg") + ")";
         lock.style.backgroundRepeat = "no-repeat";
         lock.style.backgroundPosition = "center center";
-        lock.style.backgroundImage = "url(" + browser.extension.getURL("icons/lock.svg") + ")";
 
         document.body.insertBefore(lock, document.body.firstChild);
     }

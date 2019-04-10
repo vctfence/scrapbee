@@ -154,7 +154,7 @@ window.onload = function () {
                                         uri:  $("#bookmark-url").val(),
                                         tags: $("#bookmark-tags").val(),
                                         icon: $("#bookmark-icon").val(),
-                                        parent_id: node.original.id
+                                        parent_id: parseInt(node.id)
                                     }});
     }
 

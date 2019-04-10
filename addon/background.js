@@ -109,7 +109,8 @@ browser.runtime.onMessage.addListener(message => {
         case "EXPORT_FILE":
             return exportOrg(message.nodes, message.shelf, message.uuid,
                 settings.shallow_export(), settings.compress_export()).then(url => {
-                    return browser.downloads.download({url: url, filename: message.shelf + ".org", saveAs: false});
+                    let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_");
+                    return browser.downloads.download({url: url, filename: file_name + ".org", saveAs: false});
             });
             break;
     }

@@ -116,17 +116,25 @@ NodeList.prototype.iterateAll = function (fn) {
         item.childNodes.iterateAll(fn);
     });
 }
+
 String.prototype.indexWords = function () {
-    return Array.from(new Set(this
-        .replace(/<head(?:.|\n)*?<\/head>/gm, '')
-        .replace(/<style(?:.|\n)*?<\/style>/gm, '')
-        .replace(/<script(?:.|\n)*?<\/script>/gm, '')
-        .replace(/<(?:.|\n)*?>/gm, '')
-        .replace(/(\s|\n|[^\w])+/g, ' ')
-        .split(" ")
-        .filter(s => s && s.length > 2)
-        .map(s => s.toLocaleUpperCase())
-    ));
+    try {
+        return Array.from(new Set(this
+            .substring(this.indexOf("<body>"))
+            .replace(/<style(?:.|\n)*<\/style>/gm, '')
+            .replace(/<script(?:.|\n)*<\/script>/gm, '')
+            .replace(/<(?:.|\n)*?>/gm, '')
+            .replace(/\n/g, '')
+            .replace(/(?:\s|[^\w])+/g, ' ')
+            .split(" ")
+            .filter(s => s && s.length > 2)
+            .map(s => s.toLocaleUpperCase())
+        ));
+    }
+    catch (e) {
+        console.log("Index creation has failed.")
+        return [];
+    }
 };
 
 Array.prototype.removeDups = function(field) {

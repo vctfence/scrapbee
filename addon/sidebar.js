@@ -152,12 +152,30 @@ function loadShelves(context, tree) {
     shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
+        <option class="option-builtin" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
     `);
 
     return backend.listShelves().then(shelves => {
-        for (let shelf of shelves)
-            $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
+        shelves.sort((a, b) => {
+            if (a.name < b.name)
+                return -1;
+            if (a.name > b.name)
+                return 1;
+
+            return 0;
+        });
+
+        let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+        shelves.splice(shelves.indexOf(default_shelf), 1);
+        shelves = [default_shelf, ...shelves];
+
+        for (let shelf of shelves) {
+            let option = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
+
+            if (shelf.name == DEFAULT_SHELF_NAME)
+                option.addClass("divide");
+        }
+
 
         let last_shelf_id = settings.last_shelf() || 1;
 
