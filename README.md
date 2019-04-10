@@ -9,7 +9,7 @@ This is a development page. Please visit the main site at: https://gchristensen.
 Since the departure of Scrapbook I have converted all my Scrapbook stuff to an org-mode
 based wiki, but it is very painful to add bookmarks there. Since I needed a bookmark 
 manager with some org-mode goodness which I would be able to control from UbiquityWE, 
-I decided to rewrite ScrapBee from scratch to obtain the desired features.
+I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch to obtain the desired features.
 
 ### Import from RDF
 
