@@ -113,7 +113,7 @@ class BookmarkTree {
 
             if (clickable && !e.ctrlKey) {
                 let node = this.data.find(n => n.id == id);
-                console.log(node);
+
                 if (node)
                     browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
             }

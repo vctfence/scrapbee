@@ -87,10 +87,10 @@ class EditToolBar {
 
         /** icon */
         var img = document.createElement("img");
-        img.className = "scrapyard-icon"
+        img.id = "scrapyard-icon"
         img.src = `moz-extension://${extension_id}/icons/scrapyard.svg`;
         div.appendChild(img);
-        div.innerHTML += " <b class='brand'>Scrapyard</b>&nbsp;&nbsp;";
+        div.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
 
         /** body */
         document.body.style.marginBottom = "100px";

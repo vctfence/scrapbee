@@ -42,7 +42,7 @@ export const DEFAULT_POSITION = 2147483647;
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
-import LZString from "./lib/lz-string.js"
+//import LZString from "./lib/lz-string.js"
 
 const db = new Dexie("scrapyard");
 
@@ -269,7 +269,7 @@ class Storage {
            .first();
     }
 
-    async storeBlob(node_id, data, content_type, compress = true) {
+    async storeBlob(node_id, data, content_type, compress = false) {
         let node = await this.getNode(node_id);
 
         let byte_length;
@@ -284,30 +284,30 @@ class Storage {
             data = binaryString;
         }
 
-        if (compress) {
-            data = LZString.compress(data);
-        }
+        // if (compress) {
+        //     data = LZString.compress(data);
+        // }
 
         if (node)
             return db.blobs.add({
                 node_id: node.id,
-                compressed: compress,
+                //compressed: compress,
                 data: data,
                 byte_length: byte_length,
                 type: content_type
             });
     }
 
-    async updateBlob(node_id, data, compress = true) {
+    async updateBlob(node_id, data, compress = false) {
         let node = await this.getNode(node_id);
 
-        if (compress) {
-            data = LZString.compress(data);
-        }
+        // if (compress) {
+        //     data = LZString.compress(data);
+        // }
 
         if (node)
             return db.blobs.where("node_id").equals(node.id).modify({
-                compressed: compress,
+                //compressed: compress,
                 data: data
             });
     }
@@ -320,8 +320,8 @@ class Storage {
         }
         let blob = await db.blobs.where("node_id").equals(node_id).first();
 
-        if (!compressed && blob && blob.compressed)
-            blob.data = LZString.decompress(blob.data);
+       // if (!compressed && blob && blob.compressed)
+       //     blob.data = LZString.decompress(blob.data);
 
         return blob;
     }

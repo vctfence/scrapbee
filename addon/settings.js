@@ -27,7 +27,7 @@ export const SETTING_KEY = "scrapyard-settings";
 export const DEFAULT_SETTINGS = {
     arcive_url_lifetime: 5,
     shallow_export: false,
-    compress_export: true,
+//    compress_export: true,
     switch_to_new_bookmark: true
 };
 

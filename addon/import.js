@@ -1,6 +1,6 @@
 import * as org from "./org.js"
 import {backend} from "./backend.js"
-import LZString from "./lib/lz-string.js"
+//import LZString from "./lib/lz-string.js"
 import {
     NODE_TYPE_SHELF,
     NODE_TYPE_GROUP,
@@ -165,7 +165,7 @@ export async function importOrg(shelf, text) {
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
                     if (last_object.data) {
                         last_object.data = compressed
-                            ? LZString.decompressFromBase64(last_object.data)
+                            ? null //LZString.decompressFromBase64(last_object.data)
                             : JSON.parse(last_object.data);
 
                         if (last_object.byte_length) {
@@ -180,7 +180,7 @@ export async function importOrg(shelf, text) {
 
                 if (last_object.notes) {
                     last_object.notes = compressed
-                        ? LZString.decompressFromBase64(last_object.notes)
+                        ? null // LZString.decompressFromBase64(last_object.notes)
                         : JSON.parse(last_object.notes);
                 }
             }
@@ -222,7 +222,7 @@ async function objectToProperties(node, compress) {
                 lines.push(`    :byte_length: ${blob.byte_length}`);
 
             let content = compress
-                ? LZString.compressToBase64(blob.data)
+                ? null //LZString.compressToBase64(blob.data)
                 : JSON.stringify(blob.data);
 
             lines.push(`    :data: ${content}`);
@@ -232,7 +232,7 @@ async function objectToProperties(node, compress) {
     let notes = await backend.fetchNotes(node.id);
     if (notes && notes.content) {
         let content = compress
-            ? LZString.compressToBase64(notes.content)
+            ? null //LZString.compressToBase64(notes.content)
             : JSON.stringify(notes.content);
 
         lines.push(`    :notes: ${content}`);
@@ -241,7 +241,7 @@ async function objectToProperties(node, compress) {
     return lines.join("\n");
 }
 
-export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = true) {
+export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = false) {
     let org_lines = [];
 
     if (!shallow)

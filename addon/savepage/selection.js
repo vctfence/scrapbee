@@ -84,11 +84,22 @@ function captureSelection(options) {
         }
     }
 
-
     document.querySelectorAll(`*[savepage-extraction-id]`)
         .forEach(e => e.removeAttribute("savepage-extraction-id"));
 
-    return root ? root.innerHTML : undefined;
+    let html;
+
+    if (root) {
+        html = root.innerHTML;
+
+        if (options._style) {
+            let style = options._style.replace(/</g, '&lt;')
+                                      .replace(/>/g, '&gt;')
+            html = `<style>${style}</style>` + html;
+        }
+    }
+
+    return html;
 }
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {

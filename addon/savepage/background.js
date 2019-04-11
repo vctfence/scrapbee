@@ -648,12 +648,12 @@ function addListeners()
                 break;
 
             case "UPDATE_ARCHIVE":
-                backend.updateBlob(message.id, message.data);
+                backend.updateBlob(message.id, message.data, false);
                 backend.updateIndex(message.id, message.data.indexWords());
                 break;
 
             case "STORE_PAGE_HTML":
-                backend.storeBlob(message.payload.id, message.data, "text/html")
+                backend.storeBlob(message.payload.id, message.data, "text/html", false)
                     .then(() => {
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
 
@@ -1008,7 +1008,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
                 if (contentType == null)
                     contentType = "application/pdf";
 
-                backend.storeBlob(userdata.bookmark.id, this.response, contentType, true);
+                backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
 
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 
