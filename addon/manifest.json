@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Scrapyard",
-    "version": "0.0.37",
+    "version": "0.0.38",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {

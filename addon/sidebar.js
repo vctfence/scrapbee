@@ -542,32 +542,37 @@ window.onload = function () {
     browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
         switch (message.type) {
             case "SCRAPYARD_SWITCH_SHELF":
-                backend.queryShelf(message.name).then(shelf => {
-                    if (shelf) {
-                        shelf_list.val(shelf.id);
-                        shelf_list.selectric("refresh");
-                        switchShelf(context, tree, shelf.id);
-                    }
-                    else {
-                        if (!isSpecialShelf(message.name)) {
-                            backend.createGroup(null, message.name, NODE_TYPE_SHELF).then(shelf => {
-                                if (shelf) {
-                                    $("<option></option>").appendTo(shelf_list)
-                                        .html(shelf.name)
-                                        .attr("value", shelf.id)
-                                        .attr("selected", true);
+                if (message.name) {
+                    let [shelf, ...path] = message.name.split("/");
 
-                                    shelf_list.selectric('refresh');
-                                    shelf_list.val(shelf.id);
-                                    switchShelf(context, tree, shelf.id);
-                                }
+                    backend.queryShelf(shelf).then(shelf => {
+                        if (shelf) {
+                            shelf_list.val(shelf.id);
+                            shelf_list.selectric("refresh");
+                            switchShelf(context, tree, shelf.id).then(() => {
+                                backend._queryGroup(message.name).then(group => {
+                                    if (group) {
+                                        let node = tree._jstree.get_node(group.id + "");
+                                        tree._jstree.open_node(node);
+                                        tree._jstree.deselect_all();
+                                        tree._jstree.select_node(node);
+                                    }
+                                });
                             });
+                        } else {
+                            if (!isSpecialShelf(message.name)) {
+                                backend.createGroup(null, message.name, NODE_TYPE_SHELF).then(shelf => {
+                                    if (shelf) {
+                                        settings.last_shelf(shelf.id);
+                                        loadShelves(context, tree).then();
+                                    }
+                                });
+                            } else {
+                                showNotification({message: "Can not create shelf with this name."});
+                            }
                         }
-                        else {
-                            showNotification({message: "Can not create shelf with this name."});
-                        }
-                    }
-                });
+                    });
+                }
                 break;
         }
     });

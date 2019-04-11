@@ -15,7 +15,6 @@ export function browseNode(node) {
             }
 
             return browser.tabs.create({"url": url});
-            break;
 
         case NODE_TYPE_ARCHIVE:
             return backend.fetchBlob(node.id).then(blob => {
@@ -50,13 +49,11 @@ export function browseNode(node) {
                     showNotification({message: "No data is stored."});
                 }
             });
-            break;
 
         case NODE_TYPE_NOTES:
             return browser.tabs.create({
                 "url": "notes.html#" + node.uuid + ":" + node.id
             });
-            break;
     }
 }
 

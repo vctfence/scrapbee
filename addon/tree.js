@@ -113,6 +113,7 @@ class BookmarkTree {
 
             if (clickable && !e.ctrlKey) {
                 let node = this.data.find(n => n.id == id);
+                console.log(node);
                 if (node)
                     browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
             }
@@ -237,12 +238,14 @@ class BookmarkTree {
             }
 
             if (n.type == NODE_TYPE_NOTES) {
-                n.icon = "/icons/notes.png";
+                n.icon = "/icons/notes.svg";
                 n.li_attr.class += " scrapyard-notes";
             }
 
-            if (!n.icon)
-                n.icon = "/icons/homepage.png";
+            if (!n.icon) {
+                n.icon = "/icons/globe.svg";
+                n.a_attr.class += " generic-icon";
+            }
         }
 
         n.data = {};
@@ -466,9 +469,10 @@ class BookmarkTree {
             },
             newNotesItem: {
                 label: "New Notes",
-                action: function () {
+                action: () => {
                     backend.addNotes(ctx_node_data.id, "New Notes").then(notes => {
                         BookmarkTree.toJsTreeNode(notes);
+                        this.data.push(notes);
                         tree.deselect_all(true);
 
                         let notes_node = tree.get_node(tree.create_node(ctx_node, notes));
@@ -611,22 +615,20 @@ class BookmarkTree {
                 separator_before: true,
                 label: "Properties...",
                 action: function () {
-                    switch (ctx_node.original.type) {
-                        case NODE_TYPE_BOOKMARK:
-                        case NODE_TYPE_ARCHIVE:
-                            showDlg("properties", ctx_node_data).then(data => {
-                                let original_node_data = all_nodes.find(n => n.id == ctx_node.id);
-                                backend.updateBookmark(Object.assign(original_node_data, data)).then(() => {
-                                    if (!ctx_node_data._extended_todo) {
-                                        tree.rename_node(ctx_node, original_node_data.name);
-                                    }
-                                    else {
-                                        tree.rename_node(ctx_node, BookmarkTree._formatTODO(original_node_data));
-                                    }
-                                    tree.redraw_node(ctx_node, true, false, true);
-                                });
+                    if (ENDPOINT_TYPES.some(t => t === ctx_node.original.type)) {
+                        showDlg("properties", ctx_node_data).then(data => {
+                            let original_node_data = all_nodes.find(n => n.id == ctx_node.id);
+
+                            backend.updateBookmark(Object.assign(original_node_data, data)).then(() => {
+                                if (!ctx_node_data._extended_todo) {
+                                    tree.rename_node(ctx_node, original_node_data.name);
+                                }
+                                else {
+                                    tree.rename_node(ctx_node, BookmarkTree._formatTODO(original_node_data));
+                                }
+                                tree.redraw_node(ctx_node, true, false, true);
                             });
-                            break;
+                        });
                     }
                 }
             },
