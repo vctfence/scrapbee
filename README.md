@@ -18,7 +18,13 @@ based utility which will  serve saved Scrapbook files), this is not in author's
 set of priorities. But you may try to automate this. The call: 
 
 ```javascript
-browser.runtime.sendMessage("scrapyard@firefox", {type: "SCRAPYARD_ADD_ARCHIVE"});
+browser.runtime.sendMessage("scrapyard@firefox", {
+    type: "SCRAPYARD_ADD_ARCHIVE",
+    name: "bookmark title",
+    path:  "shelf/my/directory",
+    tags:  "comma,separated",
+    details:  "bookmark description"
+});
 ``` 
 
 will add the page at the opened tab as an archive to Scrapyard.
