@@ -34,15 +34,17 @@ export function browseNode(node) {
 
                     setTimeout(() => {
                         URL.revokeObjectURL(objectURL);
-                    }, settings.archive_url_lifetime() * 60 * 1000);
+                    }, /*settings.archive_url_lifetime() * 60*/ 10  * 1000);
 
                     browser.tabs.create({
                         "url": archiveURL
                     }).then(tab => {
-                        return browser.tabs.executeScript(tab.id, {
-                            file: "edit-bootstrap.js",
-                            runAt: 'document_end'
-                        })
+                        setTimeout(() => {
+                            return browser.tabs.executeScript(tab.id, {
+                                file: "edit-bootstrap.js",
+                                runAt: 'document_end'
+                            })
+                        }, 500);
                     });
                 }
                 else {

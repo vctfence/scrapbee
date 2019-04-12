@@ -335,16 +335,33 @@ class IDBBackend extends Storage {
 
         return this.addNode(data);
     }
+    
+    _sanitizeNode(node) {
+        delete node.text;
+        delete node.data;
+        delete node._path;
+        delete node.a_attr;
+        delete node.parent;
+        delete node.li_attr;
+        delete node._overdue;
+        delete node._filter;
+        delete node._style;
+        delete node._selector;
+        delete node._extended_todo;
+    }
 
     async importBookmark(data) {
         if (data.uuid === "1")
             return;
 
+        let path = data.path;
         let group;
 
-        group = await this._getGroup(data.path);
+        group = await this._getGroup(path);
         data.parent_id = group.id;
-        delete data.path;
+
+        data = Object.assign({}, data);
+        this._sanitizeNode(data);
 
         data.name = await this._ensureUnique(data.parent_id, data.name);
 
@@ -358,15 +375,7 @@ class IDBBackend extends Storage {
         let update = {};
 
         Object.assign(update, data);
-
-        delete update.text;
-        delete update.data;
-        delete update._path;
-        delete update.a_attr;
-        delete update.parent;
-        delete update.li_attr;
-        delete update._overdue;
-        delete update._extended_todo;
+        this._sanitizeNode(update);
 
         update.tag_list = this._splitTags(update.tags);
         this.addTags(update.tag_list);
