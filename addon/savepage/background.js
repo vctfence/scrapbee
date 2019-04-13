@@ -1053,7 +1053,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
                         if (selectedHtml)
                             break;
                     } catch (e) {
-                        console.error(e);
+//                        console.error(e);
                     }
                 }
             }

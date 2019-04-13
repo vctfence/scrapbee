@@ -201,11 +201,14 @@ class Storage {
 
     // returns nodes containing only all given words
     async filterByContent(nodes, words) {
+        let node_ids = nodes.map(n => n.id);
         let matches = {};
         let all_matched_nodes = [];
         let word_count = {};
+
         for (let word of words) {
-            matches[word] = (await db.index.where("words").startsWith(word).toArray()).map(n => n.node_id);
+            matches[word] = (await db.index.where("words").startsWith(word).and(n => node_ids.some(id => id === n.node_id))
+                .toArray()).map(n => n.node_id);
             all_matched_nodes = all_matched_nodes.concat(matches[word]).filter((v, i, a) => a.indexOf(v) === i);
         }
 

@@ -1079,6 +1079,14 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             
             try
             {
+                if (!element.contentDocument && element.src) {
+                    let url = new URL(element.src);
+                    if (url.pathname.endsWith(".pdf")) {
+                        rememberURL(url.pathname,url.origin,"application/pdf","",false);
+                        return;
+                    }
+                }
+
                 if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before finding */
                 {
                     findOtherResources(depth+1,element.contentWindow,element.contentDocument.documentElement,crossorigin,nosource,loadedfonts);
@@ -1086,6 +1094,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             }
             catch (e)  /* attempting cross-domain web page access */
             {
+                console.log(e.message)
                 if (retainCrossFrames)
                 {
                     for (i = 0; i < crossFrameName.length; i++)
@@ -1292,13 +1301,13 @@ function findCSSURLsInStyleSheet(csstext,baseuri,crossorigin,loadedfonts)
 function rememberURL(url,baseuri,mimetype,charset,passive)
 {
     var i,location;
-    
+
     if (savedPage) return -1;  /* ignore new resources when re-saving */
     
     if (baseuri != null)
     {
         location = resolveURL(url,baseuri);
-        
+
         if (location != null)
         {
             for (i = 0; i < resourceLocation.length; i++)
@@ -1403,6 +1412,7 @@ function loadSuccess(index,content,contenttype,alloworigin)
         case "image/vnd.microsoft.icon":  /* icon file */
         case "audio/mpeg":  /* audio file */
         case "video/mp4":  /* video file */
+        case "application/pdf":  /* pdf file */
         case "application/octet-stream":  /* data file */
             
             if (mimetype != "") resourceMimeType[index] = mimetype;
@@ -1512,7 +1522,7 @@ function loadSuccess(index,content,contenttype,alloworigin)
     }
     
     resourceStatus[index] = "success";
-    
+
     if (--resourceCount <= 0)
     {
         timeFinish[passNumber+3] = performance.now();
@@ -1527,7 +1537,7 @@ function loadFailure(index,reason)
     resourceStatus[index] = "failure";
     
     resourceReason[index] = reason;
-    
+
     if (--resourceCount <= 0)
     {
         timeFinish[passNumber+3] = performance.now();
@@ -2350,6 +2360,25 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
 
             try
             {
+                if (!element.contentDocument && element.src) {
+                    let url = new URL(element.src);
+
+                    if (url.pathname.endsWith(".pdf")) {
+                        origurl = element.getAttribute("src");
+
+                        datauri = replaceURL(url.pathname, url.origin, crossorigin);
+
+                        origstr = (datauri == origurl) ? "" : " data-savepage-src=\"" + origurl + "\"";
+
+                        startTag = startTag.replace(/ src="[^"]*"/,origstr + " src=\"" + datauri + "\"");
+
+                        htmlStrings[htmlStrings.length] = newlineIndent(indent);
+                        htmlStrings[htmlStrings.length] = startTag;
+
+                        return;
+                    }
+                }
+
                 if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before extracting */
                 {
                     startindex = htmlStrings.length;
@@ -2878,7 +2907,7 @@ function resolveURL(url,baseuri)
     {
         return null;  /* baseuri invalid or null */
     }
-    
+
     return resolvedURL.href;
 }
 
