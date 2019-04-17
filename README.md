@@ -1,6 +1,6 @@
 # Scrapyard
 
-A Scrapbook alternative for Firefox quantum.
+A Scrapbook alternative for Firefox Quantum.
 
 This is a development page. Please visit the main site at: https://gchristensen.github.io/scrapyard/
 
