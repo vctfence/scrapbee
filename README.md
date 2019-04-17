@@ -1,6 +1,6 @@
 # Scrapyard
 
-Hacker's bookmark manager (coming soon)
+A Scrapbook alternative for Firefox quantum.
 
 This is a development page. Please visit the main site at: https://gchristensen.github.io/scrapyard/
 
