@@ -64,10 +64,33 @@ class Storage {
         this.db = db;
     }
 
+    _sanitizeNode(node) {
+        for (let key of Object.keys(node))
+            if (!["id",
+                "pos",
+                "uri",
+                "name",
+                "type",
+                "uuid",
+                "icon",
+                "tags",
+                "tag_list",
+                "details",
+                "parent_id",
+                "todo_date",
+                "todo_state",
+                "date_added",
+                "date_modified",
+                "has_notes"
+            ].some(k => k === key))
+                delete node[key];
+    }
+
     async addNode(datum, reset_order = true) {
+        this._sanitizeNode(datum);
+
         if (reset_order) {
             datum.pos = DEFAULT_POSITION;
-            datum.todo_pos = DEFAULT_POSITION;
         }
         datum.uuid = UUID.numeric();
         datum.date_added = new Date();
@@ -94,6 +117,8 @@ class Storage {
     async updateNodes(nodes) {
         return db.transaction('rw', db.nodes, async () => {
             for (let n of nodes) {
+                this._sanitizeNode(n);
+
                 let id = n.id;
                 //delete n.id;
                 n.date_modified = new Date();
@@ -105,6 +130,8 @@ class Storage {
 
     async updateNode(node) {
         if (node && node.id) {
+            this._sanitizeNode(node);
+
             let id = node.id;
             //delete node.id;
             node.date_modified = new Date();
@@ -352,10 +379,11 @@ class Storage {
         return db.index.where("node_id").equals(node_id).first();
     }
 
-    addNotes(parent_id, name) {
+    addNotesNode(parent_id, name) {
         return this.addNode({
             parent_id: parent_id,
             name: name,
+            has_notes: true,
             type: NODE_TYPE_NOTES
         });
     }
@@ -364,16 +392,21 @@ class Storage {
         let exists = await db.notes.where("node_id").equals(node_id).count();
 
         if (exists) {
-            return db.notes.where("node_id").equals(node_id).modify({
+            await db.notes.where("node_id").equals(node_id).modify({
                 content: notes
             });
         }
         else {
-            return db.notes.add({
+            await db.notes.add({
                 node_id: node_id,
                 content: notes
             });
         }
+
+        let node = await this.getNode(node_id);
+
+        node.has_notes = !!notes;
+        return this.updateNode(node);
     }
 
     async fetchNotes(node_id, is_uuid = false) {
@@ -414,6 +447,12 @@ class Storage {
 
         return path.reverse();
     }
+
+    importTransaction(handler) {
+        //return db.transaction("rw", db.nodes, db.notes, db.blobs, db.index, db.tags, handler);
+        return handler();
+    }
+
 }
 
 

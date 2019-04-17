@@ -36,14 +36,21 @@ export function browseNode(node) {
                         URL.revokeObjectURL(objectURL);
                     }, /*settings.archive_url_lifetime() * 60*/ 10  * 1000);
 
-                    browser.tabs.create({
+                    return browser.tabs.create({
                         "url": archiveURL
                     }).then(tab => {
                         setTimeout(() => {
-                            return browser.tabs.executeScript(tab.id, {
+                            browser.tabs.executeScript(tab.id, {
                                 file: "edit-bootstrap.js",
                                 runAt: 'document_end'
-                            })
+                            }).catch(e => {
+                                setTimeout(() => {
+                                    browser.tabs.executeScript(tab.id, {
+                                        file: "edit-bootstrap.js",
+                                        runAt: 'document_end'
+                                    })
+                                }, 500);
+                            });
                         }, 500);
                     });
                 }
@@ -101,12 +108,11 @@ browser.runtime.onMessage.addListener(message => {
                     }
 
                     if (importF)
-                        return importF().then(() => resolve());
+                        return backend.importTransaction(importF).then(() => resolve()).catch(e => reject(e));
                 };
 
                 reader.readAsText(message.file);
             });
-            break;
 
         case "EXPORT_FILE":
             return exportOrg(message.nodes, message.shelf, message.uuid,
@@ -114,7 +120,6 @@ browser.runtime.onMessage.addListener(message => {
                     let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_");
                     return browser.downloads.download({url: url, filename: file_name + ".org", saveAs: false});
             });
-            break;
     }
 });
 

@@ -111,11 +111,12 @@ class BookmarkTree {
             let clickable = element.getAttribute("data-clickable");
             let id = element.getAttribute("data-id");
 
-            if (clickable && !e.ctrlKey) {
+            if (clickable && !e.ctrlKey && !e.shiftKey) {
                 let node = this.data.find(n => n.id == id);
 
-                if (node)
+                if (node) {
                     browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                }
             }
             return false;
         }
@@ -225,7 +226,7 @@ class BookmarkTree {
                 n.li_attr.class += " archive-node";
 
             n.a_attr = {
-                "class": ""
+                "class": n.has_notes? "has-notes": ""
             };
 
             if (n.todo_state) {
@@ -362,8 +363,8 @@ class BookmarkTree {
     contextMenu(ctx_node) { // TODO: i18n
         let tree = this._jstree;
         let selected_nodes = tree.get_selected(true) || [];
-        let multiselect = selected_nodes && selected_nodes.length > 1;
-        let all_nodes = tree.settings.core.data;
+        let multiselect = selected_nodes.length > 1;
+        let all_nodes = this.data;
         let ctx_node_data = ctx_node.original;
 
         function setTODOState(state) {
@@ -470,7 +471,7 @@ class BookmarkTree {
             newNotesItem: {
                 label: "New Notes",
                 action: () => {
-                    backend.addNotes(ctx_node_data.id, "New Notes").then(notes => {
+                    backend.addNotesNode(ctx_node_data.id, "New Notes").then(notes => {
                         BookmarkTree.toJsTreeNode(notes);
                         this.data.push(notes);
                         tree.deselect_all(true);
@@ -617,14 +618,15 @@ class BookmarkTree {
                 action: function () {
                     if (ENDPOINT_TYPES.some(t => t === ctx_node.original.type)) {
                         showDlg("properties", ctx_node_data).then(data => {
-                            let original_node_data = all_nodes.find(n => n.id == ctx_node.id);
+                            let live_data = all_nodes.find(n => n.id == ctx_node_data.id);
+                            Object.assign(live_data, data);
 
-                            backend.updateBookmark(Object.assign(original_node_data, data)).then(() => {
+                            backend.updateBookmark(Object.assign(ctx_node_data, data)).then(() => {
                                 if (!ctx_node_data._extended_todo) {
-                                    tree.rename_node(ctx_node, original_node_data.name);
+                                    tree.rename_node(ctx_node, ctx_node_data.name);
                                 }
                                 else {
-                                    tree.rename_node(ctx_node, BookmarkTree._formatTODO(original_node_data));
+                                    tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
                                 }
                                 tree.redraw_node(ctx_node, true, false, true);
                             });

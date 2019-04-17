@@ -976,7 +976,11 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_BROWSE_NODE":
-                backend.getNode(message.uuid, true).then(node => browseNode(node));
+                if (message.node.uuid)
+                    backend.getNode(message.node.uuid, true).then(node => browseNode(node));
+                else
+                    browseNode(message.node);
+
                 break;
 
         }

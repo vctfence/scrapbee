@@ -1,27 +1,36 @@
 .scrapyard-edit-bar{
-    background: #aaa;
-    border-top: 1px solid #999;
-    width: 100%;
-    /*height: 40px;*/
+    background: #aaa !important;
+    border-top: 1px solid #999  !important;
+    width: 100%  !important;
+    white-space: nowrap !important;
+    height: 26px !important;
     position: fixed;
-    vertical-align: middle;
+    vertical-align: middle !important;
     /*line-height: 40px;*/
     bottom: 0;
     z-index: 1000000;
     text-align:left;
     display: flex;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    line-height: 100% !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+    align-items: center !important;
 }
 .scrapyard-edit-bar * {
     flex: 0 1 auto;
 }
 .original-url-text {
     flex: 1 1 auto;
-    margin-left: 16px;
-    margin-right: 16px;
-    height: 16px;
-    margin-top: 2px;
+    margin: 0 !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    height: 16px !important;
+    /*margin-top: 2px !important;*/
+    padding: 0 !important;
+    letter-spacing: normal !important;
+    border: 1px solid #777 !important;
 }
 #scrapyard-icon{
     vertical-Align:middle;
@@ -31,11 +40,14 @@
     height : 20px;
 }
 #scrapyard-brand {
-    margin-top: 6px;
+    margin-top: 2px;
     margin-left: 5px;
-    font-weight: bold;
+    color: black !important;
+    font-weight: bold !important;
+    letter-spacing: normal !important;
 }
-.scrapyard-edit-bar,  .scrapyard-edit-bar *{
+.scrapyard-edit-bar,  .scrapyard-edit-bar *, .scrapyard-edit-bar input[type=button].blue-button,
+.scrapyard-edit-bar input[type=button].yellow-button, .scrapyard-edit-bar input[type=text].original-url-text {
     font-family:
         "Helvetica",
         "Lucida Sans Unicode",
@@ -46,9 +58,9 @@
         "Liberation Sans",
         "Nimbus Sans L",
         "WenQuanYi Micro Hei",
-		sans-serif;
-    font-size:12px;
-    box-sizing: content-box;
+		sans-serif !important;
+    font-size:12px !important;
+    box-sizing: content-box !important;
 }
 .scrapyard-edit-bar input[type=button].blue-button,
 .scrapyard-edit-bar input[type=button].yellow-button,
@@ -61,6 +73,9 @@
     border:none;
     line-height:20px;
     margin-left:5px;
+    text-transform: none !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
 }
 .scrapyard-edit-bar input[type=button].yellow-button{
     background:#f70;
@@ -84,9 +99,13 @@
     margin-left: 5px;
 }
 #scrapyard-auto-open-check ~ label {
-    padding-left: 2px;
-    padding-top: 5px;
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-left: 2px !important;
+    padding-top: 2px !important;
     color: black !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
 }
 
 .scrapyard-marker-1{

@@ -69,7 +69,6 @@ function performImport(context, tree, file, file_name, file_ext) {
 
     return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
         .then(() => {
-
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
 
             if (file_name === EVERYTHING) {
@@ -90,9 +89,9 @@ function performImport(context, tree, file, file_name, file_ext) {
                     });
                     invalidateCompletion();
                 });
-        }).catch(() => {
+        }).catch(e => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
-            showNotification({message: "The import has failed."});
+            showNotification({message: "The import has failed: " + e.message});
         });
 }
 
@@ -110,11 +109,7 @@ function performExport(context, tree) {
     tree.traverse(root, node => {
         let data = Object.assign({}, node.original)
 
-        delete data._path;
-        delete data.a_attr;
-        delete data.li_attr;
-        delete data.state;
-        delete data.text;
+        backend._sanitizeNode(data);
         delete data.tag_list;
 
         data.level = node.parents.length - skip_level;
@@ -238,9 +233,8 @@ function switchShelf(context, tree, shelf_id) {
 }
 
 document.addEventListener('contextmenu', function (event) {
-    if ($(".dlg-cover:visible").length)
-        event.preventDefault()
-    return false;
+    if ($(".dlg-cover:visible").length && event.target.localName !== "input")
+        event.preventDefault();
 });
 
 function getCurrentShelf() {
@@ -431,16 +425,8 @@ window.onload = function () {
 
                 if (existingOption.length)
                     confirm("{Warning}", "This will replace '" + name + "'.").then(() => {
-                        (name === EVERYTHING
-                            ? backend.wipeEveritying()
-                            : (name === DEFAULT_SHELF_NAME
-                                ? backend.deleteChildNodes(parseInt(existingOption.val()))
-                                : backend.deleteNodes(parseInt(existingOption.val()))))
-
-                            .then(() => {
-                                performImport(context, tree, e.target.files[0], name, ext).then(() => {
-                                    $("#file-picker").val("");
-                                });
+                        performImport(context, tree, e.target.files[0], name, ext).then(() => {
+                            $("#file-picker").val("");
                         });
                     });
                 else
@@ -523,7 +509,6 @@ window.onload = function () {
             $(".simple-menu").hide();
     });
 
-
     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.type === "BOOKMARK_CREATED") {
             if (settings.switch_to_new_bookmark())
@@ -536,6 +521,19 @@ window.onload = function () {
                 });
 
             invalidateCompletion();
+        }
+        else if (request.type === "NOTES_CHANGED") {
+            let node = tree._jstree.get_node(request.node_id);
+
+            if (node) {
+                node.original.has_notes = !request.removed;
+                node.a_attr.class = node.a_attr.class.replace("has-notes", "");
+
+                if (!request.removed)
+                    node.a_attr.class += " has-notes";
+
+                tree._jstree.redraw_node(node, false, false, true);
+            }
         }
     });
 

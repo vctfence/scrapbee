@@ -91,6 +91,10 @@
         box-shadow: none !important;
     }
 
+    li.vakata-context-hover, .vakata-context .vakata-context-hover > a {
+        background-color: var(--in-content-box-background-hover) !important;
+    }
+
     .vakata-context li > a .vakata-contextmenu-sep {
         border-left: 1px solid var(--in-content-box-border-color) !important;
         box-shadow: none !important;

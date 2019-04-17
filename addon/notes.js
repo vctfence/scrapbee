@@ -100,8 +100,19 @@ o.attr = "string";
 |-------+--------+------------|
 | Vi    | ~:~    | _Bill Joy_ |
 |-------+--------+------------|
-`
 
+*** Images
+
+Referenced image: 
+
+[[https://upload.wikimedia.org/wikipedia/commons/6/60/Cat_silhouette.svg][Cat silhouette]]
+
+From data URL:
+
+[[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC][Cat silhouette]] 
+`;
+
+let DEFAULT_STYLE = `#+CSS: .notes {width: 600px;} p {text-align: justify;}`
 
 window.onload = function() {
     let node_ids = location.hash? location.hash.split(":"): [];
@@ -138,9 +149,10 @@ window.onload = function() {
             $("#notes-for").show();
         }
 
-        source_url.on("click", e => {
-            browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
-        });
+        if (node.type !== NODE_TYPE_NOTES)
+            source_url.on("click", e => {
+                browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+            });
     });
 
     function org2html(org_text) {
@@ -173,12 +185,12 @@ window.onload = function() {
         $(`#content-${e.target.id}`).show();
 
         if (e.target.id === "notes-button") {
-            $("#insert-example").hide();
+            $("#inserts").hide();
             //$("#full-width-container").show()
             $("#notes").html(org2html($("#editor").val()));
         }
         else if (e.target.id === "edit-button") {
-            $("#insert-example").show();
+            $("#inserts").show();
             //$("#full-width-container").hide();
         }
     });
@@ -198,14 +210,17 @@ window.onload = function() {
         clearTimeout(timeout);
 
         timeout = setTimeout(() => {
-            if (node_id && e.target.value)
+            if (node_id) {
                 backend.storeNotes(node_id, e.target.value);
+            }
         }, INPUT_TIMEOUT);
     });
 
     $("#editor").on("blur", e => {
-        if (node_id && e.target.value)
+        if (node_id) {
             backend.storeNotes(node_id, e.target.value);
+            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value})
+        }
     });
 
     // $("#full-width").on("change", e => {
@@ -223,6 +238,15 @@ window.onload = function() {
         let textAreaText = edit.val();
 
         edit.val(textAreaText.substring(0, caretPos) + ORG_EXAMPLE + textAreaText.substring(caretPos));
+        edit.trigger("input");
+    });
+
+    $("#insert-style").on("click", e => {
+        let edit = jQuery("#editor");
+        let caretPos = edit[0].selectionStart;
+        let textAreaText = edit.val();
+
+        edit.val(textAreaText.substring(0, caretPos) + DEFAULT_STYLE + textAreaText.substring(caretPos));
         edit.trigger("input");
     });
 

@@ -34,7 +34,7 @@ window.onload=function(){
 
     document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
     
-    let _ = (v, d) => {return v !== undefined? v: d;}
+    let _ = (v, d) => {return v !== undefined? v: d;};
 
     chrome.storage.local.get("savepage-settings",
         function(object)

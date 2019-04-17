@@ -1,5 +1,8 @@
 function loadResources() {
 
+    if (document.getElementById("scrapyard-archive-edit-css"))
+        return;
+
     let style = document.createElement("link");
     style.id = "scrapyard-archive-edit-css";
     style.rel = "stylesheet";
@@ -8,15 +11,11 @@ function loadResources() {
 
     document.head.appendChild(style);
 
-    console.log("loaded css");
-
     let script = document.createElement("script");
     script.id = "scrapyard-archive-jquery";
     script.src = browser.runtime.getURL("lib/jquery.js");
 
     script.addEventListener("load", e => {
-
-        console.log("loaded jquery");
 
         script = document.createElement("script");
         script.id = "scrapyard-archive-proto";
@@ -25,8 +24,6 @@ function loadResources() {
         document.head.appendChild(script);
 
         script.addEventListener("load", e => {
-
-            console.log("loaded proto");
 
             script = document.createElement("script");
             script.id = "scrapyard-archive-edit";

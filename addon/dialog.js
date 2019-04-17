@@ -22,6 +22,9 @@ function showDlg(name, data, callback) {
     $dlg.find("input.button-ok").unbind(".dlg");
     $dlg.find("input.button-cancel").unbind(".dlg");
     $dlg.find("input.dialog-input").first().focus();
+
+    $(".more-properties").hide();
+
     /** return promise object */
     var p = new Promise(function (resolve, reject) {
         function proceed() {
@@ -50,6 +53,19 @@ function showDlg(name, data, callback) {
         });
         $dlg.find("input.button-cancel").bind("click.dlg", function () {
             $dlg.remove();
+        });
+
+        let more_properties = $dlg.find("#more-properties");
+
+        more_properties.bind("click.dlg", function () {
+            if (more_properties.text() === "More") {
+                $(".more-properties").show();
+                more_properties.text("Less");
+            }
+            else {
+                $(".more-properties").hide();
+                more_properties.text("More");
+            }
         });
     });
     return p;

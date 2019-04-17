@@ -71,6 +71,18 @@ class EditToolBar {
         window.postMessage({
             type: "UPDATE_ARCHIVE"
         });
+
+        let btn = $("#scrapyard-save-doc-button");
+
+        btn.val("Saved");
+        btn.attr("style", "font-weight: bold !important");
+
+        setTimeout(function()
+            {
+                btn.val("Save");
+                btn.attr("style", "font-weight: normal !important");
+            }
+            ,1000);
     }
 
     buildTools() {
@@ -99,6 +111,7 @@ class EditToolBar {
 
         /** save button */
         var btn = document.createElement("input");
+        btn.id = "scrapyard-save-doc-button"
         btn.type = "button";
         btn.className = "yellow-button"
         btn.value = chrome.i18n.getMessage("save");

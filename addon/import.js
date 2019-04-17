@@ -9,11 +9,25 @@ import {
     DEFAULT_POSITION,
     TODO_STATES,
     TODO_NAMES,
-    EVERYTHING
+    EVERYTHING, DEFAULT_SHELF_NAME
 } from "./db.js";
 
 const ORG_EXPORT_VERSION = 1;
 const EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified"];
+
+async function prepareReplacement(shelf) {
+    shelf = await backend.queryShelf(shelf);
+
+    if (shelf && shelf.name === EVERYTHING) {
+        return backend.wipeEveritying();
+    }
+    else if (shelf && shelf.name === DEFAULT_SHELF_NAME) {
+        return backend.deleteChildNodes(shelf.id);
+    }
+    else if (shelf) {
+        return backend.deleteNodes(shelf.id);
+    }
+}
 
 function traverseOrgNode(node, callback) {
     callback(node);
@@ -23,6 +37,8 @@ function traverseOrgNode(node, callback) {
 }
 
 export async function importOrg(shelf, text) {
+    await prepareReplacement(shelf);
+
     let org_lines = new org.Parser().parse(text);
     let compressed = org_lines.directiveValues["compressed:"] && org_lines.directiveValues["compressed:"] === "t";
 
@@ -145,7 +161,6 @@ export async function importOrg(shelf, text) {
                         case "pos":
                             break;
                         case "type":
-                        case "todo_pos":
                         case "todo_state":
                         case "byte_length":
                             if (property.value)
@@ -246,7 +261,8 @@ export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = 
 
     if (!shallow)
         org_lines.push(
-`#+EXPORT: Scrapyard
+`#-*- coding: utf-8 -*-
+#+EXPORT: Scrapyard
 #+VERSION: ${ORG_EXPORT_VERSION}
 #+NAME: ${shelf}
 ${"#+UUID: " + uuid}
@@ -295,12 +311,14 @@ ${await objectToProperties(node, compress)}
 
     setTimeout(function() {
         window.URL.revokeObjectURL(url);
-    },100);
+    },10000);
 
     return url;
 }
 
 export async function importHtml(shelf, text) {
+    await prepareReplacement(shelf);
+
     let html = jQuery.parseHTML(text);
     let root = html.find(e => e.localName === "dl");
     let path = [shelf];

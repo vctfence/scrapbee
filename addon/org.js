@@ -1470,8 +1470,8 @@ Converter.prototype = {
         return url.replace(/\?.*$/, "");
     },
 
-    imageExtensionPattern: new RegExp("(" + [
-        "bmp", "png", "jpeg", "jpg", "gif", "tiff",
+    imageExtensionPattern: new RegExp("(^data:image)|(" + [
+        "bmp", "png", "jpeg", "jpg", "gif", "tiff", "webp",
         "tif", "xbm", "xpm", "pbm", "pgm", "ppm", "svg"
     ].join("|") + ")$", "i")
 };

@@ -29,6 +29,11 @@ browser.runtime.sendMessage("scrapyard@firefox", {
 
 will add the page at the opened tab as an archive to Scrapyard.
 
+### Project status
+
+Currently the project status is permanent alpha: be prepared for breaking changes, devastating bugs and 
+groundbreaking experiments. Please, backup your data.
+
 ### Objectives
 
 * ~~Store data at IndexedDB~~ [DONE]

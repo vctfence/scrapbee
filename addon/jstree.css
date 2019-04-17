@@ -248,3 +248,8 @@
     font-style: normal;
     font-weight: normal
 }
+
+
+a.has-notes, a.has-notes:hover {
+    text-decoration: underline;
+}

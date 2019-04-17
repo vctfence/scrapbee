@@ -387,5 +387,13 @@ select{
     margin-right: 4px;
 }
 
+.more-properties {
+    display: none;
+}
+
+a#more-properties {
+    margin-top: 10px;
+    display: inline-block;
+}
 
 
