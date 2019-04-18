@@ -1,4 +1,4 @@
-async function scriptsAllowed(tabId, frameId = 0) {
+export async function scriptsAllowed(tabId, frameId = 0) {
     try {
         await browser.tabs.executeScript(tabId, {
             frameId: frameId,
@@ -9,7 +9,7 @@ async function scriptsAllowed(tabId, frameId = 0) {
     } catch (e) {}
 }
 
-function showNotification({message, title='Scrapyard', type = 'info'}) {
+export function showNotification({message, title='Scrapyard', type = 'info'}) {
     return browser.notifications.create(`sbi-notification-${type}`, {
         type: 'basic',
         title: title,
@@ -18,7 +18,7 @@ function showNotification({message, title='Scrapyard', type = 'info'}) {
     });
 }
 
-function pathToNameExt(fullPath) {
+export function pathToNameExt(fullPath) {
 
     let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
     let dotIndex = fullPath.lastIndexOf('.');
@@ -43,10 +43,25 @@ var entityMap = {
     '=': '&#x3D;'
 };
 
-function escapeHtml (string) {
+export function escapeHtml (string) {
     return String(string).replace(/[&<>"'`=\/]/g, function (s) {
         return entityMap[s];
     });
 }
 
-export{scriptsAllowed, showNotification, pathToNameExt, escapeHtml};
+
+export function parseHtml(htmlText) {
+    let doc = document.implementation.createHTMLDocument("");
+    let doc_elt = doc.documentElement;
+    let first_elt;
+
+    doc_elt.innerHTML = htmlText;
+    first_elt = doc_elt.firstElementChild;
+
+    if (doc_elt.childElementCount === 1
+        && first_elt.localName.toLowerCase() === "html") {
+        doc.replaceChild(first_elt, doc_elt);
+    }
+
+    return doc;
+}

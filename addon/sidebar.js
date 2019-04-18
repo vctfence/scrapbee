@@ -522,6 +522,15 @@ window.onload = function () {
 
             invalidateCompletion();
         }
+        if (request.type === "SELECT_NODE") {
+            backend.computePath(request.node.id).then(path => {
+                settings.last_shelf(path[0].id);
+                loadShelves(context, tree).then(() => {
+                    tree._jstree.deselect_all(true);
+                    tree._jstree.select_node(request.node.id);
+                });
+            });
+        }
         else if (request.type === "NOTES_CHANGED") {
             let node = tree._jstree.get_node(request.node_id);
 

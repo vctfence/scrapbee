@@ -1,9 +1,18 @@
-import {settings, SETTING_KEY} from "./settings.js"
 import {backend} from "./backend.js"
+import {settings} from "./settings.js"
+import {parseHtml, showNotification} from "./utils.js";
+import {
+    DEFAULT_SHELF_NAME,
+    EVERYTHING,
+    EVERYTHING_SHELF,
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK
+} from "./db.js";
 
 window.onload=function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+
+    $("#div-page").css("display", "table-row");
 
     let darkStyle;
 
@@ -170,8 +179,132 @@ window.onload=function(){
 
     function onCopyStyle(e) {
         navigator.clipboard.writeText(darkStyle);
-
+        showNotification({message: "Dark theme style is copied to the Clipboard."});
     }
 
 
+    let link_scope = $("#link-scope");
+
+    $("#start-check-links").on("click", startCheckLinks);
+    $("#invalid-links-container").on("click", ".invalid-link", selectNode);
+
+    link_scope.html(`
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
+    `);
+
+    backend.listShelves().then(shelves => {
+        shelves.sort((a, b) => {
+            if (a.name < b.name)
+                return -1;
+            if (a.name > b.name)
+                return 1;
+
+            return 0;
+        });
+
+        let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+        shelves.splice(shelves.indexOf(default_shelf), 1);
+        shelves = [default_shelf, ...shelves];
+
+        for (let shelf of shelves) {
+            $("<option></option>").appendTo(link_scope).html(shelf.name).attr("value", shelf.id);
+        }
+    });
+
+    let abort_check_links = false;
+
+    function stopCheckLinks() {
+        $("#start-check-links").val("Go");
+        $("#current-link-title").text("");
+        $("#current-link-url").text("");
+        $("#current-link").css("visibility", "hidden");
+        abort_check_links = false;
+    }
+
+    function startCheckLinks() {
+        if ($("#start-check-links").val() === "Go") {
+
+            $("#start-check-links").val("Stop");
+
+            let timeout = parseInt($("#link-check-timeout").val()) * 1000;
+            let update_icons = $("#update-icons").is(":checked"); console.log(update_icons)
+            let scope = $(`#link-scope option[value='${link_scope.val()}']`).text();
+            let path = scope === EVERYTHING ? undefined : scope;
+
+            $("#current-link").css("visibility", "visible");
+            $("#invalid-links-container").hide();
+            $("#invalid-links").html("");
+
+            function checkNodes(nodes) {
+                let node = nodes.shift();
+                if (node && !abort_check_links) {
+                    if (node.uri) {
+                        $("#current-link-title").text(node.name);
+                        $("#current-link-url").text(node.uri);
+
+                        let xhr = new XMLHttpRequest();
+                        xhr.open("GET", node.uri);
+                        xhr.timeout = timeout;
+                        xhr.ontimeout = function () {this._timedout = true};
+                        xhr.onloadend = function (e) {
+                            if (!this.status || this.status >= 400) {
+                                $("#invalid-links-container").show();
+
+                                let error = this.status
+                                    ? `[HTTP Error: ${this.status}]`
+                                    : (this._timedout? "[Timeout]": "[Unavailable]");
+
+                                let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
+                                $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
+                            }
+                            else if (update_icons) {
+                                let type = this.getResponseHeader("Content-Type");
+                                if (type && type.toLowerCase().startsWith("text/html")) {
+                                    let base = new URL(node.uri).origin;
+                                    let doc = parseHtml(this.responseText);
+                                    let link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+
+                                    if (link) {
+                                       link = new URL(link.href, base).toString();
+                                       node.icon = link;
+                                       backend.updateNode(node);
+                                    }
+                                    else {
+                                        link = base + "/favicon.ico";
+                                        fetch(link, {method: "HEAD"}).then(response => {
+                                            if (response.ok) {
+                                                node.icon = link;
+                                                backend.updateNode(node);
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+
+                            checkNodes(nodes);
+                        };
+                        xhr.send();
+                    } else
+                        checkNodes(nodes);
+                }
+                else if (abort_check_links)
+                    abort_check_links = false;
+                else
+                    stopCheckLinks();
+            }
+
+            backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]}).then(nodes => {
+                checkNodes(nodes);
+            });
+        }
+        else {
+            stopCheckLinks();
+            abort_check_links = true;
+        }
+    }
+
+    function selectNode(e) {
+        e.preventDefault();
+        browser.runtime.sendMessage({type: "SELECT_NODE", node: {id: parseInt(e.target.getAttribute("data-id"))}});
+    }
 };

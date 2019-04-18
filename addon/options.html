@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>Scrapyard -> {Setting}</title>
+    <title>Scrapyard {Setting}</title>
     <link rel="icon" href="icons/scrapyard.svg" type="image/png"/>
     <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
     <script type="text/javascript" src="lib/jquery.js"></script>
@@ -13,6 +13,7 @@
     <div id="div-form-left">
         <!--a class="left-index" href="#initiate">{Initiate}</a-->
         <a class="left-index" href="#settings">{Setting}</a>
+        <a class="left-index" href="#links">{Check Links}</a>
         <!--a class="left-index" href="#log">{Log}</a-->
         <a class="left-index" href="#help">{Help}</a>
         <!--a class="left-index" href="#donate">{Donate}</a-->
@@ -220,5 +221,29 @@
         </table>
     </div>
     <div id="div-help" class="div-area" style="display:none;"></div>
+    <div id="div-links" class="div-area" style="display:none;">
+        <div id="check-links">
+            <h2>Automatic Link Validation</h2>
+            <div id="link-check-options" class="link-info">
+                Scope:
+                <select id="link-scope">
+                    <option>everything</option>
+                </select>
+                <label for="link-check-timeout">Timeout (sec.):</label>
+                <input id="link-check-timeout" type="number" min="1" value="30"/>
+                <input type="checkbox" id="update-icons"><label for="update-icons">Update icons</label>
+                <input type="button" class="blue-button" id="start-check-links" value="Go">
+            </div>
+            <div id="current-link" class="link-info">
+                <div>Checking: </div>
+                <div><span id="current-link-title"></span><br><span id="current-link-url"></span></div>
+            </div>
+            <div id="invalid-links-container" class="link-info">
+                Broken links:
+                <table id="invalid-links">
+                </table>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
