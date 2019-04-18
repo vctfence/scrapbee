@@ -389,6 +389,10 @@ function addListeners()
                 }
                 
                 break;
+
+            case "UNLOCK_DOCUMENT":
+                unlockDocument();
+                break;
         }
     });
 }
@@ -1678,8 +1682,6 @@ function generateHTML()
     // }
     
     // alert(Math.trunc(size/(1024*1024))+"MB");
-
-    unlockDocument();
 
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
     chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: htmlStrings.join("\n"), payload: payload });

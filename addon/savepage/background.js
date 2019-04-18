@@ -641,6 +641,7 @@ function addListeners()
                     chrome.tabs.query({ lastFocusedWindow: true, active: true },
                         function(tabs)
                         {
+                            bookmark.tab_id = tabs[0].id
                             initiateAction(tabs[0],buttonAction,null,false,false,
                                 {options: {}, bookmark: bookmark});
                         });
@@ -655,11 +656,13 @@ function addListeners()
             case "STORE_PAGE_HTML":
                 backend.storeBlob(message.payload.id, message.data, "text/html", false)
                     .then(() => {
+                        chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
 
                         alertNotify("Successfully archived page.");
                     })
                     .catch(e => {
+                        chrome.tabs.sendMessage(tab.id, {type: "UNLOCK_DOCUMENT"});
                         console.log(e);
                     });
                 backend.storeIndex(message.payload.id, message.data.indexWords());
@@ -1083,7 +1086,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
                                             function (response) {
                                                 if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
                                                 {
-                                                    alertNotify("Some problems occurred.");
+                                                    alertNotify("Cannot initialize capture script, please retry.");
                                                 } else {
                                                     chrome.tabs.executeScript(tab.id, {
                                                         file: "savepage/content-frame.js",
@@ -1091,7 +1094,7 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
                                                     });
                                                 }
                                             });
-                                    }, 100);
+                                    }, 200);
                             }).catch(e => {
                                 loadDocument();
                             });

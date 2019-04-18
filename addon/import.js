@@ -311,7 +311,7 @@ ${await objectToProperties(node, compress)}
 
     setTimeout(function() {
         window.URL.revokeObjectURL(url);
-    },10000);
+    },30000);
 
     return url;
 }

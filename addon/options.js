@@ -246,6 +246,7 @@ window.onload=function(){
                         xhr.open("GET", node.uri);
                         xhr.timeout = timeout;
                         xhr.ontimeout = function () {this._timedout = true};
+                        xhr.onerror = function (e) {console.log(e)};
                         xhr.onloadend = function (e) {
                             if (!this.status || this.status >= 400) {
                                 $("#invalid-links-container").show();
@@ -258,26 +259,32 @@ window.onload=function(){
                                 $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
                             }
                             else if (update_icons) {
+                                let link;
+                                let base = new URL(node.uri).origin;
                                 let type = this.getResponseHeader("Content-Type");
+
                                 if (type && type.toLowerCase().startsWith("text/html")) {
-                                    let base = new URL(node.uri).origin;
+
                                     let doc = parseHtml(this.responseText);
-                                    let link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+                                    link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
 
                                     if (link) {
                                        link = new URL(link.href, base).toString();
-                                       node.icon = link;
-                                       backend.updateNode(node);
                                     }
-                                    else {
-                                        link = base + "/favicon.ico";
-                                        fetch(link, {method: "HEAD"}).then(response => {
-                                            if (response.ok) {
-                                                node.icon = link;
-                                                backend.updateNode(node);
-                                            }
-                                        })
-                                    }
+                                }
+
+                                if (link) {
+                                    node.icon = link;
+                                    backend.updateNode(node);
+                                }
+                                else {
+                                    link = base + "/favicon.ico";
+                                    fetch(link, {method: "HEAD"}).then(response => {
+                                        if (response.ok) {
+                                            node.icon = link;
+                                            backend.updateNode(node);
+                                        }
+                                    })
                                 }
                             }
 

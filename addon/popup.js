@@ -69,8 +69,10 @@ window.onload = function () {
             code: `var iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
                    iconElt? iconElt.href: null;
             `}).then(icon => {
-                if (icon && icon.length && icon[0])
-                    $("#bookmark-icon").val(icon[0]);
+                if (icon && icon.length && icon[0]) {
+                    let icon_url = new URL(icon[0], new URL(tab.url).origin);
+                    $("#bookmark-icon").val(icon_url.toString());
+                }
                 else {
                     let favicon = new URL(tab.url).origin + "/favicon.ico";
                     fetch(favicon, {method: "HEAD"})

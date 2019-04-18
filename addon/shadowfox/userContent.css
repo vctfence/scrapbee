@@ -58,7 +58,7 @@
         transition: none !important;
     }
 
-    .vakata-context, .vakata-context ul {
+    .vakata-context, .vakata-context ul, ul.jstree-default-contextmenu {
         background: var(--in-content-box-background-hover) !important;
         border: 1px solid var(--in-content-box-border-color) !important;
         padding: 0px !important;
