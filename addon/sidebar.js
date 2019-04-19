@@ -107,9 +107,7 @@ function performExport(context, tree) {
 
     let nodes = [];
     tree.traverse(root, node => {
-        let data = Object.assign({}, node.original)
-
-        backend._sanitizeNode(data);
+        let data = backend._sanitizeNode(node.original);
         delete data.tag_list;
 
         data.level = node.parents.length - skip_level;

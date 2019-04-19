@@ -112,11 +112,10 @@ class BookmarkTree {
             let id = element.getAttribute("data-id");
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                let node = this.data.find(n => n.id == id);
-
-                if (node) {
-                    browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
-                }
+                backend.getNode(parseInt(id)).then(node => {
+                    if (node)
+                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                });
             }
             return false;
         }

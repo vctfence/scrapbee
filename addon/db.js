@@ -65,7 +65,9 @@ class Storage {
     }
 
     _sanitizeNode(node) {
-        for (let key of Object.keys(node))
+        node = Object.assign({}, node);
+
+        for (let key of Object.keys(node)) {
             if (!["id",
                 "pos",
                 "uri",
@@ -84,10 +86,13 @@ class Storage {
                 "has_notes"
             ].some(k => k === key))
                 delete node[key];
+        }
+
+        return node;
     }
 
     async addNode(datum, reset_order = true) {
-        this._sanitizeNode(datum);
+        datum = this._sanitizeNode(datum);
 
         if (reset_order) {
             datum.pos = DEFAULT_POSITION;
@@ -117,7 +122,7 @@ class Storage {
     async updateNodes(nodes) {
         return db.transaction('rw', db.nodes, async () => {
             for (let n of nodes) {
-                this._sanitizeNode(n);
+                n = this._sanitizeNode(n);
 
                 let id = n.id;
                 //delete n.id;
@@ -130,7 +135,7 @@ class Storage {
 
     async updateNode(node) {
         if (node && node.id) {
-            this._sanitizeNode(node);
+            node = this._sanitizeNode(node);
 
             let id = node.id;
             //delete node.id;

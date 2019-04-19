@@ -641,7 +641,7 @@ function addListeners()
                     chrome.tabs.query({ lastFocusedWindow: true, active: true },
                         function(tabs)
                         {
-                            bookmark.tab_id = tabs[0].id
+                            bookmark.tab_id = tabs[0].id;
                             initiateAction(tabs[0],buttonAction,null,false,false,
                                 {options: {}, bookmark: bookmark});
                         });
@@ -662,7 +662,7 @@ function addListeners()
                         alertNotify("Successfully archived page.");
                     })
                     .catch(e => {
-                        chrome.tabs.sendMessage(tab.id, {type: "UNLOCK_DOCUMENT"});
+                        chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
                         console.log(e);
                     });
                 backend.storeIndex(message.payload.id, message.data.indexWords());
@@ -972,8 +972,12 @@ function addListeners()
                     chrome.tabs.query({ lastFocusedWindow: true, active: true },
                         function(tabs)
                         {
+                            bookmark.tab_id = tabs[0].id;
+                            Object.assign(message, bookmark);
+                            console.log("full bookmark");
+                            console.log(message)
                             initiateAction(tabs[0],buttonAction,null,false,false,
-                                {options: message, bookmark: bookmark});
+                                {options: message, bookmark: message});
                         });
                 });
                 break;
