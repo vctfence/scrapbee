@@ -201,9 +201,9 @@ export async function importOrg(shelf, text) {
             }
         }
         else if (subnodes.length > 1 && subnodes[0].type === "paragraph" && subnodes[1].type === "text"
-                && /\s*DEADLINE:.*/.test(subnodes[0].value)) {
+                && /\s*DEADLINE:.*/.test(subnodes[1].value)) {
 
-            let match = /\s*DEADLINE:\s*<([^>]+)>/.exec(subnodes[0].value);
+            let match = /\s*DEADLINE:\s*<([^>]+)>/.exec(subnodes[1].value);
 
             if (match && match[1] && last_object)
                 last_object["todo_date"] = match[1];
