@@ -339,10 +339,9 @@ a.left-index, a:visited.left-index {
 
 #current-link-title {
     overflow: hidden;
-
 }
 
-#current-link-url{
+#current-link-url {
     font-size: 80%;
     overflow: hidden;
 }

@@ -233,4 +233,8 @@
     #source-url {
         color: #0074D9 !important;
     }
+
+    select#link-scope {
+        color: black !important;
+    }
 }

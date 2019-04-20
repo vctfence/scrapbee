@@ -386,6 +386,7 @@ class BookmarkTree {
                     node.original.todo_state = state;
                     node.a_attr.class = node.a_attr.class.replace(/todo-state-[a-zA-Z]+/g, "");
                     node.a_attr.class += BookmarkTree._styleTODO(node.original);
+                    node.text = node.text.replace(/todo-state-[a-zA-Z]+/g, node.a_attr.class);
                     tree.redraw_node(node, true, false, true);
                 });
             });

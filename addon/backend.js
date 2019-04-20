@@ -253,8 +253,13 @@ class IDBBackend extends Storage {
 
     async renameGroup(id, new_name) {
         let group = await this.getNode(id);
+
         if (group.name !== new_name) {
-            group.name = await this._ensureUnique(group.parent_id, new_name);
+            if (group.name.toLocaleUpperCase() !== new_name.toLocaleUpperCase())
+                group.name = await this._ensureUnique(group.parent_id, new_name);
+            else
+                group.name = new_name;
+
             await this.updateNode(group);
         }
         return group;
@@ -306,13 +311,13 @@ class IDBBackend extends Storage {
     async deleteNodes(ids) {
         let all_nodes = await this.queryFullSubtree(ids);
 
-        return this.deleteNodesInternal(all_nodes.map(n => n.id));
+        return super.deleteNodes(all_nodes.map(n => n.id));
     }
 
     async deleteChildNodes(id) {
         let all_nodes = await this.queryFullSubtree(id);
 
-        return this.deleteNodesInternal(all_nodes.map(n => n.id).filter(i => i !== id));
+        return super.deleteNodes(all_nodes.map(n => n.id).filter(i => i !== id));
     }
 
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
