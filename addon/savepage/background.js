@@ -974,8 +974,6 @@ function addListeners()
                         {
                             bookmark.tab_id = tabs[0].id;
                             Object.assign(message, bookmark);
-                            console.log("full bookmark");
-                            console.log(message)
                             initiateAction(tabs[0],buttonAction,null,false,false,
                                 {options: message, bookmark: message});
                         });
@@ -1004,30 +1002,62 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
         // provisional capture of PDF, etc.
         // TODO: rework with the account of savepage settings
 
-        let xhr = new XMLHttpRequest();
+        if (tab.url && tab.url.startsWith("file:")) {
+            let readFile = (url) => {
+                return new Promise((resolve, reject) => {
+                    fetch(url, {mode: 'same-origin'})
+                        .then(function(reps) {
+                            reps.arrayBuffer().then(data => {
+                                let contentType = reps.headers.get("Content-Type");
+                                if (contentType == null)
+                                    contentType = "application/pdf";
 
-        xhr.open("GET", tab.url,true);
-        xhr.setRequestHeader("Cache-Control","no-store");
+                                backend.storeBlob(userdata.bookmark.id, data, contentType, false);
 
-        xhr.responseType = "arraybuffer";
-        xhr.timeout = maxResourceTime * 1000;
-        xhr.onerror = function (){ console.log(this) };
-        xhr.onloadend = function() {
-            if (this.status === 200)
-            {
-                let contentType = this.getResponseHeader("Content-Type");
-                if (contentType == null)
-                    contentType = "application/pdf";
+                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 
-                backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
+                                alertNotify("Successfully archived page.");
+                            });
+                        })
+                        .catch(error => {
+                            reject(error);
+                        });
+                });
+            };
 
-                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
+            readFile(tab.url).then(() => {})
+                .catch(error => {
+                    console.log(error );
+                });
+        }
+        else {
 
-                alertNotify("Successfully archived page.");
-            }
-        };
+            let xhr = new XMLHttpRequest();
 
-        xhr.send()
+            xhr.open("GET", tab.url, true);
+            xhr.setRequestHeader("Cache-Control", "no-store");
+
+            xhr.responseType = "arraybuffer";
+            xhr.timeout = maxResourceTime * 1000;
+            xhr.onerror = function (e) {
+                console.log(e)
+            };
+            xhr.onloadend = function () {
+                if (this.status === 200) {
+                    let contentType = this.getResponseHeader("Content-Type");
+                    if (contentType == null)
+                        contentType = "application/pdf";
+
+                    backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
+
+                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
+
+                    alertNotify("Successfully archived page.");
+                }
+            };
+
+            xhr.send()
+        }
     }
 
 

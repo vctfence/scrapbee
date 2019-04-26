@@ -113,8 +113,10 @@ class BookmarkTree {
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
                 backend.getNode(parseInt(id)).then(node => {
-                    if (node)
+                    if (node) {
+                        console.log(node);
                         browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                    }
                 });
             }
             return false;
@@ -530,6 +532,10 @@ class BookmarkTree {
                             for (let n of new_nodes) {
                                 let parent = tree.get_node(n.parent_id);
                                 tree.create_node(parent, BookmarkTree.toJsTreeNode(n), "last");
+
+                                if (!all_nodes.some(d => d.id == n.id)) {
+                                    all_nodes.push(n);
+                                }
                             }
 
                             BookmarkTree.reorderNodes(tree, ctx_node);

@@ -292,13 +292,19 @@ class IDBBackend extends Storage {
 
         for (let n of all_nodes) {
             let old_id = n.id;
+
             if (ids.some(n => n === old_id))
                 n.parent_id = dest_id;
+
             n.name = await this._ensureUnique(dest_id, n.name);
+
             delete n.id;
             delete n.date_modified;
-            await this.addNode(n, false);
+
+            Object.assign(n, await this.addNode(n, false));
+
             n.old_id = old_id;
+
             for (let nn of all_nodes) {
                 if (nn.parent_id === old_id)
                     nn.parent_id = n.id;

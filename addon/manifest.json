@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Scrapyard",
-    "version": "0.0.85",
+    "version": "0.0.88",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -9,13 +9,11 @@
     },
     "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'",
     "permissions": [
+        "<all_urls>",
         "activeTab",
         "bookmarks",
         "contextMenus",
         "downloads",
-        "file:///*",
-        "http://*/*",
-        "https://*/*",
         "menus",
         "nativeMessaging",
         "notifications",
