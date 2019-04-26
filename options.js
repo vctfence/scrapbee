@@ -1,6 +1,5 @@
 import {settings} from "./settings.js"
-
-var msg_hub = new MsgHub();
+import {log} from "./message.js"
 
 function getAsync(file) {
     var r;
@@ -70,8 +69,8 @@ ${FILE_I18N} <input type="text" name="value"/> \
                 names.push(t+"\n");
                 paths.push($.trim($(this).next("input").val())+"\n");
             });
-            settings.set('rdf_path_names', names.join(""));
             settings.set('rdf_paths', paths.join(""));
+            settings.set('rdf_path_names', names.join(""));
             settings.set('backend_port', $("input[name=backend_port]").val());
             settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""));
             settings.set('font_color', $("input[name=font_color]").val().replace("#", ""));
@@ -219,13 +218,16 @@ pause`
         var $div = $("#div-log .console");
         if(request.type == 'LOGGING'){
             var b = Math.abs($div.scrollTop() - ($div[0].scrollHeight - $div.height())) < 100;
-            $("<div/>").appendTo($div).html(request.log.logtype + ": " +request.log.content);
+            var item = request.log;
+            $("<div/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
             if(b)
                 $div.scrollTop($div[0].scrollHeight - $div.height());
         }
     });
-    msg_hub.send('GET_ALL_LOG_REQUEST', '', function(response){
+    browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {
         var $div = $("#div-log .console");
-        $("<div/>").appendTo($div).html(response.logs.replace(/\n/g, "<br/>"));
+        response.logs.forEach(function(item){
+            $("<div/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+        })
     });
 }

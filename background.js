@@ -1,30 +1,39 @@
+import {settings} from "./settings.js"
+import {log} from "./message.js"
+import {showNotification} from "./utils.js"
+
 /* logging */
+String.prototype.htmlEncode=function(ignoreAmp){
+  var s=this;
+  if(!ignoreAmp)s=s.replace(/&/g,'&amp;')
+    return s.replace(/</g,'&lt;')
+	.replace(/>/g,'&gt;')
+	.replace(/\"/g,'&quot;')
+	.replace(/ /g,'&nbsp;')
+	.replace(/\'/g,'&#39;');
+}
 var log_pool = [];
-function __log__(logtype, content){
+log.sendLog = function(logtype, content){
     if(typeof content != "string"){
-        try{
-    	    content = JSON.stringify(content);
-        }catch(e){
-            content = content + "";
-        }
+    	content = String(content);
     }
-    var log = {logtype:logtype, content: content}
-    log_pool.push(`${logtype}: ${content}`);
+    var log = {logtype:logtype, content: content.htmlEncode()}
+    log_pool.push(log);
     browser.runtime.sendMessage({type:'LOGGING', log});
 }
-function __log_clear__(){
+log.clear = function(){
     log_pool = [];
 }
 /* log version and platform */
 browser.runtime.getBrowserInfo().then(function(info) {
     var manifest = browser.runtime.getManifest();
-    __log__("info", "ScrapBee version = " + manifest.version);
-    __log__("info", "browser = " + info.name + " " + info.version);
+    log.info("ScrapBee version = " + manifest.version);
+    log.info("browser = " + info.name + " " + info.version);
     var main_version = parseInt(info.version.replace(/\..+/, ""));
     if(info.name != "Firefox" || main_version < 60){
-	__log__("error", "Only Firefox version after 60 is supported");
+	log.error("Only Firefox version after 60 is supported");
     }
-    __log__("info", "platform = " + navigator.platform);
+    log.info("platform = " + navigator.platform);
 });
 /* backend*/
 var port;
@@ -32,12 +41,12 @@ var web_started;
 function connectPort(){
     if(!port){
 	browser.runtime.onConnect.addListener((p) => {
-	    __log__("info", `backend connected`);
+	    log.info(`backend connected`);
 	});
 	port = browser.runtime.connectNative("scrapbee_backend");
 	port.onDisconnect.addListener((p) => {
 	    if (p.error) {
-		__log__('info', `backend disconnected due to an error: ${p.error.message}`);
+		log.error(`backend disconnected due to an error: ${p.error.message}`);
 	    }
 	});
     }
@@ -53,37 +62,45 @@ function communicate(command, body, callback){
     };
     port.onMessage.addListener(listener);
 }
-function startWebServer(port, callback){
-    if(web_started){
-	callback();
-	return;
-    }
-    __log__("info", `start web server on port ${port}.`);
-    communicate("web-server", {"port": port}, function(r){
-	if(r.Serverstate != "ok"){
-	    __log__("error", r.Error)
-	    startWebServer(port, callback);
-	}else{
-	    __log__("info", "web server started.")
-	    web_started = true;
-	    callback();
-	}
+function startWebServer(port){
+    return new Promise((resolve, reject) => {
+        if(web_started){
+	    resolve();
+        }else{
+            log.info(`start web server on port ${port}.`);
+            communicate("web-server", {"port": port}, function(r){
+	        if(r.Serverstate != "ok"){
+	            log.error(r.Error)
+	            startWebServer(port).then(() => {
+                        resolve()
+                    });
+	        }else{
+	            log.info("web server started.")
+	            web_started = true;
+                    resolve();
+	        }
+            });
+        }
     });
 };
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    // log.debug("background script recv msg: " + request.type)
     if(request.type == 'START_WEB_SERVER_REQUEST'){
-	if(request.force) {
+	if(request.force)
 	    web_started = false;
-	}
-	startWebServer(request.content.port, function(){
-	    browser.runtime.sendMessage({session_id:request.session_id});
-	});
+        return startWebServer(request.port);
     }else if(request.type == 'LOG'){
-	__log__(request.logtype, request.content)
+	log.sendLog(request.logtype, request.content)
     }else if(request.type == 'CLEAR_LOG'){
 	__log_clear__()        
     }else if(request.type == 'GET_ALL_LOG_REQUEST'){
-	browser.runtime.sendMessage({session_id:request.session_id, logs: log_pool.join("\n")});
+        return Promise.resolve({logs: log_pool})
+    }else if(request.type == 'SAVE_BLOB_ITEM'){
+        return saveBlobItem(request.item)
+    }else if(request.type == 'SAVE_TEXT_FILE'){
+        return saveTextFile(request.text, request.path)
+    }else if(request.type == 'NOTIFY'){
+        return showNotification(request.message, request.title, request.notify_type)
     }
 });
 function withCurrTab(fn){
@@ -99,15 +116,14 @@ browser.menus.remove("scrapbee-capture-url");
 browser.menus.create({
     id: "scrapbee-capture-selection",
     title: browser.i18n.getMessage("CaptureSelection"),
-    contexts: ["selection"],
+    contexts: ["page", "selection", "frame", "editable"],
     documentUrlPatterns: ["http://*/*", "https://*/*"],
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
+    enabled: true,
     onclick: function(){
 	browser.sidebarAction.isOpen({}).then(result => {
 	    if(!result){
-		withCurrTab(function(tab){
-		    browser.tabs.sendMessage(tab.id, {type: 'REQUIRE_OPEN_SIDEBAR'}, null);
-		});
+                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
 	    }else{
 		browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
 	    }
@@ -117,16 +133,14 @@ browser.menus.create({
 browser.menus.create({
     id: "scrapbee-capture-page",
     title: browser.i18n.getMessage("CapturePage"),
-    contexts: ["page"],
+    contexts: ["page", "selection", "frame", "editable"],
     documentUrlPatterns: ["http://*/*",  "https://*/*"],
     icons: {"16": "icons/page.svg", "32": "icons/page.svg"},
     onclick: function(){
 	// browser.sidebarAction.open()
 	browser.sidebarAction.isOpen({}).then(result => {
 	    if(!result){
-		withCurrTab(function(tab){
-		    browser.tabs.sendMessage(tab.id, {type: 'REQUIRE_OPEN_SIDEBAR'}, null);
-		});
+                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
 	    }else{
 		browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
 	    }
@@ -136,15 +150,13 @@ browser.menus.create({
 browser.menus.create({
     id: "scrapbee-capture-url",
     title: browser.i18n.getMessage("CaptureUrl"),
-    contexts: ["page", "selection"],
+    contexts: ["page", "selection", "frame", "editable"],
     documentUrlPatterns: ["http://*/*",  "https://*/*"],
     icons: {"16": "icons/link.svg", "32": "icons/link.svg"},
     onclick: function(info, tab){
 	browser.sidebarAction.isOpen({}).then(result => {
 	    if(!result){
-		withCurrTab(function(tab){
-		    browser.tabs.sendMessage(tab.id, {type: 'REQUIRE_OPEN_SIDEBAR'}, null);
-		});
+                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
 	    }else{
 		browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
 	    }
@@ -157,3 +169,62 @@ browser.browserAction.onClicked.addListener(function(){
 });
 // browser.browserAction.onClicked.removeListener(listener)
 // browser.browserAction.onClicked.hasListener(listener)
+/* update menu */
+function updateMenu(url) {
+    var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url));
+    browser.menus.update("scrapbee-capture-selection", {enabled: enabled, visible: enabled});
+    browser.menus.update("scrapbee-capture-page", {enabled: enabled, visible: enabled});
+    browser.menus.update("scrapbee-capture-url", {enabled: enabled, visible: enabled});
+}
+browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tabInfo){
+    updateMenu(tabInfo.url)
+});
+browser.tabs.onActivated.addListener(function(activeInfo){
+    browser.tabs.get(activeInfo.tabId).then((tabInfo)=>{
+        updateMenu(tabInfo.url)
+    });
+});
+browser.tabs.onCreated.addListener(function(tabInfo){
+    updateMenu(tabInfo.url)
+});
+function saveBlobItem(item){
+    return new Promise((resolve, reject) => {
+        if(!item.blob)
+            return reject();
+        var formData = new FormData();
+        formData.append("filename", item.path);
+        formData.append("file", item.blob);
+        var request = new XMLHttpRequest();
+        request.open("POST", settings.backend_url + "savebinfile", false);
+        // request.responseType='text';
+        request.onload = function(oEvent) {
+	    resolve();
+        };
+        request.onerror = function(oEvent) {
+	    reject();
+        };    
+        request.send(formData);
+    });
+}
+function saveTextFile(content, path){
+    return new Promise((resolve, reject) => {
+        var formData = new FormData();
+        formData.append("filename", path);
+        formData.append("content", content);
+        var request=new XMLHttpRequest();
+        request.onload = function(r) {
+        }
+        request.onreadystatechange=function(){
+            if(request.readyState == 4 && request.status == 200){
+                resolve(request.responseText);
+            }else if(request.status == 500){
+                reject(Error(request.responseText))
+            }
+        }
+        request.onerror = function(err) {
+            reject(Error(err));
+        };
+        request.open("POST", settings.backend_url + "savefile", false);
+        request.send(formData);
+    });
+}

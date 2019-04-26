@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "ScrapBee",
-    "version": "1.5.1",
+    "version": "1.6.0",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -38,7 +38,7 @@
         "default_icon": "icons/bee.png"
     },
     "background": {
-        "scripts": ["background.js"]
+        "page": "background.html"
     },
     "browser_action": {
 	"default_icon": {
@@ -49,19 +49,17 @@
     "content_scripts": [
         {
             "matches": [
-                "http://*/*",
-                "https://*/*"
+                "http://localhost/*",
+                "https://localhost/*"
             ],
             "css": [
-                "content_script.css"
+                "edit.css"
             ],
             "js": [
                 "libs/jquery-3.3.1.js",
-                "libs/md5.js",
                 "proto.js",
                 "marker.js",
-                "message.js",
-                "content_script.js"
+                "edit.js"
             ]
         }
     ],

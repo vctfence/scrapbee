@@ -180,3 +180,4 @@ ScrapbeeElement.prototype.getIframeResources=function(){
     this.el.innerHTML=""
     return [];
 }
+true;

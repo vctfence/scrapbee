@@ -42,53 +42,48 @@ func IsFile(name string) bool {
   return mode.IsRegular()
 }
 
-func IsDir(name string) bool {
+func IsDir(name string) (bool, error) {
   fi, err := os.Stat(name)
   if err != nil {
-    return false
+    return false, err
   }
-  return fi.IsDir()
+  return fi.IsDir(), nil
   // mode := fi.Mode()
   // return mode.IsRegular()
 }
 
-func createDirImpl(name string) bool {
-  err := os.MkdirAll(name, 0755)
-  if err == nil {
-    return true
-  } else {
-		// fmt.Println("Error: ", err)
-		logger.Println(err.Error())
-    return false
+func CreateDir(name string) error {
+  is, err := IsDir(name) 
+  if is{
+    return nil
   }
+  err = os.MkdirAll(name, 0755)
+  return err
 }
 
-func CreateDir(name string) bool {
-  if IsDir(name) {
-		// logger.Println(fmt.Sprintf("%s is already a directory.\n", name))
-    return true
-  }
-  if createDirImpl(name) {
-		// logger.Println(fmt.Sprintf("%s Create directory successfully.\n", name))
-    return true
-  } else {
-    return false
-  }
+func resp500(w http.ResponseWriter, err error){
+  w.Header().Add("Content-Type", "text/plain")
+  err_msg := fmt.Sprintf("%s", err)
+  logger.Print(err_msg)
+  w.WriteHeader(http.StatusInternalServerError)
+  w.Write([]byte(err_msg))
 }
 
 func saveFileHandle(w http.ResponseWriter, r *http.Request){
-  w.Header().Add("Content-Type", "text/plain")
   if r.Method == "POST" {
     filename := r.FormValue("filename")
     content := r.FormValue("content")
     downloadpath := filepath.Dir(filename)
-    if CreateDir(downloadpath) {
+    err := CreateDir(downloadpath)
+    if err == nil {
       f, err := os.Create(filename)
       if err != nil {
-        logger.Printf("Open file for write fail,(%s) %s\n", filename, err)
+        resp500(w, err)
         return
       }
-      f.WriteString(content)	
+      f.WriteString(content)
+    }else{
+      resp500(w, err)
     }
   }
 }
@@ -99,21 +94,24 @@ func saveBinFileHandle(w http.ResponseWriter, r *http.Request){
   defer file.Close()
   // fW, err := os.Create("" + head.Filename)
   // logger.Printf("%q", head)
-  filename := r.FormValue("filename")  
+  filename := r.FormValue("filename")
   downloadpath := filepath.Dir(filename)
-  if CreateDir(downloadpath) {
+  err := CreateDir(downloadpath)
+  if err == nil {
     fW, err := os.Create(filename)
     if err != nil {
-      logger.Printf("Failed to create file %s", filename)
+      resp500(w, err)
       return
     }
     defer fW.Close()
     _, err = io.Copy(fW, file)
     if err != nil {
-      logger.Printf("Failed to save file %s", filename)
+      resp500(w, err)
       return
     }
     // logger.Println("File saved successful")
+  }else{
+    resp500(w, err)
   }
 }
 
@@ -128,7 +126,8 @@ func downloadHandle(w http.ResponseWriter, r *http.Request) {
     filename := r.FormValue("filename")
     downloadpath := filepath.Dir(filename)
     logger.Println(downloadpath)
-    if CreateDir(downloadpath) {				
+    err := CreateDir(downloadpath)
+    if err == nil {				
       if len(url) > 0 {
         reg, _ := regexp.Compile(`(?i)^data:image/(.+?);base64,(.+)`)
         m := reg.FindStringSubmatch(url)
@@ -141,6 +140,8 @@ func downloadHandle(w http.ResponseWriter, r *http.Request) {
           io.WriteString(w, f)
         }
       }
+    }else{
+      resp500(w, err)
     }
   }
 }
@@ -215,7 +216,8 @@ func deleteDirHandle(w http.ResponseWriter, r *http.Request){
     return
   }
   path := r.FormValue("path")
-  if IsDir(path) {
+  is, _ := IsDir(path)
+  if is {
     os.RemoveAll(path)
   }
 }

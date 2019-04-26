@@ -1,12 +1,11 @@
 import {BookTree} from "./tree.js";
 import {settings} from "./settings.js"
 import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
-import {getMainMimeExt} from "./libs/mime.types.js"
+import {log} from "./message.js"
+// import {getMainMimeExt} from "./libs/mime.types.js"
 
 var currTree;
-var windowId;
-
-var msg_hub = new MsgHub();
+var thisWindowId;
 
 /* show members of an object */
 function dir(o, delimiter){
@@ -26,9 +25,8 @@ function genItemId(){
 }
 function saveRdf(){
     log.info(`saving changes to rdf`);
-    var rdf=currTree.rdf;
-    $.post(settings.backend_url + "savefile", {filename:rdf, content: currTree.xmlSerialized()}, function(r){
-	msg_hub.send('RDF_EDITED', {windowId: windowId, rdf: rdf});
+    browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
+        browser.runtime.sendMessage({type: 'RDF_EDITED', rdf: currTree.rdf}).then((response) => {});
 	log.info(`save changes to rdf, done`);
     });
 }
@@ -37,8 +35,10 @@ function initRdf(rdf, callback){
 <RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
 <RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>\
 </RDF:RDF>';
-    $.post(settings.backend_url + "savefile", {filename:rdf, content: content}, function(r){
-	callback && callback();
+    browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
+        callback && callback();
+    }).catch((err) => {
+        alert("{Warning}", err.message)
     });
 }
 function getCurrContainer(){
@@ -154,8 +154,19 @@ menulistener.onRename = function(){
 	});
     }
 }
+menulistener.onOpenFolder = function(){
+    if($(".item.focus").length){
+    	var id = $(".item.focus").attr("id");
+        var path = currTree.getItemPath(id);
+        $.post(settings.backend_url + "filemanager/", {path:path}, function(r){
+	    // 
+	});
+    }
+}
 var drop;
 function showRdfList(){
+    log.info("show rdf list")
+    
     var lastRdf = settings.last_rdf;
     var saw = false;
     var paths = settings.getRdfPaths();
@@ -163,7 +174,7 @@ function showRdfList(){
     drop.clear()
     drop.onchange=(function(title, value){
         $(".drop-button .label").html(title || "")
-	switchRdf(value);  // switch rdf and notify other side bar.
+	if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
     });
     if(paths){
         var names = settings.getRdfPathNames(); 
@@ -184,21 +195,20 @@ function applyColor(){
     $("#"+id).remove();
     var sheet = document.createElement('style');
     sheet.id=id;
-
     var item_h = parseInt(settings.font_size) * 1.6;
     var icon_h = parseInt(settings.font_size) * 1.5;
     var origin_h = parseInt(settings.font_size) * 0.85;
     var bg_color = settings.bg_color;
     var filter = getColorFilter("#"+settings.font_color).filter;
-    
     sheet.innerHTML=`
 *{color:${settings.font_color}}
 .item.local,.item.folder{color:#${settings.font_color}}
 .item.bookmark label{color:#${settings.bookmark_color}}
-.toolbar{backgroud-color:#${settings.bg_color}}
-body{background:#${settings.bg_color}}
-.toolbar{border-color:#${settings.separator_color};background:#${settings.bg_color}}
-.item.separator{border-color:#${settings.bg_color};background:#${settings.separator_color}}
+.toolbar{backgroud-color:#${bg_color}}
+body{background:#${bg_color}}
+.dlg-cover{background:#${bg_color}99}
+.toolbar{border-color:#${settings.separator_color};background:#${bg_color}}
+.item.separator{border-color:#${bg_color};background:#${settings.separator_color}}
 .tool-button{background:#${settings.font_color}}
 .item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;
 background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}
@@ -206,14 +216,13 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-h
 .item .origin{width:${origin_h}px;height:${origin_h}px;background-size:${origin_h}px ${origin_h}px; line-height:${item_h}px}
 .item{line-height:${item_h}px}
 .simple-menu-button:{border-color:#${settings.font_color}}
-.simple-menu{background:#${settings.bg_color};border-color:#${settings.font_color}}
+.simple-menu{background:#${bg_color};border-color:#${settings.font_color}}
 .drop-button{border: 1px solid #${settings.font_color}}
 .drop-button .label{color:#${settings.font_color}}
 .drop-button .button{border-left:1px solid #${settings.font_color}; color:#${settings.font_color}}
 .item .origin{${filter}}
-.tool-button:hover,.item.folder.focus label,.item.local.focus label,.simple-menu div:hover{background-color:#${settings.selection_color}}
+.tool-button:hover,.item.folder.focus label, .item.bookmark.focus label, .item.local.focus label,.simple-menu div:hover{background-color:#${settings.selection_color}}
 `
-
     document.body.appendChild(sheet);
 }
 window.addEventListener("storage", function(e){
@@ -221,11 +230,10 @@ window.addEventListener("storage", function(e){
 	showRdfList();
     }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
 	applyColor();
-    }else if(e.key == "last_rdf"){
     }else if(e.key == "backend_port"){
-	msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
-	    loadAll();
-	});
+        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
+            loadAll();
+        });
     }
 });
 /* on page loaded */
@@ -241,7 +249,6 @@ function loadAll(){
     });
 }
 window.onload=function(){
-    /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     var btn = document.getElementById("btnLoad");
@@ -270,21 +277,51 @@ window.onload=function(){
     	    "url": "search.html"
         });
     }
-    // $(".i18n").each(function(i, item){
-    // 	if(/i18n-(\w+)/.test(item.className)){
-    // 	    item[RegExp.$1] = browser.i18n.getMessage(item[RegExp.$1]) || item[RegExp.$1];
-    // 	}
-    // });
     $("menuitem").click(function(e){
 	var listener = menulistener[this.id.replace(/^menu/, "on")];
 	listener && listener();
     });    
     /**  */
     applyColor();
-    // browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST'});
-    msg_hub.send('START_WEB_SERVER_REQUEST', {port: settings.backend_port}, function(){
-	loadAll();
+    browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
+        loadAll();
     });
+    /** announcement */
+    function getVersionParts(v){
+        var m = String(v).match(/(\d+)\.(\d+)\.(\d+)/)
+        if(m){
+            return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]
+        }else{
+            return [0, 0, 0]
+        }
+    }
+    var ann = browser.i18n.getMessage("announcement_content")
+    var m = ann.match(/#(\d+\.\d+\.\d+)#/)
+    if(m){
+        var a = getVersionParts(settings.announcement_showed)
+        var b = getVersionParts(m[1])
+
+        log.debug(a, b)
+        if(gtv(b, a)){
+            $("#announcement-red-dot").show()
+        }else{
+            $("#announcement-red-dot").hide()
+        }
+        function gtv(b, a){
+            for(var i=0; i<b.length; i++){
+                if(b[i] > a[i]){
+                    return true;
+                }else if(b[i] < a[i]){
+                    return false
+                }
+            }
+            return false;
+        }
+        $("#announcement-red-dot").parent().click(function(){
+            settings.set('announcement_showed', m[1])
+            $("#announcement-red-dot").hide()
+        });
+    }
 }
 class SimpleDropdown{
     constructor(button, items){
@@ -300,15 +337,15 @@ class SimpleDropdown{
     clear(){
         this.$menu.hide();
         this.$menu.html("");
-        this.value=null;
-        this.onchange && this.onchange(null, null);
+        this.select(null, null)
     }
     addItem(title, value){
         $(`<div class='simple-menu-item' value='${value}'>${title}</div>`).appendTo(this.$menu);
     }
     select(title, value){
+        if(this.value != value)
+            this.onchange && this.onchange(title, value)
         this.value = value;
-        this.onchange && this.onchange(title, value)
     }
     bindEvents(){
         var self = this;
@@ -361,6 +398,10 @@ function loadXml(rdf){
 	currTree.onItemRemoved=function(id){
 	    $.post(settings.backend_url + "deletedir/", {path: rdf_path + "data/" + id}, function(r){});
 	}
+	currTree.onOpenItem=function(itemId, url, newTab, isLocal){
+            var method = newTab ? "create" : "update";
+            browser.tabs[method]({ url: url }, function (tab) {});
+	}
     };
     xmlhttp.onerror = function(err) {
 	log.info(`load ${rdf} failed, ${err}`)
@@ -387,11 +428,7 @@ function switchRdf(rdf){
 	    loadXml(rdf);
 	}else if(rdf){
 	    /** show it need to create rdf */
-	    try{
-		$(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate())
-	    }catch(e){
-		log.info(e.message)
-	    }
+	    $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate())
 	    $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
 		initRdf(rdf, function(){
 		    loadXml(rdf);
@@ -434,21 +471,58 @@ function requestUrlSaving(itemId){
 	}
     });
 }
-function requestPageSaving(itemId, type){
-    withCurrTab(async function(tab){
-	var ico = "icons/loading.gif"
-	try{
-	    if (!(await scriptsAllowed(tab.id))) {
-		var err = "Content script is not allowed on this page";
-		log.error(err)
-		await showNotification({message: err, title: "Error"});
-		return;
-	    }
-	    currTree.createLink(getCurrContainer(), "local", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
-            browser.tabs.sendMessage(tab.id, {type: type, itemId: itemId, windowId: windowId}, null);
-	}catch(e){
-	    log.error(e.message)
-	}
+function executeScriptsInTab(tab_id, files){
+    return new Promise((resolve, reject) => {
+        function sendone(){
+            if(files.length){
+                var f = files.shift();
+                browser.tabs.executeScript(tab_id, {file: f}).then(() => {
+                    sendone();
+                }).catch(reject);
+            }else{
+                resolve();
+            }
+        }
+        sendone();
+    })
+}
+function requestPageSaving(itemId, selection){
+    return new Promise((resolve, reject) => {
+        withCurrTab(async function(tab){
+            var ico = "icons/loading.gif"
+            if (!(scriptsAllowed(tab.id))) {
+	        var err = "Content script is not allowed on this page";
+	        log.error(err)
+	        showNotification({message: err, title: "Error"});
+	        reject()
+            }else{
+                log.debug("status", tab.status)
+                if(tab.status == "loading"){
+                    showNotification({message: `Waiting for page loading, please do not make any options on this page before capturing finished`, title: "Info"});
+                }
+                executeScriptsInTab(tab.id, [
+                    "libs/mime.types.js",
+                    "libs/jquery-3.3.1.js",
+                    "libs/md5.js",
+                    "proto.js",
+                    "dialog.js",
+                    "content_script.js"
+                ]).then(function(){
+                    currTree.createLink(getCurrContainer(), "local", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
+                    log.debug("content scripts injected")
+                    browser.tabs.sendMessage(tab.id, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(){
+                        var item = {}
+                        item.tabId = tab.id;
+                        item.id = itemId;
+                        resolve(item);
+                    }).catch((err) => {
+                        currTree.removeItem($("#"+itemId))
+                        log.debug(err.message)
+                    });
+                }).catch((err) => {
+                });
+            }
+        });
     });
 }
 function updateMenuItem(t){
@@ -456,40 +530,45 @@ function updateMenuItem(t){
         browser.contextMenus.create({id: "catch", title: `catch ${t}`, onclick:function(){}});
     });
 }
-function withFocusedWindow(callback){
-    browser.windows.getLastFocused().then((win) => callback(win));
+function getFocusedWindow(callback){
+    // return browser.windows.getLastFocused().then((win) => callback(win));
 }
 /* receive message from background page */
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'UPDATE_CONTEXTMENU_REQUEST'){
-    }else if(request.type == 'SAVE_CONTENT2'){
-	savePage2(request.path, request.title, request.content);
-    }else if(request.type == 'SAVE_CONTENT' && request.windowId == windowId){
-	savePage(request.itemId, request.content.title, request.content.html, request.content.css, request.content.res, function(){
-	    browser.tabs.sendMessage(sender.tab.id, {type: 'SAVE_CONTENT_FINISHED', itemId: request.itemId, title: request.content.title}, null);
-	});
     }else if(request.type == 'GET_OTHER_INSTANCE_REQUEST'){
 	browser.runtime.sendMessage({session_id:request.session_id});
     }else if(request.type == 'RDF_EDITED'){
-	if(request.content.rdf == currTree.rdf){
+	if(request.rdf == currTree.rdf){
 	    alert("{Warning}", "{SAME_RDF_MODIFIED}").then(function(r){
 		loadXml(currTree.rdf);	
 	    });
 	}
     }else if(request.type == 'SAVE_PAGE_SELECTION_REQUEST'){
 	if(currTree && currTree.rendered) {
-	    withFocusedWindow(function(win){
-		if(win.id == windowId)
-		    requestPageSaving(genItemId(), 'GET_PAGE_SELECTION_REQUEST');
+	    browser.windows.getLastFocused().then(function(win){
+		if(win.id == thisWindowId){
+		    requestPageSaving(genItemId(), true).then((item) => {
+		        var icon = "resource://scrapbook/data/" + item.id + "/favicon.ico";
+		        $("#"+item.id).removeAttr("disabled");
+		        currTree.updateItemIcon($("#"+item.id), icon);
+	               	saveRdf();
+	            });
+		}
 	    });
 	}else{
 	    log.error("rdf have not been loaded")
 	}
     }else if(request.type == 'SAVE_PAGE_REQUEST'){
 	if(currTree && currTree.rendered) {
-	    withFocusedWindow(function(win){
-		if(win.id == windowId){
-		    requestPageSaving(genItemId(), 'GET_PAGE_REQUEST');
+	    browser.windows.getLastFocused().then(function(win){
+		if(win.id == thisWindowId){
+		    requestPageSaving(genItemId(), false).then((item) => {
+                      	var icon = "resource://scrapbook/data/" + item.id + "/favicon.ico";
+		        $("#"+item.id).removeAttr("disabled");
+		        currTree.updateItemIcon($("#"+item.id), icon);
+	               	saveRdf();
+	            });
 		}
 	    });
 	}else{
@@ -497,17 +576,14 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	}
     }else if(request.type == 'SAVE_URL_REQUEST'){
 	if(currTree && currTree.rendered) {
-	    withFocusedWindow(function(win){
-		if(win.id == windowId)
+	    browser.windows.getLastFocused().then(function(win){
+		if(win.id == thisWindowId)
 		    requestUrlSaving(genItemId());
 	    });
 	}else{
 	    log.error("rdf have not been loaded")
 	}
     }
-});
-msg_hub.send('GET_OTHER_INSTANCE_REQUEST', '', function(response){
-    // alert("Warning", "Found another window")
 });
 function postBlob(url, blob, filename, itemId, onload, onerror){
     var rdf_path = currTree.rdf_path;
@@ -525,50 +601,12 @@ function postBlob(url, blob, filename, itemId, onload, onerror){
     };    
     request.send(formData);
 }
-function savePage(itemId, title, content, css, res, callback){
-    var finished=0, all=0;
-    $.each(res, function(i, item){
-	if(item.blob) all++;
-    });
-    $.each(res, function(i, item){
-	if(item.blob){
-	    var ext = getMainMimeExt(item.blob.type) || "";
-            var reg = new RegExp(item.hex, "g" )
-     	    if(item.hex)content = content.replace(reg, item.hex+ext);
-	    postBlob(settings.backend_url + "savebinfile", item.blob, item.filename || (item.hex+ext), itemId, function(){
-	    	if(++finished == all){
-		    content = ['<!Doctype html>', content,].join("\n");
-		    var rdf_path = currTree.rdf_path;
-		    $.post(settings.backend_url + "savefile", {filename: `${rdf_path}/data/${itemId}/index.html`, content: content}, function(r){
-			$.post(settings.backend_url + "savefile", {filename:`${rdf_path}/data/${itemId}/index.css`, content:css, folder:settings.getLastRdfPath() + "data/" + itemId}, function(r){
-			    /** update the icon */
-			    var icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-			    $("#"+itemId).removeAttr("disabled");
-			    currTree.updateItemIcon($("#"+itemId), icon);
-			    /** save xml file when all files uploaded */
-			    saveRdf();
-			    showNotification({message: `Capture content of "${title}" done`, title: "Info"});
-			    callback && callback();
-			});
-		    });
-		}
-	    }, function(){
-	    	// error
-	    });
-	}
-    });
-}
-function savePage2(path, title, content){
-    $.post(settings.backend_url + "savefile", {filename: `${path}/index.html`, content: content}, function(r){
-	showNotification({message: `Save content of "${title}" done`, title: "Info"});
-    });
-}
 document.addEventListener('contextmenu', function(event){
     if($(".dlg-cover:visible").length)
 	event.preventDefault()
     return false;
 });
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
-    windowId = windowInfo.id;
+    thisWindowId = windowInfo.id;
 });
 console.log("==> main.js loaded");

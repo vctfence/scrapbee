@@ -1,38 +1,36 @@
+function stringifyArgs(args){
+    var ar = Array.from(args); 
+    ar.forEach(function(v, i){
+        try{
+            if(typeof v != "string")
+    	        v = JSON.stringify(v);
+        }catch(e){
+            v = String(v);
+        }
+        ar[i] = v;
+    });
+    return ar.join(', ')
+}
+
 var log = {
-    info: function(content){
-        browser.runtime.sendMessage({type:'LOG', logtype: "info", content: content});
+    info: function(){
+        log.sendLog("info", stringifyArgs(arguments))
     },
-    error: function(content){
-        browser.runtime.sendMessage({type:'LOG', logtype: "error", content: content});
+    error: function(){
+        log.sendLog("error", stringifyArgs(arguments))
     },
-    warning: function(content){
-        browser.runtime.sendMessage({type:'LOG', logtype: "warning", content: content});
+    warning: function(){
+        log.sendLog("warning", stringifyArgs(arguments))
     },
-    debug: function(content){
-        browser.runtime.sendMessage({type:'LOG', logtype: "debug", content: content});
+    debug: function(){
+        // log.sendLog("debug", stringifyArgs(arguments))
     },
-    clear: function(content){
+    clear: function(){
         browser.runtime.sendMessage({type:'CLEAR_LOG'});
+    },
+    sendLog: function(type, content){
+        browser.runtime.sendMessage({type:'LOG', logtype: type, content});
     }
 }
 
-class MsgHub {
-    constructor() {
-        // var id = 0;
-        var self=this;
-        this.listeners = {};
-        browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-	    var session_id = request.session_id;
-	    if(self.listeners[session_id]){
-	        self.listeners[session_id](request);
-	        delete self.listeners[session_id];
-	    }
-        });
-    }
-    send(type, content, callback) {
-	var session_id = Math.random();
-	if(callback)
-	    this.listeners[session_id] = callback;
-	browser.runtime.sendMessage({type: type, content: content, session_id: session_id});
-    }
-}
+export {log}

@@ -2,8 +2,8 @@ var settings={};
 settings.get=function(k){
     return this[k];
 }
-settings.set=function(k, v, sync){
-    if(sync || (typeof sync == "undefined")){
+settings.set=function(k, v, sync=true){
+    if(sync){
 	localStorage.setItem(k, v)
     }
     settings[k] = v;
@@ -50,6 +50,7 @@ settings.set('platform', platform, false);
 settings.set('id', browser.runtime.id, false);
 settings.set('extension_id', browser.i18n.getMessage("@@extension_id"), false);
 settings.set('open_in_current_tab', "off", false);
+settings.set('announcement_showed', "", false);
 settings.loadFromStorage();
 settings.pathJoin=function(){
     var arr = Array.from(arguments);

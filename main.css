@@ -238,6 +238,12 @@ html,body{
 .tool-button.open{
     mask-image:url(icons/openfolder.svg);
 }
+.tool-button.donate{
+    mask-image:url(icons/donate.svg);
+}
+.tool-button.announcement{
+    mask-image:url(icons/bell.svg);
+}
 .tool-button.set:hover{
     background-image:url(icons/settings.svg);
 }
@@ -252,6 +258,12 @@ html,body{
 }
 .tool-button.open:hover{
     background-image:url(icons/openfolder.svg);
+}
+.tool-button.donate:hover{
+    background-image:url(icons/donate.svg);
+}
+.tool-button.announcement:hover{
+    background-image:url(icons/bell.svg);
 }
 .tool-button:hover{
     background-size:22px 22px;
@@ -338,4 +350,15 @@ select{
     font-size:14px;
     line-height:16px;
     padding:2px 0;
+}
+.red-dot{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:#f00;
+    color:red;
+    position:absolute;
+    top:3px;
+    right:-3px;
+    display:none;
 }

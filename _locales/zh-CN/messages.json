@@ -188,7 +188,7 @@
         "message": "在当前标签打开"
     },
     "OPEN_IN_CURRENT_TAB_TIP":{
-        "message": "点击条目时，ScrapBook默认在新标签页中打开{Scrap}，<br>如果按住Control(苹果系统中使用Meta)，则在当前标签中打开，<br>你可以通过此选项来切换两种操作"
+        "message": "点击条目时，ScrapBee默认在新标签页中打开{Scrap}，<br>如果按住Control(苹果系统中使用Meta)，则在当前标签中打开，<br>你可以通过此选项来切换两种操作"
     },
     "DONATE_WORDS":{
         "message": "为了使ScrapBee更健康地成长，<br>任何数量的捐助都是非常欢迎的，<br>感谢您的支持!!!<br><i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>如果您喜欢ScrapBee, 请评5颗星</i></a>"
@@ -237,5 +237,11 @@
     },
     "NO_SELECTION_ACTIVATED": {
         "message": "没有激活选区"
-    }    
+    },
+    "Announcement": {
+        "message": "公告"
+    },
+    "announcement_content":{
+        "message": "#1.6.0#<li>修复了一些问题以提高抓取成功率</li><li>后端已升级, 请下载和安装后端来确保功能完整(减少安全软件误报，增加某些错误检查)</li>"
+    }
 }

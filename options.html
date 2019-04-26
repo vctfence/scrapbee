@@ -7,7 +7,6 @@
     <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
     <script type="text/javascript" src="libs/jscolor.js"></script>
     <script type="text/javascript" src="proto.js"></script>
-    <script type="text/javascript" src="message.js"></script>
     <script type="module" src="options.js"></script>
   </head>
   <body>
@@ -17,6 +16,7 @@
         <a class="left-index" href="#settings">{Setting}</a>
         <a class="left-index" href="#log">{Log}</a>
         <a class="left-index" href="#help">{Help}</a>
+        <a class="left-index" href="#announcement">{Announcement}</a>
         <a class="left-index" href="#donate">{Donate}</a>
       </div>
       <div id="div-initiate" class="div-area" style="display:none">
@@ -43,12 +43,12 @@
                 <br>
                 <br>Linux/Mac:
                 <br>{STEP2_TEXT_2}
-                <br>cd <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;\scrapbee</i>
+                <br>cd <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;/scrapbee</i>
                 <br>bash install.sh
                 <br>
                 <br>Windows:
-                <br>open <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;/scrapbee</i>
-                <br>Run install.bat ({STEP2_TEXT_3}
+                <br>open <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;\scrapbee</i>
+                <br>Run install.bat ({STEP2_TEXT_3})
               </div>
             </td>
           </tr>
@@ -134,6 +134,9 @@
             <td><input type="button" name="save" value="{Save}" /></td>
           </tr>
         </table>
+      </div>
+      <div id="div-announcement" class="div-area" style="display:none">
+        {ANNOUNCEMENT_CONTENT}
       </div>
       <div id="div-donate" class="div-area" style="display:none;">
         <div style="font-size:15px;text-align:center;vertical-align:middle;">

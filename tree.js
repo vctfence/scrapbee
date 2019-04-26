@@ -101,13 +101,14 @@ class BookTree {
                 if ($el.attr("disabled"))
                     return;
                 var url = $el.attr("source");
+                var is_local = ($el.hasClass("local") && !$(e.target).hasClass("origin"));
                 if ($el.hasClass("local") && !$(e.target).hasClass("origin")) {
-                    url = self.getItemIndexPage($el.attr("id")) + "?scrapbee_editing=1&refresh=" + new Date().getTime();
+                    url = self.getItemIndexPage($el.attr("id"));
                 }
                 if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey)) {
-                    browser.tabs.update({ url: url }, function (tab) { });
+                    self.onOpenItem && self.onOpenItem($el.attr("id"), url, false, is_local);
                 } else {
-                    browser.tabs.create({ url: url }, function (tab) { });
+                    self.onOpenItem && self.onOpenItem($el.attr("id"), url, true, is_local);
                 }
             }
         });
@@ -174,8 +175,11 @@ class BookTree {
             }
         });
     }
+    getItemPath(id) {
+        return (this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/")
+    }    
     getItemIndexPage(id) {
-        return (settings.backend_url + "file-service/" + this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/")
+        return (settings.backend_url + "file-service/" + this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/") + "?scrapbee_refresh=" + new Date().getTime()
     }
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {

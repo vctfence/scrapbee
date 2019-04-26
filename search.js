@@ -81,14 +81,14 @@ function processTree(tree){
 	var m=null;
 	if(m = item.title.match(re)){
 	    title_matched = true;
-	    $("<a target='_blank' class='match-title'>").appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url);
+	    $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
 	}
 	var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
 	if(m = text.match(re)){
 	    var pos1 = m.index;
 	    content_matched = true;
 	    if(!title_matched){
-		$("<a target='_blank' class='match-title'>").appendTo($("#divResult")).html(item.title).prop("href", url);
+		$(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
 	    }
 	    pos1 = Math.max(0, pos1 - 50)
 	    var pos2 = Math.min(text.length - 1, pos1 + 100);
@@ -105,7 +105,7 @@ function processTree(tree){
 	    $("<div class='match-content'>").appendTo($("#divResult")).html(s);
 	}
 	if(title_matched || content_matched){
-	    $("<a target='_blank' class='match-source'>").appendTo($("#divResult")).html(item.source).prop("href", item.source);
+	    $(`<a target='_blank' class='match-source'>`).appendTo($("#divResult")).html(item.source).prop("href", item.source)
 	    match_count ++;
 	}
     }
@@ -130,9 +130,17 @@ function processTree(tree){
     }
     tree.iterateNodes(function(item){
 	if(item.nodeType == "item"){
-	    //if(item.type == "local"){
+            try{
+                if(item.icon){
+                    
+                    item.icon = tree.translateResource(item.icon, tree.rdf_path, item.id)
+                    console.log(item.icon)
+                }
 		q.addTask(item);
-	    //}
+            }catch(e){
+                console.log(e)
+                alert(e.message)
+            }
 	}
     });
     q.start()

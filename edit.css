@@ -1,30 +1,20 @@
-
-/* .scrapbee-edit-bar{ */
-/*     background:#f00; */
-/*     height:100px; */
-/*     left:0; */
-/*     right:0; */
-/*     bottom:0px; */
-/*     position:fixed; */
-/*     z-index:2147483647;    */
-/* } */
 .scrapbee-edit-bar{
-    background: #aaa;
-    border-top: 1px solid #999;
-    width: 100%;
-    height: 40px;
-    position: fixed;
-    vertical-align: middle;
-    line-height: 40px;
-    bottom: 0;
-    z-index: 2147483647;
-    text-align:left;
+    background: #aaa !important;
+    border-top: 1px solid #999 !important;
+    width: 100% !important;
+    height: 40px !important;
+    position: fixed !important;
+    vertical-align: middle !important;
+    line-height: 40px !important;
+    bottom: 0 !important;
+    z-index: 2147483647 !important;
+    text-align:left !important;
 }
 .scrapbee-icon{
-    vertical-Align:middle;
-    margin-Left:10px;
-    width :20px;
-    height : 20px;
+    vertical-Align:middle !important;
+    margin-Left:10px !important;
+    width :20px !important;
+    height : 20px !important;
 }
 .scrapbee-edit-bar,  .scrapbee-edit-bar *{
     font-family:"WenQuanYi Micro Hei",
@@ -35,33 +25,34 @@
 		"Trebuchet MS",
 		"Liberation Sans",
 		"Nimbus Sans L",
-		sans-serif;
-    font-size:12px;
-    box-sizing: content-box;
+		sans-serif !important;
+    font-size:12px !important;
+    box-sizing: content-box !important;
+}
+.scrapbee-edit-bar input[type=button]{
+    display:inline-block !important;
+    color:#fff !important;
+    cursor:pointer !important;
+    border-radius:5px !important;
+    padding:3px 15px !important;
+    border:none !important;
+    line-height:20px !important;
+    margin: auto auto auto 5px !important;
+    width:auto !important;
+    height:auto !important;
+    font-weight:normal !important;
+    vertical-align:middle;
+    min-height:auto !important;
 }
 .scrapbee-edit-bar input[type=button].blue-button{
-    background:#09c;
-    color:#fff;
-    cursor:pointer;
-    border-radius:5px;
-    padding:3px 15px;
-    border:none;
-    line-height:20px;
-    margin-left:5px;
+    background:#09c !important;
 }
 .scrapbee-edit-bar input[type=button].yellow-button{
-    background:#f70;
-    color:#fff;
-    cursor:pointer;
-    border-radius:5px;
-    padding:3px 15px;
-    border:none;
-    line-height:20px;
-    margin-left:5px;
+    background:#f70 !important;
 }
 .scrapbee-edit-bar input[type=button]:disabled{
-    background:#555;
+    background:#555 !important;
 }
 .scrapbee-menu-item{
-    text-align:center;
+    text-align:center !important;
 }
