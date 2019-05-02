@@ -15,6 +15,7 @@
     margin-Left:10px !important;
     width :20px !important;
     height : 20px !important;
+    display:inline !important;
 }
 .scrapbee-edit-bar,  .scrapbee-edit-bar *{
     font-family:"WenQuanYi Micro Hei",
@@ -55,4 +56,28 @@
 }
 .scrapbee-menu-item{
     text-align:center !important;
+    height:14px !important;
+    line-height:14px !important;
+    min-width:200px !important;
+}
+.scrapbee-menu{
+    position: absolute !important;
+    z-index: 2147483647 !important;
+    border: 1px solid #999 !important;
+    background: #fff !important;
+    display: none !important;
+    box-shadow: 5px 5px 5px #888888 !important;
+    border-width: 1px 1px 0px 1px !important;
+}
+.scrapbee-menu.show{
+    display: block !important;
+}
+
+.scrapbee-marker{
+    height:14px !important;
+    color:#333 !important;
+    cursor:pointer !important;
+    border-bottom:1px solid #999 !important;
+    padding:8px 20px !important;
+    vertical-align:middle !important;
 }

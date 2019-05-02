@@ -1,37 +1,37 @@
 .scrapbee-marker-a1{
-    color:#fff;
-    background:#00f ;
+    color:#fff !important;
+    background:#00f !important;
 }
 .scrapbee-marker-a2{
-    color:#f00;
-    background:#f00 ;
-    color:#fff
+    color:#f00 !important;
+    background:#f00  !important;
+    color:#fff !important;
 }
 .scrapbee-marker-a3{
-    color:#fff;
-    background:#90f ;
+    color:#fff !important;
+    background:#90f  !important;
 }
 .scrapbee-marker-a4{
-    color:#000;
-    background:#0f0 ;
+    color:#000 !important;
+    background:#0f0  !important;
 }
 .scrapbee-marker-a5{
-    color:#000;
-    background:#0ff ;
+    color:#000 !important;
+    background:#0ff  !important;
 }
 .scrapbee-marker-a6{
-    color:#000;
-    background:#fd0 ;
+    color:#000 !important;
+    background:#fd0  !important;
 }
 .scrapbee-marker-b1{
-    border-bottom:2px solid #00f;
+    border-bottom:2px solid #00f !important;
 }
 .scrapbee-marker-b2{
-    border-bottom:2px solid #f00;
+    border-bottom:2px solid #f00 !important;
 }
 .scrapbee-marker-b3{
-    border-bottom:2px dotted #00f;
+    border-bottom:2px dotted #00f !important;
 }
 .scrapbee-marker-b4{
-    border-bottom:2px dotted #f00;
+    border-bottom:2px dotted #f00 !important;
 }

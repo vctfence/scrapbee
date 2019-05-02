@@ -52,7 +52,7 @@ class EditToolBar{
                 if(!$(e.target).hasClass("mark-pen-btn")){
                     if($(self.menu).is(":visible")){
                         e.preventDefault();
-                        $(self.menu).hide();
+                        $(self.menu).removeClass("show");
                     }
                 }
             }
@@ -150,71 +150,40 @@ class EditToolBar{
         btn.value=chrome.i18n.getMessage("MARK_PEN");
         div.appendChild(btn);
         btn.addEventListener("click", function(){
-            $(self.menu).toggle();
+            $(self.menu).toggleClass("show");
             var rect_div = self.div.getBoundingClientRect();
             var rect_btn = this.getBoundingClientRect();
-            $(self.menu).css("bottom", (rect_div.bottom - rect_btn.top) + "px");
-            $(self.menu).css("left", rect_btn.left + "px");
+            $(self.menu).css("cssText", "bottom:" + (rect_div.bottom - rect_btn.top) + "px !important; left:" + rect_btn.left + "px !important;");
         });
         /** mark pen menu */
-        var $m = $("<div>").appendTo(this.div);
+        var $m = $("<div class='scrapbee-menu'>").appendTo(this.div);
         /** marker cleaner */
-        var $item = $("<div>").appendTo($m).css({
-            height:"14px",
-            color:"#333",
-            cursor:"pointer",
-            borderBottom:"1px solid #999",
-            padding:"8px 20px",
-            verticalAlign:"middle"
-        }).bind("mousedown", function(e){
+        var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
             e.preventDefault()
-            $(self.menu).hide();
+            $(self.menu).removeClass("show");
             if(self.isSelectionOn()){
                 clearMarkPen();
             }else{
                 alert("{NO_SELECTION_ACTIVATED}".translate());
             }
         });
-        $(`<div class='scrapbee-menu-item'>Clear Marks</div>`).appendTo($item).css({
-            height:"14px",
-            lineHeight:"14px",
-            minWidth:"200px"
-        });
+        $(`<div class='scrapbee-menu-item'>Clear Marks</div>`).appendTo($item);
         /** markers */
         for (let child of ["scrapbee-marker-a1", "scrapbee-marker-a2", "scrapbee-marker-a3",
                            "scrapbee-marker-a4", "scrapbee-marker-a5", "scrapbee-marker-a6",
                            "scrapbee-marker-b1", "scrapbee-marker-b2", "scrapbee-marker-b3", "scrapbee-marker-b4"]){
-            var $item = $("<div>").appendTo($m).css({
-                height:"14px",
-                color:"#333",
-                cursor:"pointer",
-                borderBottom:"1px solid #999",
-                padding:"8px 20px",
-                verticalAlign:"middle"
-            }).bind("mousedown", function(e){
+            var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
                 e.preventDefault()
-                $(self.menu).hide();
+                $(self.menu).removeClass("show");
                 if(self.isSelectionOn()){
                     mark(child);
                 }else{
                     alert("{NO_SELECTION_ACTIVATED}".translate());
                 }
             });
-            $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
-                height:"14px",
-                lineHeight:"14px",
-                minWidth:"200px"
-            });
+            $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item);
         }
-        $m.css({
-            position: 'absolute',
-            zIndex: 2147483647,
-            border: "1px solid #999",
-            background: "#fff",
-            display: "none",
-            boxShadow: "5px 5px 5px #888888",
-            borderWidth: "1px 1px 0px 1px"
-        });
+  
         this.menu = $m[0];
         /** reload button */
         var btn = document.createElement("input");
