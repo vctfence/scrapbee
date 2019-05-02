@@ -64,7 +64,7 @@ function loadXml(rdf){
 function red(a){
     return "<b style='color:red'>"+a+"</b>";
 }
-function processTree(tree){
+async function processTree(tree){
     var searching = escapeRegExp($.trim($("#txtSearch").val()));
     var match_count = 0;
     function seek(item, body){
@@ -128,18 +128,15 @@ function processTree(tree){
 	$("<div>").appendTo($("#divResult")).html(match_count + i18n_result)
 	$("#btnSearch").prop("disabled", false)
     }
-    tree.iterateNodes(function(item){
-	if(item.nodeType == "item"){
+    await tree.iterateLiNodes(async function(item){
+	if(item.nodeType == "scrap"){
             try{
                 if(item.icon){
-                    
                     item.icon = tree.translateResource(item.icon, tree.rdf_path, item.id)
-                    console.log(item.icon)
                 }
 		q.addTask(item);
             }catch(e){
                 console.log(e)
-                alert(e.message)
             }
 	}
     });

@@ -16,83 +16,7 @@ html,body{
     /* width:100%; */
      min-height: 100vh;
 }
-.item.folder{
-    color:#000;
-    background:url(icons/folder.gif) no-repeat;
-    background-position:0px 1px;
-    margin:3px 0;
-}
-.item.folder::before{
-    content: "\200B";
-}
-.item.folder.expended{
-    background-image:url(icons/openfolder.gif);
-    background-repeat:no-repeat;
-    background-position:0px 1px;
-}
-.item *{
-    cursor:pointer;
-}
-.item.local{
-    /* background-color:#7af; */
-    color:#000;
-    display:block;
-    background-image:url(icons/item.gif);
-    background-repeat:no-repeat;
-    background-position:0px 0px;
-    margin:3px 0;
-}
-.item.bookmark{
-    color:#050;
-    display:block;
-    background-image:url(icons/item.gif);
-    background-repeat:no-repeat;
-    margin:3px 0;
-}
-.item{
-    cursor:pointer;
-    margin-bottom:0px;
-    width:fit-content;
-    width:-webkit-fit-content;
-    width:-moz-fit-content;
-    vertical-align:top;
-    line-height:18px;
-    padding-left:20px;
-    background-size:18px 18px;
-    /* color:red; */
-    white-space:nowrap;
-    width:0px;
-}
-.item label{
-    text-overflow:ellipsis;
-    max-width:30em;
-    overflow:hidden;
-    display: inline-block;
-    padding:1px 2px;
-    border-radius:3px;
-    vertical-align:top;
-    /* background-color:#ccc; */
-    /* color:#000; */
-}
-.item.bookmark.focus label,
-.item.local.focus label,
-.item.folder.focus label{
-    background-color:#079;
-    color:#fff;
-}
-.item .origin{
-    cursor:pointer;
-    /* width:-moz-fit-content; */
-    vertical-align:top;
-    padding-left:20px;
-    display:inline-block;
-    background:url(icons/online.svg);
-    background-repeat:no-repeat;
-    background-position:0px 0px;
-    background-size:9px 9px;
-    width:9px;
-    height:9px;
-}
+
 .box{
     margin:70px 20px 20px 20px;
 }
@@ -112,21 +36,6 @@ html,body{
     border-bottom:1px solid #999;
     white-space:nowrap;
     z-index:1; /* prevent dots of "text-overflow:ellipsis" diplayed over me */
-}
-.folder-content{
-    display:none;
-    margin-left:18px;
-    /* border:1px solid; */
-}
-.folder-content.root{
-    display:block;
-    margin-left:0px;
-    margin:70px 20px 20px 20px;
-    overflow:visible;
-}
-.folder-content.root > .item{
-    display:block;
-    margin-left:0px;
 }
 .dlg-row{
     padding:12px 0 6px 0;
@@ -193,16 +102,6 @@ html,body{
 .dlg .dlg-box{
     width:100%;
     overflow:hidden;
-}
-.drag-mark{
-    /* background:#f00; */
-    border:none;
-    /* height:2px; */
-    border-bottom:1px dashed #f00;
-    /* margin:0 0 2px 0; */
-}
-.item.folder.drag-into{
-    border-bottom:1px dashed #f00;
 }
 .table{
     display:table;
@@ -280,16 +179,6 @@ html,body{
     padding:2px 5px;
     border:0;
 }
-.item.separator{
-    width:100%;
-    height:15px;
-    border-width:7px 0 7px 0;
-    border-style:solid;
-    background:#999;
-}
-.item.separator.focus{
-   background:#900;
-}
 select{
     color: #000;
 }
@@ -338,11 +227,11 @@ select{
 .drop-button .label{
     font-size:14px;
     line-height:20px;
-    padding:0px 10px;
+    padding:0 0 0 10px;
     color:#f00;
 }
 .drop-button .button{
-    border-left:1px solid #f00;
+    /* border-left:1px solid #f00; */
     color:#f00;
     text-align:center;
     width:20px;

@@ -286,4 +286,13 @@ function getColorFilter(hex){
     return result;
 }
 
-export{scriptsAllowed, showNotification, getColorFilter};
+function randRange(a, b){
+    return Math.floor(Math.random() * (b-a+1)) + a;
+}
+
+function genItemId(){
+    return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
+}
+
+export{scriptsAllowed, showNotification, getColorFilter, randRange, genItemId};
+

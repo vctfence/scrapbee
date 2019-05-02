@@ -235,7 +235,7 @@ if(!window.scrapbee_injected){
         return images.join("\n");
     }
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        log.debug("content script recv msg:", request.type, 111)
+        log.debug("content script recv msg:", request.type)
         if(request.type == "SAVE_PAGE" || request.type == "SAVE_PAGE_SELECTION"){
             return new Promise((resolve, reject) => {
                 if(lock()){
@@ -276,7 +276,7 @@ if(!window.scrapbee_injected){
                     var path = `${rdf_path}/data/${scrapId}/index.html`;
                     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: html, path}).then((response) => {
                         dlgDownload.updateCell(res.length+1, 3, "<font style='color:#0055ff'>saved</font>")
-                        log.debug("done all >>>>>>> ")
+                        log.debug("capture, all done")
                         resolve();
                     });
                 });

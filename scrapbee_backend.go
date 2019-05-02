@@ -23,6 +23,7 @@ import (
   "runtime"
   "github.com/gorilla/mux"
 )
+
 var config map[string]interface{}
 var rdfdirs map[string]string
 var currentwd string
@@ -42,7 +43,7 @@ func IsFile(name string) bool {
   return mode.IsRegular()
 }
 
-func IsDir(name string) (bool, error) {
+func isDir(name string) (bool, error) {
   fi, err := os.Stat(name)
   if err != nil {
     return false, err
@@ -53,7 +54,7 @@ func IsDir(name string) (bool, error) {
 }
 
 func CreateDir(name string) error {
-  is, err := IsDir(name) 
+  is, err := isDir(name) 
   if is{
     return nil
   }
@@ -195,8 +196,9 @@ func start_web_server(port string) {
   go func() {
     err = srv.ListenAndServe() // waiting...
   }()
-  time.Sleep(time.Duration(1)*time.Second)
+  time.Sleep(time.Duration(2) * time.Second)
   m := Message{"0", "0", "0", "0", "0", "0"}
+  m.Version = "1.7.0"
   m.Serverstate = "ok"
   m.Serverport = port
   // defer srv.Shutdown(nil)
@@ -216,7 +218,7 @@ func deleteDirHandle(w http.ResponseWriter, r *http.Request){
     return
   }
   path := r.FormValue("path")
-  is, _ := IsDir(path)
+  is, _ := isDir(path)
   if is {
     os.RemoveAll(path)
   }
@@ -270,10 +272,39 @@ func fileManagerHandle(w http.ResponseWriter, r *http.Request){
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
-  io.WriteString(w, "ok")
+  if err != nil {
+    io.WriteString(w, err.Error())
+    log.Fatal(err)
+  }else{
+    io.WriteString(w, "ok")
+  }
+}
+
+func fsCopyHandle(w http.ResponseWriter, r *http.Request){
+  w.Header().Add("Content-Type", "text/plain")
+  src := r.FormValue("src")
+  dest := r.FormValue("dest")
+  err := copyFsNode(src, dest)
+  if err != nil {
+    io.WriteString(w, err.Error())
+  }else{
+    io.WriteString(w, "ok")
+  }
+}
+
+func fsMoveHandle(w http.ResponseWriter, r *http.Request){
+  w.Header().Add("Content-Type", "text/plain")
+  src := r.FormValue("src")
+  dest := r.FormValue("dest")
+  err := copyFsNode(src, dest)
+  if err == nil {
+    err = rmFsNode(src)
+  }
+  if err != nil {
+    io.WriteString(w, err.Error())
+  }else{
+    io.WriteString(w, "ok")
+  }
 }
 
 /* ========== MAIN ENTRIES ========== */
@@ -287,12 +318,10 @@ func main(){
   defer logfile.Close()
   logger = log.New(logfile,"",log.Ldate|log.Ltime|log.Lshortfile)
   logger.Println("start backend\n")
-  
   /** handles by mux */
   rtr := mux.NewRouter()
   rtr.HandleFunc("/file-service/{path:.+}", rootFsHandle).Methods("GET")
   http.Handle("/", rtr)
-
   /** handles by http */
   http.HandleFunc("/isfile/", isFileHandle)
   http.HandleFunc("/deletedir/", deleteDirHandle)
@@ -300,7 +329,8 @@ func main(){
   http.HandleFunc("/download", downloadHandle)
   http.HandleFunc("/savefile", saveFileHandle)
   http.HandleFunc("/savebinfile", saveBinFileHandle)
-    
+  http.HandleFunc("/fs/copy", fsCopyHandle)
+  http.HandleFunc("/fs/move", fsMoveHandle)
   /** commmand line args */  
   if len(os.Args) == 2 && os.Args[1] == "web-server" {
     go start_web_server("9900")
@@ -340,7 +370,7 @@ func main(){
 }
 
 type Message struct {
-  Scrapbook string
+  Version string
 	Rdfloaded string
 	Serverport string
 	Serverstate string
@@ -373,4 +403,86 @@ func getMsg () []byte{
 			return b[1:len(b)-1]
 		}
 	}
+}
+
+/* copy folder */
+func copyFolder(source string, dest string) (err error) {
+	sourceinfo, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(dest, sourceinfo.Mode())
+	if err != nil {
+		return err
+	}
+	directory, _ := os.Open(source)
+	objects, err := directory.Readdir(-1)
+	for _, obj := range objects {
+		sourcefilepointer := source + "/" + obj.Name()
+		destinationfilepointer := dest + "/" + obj.Name()
+		if obj.IsDir() {
+			err = copyFolder(sourcefilepointer, destinationfilepointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			err = copyFile(sourcefilepointer, destinationfilepointer)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+	return
+}
+
+/* copy file */
+func copyFile(source string, dest string) (err error) {
+	sourcefile, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer sourcefile.Close()
+	destfile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer destfile.Close()
+	_, err = io.Copy(destfile, sourcefile)
+	if err == nil {
+		sourceinfo, err := os.Stat(source)
+		if err != nil {
+			err = os.Chmod(dest, sourceinfo.Mode())
+		}
+	}
+	return
+}
+
+/* rm file or folder */
+func rmFsNode(src string) (err error){
+  is_dir, err := isDir(src)
+  if err == nil {
+    if(is_dir){
+      err = os.RemoveAll(src)
+    }else{
+      err = os.Remove(src)
+    }
+  }
+  return err
+}
+
+/* copy file or folder */
+func copyFsNode(src string, dest string) (err error){
+  /** always remove dest if already exists */
+  if _, err := os.Stat(dest); !os.IsNotExist(err) {
+    rmFsNode(dest)
+  }
+  is_dir, err := isDir(src)
+	if err == nil {
+    if(is_dir){
+      err = copyFolder(src, dest)
+    }else{
+      err = copyFile(src, dest)
+    }
+	}
+  return err
 }

@@ -4,9 +4,11 @@
     <title>ScrapBee -> {Setting}</title>
     <link rel="icon" href="icons/bee.svg" type="image/png" />
     <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="tree.css" media="screen"/>
     <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
     <script type="text/javascript" src="libs/jscolor.js"></script>
     <script type="text/javascript" src="proto.js"></script>
+    <script type="text/javascript" src="dialog.js"></script>
     <script type="module" src="options.js"></script>
   </head>
   <body>
@@ -16,6 +18,7 @@
         <a class="left-index" href="#settings">{Setting}</a>
         <a class="left-index" href="#log">{Log}</a>
         <a class="left-index" href="#help">{Help}</a>
+        <a class="left-index" href="#tool">工具</a>
         <a class="left-index" href="#announcement">{Announcement}</a>
         <a class="left-index" href="#donate">{Donate}</a>
       </div>
@@ -86,8 +89,8 @@
           </tr>
           <tr>
             <td>{Backend Port}</td>
-            <td id="">
-              <input type="text" name="backend_port" value="" />
+            <td id="" style="position:relative">
+              <input type="text" name="backend_port" value="" \/>
               <i class="help-mark"></i>
               <div class="tips hide">{BACKEND_PORT_TIP}</div>
             </td>
@@ -119,7 +122,7 @@
               <div class="panel">
                 <table width="100%" cellspacing="" cellpadding="0" border="0" class="form-table inner">
                   <tr>
-                    <td width="100">{OPEN_IN_CURRENT_TAB}</td><td>
+                    <td width="100">{OPEN_IN_CURRENT_TAB}</td><td style="position:relative">
                       <input type="checkbox" name="open_in_current_tab" value="" style="vertical-align:top"/>
                       <i class="help-mark"></i>
                       <div class="tips hide">{OPEN_IN_CURRENT_TAB_TIP}</div>
@@ -152,7 +155,52 @@
           </div>
         </div>
       </div>
-      <div id="div-help" class="div-area" style="display:none;">
+      <div id="div-help" class="div-area" style="display:none;"></div>
+      <div id="div-tool" class="div-area" style="display:none;position:relative;">
+        <div style="text-align:left;padding-left:15px;padding-top:20px;position:relative;">
+          <span style="font-weight:bold;background:#555;padding:5px 10px;border-radius:10px;color:#fff;font-size:12px;cursor:default;">Tree Node Mover</span>
+          <i class="help-mark"></i>
+          <div class="tips hide">
+            {NODE_MOVER_TIP}
+            
+          </div>
+          <i class="warn-mark"></i>
+          <div class="tips hide">
+            {NODE_MOVER_WARN_TIP}
+            
+            
+          </div>
+        </div>
+        <!-- tool1 -->
+        <div style="" id="node-mover">
+          <div class="left-box" >
+            <div class="cell">
+              <div class="drop-box">
+                <div class="label"></div><div class="button">▼</div>
+              </div>
+              <div class="folder-content root" id="tree1"></div>
+              <div class="path-box"></div>
+            </div>
+          </div>
+          <div class="right-box">
+            <div class="cell">
+              <div class="drop-box">
+                <div class="label"></div><div class="button">▼</div>
+              </div>
+              <div id="tree2" class="folder-content root"></div>
+              <div class="path-box"></div>
+            </div>
+          </div>
+          <div class="toolbar">
+            <br /><br />
+            <input type="button" title="move to right" value=">" class="tool-button rightward move"/>
+            <input type="button" title="copy to right" value=">>" class="tool-button rightward copy"/>
+            <br /><br />      
+            <input type="button" title="move to left" value="<" class="tool-button leftward move"/>
+            <input type="button" title="copy to left" value="<<" class="tool-button leftward copy"/>
+          </div>          
+        </div>
+        <!-- tool2 -->
       </div>
       <div id="div-log" class="div-area" style="display:none;height:100%;position:relative">
         <div class="console"></div>

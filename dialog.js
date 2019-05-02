@@ -54,6 +54,17 @@ var DialogYesNo = class extends Dialog {
         });
     }
 }
+var DialogWaiting = class extends Dialog {
+    constructor(title, content, fn) {
+        super(title, '');
+        this.el.innerHTML = `
+  <div class="scrapbee-dlg-cover">
+    <div class="scrapbee-dlg">
+     <img src="icons/loading-big.gif" class="waiting-gif"/>
+    </div>
+  </div>`;
+    }
+}
 var DialogTable = class extends Dialog {
     constructor(title, content, onclose) {
         super(title, '');

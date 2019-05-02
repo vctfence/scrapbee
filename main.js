@@ -1,7 +1,8 @@
 import {BookTree} from "./tree.js";
 import {settings} from "./settings.js"
-import {scriptsAllowed, showNotification, getColorFilter} from "./utils.js"
+import {scriptsAllowed, showNotification, getColorFilter, genItemId} from "./utils.js"
 import {log} from "./message.js"
+import {SimpleDropdown} from "./control.js"
 // import {getMainMimeExt} from "./libs/mime.types.js"
 
 var currTree;
@@ -18,16 +19,6 @@ function dir(o, delimiter){
 function withCurrTab(fn){
     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
         fn.apply(null, [tabs[0]]);
-    });
-}
-function genItemId(){
-    return new Date().format("yyyyMMddhhmmss");
-}
-function saveRdf(){
-    log.info(`saving changes to rdf`);
-    browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
-        browser.runtime.sendMessage({type: 'RDF_EDITED', rdf: currTree.rdf}).then((response) => {});
-	log.info(`save changes to rdf, done`);
     });
 }
 function initRdf(rdf, callback){
@@ -119,9 +110,7 @@ function confirm(title, message){
 var menulistener={};
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
-	currTree.removeItem($(".item.focus"), function(){
-	    saveRdf(); // all done (all sub nodes removed)
-	});
+	currTree.removeItem($(".item.focus"));
     });
 }
 menulistener.onCreateFolder = function(){
@@ -133,7 +122,6 @@ menulistener.onCreateFolder = function(){
 	    p = getCurrContainer(); 
 	}
     	currTree.createFolder(p, genItemId(), getCurrRefId(), d.title, true);
-    	saveRdf();
     });
 }
 menulistener.onCreateSeparator = function(){
@@ -147,9 +135,7 @@ menulistener.onRename = function(){
 	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}).then(function(d){
 	    var t1 = d.title.htmlEncode();
 	    if(t1 != t0){
-   		currTree.renameItem($(".item.focus"), t1, function(){
-    		    saveRdf();
-    		});
+   		currTree.renameItem($(".item.focus"), t1);
 	    }
 	});
     }
@@ -157,7 +143,7 @@ menulistener.onRename = function(){
 menulistener.onOpenFolder = function(){
     if($(".item.focus").length){
     	var id = $(".item.focus").attr("id");
-        var path = currTree.getItemPath(id);
+        var path = currTree.getItemFilePath(id);
         $.post(settings.backend_url + "filemanager/", {path:path}, function(r){
 	    // 
 	});
@@ -199,7 +185,7 @@ function applyColor(){
     var icon_h = parseInt(settings.font_size) * 1.5;
     var origin_h = parseInt(settings.font_size) * 0.85;
     var bg_color = settings.bg_color;
-    var filter = getColorFilter("#"+settings.font_color).filter;
+    // var filter = getColorFilter("#"+settings.font_color).filter;
     sheet.innerHTML=`
 *{color:${settings.font_color}}
 .item.local,.item.folder{color:#${settings.font_color}}
@@ -213,14 +199,13 @@ body{background:#${bg_color}}
 .item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;
 background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}
 .folder-content{margin-left:${item_h}px}
-.item .origin{width:${origin_h}px;height:${origin_h}px;background-size:${origin_h}px ${origin_h}px; line-height:${item_h}px}
+.item .origin{width:${origin_h}px;height:${origin_h}px;mask-size:${origin_h}px ${origin_h}px; line-height:${item_h}px;background:#${settings.font_color}}
 .item{line-height:${item_h}px}
 .simple-menu-button:{border-color:#${settings.font_color}}
 .simple-menu{background:#${bg_color};border-color:#${settings.font_color}}
 .drop-button{border: 1px solid #${settings.font_color}}
 .drop-button .label{color:#${settings.font_color}}
-.drop-button .button{border-left:1px solid #${settings.font_color}; color:#${settings.font_color}}
-.item .origin{${filter}}
+.drop-button .button{border-color:#${settings.font_color}; color:#${settings.font_color}}
 .tool-button:hover,.item.folder.focus label, .item.bookmark.focus label, .item.local.focus label,.simple-menu div:hover{background-color:#${settings.selection_color}}
 `
     document.body.appendChild(sheet);
@@ -300,8 +285,6 @@ window.onload=function(){
     if(m){
         var a = getVersionParts(settings.announcement_showed)
         var b = getVersionParts(m[1])
-
-        log.debug(a, b)
         if(gtv(b, a)){
             $("#announcement-red-dot").show()
         }else{
@@ -323,58 +306,6 @@ window.onload=function(){
         });
     }
 }
-class SimpleDropdown{
-    constructor(button, items){
-        var self = this;
-        this.button = button;
-        this.$menu = $("<div class='simple-menu'></div>").appendTo(document.body);
-        items.forEach(function(v){
-            if(v) self.addItem(v.title || v, v.value || v);
-        });
-        this.bindEvents();
-        this.value=null;
-    }
-    clear(){
-        this.$menu.hide();
-        this.$menu.html("");
-        this.select(null, null)
-    }
-    addItem(title, value){
-        $(`<div class='simple-menu-item' value='${value}'>${title}</div>`).appendTo(this.$menu);
-    }
-    select(title, value){
-        if(this.value != value)
-            this.onchange && this.onchange(title, value)
-        this.value = value;
-    }
-    bindEvents(){
-        var self = this;
-        function hput(){
-            var p = self.button.getBoundingClientRect();
-            self.$menu.css({left: Math.min(p.left, document.body.clientWidth - self.$menu.outerWidth() - 1) + "px"});
-        }
-        $(window).resize(function(){
-            hput();
-        });
-        $(document.body).bind("mousedown", function(e){
-            if($(e.target).closest(self.button).length > 0){
-                var p = self.button.getBoundingClientRect();
-                self.$menu.css({top:p.bottom+"px"})
-                hput();
-                self.$menu.toggle();   
-            }else if($(e.target).hasClass("simple-menu-item")){
-                self.$menu.hide();
-                var title = $(e.target).html();
-                var value = $(e.target).attr("value");
-                if(self.value != value){
-                    self.select(title, value);
-                }
-            }else if($(e.target).closest(self.$menu).length == 0){
-                self.$menu.hide();
-            }
-        });
-    }
-}
 function loadXml(rdf){
     currTree=null;
     if(!rdf)return;
@@ -382,26 +313,40 @@ function loadXml(rdf){
     var rdf_path = rdf.replace(/[^\/\\]*$/, "");
     var rdf_file = rdf.replace(/.*[\/\\]/, "");    
     var xmlhttp=new XMLHttpRequest();
-    xmlhttp.onload = function(r) {
+    xmlhttp.onload = async function(r) {
 	try{
             var _begin = new Date().getTime();
 	    currTree = new BookTree(r.target.response, rdf)
-	    currTree.renderTree();
+	    await currTree.renderTree($(".root.folder-content"));
             var cost = new Date().getTime() - _begin;
             log.info(`rdf loaded in ${cost}ms`)
 	}catch(e){
 	    log.error(e.message)
 	}
 	currTree.onXmlChanged=function(){
-	    saveRdf();
+            log.info(`saving changes to rdf`);
+            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
+                browser.runtime.sendMessage({type: 'RDF_EDITED', rdf: currTree.rdf}).then((response) => {});
+	        log.info(`save changes to rdf, done`);
+            });
 	}
 	currTree.onItemRemoved=function(id){
 	    $.post(settings.backend_url + "deletedir/", {path: rdf_path + "data/" + id}, function(r){});
 	}
-	currTree.onOpenItem=function(itemId, url, newTab, isLocal){
+	currTree.onOpenContent=function(itemId, url, newTab, isLocal){
             var method = newTab ? "create" : "update";
             browser.tabs[method]({ url: url }, function (tab) {});
 	}
+        currTree.onChooseItem=function(id){
+            var $f = currTree.getItemById(id)
+            if ($f.hasClass("folder")) {
+                $(document.body).attr("contextmenu", "popup-menu-folder");
+            } else if ($f.hasClass("item")) {
+                $(document.body).attr("contextmenu", "popup-menu-link");
+            } else {
+                $(document.body).attr("contextmenu", "popup-menu-body");
+            }
+        }
     };
     xmlhttp.onerror = function(err) {
 	log.info(`load ${rdf} failed, ${err}`)
@@ -456,7 +401,6 @@ function requestUrlSaving(itemId){
 		$container = $(".root.folder-content");
 	    }
 	    currTree.createLink(getCurrContainer(), "bookmark", itemId, getCurrRefId(), tab.url, icon, tab.title, false, true);
-	    saveRdf();
 	    showNotification({message: `Capture url "${tab.title}" done`, title: "Info"});
 	}
 	if(icon.match(/^data:image/i)){
@@ -552,7 +496,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 		        var icon = "resource://scrapbook/data/" + item.id + "/favicon.ico";
 		        $("#"+item.id).removeAttr("disabled");
 		        currTree.updateItemIcon($("#"+item.id), icon);
-	               	saveRdf();
 	            });
 		}
 	    });
@@ -567,7 +510,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                       	var icon = "resource://scrapbook/data/" + item.id + "/favicon.ico";
 		        $("#"+item.id).removeAttr("disabled");
 		        currTree.updateItemIcon($("#"+item.id), icon);
-	               	saveRdf();
 	            });
 		}
 	    });

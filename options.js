@@ -1,5 +1,6 @@
 import {settings} from "./settings.js"
 import {log} from "./message.js"
+import {initMover} from "./tools.js"
 
 function getAsync(file) {
     var r;
@@ -28,14 +29,17 @@ window.onload=function(){
     })
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-
+    /** mover */
+    initMover();
     /** help mark */
-    $(".help-mark").hover(function(e){
-        $(this).next(".tips.hide").show().css({left: (e.pageX )+"px", top: (e.pageY) +"px"})
+    $(".help-mark, .warn-mark").hover(function(e){
+        var parentOffset = $(this).parent().offset(); 
+        var relX = e.pageX - parentOffset.left;
+        var relY = e.pageY - parentOffset.top;
+        $(this).next(".tips.hide").show().css({left: relX+"px", top: relY +"px"})
     }, function(){
         $(this).next(".tips.hide").hide();
     });
-    
     /** more donation */
     if($.trim($("#divMoreDonateWay>div").text())){
         $("#divMoreDonateWay").show()
@@ -44,7 +48,6 @@ window.onload=function(){
             return false;
         });
     }
-     
     $("input[name='add']").click(function(){
         createRdfField("", "");
     });

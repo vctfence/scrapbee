@@ -75,7 +75,8 @@ function startWebServer(port){
                         resolve()
                     });
 	        }else{
-	            log.info("web server started.")
+                    var version = r.Version || 'unknown'
+	            log.info(`web server started (backend version = ${version})`)
 	            web_started = true;
                     resolve();
 	        }
@@ -96,9 +97,25 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == 'GET_ALL_LOG_REQUEST'){
         return Promise.resolve({logs: log_pool})
     }else if(request.type == 'SAVE_BLOB_ITEM'){
-        return saveBlobItem(request.item)
+        var filename = request.item.path;
+        var file = request.item.blob;
+        if(!file){
+            return Promise.reject(Error('empty blob'));
+        }else{
+            return ajaxFormPost(settings.backend_url + "savebinfile", {filename, file})
+        }
+        // return saveBlobItem(request.item)
     }else if(request.type == 'SAVE_TEXT_FILE'){
-        return saveTextFile(request.text, request.path)
+        var filename = request.path;
+        var content = request.text;
+        return ajaxFormPost(settings.backend_url + "savefile", {filename, content})
+        // return saveTextFile(request.text, request.path)        
+    }else if(request.type == 'FS_MOVE'){
+        var src = request.src, dest = request.dest;
+        return ajaxFormPost(settings.backend_url + "fs/move", {src, dest})
+    }else if(request.type == 'FS_COPY'){
+        var src = request.src, dest = request.dest;
+        return ajaxFormPost(settings.backend_url + "fs/copy", {src, dest})
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type)
     }
@@ -108,7 +125,6 @@ function withCurrTab(fn){
         fn.apply(null, [tabs[0]]);
     });
 }
-
 /* build menu */
 browser.menus.remove("scrapbee-capture-selection");
 browser.menus.remove("scrapbee-capture-page");
@@ -163,7 +179,7 @@ browser.menus.create({
 	});
     }
 }, function(){});
-/* toolbar icon */
+/* add-on toolbar icon */
 browser.browserAction.onClicked.addListener(function(){
     browser.sidebarAction.open()
 });
@@ -187,30 +203,13 @@ browser.tabs.onActivated.addListener(function(activeInfo){
 browser.tabs.onCreated.addListener(function(tabInfo){
     updateMenu(tabInfo.url)
 });
-function saveBlobItem(item){
-    return new Promise((resolve, reject) => {
-        if(!item.blob)
-            return reject();
-        var formData = new FormData();
-        formData.append("filename", item.path);
-        formData.append("file", item.blob);
-        var request = new XMLHttpRequest();
-        request.open("POST", settings.backend_url + "savebinfile", false);
-        // request.responseType='text';
-        request.onload = function(oEvent) {
-	    resolve();
-        };
-        request.onerror = function(oEvent) {
-	    reject();
-        };    
-        request.send(formData);
-    });
-}
-function saveTextFile(content, path){
+/* http request */
+function ajaxFormPost(url, json){
     return new Promise((resolve, reject) => {
         var formData = new FormData();
-        formData.append("filename", path);
-        formData.append("content", content);
+        for(var k in json){
+            formData.append(k, json[k]);
+        }
         var request=new XMLHttpRequest();
         request.onload = function(r) {
         }
@@ -218,13 +217,14 @@ function saveTextFile(content, path){
             if(request.readyState == 4 && request.status == 200){
                 resolve(request.responseText);
             }else if(request.status == 500){
+                log.error(request.responseText)
                 reject(Error(request.responseText))
             }
         }
         request.onerror = function(err) {
             reject(Error(err));
         };
-        request.open("POST", settings.backend_url + "savefile", false);
+        request.open("POST", url, false);
         request.send(formData);
     });
 }

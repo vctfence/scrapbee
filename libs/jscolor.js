@@ -530,8 +530,6 @@ if (!window.jscolor) { window.jscolor = (function () {
         onDocumentMouseDown : function (e) {
 	    if (!e) { e = window.event; }
 	    var target = e.target || e.srcElement;
-                        console.log(target)
-
 	    if (target._jscLinkedInstance) {
 		if (target._jscLinkedInstance.showOnClick) {
 		    target._jscLinkedInstance.show();
@@ -1741,7 +1739,6 @@ if (!window.jscolor) { window.jscolor = (function () {
 		return;
 	    }
 
-                        console.log(this.targetElement)
 
 	    this.targetElement._jscLinkedInstance = this;
 

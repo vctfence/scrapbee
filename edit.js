@@ -97,6 +97,8 @@ class EditToolBar{
         $(doc).find(".scrapbee-edit-bar").remove();
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: $(doc).html(), path: self.scrap_path+"index.html"}).then((response) => {
             alert("Content saved")
+        }).catch((e) => {
+            alert(e.message)
         });
     }
     buildTools(){
