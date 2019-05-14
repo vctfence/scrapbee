@@ -193,7 +193,7 @@ function applyColor(){
 .toolbar{backgroud-color:#${bg_color}}
 body{background:#${bg_color}}
 .dlg-cover{background:#${bg_color}99}
-.toolbar{border-color:#${settings.separator_color};background:#${bg_color}}
+.toolbar{border-color:#${settings.font_color};background:#${bg_color}}
 .item.separator{border-color:#${bg_color};background:#${settings.separator_color}}
 .tool-button{background:#${settings.font_color}}
 .item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;
