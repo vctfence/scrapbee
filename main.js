@@ -203,7 +203,7 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-h
 .item{line-height:${item_h}px}
 .simple-menu-button:{border-color:#${settings.font_color}}
 .simple-menu{background:#${bg_color};border-color:#${settings.font_color}}
-.drop-button{border: 1px solid #${settings.font_color}}
+.drop-button{border-color:#${settings.font_color}}
 .drop-button .label{color:#${settings.font_color}}
 .drop-button .button{border-color:#${settings.font_color}; color:#${settings.font_color}}
 .tool-button:hover,.item.folder.focus label, .item.bookmark.focus label, .item.local.focus label,.simple-menu div:hover{background-color:#${settings.selection_color}}
