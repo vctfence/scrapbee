@@ -67,7 +67,7 @@ function startWebServer(port){
         if(web_started){
 	    resolve();
         }else{
-            log.info(`start web server on port ${port}.`);
+            log.info(`start backend service on port ${port}.`);
             communicate("web-server", {"port": port}, function(r){
 	        if(r.Serverstate != "ok"){
 	            log.error(r.Error)
@@ -76,7 +76,7 @@ function startWebServer(port){
                     });
 	        }else{
                     var version = r.Version || 'unknown'
-	            log.info(`web server started (backend version = ${version})`)
+	            log.info(`backend service started, version = ${version} (wanted = 1.7.0)`)
 	            web_started = true;
                     resolve();
 	        }

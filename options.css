@@ -53,7 +53,7 @@ input[type=button]{
     cursor:pointer;
 }
 input[type=button]:disabled{
-    background:#444;
+    background:#555;
 }
 input[type=button]:hover{
     background:#080;
@@ -78,7 +78,7 @@ input[type=button]:hover{
     border-radius:5px;
     border:1px solid #222;
     padding:4px 5px;
-    background:#444;
+    background:#555;
     color:#fff;
 }
 .form-table>tbody>tr>td:first-child{
@@ -155,7 +155,7 @@ div.panel{
     left:30px;
     right:30px;
     bottom:30px;
-    background:#444;
+    background:#555;
     color:#eee;
     border-radius:5px;
 }
@@ -163,7 +163,7 @@ h2{
     font-size:18px;
 }
 .embeded-log-text{
-    background:#333;
+    background:#555;
     color:#eee;
     padding:10px;
     width:-moz-fit-content;
@@ -176,7 +176,7 @@ h2{
     appearance: none;
     /* width: 100%; */ /* Full-width */
     height: 6px; /* Specified height */
-    background: #444; /* Grey background */
+    background: #555; /* Grey background */
     outline: none; /* Remove outline */
     /* opacity: 0.7; */ /* Set transparency (for mouse-over effects on hover) */
     -webkit-transition: .2s; /* 0.2 seconds transition on hover */
@@ -231,11 +231,11 @@ h2{
     border:0px solid;
     position:absolute;
     left:30px;
-    top:80px;
+    top:60px;
     right:30px;
     bottom:60px;
     border-radius:5px;
-    border:1px solid #444;
+    border:1px solid #555;
     overflow:hidden;
     min-width:300px;
     min-height:300px;
@@ -260,7 +260,7 @@ h2{
     box-sizing:border-box;
     margin-left:-20px;
     text-align:center;
-    border:1px solid #444;
+    border:1px solid #555;
     border-width: 0 1px 0 1px;
 }
 #node-mover .left-box{
@@ -288,11 +288,11 @@ h2{
     position:relative;
 }
 #node-mover #tree1, #node-mover #tree2{
-    background:#444;
+    background:#555;
     margin:0;
     overflow:auto;
     position:absolute;
-    /* border:1px solid #444; */
+    /* border:1px solid #555; */
     left:0;
     top:58px;
     right:0;
@@ -306,7 +306,7 @@ h2{
     right:0;
     top:29px;
     position:absolute;
-    border:1px solid #444;
+    border:1px solid #555;
     border-width: 1px 0 1px 0;
     box-sizing:border-box;
     padding:0 5px;
@@ -324,7 +324,7 @@ h2{
     right:0;
     top:0px;
     position:absolute;
-    /* border:1px solid #444; */
+    /* border:1px solid #555; */
     border-width: 0 1px 1px 0;
     box-sizing:border-box;
     text-overflow:ellipsis;
@@ -397,7 +397,7 @@ h2{
     cursor:default;
 }
 .simple-menu div:hover{
-    background-color:#444;
+    background-color:#555;
     color:#fff;
 }
 /* ========================== */

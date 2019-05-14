@@ -54,9 +54,9 @@ function getCurrRefId(){
     	}
     }
 }
-function showDlg(name, data, callback){
+function showDlg(name, data){
     if($(".dlg-cover:visible").length)
-	return
+	return Promise.reject(Error("only one alert dialog can be showed"))
     var $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
     $dlg.show();
     data = data||{}
@@ -92,7 +92,6 @@ function showDlg(name, data, callback){
 	    })
 	    $dlg.remove();
 	    resolve(data);
-	    // callback && callback(data);
 	});
 	$dlg.find("input.button-cancel").bind("click.dlg", function(){
 	    $dlg.remove();

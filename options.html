@@ -18,7 +18,7 @@
         <a class="left-index" href="#settings">{Setting}</a>
         <a class="left-index" href="#log">{Log}</a>
         <a class="left-index" href="#help">{Help}</a>
-        <a class="left-index" href="#tool">工具</a>
+        <a class="left-index" href="#tool">{Tool}</a>
         <a class="left-index" href="#announcement">{Announcement}</a>
         <a class="left-index" href="#donate">{Donate}</a>
       </div>
@@ -134,7 +134,7 @@
           </tr>
           <tr>
             <td></td>
-            <td><input type="button" name="save" value="{Save}" /></td>
+            <td><input type="button" name="save" value="{Save}" /> <span style="display:none">{Done}</span></td>
           </tr>
         </table>
       </div>
@@ -157,18 +157,17 @@
       </div>
       <div id="div-help" class="div-area" style="display:none;"></div>
       <div id="div-tool" class="div-area" style="display:none;position:relative;">
-        <div style="text-align:left;padding-left:15px;padding-top:20px;position:relative;">
-          <span style="font-weight:bold;background:#555;padding:5px 10px;border-radius:10px;color:#fff;font-size:12px;cursor:default;">Tree Node Mover</span>
+        <div style="text-align:left;padding-left:15px;position:absolute;top:0;width:100%">
+          <span style="display:inline-block;font-weight:bold;background:#555;padding:10px 20px;border-radius:0 0 10px 10px;color:#fff;font-size:12px;cursor:default;">
+            {Node Mover}
+          </span>
           <i class="help-mark"></i>
           <div class="tips hide">
             {NODE_MOVER_TIP}
-            
           </div>
           <i class="warn-mark"></i>
           <div class="tips hide">
             {NODE_MOVER_WARN_TIP}
-            
-            
           </div>
         </div>
         <!-- tool1 -->

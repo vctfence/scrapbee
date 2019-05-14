@@ -82,7 +82,7 @@ ${FILE_I18N} <input type="text" name="value"/> \
             settings.set('selection_color', $("input[name=selection_color]").val().replace("#", ""));
             settings.set('font_size', ($("input[name=font_size]").val() / 100) * 12);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
-            alert("Save success")
+            $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed")
         }

@@ -22,9 +22,9 @@ Rdf是ScrapBee及ScrapBook的主要数据文件，用于登记已下载数据的
 <h4>端口</h4>
 如果ScrapBee工作不正常, 同时发现在<a href="#log">日志</a>窗口中有:
 <div class="embeded-log-text"> error: listen tcp :9900: bind: address already in use</div>
-请手工结束占用此端口的进程，比如在Linux中你可以执行：
+请手工结束占用此端口的进程（通常是火狐非正常退出时遗弃的ScrapBee后端进程），比如在Linux中你可以执行：
 <div class="embeded-log-text">fuser -k 9900/tcp</div>
-或者在<a href="#settings">设置</a>中换用其它端口 
+或者在<a href="#settings">设置</a>中换用其它端口
 <h4>文件系统权限</h4>
 请不要注册当前用户不具有读写权限的目录中的Rdf文件，
 比如，对于Windows，普通用户通常没有c:\目录的写权限，而像c:\foobar这样的子目录通常可行。

@@ -83,6 +83,7 @@ class BookTree {
                     self.onChooseItem && self.onChooseItem($el.attr("id"));
                 }            
                 if (e.button == 0) {
+                    e.preventDefault()
                     $drag_item = $el;
                     $ref_item = $el;
                     dragging = true;
@@ -211,15 +212,16 @@ class BookTree {
         if (![1, 2, 3].includes(move_type))
             return;
         var $c = $item.clone();
-        if (move_type == 3)
-            $ref_item.next(".folder-content").prepend($c);
-        else if (move_type == 2)
+        if (move_type == 3){
+            $ref_item.next(".folder-content").append($c);
+        }else if (move_type == 2){
             if ($ref_item.hasClass("folder"))
                 $ref_item.next(".folder-content").after($c);
-        else
-            $ref_item.after($c);
-        else if (move_type == 1)
+            else
+                $ref_item.after($c);
+        }else if (move_type == 1){
             $ref_item.before($c);
+        }
         if ($item.hasClass("folder")) {
             var $cc = $item.next(".folder-content").clone();
             $c.after($cc);

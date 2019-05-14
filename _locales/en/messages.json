@@ -164,7 +164,7 @@
         "message": "Set absolute path of rdf files(ending with extension '.rdf') to register information of scraps，downloaded scraps will be saved in \"data\" folder beside the rdf files.<br/><br> For example： c:\\scrapbee\\test.rdf (Windows)<br> or：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> You can setup multiple rdf files to classify your scraps，<br>You can have different rdf files inside same directory.<br>No need to create these files maunally(Some XML tags are needed for an empty rdf file).<br/><br/> Good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user: ScrapBook rdfs are also supported."
     },
     "BACKEND_PORT_TIP":{
-        "message": "TCP port ScrapBee backend listens. e.g. 9900"
+        "message": "TCP port ScrapBee backend service listens. e.g. 9900"
     },
     "_COLOR":{
         "message": " Color"
@@ -232,6 +232,9 @@
     "Loading...": {
         "message": "Loading..."
     },
+    "Starting...": {
+        "message": "Starting..."
+    },    
     "SAME_RDF_MODIFIED": {
         "message": "Same rdf modified, click OK to refresh"
     },
@@ -242,12 +245,21 @@
         "message": "Announcement"
     },
     "announcement_content":{
-        "message": "#1.6.0#<li>Fixed problem about it can not finish capture sometime</li><li>Backend updated, please re-download and install backend to get full features(less malware fake alarm and more error checking)</li>"
+        "message": "#1.7.0#<li>An experimental tool named \"{Node Mover}\" added, backend need to be updated for it (check backend version in log), please backup your data before trying this tool, please let me know if you like or feel it useless</li><br>#1.6.0#<li>Fixed problem about it can not finish capture sometime</li><li>Backend updated, please re-download and install backend to get full features(less malware fake alarm and more error checking)</li>"
     },
     "NODE_MOVER_TIP":{
         "message": "With this tool, you can move or copy nodes and their contents between 2 rdfs (book trees), draging nodes within one rdf is also available here."
     },
     "NODE_MOVER_WARN_TIP":{
-        "message": "<b>BE CARE!!! THIS IS AN EXPERIMENTAL-FEATURE.</b> <br>Please make sure you'v backup your data before using this tool. <br>Actions on heavy nodes are not recommended. <br>Do not make changes somewhere else while using this tool or it may causes conflicts."
+        "message": "<b>BE CARE!!! THIS IS AN EXPERIMENTAL-FEATURE.</b> <br>Please make sure you'v backup your data before using this tool. <br>Actions on heavy nodes are not recommended. <br>Do not make changes anywhere else while using this tool or it possibly causes conflicts."
+    },
+    "Tool":{
+        "message": "Tool"
+    },
+    "Node Mover": {
+        "message": "Node Mover"
+    },
+    "Done": {
+        "message": "Done"
     }
 }
