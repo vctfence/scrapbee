@@ -251,7 +251,7 @@
         "message": "With this tool, you can move or copy nodes and their contents between 2 rdfs (book trees), draging nodes within one rdf is also available here."
     },
     "NODE_MOVER_WARN_TIP":{
-        "message": "<b>BE CARE!!! THIS IS AN EXPERIMENTAL-FEATURE.</b> <br>Please make sure you'v backup your data before using this tool. <br>Actions on heavy nodes are not recommended. <br>Do not make changes anywhere else while using this tool or it possibly causes conflicts."
+        "message": "<b>BE CAREFUL!!! THIS IS AN EXPERIMENTAL-FEATURE.</b> <br>Please make sure you'v backup your data before using this tool. <br>Actions on heavy nodes are not recommended. <br>Do not make changes anywhere else while using this tool or it possibly causes conflicts."
     },
     "Tool":{
         "message": "Tool"
