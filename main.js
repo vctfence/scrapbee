@@ -175,7 +175,7 @@ function showRdfList(){
         }
     }
 }
-function applyColor(){
+function applyAppearance(){
     var id = "scrapbee_setting_style";
     $("#"+id).remove();
     var sheet = document.createElement('style');
@@ -213,7 +213,7 @@ window.addEventListener("storage", function(e){
     if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
 	showRdfList();
     }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
-	applyColor();
+	applyAppearance();
     }else if(e.key == "backend_port"){
         browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
             loadAll();
@@ -266,7 +266,7 @@ window.onload=function(){
 	listener && listener();
     });    
     /**  */
-    applyColor();
+    applyAppearance();
     browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
         loadAll();
     });

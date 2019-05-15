@@ -48,7 +48,7 @@ window.onload=function(){
         $("#divMoreDonateWay").show()
         $("#divMoreDonateWay>a").click(function(){
             $("#divMoreDonateWay>div").toggle();
-            return false;
+            return false;x
         });
     }
     $("input[name='add']").click(function(){
@@ -97,7 +97,7 @@ ${FILE_I18N} <input type="text" name="value"/> \
         });
     }
     $("input[name=font_size]").bind("input", function(){ // bind 'input' instead of 'change' event
-        $(this).next("span").text((parseInt(this.value)) +"%");
+        $(this).next("span").text((parseInt(this.value / 5) * 5) +"%");
     });
     $("input[name=bg_color]").val(settings.bg_color.replace("#", ""));
     $("input[name=font_color]").val(settings.font_color.replace("#", ""));
