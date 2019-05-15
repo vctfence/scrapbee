@@ -30,7 +30,10 @@ window.onload=function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     /** mover */
-    initMover();
+    browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
+        if(version=='1.7.0')
+            initMover();
+    });
     /** help mark */
     $(".help-mark, .warn-mark").hover(function(e){
         var parentOffset = $(this).parent().offset(); 

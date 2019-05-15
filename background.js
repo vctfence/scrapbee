@@ -38,6 +38,7 @@ browser.runtime.getBrowserInfo().then(function(info) {
 /* backend*/
 var port;
 var web_started;
+var backend_version;
 function connectPort(){
     if(!port){
 	browser.runtime.onConnect.addListener((p) => {
@@ -76,6 +77,7 @@ function startWebServer(port){
                     });
 	        }else{
                     var version = r.Version || 'unknown'
+                    backend_version = version;
 	            log.info(`backend service started, version = ${version} (wanted = 1.7.0)`)
 	            web_started = true;
                     resolve();
@@ -96,6 +98,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	__log_clear__()        
     }else if(request.type == 'GET_ALL_LOG_REQUEST'){
         return Promise.resolve({logs: log_pool})
+    }else if(request.type == 'GET_BACKEND_VERSION'){
+        return Promise.resolve(backend_version);        
     }else if(request.type == 'SAVE_BLOB_ITEM'){
         var filename = request.item.path;
         var file = request.item.blob;
