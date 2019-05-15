@@ -10,11 +10,11 @@ function initMover(){
         if(request.type == 'RDF_EDITED'){
 	    if(request.rdf == tree1.rdf){
                 var $box = $("#tree1");
-                alert("{SAME_RDF_MODIFIED}".translate());
+                if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
                 loadXml(tree1.rdf, $box, 1)
 	    }else if(request.rdf == tree2.rdf){
                 var $box = $("#tree2");
-                alert("{SAME_RDF_MODIFIED}".translate());
+                if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
                 loadXml(tree2.rdf, $box, 2)
 	    }
         }
