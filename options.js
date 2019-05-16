@@ -83,7 +83,9 @@ ${FILE_I18N} <input type="text" name="value"/> \
             settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""));
             settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""));
             settings.set('selection_color', $("input[name=selection_color]").val().replace("#", ""));
-            settings.set('font_size', ($("input[name=font_size]").val() / 100) * 12);
+            var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
+            settings.set('font_size', size);
+            settings.set('line_distance', $("input[name=line_distance]").val());
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
@@ -99,11 +101,15 @@ ${FILE_I18N} <input type="text" name="value"/> \
     $("input[name=font_size]").bind("input", function(){ // bind 'input' instead of 'change' event
         $(this).next("span").text((parseInt(this.value / 5) * 5) +"%");
     });
+    $("input[name=line_distance]").bind("input", function(){ // bind 'input' instead of 'change' event
+        $(this).next("span").text(parseInt(this.value));
+    });
     $("input[name=bg_color]").val(settings.bg_color.replace("#", ""));
     $("input[name=font_color]").val(settings.font_color.replace("#", ""));
     $("input[name=separator_color]").val(settings.separator_color.replace("#", ""));
     $("input[name=bookmark_color]").val(settings.bookmark_color.replace("#", ""));
     $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
+    $("input[name=line_distance]").val(settings.line_distance).trigger("input");
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=selection_color]").val(settings.selection_color);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")

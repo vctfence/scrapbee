@@ -151,9 +151,12 @@
     "SELECTED_ITEM": {
         "message": "Selected Item"
     },
-    "ENTITY_SIZE": {
-        "message": "Entity Size"
-    },    
+    "FONT_SIZE": {
+        "message": "Font Size"
+    },
+    "LINE_DISTANCE": {
+        "message": "Line Distance"
+    },        
     "Language": {
         "message": "lanugage"
     },

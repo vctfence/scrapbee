@@ -52,7 +52,7 @@ function initMover(){
                     var dest = destTree.rdf_path + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).then((response) => {
                         var icon = nodeJson.icon.replace(nodeJson.id, id)
-                        destTree.createLink($dest, nodeJson.type, id, rid, "url", icon, nodeJson.title, false, true);
+                        destTree.createLink($dest, nodeJson.type, id, rid, nodeJson.source, icon, nodeJson.title, false, true);
                         resolve()
                     }).catch((e) => {
                         saveingLocked = false;

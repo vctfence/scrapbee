@@ -107,11 +107,17 @@
                   <tr><td>{Separator}{_COLOR}</td><td><input type="text" name="separator_color" value="" class="jscolor"/></td></tr>
                   <tr><td>{SELECTED_ITEM}{_COLOR}</td><td><input type="text" name="selection_color" value="" class="jscolor"/></td></tr>
                 </table>
-                <table width="50%" cellspacing="" cellpadding="0" border="0" class="form-table inner" style="display:inline-block;vertical-align:top;">
+                <table width="50%" cellspacing="" cellpadding="50" border="0" class="form-table inner" style="display:inline-block;vertical-align:top;border-spacing:10px">
                   <tr>
-                    <td>{ENTITY_SIZE}</td><td>
+                    <td>{FONT_SIZE}</td><td>
                       <input type="range" min="50" max="250" value="20" class="slider" name="font_size"> <span></span>
-                    </td></tr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>{LINE_DISTANCE}</td><td>
+                      <input type="range" min="0" max="50" value="20" class="slider" name="line_distance"> <span></span>
+                    </td>
+                  </tr>
                 </table>
               </div>
             </td>

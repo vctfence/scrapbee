@@ -180,9 +180,12 @@ function applyAppearance(){
     $("#"+id).remove();
     var sheet = document.createElement('style');
     sheet.id=id;
-    var item_h = parseInt(settings.font_size) * 1.6;
-    var icon_h = parseInt(settings.font_size) * 1.5;
-    var origin_h = parseInt(settings.font_size) * 0.85;
+    var item_h = parseInt(settings.font_size);
+    var line_distance = parseInt(settings.line_distance);
+    var icon_h = parseInt(settings.font_size) * 1.2;
+    var icon_space = icon_h + 5
+    var icon_top = parseInt(settings.font_size) * 0.1;
+    var origin_h = parseInt(settings.font_size) * 0.75;
     var bg_color = settings.bg_color;
     // var filter = getColorFilter("#"+settings.font_color).filter;
     sheet.innerHTML=`
@@ -195,11 +198,11 @@ body{background:#${bg_color}}
 .toolbar{border-color:#${settings.font_color};background:#${bg_color}}
 .item.separator{border-color:#${bg_color};background:#${settings.separator_color}}
 .tool-button{background:#${settings.font_color}}
-.item.local,.item.bookmark,.item.folder{padding-left:${item_h}px;
-background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-height:${item_h}px}
+.item.local,.item.bookmark,.item.folder{padding-left:${icon_space}px;
+background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;background-position:${icon_top}px 0;height:${icon_h}px }
 .folder-content{margin-left:${item_h}px}
-.item .origin{width:${origin_h}px;height:${origin_h}px;mask-size:${origin_h}px ${origin_h}px; line-height:${item_h}px;background:#${settings.font_color}}
-.item{line-height:${item_h}px}
+.item .origin{width:${origin_h}px;height:${origin_h}px;mask-size:${origin_h}px ${origin_h}px;background:#${settings.font_color}}
+.item{margin-top:0 !important;margin-bottom:${line_distance}px !important}
 .simple-menu-button:{border-color:#${settings.font_color}}
 .simple-menu{background:#${bg_color};border-color:#${settings.font_color}}
 .drop-button{border-color:#${settings.font_color}}
@@ -212,7 +215,7 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;line-h
 window.addEventListener("storage", function(e){
     if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
 	showRdfList();
-    }else if(e.key == "font_size" || e.key.match(/\w+_color/)){
+    }else if(e.key == "font_size" || e.key == "line_distance" || e.key.match(/\w+_color/)){
 	applyAppearance();
     }else if(e.key == "backend_port"){
         browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {

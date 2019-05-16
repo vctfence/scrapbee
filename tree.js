@@ -106,7 +106,7 @@ class BookTree {
                     return;
                 var url = $el.attr("source");
                 var is_local = ($el.hasClass("local") && !$(e.target).hasClass("origin"));
-                if ($el.hasClass("local") && !$(e.target).hasClass("origin")) {
+                if (is_local) {
                     url = self.getItemIndexPage($el.attr("id"));
                 }
                 if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey)) {

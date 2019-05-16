@@ -154,6 +154,12 @@
     "ENTITY_SIZE": {
         "message": "条目大小"
     },
+    "FONT_SIZE": {
+        "message": "字体大小"
+    },
+    "LINE_DISTANCE": {
+        "message": "行间距"
+    },     
     "Language": {
         "message": "语言"
     },

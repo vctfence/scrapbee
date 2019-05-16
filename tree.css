@@ -1,8 +1,8 @@
 .item.folder{
     color:#eee;
     background:url(icons/folder.gif) no-repeat;
-    background-position:0px 1px;
-    margin:3px 0;
+    background-position:0px 0px;
+    margin:0 0 5px 0;
 }
 .item.folder::before{
     content: "\200B";
@@ -22,35 +22,37 @@
     background-image:url(icons/item.gif);
     background-repeat:no-repeat;
     background-position:0px 0px;
-    margin:3px 0;
+    margin:0 0 5px 0;
 }
 .item.bookmark{
     color:#ae0;
     display:block;
     background-image:url(icons/item.gif);
     background-repeat:no-repeat;
-    margin:3px 0;
+    margin:0 0 5px 0;
 }
 .item{
     cursor:pointer;
-    margin-bottom:0px;
+    margin-bottom:15px;
+    margin-top:0;
     width:fit-content;
     width:-webkit-fit-content;
     width:-moz-fit-content;
     vertical-align:top;
-    line-height:18px;
+    /* line-height:18px; */
     padding-left:20px;
-    background-size:18px 18px;
+    background-size:12px 12px;
     /* color:red; */
     white-space:nowrap;
     width:0px;
+    height:14px
 }
 .item label{
     text-overflow:ellipsis;
     max-width:30em;
     overflow:hidden;
     display: inline-block;
-    padding:1px 2px;
+    padding:0px 2px 0px 4px;
     border-radius:3px;
     vertical-align:top;
     /* background-color:#ccc; */
@@ -74,6 +76,7 @@
     width:10px;
     height:10px;
     mask-image:url(icons/online.svg);
+    margin-top:-2px;
 }
 .item.folder.drag-into{
     border-bottom:1px dashed #f00;
@@ -86,6 +89,7 @@
     border-color:#555;
     background:#bbb;
     box-sizing:border-box;
+    margin:0;
 }
 .item.separator.focus{
    background:#900;
