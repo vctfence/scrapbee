@@ -37,6 +37,9 @@
     "Title": {
         "message": "标题"
     },
+    "Content": {
+        "message": "内容"
+    },    
     "Rename": {
         "message": "重命名"
     },

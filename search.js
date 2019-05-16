@@ -43,12 +43,21 @@ function loadXml(rdf){
    var searching = $.trim($("#txtSearch").val());
     if(!searching)
 	return;
+    var search_title, search_body;
+    $("input[type=checkbox][name=source]:checked").each(function(){
+        if(this.value == 'title'){
+            search_title = true;
+        }else if(this.value == 'body'){
+            search_body = true;
+        }
+    });
+    if(!(search_title || search_body))
+        return
     $("#btnSearch").prop("disabled", true)
-    
     var xmlhttp=new XMLHttpRequest();
     xmlhttp.onload = function(r) {
 	var tree = new BookTree(r.target.response, rdf)
-	processTree(tree)
+	processTree(tree, search_title, search_body)
     };
     xmlhttp.onerror = function(err) {
 	// log.info(`load ${rdf} failed, ${err}`)
@@ -64,7 +73,7 @@ function loadXml(rdf){
 function red(a){
     return "<b style='color:red'>"+a+"</b>";
 }
-async function processTree(tree){
+async function processTree(tree, search_title, search_body){
     var searching = escapeRegExp($.trim($("#txtSearch").val()));
     var match_count = 0;
     function seek(item, body){
@@ -79,16 +88,19 @@ async function processTree(tree){
 	var re = new RegExp(searching, "i")
 	var re2 = new RegExp(searching, "ig")
 	var m=null;
-	if(m = item.title.match(re)){
+        m = item.title.match(re)
+	if(search_title && m){
 	    title_matched = true;
 	    $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
 	}
 	var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
-	if(m = text.match(re)){
+        m = text.match(re)
+	if(search_body && m){
 	    var pos1 = m.index;
 	    content_matched = true;
 	    if(!title_matched){
-		$(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
+                $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
+		// $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
 	    }
 	    pos1 = Math.max(0, pos1 - 50)
 	    var pos2 = Math.min(text.length - 1, pos1 + 100);
@@ -99,7 +111,7 @@ async function processTree(tree){
 	}else if(title_matched && body.length){
 	    pos1 = 0
 	    pos2 = Math.min(text.length, 150);
-	    var s = text.substring(pos1, pos2);
+	    var s = text.substring(pos1, pos2).replace(re2, red);
 	    if(pos1 > 0) s = "..." + s;
 	    if(pos2 < text.length - 1) s = s + "...";
 	    $("<div class='match-content'>").appendTo($("#divResult")).html(s);

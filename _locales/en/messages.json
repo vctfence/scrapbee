@@ -37,6 +37,9 @@
     "Title": {
         "message": "Title"
     },
+    "Content": {
+        "message": "Content"
+    },    
     "Rename": {
         "message": "Rename"
     },

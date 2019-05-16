@@ -43,6 +43,9 @@
      input[type=button]:disabled{
        background:#555;
      }
+     input[type=checkbox]{
+       vertical-align:middle;
+     }
      .match-content{
        display:block;
        width:fit-content;
@@ -83,6 +86,8 @@
         {Search} <select id="lstRdfs" name="" autocomplate="off">
         </select>
         <input type="" name="" value="" id="txtSearch"/>
+        <input type="checkbox" name="source" value="title" checked="true"/> {Title}
+        <input type="checkbox" name="source" value="body" /> {Content}
         <input type="button" name="" value="{Search}" id="btnSearch"/>
       </div>
     </div>
