@@ -4,18 +4,18 @@ import {showNotification} from "./utils.js"
 
 /* logging */
 String.prototype.htmlEncode=function(ignoreAmp){
-  var s=this;
-  if(!ignoreAmp)s=s.replace(/&/g,'&amp;')
+    var s=this;
+    if(!ignoreAmp)s=s.replace(/&/g,'&amp;')
     return s.replace(/</g,'&lt;')
-	.replace(/>/g,'&gt;')
-	.replace(/\"/g,'&quot;')
-	.replace(/ /g,'&nbsp;')
-	.replace(/\'/g,'&#39;');
+        .replace(/>/g,'&gt;')
+        .replace(/\"/g,'&quot;')
+        .replace(/ /g,'&nbsp;')
+        .replace(/\'/g,'&#39;');
 }
 var log_pool = [];
 log.sendLog = function(logtype, content){
     if(typeof content != "string"){
-    	content = String(content);
+        content = String(content);
     }
     var log = {logtype:logtype, content: content.htmlEncode()}
     log_pool.push(log);
@@ -31,7 +31,7 @@ browser.runtime.getBrowserInfo().then(function(info) {
     log.info("browser = " + info.name + " " + info.version);
     var main_version = parseInt(info.version.replace(/\..+/, ""));
     if(info.name != "Firefox" || main_version < 60){
-	log.error("Only Firefox version after 60 is supported");
+        log.error("Only Firefox version after 60 is supported");
     }
     log.info("platform = " + navigator.platform);
 });
@@ -41,15 +41,15 @@ var web_started;
 var backend_version;
 function connectPort(){
     if(!port){
-	browser.runtime.onConnect.addListener((p) => {
-	    log.info(`backend connected`);
-	});
-	port = browser.runtime.connectNative("scrapbee_backend");
-	port.onDisconnect.addListener((p) => {
-	    if (p.error) {
-		log.error(`backend disconnected due to an error: ${p.error.message}`);
-	    }
-	});
+        browser.runtime.onConnect.addListener((p) => {
+            log.info(`backend connected`);
+        });
+        port = browser.runtime.connectNative("scrapbee_backend");
+        port.onDisconnect.addListener((p) => {
+            if (p.error) {
+                log.error(`backend disconnected due to an error: ${p.error.message}`);
+            }
+        });
     }
     return port;
 }
@@ -66,41 +66,40 @@ function communicate(command, body, callback){
 function startWebServer(port){
     return new Promise((resolve, reject) => {
         if(web_started){
-	    resolve();
+            resolve();
         }else{
             log.info(`start backend service on port ${port}.`);
             communicate("web-server", {"port": port}, function(r){
-	        if(r.Serverstate != "ok"){
-	            log.error(r.Error)
-	            startWebServer(port).then(() => {
+                if(r.Serverstate != "ok"){
+                    log.error(r.Error)
+                    startWebServer(port).then(() => {
                         resolve()
                     });
-	        }else{
+                }else{
                     var version = r.Version || 'unknown'
                     backend_version = version;
-	            log.info(`backend service started, version = ${version} (wanted = 1.7.0)`)
-	            web_started = true;
+                    log.info(`backend service started, version = ${version} (wanted = 1.7.0)`)
+                    web_started = true;
                     browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                     resolve();
-	        }
+                }
             });
         }
     });
 };
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    // log.debug("background script recv msg: " + request.type)
     if(request.type == 'START_WEB_SERVER_REQUEST'){
-	if(request.force)
-	    web_started = false;
+        if(request.force)
+            web_started = false;
         return startWebServer(request.port);
     }else if(request.type == 'LOG'){
-	log.sendLog(request.logtype, request.content)
+        log.sendLog(request.logtype, request.content)
     }else if(request.type == 'CLEAR_LOG'){
-	__log_clear__()        
+        __log_clear__()
     }else if(request.type == 'GET_ALL_LOG_REQUEST'){
         return Promise.resolve({logs: log_pool})
     }else if(request.type == 'GET_BACKEND_VERSION'){
-        return Promise.resolve(backend_version);        
+        return Promise.resolve(backend_version);
     }else if(request.type == 'SAVE_BLOB_ITEM'){
         var filename = request.item.path;
         var file = request.item.blob;
@@ -109,12 +108,10 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }else{
             return ajaxFormPost(settings.backend_url + "savebinfile", {filename, file})
         }
-        // return saveBlobItem(request.item)
     }else if(request.type == 'SAVE_TEXT_FILE'){
         var filename = request.path;
         var content = request.text;
         return ajaxFormPost(settings.backend_url + "savefile", {filename, content})
-        // return saveTextFile(request.text, request.path)        
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
         return ajaxFormPost(settings.backend_url + "fs/move", {src, dest})
@@ -142,13 +139,13 @@ browser.menus.create({
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
     onclick: function(){
-	browser.sidebarAction.isOpen({}).then(result => {
-	    if(!result){
+        browser.sidebarAction.isOpen({}).then(result => {
+            if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
-	    }else{
-		browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
-	    }
-	});
+            }else{
+                browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
+            }
+        });
     }
 }, function(){});
 browser.menus.create({
@@ -158,14 +155,14 @@ browser.menus.create({
     documentUrlPatterns: ["http://*/*",  "https://*/*"],
     icons: {"16": "icons/page.svg", "32": "icons/page.svg"},
     onclick: function(){
-	// browser.sidebarAction.open()
-	browser.sidebarAction.isOpen({}).then(result => {
-	    if(!result){
+        // browser.sidebarAction.open()
+        browser.sidebarAction.isOpen({}).then(result => {
+            if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
-	    }else{
-		browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
-	    }
-	});
+            }else{
+                browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
+            }
+        });
     }
 }, function(){});
 browser.menus.create({
@@ -175,13 +172,13 @@ browser.menus.create({
     documentUrlPatterns: ["http://*/*",  "https://*/*"],
     icons: {"16": "icons/link.svg", "32": "icons/link.svg"},
     onclick: function(info, tab){
-	browser.sidebarAction.isOpen({}).then(result => {
-	    if(!result){
+        browser.sidebarAction.isOpen({}).then(result => {
+            if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
-	    }else{
-		browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
-	    }
-	});
+            }else{
+                browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
+            }
+        });
     }
 }, function(){});
 /* add-on toolbar icon */
