@@ -352,5 +352,6 @@ if(!window.scrapbee_injected){
     }
     var extension_id = browser.i18n.getMessage("@@extension_id");
     loadCss("content_script", `moz-extension://${extension_id}/content_script.css`)
+    loadCss("content_script", `moz-extension://${extension_id}/dialog.css`)
 }
 console.log("[content_script.js] loaded")
