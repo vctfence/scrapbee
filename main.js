@@ -183,7 +183,7 @@ function applyAppearance(){
     var item_h = parseInt(settings.font_size);
     var line_spacing = parseInt(settings.line_spacing);
     var icon_h = parseInt(settings.font_size) * 1.2;
-    var icon_space = icon_h + 5
+    var icon_space = icon_h + 3
     var icon_top = parseInt(settings.font_size) * 0.1;
     var origin_h = parseInt(settings.font_size) * 0.75;
     var bg_color = settings.bg_color;
@@ -343,8 +343,10 @@ function loadXml(rdf){
             var $f = currTree.getItemById(id)
             if ($f.hasClass("folder")) {
                 $(document.body).attr("contextmenu", "popup-menu-folder");
+            } else if ($f.hasClass("separator")) {
+                $(document.body).attr("contextmenu", "popup-menu-separator");
             } else if ($f.hasClass("item")) {
-                $(document.body).attr("contextmenu", "popup-menu-link");
+                $(document.body).attr("contextmenu", "popup-menu-link");                
             } else {
                 $(document.body).attr("contextmenu", "popup-menu-body");
             }

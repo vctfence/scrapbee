@@ -137,7 +137,7 @@
         "message": "你可能需要以管理员身份运行此脚本"
     },
     "STEP3_TEXT_1": {
-        "message": "完成"
+        "message": "完成rdf"
     },
     "STEP4_TEXT_1": {
         "message": "重启{Firefox}"
@@ -170,7 +170,7 @@
         "message": "分隔符"
     },
     "RDF_FILES_TIP": {
-        "message": "设置rdf文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到rdf文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)<br> 或者：<br> /home/userID/scrapbee/test.rdf (Linux)<br>/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个rdf文件来实现{Scrap}的分类，可以在同一文件夹下放置多个rdf文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的rdf文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加rdf，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
+        "message": "设置rdf文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到rdf文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个rdf文件来实现{Scrap}的分类，可以在同一文件夹下放置多个rdf文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的rdf文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加rdf，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
     },
     "BACKEND_PORT_TIP":{
         "message": "后端服务监听的TCP端口，比如9900"
@@ -273,5 +273,20 @@
     },
     "STORAGE_WARN": {
         "message": "目前，ScrapBee需要开启本地存储来保存设置，请关闭存储清理功能来防止设置丢失"
+    },
+    "NO_SOURCE_NODE_SELECTED": {
+        "message": "没有选择源结点"
+    },
+    "MOVE_TO": {
+        "message": "移动到"
+    },
+    "COPY_TO": {
+        "message": "复至到"
+    },
+    "Left": {
+        "message": "左边"
+    },
+    "Right": {
+        "message": "右边"
     }
 }

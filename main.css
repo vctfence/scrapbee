@@ -16,12 +16,6 @@ html,body{
     /* width:100%; */
      min-height: 100vh;
 }
-.folder-content.root{
-    display:block;
-    margin-left:0px;
-    margin:60px 20px 20px 20px;
-    overflow:visible;
-}
 .main-tools{
     width:fit-content;
     width:-webkit-fit-content;

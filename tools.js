@@ -29,7 +29,7 @@ function initMover(){
         /** src node */
         var $foc = srcTree.getFocusedItem();
         var id = $foc.attr("id");
-        if(!id) return alert("No source node selected");
+        if(!id) return alert("{NO_SOURCE_NODE_SELECTED}".translate());
         var liXmlNode = srcTree.getItemXmlNode(id);
         var [type, introNode] = srcTree.getLiNodeType(liXmlNode)
         /** show  waiting dialog */

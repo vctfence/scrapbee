@@ -79,7 +79,7 @@ class BookTree {
                 return
             var $el = getItemNode(e.target);
             if ($el) {
-                if ($el.hasClass("folder") || $el.hasClass("local") || $el.hasClass("bookmark")) {
+                if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("local") || $el.hasClass("bookmark")) {
                     self.onChooseItem && self.onChooseItem($el.attr("id"));
                 }            
                 if (e.button == 0) {
