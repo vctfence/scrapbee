@@ -466,6 +466,7 @@ function requestPageSaving(itemId, selection){
                         log.debug(err.message)
                     });
                 }).catch((err) => {
+                    log.error(err.message)
                 });
             }
         });
