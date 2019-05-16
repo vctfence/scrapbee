@@ -16,8 +16,9 @@ function initMover(){
                 var $box = $("#tree2");
                 if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
                 loadXml(tree2.rdf, $box, 2)
-	    }
+            }
         }
+
     });
     $("#node-mover .tool-button").prop("disabled", true);
     $("#node-mover .tool-button").click(async function(){

@@ -234,6 +234,9 @@ pause`
             $("<div/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
             if(b)
                 $div.scrollTop($div[0].scrollHeight - $div.height());
+        }else if(request.type == "BACKEND_SERVICE_STARTED"){
+            if(request.version=='1.7.0')
+                initMover();
         }
     });
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {

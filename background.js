@@ -80,6 +80,7 @@ function startWebServer(port){
                     backend_version = version;
 	            log.info(`backend service started, version = ${version} (wanted = 1.7.0)`)
 	            web_started = true;
+                    browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                     resolve();
 	        }
             });
