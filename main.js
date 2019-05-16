@@ -436,8 +436,8 @@ function requestPageSaving(itemId, selection){
     return new Promise((resolve, reject) => {
         withCurrTab(async function(tab){
             var ico = "icons/loading.gif"
-            if (!(scriptsAllowed(tab.id))) {
-	        var err = "Content script is not allowed on this page";
+            if (!(await scriptsAllowed(tab.id))) {
+	        var err = "Add-on content script is not allowed on this page";
 	        log.error(err)
 	        showNotification({message: err, title: "Error"});
 	        reject()

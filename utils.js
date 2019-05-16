@@ -1,12 +1,14 @@
 async function scriptsAllowed(tabId, frameId = 0) {
+    var a = false;
     try {
         await browser.tabs.executeScript(tabId, {
             frameId: frameId,
             runAt: 'document_start',
             code: 'true;'
         });
-        return true;
+        a = true;
     } catch (e) {}
+    return a;
 }
 
 function showNotification({message, title='', type = 'info'}) {
