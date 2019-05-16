@@ -103,12 +103,6 @@
     margin-left:18px;
     /* border:1px solid; */
 }
-.folder-content.root{
-    display:block;
-    margin-left:0px;
-    margin:70px 20px 20px 20px;
-    overflow:visible;
-}
 .drag-mark{
     /* background:#f00; */
     border:none;

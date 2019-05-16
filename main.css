@@ -16,9 +16,11 @@ html,body{
     /* width:100%; */
      min-height: 100vh;
 }
-
-.box{
-    margin:70px 20px 20px 20px;
+.folder-content.root{
+    display:block;
+    margin-left:0px;
+    margin:60px 20px 20px 20px;
+    overflow:visible;
 }
 .main-tools{
     width:fit-content;
