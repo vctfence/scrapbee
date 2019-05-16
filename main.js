@@ -181,7 +181,7 @@ function applyAppearance(){
     var sheet = document.createElement('style');
     sheet.id=id;
     var item_h = parseInt(settings.font_size);
-    var line_distance = parseInt(settings.line_distance);
+    var line_spacing = parseInt(settings.line_spacing);
     var icon_h = parseInt(settings.font_size) * 1.2;
     var icon_space = icon_h + 5
     var icon_top = parseInt(settings.font_size) * 0.1;
@@ -202,7 +202,7 @@ body{background:#${bg_color}}
 background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;background-position:${icon_top}px 0;height:${icon_h}px }
 .folder-content{margin-left:${item_h}px}
 .item .origin{width:${origin_h}px;height:${origin_h}px;mask-size:${origin_h}px ${origin_h}px;background:#${settings.font_color}}
-.item{margin-top:0 !important;margin-bottom:${line_distance}px !important}
+.item{margin-top:0 !important;margin-bottom:${line_spacing}px !important}
 .simple-menu-button:{border-color:#${settings.font_color}}
 .simple-menu{background:#${bg_color};border-color:#${settings.font_color}}
 .drop-button{border-color:#${settings.font_color}}
@@ -215,7 +215,7 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;backgr
 window.addEventListener("storage", function(e){
     if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
 	showRdfList();
-    }else if(e.key == "font_size" || e.key == "line_distance" || e.key.match(/\w+_color/)){
+    }else if(e.key == "font_size" || e.key == "line_spacing" || e.key.match(/\w+_color/)){
 	applyAppearance();
     }else if(e.key == "backend_port"){
         browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
