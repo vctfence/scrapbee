@@ -139,6 +139,8 @@ div.panel{
     padding:5px;
     margin-bottom:5px;
     text-align:left;
+    font-weight:normal;
+    white-space:normal;
 }
 .tips.hide{
     display:none;
