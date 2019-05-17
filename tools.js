@@ -85,15 +85,21 @@ function initMover(){
         drop.onchange=function(title, value){
             selected_rdfs[i] = value;
             var $box = $("#tree" + (i + 1));
-            $label.html(title || "")
-            loadXml(value, $box, i+1)
-            $box.next(".path-box").html("/")
-            $("#node-mover .tool-button").prop("disabled", selected_rdfs[1] && selected_rdfs[0] == selected_rdfs[1])
+            $label.html(title || "");
+            $box.html("");
+            $.post(settings.backend_url + "isfile/", {path: value}, function(r){
+                if(r == "yes"){
+                    loadXml(value, $box, i+1);
+                    $("#node-mover .tool-button").prop("disabled", selected_rdfs[1] && selected_rdfs[0] == selected_rdfs[1]);
+                }
+            })
+            $box.next(".path-box").html("/");
+            $("#node-mover .tool-button").prop("disabled", true);
         };
         if(paths){
             var names = settings.getRdfPathNames(); 
 	    names.forEach(function(n, i){
-                drop.addItem(n, paths[i])
+                drop.addItem(n, paths[i]);
 	    });
             drop.select(names[i], paths[i]);
         }
