@@ -184,7 +184,7 @@ function applyAppearance(){
     var line_spacing = parseInt(settings.line_spacing);
     var icon_h = parseInt(settings.font_size) * 1.2;
     var icon_space = icon_h + 3
-    var origin_h = parseInt(settings.font_size) * 0.75;
+    var origin_h = parseInt(settings.font_size) * 0.80;
     var bg_color = settings.bg_color;
     // var filter = getColorFilter("#"+settings.font_color).filter;
     sheet.innerHTML=`
