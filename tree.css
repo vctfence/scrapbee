@@ -11,6 +11,7 @@
     background-image:url(icons/openfolder.gif);
     background-repeat:no-repeat;
     background-position:0px 1px;
+    /* border:1px solid #f00 */
 }
 .item *{
     cursor:pointer;
@@ -33,19 +34,17 @@
 }
 .item{
     cursor:pointer;
+    margin-left:0;
     margin-bottom:15px;
     margin-top:0;
-    width:fit-content;
-    width:-webkit-fit-content;
     width:-moz-fit-content;
     vertical-align:top;
-    /* line-height:18px; */
-    padding-left:20px;
-    background-size:12px 12px;
-    /* color:red; */
+    padding-left:16px;
+    background-size:14px 14px;
+    background-position:center left;
     white-space:nowrap;
-    width:0px;
-    height:14px
+    height:14px;
+    display:block;
 }
 .item label{
     text-overflow:ellipsis;
@@ -54,7 +53,8 @@
     display: inline-block;
     padding:0px 2px 0px 2px;
     border-radius:3px;
-    vertical-align:top;
+    vertical-align:middle;
+    line-height:14px;
     /* background-color:#ccc; */
     /* color:#000; */
 }
@@ -102,6 +102,7 @@
     display:none;
     margin-left:18px;
     /* border:1px solid; */
+    text-align:left;
 }
 .drag-mark{
     /* background:#f00; */
@@ -109,6 +110,8 @@
     /* height:2px; */
     border-bottom:1px dashed #f00;
     /* margin:0 0 2px 0; */
+    display:block;
+    margin-left:0;
 }
 .folder-content.root{
     display:block;

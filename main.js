@@ -183,7 +183,7 @@ function applyAppearance(){
     var item_h = parseInt(settings.font_size);
     var line_spacing = parseInt(settings.line_spacing);
     var icon_h = parseInt(settings.font_size) * 1.2;
-    var icon_space = icon_h + 3
+    var icon_space = icon_h + 2
     var origin_h = parseInt(settings.font_size) * 0.80;
     var bg_color = settings.bg_color;
     // var filter = getColorFilter("#"+settings.font_color).filter;
@@ -198,7 +198,8 @@ body{background:#${bg_color}}
 .item.separator{border-color:#${bg_color};background:#${settings.separator_color}}
 .tool-button{background:#${settings.font_color}}
 .item.local,.item.bookmark,.item.folder{padding-left:${icon_space}px;
-background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;background-position:center 0;height:${icon_h}px }
+background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;background-position:center left;height:${icon_h}px }
+.item label{line-height:${icon_h}px;}
 .folder-content{margin-left:${item_h}px}
 .item .origin{width:${origin_h}px;height:${origin_h}px;mask-size:${origin_h}px ${origin_h}px;background:#${settings.font_color}}
 .item{margin-top:0 !important;margin-bottom:${line_spacing}px !important}

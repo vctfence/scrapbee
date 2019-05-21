@@ -128,10 +128,11 @@ class BookTree {
             $ref_item = null;
             $container.find(".drag-into").removeClass("drag-into");
         });
+        var $prev_ref, prev_t;
         $(document).bind("mousemove.BookTree" + token, function (e) {
             if (!dragging) return;
             var $el = $ref_item = self.getItemY($container, e.pageY) || $ref_item;
-            var drag_mark = "<hr class='drag-mark'/>";
+            var drag_mark = $("<hr class='drag-mark'/>");
             if ($el) {
                 $container.find(".drag-into").removeClass("drag-into");
                 var parentOffset = $el.offset();
@@ -140,8 +141,8 @@ class BookTree {
                 /** get drag ref and position */
                 $ref_item = $el;
                 if ($el.hasClass("folder")) {
-                    var $children = $el.next(".folder-content").children(".item");
-                    var expanded_owner = $el.hasClass("expended") && ($children.length);
+                    var $children = $el.nextAll(".folder-content:first").children(".item");
+                    var expanded_owner = $el.hasClass("expended") && ($children.length > 0);
                     var $parent = self.getParentFolderItem($drag_item);
                     var single_child = ($children.length == 1 && $parent && $parent[0] == $el[0]);
                     if ((!expanded_owner || single_child) && relY > $el.height() * 0.6) { // after
@@ -156,27 +157,34 @@ class BookTree {
                     t = (relY > $el.height() * 0.5) ? 2 : 1;
                 }
                 /** show draging mark */
-                $container.find(".drag-mark").remove();
-                if (t == 1) {
-                    $el.before(drag_mark)
-                } else if (t == 2) {
-                    $el.after(drag_mark)
-                } else if (t == 3) {
-                    if ($el.hasClass("expanded")) {
-                        $el.next(".folder-content").prepend(drag_mark)
-                    } else if ($drag_item[0] != $el[0]) {
-                        $el.addClass("drag-into");
+                if((!$prev_ref || ($prev_ref[0] != $el[0])) || prev_t != t){
+                    $container.find(".drag-mark").remove();
+                    if (t == 1) {
+                        $el.before(drag_mark)
+                    } else if (t == 2) {
+                        $el.after(drag_mark)
+                    } else if (t == 3) {
+                        $el.after(drag_mark);
+                        // if ($el.hasClass("expanded")) {
+                        //     // $el.nextAll(".folder-content:first").prepend(drag_mark)
+                        // } else if ($drag_item[0] != $el[0]) {
+                        //     //$el.addClass("drag-into");
+                        // }
+                        // var rect = $el[0].getBoundingClientRect();
+                        drag_mark.css("width", "30px");
                     }
                 }
                 /** ignore invalid folder dragging */
                 if ($drag_item.hasClass("folder")) {
                     if ($drag_item[0] == $el[0]) {
                         t = 0;
-                    } else if ($.contains($drag_item.next(".folder-content")[0], $el[0])) {
+                    } else if ($.contains($drag_item.nextAll(".folder-content:first")[0], $el[0])) {
                         t = 0;
                     }
                 }
             }
+            $prev_ref = $el;
+            prev_t = t;
         });
     }
     getItemFilePath(id) {
@@ -189,10 +197,10 @@ class BookTree {
         if ($item && $item.hasClass("folder")) {
             if (!$item.hasClass("expended") || on) {
                 $item.addClass("expended");
-                $item.next(".folder-content").show();
+                $item.nextAll(".folder-content:first").show();
             } else {
                 $item.removeClass("expended");
-                $item.next(".folder-content").hide();
+                $item.nextAll(".folder-content:first").hide();
             }
         }
     }
@@ -213,19 +221,19 @@ class BookTree {
             return;
         var $c = $item.clone();
         if (move_type == 3){
-            $ref_item.next(".folder-content").append($c);
+            $ref_item.nextAll(".folder-content:first").append($c);
         }else if (move_type == 2){
             if ($ref_item.hasClass("folder"))
-                $ref_item.next(".folder-content").after($c);
+                $ref_item.nextAll(".folder-content:first").after($c);
             else
                 $ref_item.after($c);
         }else if (move_type == 1){
             $ref_item.before($c);
         }
         if ($item.hasClass("folder")) {
-            var $cc = $item.next(".folder-content").clone();
+            var $cc = $item.nextAll(".folder-content:first").clone();
             $c.after($cc);
-            $item.next(".folder-content").remove();
+            $item.nextAll(".folder-content:first").remove();
         }
         this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
         $item.remove();
@@ -360,7 +368,7 @@ class BookTree {
         var $f = this.$top_container.find(".item.focus");
         if($f.length){
     	    if($f.hasClass("folder")){
-    	        $container = $f.next(".folder-content");
+    	        $container = $f.nextAll(".folder-content:first");
     	    }else{
     	        $container = $f.parent(".folder-content");
     	    }
@@ -445,10 +453,10 @@ class BookTree {
         var self = this;
         var id = $item.attr("id");
         if ($item.hasClass("folder")) {
-            $item.next(".folder-content").children(".item").each(function () {
+            $item.nextAll(".folder-content:first").children(".item").each(function () {
                 self.removeItem($(this));
             });
-            $item.next(".folder-content").remove();
+            $item.nextAll(".folder-content:first").remove();
         }
         $item.remove();
         if ($item.hasClass("local") || $item.hasClass("bookmark")) {
