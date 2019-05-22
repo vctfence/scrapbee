@@ -191,7 +191,7 @@
         "message": "Behavior"
     },
     "OPEN_IN_CURRENT_TAB":{
-        "message": "Open in current tab"
+        "message": "Open In Current Tab"
     },
     "OPEN_IN_CURRENT_TAB_TIP":{
         "message": "By default, ScrapBee opens each scrap in new tab when clicking on an entity, <br>and open scraps in current tab by holding control(meta for Mac) while clicking. <br>You can reverse this by turn on this option. "
