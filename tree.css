@@ -43,8 +43,9 @@
     background-size:14px 14px;
     background-position:center left;
     white-space:nowrap;
-    height:14px;
+    /* height:14px; */
     display:block;
+    /* border:1px solid #f00; */
 }
 .item label{
     text-overflow:ellipsis;
@@ -54,9 +55,14 @@
     padding:0px 2px 0px 2px;
     border-radius:3px;
     vertical-align:middle;
-    line-height:14px;
+    /* line-height:14px; */
     /* background-color:#ccc; */
     /* color:#000; */
+}
+.item.local,
+.item.bookmark,
+.item.folder{
+    background-position:center left;
 }
 .item.bookmark.focus label,
 .item.local.focus label,
