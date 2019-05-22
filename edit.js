@@ -38,6 +38,7 @@ function loadCss(id, href){
 class EditToolBar{
     constructor(scrap_path){
         var self = this;
+        this.$cap = $("<div>").appendTo(document.body);
         this.scrap_path=scrap_path;
         this.buildTools()
         window.addEventListener("mousedown", function(e){
@@ -47,6 +48,11 @@ class EditToolBar{
                     e.preventDefault();
                     self.last.parentNode.removeChild(self.last);
                     self.last=null;
+                    /** check next target */
+                    var em = new Event('mousemove');
+                    em.pageX = e.pageX;
+                    em.pageY = e.pageY;
+                    window.dispatchEvent(em);
                 }
                 /** hide marker-pen menu when click somewhere */
                 if(!$(e.target).hasClass("mark-pen-btn")){
@@ -58,15 +64,23 @@ class EditToolBar{
             }
         });
         window.addEventListener("mousemove", function(e){
+            console.log(self.editing)
             if(self.editing){
                 var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
                 if(dom && !isDescendant(self.div, dom)){
                     if(dom != document.body && $(document.body).closest(dom).length == 0){
-                        if(self.last)
-                            self.last.style.border = self.last_border;
-                        self.last_border = dom.style.border;
                         self.last = dom;
-                        dom.style.border="2px solid #f00";
+                        var r = dom.getBoundingClientRect();
+                        self.$cap.css("pointer-events", "none");
+                        self.$cap.css("box-sizing", "border-box");
+                        self.$cap.css({border: "2px solid #f00",
+                                       position: "absolute",
+                                       left: parseInt(r.left)+"px",
+                                       top: parseInt(r.top + window.scrollY)+"px",
+                                       width:r.width+"px",
+                                       height:r.height+"px",
+                                       zIndex: 999});
+                        self.$cap.show();
                     }else{
                         // document.body or ancestors
                     }
@@ -83,11 +97,9 @@ class EditToolBar{
     }
     toggleDomEdit(on){
         var self = this;
-        if(self.last)
-            self.last.style.border = self.last_border;
         self.last = null;
-        self.last_border = null;
         self.editing = on;
+        self.$cap.hide()
         $(this.div).find("input[type=button]").prop("disabled", on);
         document.body.style.cursor=self.editing?"crosshair":"";
     }
@@ -185,7 +197,6 @@ class EditToolBar{
             });
             $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item);
         }
-  
         this.menu = $m[0];
         /** reload button */
         var btn = document.createElement("input");
