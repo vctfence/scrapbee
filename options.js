@@ -136,6 +136,8 @@ ${FILE_I18N} <input type="text" name="value"/> \
     $("#btnDownloadBackend").click(function(){
         function Next(){
             const extRoot = "moz-extension://" + settings.extension_id;
+            // var binDir = extRoot + "/bin/"
+            var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/" //scrapbee_backend.exe
             var src_exec = "scrapbee_backend";
             if(settings.platform=="mac")
                 src_exec += "_mac"
@@ -144,7 +146,7 @@ ${FILE_I18N} <input type="text" name="value"/> \
             src_exec += settings.platform=="windows"?".exe":"";
             var dest_exec = "scrapbee_backend" + (settings.platform=="windows"?".exe":"");
             /** download backend executable */
-            downloadFile(extRoot + "/bin/" + src_exec, "scrapbee/" + dest_exec, function(id){
+            downloadFile(binDir + src_exec, "scrapbee/" + dest_exec, function(id){
                 /*** query really filename of backend executable */
                 browser.downloads.search({id: id}).then((downloads) => {
                     var filename = downloads[0].filename;
