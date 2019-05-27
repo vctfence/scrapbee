@@ -19,14 +19,13 @@ function getAsync(file) {
     return r;
 }
 window.onload=function(){
-    browser.i18n.getAcceptLanguages().then(function(r){
-        var lang = "en";
-        var ui = browser.i18n.getUILanguage();
-        if(r.indexOf(ui) > -1){
-            lang = ui;
-        }
-        $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
-    })
+    var lang = "en";
+    var ui = browser.i18n.getUILanguage();
+    if(["en", "zh-CN"].indexOf(ui) > -1){
+        lang = ui;
+    }
+
+    $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     /** mover */

@@ -251,7 +251,7 @@
         "message": "Announcement"
     },
     "announcement_content":{
-        "message": "#1.7.0#<li>An experimental tool named \"{Node Mover}\" added, backend need to be updated for it (check backend version in log), please backup your data before trying this tool, please let me know if you like or feel it useless</li><br>#1.6.0#<li>Fixed problem about it can not finish capture sometime</li><li>Backend updated, please re-download and install backend to get full features(less malware fake alarm and more error checking)</li>"
+        "message": "#1.7.1#<li>Improve 'highlight red frame' of page cleaner</li><li>Improve tree render</li><li>For Windows user mainly: host an unpacked backend executable (to satisfy defender) in github.com now, please re-download</li><li>Fix empty help page for some user</li><br>#1.7.0#<li>An experimental tool named \"{Node Mover}\" added, backend need to be updated for it (check backend version in log), please backup your data before trying this tool, please let me know if you like or feel it useless</li><br>#1.6.0#<li>Fixed problem about it can not finish capture sometime</li><li>Backend updated, please re-download and install backend to get full features(less malware fake alarm and more error checking)</li>"
     },
     "NODE_MOVER_TIP":{
         "message": "With this tool, you can move or copy nodes and their contents between 2 rdfs (book trees), draging nodes within one rdf is also available here."
