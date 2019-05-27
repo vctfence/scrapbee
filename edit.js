@@ -82,6 +82,7 @@ class EditToolBar{
                                        zIndex: 999});
                         self.$cap.show();
                     }else{
+                        self.$cap.hide();
                         // document.body or ancestors
                     }
                 }
