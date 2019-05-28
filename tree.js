@@ -584,7 +584,12 @@ class BookTree {
     }
     xmlSerialized() {
         var serializer = new XMLSerializer();
-        return serializer.serializeToString(this.xmlDoc);
+        var xml = serializer.serializeToString(this.xmlDoc);
+        xml = xml.replace(/\<[^\<\>]+\>/g, function(a){
+            return a + "\n";
+        });
+        xml = xml.replace(/[\n\r]+/g, "\n");
+        return xml;
     }
     cacheXmlNode() {
         var search = `//RDF:Description`;

@@ -22,10 +22,10 @@ function withCurrTab(fn){
     });
 }
 function initRdf(rdf, callback){
-    var content = '<?xml version="1.0"?>\
-<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
-<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>\
-</RDF:RDF>';
+    var content = `<?xml version="1.0"?>
+<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
+</RDF:RDF>`;
     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
         callback && callback();
     }).catch((err) => {
@@ -302,7 +302,7 @@ window.onload=async function(){
             return false;
         }
         $("#announcement-red-dot").parent().click(function(){
-            settings.set('announcement_showed', m[1])
+            settings.set('announcement_showed', m[1], true)
             $("#announcement-red-dot").hide()
         });
     }
@@ -364,7 +364,7 @@ function loadXml(rdf){
 }
 function switchRdf(rdf){
     log.info(`switch to rdf "${rdf}"`)
-    settings.set('last_rdf', rdf);
+    settings.set('last_rdf', rdf, true);
     if(!$.trim(rdf)){
 	$(".root.folder-content").html("Invaid rdf path.")
 	return;
