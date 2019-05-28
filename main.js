@@ -217,7 +217,7 @@ settings.onchange=function(key, value){
     }else if(key == "font_size" || key == "line_spacing" || key.match(/\w+_color/)){
 	applyAppearance();
     }else if(key == "backend_port"){
-        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
+        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, force: true}).then((response) => {
             loadAll();
         });
     }
