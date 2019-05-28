@@ -27,7 +27,6 @@ log.clear = function(){
 /* log version and platform */
 browser.runtime.getBrowserInfo().then(async function(info) {
     await settings.loadFromStorage();
-    
     var manifest = browser.runtime.getManifest();
     log.info("ScrapBee version = " + manifest.version);
     log.info("browser = " + info.name + " " + info.version);

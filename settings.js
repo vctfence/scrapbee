@@ -48,8 +48,8 @@ settings.getLastRdfPath=function(){
 browser.storage.onChanged.addListener(function(changes, area){
     var changedItems = Object.keys(changes);
     for (var item of changedItems) {
-        console.log(888,item)
         settings.set(item, changes[item].newValue);
+        settings.onchange && settings.onchange(item, changes[item].newValue);
     }
 });
 /* =================================================== */

@@ -211,20 +211,17 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;}
 `
     document.body.appendChild(sheet);
 }
-browser.storage.onChanged.addListener(function(changes, area){
-    var changedItems = Object.keys(changes);
-    for (var item of changedItems) {
-        if(item == "rdf_path_names" || item == "rdf_paths"){
-	    showRdfList();
-        }else if(item == "font_size" || item == "line_spacing" || item.match(/\w+_color/)){
-	    applyAppearance();
-        }else if(item == "backend_port"){
-            browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
-                loadAll();
-            });
-        }
+settings.onchange=function(key, value){
+    if(key == "rdf_path_names" || key == "rdf_paths"){
+	showRdfList();
+    }else if(key == "font_size" || key == "line_spacing" || key.match(/\w+_color/)){
+	applyAppearance();
+    }else if(key == "backend_port"){
+        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
+            loadAll();
+        });
     }
-});
+};
 /* on page loaded */
 function loadAll(){    
     /** rdf list */
