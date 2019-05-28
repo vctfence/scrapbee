@@ -151,7 +151,6 @@ menulistener.onOpenFolder = function(){
 var drop;
 function showRdfList(){
     log.info("show rdf list")
-    
     var lastRdf = settings.last_rdf;
     var saw = false;
     var paths = settings.getRdfPaths();
@@ -236,7 +235,6 @@ function loadAll(){
 }
 window.onload=async function(){
     await settings.loadFromStorage();
-    
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     var btn = document.getElementById("btnLoad");

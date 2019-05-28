@@ -165,12 +165,6 @@ class BookTree {
                         $el.after(drag_mark)
                     } else if (t == 3) {
                         $el.after(drag_mark);
-                        // if ($el.hasClass("expanded")) {
-                        //     // $el.nextAll(".folder-content:first").prepend(drag_mark)
-                        // } else if ($drag_item[0] != $el[0]) {
-                        //     //$el.addClass("drag-into");
-                        // }
-                        // var rect = $el[0].getBoundingClientRect();
                         drag_mark.css("width", "30px");
                     }
                 }

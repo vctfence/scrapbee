@@ -20,7 +20,6 @@ function getAsync(file) {
 }
 window.onload=async function(){
     await settings.loadFromStorage();
-    
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
     if(["en", "zh-CN"].indexOf(ui) > -1){
