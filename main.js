@@ -211,15 +211,18 @@ background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;}
 `
     document.body.appendChild(sheet);
 }
-window.addEventListener("storage", function(e){
-    if(e.key == "rdf_path_names" || e.key == "rdf_paths"){
-	showRdfList();
-    }else if(e.key == "font_size" || e.key == "line_spacing" || e.key.match(/\w+_color/)){
-	applyAppearance();
-    }else if(e.key == "backend_port"){
-        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
-            loadAll();
-        });
+browser.storage.onChanged.addListener(function(changes, area){
+    var changedItems = Object.keys(changes);
+    for (var item of changedItems) {
+        if(item == "rdf_path_names" || item == "rdf_paths"){
+	    showRdfList();
+        }else if(item == "font_size" || item == "line_spacing" || item.match(/\w+_color/)){
+	    applyAppearance();
+        }else if(item == "backend_port"){
+            browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
+                loadAll();
+            });
+        }
     }
 });
 /* on page loaded */
@@ -234,7 +237,9 @@ function loadAll(){
 	});
     });
 }
-window.onload=function(){
+window.onload=async function(){
+    await settings.loadFromStorage();
+    
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     var btn = document.getElementById("btnLoad");

@@ -18,13 +18,14 @@ function getAsync(file) {
     xhttp.send();
     return r;
 }
-window.onload=function(){
+window.onload=async function(){
+    await settings.loadFromStorage();
+    
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
     if(["en", "zh-CN"].indexOf(ui) > -1){
         lang = ui;
     }
-
     $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
@@ -47,7 +48,7 @@ window.onload=function(){
         $("#divMoreDonateWay").show()
         $("#divMoreDonateWay>a").click(function(){
             $("#divMoreDonateWay>div").toggle();
-            return false;x
+            return false;
         });
     }
     $("input[name='add']").click(function(){
@@ -74,18 +75,18 @@ ${FILE_I18N} <input type="text" name="value"/> \
                 names.push(t+"\n");
                 paths.push($.trim($(this).next("input").val())+"\n");
             });
-            settings.set('rdf_paths', paths.join(""));
-            settings.set('rdf_path_names', names.join(""));
-            settings.set('backend_port', $("input[name=backend_port]").val());
-            settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""));
-            settings.set('font_color', $("input[name=font_color]").val().replace("#", ""));
-            settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""));
-            settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""));
-            settings.set('selection_color', $("input[name=selection_color]").val().replace("#", ""));
+            settings.set('rdf_paths', paths.join(""), true);
+            settings.set('rdf_path_names', names.join(""), true);
+            settings.set('backend_port', $("input[name=backend_port]").val(), true);
+            settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""), true);
+            settings.set('font_color', $("input[name=font_color]").val().replace("#", ""), true);
+            settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""), true);
+            settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""), true);
+            settings.set('selection_color', $("input[name=selection_color]").val().replace("#", ""), true);
             var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
-            settings.set('font_size', size);
-            settings.set('line_spacing', $("input[name=line_spacing]").val());
-            settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off")
+            settings.set('font_size', size, true);
+            settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
+            settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed")
