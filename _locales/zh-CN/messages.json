@@ -109,8 +109,8 @@
     "Log": {
         "message": "日志"
     },
-    "Rdf Files":{
-        "message": "Rdf文件"
+    "RDF Files":{
+        "message": "RDF文件"
     },
     "Backend Port":{
         "message": "端口"
@@ -137,7 +137,7 @@
         "message": "你可能需要以管理员身份运行此脚本"
     },
     "STEP3_TEXT_1": {
-        "message": "完成rdf"
+        "message": "完成RDF"
     },
     "STEP4_TEXT_1": {
         "message": "重启{Firefox}"
@@ -170,7 +170,7 @@
         "message": "分隔符"
     },
     "RDF_FILES_TIP": {
-        "message": "设置rdf文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到rdf文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个rdf文件来实现{Scrap}的分类，可以在同一文件夹下放置多个rdf文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的rdf文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加rdf，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
+        "message": "设置RDF文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到RDF文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个RDF文件来实现{Scrap}的分类，可以在同一文件夹下放置多个RDF文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的RDF文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加RDF，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
     },
     "BACKEND_PORT_TIP":{
         "message": "后端服务监听的TCP端口，比如9900"
@@ -257,7 +257,7 @@
         "message": "#1.7.2#<li>改进页面清理工具的'红色高亮框'</li><li>改进目录树的显示</li><li>主要针对Windows用户: 不再打包后端程序 (防病毒误报), 请重新下载</li><li>修复某些用户无法看到帮助页</li><br>#1.7.0#<li>新增一个实验性工具\"{Node Mover}\", 为此需要更新后端到最新版本（注意检查log中的后端版本），使用本工具前请注意备份数据</li><br>#1.6.0#<li>修复了一些问题以提高抓取成功率</li><li>后端已升级, 请下载和安装后端来确保功能完整(减少安全软件误报，增加某些错误检查)</li>"
     },
    "NODE_MOVER_TIP":{
-        "message": "本工具可以实现两个rdf树之间的结点移动或复制，此处也允许单个rdf树内的结点拖动"
+        "message": "本工具可以实现两个RDF树之间的结点移动或复制，此处也允许单个RDF树内的结点拖动"
     },
     "NODE_MOVER_WARN_TIP":{
         "message": "<b>注意!!! 这是一个实验性功能</b> <br>使用前请确保已进行数据备份<br>不建议针对大型结点使用<br>使用此工具时不要在别处进行修改操作以免引起冲突"
