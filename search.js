@@ -154,7 +154,8 @@ async function processTree(tree, search_title, search_body){
     });
     q.start()
 }
-$(document).ready(function(){
+$(document).ready(async function(){
+    await settings.loadFromStorage();
     document.title = document.title.fillData(function(s){
 	return browser.i18n.getMessage(s)  || s;
     });    
