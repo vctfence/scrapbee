@@ -25,9 +25,9 @@ window.onload=async function(){
     if(["en", "zh-CN"].indexOf(ui) > -1){
         lang = ui;
     }
-    $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+    $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
     /** mover */
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
         if(version=='1.7.0')
