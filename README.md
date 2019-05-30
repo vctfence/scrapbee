@@ -7,7 +7,7 @@ This is a development page. Please visit the main site at: https://gchristensen.
 ### Background
 
 Since the departure of Scrapbook I have converted all my Scrapbook stuff to an org-mode
-based wiki, but it is very painful to add bookmarks there. Because I needed a bookmark 
+based wiki, but it was very painful to add bookmarks there. Because I needed a bookmark 
 manager with some org-mode goodness which I would be able to control from UbiquityWE, 
 I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch to obtain the desired features.
 
@@ -15,7 +15,7 @@ I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scr
 
 Although it is possible in principle (for example, through an external python/flask
 based utility which will serve saved Scrapbook files), this is not in author's 
-set of priorities. But you may try to automate this. The call: 
+set of priorities. But you may try to automate this with your own Firefox add-on. The call: 
 
 ```javascript
 browser.runtime.sendMessage("scrapyard@firefox", {
@@ -32,7 +32,7 @@ will add the page at the opened tab as an archive to Scrapyard.
 ### Project status
 
 Currently the project status is permanent alpha: be prepared for breaking changes, devastating bugs and 
-groundbreaking experiments. Please, backup your data.
+groundbreaking experiments. Please, backup your data often.
 
 ### Objectives
 

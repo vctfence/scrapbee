@@ -1,8 +1,9 @@
 {
     "manifest_version": 2,
     "name": "Scrapyard",
-    "version": "0.0.91",
+    "version": "0.1.1",
     "description": "__MSG_extensionDescription__",
+    "homepage_url": "https://gchristensen.github.io/scrapyard/",
     "default_locale": "en",
     "icons": {
 	"64": "icons/scrapyard.svg"
@@ -26,7 +27,7 @@
     ],
     "applications": {
         "gecko": {
-            "id": "scrapyard@firefox",
+            "id": "scrapyard-we@firefox",
             "strict_min_version": "60.0"
         }
     },
