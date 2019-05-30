@@ -338,6 +338,7 @@ class BookmarkTree {
 
             backend.moveNodes([node.original.id], parent.original.id).then(new_nodes => {
                 //console.log("Nodes moved: "  + node.original.uuid);
+                tree.move_node(node.original.id, parent.original.id, "last");
                 BookmarkTree.reorderNodes(tree, parent);
             });
         }
