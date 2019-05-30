@@ -227,7 +227,7 @@
         "message": "This is a folder, do you really want delete it and items within it?"
     },
     "ConfirmDeleteItem": {
-        "message": "Realy delete the selected item?"
+        "message": "Really delete the selected item?"
     },
     "Warning": {
         "message": "Warning"
