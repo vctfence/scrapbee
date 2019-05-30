@@ -79,7 +79,7 @@ class EditToolBar{
                                        top: parseInt(r.top + window.scrollY)+"px",
                                        width:r.width+"px",
                                        height:r.height+"px",
-                                       zIndex: 999});
+                                       zIndex: 2147483647});
                         self.$cap.show();
                     }else{
                         self.$cap.hide();
