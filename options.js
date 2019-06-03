@@ -58,7 +58,7 @@ window.onload=async function(){
         var FILE_I18N = browser.i18n.getMessage("File");
         var $el = $(`<div class='rdf-row'>${NAME_I18N} <input type="text" name="name"/> \
 ${FILE_I18N} <input type="text" name="value"/> \
-<input type="button" name="move" value="↑" /> <input type="button" name="move" value="↑" /> <input type="button" name="move" value="↓" /> <input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
+<input type="button" name="move" value="↑" /> <input type="button" name="move" value="↓" /> <input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
         $el.find("input[name=name]").val(k);
         $el.find("input[name=value]").val(v);
         $el.find("input[name=del]").click(function(){

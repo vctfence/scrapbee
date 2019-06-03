@@ -109,7 +109,7 @@ class BookTree {
                 if (is_local) {
                     url = self.getItemIndexPage($el.attr("id"));
                 }
-                if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey)) {
+                if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
                     self.onOpenContent && self.onOpenContent($el.attr("id"), url, false, is_local);
                 } else {
                     self.onOpenContent && self.onOpenContent($el.attr("id"), url, true, is_local);
