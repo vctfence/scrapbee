@@ -140,6 +140,13 @@ browser.menus.create({
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
     onclick: function(){
+        withCurrTab(function(t){
+            browser.windows.get(t.windowId).then((win) => {
+                console.log(win)
+            })
+            
+        })
+        
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
@@ -231,3 +238,4 @@ function ajaxFormPost(url, json){
         request.send(formData);
     });
 }
+

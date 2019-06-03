@@ -59,6 +59,9 @@ input[type=button]:disabled, input[type=button]:disabled:hover{
 input[type=button]:hover{
     background:#080;
 }
+.rdf-row>input[type=button], input[type=button].narrow{
+    padding:5px 10px;
+}
 #txtBackendPath{
     border-radius:5px;
     border:1px solid;

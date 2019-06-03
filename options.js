@@ -56,13 +56,25 @@ window.onload=async function(){
     function createRdfField(k, v){
         var NAME_I18N = browser.i18n.getMessage("Name");
         var FILE_I18N = browser.i18n.getMessage("File");
-        var $el = $(`<div>${NAME_I18N} <input type="text" name="name"/> \
+        var $el = $(`<div class='rdf-row'>${NAME_I18N} <input type="text" name="name"/> \
 ${FILE_I18N} <input type="text" name="value"/> \
-<input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
+<input type="button" name="move" value="↑" /> <input type="button" name="move" value="↑" /> <input type="button" name="move" value="↓" /> <input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
         $el.find("input[name=name]").val(k);
         $el.find("input[name=value]").val(v);
         $el.find("input[name=del]").click(function(){
             $(this).parent().remove();
+        });
+        $el.find("input[name=move]").click(function(){
+            var up = (this.value == '↑');
+            var $you;
+            var $p = $(this).parent();
+            if(up){
+                $you = $p.prev(".rdf-row");
+                if($you)$you.before($p);
+            }else{
+                $you = $p.next(".rdf-row");
+                if($you)$you.after($p);
+            }
         });
     }
     $("input[name='save']").click(function(){
