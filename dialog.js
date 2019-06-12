@@ -29,7 +29,7 @@ var Dialog = class{
     }
     hide(){
         this.el.style.display = "none"
-    }
+   }
     remove(){
         this.el.remove()
     }
@@ -111,5 +111,8 @@ var DialogTable = class extends Dialog {
     }
     updateCell(x, y, s){
         this.tbody.querySelectorAll("tr")[x].querySelectorAll("td")[y].innerHTML=s;
+    }
+    hideRow(x){
+        this.tbody.querySelectorAll("tr")[x].style.display = "none";
     }
 }

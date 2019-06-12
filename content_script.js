@@ -186,8 +186,8 @@ if(!window.scrapbee_injected){
                 head[0].appendChild(mc);
             }
             /*** download resources and callback */
-            var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title};
             var downloaded = 0;
+            var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title};
             function end(){
                 dlgDownload.addRow("CSS", "index.css", "index.css", "<font style='color:#cc5500'>buffered</font>")
                 dlgDownload.addRow("HTML", "index.html", "index.html", "<font style='color:#cc5500'>buffered</font>")
@@ -204,7 +204,10 @@ if(!window.scrapbee_injected){
                         // log.info(`downloaded ${downloaded}/${res.length}`)
                         dlgDownload.updateCell(i, 0, b.type)
                         dlgDownload.updateCell(i, 2, r.saveas)
-                        dlgDownload.updateCell(i, 3, "<font style='color:#cc5500'>buffered</font>")
+                        if(b.type)
+                            dlgDownload.updateCell(i, 3, "<font style='color:#cc5500'>buffered</font>")
+                        else
+                            dlgDownload.hideRow(i);
                         if(downloaded == res.length){
                             end();
                         }
