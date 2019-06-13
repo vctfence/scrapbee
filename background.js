@@ -136,7 +136,7 @@ browser.menus.create({
     id: "scrapbee-capture-selection",
     title: browser.i18n.getMessage("CaptureSelection"),
     contexts: ["page", "selection", "frame", "editable"],
-    documentUrlPatterns: ["http://*/*", "https://*/*"],
+    documentUrlPatterns: ["http://*/*", "https://*/*", "file://*/*"],
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
     onclick: function(){
@@ -144,9 +144,7 @@ browser.menus.create({
             browser.windows.get(t.windowId).then((win) => {
                 console.log(win)
             })
-            
         })
-        
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
@@ -160,7 +158,7 @@ browser.menus.create({
     id: "scrapbee-capture-page",
     title: browser.i18n.getMessage("CapturePage"),
     contexts: ["page", "selection", "frame", "editable"],
-    documentUrlPatterns: ["http://*/*",  "https://*/*"],
+    documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/page.svg", "32": "icons/page.svg"},
     onclick: function(){
         // browser.sidebarAction.open()
@@ -197,7 +195,7 @@ browser.browserAction.onClicked.addListener(function(){
 // browser.browserAction.onClicked.hasListener(listener)
 /* update menu */
 function updateMenu(url) {
-    var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url));
+    var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
     browser.menus.update("scrapbee-capture-selection", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-page", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-url", {enabled: enabled, visible: enabled});
@@ -239,3 +237,10 @@ function ajaxFormPost(url, json){
     });
 }
 
+// browser.browserAction.onClicked.addListener(() => {
+//     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
+//         browser.tabs.executeScript(tabs[0].id, { code: 'document.contentType' }, ([ mimeType ]) => {
+//             console.log(mimeType);
+//         });
+//     })
+// });

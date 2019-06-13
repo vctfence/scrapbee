@@ -555,4 +555,10 @@ document.addEventListener('contextmenu', function(event){
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });
+
+document.addEventListener('keydown', function(event){
+    console.log(event.code)
+    return false;
+});
+
 console.log("==> main.js loaded");

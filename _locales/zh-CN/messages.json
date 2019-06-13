@@ -122,10 +122,10 @@
        "message": "火狐下载目录"
     },
     "STEP1_TEXT_1": {
-        "message": "下载ScrapBee后端可执行文件和2个安装文件到\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\"，只需点击下方按钮。"
+        "message": "下载ScrapBee后端可执行文件和2个安装文件到\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\"，只需点击下方按钮。"
     },
     "STEP1_TEXT_2": {
-        "message": "您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\"中的所有文件，重启{Firefox}再次下载。另外，请使用{Firefox}60及以后的标准版{Firefox}。"
+        "message": "您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\"中的所有文件，重启{Firefox}再次下载。另外，请使用{Firefox}60及以后的标准版{Firefox}。"
     },
     "STEP2_TEXT_1": {
         "message": "手工运行上面下载的安装脚本："
