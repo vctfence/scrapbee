@@ -5,8 +5,8 @@ an extension acts "partly" like ScrapBook under Firefox Quantum.
 <p>With ScrapBee, you can save web page scraps to local storage, and manage scraps in browser sidebar。</p>
 <h2>What's RDF?</h2>
 RDF is ScrapBee/ScrapBook's data file in which properties of scraps stored in. And downloaded scraps will be saved in "data" folder beside the RDF file.
-<h2>Install/Setup</h2>
-After ScrapBee addon installed, please just finish a few steps of <a href="#install">Installation Guide</a> before using ScrapBee.
+<h2>Install/Configuration</h2>
+After ScrapBee addon installed, please follow a few steps of <a href="#install">Guide of Installation</a> before using ScrapBee.
 <h2>How to use?</h2>
 <img src="image/hints/01.png" class="" alt="" />
 <p class=""> Click on ScrapBee Icon, ScrapBee will be opened in sidebar(Mark1), create folders in sidebar if needed.(Mark2) </p>
@@ -25,7 +25,7 @@ If ScrapBee stop working, and if you see error message in <a href="#log">Log</a>
 <div class="embeded-log-text"> error: listen tcp :9900: bind: address already in use</div>
 Please try to kill the process (<b>Usually, it's abandoned ScrapBee backend process when FireFox terminated abnormally</b>) binds on that port manually, e.g. under Linux you can do:
 <div class="embeded-log-text">fuser -k 9900/tcp</div>
-Or try another backend port in <a href="#settings">Settings</a>
+Or try another backend port in <a href="#configuration">Configuration</a>
 <h4>File system permission</h4>
 Please do not register RDFs under a directory without read/write permission for current user,
 e.g. common users have no write permission of Windows root directory like c:\, but sub directory of that like c:\foobar works in general.

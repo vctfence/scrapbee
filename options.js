@@ -137,8 +137,8 @@ ${FILE_I18N} <input type="text" name="value"/> \
             $("#div-"+m[1]).show();
             $("a.left-index[href='#" + m[1] + "']").addClass("focus")
         }else{
-            $("#div-settings").show();
-            $("a.left-index[href='#settings']").addClass("focus")
+            $("#div-configuration").show();
+            $("a.left-index[href='#configuration']").addClass("focus")
         }
     }
     window.onhashchange=()=>applyArea();

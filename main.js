@@ -264,8 +264,10 @@ window.onload=async function(){
         });
     }
     $("menuitem").click(function(e){
-	var listener = menulistener[this.id.replace(/^menu/, "on")];
-	listener && listener();
+        if(currTree){
+            var listener = menulistener[this.id.replace(/^menu/, "on")];
+	    listener && listener();
+        }
     });    
     /**  */
     applyAppearance();
@@ -366,6 +368,7 @@ function loadXml(rdf){
     xmlhttp.send();
 }
 function switchRdf(rdf){
+    currTree = null;
     log.info(`switch to rdf "${rdf}"`)
     settings.set('last_rdf', rdf, true);
     if(!$.trim(rdf)){
