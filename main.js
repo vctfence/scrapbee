@@ -336,11 +336,10 @@ function loadXml(rdf){
 	}
 	currTree.onOpenContent=function(itemId, url, newTab, isLocal){
             var method = newTab ? "create" : "update";
-            try{
-                browser.tabs[method]({ url: url }, function (tab) {});
-            }catch(e){
-                console.log(e)
+            if(/^file\:/.test(url)){
+                url = settings.backend_url + "file-service/" + url.replace(/.{7}/,'');
             }
+            browser.tabs[method]({ url: url }, function (tab) {});
 	}
         currTree.onChooseItem=function(id){
             var $f = currTree.getItemById(id)
