@@ -255,7 +255,8 @@ if(!window.scrapbee_injected){
                         saveData(data, request.rdf_path, request.scrapId).then(()=>{
                             dlgDownload.showButton()
                             dlgDownload.hint = "All done";
-                            resolve();
+                            var have_icon = !!(data.res[data.res.length - 1].blob);
+                            resolve(have_icon);
                         });
                     });
                 }else{

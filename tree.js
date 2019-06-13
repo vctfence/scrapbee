@@ -315,7 +315,11 @@ class BookTree {
     }
     updateItemIcon($item, icon) {
         var id = $item.attr("id");
-        $item.css("background-image", "url(" + this.translateResource(icon, this.rdf_path, id) + ")");
+        if(icon){
+            $item.css("background-image", "url(" + this.translateResource(icon, this.rdf_path, id) + ")");
+        }else{
+            $item[0].style.removeProperty("background-image");
+        }
         var node = this.getDescNode("urn:scrapbook:item" + id);
         if (node) node.setAttributeNS(this.MAIN_NS, "icon", icon);
         this.onXmlChanged && this.onXmlChanged();

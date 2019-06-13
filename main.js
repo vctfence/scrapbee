@@ -336,7 +336,11 @@ function loadXml(rdf){
 	}
 	currTree.onOpenContent=function(itemId, url, newTab, isLocal){
             var method = newTab ? "create" : "update";
-            browser.tabs[method]({ url: url }, function (tab) {});
+            try{
+                browser.tabs[method]({ url: url }, function (tab) {});
+            }catch(e){
+                console.log(e)
+            }
 	}
         currTree.onChooseItem=function(id){
             var $f = currTree.getItemById(id)
@@ -345,7 +349,7 @@ function loadXml(rdf){
             } else if ($f.hasClass("separator")) {
                 $(document.body).attr("contextmenu", "popup-menu-separator");
             } else if ($f.hasClass("item")) {
-                $(document.body).attr("contextmenu", "popup-menu-link");                
+                $(document.body).attr("contextmenu", "popup-menu-link");
             } else {
                 $(document.body).attr("contextmenu", "popup-menu-body");
             }
@@ -457,10 +461,11 @@ function requestPageSaving(itemId, selection){
                 ]).then(function(){
                     currTree.createLink(getCurrContainer(), "local", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
                     log.debug("content scripts injected")
-                    browser.tabs.sendMessage(tab.id, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(){
+                    browser.tabs.sendMessage(tab.id, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(have_icon){
                         var item = {}
                         item.tabId = tab.id;
                         item.id = itemId;
+                        item.have_icon = have_icon;
                         resolve(item);
                     }).catch((err) => {
                         currTree.removeItem($("#"+itemId))
@@ -497,7 +502,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	    browser.windows.getLastFocused().then(function(win){
 		if(win.id == thisWindowId){
 		    requestPageSaving(genItemId(), true).then((item) => {
-		        var icon = "resource://scrapbook/data/" + item.id + "/favicon.ico";
+		        var icon = item.have_icon ? "resource://scrapbook/data/" + item.id + "/favicon.ico" : "";
 		        $("#"+item.id).removeAttr("disabled");
 		        currTree.updateItemIcon($("#"+item.id), icon);
 	            });
@@ -511,7 +516,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	    browser.windows.getLastFocused().then(function(win){
 		if(win.id == thisWindowId){
 		    requestPageSaving(genItemId(), false).then((item) => {
-                      	var icon = "resource://scrapbook/data/" + item.id + "/favicon.ico";
+                        var icon = item.have_icon ? "resource://scrapbook/data/" + item.id + "/favicon.ico" : "";
 		        $("#"+item.id).removeAttr("disabled");
 		        currTree.updateItemIcon($("#"+item.id), icon);
 	            });
