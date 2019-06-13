@@ -20,10 +20,10 @@ class NodeHTMLBuffer {
         return list;        
     }
     flatten() {
-        var list = [this.start]
+        var list = [this.start];
         this.children.forEach(function(c){
             list.push(c.flatten());
-        })
+        });
         list.push(this.end);
         return list.join("");
     }

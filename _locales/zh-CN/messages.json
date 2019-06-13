@@ -19,6 +19,9 @@
     "Setting": {
         "message": "设置"
     },
+    "Configuration": {
+        "message": "配置"
+    },
     "Reload": {
         "message": "刷新"
     },
@@ -102,6 +105,9 @@
     },
     "Initiate": {
         "message": "初始化"
+    },
+    "Install": {
+        "message": "安装"
     },
     "History": {
         "message": "更新历史"

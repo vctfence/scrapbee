@@ -19,6 +19,9 @@
     "Setting": {
         "message": "Settings"
     },
+    "Configuration": {
+        "message": "Configuration"
+    },
     "Reload": {
         "message": "Reload"
     },
@@ -102,6 +105,9 @@
     },
     "Initiate": {
         "message": "Initiate"
+    },
+    "Install": {
+        "message": "Install"
     },
     "History": {
         "message": "History"
