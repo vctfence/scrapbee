@@ -299,6 +299,6 @@
         "message": "排序"
     },
     "ConfirmSorting": {
-        "message": "排序操作不可逆，确定要继续吗？"
+        "message": "本操作不可逆，确定要继续吗？"
     }
 }

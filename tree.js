@@ -234,40 +234,21 @@ class BookTree {
     }
     async sortTree(asc=true) {
         var self = this;
-        var bufferlist=[];
+        var items = [];
         var sects = {};
-        function rename(id, title){
-            var desc_node = self.getDescNode("urn:scrapbook:item" + id);
-            if (desc_node) {
-                desc_node.setAttributeNS(self.MAIN_NS, "title", title);
-            }
-        }
         await this.iterateLiNodes(function (json, node) {
+            var inc = json.nodeType == "separator" ? 1 : 0;
+            var title = (json.title || "").toLowerCase()
             var parentId = json.parentId || "urn:scrapbook:root";
-            sects[parentId] = sects[parentId] || 0; 
-            var bf;
-            switch (json.nodeType) {
-            case "seq":
-                break;
-            case "scrap":
-                break;
-            case "separator":
-                sects[parentId]++;
-                break;
-            }
-            var title = (json.title || "").replace(/^.*\|/,"").toLowerCase()
-            var id = json.id;
-            var type = json.nodeType
-            bufferlist.push({id, title, parentId, sect: sects[parentId], node, type})
-            // rename(id, `${title}`)
-            if(json.nodeType == "separator"){
-                sects[parentId]++;
-            }
+            sects[parentId] = sects[parentId] || 0;
+            sects[parentId] += inc;
+            items.push({id: json.id, title, parentId, sect: sects[parentId], node, type: json.nodeType})
+            sects[parentId] += inc;
         });
         function comp(a, b){
             return a < b ? -1 : (a > b ? 1 : 0);
         }
-        bufferlist = bufferlist.sort(function(a, b){
+        items = items.sort(function(a, b){
             var v = comp(a.parentId, b.parentId)
             if(v == 0){
                 v = comp(a.sect, b.sect);
@@ -276,22 +257,16 @@ class BookTree {
                 v = a.type == b.type ? 0 : (a.type == "seq" ? -1 : 1);
             }
             if(v == 0){
-                // v = comp(a.title, b.title);
-                // v = a.title.localeCompare(b.title);
                 v = a.title.localeCompare(b.title, 'en', {sensitivity: 'base', ignorePunctuation: 'true'});
                 v *= (asc ? 1 : -1)
-                console.log((asc ? 1 : -1))
             }
-            // rename(a.id, `${a.sect}|${a.title}`)
-            // rename(b.id, `${b.sect}|${b.title}`)
             return v;
         });
-        bufferlist.forEach(function(a){
+        items.forEach(function(a){
             var nn = a.node.cloneNode();
             a.node.parentNode.appendChild(nn);
             a.node.parentNode.removeChild(a.node);
         });
-        // this.renderTree(this.$top_container);
     }
     async renderTree($container) {
         var self = this;
