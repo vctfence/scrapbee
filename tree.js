@@ -232,13 +232,76 @@ class BookTree {
         this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
         $item.remove();
     }
+    async sortTree(asc=true) {
+        var self = this;
+        var bufferlist=[];
+        var sects = {};
+        function rename(id, title){
+            var desc_node = self.getDescNode("urn:scrapbook:item" + id);
+            if (desc_node) {
+                desc_node.setAttributeNS(self.MAIN_NS, "title", title);
+            }
+        }
+        await this.iterateLiNodes(function (json, node) {
+            var parentId = json.parentId || "urn:scrapbook:root";
+            sects[parentId] = sects[parentId] || 0; 
+            var bf;
+            switch (json.nodeType) {
+            case "seq":
+                break;
+            case "scrap":
+                break;
+            case "separator":
+                sects[parentId]++;
+                break;
+            }
+            var title = (json.title || "").replace(/^.*\|/,"").toLowerCase()
+            var id = json.id;
+            var type = json.nodeType
+            bufferlist.push({id, title, parentId, sect: sects[parentId], node, type})
+            // rename(id, `${title}`)
+            if(json.nodeType == "separator"){
+                sects[parentId]++;
+            }
+        });
+        function comp(a, b){
+            return a < b ? -1 : (a > b ? 1 : 0);
+        }
+        bufferlist = bufferlist.sort(function(a, b){
+            var v = comp(a.parentId, b.parentId)
+            if(v == 0){
+                v = comp(a.sect, b.sect);
+            }
+            if(v == 0){
+                v = a.type == b.type ? 0 : (a.type == "seq" ? -1 : 1);
+            }
+            if(v == 0){
+                // v = comp(a.title, b.title);
+                // v = a.title.localeCompare(b.title);
+                v = a.title.localeCompare(b.title, 'en', {sensitivity: 'base', ignorePunctuation: 'true'});
+                v *= (asc ? 1 : -1)
+                console.log((asc ? 1 : -1))
+            }
+            // rename(a.id, `${a.sect}|${a.title}`)
+            // rename(b.id, `${b.sect}|${b.title}`)
+            return v;
+        });
+        bufferlist.forEach(function(a){
+            var nn = a.node.cloneNode();
+            a.node.parentNode.appendChild(nn);
+            a.node.parentNode.removeChild(a.node);
+        });
+        // this.renderTree(this.$top_container);
+    }
     async renderTree($container) {
         var self = this;
         this.$top_container = $container;
         $container.html("");
         var buffers={};
+        var bufferlist=[];
         buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        
         try{
+            var sec = 0
             await this.iterateLiNodes(function (json) {
                 var parentId = json.parentId || "urn:scrapbook:root";
                 var bf;
@@ -250,14 +313,23 @@ class BookTree {
                     bf = self.createLink(null, json.type, json.id, null, json.source, json.icon, json.title);
                     break;
                 case "separator":
+                    sec++;
                     bf = self.createSeparator(null, json.id, null);
                     break;
                 }
                 if(bf){
-                    buffers[json.id] = bf;
-                    if(buffers[parentId])
-                        buffers[parentId].appendChild(bf);
+                    var title = (json.title || "").toLowerCase()
+                    var id = json.id;
+                    bufferlist.push({id, bf, title, parentId, sec})
                 }
+                if(json.nodeType == "separator"){
+                    sec++;
+                }
+            });
+            bufferlist.forEach(function(item){
+                buffers[item.id] = item.bf;
+                if(buffers[item.parentId])
+                    buffers[item.parentId].appendChild(item.bf);
             });
             var html = buffers["urn:scrapbook:root"].flatten();
             $container.html(html);
@@ -288,7 +360,7 @@ class BookTree {
                                 id: id,
                                 title: desc_node.getAttributeNS(self.MAIN_NS, "title"),
                                 level
-                            });
+                            }, child);
                         }
                         level++;
                         await processer(seqNode.children, id);
@@ -296,7 +368,7 @@ class BookTree {
                     }
                 } else if(nodeType == "separator") {
                     var id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");
-                    await fn({ nodeType: 'separator', id: id, parentId: parentId, level});
+                    await fn({ nodeType: 'separator', id: id, parentId: parentId, level}, child);
                 } else if(nodeType) {   // scrap
                     await fn({
                         parentId: parentId,
@@ -307,7 +379,7 @@ class BookTree {
                         icon: introNode.getAttributeNS(self.MAIN_NS, "icon"),
                         title: introNode.getAttributeNS(self.MAIN_NS, "title"),
                         level
-                    });
+                    }, child);
                 }
             }
         }

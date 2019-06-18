@@ -123,32 +123,64 @@
         </div>
       </div>
     </div>
+    <div class="dlg-cover dlg-sort" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title i18n i18n-innerHTML">{Sort}</div>
+          <div class="dlg-table" style="overflow:hidden;">
+            <div class="row">
+              <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Sort}</div>
+              <div class="cell"><input type="" name="title" value="" style="width:100%"/></div>
+            </div>
+            <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
+              <div class="cell"></div>
+              <div class="cell">
+                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
+                <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="root folder-content i18n">{Starting...}</div>
     <menu type="context" id="popup-menu-folder">
-      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png"></menuitem> -->
       <menuitem id="menuRename" label="{Rename}" icon="icons/rename.svg"></menuitem>
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
+      <menu type="context">
+        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
+        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+      </menu>
     </menu>
     <menu type="context" id="popup-menu-separator">
-      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png"></menuitem> -->
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
+      <menu type="context">
+        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
+        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+      </menu>
     </menu>    
     <menu type="context" id="popup-menu-link">
-      <!-- <menuitem id="menuDetail" label="Property" icon="icons/a/star0.png"></menuitem> -->
       <menuitem id="menuRename" label="{Rename}"" icon="icons/rename.svg"></menuitem>
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
-      <!-- <menu label="Modify" id="menuModify"></menu> -->
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
       <menuitem id="menuOpenFolder" label="{Open Folder}" icon="icons/openfolderblack.svg"></menuitem>
+      <menu type="context">
+        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
+        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+      </menu>
     </menu>
     <menu type="context" id="popup-menu-body">
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
+      <menu type="context">
+        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
+        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+      </menu>
     </menu>
   </body>
 </html>

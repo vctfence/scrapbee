@@ -244,3 +244,7 @@ function ajaxFormPost(url, json){
 //         });
 //     })
 // });
+
+// browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
+//     var saving = browser.tabs.saveAsPDF({});
+// });

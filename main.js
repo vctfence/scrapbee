@@ -107,6 +107,20 @@ function confirm(title, message){
 }
 /* context menu listener */
 var menulistener={};
+menulistener.onSort1 = function(){
+    confirm("{Sort}", "{ConfirmSorting}").then(async function(){
+	await currTree.sortTree(true);
+        currTree.onXmlChanged();
+        await currTree.renderTree($(".root.folder-content"));
+    });
+}
+menulistener.onSort2 = function(){
+    confirm("{Sort}", "{ConfirmSorting}").then(async function(){
+	await currTree.sortTree(false);
+        currTree.onXmlChanged();
+        await currTree.renderTree($(".root.folder-content"));
+    });
+}
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
 	currTree.removeItem($(".item.focus"));
@@ -569,3 +583,4 @@ document.addEventListener('keydown', function(event){
 });
 
 console.log("==> main.js loaded");
+
