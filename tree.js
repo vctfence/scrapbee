@@ -257,7 +257,7 @@ class BookTree {
                 v = a.type == b.type ? 0 : (a.type == "seq" ? -1 : 1);
             }
             if(v == 0){
-                v = a.title.localeCompare(b.title, 'en', {sensitivity: 'base', ignorePunctuation: 'true'});
+                v = a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
                 v *= (asc ? 1 : -1)
             }
             return v;

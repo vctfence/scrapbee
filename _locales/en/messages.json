@@ -200,7 +200,7 @@
         "message": "Open In Current Tab"
     },
     "OPEN_IN_CURRENT_TAB_TIP":{
-        "message": "By default, ScrapBee opens each scrap in new tab when clicking on an entity, <br>and open scraps in current tab by holding control(meta for Mac) while clicking, this also can be done with a middle mouse button clicking. <br>You can reverse this by turn on this option. "
+        "message": "By default, ScrapBee opens each scrap in new tab while clicking on an entity, <br>and open scraps in current tab by holding control(meta for Mac) while doing click, this also can be done with a middle mouse button clicking. <br>You can reverse this by turn on this option. "
     },
     "DONATE_WORDS":{
         "message": "To make ScrapBee grows better, <br/>your donations are very welcome, <br/>thanks for your support !!! <br> <i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>Also, please rank 5 stars if you like ScrapBee</i></a>"
@@ -296,6 +296,6 @@
         "message": "Sort"
     },
     "ConfirmSorting": {
-        "message": "This option can not be reverted, proceed?"
+        "message": "This process can not be reverted, proceed?"
     }
 }
