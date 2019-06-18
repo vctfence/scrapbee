@@ -22,7 +22,7 @@ window.onload=async function(){
     await settings.loadFromStorage();
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
-    if(["en", "zh-CN"].indexOf(ui) > -1){
+    if(["en", "zh-CN", "fr"].indexOf(ui) > -1){
         lang = ui;
     }
     document.title = document.title.translate();
