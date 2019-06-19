@@ -1,0 +1,84 @@
+<h2>What's ScrapBee?</h2>
+ScrapBee est une extension pour Firefox Quantum essayant de reproduire les fonctionalités de l'extension <a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a>. ScrapBee est capable de lire et d'écrire des pages sauvées avec ScrapBook et d'en sauver de nouvelles. Comme le pasage de Firefox à la version Quantum n'a pas assuré de compatibilité accendante et à rendu Scrapbook inutilisable, ScrapBee a l'ambition de prendre la relève pour les nouvelles versions de Firefox.
+<p>Avec ScrapBee, vous pouvez sauver sur un disque local des "scraps", c'est-à-dire des pages web entières ou des sélections puis les gérer dans un panneau latéral du navigateur.</p>
+<h2>Qu'est-ce que RDF?</h2>
+RDF est un format de fichier XML utilisé par ScrapBokk et ScrapBee pour décrire les propriétés des documents sauvegardés. Les documents eux-mêmes et leurs fichiers associés (images notamment) sont sauvés dans un répertoire "data" situé à côté du fichier RDF.
+<h2>Installation/Paramétrage</h2>
+Après l'installation de ScrapBee en téléchargeant l'extension au format "xpi", terminez la configuration en suivant l'étape <a href="#initiate">Initialisation</a> avant de l'utiliser. N'oubliez pas notamment de donner le chemin d'accès d'au moins un fichier RDF (soit vers un emplacement existant, soit vers un nouvel emplacement, ScrapBee créant alors le répertoire et le fichier).
+<h2>Comment utiliser ScrapBee?</h2>
+<img src="image/hints/01.png" class="" alt="" />
+<p class=""> Cliquez sur l'icône de ScrapBee (Marque 1) permet d'ouvrir le panneau latéral de ScrapBee. Si besoin, créer des dossiers ou des séparateurs dans le panneau (Marque 2).</p>
+<img src="image/hints/02.png" class="" alt="" />
+<p class="">Pour sauvegarder une page entière, cliquer sur le menu "bouton droit" et choisir l'entrée "Sauver la page" (Marque 3).</p>
+<img src="image/hints/03.png" class="" alt="" />
+<p class="">Pour sauvegarder une sélection, après l'avoir désignée avec la souris, cliquer sur le menu "bouton droit" et choisir l'entrée "Sauver la sélection" (Marque 4). </p>
+<img src="image/hints/04.png" class="" alt="" />
+<p class="">A début de la capture, une entrée apparait dans le panneau latéral avec une icône indiquant le téléchargement en cours. Quand la capture est terminée (icône stabilisée correspondant au contenu), un clic sur cette entrée (Marque 5) affiche le document sauvegardé (Marque 6). L'accès à la page web d'origine se fait en cliquant sur le petit lien positionné à la fin de l'entrée (Marque 7). Vous pouvez aussi déplacer une entrée en la sélectionnant et en déplaçant la souris.</p>
+<h4>Attention</h4>
+Pendant une capture, le panneau latéral de ScrapBee doit rester ouvert, l'entrée correspondant à la page web en cours de sauvegarde se positionnant après l'entrée courante.
+<h2>Résolution d'incidents</h2>
+<h4>Port</h4>
+Si ScrapBee en fonctionne plus et que vous avez dans la  <a href="#log">page de logs</a> un message du type:
+<div class="embeded-log-text"> error: listen tcp :9900: bind: address already in use</div>, il faut essayer d'arrêter le process correspondant (scrapbee_backend) (<b>En général, cela correspond à un arrêt anormal de Firefox</b>). Sur Linux, essayez:
+<div class="embeded-log-text">fuser -k 9900/tcp</div>
+Ou sélectionnez un autre numéro de port dans les  <a href="#settings">Paramètres</a>
+<h4>Permissions du système de fichiers</h4>
+N'enregistrez vos fichiers RDF que dans un répertoire accessible à l'utilisateur courant. Sur Window utilisez un répertoire de votre espace personnel ou un sous-répertoire de la racine comme c:\foobar par exemple.
+<h4>Détection d'un malware ou d'un cheval de Troie (trojan)</h4>
+Le programme backend de ScrapBee est parfois considéré comme un malware ou un trojan par les programmes de détection et de sécurisation. Dans ce cas, ajoutez ScrapBee à la liste (blanche) des programmes légitimes. Contactez l'auteur de ScrapBee si vous trouvez une meilleure solution.
+<h4>Echec du téléchargement du programme d'installation</h4>
+Si vous ne pouvez pas télécharger les scripts d'installation (blocage par des outils de sécurisation par exemple), réessayez de nouveau :
+<br/>Fermez Firefox -> Effacez les fichiers dans le répertoire “<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/” -> Relancer Firefox -> Téléchargez à nouveau.
+<br/><br/>Si cela ne fonctionne toujours pas, créez manuellement les scripts dans le répertoire “<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/”:
+<br /> <br />
+scrapbee_backend.json: (<b>Attention:</b> remplacez "<b><i>FIREFOX-DOWNLOAD-DIRECTORY</i></b>" par le chemin vers votre <b>répertoire de téléchargement Firefox</b>)
+<div class="embeded-log-text">
+  {<br />
+  "allowed_extensions": [<br />
+  "scrapbee@scrapbee.org"<br />
+  ],<br />
+  "description": "Scrapbee backend",<br />
+  "name": "scrapbee_backend",<br />
+  "path": "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/scrapbee_backend",<br />
+  "type": "stdio"<br />
+  }<br />
+</div>
+install.bat(Windows, CODEPAGE UTF-8):
+<div class="embeded-log-text">
+  chcp 65001<br />
+  reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
+  reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla\NativeMessagingHosts\scrapbee_backend" /d "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json" /f<br />
+  reg delete "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /f<br />
+  reg add "HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapbee_backend" /d "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>\scrapbee\scrapbee_backend.json"  /f<br />
+  echo done<br />
+  pause<br />
+</div>
+install.sh(Linux)
+<div class="embeded-log-text">
+  #!/bin/bash<br />
+  chmod +x scrapbee_backend<br />
+  dest="${HOME}/.mozilla/native-messaging-hosts"<br />
+  if [ ! -d "$dest" ];then<br />
+  &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p "$dest"<br />
+  fi<br />
+  cp scrapbee_backend.json "$dest"<br />
+  echo done<br />
+</div>
+install.sh(Mac)
+<div class="embeded-log-text">
+  #!/bin/bash<br />
+  chmod +x scrapbee_backend<br />
+  dest="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
+  if [ ! -d $dest ];then<br />
+  &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p $dest<br />
+  fi<br />
+  cp scrapbee_backend.json $dest<br />
+  echo done<br />
+</div>
+<h4>Problème persistant?</h4>
+Vérifiez la <a href="#log">page de logs</a>, il peut y avoir des informations sur le dysfonctionnement.
+<br>Redémarrez Firefox, cela marche parfois!
+<br>Sinon posez votre question ou exposez votre problème sous forme d'"issue" sur le dépôt Git: <a href="https://github.com/vctfence/scrapbee">https://github.com/vctfence/scrapbee</a>
+<br>Ou envoyez un courrier à <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
+<h2>Sauvegarde</h2>
+ScrapBee n'a aucune fonction de sauvegarde, sauvez régulièrement les répertoires où se trouvent vos fichiers RDF et les documents sauvegardés.
