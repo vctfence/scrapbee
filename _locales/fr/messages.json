@@ -1,0 +1,289 @@
+{
+    "extensionName": {
+        "message": "ScrapBee",
+        "description": "Nom de l'extension."
+    },
+    "extensionDescription": {
+        "message": "Capture localement les pages web et gère les pages capturées dans un panneau latéral. Est compatible avec les documents de l'ancienne extension Scrapbook. Nécessite l'installation et l'exécution d'un programme backend en plus du navigateur web.",
+        "description": "Description de l'extension."
+    },
+    "Firefox":{
+        "message": "Firefox"
+    },
+    "DLG_OK": {
+        "message": "OK"
+    },
+    "DLG_CANCEL": {
+        "message": "Annulation"
+    },
+    "Setting": {
+        "message": "Paramètres"
+    },
+    "Reload": {
+        "message": "Recharger"
+    },
+    "Search": {
+        "message": "Recherche"
+    },
+    "Help": {
+        "message": "Aide"
+    },
+    "Folder": {
+        "message": "Dossier"
+    },
+    "Open Folder": {
+        "message": "Ouvrir le dossier"
+    },
+    "Title": {
+        "message": "Titre"
+    },
+    "Content": {
+        "message": "Contenu"
+    },    
+    "Rename": {
+        "message": "Renommer"
+    },
+    "Step": {
+        "message": "Etape"
+    },
+    "Name": {
+        "message": "Nom"
+    },
+    "Save": {
+        "message": "Sauver"
+    },
+    "MODIFY_DOM_ON": {
+        "message": "Nettoyage de la page"
+    },
+    "MODIFY_DOM_OFF": {
+        "message": "Arrêt du nettoyage"
+    },
+    "MARK_PEN": {
+        "message": "Type de surlignage"
+    },
+    "File": {
+        "message": "Fichier"
+    },
+    "Donate": {
+        "message": "Don"
+    },
+    "DONATE_WITH_PAYPAL": {
+        "message": "Don avec PayPal"
+    },
+    "New Folder": {
+        "message": "Nouveau dossier"
+    },
+    "New Separator": {
+        "message": "Nouveau séparateur"
+    },
+    "CapturePage": {
+        "message": "Capture de la page"
+    },
+    "As Root Node": {
+        "message": "Commme noeud racine"
+    },
+    "At Current Position": {
+        "message": "A la position courante"
+    },
+    "CaptureSelection": {
+        "message": "Capture de la sélection"
+    },
+    "CaptureUrl": {
+        "message": "Capture de l'URL"
+    },
+    "Download": {
+        "message": "Télécharger"
+    },
+    "ToggleSidebar": {
+        "message": "Permuter le panneau latéral"
+    },
+    "Delete": {
+        "message": "Supprimer"
+    },
+    "Initiate": {
+        "message": "Initialisation"
+    },
+    "History": {
+        "message": "Historique"
+    },
+    "Log": {
+        "message": "Journal"
+    },
+    "RDF Files":{
+        "message": "Fichiers RDF"
+    },
+    "Backend Port":{
+        "message": "Port du backend"
+    },
+    "Background": {
+        "message": "Couleur de l'arrière-plan"
+    },
+    "FIREFOX_DOWNLOAD_DIRECTORY":{
+        "message": "Répertoire de téléchargements de Firefox"
+    },
+    "STEP1_TEXT_1": {
+        "message": "Télécharger le programme backend de Scrapbee et les 2 fichiers d'installation dans \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", en cliquant simplement sur le bouton ci-dessous."
+    },
+    "STEP1_TEXT_2": {
+        "message": "En cas de problème pour télécharger le programme et les 2 fichiers, arrêter Firefox et supprimer les fichiers dans \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", relancer Firefox puis le téléchargement. Compatible avec les versions standard de {Firefox} postérieures à 60."
+    },
+    "STEP2_TEXT_1": {
+        "message": "Lancer manuellement le script d'installation téléchargé:"
+    },
+    "STEP2_TEXT_2": {
+        "message": "Lancer les commandes dans une fenêtre de console:"
+    },
+    "STEP2_TEXT_3": {
+        "message": "Il faut peut-être exécuter le script comme administrateurr"
+    },
+    "STEP3_TEXT_1": {
+        "message": "Terminer la configuration des fichiers RDF dans "
+    },
+    "STEP4_TEXT_1": {
+        "message": "Relancer {Firefox}"
+    },
+    "STEP5_TEXT_1": {
+        "message": "Apprécier l'extension"
+    },
+    "BASIC_TEXT": {
+        "message": "Couleur du texte"
+    },
+    "BOOKMARK_TEXT": {
+        "message": "Couleur des signets"
+    },
+    "SELECTED_ITEM": {
+        "message": "Couleur de la sélection"
+    },
+    "FONT_SIZE": {
+        "message": "Taille de police"
+    },
+    "LINE_SPACING": {
+        "message": "Espacement des lignes"
+    },        
+    "Language": {
+        "message": "Langue"
+    },
+    "Separator": {
+        "message": "Séparateur"
+    },
+    "RDF_FILES_TIP": {
+        "message": "Editez le chemin des fichiers RDF (avec une extension '.rdf') contenant les informations sur les documents téléchargés qui sont sauvés dans un répertoire \"data\" au même niveau que le fichier RDF.<br /><br /> Par exemple, c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br /><br /> Vous pouvez utiliser plusieurs fichiers RDF pour organiser vos documents.<br /> Il est possible d'avoir plusieurs fichiers RDF dans un même répertoire.<br /> Scrapbee initialise le fichier RDF si nécessaire (tags XML).<br />Les fichiers RDF créés par l'ancienne extension <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> sont supportés.<br /><br /><b>Cliquez sur le bouton '+' ci-dessous pour enregistrer un nouveau RDF, choississez un alias dans le champ 'Nom' et le chemin absolu dans le champ 'Fichier'.</b>"
+    },
+    "BACKEND_PORT_TIP":{
+        "message": "Port TCP utilisé pour communiquer avec le programme backend de Scrapbee e.g. 9900"
+    },
+    "_COLOR":{
+        "message": ""
+    },
+    "Appearance":{
+        "message": "Apparence"
+    },    
+    "Scrap":{
+        "message": "scrap"
+    },
+    "COLOR_TIP":{
+        "message": "Paramétrisation de la couleur de certains éléments pour modifier l'apparence de Scrapbee. <br>Les couleurs sont dans un format hexadécimal #FFFFFF ou #FFF"
+    },
+    "ALREADY_DOWNLOADED_TO": {
+        "message": "déjà téléchargé dans"
+    },
+    "Behavior":{
+        "message": "Comportement"
+    },
+    "OPEN_IN_CURRENT_TAB":{
+        "message": "Ouvrir dans l'onglet courant"
+    },
+    "OPEN_IN_CURRENT_TAB_TIP":{
+        "message": "Par défaut, Scrapbee ouvre chaque page sauvée dans un nouvel onglet lors d'un simple clic dans le panneau latéral. Il utilise l'onglet courant si la touche Ctrl est enfoncée pendant le clic (touche Méta sur Mac) ou si le bouton du milieu est utilisé. Ce comportement est inversé si l'option est sélectionnée. "
+    },
+    "DONATE_WORDS":{
+        "message": "Pour encourager les améliorations de Scrapbee, <br />toute donation est la bienvenue.<br />Merci pour votre support !!! <br /> <i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>Donnez un bonne note à Scrapbook!</i></a>"
+    },
+    "MORE_DONATE_WAY_TOGGLE":{
+        "message": "In other way"
+    },    
+    "MORE_DONATE_WAY":{
+        "message": ""
+    },
+    "RESULTS_FOUND": {
+        "message": " résultat(s) trouvé(s)"
+    },
+    "NOT_EXISTS": {
+        "message": " non trouvé"
+    },
+    "Yes": {
+        "message": "Oui"
+    },
+    "No": {
+        "message": "Non"
+    },
+    "CREATE_OR_NOT": {
+        "message": "le créer"
+    },
+    "NewDirectory": {
+        "message": "Nouveau répertoire"
+    },
+    "ConfirmDeleteDirectory": {
+        "message": "Ceci est un répertoire, voulez-vous vraiment le supprimer avec tout son contenu?"
+    },
+    "ConfirmDeleteItem": {
+        "message": "Détruire l'élément sélectionné??"
+    },
+    "Warning": {
+        "message": "Avertissement"
+    },
+    "Confirm": {
+        "message": "Confirmation"
+    },
+    "Loading...": {
+        "message": "Chargement..."
+    },
+    "Starting...": {
+        "message": "Démarrage..."
+    },    
+    "SAME_RDF_MODIFIED": {
+        "message": "Le RDF a été modifié, choisir OK pour rafraîchir"
+    },
+    "NO_SELECTION_ACTIVATED": {
+        "message": "Aucune sélection activée"
+    },
+    "Announcement": {
+        "message": "Annonce"
+    },
+    "announcement_content":{
+        "message": "#1.7.8#<li>Ouverture des documents dans l'onglet courant avec le bouton du milieu (see {Setting}->{Behavior}->{OPEN_IN_CURRENT_TAB})</li><li>Changement de l'ordre des RDF</li><br>#1.7.6#<li>Nouvelle solution pour le stockage des préférences pour éviter de les perdre, <b>ATTENTION : il faut d'abord reconfigurer les préférences!</b></li><li>Correction du problème du port ne changeant pas après modification dans les préférences.</li><li>Ajout d'un saut de ligne après chaque étiquette dans le fichier RDF.</li><br>#1.7.2#<li>Amélioration du cadre rouge pour le nettoyage des pages.</li><li>Amélioration du rendu de l'arbre.</li><li>Pour les utilisateurs sur Windows, hébergement d'un exécutable non compressé sur github.com, à télécharger de nouveau, pour éviter des avertissements des anti-virus.</li><li>Correction d'une page d'aide vide pour certains utilisateurs.</li><br>#1.7.0#<li>Ajout d'un outil expérimental, \"{Node Mover}\", nécessitant une mise à jour du programme backend (version à vérifier dans la page de logs). <b>ATTENTION : penser à faire une sauvegarde avant d'essayer cet outil.</b>. Merci d'indiquer si cet outil est utile.</li><br>#1.6.0#<li>Correction des certaines captures qui ne terminaient pas.</li><li>Mise à jour du programme backend, à télécharger à nouveau et à réinstaller pour bénéficier des nouvelles fonctions (moins de faux positifs comme malware et amélioration des vérifications)</li>"
+    },
+    "NODE_MOVER_TIP":{
+        "message": "Avec cet outil, vous pouvez déplacer ou copier des noeuds et leurs contenus entre deux fichiers RDF (arbres de documents), le déplacement au sein d'un fichier RDF est aussi possible."
+    },
+    "NODE_MOVER_WARN_TIP":{
+        "message": "<b>ATTENTION!!! Ceci est une fonctionalité expérimentale!</b> <br>Assurez-vous d'avoir fait une sauvegarde de toutes vos données avant d'utiliser cet outil.<br>Les actions sur les noeuds importants ne sont pas recommandées.<br> Ne pas faire de changement ailleurs alors que vous utilisez l'outil car cela peut causer des conflits."
+    },
+    "Tool":{
+        "message": "Outil de gestion"
+    },
+    "Node Mover": {
+        "message": "Gestion des noeuds"
+    },
+    "Done": {
+        "message": "Fait"
+    },
+    "STORAGE_WARN": {
+        "message": "Pour l'instant, Scrapbee utilise le stockage local pour sauvegarder les préférences, déactivez le nettoyage automatique du stockage si vous l'avez positionné."
+    },
+    "NO_SOURCE_NODE_SELECTED": {
+        "message": "Aucun noeud source sélectionné"
+    },
+    "MOVE_TO": {
+        "message": "déplacer vers la "
+    },
+    "COPY_TO": {
+        "message": "copier vers la "
+    },
+    "Left": {
+        "message": "gauche"
+    },
+    "Right": {
+        "message": "droite"
+    }
+}
