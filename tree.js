@@ -250,14 +250,17 @@ class BookTree {
         }
         items = items.sort(function(a, b){
             var v = comp(a.parentId, b.parentId)
+            v = v || comp(a.sect, b.sect);
+            v = v || (a.type == b.type ? 0 : (a.type == "seq" ? -1 : 1));
             if(v == 0){
-                v = comp(a.sect, b.sect);
-            }
-            if(v == 0){
-                v = a.type == b.type ? 0 : (a.type == "seq" ? -1 : 1);
-            }
-            if(v == 0){
-                v = a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
+                /** hack: put Far East Character behind */
+                if(a.title.length && b.title.length){
+                    var x = a.title[0], y = b.title[0];
+                    x = x.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
+                    y = y.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
+                    v = comp(x, y)
+                }
+                v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
                 v *= (asc ? 1 : -1)
             }
             return v;
