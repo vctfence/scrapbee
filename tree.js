@@ -75,22 +75,24 @@ class BookTree {
         $(document).unbind('.BookTree' + token);
         $container.prop("scrapbee_tree_token", token)
         $(document).bind("mousedown.BookTree" + token, function (e) {
-            if(!$(e.target).closest($container).length)
-                return
-            var $el = getItemNode(e.target);
-            if ($el) {
-                if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("local") || $el.hasClass("bookmark")) {
-                    self.onChooseItem && self.onChooseItem($el.attr("id"));
-                }            
-                if (e.button == 0) {
-                    e.preventDefault()
-                    $drag_item = $el;
-                    $ref_item = $el;
-                    dragging = true;
-                    t = 0;
+            if(e.target.tagName != "INPUT"){
+                if(!$(e.target).closest($container).length)
+                    return
+                var $el = getItemNode(e.target);
+                if ($el) {
+                    if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("local") || $el.hasClass("bookmark")) {
+                        self.onChooseItem && self.onChooseItem($el.attr("id"));
+                    }            
+                    if (e.button == 0) {
+                        e.preventDefault()
+                        $drag_item = $el;
+                        $ref_item = $el;
+                        dragging = true;
+                        t = 0;
+                    }
+                    $container.find(".item.focus").removeClass("focus");
+                    $el.addClass("focus");
                 }
-                $container.find(".item.focus").removeClass("focus");
-                $el.addClass("focus");
             }
         });
         $(document).bind("click.BookTree" + token, function (e) {
@@ -100,23 +102,33 @@ class BookTree {
             if (!$el || !$el.length)
                 return;
             if ($el.hasClass("folder")) {
-                self.toggleFolder($el);
+                if(e.target.tagName != "INPUT") self.toggleFolder($el);
             } else if ($el.hasClass("local") || $el.hasClass("bookmark")) {
-                if ($el.attr("disabled"))
-                    return;
-                var url = $el.attr("source");
-                var is_local = ($el.hasClass("local") && !$(e.target).hasClass("origin"));
-                if (is_local) {
-                    url = self.getItemIndexPage($el.attr("id"));
-                }
-                if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
-                    self.onOpenContent && self.onOpenContent($el.attr("id"), url, false, is_local);
-                } else {
-                    self.onOpenContent && self.onOpenContent($el.attr("id"), url, true, is_local);
+                if(e.target.tagName != "INPUT"){
+                    if ($el.attr("disabled"))
+                        return;
+                    var url = $el.attr("source");
+                    var is_local = ($el.hasClass("local") && !$(e.target).hasClass("origin"));
+                    if (is_local) {
+                        url = self.getItemIndexPage($el.attr("id"));
+                    }
+                    if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
+                        self.onOpenContent && self.onOpenContent($el.attr("id"), url, false, is_local);
+                    } else {
+                        self.onOpenContent && self.onOpenContent($el.attr("id"), url, true, is_local);
+                    }
                 }
             }
         });
         $(document).bind("mouseup.BookTree" + token, function (e) {
+            /** toggle checkboxs recursively */
+            if(e.target.tagName == "INPUT"){
+                $(e.target).parent().next(".folder-content").find("input").prop("checked", !e.target.checked)
+                if(e.target.checked){
+                    $(e.target).parents(".folder-content").prev("div").find("input").prop("checked", false)
+                }
+            }
+            /** end of item draging */
             if (!dragging) return;
             dragging = false;
             $container.find(".drag-mark").remove();
@@ -193,7 +205,7 @@ class BookTree {
                 $item.addClass("expended");
                 $item.nextAll(".folder-content:first").show();
             } else {
-                $item.removeClass("expended");
+               $item.removeClass("expended");
                 $item.nextAll(".folder-content:first").hide();
             }
         }
@@ -231,6 +243,22 @@ class BookTree {
         }
         this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
         $item.remove();
+    }
+    getChecked(level_sort=-1){
+        var self = this, buf = [];
+        this.$top_container.find(".item input[type=checkbox]:checked").each(function(i, check){
+            var $item = $(check).parent();
+            var id = $item.prop("id");
+            buf.push({
+                id: id,
+                level: $item.parents(".folder-content").length,
+                node: self.getLiNode("urn:scrapbook:item" + id)
+            });
+        });
+        buf = buf.sort(function(a, b){
+            return a.level > b.level ? level_sort : -level_sort;
+        });
+        return buf;
     }
     async sortTree(asc=true) {
         var self = this;
@@ -436,7 +464,7 @@ class BookTree {
             style = "background-image:url(" + this.translateResource(icon, this.rdf_path, id) + ");";
         }
         var bf = new NodeHTMLBuffer(
-            `<div id='${id}' class='item ${type}' title='${title}' style='${style}' source='${source}' draggable='true'><label>${label}</label>`,
+            `<div id='${id}' class='item ${type}' title='${title}' source='${source}'><input type='checkbox'/><i style='${style}'/><label>${label}</label>`,
             (type == "local" ? "<div class='origin'></div>" : "") + "</div>");
         if (is_new_node) {
             /** append to dom */
@@ -464,7 +492,7 @@ class BookTree {
     createFolder($container, id, ref_id, title, is_new_node) {
         title = $.trim(title);
         var label = title || "?";
-        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title}' draggable='true'><label>${label}</label></div>
+        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title}'><input type='checkbox'/><i/><label>${label}</label></div>
 <div class='folder-content'>`,"</div>");
         if (is_new_node) {
             var $folder = $(bf.flatten());

@@ -18,7 +18,6 @@ function initMover(){
                 loadXml(tree2.rdf, $box, 2)
             }
         }
-
     });
     $("#node-mover .tool-button").prop("disabled", true);
     $("#node-mover .tool-button").click(async function(){
