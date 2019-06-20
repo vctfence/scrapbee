@@ -14,7 +14,7 @@ html,body{
     /* background:#090; */
     /* height:100%; */
     /* width:100%; */
-     min-height: 100vh;
+    min-height: 100vh;
 }
 .main-tools{
     width:fit-content;
@@ -109,63 +109,48 @@ html,body{
 .tool-button{
     line-height:45px;
     vertical-align:middle !important;
-
     display:nowrap;
-    background:#000;
+    /* background:#000; */
     display:inline-block;
     cursor:pointer;
     width:22px;
     height:22px;
-    mask-size:22px 22px;
-}
-.tool-button.set{
-    mask-image:url(icons/settings.svg);
-}
-.tool-button.help{
-    mask-image:url(icons/help.svg);
-}
-.tool-button.reload{
-    mask-image:url(icons/reload.svg);
-}
-.tool-button.search{
-    mask-image:url(icons/search.svg);
-}
-.tool-button.open{
-    mask-image:url(icons/openfolder.svg);
-}
-.tool-button.donate{
-    mask-image:url(icons/donate.svg);
-}
-.tool-button.announcement{
-    mask-image:url(icons/bell.svg);
-}
-.tool-button.set:hover{
-    background-image:url(icons/settings.svg);
-}
-.tool-button.help:hover{
-    background-image:url(icons/help.svg);
-}
-.tool-button.reload:hover{
-    background-image:url(icons/reload.svg);
-}
-.tool-button.search:hover{
-    background-image:url(icons/search.svg);
-}
-.tool-button.open:hover{
-    background-image:url(icons/openfolder.svg);
-}
-.tool-button.donate:hover{
-    background-image:url(icons/donate.svg);
-}
-.tool-button.announcement:hover{
-    background-image:url(icons/bell.svg);
+    border-radius:11px;
 }
 .tool-button:hover{
-    background-size:22px 22px;
-    mask-repeat:no-repeat;
     background-color:#700;
-    mask-image:none;
-    border-radius:11px;
+}
+.tool-button:before{
+    width:22px;
+    height:22px;
+    content:'';
+    mask-size:22px 22px;
+    background:#070;
+    display:inline-block;
+}
+.tool-button:hover:before{
+    background:#fff;
+}
+.tool-button.set:before{
+    mask-image:url(icons/settings.svg);
+}
+.tool-button.help:before{
+    mask-image:url(icons/help.svg);
+}
+.tool-button.reload:before{
+    mask-image:url(icons/reload.svg);
+}
+.tool-button.search:before{
+    mask-image:url(icons/search.svg);
+}
+.tool-button.open:before{
+    mask-image:url(icons/openfolder.svg);
+}
+.tool-button.donate:before{
+    mask-image:url(icons/donate.svg);
+}
+.tool-button.announcement:before{
+    mask-image:url(icons/bell.svg);
 }
 .blue-button{
     background:#09c;
@@ -211,7 +196,6 @@ select{
 .drop-button{
     line-height:45px;
     vertical-align:middle !important;
-    
     border-radius: 5px;
     border: 1px solid #f00;
     display:inline-block;

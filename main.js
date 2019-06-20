@@ -200,34 +200,96 @@ function applyAppearance(){
     var origin_h = parseInt(settings.font_size) * 0.80;
     var bg_color = settings.bg_color;
     // var filter = getColorFilter("#"+settings.font_color).filter;
-    sheet.innerHTML=`
-*{color:${settings.font_color}}
-.item.local,.item.folder{color:#${settings.font_color}}
-.item.bookmark label{color:#${settings.bookmark_color}}
-.toolbar{backgroud-color:#${bg_color}}
-body{background:#${bg_color}}
-.dlg-cover{background:#${bg_color}99}
-.toolbar{border-color:#${settings.font_color};background:#${bg_color}}
-.item.separator{border-color:#${bg_color};background:#${settings.separator_color}}
-.tool-button{background:#${settings.font_color}}
-.item.local,.item.bookmark,.item.folder{000padding-left:${icon_space}px;
-background-size:${icon_h}px ${icon_h}px;font-size:${settings.font_size}px;}
-.item.local i,.item.bookmark i,.item.folder i{width:${icon_h}px;height:${icon_h}px;}
-.item.local input[type='checkbox'],.item.bookmark input[type='checkbox'],.item.folder input[type='checkbox']{
-mask-size:${icon_h}px ${icon_h}px;
-width:${icon_h}px;height:${icon_h}px;}
-.item input[type='checkbox']{background-color:#${settings.font_color};}
-.folder-content{margin-left:${item_h}px;}
-.item .origin{width:${origin_h}px;height:${origin_h}px;mask-size:${origin_h}px ${origin_h}px;background:#${settings.font_color}}
-.item{margin-top:0 !important;margin-bottom:${line_spacing}px !important}
-.simple-menu-button:{border-color:#${settings.font_color}}
-.simple-menu{background:#${bg_color};border-color:#${settings.font_color}}
-.drop-button{border-color:#${settings.font_color}}
-.drop-button .label{color:#${settings.font_color}}
-.drop-button .button{border-color:#${settings.font_color}; color:#${settings.font_color}}
-.tool-button:hover,.item.folder.focus label, .item.bookmark.focus label, .item.local.focus label,.simple-menu div:hover{
-background-color:#${settings.selection_color}}
-`
+    sheet.innerHTML = `
+*{
+  color:${settings.font_color}
+}
+.item.local,.item.folder{
+  color:#${settings.font_color}
+}
+.item.bookmark label{
+  color:#${settings.bookmark_color}
+}
+.toolbar{
+  backgroud-color:#${bg_color}
+}
+body{
+  background:#${bg_color}
+}
+.dlg-cover{
+  background:#${bg_color}99;
+}
+.toolbar{
+  border-color:#${settings.font_color};
+  background:#${bg_color}
+}
+.item.separator{
+  border-color:#${bg_color};
+  background:#${settings.separator_color}
+}
+.item.local,.item.bookmark,.item.folder{
+  000padding-left:${icon_space}px;
+  background-size:${icon_h}px ${icon_h}px;
+  font-size:${settings.font_size}px;
+}
+.item.local i,.item.bookmark i,.item.folder i{
+  width:${icon_h}px;
+  height:${icon_h}px;
+}
+.item.local input[type='checkbox'],
+.item.bookmark input[type='checkbox'],
+.item.folder input[type='checkbox']{
+  mask-size:${icon_h}px ${icon_h}px;
+  width:${icon_h}px;
+  height:${icon_h}px;
+}
+.item input[type='checkbox']{
+  background-color:#${settings.font_color};
+}
+.folder-content{
+  margin-left:${item_h}px;
+}
+.item .origin{
+  width:${origin_h}px;
+  height:${origin_h}px;
+  mask-size:${origin_h}px ${origin_h}px;
+  background:#${settings.font_color}
+}
+.item{
+  margin-top:0 !important;
+  margin-bottom:${line_spacing}px !important
+}
+.simple-menu-button{
+  border-color:#${settings.font_color}
+}
+.simple-menu{
+  background:#${bg_color};
+  border-color:#${settings.font_color}
+}
+.drop-button{
+  border-color:#${settings.font_color}
+}
+.drop-button .label{
+  color:#${settings.font_color}
+}
+.drop-button .button{
+  border-color:#${settings.font_color};
+  color:#${settings.font_color}
+}
+.item.bookmark.focus label,
+.item.local.focus label,
+.item.folder.focus label,
+.simple-menu div:hover,
+.tool-button:hover{
+  background-color:#${settings.selection_color_bg};
+  color:#${settings.selection_color_fg};
+}
+.tool-button:hover:before{
+  background-color:#${settings.selection_color_fg};
+}
+.tool-button:before{
+  background-color:#${settings.font_color};
+}`
     document.body.appendChild(sheet);
 }
 settings.onchange=function(key, value){

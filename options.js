@@ -93,7 +93,8 @@ ${FILE_I18N} <input type="text" name="value"/> \
             settings.set('font_color', $("input[name=font_color]").val().replace("#", ""), true);
             settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""), true);
             settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""), true);
-            settings.set('selection_color', $("input[name=selection_color]").val().replace("#", ""), true);
+            settings.set('selection_color_bg', $("input[name=selection_color_bg]").val().replace("#", ""), true);
+            settings.set('selection_color_fg', $("input[name=selection_color_fg]").val().replace("#", ""), true);
             var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
             settings.set('font_size', size, true);
             settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
@@ -122,7 +123,8 @@ ${FILE_I18N} <input type="text" name="value"/> \
     $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
     $("input[name=line_spacing]").val(settings.line_spacing).trigger("input");
     $("input[name=backend_port]").val(settings.backend_port);
-    $("input[name=selection_color]").val(settings.selection_color);
+    $("input[name=selection_color_bg]").val(settings.selection_color_bg);
+    $("input[name=selection_color_fg]").val(settings.selection_color_fg);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")
     if(settings.backend_path){
         $("#txtBackendPath").show();
