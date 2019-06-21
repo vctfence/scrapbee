@@ -394,9 +394,9 @@ class BookTree {
     updateItemIcon($item, icon) {
         var id = $item.attr("id");
         if(icon){
-            $item.css("background-image", "url(" + this.translateResource(icon, this.rdf_path, id) + ")");
+            $item.find("i").css("background-image", "url(" + this.translateResource(icon, this.rdf_path, id) + ")");
         }else{
-            $item[0].style.removeProperty("background-image");
+            $item[0].find("i")[0].style.removeProperty("background-image");
         }
         var node = this.getDescNode("urn:scrapbook:item" + id);
         if (node) node.setAttributeNS(this.MAIN_NS, "icon", icon);
@@ -615,7 +615,6 @@ class BookTree {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
         if (seq_node) {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
-            var nod=node
             node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
             if (ref_id) {
                 var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
