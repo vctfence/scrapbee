@@ -160,6 +160,12 @@
     "SELECTED_ITEM": {
         "message": "Selected Item"
     },
+    "FOCUSED_ITEM_BG_COLOR": {
+        "message": "Focused Item BG Golor"
+    },
+    "FOCUSED_ITEM_FG_COLOR": {
+        "message": "Focused Item FG Golor"
+    },
     "FONT_SIZE": {
         "message": "Font Size"
     },

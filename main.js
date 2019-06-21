@@ -281,11 +281,11 @@ body{
 .item.folder.focus label,
 .simple-menu div:hover,
 .tool-button:hover{
-  background-color:#${settings.selection_color_bg};
-  color:#${settings.selection_color_fg};
+  background-color:#${settings.focused_color_bg};
+  color:#${settings.focused_color_fg};
 }
 .tool-button:hover:before{
-  background-color:#${settings.selection_color_fg};
+  background-color:#${settings.focused_color_fg};
 }
 .tool-button:before{
   background-color:#${settings.font_color};

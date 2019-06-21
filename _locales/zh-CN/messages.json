@@ -160,6 +160,12 @@
     "SELECTED_ITEM": {
         "message": "选中项"
     },
+    "FOCUSED_ITEM_BG_COLOR": {
+        "message": "焦点背景色"
+    },
+    "FOCUSED_ITEM_FG_COLOR": {
+        "message": "焦点前景色"
+    },
     "ENTITY_SIZE": {
         "message": "条目大小"
     },
