@@ -2,6 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
+import {isElementInViewport} from "./utils.js"
 
 import {
     EVERYTHING,
@@ -515,7 +516,11 @@ window.onload = function () {
                     loadShelves(context, tree).then(() => {
                         tree._jstree.deselect_all(true);
                         tree._jstree.select_node(request.node.id);
-                        document.getElementById(request.node.id.toString()).scrollIntoView();
+                        let node = document.getElementById(request.node.id.toString());
+                        if (!isElementInViewport(node)) {
+                            node.scrollIntoView();
+                            $("#treeview").scrollLeft(0);
+                        }
                     });
                 });
 
@@ -527,7 +532,11 @@ window.onload = function () {
                 loadShelves(context, tree).then(() => {
                     tree._jstree.deselect_all(true);
                     tree._jstree.select_node(request.node.id);
-                    document.getElementById(request.node.id.toString()).scrollIntoView();
+                    let node = document.getElementById(request.node.id.toString());
+                    if (!isElementInViewport(node)) {
+                        node.scrollIntoView();
+                        $("#treeview").scrollLeft(0);
+                    }
                 });
             });
         }
@@ -563,7 +572,12 @@ window.onload = function () {
                                         tree._jstree.open_node(node);
                                         tree._jstree.deselect_all();
                                         tree._jstree.select_node(node);
-                                        document.getElementById(request.node.id.toString()).scrollIntoView();
+
+                                        node = document.getElementById(request.node.id.toString());
+                                        if (!isElementInViewport(node)) {
+                                            node.scrollIntoView();
+                                            $("#treeview").scrollLeft(0);
+                                        }
                                     }
                                 });
                             });

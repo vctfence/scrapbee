@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Scrapyard",
-    "version": "0.1.1",
+    "version": "0.1.3",
     "description": "__MSG_extensionDescription__",
     "homepage_url": "https://gchristensen.github.io/scrapyard/",
     "default_locale": "en",
