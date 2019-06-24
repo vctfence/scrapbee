@@ -122,7 +122,7 @@ class BookTree {
         });
         $(document).bind("mouseup.BookTree" + token, function (e) {
             /** toggle checkboxs recursively */
-            if(e.target.tagName == "INPUT"){
+            if(e.target.tagName == "INPUT" && e.button == 0){
                 $(e.target).parent().next(".folder-content").find("input").prop("checked", !e.target.checked)
                 if(e.target.checked){
                     $(e.target).parents(".folder-content").prev("div").find("input").prop("checked", false)
