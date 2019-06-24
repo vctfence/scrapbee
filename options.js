@@ -28,6 +28,28 @@ window.onload=async function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
+    /** export / import */
+    $("input[name='export']").click(async function(){
+        var json = await settings.getJson();
+        downloadText(JSON.stringify(json, null, 2), "scrapbee_configure.json", null, false)
+    });
+    $("input[name='import']").click(async function(){
+        document.getElementById("import_file").onchange=function(){
+            var fileToLoad = document.getElementById("import_file").files[0];
+            var fileReader = new FileReader();
+            fileReader.onload = function(fileLoadedEvent){
+                var textFromFileLoaded = fileLoadedEvent.target.result;
+                try{
+                    var json = JSON.parse(textFromFileLoaded)
+                    settings.loadJson(json)
+                }catch(e){
+                    alert("Invalid configuration file".translate())
+                }
+            };
+            fileReader.readAsText(fileToLoad, "UTF-8");
+        }
+        document.getElementById("import_file").click();
+    });
     /** mover */
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
         if(version=='1.7.0')
@@ -220,14 +242,14 @@ pause`
             $("#txtBackendPath").html("error: " + error);
         });
     }
-    function downloadText(text, filename, callback){
+    function downloadText(text, filename, callback, saveas=false){
         var blob = new Blob([text], {type : 'text/plain'});
         var objectURL = URL.createObjectURL(blob);
         browser.downloads.download({
             url:objectURL,
             filename: filename,
             conflictAction: "overwrite",
-            saveAs: false
+            saveAs: true
         }).then(function(id){
             var fn = function(downloadDelta){
                 if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){

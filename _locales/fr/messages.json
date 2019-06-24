@@ -285,5 +285,14 @@
     },
     "Right": {
         "message": "droite"
+    },
+    "Export": {
+        "message": "Export"
+    },
+    "Import": {
+        "message": "Import"
+    },    
+    "INVALID_CONFIGURATION_FILE":{
+        "message": "Fichier de configuration invalide"
     }
 }

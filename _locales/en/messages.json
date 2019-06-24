@@ -303,5 +303,14 @@
     },
     "ConfirmSorting": {
         "message": "This process can not be reverted, proceed?"
+    },
+    "Export": {
+        "message": "Export"
+    },
+    "Import": {
+        "message": "Import"
+    },
+    "INVALID_CONFIGURATION_FILE":{
+        "message": "Invalid configuration file"
     }
 }

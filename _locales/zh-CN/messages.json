@@ -306,5 +306,14 @@
     },
     "ConfirmSorting": {
         "message": "本操作不可逆，确定要继续吗？"
+    },
+    "Export": {
+        "message": "导出"
+    },
+    "Import": {
+        "message": "导入"
+    },
+    "INVALID_CONFIGURATION_FILE":{
+        "message": "无效配置文件"
     }
 }

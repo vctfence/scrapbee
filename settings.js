@@ -20,11 +20,24 @@ settings.loadFromStorage=async function(){
         Object.keys(all).forEach(function (key) {
             settings.set(key, all[key]);
         });
-    })
+    });
+}
+settings.loadJson=function(json){
+    Object.keys(json).forEach(function(key) {
+        // console.log(key)
+        settings.set(key, json[key], true);
+    });
+}
+settings.getJson=async function(){
+    var json;
+    await browser.storage.local.get().then(function(all){
+        json = all;
+    });
+    return json;
 }
 settings.getRdfPaths=function(){
     var paths = (settings.rdf_paths||"").split("\n");
-    paths.pop()
+    paths.pop();
     return paths;
 }
 settings.getRdfPathNames=function(){
