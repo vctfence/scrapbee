@@ -106,7 +106,7 @@ function initMover(){
     function loadXml(rdf, $box, treeId){
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
-	    var currTree = new BookTree(r.target.response, rdf)
+	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: "on"})
             if(treeId == 1)
                 tree1 = currTree
             else if(treeId == 2)

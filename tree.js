@@ -29,8 +29,9 @@ class NodeHTMLBuffer {
     }
 }
 class BookTree {
-    constructor(xmlString, rdf_full_file) {
+    constructor(xmlString, rdf_full_file, options={}) {
         var self = this;
+        this.options = options;
         this.rdf = rdf_full_file;
         this.rdf_path = rdf_full_file.replace(/[^\/\\]*$/, "");
         this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
@@ -344,6 +345,9 @@ class BookTree {
             log.error(e.message)
         }
         this.listenUserEvents($container);
+        if(this.options.checkboxes != "on"){
+            this.$top_container.find(".item input").hide();
+        }
     }
     async iterateLiNodes(fn, nodes=null) {
         var self = this;
