@@ -1,4 +1,4 @@
-var settings={};
+var settings={fields:{}};
 settings.get=function(k){
     return this[k];
 }
@@ -11,6 +11,7 @@ settings.set=function(k, v, commit=false){
         }
     }
     settings[k] = v;
+    settings.fields[k] = v;
     if(k == "backend_port"){
 	settings["backend_url"] = "http://localhost:" + settings.backend_port + "/";
     }
@@ -24,16 +25,16 @@ settings.loadFromStorage=async function(){
 }
 settings.loadJson=function(json){
     Object.keys(json).forEach(function(key) {
-        // console.log(key)
         settings.set(key, json[key], true);
     });
 }
 settings.getJson=async function(){
-    var json;
-    await browser.storage.local.get().then(function(all){
-        json = all;
-    });
-    return json;
+    // var json;
+    // await browser.storage.local.get().then(function(all){
+    //     json = all;
+    // });
+    // return json;
+    return settings.fields;
 }
 settings.getRdfPaths=function(){
     var paths = (settings.rdf_paths||"").split("\n");
@@ -61,14 +62,6 @@ browser.storage.onChanged.addListener(function(changes, area){
     }
 });
 /* =================================================== */
-var platform = "linux";
-if (navigator.platform == "Win64" || navigator.platform == "Win32") {
-    platform = "windows";
-}else if(/Mac.+/.test(navigator.platform)){
-    platform = "mac";
-}
-// settings.set('debug', true, false);
-settings.set('fs_path_separator', platform=='windows'?'\\':'/');
 settings.set('backend_port', "9900");
 settings.set('bg_color', 'fff');
 settings.set('font_color', '000');
@@ -78,10 +71,23 @@ settings.set('focused_color_fg', 'fff');
 settings.set('focused_color_bg', '07a');
 settings.set('font_size', '12');
 settings.set('line_spacing', '5');
-settings.set('platform', platform);
-settings.set('id', browser.runtime.id);
-settings.set('extension_id', browser.i18n.getMessage("@@extension_id"));
 settings.set('open_in_current_tab', "off");
-settings.set('announcement_showed', "");
 // settings.loadFromStorage();
-export {settings}
+/* =================================================== */
+var global={}
+var platform = "linux";
+if (navigator.platform == "Win64" || navigator.platform == "Win32") {
+    platform = "windows";
+}else if(/Mac.+/.test(navigator.platform)){
+    platform = "mac";
+}
+global.set=function(k, v){
+    global[k] = v;
+}
+// global.set('debug', true, false);
+global.set('fs_path_separator', platform=='windows'?'\\':'/');
+global.set('platform', platform);
+global.set('id', browser.runtime.id);
+global.set('extension_id', browser.i18n.getMessage("@@extension_id"));
+global.set('announcement_showed', "");
+export {settings, global}

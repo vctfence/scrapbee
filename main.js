@@ -1,5 +1,5 @@
 import {BookTree} from "./tree.js";
-import {settings} from "./settings.js"
+import {settings, global} from "./settings.js"
 import {scriptsAllowed, showNotification, getColorFilter, genItemId} from "./utils.js"
 import {log} from "./message.js"
 import {SimpleDropdown} from "./control.js"
@@ -368,7 +368,7 @@ window.onload=async function(){
     var ann = browser.i18n.getMessage("announcement_content")
     var m = ann.match(/#(\d+\.\d+\.\d+)#/)
     if(m){
-        var a = getVersionParts(settings.announcement_showed)
+        var a = getVersionParts(global.announcement_showed)
         var b = getVersionParts(m[1])
         if(gtv(b, a)){
             $("#announcement-red-dot").show()

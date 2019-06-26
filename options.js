@@ -1,4 +1,4 @@
-import {settings} from "./settings.js"
+import {settings, global} from "./settings.js"
 import {log} from "./message.js"
 import {initMover} from "./tools.js"
 
@@ -170,16 +170,16 @@ ${FILE_I18N} <input type="text" name="value"/> \
     $("#donate").click(()=>window.open('http://PayPal.me/VFence', '_blank'));
     $("#btnDownloadBackend").click(function(){
         function Next(){
-            const extRoot = "moz-extension://" + settings.extension_id;
+            const extRoot = "moz-extension://" + global.extension_id;
             // var binDir = extRoot + "/bin/"
             var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/" //scrapbee_backend.exe
             var src_exec = "scrapbee_backend";
-            if(settings.platform=="mac")
+            if(global.platform=="mac")
                 src_exec += "_mac"
-            else if(settings.platform=="linux")
+            else if(global.platform=="linux")
                 src_exec += "_lnx"
-            src_exec += settings.platform=="windows"?".exe":"";
-            var dest_exec = "scrapbee_backend" + (settings.platform=="windows"?".exe":"");
+            src_exec += global.platform=="windows"?".exe":"";
+            var dest_exec = "scrapbee_backend" + (global.platform=="windows"?".exe":"");
             /** download backend executable */
             downloadFile(binDir + src_exec, "scrapbee/" + dest_exec, function(id){
                 /*** query really filename of backend executable */
@@ -201,9 +201,9 @@ ${FILE_I18N} <input type="text" name="value"/> \
                             }
                         }
                         /** download installation script */
-                        if(settings.platform=="windows")
+                        if(global.platform=="windows")
                             downloadText(installBat(download_path), "scrapbee/install.bat", done);
-                        else if(settings.platform=="mac")
+                        else if(global.platform=="mac")
                             downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh", done);
                         else
                             downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh", done);

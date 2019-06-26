@@ -1,4 +1,4 @@
-import {settings} from "./settings.js"
+import {settings, global} from "./settings.js"
 import {log} from "./message.js"
 import {showNotification} from "./utils.js"
 
