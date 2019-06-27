@@ -1,6 +1,6 @@
 import {settings} from "./settings.js";
 import {log} from "./message.js"
-import {randRange} from "./utils.js"
+import {randRange, comp} from "./utils.js"
 
 class NodeHTMLBuffer {
     constructor(start, end) {
@@ -46,6 +46,12 @@ class BookTree {
             return self.namespaces[prefix] || null;
         }
         this.cacheXmlNode();
+    }
+    showCheckBoxes(visible){
+        if(visible)
+            this.$top_container.find(".item input").show();
+        else
+            this.$top_container.find(".item input").hide();
     }
     translateResource(r, rdf_path, id) {
         return r.replace(
@@ -245,19 +251,20 @@ class BookTree {
         this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
         $item.remove();
     }
-    getChecked(level_sort=-1){
+    getChecked(sort=-1){
         var self = this, buf = [];
-        this.$top_container.find(".item input[type=checkbox]:checked").each(function(i, check){
+        this.$top_container.find(".item input[type=checkbox]:checked").toArray().forEach(function(check){
             var $item = $(check).parent();
             var id = $item.prop("id");
+            var title = $item.prop("title")
             buf.push({
-                id: id,
-                level: $item.parents(".folder-content").length,
-                node: self.getLiNode("urn:scrapbook:item" + id)
+                title:title,
+                node: self.getLiNode("urn:scrapbook:item" + id),
+                checkLevel: $item.parents(".folder-content").prev("div").find("input[type=checkbox]:checked").length
             });
         });
         buf = buf.sort(function(a, b){
-            return a.level > b.level ? level_sort : -level_sort;
+            return sort * comp(a.checkLevel, b.checkLevel);
         });
         return buf;
     }
@@ -274,9 +281,6 @@ class BookTree {
             items.push({id: json.id, title, parentId, sect: sects[parentId], node, type: json.nodeType})
             sects[parentId] += inc;
         });
-        function comp(a, b){
-            return a < b ? -1 : (a > b ? 1 : 0);
-        }
         items = items.sort(function(a, b){
             var v = comp(a.parentId, b.parentId)
             v = v || comp(a.sect, b.sect);
@@ -501,8 +505,12 @@ class BookTree {
         if (is_new_node) {
             var $folder = $(bf.flatten());
             if (ref_id) {
+                
                 var $ref = this.getItemById(ref_id);
-                if($ref.closest($container).length > 0){
+                if($ref.next(".folder-content").length)
+                    $ref = $ref.next(".folder-content");
+                    
+                if($ref.closest($container).length > 0){ /** ensure in container */
                     $folder.insertAfter($ref);
                 }else{
                     $folder.appendTo($container);

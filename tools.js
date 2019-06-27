@@ -4,6 +4,12 @@ import {SimpleDropdown} from "./control.js"
 import {genItemId} from "./utils.js"
 
 function initMover(){
+    $("#Multi-Select").change(function(){
+        if(tree1)
+            tree1.showCheckBoxes(this.checked)
+        if(tree2)
+            tree2.showCheckBoxes(this.checked)
+    });
     var saveingLocked = false;
     var tree1, tree2;
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -28,12 +34,7 @@ function initMover(){
         /** src node */
         var $foc = srcTree.getFocusedItem();
         var id = $foc.attr("id");
-        if(!id) return alert("{NO_SOURCE_NODE_SELECTED}".translate());
-        var liXmlNode = srcTree.getItemXmlNode(id);
-        var [type, introNode] = srcTree.getLiNodeType(liXmlNode)
-        /** show  waiting dialog */
-        var waitingDlg = new DialogWaiting();
-        waitingDlg.show();
+        // var [type, introNode] = srcTree.getLiNodeType(liXmlNode)
         /** get rdf item id (none folder)*/
         var $f = destTree.getFocusedItem(), ref_id;
         if($f.length && !$f.hasClass("folder")){
@@ -42,6 +43,24 @@ function initMover(){
         /** process src nodes */
         saveingLocked = true;
         var parents = [destTree.getCurrContainer()];
+        var topNodes = [];
+        var mode_multi = false;
+        if($("#Multi-Select").is(":checked")){
+            srcTree.getChecked(1).forEach(function(item){
+                if(item.checkLevel == 0)
+                    topNodes.push(item.node);
+            });
+            if(!topNodes.length)
+                return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
+        }else{
+            if(!id)
+                return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
+            var liXmlNode = srcTree.getItemXmlNode(id);
+            topNodes.push(liXmlNode);
+        }
+        /** show  waiting dialog */
+        var waitingDlg = new DialogWaiting();
+        waitingDlg.show();
         await srcTree.iterateLiNodes(function(nodeJson){
             return new Promise((resolve, reject) => {
                 var $dest = parents[nodeJson.level];
@@ -65,8 +84,9 @@ function initMover(){
                     destTree.createSeparator($dest, id, rid, true);
                     resolve();
                 }
+                if(nodeJson.level == 0) ref_id = id;
             });
-        }, [liXmlNode]);
+        }, topNodes);
         /** saving changes */
         saveingLocked = false;
         destTree.onXmlChanged();
@@ -106,7 +126,7 @@ function initMover(){
     function loadXml(rdf, $box, treeId){
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
-	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: "on"})
+	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: "off"})
             if(treeId == 1)
                 tree1 = currTree
             else if(treeId == 2)

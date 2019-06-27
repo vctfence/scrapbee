@@ -296,5 +296,9 @@ function genItemId(){
     return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
 }
 
-export{scriptsAllowed, showNotification, getColorFilter, randRange, genItemId};
+function comp(a, b){
+    return a < b ? -1 : (a > b ? 1 : 0);
+}
+
+export{scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp};
 
