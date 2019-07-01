@@ -40,6 +40,7 @@
     mask-size:12px 12px;
     background:#eee;
     background-size: 100% 100% !important;
+    display:none;
 }
 .item input[type='checkbox']:checked{
     mask-image:url(icons/checkbox-on.svg);
