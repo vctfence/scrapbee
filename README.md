@@ -53,7 +53,3 @@ groundbreaking experiments. Please, backup your data often.
 * ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
 * ~~Live link auto checker~~ [DONE]
 * Self-hosted cloud-synchronization backend (possibly with bookmark access through the web)
-
-### In Action
-
-![screen](/media/screen.gif?raw=true)
