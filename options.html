@@ -172,7 +172,6 @@
       </div>
       <div id="div-help" class="div-area" style="display:none;"></div>
       <div id="div-tool" class="div-area" style="display:none;position:relative;">
-        
         <div style="text-align:left;padding-left:15px;position:absolute;top:0;width:100%">
           <span class="tab-button">{Node Mover}</span>
           <i class="help-mark"></i>
@@ -184,8 +183,8 @@
             {NODE_MOVER_WARN_TIP}
           </div>
         </div>
-        <div id="some_id" class="some_class" style="text-align:right;margin-top:10px;">
-          <label><input type="checkbox" name="" value="" id="Multi-Select"/> Multi-Select</label>
+        <div id="some_id" class="some_class" style="text-align:right;margin-top:10px;padding-right:30px;">
+          <label><input type="checkbox" id="multi-select"/>{MULTI_SELECT}</label>
         </div> 
         <!-- tool1 -->
         <div style="" id="node-mover">
@@ -196,6 +195,10 @@
               </div>
               <div class="folder-content root" id="tree1"></div>
               <div class="path-box"></div>
+              <div class="toolbar">
+                <img src="icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
+                <img src="icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
+              </div>
             </div>
           </div>
           <div class="right-box">
@@ -205,9 +208,13 @@
               </div>
               <div id="tree2" class="folder-content root"></div>
               <div class="path-box"></div>
+              <div class="toolbar">
+                <img src="icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
+                <img src="icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
+              </div>
             </div>
           </div>
-          <div class="toolbar">
+          <div class="center-toolbar">
             <br /><br />
             <input type="button" title="{MOVE_TO}{Right}" value=">" class="tool-button rightward move"/>
             <input type="button" title="{COPY_TO}{Right}" value=">>" class="tool-button rightward copy"/>

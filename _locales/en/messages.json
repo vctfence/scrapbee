@@ -312,5 +312,11 @@
     },
     "INVALID_CONFIGURATION_FILE":{
         "message": "Invalid configuration file"
+    },
+    "UNCHECK_ALL": {
+        "message": "Uncheck all"
+    },
+    "MULTI_SELECT": {
+        "message": "Multiple Selection"
     }
 }

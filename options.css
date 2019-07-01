@@ -22,6 +22,9 @@ body{
     height: 100%;
     width:100%;
 }
+input{
+    vertical-align:middle;
+}
 #div-page{
     display:table-row;
     background:#999;
@@ -257,18 +260,6 @@ h2{
     margin:auto;
     margin-bottom:5px;
 }
-#node-mover .toolbar{
-    position:absolute;
-    left:50%;
-    top:0;
-    bottom:0;
-    width:40px;
-    box-sizing:border-box;
-    margin-left:-20px;
-    text-align:center;
-    border:1px solid #555;
-    border-width: 0 1px 0 1px;
-}
 #node-mover .left-box{
     position:absolute;
     left:0;
@@ -302,9 +293,18 @@ h2{
     left:0;
     top:58px;
     right:0;
-    bottom:0px;
+    bottom:30px;
     box-sizing:border-box;
     padding:10px;
+}
+#node-mover .toolbar{
+    left:0;
+    height:30px;
+    right:0;
+    bottom:0px;
+    position:absolute;
+    box-sizing:border-box;
+    padding:7px;
 }
 #node-mover .path-box{
     left:0;
@@ -337,6 +337,21 @@ h2{
     overflow:hidden;
     text-align:left;
     white-space:nowrap;
+}
+#node-mover .center-toolbar{
+    position:absolute;
+    left:50%;
+    top:0;
+    bottom:0;
+    width:40px;
+    box-sizing:border-box;
+    margin-left:-20px;
+    text-align:center;
+    border:1px solid #555;
+    border-width: 0 1px 0 1px;
+}
+#node-mover .toolbar img{
+    cursor:pointer;
 }
 /* */
 .drop-box{

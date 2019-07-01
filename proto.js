@@ -70,7 +70,9 @@ String.prototype.fillData = function(data) {
             return r;
         });
     }
-    return s;
+    return s.replace(/\&\#(\d+)\;/g, function(a, b){
+        return String.fromCharCode(parseInt(b));
+    });
 }
 String.prototype.shorten = function storten(l){
     if(this.length > l){

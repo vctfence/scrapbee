@@ -36,7 +36,7 @@ class BookTree {
         this.rdf_path = rdf_full_file.replace(/[^\/\\]*$/, "");
         this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
         this.namespaces = this.getNameSpaces();
-        Object.keys(this.namespaces).forEach(function (k) {
+        Object.keys(this.namespaces).forEach(function(k) {
             var v = self.namespaces[k];
             if (/^NS\d+$/.test(k))
                 self.MAIN_NS = v;
@@ -47,11 +47,14 @@ class BookTree {
         }
         this.cacheXmlNode();
     }
+    unCheckAll(){
+        this.$top_container.find(".item input[type='checkbox']").prop('checked', false);
+    }
     showCheckBoxes(visible){
         if(visible)
-            this.$top_container.find(".item input").show();
+            this.$top_container.find(".item input[type='checkbox']").css('display', 'inline-block');
         else
-            this.$top_container.find(".item input").hide();
+            this.$top_container.find(".item input[type='checkbox']").css('display', 'none');
     }
     translateResource(r, rdf_path, id) {
         return r.replace(
@@ -251,7 +254,7 @@ class BookTree {
         this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
         $item.remove();
     }
-    getChecked(sort=-1){
+    getCheckedItemsInfo(sort=-1){
         var self = this, buf = [];
         this.$top_container.find(".item input[type=checkbox]:checked").toArray().forEach(function(check){
             var $item = $(check).parent();
@@ -260,7 +263,8 @@ class BookTree {
             buf.push({
                 title:title,
                 node: self.getLiNode("urn:scrapbook:item" + id),
-                checkLevel: $item.parents(".folder-content").prev("div").find("input[type=checkbox]:checked").length
+                checkLevel: $item.parents(".folder-content").prev("div").find("input[type=checkbox]:checked").length,
+                domElement: $item[0]
             });
         });
         buf = buf.sort(function(a, b){
@@ -349,9 +353,7 @@ class BookTree {
             log.error(e.message)
         }
         this.listenUserEvents($container);
-        if(this.options.checkboxes != "on"){
-            this.$top_container.find(".item input").hide();
-        }
+        this.showCheckBoxes(this.options.checkboxes == "on");
     }
     async iterateLiNodes(fn, nodes=null) {
         var self = this;

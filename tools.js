@@ -4,7 +4,7 @@ import {SimpleDropdown} from "./control.js"
 import {genItemId} from "./utils.js"
 
 function initMover(){
-    $("#Multi-Select").change(function(){
+    $("#multi-select").change(function(){
         if(tree1)
             tree1.showCheckBoxes(this.checked)
         if(tree2)
@@ -24,6 +24,38 @@ function initMover(){
                 loadXml(tree2.rdf, $box, 2)
             }
         }
+    });
+    $(".uncheckall-button").each(function(i){
+        $(this).click(function(){
+            var tree = i == 0 ? tree1 : tree2;
+            tree.unCheckAll();
+        });
+    });
+    $(".delete-button").each(function(i){
+        $(this).click(function(){
+            var tree = i == 0 ? tree1 : tree2;
+            var proceed = false;
+            function cfm(){
+                proceed = proceed || confirm("{ConfirmDeleteItem}".translate());
+                return proceed;
+            }
+            if($("#multi-select").is(":checked")){
+                tree.getCheckedItemsInfo(1).every(function(info){
+                    if(!cfm()){
+                        return false;
+                    }
+                    tree.removeItem($(info.domElement));
+                });
+            }else{
+                var $foc = tree.getFocusedItem();
+                if($foc.length){
+                    if(cfm())tree.removeItem($foc);
+                }
+            }
+            if(proceed){
+                tree.onXmlChanged(changed);
+            }
+        });
     });
     $("#node-mover .tool-button").prop("disabled", true);
     $("#node-mover .tool-button").click(async function(){
@@ -45,8 +77,8 @@ function initMover(){
         var parents = [destTree.getCurrContainer()];
         var topNodes = [];
         var mode_multi = false;
-        if($("#Multi-Select").is(":checked")){
-            srcTree.getChecked(1).forEach(function(item){
+        if($("#multi-select").is(":checked")){
+            srcTree.getCheckedItemsInfo(1).forEach(function(item){
                 if(item.checkLevel == 0)
                     topNodes.push(item.node);
             });
@@ -126,7 +158,8 @@ function initMover(){
     function loadXml(rdf, $box, treeId){
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
-	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: "off"})
+            var checkboxes = $("#multi-select").is(":checked") ? "on" : "off";
+	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: checkboxes})
             if(treeId == 1)
                 tree1 = currTree
             else if(treeId == 2)

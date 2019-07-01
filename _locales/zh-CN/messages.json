@@ -315,5 +315,11 @@
     },
     "INVALID_CONFIGURATION_FILE":{
         "message": "无效配置文件"
+    },
+    "UNCHECK_ALL": {
+        "message": "清除复选"
+    },
+    "MULTI_SELECT": {
+        "message": "多选"
     }
 }
