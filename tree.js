@@ -51,6 +51,7 @@ class BookTree {
         this.$top_container.find(".item input[type='checkbox']").prop('checked', false);
     }
     showCheckBoxes(visible){
+        this.options.checkboxes = visible;
         if(visible)
             this.$top_container.find(".item input[type='checkbox']").css('display', 'inline-block');
         else
@@ -215,7 +216,7 @@ class BookTree {
                 $item.addClass("expended");
                 $item.nextAll(".folder-content:first").show();
             } else {
-               $item.removeClass("expended");
+                $item.removeClass("expended");
                 $item.nextAll(".folder-content:first").hide();
             }
         }
@@ -348,12 +349,13 @@ class BookTree {
             });
             var html = buffers["urn:scrapbook:root"].flatten();
             $container.html(html);
+            this.showCheckBoxes(this.options.checkboxes);
             this.rendered = true;
         }catch(e){
             log.error(e.message)
         }
         this.listenUserEvents($container);
-        this.showCheckBoxes(this.options.checkboxes == "on");
+        this.showCheckBoxes(this.options.checkboxes);
     }
     async iterateLiNodes(fn, nodes=null) {
         var self = this;
@@ -496,7 +498,8 @@ class BookTree {
             /** add new node to doc */    
             var folder_id = this.getContainerFolderId($container);
             this.createScrapXml(folder_id, type, id, ref_id, title, source, icon);
-        }
+            this.showCheckBoxes(this.options.checkboxes);
+        }        
         return bf;
     }
     createFolder($container, id, ref_id, title, is_new_node) {
@@ -507,11 +510,9 @@ class BookTree {
         if (is_new_node) {
             var $folder = $(bf.flatten());
             if (ref_id) {
-                
                 var $ref = this.getItemById(ref_id);
                 if($ref.next(".folder-content").length)
                     $ref = $ref.next(".folder-content");
-                    
                 if($ref.closest($container).length > 0){ /** ensure in container */
                     $folder.insertAfter($ref);
                 }else{
@@ -522,6 +523,7 @@ class BookTree {
             }
             var folder_id = this.getContainerFolderId($container);
             this.createFolderXml(folder_id, id, ref_id, title);
+            this.showCheckBoxes(this.options.checkboxes);
         }        
         return bf;
     }

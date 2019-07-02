@@ -41,10 +41,11 @@ function initMover(){
             }
             if($("#multi-select").is(":checked")){
                 tree.getCheckedItemsInfo(1).every(function(info){
-                    if(!cfm()){
-                        return false;
+                    if(info.checkLevel == 0){
+                        if(!cfm())return false;
+                        tree.removeItem($(info.domElement));
                     }
-                    tree.removeItem($(info.domElement));
+                    return true;
                 });
             }else{
                 var $foc = tree.getFocusedItem();
@@ -53,7 +54,7 @@ function initMover(){
                 }
             }
             if(proceed){
-                tree.onXmlChanged(changed);
+                tree.onXmlChanged();
             }
         });
     });
@@ -158,8 +159,7 @@ function initMover(){
     function loadXml(rdf, $box, treeId){
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
-            var checkboxes = $("#multi-select").is(":checked") ? "on" : "off";
-	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: checkboxes})
+	    var currTree = new BookTree(r.target.response, rdf, {checkboxes: $("#multi-select").is(":checked")})
             if(treeId == 1)
                 tree1 = currTree
             else if(treeId == 2)
