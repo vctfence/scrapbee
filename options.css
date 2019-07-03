@@ -450,3 +450,15 @@ h2{
     cursor:pointer;
     margin-left:1px;
 }
+.log-line.info{
+    color:#7d7;
+}
+.log-line.error{
+    color:#f79;
+}
+.log-line.warning{
+    color:#f90;
+}
+.log-line.debug{
+    color:#0ff;
+}

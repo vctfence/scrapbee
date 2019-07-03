@@ -278,7 +278,8 @@ pause`
         if(request.type == 'LOGGING'){
             var b = Math.abs($div.scrollTop() - ($div[0].scrollHeight - $div.height())) < 100;
             var item = request.log;
-            $("<div/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+            var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+            $line.addClass(item.logtype);
             if(b)
                 $div.scrollTop($div[0].scrollHeight - $div.height());
         }else if(request.type == "BACKEND_SERVICE_STARTED"){
@@ -289,7 +290,8 @@ pause`
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {
         var $div = $("#div-log .console");
         response.logs.forEach(function(item){
-            $("<div/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+            var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+            $line.addClass(item.logtype);
         })
     });
 }
