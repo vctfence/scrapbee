@@ -18,6 +18,88 @@ function getAsync(file) {
     xhttp.send();
     return r;
 }
+function createRdfField(k, v){
+    var NAME_I18N = browser.i18n.getMessage("Name");
+    var FILE_I18N = browser.i18n.getMessage("File");
+    var $el = $(`<div class='rdf-row'>${NAME_I18N} <input type="text" name="name"/>
+${FILE_I18N} <input type="text" name="value"/>
+<input type="button" name="move" value="↑" />
+<input type="button" name="move" value="↓" />
+<input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
+    $el.find("input[name=name]").val(k);
+    $el.find("input[name=value]").val(v);
+    $el.find("input[name=del]").click(function(){
+        $(this).parent().remove();
+    });
+    $el.find("input[name=move]").click(function(){
+        var up = (this.value == '↑');
+        var $you;
+        var $p = $(this).parent();
+        if(up){
+            $you = $p.prev(".rdf-row");
+            if($you)$you.before($p);
+        }else{
+            $you = $p.next(".rdf-row");
+            if($you)$you.after($p);
+        }
+    });
+}
+function showConfiguration(){
+    $("#rdf-area").html("");
+    $("input[name='save']").click(function(){
+        try{
+            var names=[];
+            var paths=[];
+            $("#rdf-area div input:first-child").each(function(){
+                var t = $.trim(this.value);
+                names.push(t+"\n");
+                paths.push($.trim($(this).next("input").val())+"\n");
+            });
+            settings.set('rdf_paths', paths.join(""), true);
+            settings.set('rdf_path_names', names.join(""), true);
+            settings.set('backend_port', $("input[name=backend_port]").val(), true);
+            settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""), true);
+            settings.set('font_color', $("input[name=font_color]").val().replace("#", ""), true);
+            settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""), true);
+            settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""), true);
+            settings.set('focused_bg_color', $("input[name=focused_bg_color]").val().replace("#", ""), true);
+            settings.set('focused_fg_color', $("input[name=focused_fg_color]").val().replace("#", ""), true);
+            var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
+            settings.set('font_size', size, true);
+            settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
+            settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
+            $(this).next("span").fadeIn().fadeOut();
+        }catch(e){
+            alert("Save failed")
+        }
+    });
+    var paths = settings.getRdfPaths();
+    if(paths){
+        settings.getRdfPathNames().forEach(function(k, i){
+            createRdfField(k, paths[i]);
+        });
+    }
+    $("input[name=font_size]").bind("input", function(){ // bind 'input' instead of 'change' event
+        $(this).next("span").text((parseInt(this.value / 5) * 5) +"%");
+    });
+    $("input[name=line_spacing]").bind("input", function(){ // bind 'input' instead of 'change' event
+        $(this).next("span").text(parseInt(this.value));
+    });
+    ["bg", "font", "separator", "bookmark", "focused_fg", "focused_bg"].forEach(function(pfx){
+        var name = pfx + "_color";
+        var value = (settings[name] || "").replace("#", "");
+        var element = $(`input[name='${name}']`)[0];
+        element.value = value;
+        if(element.jscolor){
+            element.jscolor.fromString(value); /** for updating */
+        }
+    });
+    jscolor.installByClassName("jscolor");
+    $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
+    $("input[name=line_spacing]").val(settings.line_spacing).trigger("input");
+    $("input[name=backend_port]").val(settings.backend_port);
+    $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
+}
 window.onload=async function(){
     await settings.loadFromStorage();
     var lang = "en";
@@ -27,7 +109,7 @@ window.onload=async function(){
     }
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-    $("#div-help").html(getAsync("_locales/" + lang + "/help.html"))
+    $("#div-help").html(getAsync("_locales/" + lang + "/help.html"));
     /** export / import */
     $("input[name='export']").click(async function(){
         var json = await settings.getJson();
@@ -40,10 +122,11 @@ window.onload=async function(){
             fileReader.onload = function(fileLoadedEvent){
                 var textFromFileLoaded = fileLoadedEvent.target.result;
                 try{
-                    var json = JSON.parse(textFromFileLoaded)
-                    settings.loadJson(json)
+                    var json = JSON.parse(textFromFileLoaded);
+                    settings.loadJson(json);
+                    showConfiguration();
                 }catch(e){
-                    alert("Invalid configuration file".translate())
+                    alert("Invalid configuration file".translate());
                 }
             };
             fileReader.readAsText(fileToLoad, "UTF-8");
@@ -75,84 +158,11 @@ window.onload=async function(){
     $("input[name='add']").click(function(){
         createRdfField("", "");
     });
-    function createRdfField(k, v){
-        var NAME_I18N = browser.i18n.getMessage("Name");
-        var FILE_I18N = browser.i18n.getMessage("File");
-        var $el = $(`<div class='rdf-row'>${NAME_I18N} <input type="text" name="name"/> \
-${FILE_I18N} <input type="text" name="value"/> \
-<input type="button" name="move" value="↑" /> <input type="button" name="move" value="↓" /> <input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
-        $el.find("input[name=name]").val(k);
-        $el.find("input[name=value]").val(v);
-        $el.find("input[name=del]").click(function(){
-            $(this).parent().remove();
-        });
-        $el.find("input[name=move]").click(function(){
-            var up = (this.value == '↑');
-            var $you;
-            var $p = $(this).parent();
-            if(up){
-                $you = $p.prev(".rdf-row");
-                if($you)$you.before($p);
-            }else{
-                $you = $p.next(".rdf-row");
-                if($you)$you.after($p);
-            }
-        });
-    }
-    $("input[name='save']").click(function(){
-        try{
-            var names=[];
-            var paths=[];
-            $("#rdf-area div input:first-child").each(function(){
-                var t = $.trim(this.value);
-                names.push(t+"\n");
-                paths.push($.trim($(this).next("input").val())+"\n");
-            });
-            settings.set('rdf_paths', paths.join(""), true);
-            settings.set('rdf_path_names', names.join(""), true);
-            settings.set('backend_port', $("input[name=backend_port]").val(), true);
-            settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""), true);
-            settings.set('font_color', $("input[name=font_color]").val().replace("#", ""), true);
-            settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""), true);
-            settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""), true);
-            settings.set('focused_color_bg', $("input[name=focused_color_bg]").val().replace("#", ""), true);
-            settings.set('focused_color_fg', $("input[name=focused_color_fg]").val().replace("#", ""), true);
-            var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
-            settings.set('font_size', size, true);
-            settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
-            settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
-            $(this).next("span").fadeIn().fadeOut();
-        }catch(e){
-            alert("Save failed")
-        }
-    });
-    var paths = settings.getRdfPaths();
-    if(paths){
-        settings.getRdfPathNames().forEach(function(k, i){
-            createRdfField(k, paths[i]);
-        });
-    }
-    $("input[name=font_size]").bind("input", function(){ // bind 'input' instead of 'change' event
-        $(this).next("span").text((parseInt(this.value / 5) * 5) +"%");
-    });
-    $("input[name=line_spacing]").bind("input", function(){ // bind 'input' instead of 'change' event
-        $(this).next("span").text(parseInt(this.value));
-    });
-    $("input[name=bg_color]").val(settings.bg_color.replace("#", ""));
-    $("input[name=font_color]").val(settings.font_color.replace("#", ""));
-    $("input[name=separator_color]").val(settings.separator_color.replace("#", ""));
-    $("input[name=bookmark_color]").val(settings.bookmark_color.replace("#", ""));
-    $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
-    $("input[name=line_spacing]").val(settings.line_spacing).trigger("input");
-    $("input[name=backend_port]").val(settings.backend_port);
-    $("input[name=focused_color_bg]").val(settings.focused_color_bg);
-    $("input[name=focused_color_fg]").val(settings.focused_color_fg);
-    $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on")
+    showConfiguration();
     if(settings.backend_path){
         $("#txtBackendPath").show();
         $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
     }
-    jscolor.installByClassName("jscolor");
     function applyArea(){
         $(".div-area").hide();
         $("a.left-index").removeClass("focus")

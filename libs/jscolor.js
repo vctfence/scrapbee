@@ -1107,6 +1107,7 @@ if (!window.jscolor) { window.jscolor = (function () {
 		}
 		if (!(flags & jsc.leaveStyle)) {
 		    if (this.styleElement) {
+
 			var bgColor = '#' + this.toString();
 			var fgColor = this.isLight() ? '#000' : '#FFF';
 
@@ -1115,6 +1116,7 @@ if (!window.jscolor) { window.jscolor = (function () {
 			this.styleElement.style.color = fgColor;
 
 			if (this.overwriteImportant) {
+                            console.log(789)
 			    this.styleElement.setAttribute('style',
 							   'background: ' + bgColor + ' !important; ' +
 							   'color: ' + fgColor + ' !important;'
