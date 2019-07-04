@@ -81,8 +81,16 @@ function showDlg(name, data){
         var input = $dlg.find("input").eq(0)[0];
         input.setSelectionRange(input.value.length, input.value.length)
     }
+    $(document).unbind("keyup.dialog");
     /** return promise object */
     var p = new Promise(function(resolve, reject){
+        $(document).bind("keyup.dialog", function(e) {
+            if (e.key === "Escape") { // escape key maps to keycode `27`
+                $dlg.find("input.button-cancel").click();
+            }else if(e.key === "Enter"){
+                $dlg.find("input[type=submit]").click();
+            }
+        });
         $dlg.find("form").submit(function(){
             var data = {};
 	    $dlg.find("input").each(function(){

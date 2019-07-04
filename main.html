@@ -87,30 +87,29 @@
       <div class="dlg">
         <div class="dlg-box">
           <div class="dlg-title">{New Folder}</div>
-          <div class="dlg-table" style="overflow:hidden;">
+          <form class="dlg-table" style="overflow:hidden;">
             <div class="row">
               <div class="cell" style="width:50px;text-align:right;">{Title}</div>
               <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
             </div>
-            <form method="" id="" action="">
-              <div class="row">
-                <div class="cell"></div>
-                <div class="cell">
-                  <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
-                  <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
-                </div>
+            <div class="row">
+              <div class="cell"></div>
+              <div class="cell">
+                <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
+                <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
               </div>
-              <div class="row">
-                <div class="cell"></div>
-                <div class="cell">
-                  <input type="submit" value="{DLG_OK}" />
-                  <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
-                </div>
+            </div>
+            <div class="row">
+              <div class="cell"></div>
+              <div class="cell">
+                <input type="submit" value="{DLG_OK}" />
+                <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </div>
+    </div>
     </div>
     <!-- dlg prompt -->
     <div class="dlg-cover dlg-prompt" style="display:none;">
