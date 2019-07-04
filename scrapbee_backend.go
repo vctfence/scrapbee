@@ -178,14 +178,15 @@ func downlaodFile(url string, filepath string) string{
 	return filepath
 }
 
-func start_web_server(port string) {
+func start_web_server(addr string) {
   logger.Print("start server\n")
-  /**** create server */
   if srv != nil {
-    srv.Shutdown(nil)
+    if srv.Addr != addr {
+      srv.Shutdown(nil)
+    }
   }
   srv = &http.Server{
-    Addr:           fmt.Sprintf("127.0.0.1:%s", port),
+    Addr:           addr,
     Handler:        nil,
     ReadTimeout:    10 * time.Second,
     WriteTimeout:   10 * time.Second,
@@ -198,9 +199,9 @@ func start_web_server(port string) {
   }()
   time.Sleep(time.Duration(2) * time.Second)
   m := Message{"0", "0", "0", "0", "0", "0"}
-  m.Version = "1.7.0"
+  m.Version = "1.7.1"
   m.Serverstate = "ok"
-  m.Serverport = port
+  m.Serveraddr = addr
   // defer srv.Shutdown(nil)
   if err != nil {
     logger.Println(fmt.Sprintf("Listen Error: %s", err))
@@ -333,7 +334,7 @@ func main(){
   http.HandleFunc("/fs/move", fsMoveHandle)
   /** commmand line args */  
   if len(os.Args) == 2 && os.Args[1] == "web-server" {
-    go start_web_server("9900")
+    go start_web_server("127.0.0.1:9900")
     // return
   } else if len(os.Args) == 2 && os.Args[1] == "init" {
 		// initBackend ()
@@ -362,8 +363,12 @@ func main(){
       command := myjson["command"]
       logger.Println(fmt.Sprintf("command=%s", command))
       if command == "web-server" {
-        port := myjson["port"]
-        go start_web_server(port)
+        addr := myjson["addr"]
+        if addr == "" {
+          port := myjson["port"]
+          addr = fmt.Sprintf("127.0.0.1:%s", port);
+        }
+        go start_web_server(addr)
       }
     }
 	}
@@ -372,7 +377,7 @@ func main(){
 type Message struct {
   Version string
 	Rdfloaded string
-	Serverport string
+	Serveraddr string
 	Serverstate string
 	Downloadjs string
   Error string

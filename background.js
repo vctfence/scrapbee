@@ -37,32 +37,30 @@ browser.runtime.getBrowserInfo().then(async function(info) {
     log.info("platform = " + navigator.platform);
 });
 /* backend*/
-var port;
+var backend_inst_port;
 var web_started;
 var backend_version;
-function connectPort(){
-    if(!port){
-        browser.runtime.onConnect.addListener((p) => {
-            log.info(`backend connected`);
-        });
-        port = browser.runtime.connectNative("scrapbee_backend");
-        port.onDisconnect.addListener((p) => {
+function connectBackendInst(){
+    if(!backend_inst_port){
+        backend_inst_port = browser.runtime.connectNative("scrapbee_backend");
+        backend_inst_port.onDisconnect.addListener((p) => {
             if (p.error) {
                 log.error(`backend disconnected due to an error: ${p.error.message}`);
+            }else{
+                log.error(`backend disconnected`);
             }
-        });
+        });    
     }
-    return port;
 }
 function communicate(command, body, callback){
-    var port = connectPort();
+    connectBackendInst();
     body.command=command;
-    port.postMessage(JSON.stringify(body));
+    backend_inst_port.postMessage(JSON.stringify(body));
     var listener = (response) => {
         callback(response);
-        port.onMessage.removeListener(listener);
+        backend_inst_port.onMessage.removeListener(listener);
     };
-    port.onMessage.addListener(listener);
+    backend_inst_port.onMessage.addListener(listener);
 }
 function startWebServer(port){
     return new Promise((resolve, reject) => {
@@ -70,16 +68,16 @@ function startWebServer(port){
             resolve();
         }else{
             log.info(`start backend service on port ${port}.`);
-            communicate("web-server", {"port": port}, function(r){
+            communicate("web-server", {"addr": `127.0.0.1:${port}`}, function(r){
                 if(r.Serverstate != "ok"){
-                    log.error(r.Error)
+                    log.error(`failed to start backend service: ${r.Error}`)
                     startWebServer(port).then(() => {
                         resolve()
                     });
                 }else{
                     var version = r.Version || 'unknown'
                     backend_version = version;
-                    log.info(`backend service started, version = ${version} (wanted >= 1.7.0)`)
+                    log.info(`backend service started, version = ${version} (wanted >= 1.7.1)`)
                     web_started = true;
                     browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                     resolve();
