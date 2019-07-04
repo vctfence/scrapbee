@@ -113,7 +113,7 @@ window.onload=async function(){
     /** export / import */
     $("input[name='export']").click(async function(){
         var json = await settings.getJson();
-        downloadText(JSON.stringify(json, null, 2), "scrapbee_configure.json", null, false)
+        downloadText(JSON.stringify(json, null, 2), "scrapbee_configure.json", null, true)
     });
     $("input[name='import']").click(async function(){
         document.getElementById("import_file").onchange=function(){
@@ -182,7 +182,8 @@ window.onload=async function(){
         function Next(){
             const extRoot = "moz-extension://" + global.extension_id;
             // var binDir = extRoot + "/bin/"
-            var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/" //scrapbee_backend.exe
+            var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/v1.7.1/";
+            // or -> "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/"
             var src_exec = "scrapbee_backend";
             if(global.platform=="mac")
                 src_exec += "_mac"
@@ -292,6 +293,6 @@ pause`
         response.logs.forEach(function(item){
             var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
             $line.addClass(item.logtype);
-        })
+        });
     });
 }
