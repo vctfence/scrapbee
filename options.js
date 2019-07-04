@@ -1,6 +1,7 @@
 import {settings, global} from "./settings.js"
 import {log} from "./message.js"
 import {initMover} from "./tools.js"
+import {gtev} from "./utils.js"
 
 function getAsync(file) {
     var r;
@@ -135,7 +136,7 @@ window.onload=async function(){
     });
     /** mover */
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
-        if(version=='1.7.0')
+        if(gtev(version, '1.7.0'))
             initMover();
     });
     /** help mark */
@@ -284,7 +285,7 @@ pause`
             if(b)
                 $div.scrollTop($div[0].scrollHeight - $div.height());
         }else if(request.type == "BACKEND_SERVICE_STARTED"){
-            if(request.version=='1.7.0')
+            if(gtev(version, '1.7.0'))
                 initMover();
         }
     });

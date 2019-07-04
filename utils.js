@@ -10,7 +10,6 @@ async function scriptsAllowed(tabId, frameId = 0) {
     } catch (e) {}
     return a;
 }
-
 function showNotification({message, title='', type = 'info'}) {
     return browser.notifications.create(`sbi-notification-${type}`, {
         type: 'basic',
@@ -19,8 +18,6 @@ function showNotification({message, title='', type = 'info'}) {
         iconUrl: '/icons/bee.png'
     });
 }
-
-
 class Color {
     constructor(r, g, b) {
         this.set(r, g, b);
@@ -279,7 +276,6 @@ function hexToRgb(hex) {
         ]
         : null;
 }
-
 function getColorFilter(hex){
     const rgb = hexToRgb(hex);
     const color = new Color(rgb[0], rgb[1], rgb[2]);
@@ -287,18 +283,43 @@ function getColorFilter(hex){
     const result = solver.solve();
     return result;
 }
-
 function randRange(a, b){
     return Math.floor(Math.random() * (b-a+1)) + a;
 }
-
 function genItemId(){
     return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
 }
-
 function comp(a, b){
     return a < b ? -1 : (a > b ? 1 : 0);
 }
-
-export{scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp};
-
+function getVersionParts(v){
+    var m = String(v).match(/(\d+)\.(\d+)\.(\d+)/)
+    if(m){
+        return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+    }else{
+        return [0, 0, 0];
+    }
+}
+function gtv(a, b){
+    var a = getVersionParts(a);
+    var b = getVersionParts(b);
+    for(var i=0; i<b.length; i++){
+        if(parseInt(a[i]) > parseInt(b[i])){
+            return true;
+        }else if(parseInt(a[i]) < parseInt(b[i])){
+            return false;
+        }
+    }
+    return false;
+}
+function gtev(a, b){
+    var a = getVersionParts(a);
+    var b = getVersionParts(b);
+    for(var i=0; i<b.length; i++){
+        if(parseInt(a[i]) < parseInt(b[i])){
+            return false;
+        }
+    }
+    return true;
+}
+export{gtv, gtev, scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp};

@@ -133,6 +133,7 @@ function initMover(){
         var $label = $(this).find(".label") 
         var drop = new SimpleDropdown(this, [], false);
         var paths = settings.getRdfPaths();
+
         drop.clear()
         drop.onchange=function(title, value){
             selected_rdfs[i] = value;

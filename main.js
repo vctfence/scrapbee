@@ -1,6 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js"
-import {scriptsAllowed, showNotification, getColorFilter, genItemId} from "./utils.js"
+import {scriptsAllowed, showNotification, getColorFilter, genItemId, gtv} from "./utils.js"
 import {log} from "./message.js"
 import {SimpleDropdown} from "./control.js"
 // import {getMainMimeExt} from "./libs/mime.types.js"
@@ -370,33 +370,13 @@ window.onload=async function(){
         loadAll();
     });
     /** announcement */
-    function getVersionParts(v){
-        var m = String(v).match(/(\d+)\.(\d+)\.(\d+)/)
-        if(m){
-            return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]
-        }else{
-            return [0, 0, 0]
-        }
-    }
     var ann = browser.i18n.getMessage("announcement_content")
     var m = ann.match(/#(\d+\.\d+\.\d+)#/)
     if(m){
-        var a = getVersionParts(global.announcement_showed)
-        var b = getVersionParts(m[1])
-        if(gtv(b, a)){
+        if(gtv(m[1], global.announcement_showed)){
             $("#announcement-red-dot").show()
         }else{
             $("#announcement-red-dot").hide()
-        }
-        function gtv(b, a){
-            for(var i=0; i<b.length; i++){
-                if(b[i] > a[i]){
-                    return true;
-                }else if(b[i] < a[i]){
-                    return false
-                }
-            }
-            return false;
         }
         $("#announcement-red-dot").parent().click(function(){
             settings.set('announcement_showed', m[1], true)
