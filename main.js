@@ -74,12 +74,17 @@ function showDlg(name, data){
 	    }
 	}
     });
-    $dlg.find("input.button-ok").unbind(".dlg");
-    $dlg.find("input.button-cancel").unbind(".dlg");
+    /** focus input */
+    $dlg.find("input").eq(0).focus();
+    /** put cursor and scroll to the end of a focused text input */
+    if($dlg.find("input").eq(0).attr('type').toLowerCase() == "text"){
+        var input = $dlg.find("input").eq(0)[0];
+        input.setSelectionRange(input.value.length, input.value.length)
+    }
     /** return promise object */
     var p = new Promise(function(resolve, reject){
-	$dlg.find("input.button-ok").bind("click.dlg", function(){
-	    var data = {};
+        $dlg.find("form").submit(function(){
+            var data = {};
 	    $dlg.find("input").each(function(){
 		if(this.name){
 		    if(this.type=="radio"){
@@ -92,7 +97,7 @@ function showDlg(name, data){
 	    })
 	    $dlg.remove();
 	    resolve(data);
-	});
+        });
 	$dlg.find("input.button-cancel").bind("click.dlg", function(){
 	    $dlg.remove();
 	});
@@ -145,8 +150,8 @@ menulistener.onRename = function(){
     if($(".item.focus").length){
     	var $label = $(".item.focus label");
     	var t0 = $(".item.focus").attr("title");
-	showDlg("prompt", {pos:"root", title: t0.htmlDecode()}).then(function(d){
-	    var t1 = d.title.htmlEncode();
+	showDlg("prompt", {pos:"root", title:"{Rename}".translate(), value: t0.htmlDecode()}).then(function(d){
+	    var t1 = d.value.htmlEncode();
 	    if(t1 != t0){
    		currTree.renameItem($(".item.focus"), t1);
 	    }

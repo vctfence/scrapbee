@@ -41,6 +41,7 @@
         </div>
       </div>
     </div>
+    <!-- dlg confirm -->
     <div class="dlg-cover dlg-confirm" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
@@ -50,15 +51,18 @@
               <div class="cell">[message]</div>
             </div>
             <div class="row">
-              <div class="cell" style="text-align:center;">
-                <input type="button" class="button-ok" value="{DLG_OK}"/>
-                <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
+              <div class="cell">
+                <form method="" id="" action="" style="text-align:center;">
+                  <input type="submit" class="button-ok" value="{DLG_OK}"/>
+                  <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
+                </form>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- dlg alert -->
     <div class="dlg-cover dlg-alert" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
@@ -68,14 +72,17 @@
               <div class="cell">[message]</div>
             </div>
             <div class="row">
-              <div class="cell" style="text-align:center;">
-                <input type="button" class="button-ok" value="OK" />
+              <div class="cell">
+                <form method="" id="" action="" style="text-align:center;">
+                  <input type="submit" value="OK" />
+                </form>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- dlg folder -->
     <div class="dlg-cover dlg-folder" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
@@ -85,61 +92,46 @@
               <div class="cell" style="width:50px;text-align:right;">{Title}</div>
               <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
             </div>
-            <div class="row">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
-                <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
+            <form method="" id="" action="">
+              <div class="row">
+                <div class="cell"></div>
+                <div class="cell">
+                  <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
+                  <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
+                </div>
               </div>
-            </div>
-            <div class="row">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="button" class="button-ok" value="{DLG_OK}" />
-                <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
+              <div class="row">
+                <div class="cell"></div>
+                <div class="cell">
+                  <input type="submit" value="{DLG_OK}" />
+                  <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
+                </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
+    <!-- dlg prompt -->
     <div class="dlg-cover dlg-prompt" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
-          <div class="dlg-title i18n i18n-innerHTML">{Rename}</div>
-          <div class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Title}</div>
-              <div class="cell"><input type="" name="title" value="" style="width:100%"/></div>
-            </div>
-            <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
-                <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
+          <form method="" id="aaa" action="">
+            <div class="dlg-title i18n i18n-innerHTML">[title]</div>
+            <div class="dlg-table" style="overflow:hidden;">
+              <div class="row">
+                <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Title}</div>
+                <div class="cell"><input type="text" name="value" value="" style="width:100%"/></div>
+              </div>
+              <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
+                <div class="cell"></div>
+                <div class="cell">
+                  <input type="submit" class="i18n i18n-value" value="{DLG_OK}"/>
+                  <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dlg-cover dlg-sort" style="display:none;">
-      <div class="dlg">
-        <div class="dlg-box">
-          <div class="dlg-title i18n i18n-innerHTML">{Sort}</div>
-          <div class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Sort}</div>
-              <div class="cell"><input type="" name="title" value="" style="width:100%"/></div>
-            </div>
-            <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
-                <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
