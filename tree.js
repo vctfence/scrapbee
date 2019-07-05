@@ -47,6 +47,17 @@ class BookTree {
         }
         this.cacheXmlNode();
     }
+    getItemType($item){
+        var type = "local"
+        if($item.hasClass("folder")){
+            type = "folder";
+        }else if($item.hasClass("separator")){
+            type = "separator";
+        }else if($item.hasClass("bookmark")){
+            type = "bookmark";
+        }
+        return type;
+    }
     unCheckAll(){
         this.$top_container.find(".item input[type='checkbox']").prop('checked', false);
     }
@@ -260,9 +271,10 @@ class BookTree {
         this.$top_container.find(".item input[type=checkbox]:checked").toArray().forEach(function(check){
             var $item = $(check).parent();
             var id = $item.prop("id");
-            var title = $item.prop("title")
             buf.push({
-                title:title,
+                id,
+                type:self.getItemType($item),
+                title:$item.prop("title"),
                 node: self.getLiNode("urn:scrapbook:item" + id),
                 checkLevel: $item.parents(".folder-content").prev("div").find("input[type=checkbox]:checked").length,
                 domElement: $item[0]
@@ -445,8 +457,15 @@ class BookTree {
             return "";
         return $container.prev(".item.folder").attr("id");
     }
-    getItemById(id){
-        return this.$top_container.find("#"+id);
+    getItemById(id, $container=null){
+        if($container)
+            return this.$container.find("#"+id);
+        else
+            return this.$top_container.find("#"+id);
+    }
+    getContainerById(id) {
+        var $item = this.getItemById(id);
+        return $item.next(".folder-content"); 
     }
     getFocusedItem(){
         return this.$top_container.find(".item.focus");
