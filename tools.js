@@ -4,9 +4,7 @@ import {SimpleDropdown} from "./control.js"
 import {genItemId} from "./utils.js"
 
 function initMover(){
-
     var mulitCheck;
-    
     $("#multi-select").change(function(){
         mulitCheck = this.checked;
         
@@ -133,11 +131,11 @@ function initMover(){
                         var dest_type = destTree.getItemType($foc_dest);
                         if(dest_type == "folder"){ /** ref = src folder, means move src folder as its child */
                             if($foc_dest[0].id == r.domElement.id){
-                                throw Error("Invalid operation: can not move a foler as child of itself");
+                                throw Error("{ERROR_MOVE_FOLER_INTO_ITSELF}".translate());
                             }     
                         }else{ /** rdf = descendant of src folder, means move src folder as its descendant */
                             if($foc_dest.closest(r.domElement)){
-                                throw Error("Invalid operation: can not move a foler as descendant of itself");
+                                throw Error("{ERROR_MOVE_FOLER_INTO_ITSELF}".translate());
                             }
                         }
                     }
