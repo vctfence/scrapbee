@@ -157,6 +157,7 @@ class BookTree {
             if ($ref_item && [1, 2, 3].includes(t)) {
                 if ($drag_item[0] != $ref_item[0]) {
                     self.moveNode($drag_item, $ref_item, t);
+                    self.onDragged && self.onDragged($drag_item);
                 }
             }
             $ref_item = null;

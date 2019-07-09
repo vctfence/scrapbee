@@ -237,7 +237,7 @@ function initMover(){
                     var t = currTree.getItemPath(currTree.getItemById(itemId))
                     $box.next(".path-box").html(`<bdi>${t}</bdi>`)
 	        }
-                currTree.saveXml=function(){
+                currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {
                         if(!saveingLocked){
                             browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {

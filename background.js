@@ -68,7 +68,7 @@ function startWebServer(port){
             resolve();
         }else{
             log.info(`start backend service on port ${port}.`);
-            communicate("web-server", {"addr": `127.0.0.1:${port}`}, function(r){
+            communicate("web-server", {addr: `127.0.0.1:${port}`, port: "9900"}, function(r){
                 if(r.Serverstate != "ok"){
                     log.error(`failed to start backend service: ${r.Error}`)
                     startWebServer(port).then(() => {
@@ -77,7 +77,7 @@ function startWebServer(port){
                 }else{
                     var version = r.Version || 'unknown'
                     backend_version = version;
-                    log.info(`backend service started, version = ${version} (wanted >= 1.7.1)`)
+                    log.info(`backend service started, version = ${version} (wanted >= 1.7.0)`)
                     web_started = true;
                     browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                     resolve();
