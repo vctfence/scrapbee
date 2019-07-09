@@ -120,6 +120,15 @@ function confirm(title, message){
 }
 /* context menu listener */
 var menulistener={};
+menulistener.onOpenAll = function(){
+    var $foc = currTree.getFocusedItem();
+    var liXmlNode = currTree.getItemXmlNode($foc.attr('id'));
+    currTree.iterateLiNodes(function(nodeJson){
+        if(nodeJson.nodeType == "scrap"){
+            currTree.onOpenContent(nodeJson.id, currTree.getItemIndexPage(nodeJson.id), true)
+        }
+    }, [liXmlNode]);
+}
 menulistener.onSort1 = function(){
     confirm("{Sort}", "{ConfirmSorting}").then(async function(){
 	await currTree.sortTree(true);
