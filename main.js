@@ -355,7 +355,7 @@ window.onload=async function(){
     btn.onclick = function(){
 	// window.open("search.html", "_scrapbee_search")
         browser.tabs.create({
-    	    "url": "search.html"
+    	    "url": "search.html?rdf=" + currTree.rdf
         });
     }
     $("menuitem").click(function(e){

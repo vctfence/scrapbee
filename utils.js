@@ -322,4 +322,19 @@ function gtev(a, b){
     }
     return true;
 }
-export{gtv, gtev, scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp};
+function getUrlParams(url){
+    var params = {};
+    var m = url.match(/\?[^\?\# ]+$/);
+    if(m){
+        m = m[0].match(/\w+=[^\&\=\?\# ]+/g);
+        if(m) {
+            m.forEach((s)=>{
+                var [key, value] = s.split("=")
+                params[key] = value;
+            });
+        }
+    }
+    return params;
+}
+
+export{gtv, gtev, scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp, getUrlParams};

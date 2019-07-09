@@ -27,7 +27,7 @@
      .item{margin-bottom:1em;}
      .origin{color:green}
      .icon{height:1em}
-     input[type=button]{
+     input[type=submit]{
        padding:5px 20px;
        appearance: none;
        -moz-appearance: none;
@@ -82,14 +82,14 @@
   </head>
   <body>
     <div id="" style="margin-top:0;white-space:nowrap;border-bottom:1px solid #999;height:60px;top:0;position:fixed;background:#fff;width:100%;vertical-align:middle;line-height:60px;z-index:9">
-      <div style="padding-left:30px;">
+      <form style="padding-left:30px;" id="searchForm">
         {Search} <select id="lstRdfs" name="" autocomplate="off">
         </select>
         <input type="" name="" value="" id="txtSearch"/>
         <input type="checkbox" name="source" value="title" checked="true"/> {Title}
         <input type="checkbox" name="source" value="body" /> {Content}
-        <input type="button" name="" value="{Search}" id="btnSearch"/>
-      </div>
+        <input type="submit" name="" value="{Search}" id="btnSearch"/>
+      </form>
     </div>
     <div id="divResult" class="some_class" style="margin-top:70px;position:relative;margin-bottom:50px;margin-left:30px;">
     </div> 

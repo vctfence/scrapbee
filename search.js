@@ -1,5 +1,6 @@
 import {settings} from "./settings.js"
 import {BookTree} from "./tree.js"
+import {getUrlParams} from "./utils.js"
 
 function Queue(maxWorkingTasks, workingFn){
     this.tasks = [];
@@ -162,13 +163,15 @@ $(document).ready(async function(){
     document.body.innerHTML = document.body.innerHTML.fillData(function(s){
 	return browser.i18n.getMessage(s)  || s;
     });    
-    $("#btnSearch").click(function(){
+    $("#searchForm").submit(function(){
 	$("#divResult").html("");
 	var rdf = $("#lstRdfs").val();
 	if(rdf)loadXml(rdf)
+        return false;
     });
+    var params = getUrlParams(location.href);
     var paths = settings.getRdfPaths();
     settings.getRdfPathNames().forEach(function(k, i){
-	$("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs"));
+	$("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs")).prop("selected", paths[i] == params.rdf);
     });
 });
