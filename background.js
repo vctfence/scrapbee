@@ -68,7 +68,7 @@ function startWebServer(port){
             resolve();
         }else{
             log.info(`start backend service on port ${port}.`);
-            communicate("web-server", {addr: `127.0.0.1:${port}`, port: "9900"}, function(r){
+            communicate("web-server", {addr: `127.0.0.1:${port}`, port}, function(r){
                 if(r.Serverstate != "ok"){
                     log.error(`failed to start backend service: ${r.Error}`)
                     startWebServer(port).then(() => {
