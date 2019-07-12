@@ -338,7 +338,8 @@ class BookTree {
                 case "seq":
                     bf = self.createFolder(null, json.id, null, json.title);
                     break;
-                case "scrap":
+                case "bookmark":
+                case "local":
                     bf = self.createLink(null, json.type, json.id, null, json.source, json.icon, json.title);
                     break;
                 case "separator":
@@ -403,7 +404,7 @@ class BookTree {
                 } else if(nodeType) {   // scrap
                     await fn({
                         parentId: parentId,
-                        nodeType: "scrap",
+                        nodeType: nodeType,
                         id: introNode.getAttributeNS(self.MAIN_NS, "id"),
                         type: nodeType,
                         source: introNode.getAttributeNS(self.MAIN_NS, "source"),

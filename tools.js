@@ -122,19 +122,18 @@ function initMover(){
             topInfos.push({id, type, domElement})
         }
         /** operation validate */
-        // move folder inside itself
-        // move someting to same place
         if($foc_dest.length && srcTree.rdf == destTree.rdf && moveType == "FS_MOVE"){
             try{
                 topInfos.forEach(function(r){ /** check every top level src nodes */
                     if(r.type == "folder"){
                         var dest_type = destTree.getItemType($foc_dest);
                         if(dest_type == "folder"){ /** ref = src folder, means move src folder as its child */
-                            if($foc_dest[0].id == r.domElement.id){
+                            if($foc_dest[0].id == r.id){
                                 throw Error("{ERROR_MOVE_FOLER_INTO_ITSELF}".translate());
                             }     
                         }else{ /** rdf = descendant of src folder, means move src folder as its descendant */
-                            if($foc_dest.closest(r.domElement)){
+                            if($foc_dest.closest($(`#${r.id}`).next(".folder-content")).length){
+                                console.log(r.id)
                                 throw Error("{ERROR_MOVE_FOLER_INTO_ITSELF}".translate());
                             }
                         }
@@ -147,30 +146,30 @@ function initMover(){
         /** show  waiting dialog */
         var waitingDlg = new DialogWaiting();
         waitingDlg.show();
-        await srcTree.iterateLiNodes(function(nodeJson){
+        await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
-                var $dest = parents[nodeJson.level];
+                var $dest = parents[item.level];
                 var id = genItemId();
-                var rid = nodeJson.level == 0 ? ref_id : null;
-                if(nodeJson.nodeType == "scrap"){
-                    var src = srcTree.rdf_path + 'data/' + nodeJson.id;
+                var rid = item.level == 0 ? ref_id : null;
+                if(item.nodeType == "bookmark" || item.nodeType == "local"){
+                    var src = srcTree.rdf_path + 'data/' + item.id;
                     var dest = destTree.rdf_path + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).then((response) => {
-                        var icon = nodeJson.icon.replace(nodeJson.id, id)
-                        destTree.createLink($dest, nodeJson.type, id, rid, nodeJson.source, icon, nodeJson.title, false, true);
+                        var icon = item.icon.replace(item.id, id)
+                        destTree.createLink($dest, item.type, id, rid, item.source, icon, item.title, false, true);
                         resolve()
                     }).catch((e) => {
                         saveingLocked = false;
                     });
-                }else if(nodeJson.nodeType == "seq"){
-                    destTree.createFolder($dest, id, rid, nodeJson.title, true);
-                    parents[nodeJson.level+1]=(destTree.getItemById(id).next(".folder-content"))
+                }else if(item.nodeType == "seq"){
+                    destTree.createFolder($dest, id, rid, item.title, true);
+                    parents[item.level+1]=(destTree.getItemById(id).next(".folder-content"))
                     resolve()
-                }else if(nodeJson.nodeType == "separator"){
+                }else if(item.nodeType == "separator"){
                     destTree.createSeparator($dest, id, rid, true);
                     resolve();
                 }
-                if(nodeJson.level == 0) ref_id = id;
+                if(item.level == 0) ref_id = id;
             });
         }, topNodes);
         /** saving changes */

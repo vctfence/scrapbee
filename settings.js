@@ -72,6 +72,7 @@ settings.set('focused_bg_color', '07a');
 settings.set('font_size', '12');
 settings.set('line_spacing', '5');
 settings.set('open_in_current_tab', "off");
+settings.set('announcement_showed', "");
 // settings.loadFromStorage();
 /* =================================================== */
 var global={}
@@ -89,5 +90,4 @@ global.set('fs_path_separator', platform=='windows'?'\\':'/');
 global.set('platform', platform);
 global.set('id', browser.runtime.id);
 global.set('extension_id', browser.i18n.getMessage("@@extension_id"));
-global.set('announcement_showed', "");
 export {settings, global}

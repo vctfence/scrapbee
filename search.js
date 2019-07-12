@@ -142,7 +142,7 @@ async function processTree(tree, search_title, search_body){
 	$("#btnSearch").prop("disabled", false)
     }
     await tree.iterateLiNodes(async function(item){
-	if(item.nodeType == "scrap"){
+	if(item.nodeType == "bookmark" || item.nodeType == "local"){
             try{
                 if(item.icon){
                     item.icon = tree.translateResource(item.icon, tree.rdf_path, item.id)

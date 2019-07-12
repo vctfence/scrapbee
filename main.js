@@ -123,9 +123,10 @@ var menulistener={};
 menulistener.onOpenAll = function(){
     var $foc = currTree.getFocusedItem();
     var liXmlNode = currTree.getItemXmlNode($foc.attr('id'));
-    currTree.iterateLiNodes(function(nodeJson){
-        if(nodeJson.nodeType == "scrap"){
-            currTree.onOpenContent(nodeJson.id, currTree.getItemIndexPage(nodeJson.id), true)
+    currTree.iterateLiNodes(function(item){
+        if(item.nodeType == "bookmark" || item.nodeType == "local"){
+            var url = item.nodeType == "local" ? currTree.getItemIndexPage(item.id) : item.source;
+            currTree.onOpenContent(item.id, url, true, item.nodeType == "local");
         }
     }, [liXmlNode]);
 }
@@ -382,7 +383,7 @@ window.onload=async function(){
     var ann = browser.i18n.getMessage("announcement_content")
     var m = ann.match(/#(\d+\.\d+\.\d+)#/)
     if(m){
-        if(gtv(m[1], global.announcement_showed)){
+        if(gtv(m[1], settings.announcement_showed)){
             $("#announcement-red-dot").show()
         }else{
             $("#announcement-red-dot").hide()
