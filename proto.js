@@ -149,7 +149,6 @@ ScrapbeeElement.prototype.getCommonResources=function(){
     return r;
 }
 ScrapbeeElement.prototype.getImgResources=function(){
-    // console.log("ScrapbeeElement.prototype.getImgResources:", this.el.src)
     var r=[];
     if(this.el.getAttribute("src")){
 	var hex = hex_md5(this.el.src);
@@ -159,15 +158,15 @@ ScrapbeeElement.prototype.getImgResources=function(){
     return r;
 }
 ScrapbeeElement.prototype.getScriptResources=function(){
-    this.el.src=""
-    this.el.innerHTML=""
+    this.el.setAttribute("mark_remove", "1");
     return [];
 }
 ScrapbeeElement.prototype.getStyleResources=function(){
-    this.el.innerHTML=""
+    this.el.setAttribute("mark_remove", "1");
     return [];
 }
 ScrapbeeElement.prototype.getLinkResources=function(){
+    this.el.setAttribute("mark_remove", "1");
     var r=[]
     if(this.el.rel=="shortcut icon"){
 	r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"})
@@ -178,8 +177,11 @@ ScrapbeeElement.prototype.getLinkResources=function(){
     return r;
 }
 ScrapbeeElement.prototype.getIframeResources=function(){
-    this.el.src=""
-    this.el.innerHTML=""
+    this.el.setAttribute("mark_remove", "1");
+    return [];
+}
+ScrapbeeElement.prototype.getBaseResources=function(){
+    this.el.setAttribute("mark_remove", "1");
     return [];
 }
 true;

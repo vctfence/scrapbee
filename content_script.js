@@ -187,6 +187,9 @@ if(!window.scrapbee_injected){
             }
             /*** download resources and callback */
             var downloaded = 0;
+            
+            Array.from(div.querySelectorAll("*[mark_remove='1']")).forEach(el => el.remove());
+            
             var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title};
             function end(){
                 dlgDownload.addRow("CSS", "index.css", "index.css", "<font style='color:#cc5500'>buffered</font>")
