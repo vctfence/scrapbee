@@ -327,5 +327,8 @@
     },
     "OPEN_ALL_ITEMS":{
         "message": "打开所有项目"
+    },
+    "OPEN_ORIGIN_LINK":{
+        "message": "打开原始链接"
     }
 }

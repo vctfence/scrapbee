@@ -306,5 +306,8 @@
     },
     "OPEN_ALL_ITEMS":{
         "message": "Ouvrir tous les articles"
+    },
+    "OPEN_ORIGIN_LINK":{
+        "message": "Lien d'origine ouvert"
     }
 }

@@ -324,5 +324,8 @@
     },
     "OPEN_ALL_ITEMS":{
         "message": "Open All Items"
+    },
+    "OPEN_ORIGIN_LINK":{
+        "message": "Open Origin Link"
     }
 }
