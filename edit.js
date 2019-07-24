@@ -118,6 +118,9 @@ class EditToolBar{
         var self = this;
         var editing=false;
         var extension_id = browser.i18n.getMessage("@@extension_id");
+
+
+        
         /** load editing css */
         // loadCss("scrapbee_editing_css", `moz-extension://${extension_id}/edit.css`)
         loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`)
@@ -148,6 +151,7 @@ class EditToolBar{
         });
         /** modify dom button */
         var btn = document.createElement("input");
+        var btnDomClean =  btn;
         btn.type="button";
         btn.className="blue-button"
         btn.value=chrome.i18n.getMessage("MODIFY_DOM_ON");
@@ -160,15 +164,23 @@ class EditToolBar{
         });
         /** mark pen button */
         var btn = document.createElement("input");
+        var btnMarkPen = btn;
         btn.type="button";
         btn.className="blue-button mark-pen-btn"
         btn.value=chrome.i18n.getMessage("MARK_PEN");
         div.appendChild(btn);
-        btn.addEventListener("click", function(){
+        btn.addEventListener("click", function(e){
             $(self.menu).toggleClass("show");
             var rect_div = self.div.getBoundingClientRect();
             var rect_btn = this.getBoundingClientRect();
             $(self.menu).css("cssText", "bottom:" + (rect_div.bottom - rect_btn.top) + "px !important; left:" + rect_btn.left + "px !important;");
+        });
+        /** press esc to cancel cleaning for marking */
+        document.addEventListener("keydown", function(e){
+            if(e.key == "Escape"){
+                if($(self.menu).is(":visible"))btnMarkPen.click(999);
+                if(editing) btnDomClean.click();
+            }
         });
         /** mark pen menu */
         var $m = $("<div class='scrapbee-menu'>").appendTo(this.div);

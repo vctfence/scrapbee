@@ -167,7 +167,7 @@ menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
     var url = $foc.attr("source");
     var method = settings.open_in_current_tab == "on" ? "update" : "create";
-    browser.tabs[method]({ url: url }, function (tab) {});
+    browser.tabs[method]({ url: url }, function(tab){});
 }
 menulistener.onDebug = function(){}
 menulistener.onRename = function(){
