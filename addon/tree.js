@@ -70,6 +70,9 @@ class BookmarkTree {
             },
             state: {
                 key: inline? TREE_STATE_PREFIX + EVERYTHING: undefined
+            },
+            dnd: {
+                inside_pos: "last"
             }
         }).on("move_node.jstree", BookmarkTree.moveNode);
 
@@ -333,18 +336,7 @@ class BookmarkTree {
         let tree = $(this).jstree(true);
         let parent = tree.get_node(data.parent);
 
-        if (data.parent != data.old_parent) {
-            let node = tree.get_node(data.node);
-
-            backend.moveNodes([node.original.id], parent.original.id).then(new_nodes => {
-                //console.log("Nodes moved: "  + node.original.uuid);
-                tree.move_node(node.original.id, parent.original.id, "last");
-                BookmarkTree.reorderNodes(tree, parent);
-            });
-        }
-        else {
-            BookmarkTree.reorderNodes(tree, parent);
-        }
+        BookmarkTree.reorderNodes(tree, parent);
     }
 
     static reorderNodes(tree, parent) {
