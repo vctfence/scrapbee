@@ -112,8 +112,7 @@ class BookTree {
                         dragging = true;
                         t = 0;
                     }
-                    $container.find(".item.focus").removeClass("focus");
-                    $el.addClass("focus");
+                    self.focusItem($el);                    
                 }
             }
         });
@@ -232,6 +231,21 @@ class BookTree {
                 $item.nextAll(".folder-content:first").hide();
             }
         }
+    }
+    scrollToItem($item, ms, mostTop){
+        document.body.scrollTop = $item.offset().top - mostTop;
+        return;
+        
+        console.log($item.offset().top)
+        $(document.body).animate({
+            scrollTop: $item.offset().top
+        }, ms);
+    }
+    expandAllParents($item){
+        var self = this;
+        $item.parents(".folder-content").each(function(){
+            self.toggleFolder($(this).prev(".item"), true);
+        });
     }
     getItemY($container, y) {
         y -= window.scrollY;
@@ -468,6 +482,10 @@ class BookTree {
     getContainerById(id) {
         var $item = this.getItemById(id);
         return $item.next(".folder-content"); 
+    }
+    focusItem($item){
+        this.$top_container.find(".item.focus").removeClass("focus");
+        $item.addClass("focus");
     }
     getFocusedItem(){
         return this.$top_container.find(".item.focus");

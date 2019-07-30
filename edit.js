@@ -36,10 +36,11 @@ function loadCss(id, href){
     head.appendChild(link);
 }
 class EditToolBar{
-    constructor(scrap_path){
+    constructor(scrap_path, scrap_id){
         var self = this;
         this.$cap = $("<div>").appendTo(document.body);
-        this.scrap_path=scrap_path;
+        this.scrap_path = scrap_path;
+        this.scrap_id = scrap_id
         this.buildTools()
         window.addEventListener("mousedown", function(e){
             if(e.button == 0) {
@@ -118,9 +119,6 @@ class EditToolBar{
         var self = this;
         var editing=false;
         var extension_id = browser.i18n.getMessage("@@extension_id");
-
-
-        
         /** load editing css */
         // loadCss("scrapbee_editing_css", `moz-extension://${extension_id}/edit.css`)
         loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`)
@@ -220,12 +218,27 @@ class EditToolBar{
         btn.addEventListener("click", function(){
             window.location.reload()
         });
+        /** locate button */
+        var btn = document.createElement("input");
+        var btnMarkPen = btn;
+        btn.type="button";
+        btn.className="blue-button mark-pen-btn"
+        btn.value="<<" //chrome.i18n.getMessage("MARK_PEN");
+        div.appendChild(btn);
+        btn.addEventListener("click", function(e){
+            browser.runtime.sendMessage({type: 'LOCATE_ITEM', id:self.scrap_id }).then((response) => {
+                
+            }).catch((e) => {
+                
+            });
+        });
     }
 }
-if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/\d+\/)\?scrapbee_refresh=\d+$/i)){
+if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
     var path = RegExp.$1;
+    var scrap_id = RegExp.$2;
     if(platform!="windows"){
         path = `/${path}`
     }
-    new EditToolBar(path);
+    new EditToolBar(path, scrap_id);
 }

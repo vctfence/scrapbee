@@ -630,6 +630,18 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	}else{
 	    log.error("rdf have not been loaded")
 	}
+    }else if(request.type == 'LOCATE_ITEM'){
+        return new Promise((resolve, reject) => {
+            var $item = currTree.getItemById(request.id);
+            if($item.length){
+                currTree.focusItem($item);
+                currTree.expandAllParents($item);
+                currTree.scrollToItem($item, 1000, $(".toolbar").height() + 5);
+                resolve();
+            }else{
+                reject();
+            }
+        });
     }
 });
 function postBlob(url, blob, filename, itemId, onload, onerror){
