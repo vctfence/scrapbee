@@ -63,7 +63,7 @@ function showDlg(name, data){
     $dlg.html($dlg.html().replace(/\[([^\[\]]+?)\]/g, function(a, b){
 	return data[b] || ""
     }));
-    $dlg.find("input").each(function(){
+    $dlg.find("input,textarea").each(function(){
 	if(this.name){
 	    if(this.type=="radio"){
 		if(this.value == data[this.name])
@@ -93,7 +93,7 @@ function showDlg(name, data){
         });
         $dlg.find("form").submit(function(){
             var data = {};
-	    $dlg.find("input").each(function(){
+	    $dlg.find("input,textarea").each(function(){
 		if(this.name){
 		    if(this.type=="radio"){
 			if(this.checked)
@@ -113,10 +113,10 @@ function showDlg(name, data){
     return p;
 }
 function alert(title, message){
-    return showDlg("alert", {title:title.translate(), message:message.translate()});
+    return showDlg("alert", {dlg_title:title.translate(), message:message.translate()});
 }
 function confirm(title, message){
-    return showDlg("confirm", {title:title.translate(), message:message.translate()});
+    return showDlg("confirm", {dlg_title:title.translate(), message:message.translate()});
 }
 /* context menu listener */
 var menulistener={};
@@ -124,9 +124,9 @@ menulistener.onOpenAll = function(){
     var $foc = currTree.getFocusedItem();
     var liXmlNode = currTree.getItemXmlNode($foc.attr('id'));
     currTree.iterateLiNodes(function(item){
-        if(item.nodeType == "bookmark" || item.nodeType == "local"){
-            var url = item.nodeType == "local" ? currTree.getItemIndexPage(item.id) : item.source;
-            currTree.onOpenContent(item.id, url, true, item.nodeType == "local");
+        if(item.nodeType == "bookmark" || item.nodeType == "page"){
+            var url = item.nodeType == "page" ? currTree.getItemIndexPage(item.id) : item.source;
+            currTree.onOpenContent(item.id, url, true, item.nodeType == "page");
         }
     }, [liXmlNode]);
 }
@@ -170,14 +170,48 @@ menulistener.onOpenOriginLink = function(){
     browser.tabs[method]({ url: url }, function(tab){});
 }
 menulistener.onDebug = function(){}
-menulistener.onRename = function(){
-    if($(".item.focus").length){
+menulistener.onProperty = function(){
+    var $foc = $(".item.focus");
+    if($foc.length){
     	var $label = $(".item.focus label");
-    	var t0 = $(".item.focus").attr("title");
-	showDlg("prompt", {pos:"root", title:"{Rename}".translate(), value: t0.htmlDecode()}).then(function(d){
-	    var t1 = d.value.htmlEncode();
+        var c0;
+    	var t0 = $foc.attr("title");
+        var s0 = $foc.attr("source");
+        var id = $foc.attr("id");
+
+        var time = "";
+        var type = currTree.getItemType($foc);
+        var comment = currTree.getItemComment(id);
+        
+        var m = id.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
+        if(m){
+            var lang = "en";
+            var ui = browser.i18n.getUILanguage();
+            if(["en", "zh-CN", "fr"].indexOf(ui) > -1){
+                lang = ui;
+            }
+            var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric'};
+            time = new Date(m[1], m[2]-1, m[3], m[4], m[5]).toLocaleDateString(lang, options);
+        }
+        
+        var t = type.replace(/^\w/, function(a){return a.toUpperCase()})
+        t = `{${t}}`.translate();
+        
+	showDlg("property", {dlg_title:"{Property}".translate(), title: t0.htmlDecode(),
+                             url: s0, id, time, type:t, display_url: type == "folder" ? "none" : "",
+                             comment}).then(function(d){
+                                 
+	    var t1 = d.title.htmlEncode();
 	    if(t1 != t0){
-   		currTree.renameItem($(".item.focus"), t1);
+   		currTree.renameItem($foc, t1);
+	    }
+            var s1 = d.url;
+            if(s1 != s0){
+   		currTree.updateSource($foc, s1);
+	    }
+            var c1 = d.comment;
+            if(c1 != c0){
+   		currTree.updateComment($foc, c1);
 	    }
 	});
     }
@@ -342,10 +376,39 @@ function loadAll(){
 	});
     });
 }
+function initTabs($tabbars){
+    $tabbars.each(function(){
+        var $pages = $(this).nextAll(".tab-page");
+        var $tabs = $(this).find("span"); 
+        $tabs.click(function(){
+            $pages.hide();
+            $tabs.removeClass("on");
+            $(this).addClass("on");
+            $pages.eq($(this).index()).show();
+        });
+        $tabs.eq(0).click();
+    });
+
+}
 window.onload=async function(){
     await settings.loadFromStorage();
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+    /** init tab frames */
+    const targetNode = document.body;
+    const config = { attributes: false, childList: true, subtree: true };
+    const callback = function(mutationsList, observer) {
+        for(let mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    initTabs($(node).find(".tab-page-top-bar"));
+                });
+            }
+        }
+    };
+    const observer = new MutationObserver(callback);
+    observer.observe(targetNode, config);
+    /** */
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
 	if(currTree && currTree.rdf)loadXml(currTree.rdf);
@@ -555,7 +618,7 @@ function requestPageSaving(itemId, selection){
                     "dialog.js",
                     "content_script.js"
                 ]).then(function(){
-                    currTree.createLink(getCurrContainer(), "local", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
+                    currTree.createLink(getCurrContainer(), "page", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
                     log.debug("content scripts injected")
                     browser.tabs.sendMessage(tab.id, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(have_icon){
                         var item = {}

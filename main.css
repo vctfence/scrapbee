@@ -58,7 +58,7 @@ html,body{
     background:#ccc;
     left:10%;
     width:80%;
-    padding:15px 20px 20px 20px;
+    padding:15px 20px 10px 20px;
     border-radius:5px;
     border:1px solid #777;
     overflow:hidden;
@@ -77,15 +77,13 @@ html,body{
 }
 .dlg-table .row{
     display:table-row;
-    padding:12px 0 6px 0;
     white-space:nowrap;
     overflow:hidden;
 }
 .dlg-table .row .cell{
     display:table-cell;    
     line-height:20px;
-    vertical-align:middle;
-    padding:15px 5px 0 5px;
+    padding:5px 5px 0 5px;
     vertical-align:middle;
     /* border:1px solid; */
     /* -webkit-box-sizing: border-box; */
@@ -158,6 +156,14 @@ html,body{
     cursor:pointer;
     border-radius:5px;
     padding:2px 5px;
+    border:0;
+}
+input[type=submit],input[type=button]{
+    background:#09c;
+    color:#fff;
+    cursor:pointer;
+    border-radius:5px;
+    padding:3px 15px;
     border:0;
 }
 select{
@@ -233,4 +239,23 @@ select{
     top:3px;
     right:-1px;
     display:none;
+}
+.tab-page-top-bar span{
+    display:inline-block;
+    padding:3px 15px;
+    background:#aaa;
+    
+    margin-left:3px;
+    border-radius:3px 3px 0 0;
+    vertical-align:bottom;
+    color:#000;
+    
+}
+.tab-page-top-bar span.on{
+    background:#09c;
+    color:#fff;
+    padding:5px 15px;
+}
+.tab-page{
+    /* display:none; */
 }

@@ -79,7 +79,7 @@ async function processTree(tree, search_title, search_body){
     var match_count = 0;
     function seek(item, body){
 	var url;
-	if(item.type == "local"){
+	if(item.type == "page"){
 	    url = tree.getItemIndexPage(item.id);
 	}else{
 	    url = item.source;
@@ -124,7 +124,7 @@ async function processTree(tree, search_title, search_body){
     }
     var q = new Queue(50, function(item, callback){
 	var url = tree.getItemIndexPage(item.id);
-	if(item.type=="local"){
+	if(item.type=="page"){
 	    $.get(url+"?time="+Math.random(),function(r){
 		seek(item, r)
 		callback();
@@ -142,7 +142,7 @@ async function processTree(tree, search_title, search_body){
 	$("#btnSearch").prop("disabled", false)
     }
     await tree.iterateLiNodes(async function(item){
-	if(item.nodeType == "bookmark" || item.nodeType == "local"){
+	if(item.nodeType == "bookmark" || item.nodeType == "page"){
             try{
                 if(item.icon){
                     item.icon = tree.translateResource(item.icon, tree.rdf_path, item.id)

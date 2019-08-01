@@ -45,7 +45,7 @@
 .item input[type='checkbox']:checked{
     mask-image:url(icons/checkbox-on.svg);
 }
-.item.local{
+.item.page{
     color:#eee;
     display:block;
     background-repeat:no-repeat;
@@ -72,12 +72,12 @@
     margin-top:-2px;
 }
 .item.bookmark.focus label,
-.item.local.focus label,
+.item.page.focus label,
 .item.folder.focus label{
     background-color:#079;
     color:#fff;
 }
-.item.local i, .item.bookmark i{
+.item.page i, .item.bookmark i{
     background:url(icons/item.gif);
 }
 .item.folder{

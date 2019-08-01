@@ -151,7 +151,7 @@ function initMover(){
                 var $dest = parents[item.level];
                 var id = genItemId();
                 var rid = item.level == 0 ? ref_id : null;
-                if(item.nodeType == "bookmark" || item.nodeType == "local"){
+                if(item.nodeType == "bookmark" || item.nodeType == "page"){
                     var src = srcTree.rdf_path + 'data/' + item.id;
                     var dest = destTree.rdf_path + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).then((response) => {

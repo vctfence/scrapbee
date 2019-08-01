@@ -45,7 +45,7 @@
     <div class="dlg-cover dlg-confirm" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
-          <div class="dlg-title">[title]</div>
+          <div class="dlg-title">[dlg_title]</div>
           <form class="dlg-table" style="overflow:hidden;">
             <div class="row">
               <div class="cell">[message]</div>
@@ -64,7 +64,7 @@
     <div class="dlg-cover dlg-alert" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
-          <div class="dlg-title">[title]</div>
+          <div class="dlg-title">[dlg_title]</div>
           <form class="dlg-table" style="overflow:hidden;">
             <div class="row">
               <div class="cell">[message]</div>
@@ -106,30 +106,79 @@
         </div>
       </div>
     </div>
+    <!-- dlg prop -->
+    <div class="dlg-cover dlg-property" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title">[dlg_title]</div>
+          <form style="overflow:hidden;width:100%;">
+            <div style="margin-top:10px;" class="tab-page-top-bar">
+              <span id="">常规</span><span id="">注释</span>
+            </div> 
+            <div class="dlg-table tab-page" style="border:1px solid #999;width:100%;">
+              <div class="row">
+                <div class="cell" style="width:50px;text-align:right;">{Title}</div>
+                <div class="cell"><input type="text" name="title" value="" style="width:100%"/></div>
+              </div>
+              <div class="row" style="display:[display_url]">
+                <div class="cell" style="width:50px;text-align:right;">URL</div>
+                <div class="cell"><input type="text" name="url" value="" style="width:100%"/></div>
+              </div>
+              <div class="row">
+                <div class="cell" style="border-bottom:1px solid #999"></div>
+                <div class="cell" style="border-bottom:1px solid #999"></div>
+              </div>
+              <div class="row">
+                <div class="cell" style="width:50px;text-align:right;">ID</div>
+                <div class="cell">[id]</div>
+              </div>
+              <div class="row">
+                <div class="cell" style="width:50px;text-align:right;">CREATED</div>
+                <div class="cell">[time]</div>
+              </div>
+              <div class="row">
+                <div class="cell" style="width:50px;text-align:right;">TYPE</div>
+                <div class="cell">[type]</div>
+              </div>
+            </div>
+            <div class="tab-page" style="border:1px solid #999;width:100%;">
+              <textarea name="comment" style="width:100%;height:150px;resize:none;border:none;"></textarea>
+            </div>
+            <div style="white-space:nowrap;margin-top:10px;">
+              <div class="cell"></div>
+              <div class="cell" style="text-align:right;">
+                <input type="submit" class="" value="{DLG_OK}"/>
+                <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
     <!-- dlg prompt -->
     <div class="dlg-cover dlg-prompt" style="display:none;">
       <div class="dlg">
         <div class="dlg-box">
-            <div class="dlg-title i18n i18n-innerHTML">[title]</div>
+            <div class="dlg-title">[dlg_title]</div>
             <form class="dlg-table" style="overflow:hidden;">
               <div class="row">
-                <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">{Title}</div>
+                <div class="cell" style="width:50px;text-align:right;">{Title}</div>
                 <div class="cell"><input type="text" name="value" value="" style="width:100%"/></div>
               </div>
               <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
                 <div class="cell"></div>
                 <div class="cell" style="text-align:center;">
-                  <input type="submit" class="i18n i18n-value" value="{DLG_OK}"/>
-                  <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
+                  <input type="submit" class="" value="{DLG_OK}"/>
+                  <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
                 </div>
               </div>
           </form>
         </div>
       </div>
     </div>
-    <div class="root folder-content i18n">{Starting...}</div>
+    <div class="root folder-content">{Starting...}</div>
     <menu type="context" id="popup-menu-folder">
-      <menuitem id="menuRename" label="{Rename}" icon="icons/rename.svg"></menuitem>
+      <menuitem id="menuProperty" label="{Property}" icon="icons/property.svg"></menuitem>
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
@@ -152,7 +201,7 @@
     </menu>    
     <menu type="context" id="popup-menu-link">
       <menuitem id="menuOpenOriginLink" label="{OPEN_ORIGIN_LINK}" icon="icons/open_origin.svg"></menuitem>
-      <menuitem id="menuRename" label="{Rename}"" icon="icons/rename.svg"></menuitem>
+      <menuitem id="menuProperty" label="{Property}"" icon="icons/property.svg"></menuitem>
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>

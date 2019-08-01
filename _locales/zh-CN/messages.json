@@ -330,5 +330,17 @@
     },
     "OPEN_ORIGIN_LINK":{
         "message": "打开原始链接"
+    },
+    "Property":{
+        "message": "属性"
+    },
+    "NODE_TYPE_PAGE":{
+        "message": "页面"
+    },
+    "NODE_TYPE_BOOKMARK":{
+        "message": "书签"
+    },
+    "NODE_TYPE_FOLDER":{
+        "message": "文件夹"
     }
 }

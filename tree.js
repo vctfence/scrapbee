@@ -48,7 +48,7 @@ class BookTree {
         this.cacheXmlNode();
     }
     getItemType($item){
-        var type = "local"
+        var type = "page"
         if($item.hasClass("folder")){
             type = "folder";
         }else if($item.hasClass("separator")){
@@ -102,7 +102,7 @@ class BookTree {
                     return
                 var $el = getItemNode(e.target);
                 if ($el) {
-                    if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("local") || $el.hasClass("bookmark")) {
+                    if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("page") || $el.hasClass("bookmark")) {
                         self.onChooseItem && self.onChooseItem($el.attr("id"));
                     }            
                     if (e.button == 0) {
@@ -124,12 +124,12 @@ class BookTree {
                 return;
             if ($el.hasClass("folder")) {
                 if(e.target.tagName != "INPUT") self.toggleFolder($el);
-            } else if ($el.hasClass("local") || $el.hasClass("bookmark")) {
+            } else if ($el.hasClass("page") || $el.hasClass("bookmark")) {
                 if(e.target.tagName != "INPUT"){
                     if ($el.attr("disabled"))
                         return;
                     var url = $el.attr("source");
-                    var is_local = ($el.hasClass("local") && !$(e.target).hasClass("origin"));
+                    var is_local = ($el.hasClass("page") && !$(e.target).hasClass("origin"));
                     if (is_local) {
                         url = self.getItemIndexPage($el.attr("id"));
                     }
@@ -215,6 +215,12 @@ class BookTree {
             prev_t = t;
         });
     }
+    getItemComment(id) {
+        var node = this.getDescNode("urn:scrapbook:item" + id);
+        var c = node.getAttributeNS(this.MAIN_NS, "comment") || "";
+        c = c.replace(/ __BR__ /g, "\n");
+        return c;
+    }
     getItemFilePath(id) {
         return (this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/")
     }    
@@ -234,12 +240,9 @@ class BookTree {
     }
     scrollToItem($item, ms, mostTop){
         document.body.scrollTop = $item.offset().top - mostTop;
-        return;
-        
-        console.log($item.offset().top)
-        $(document.body).animate({
-            scrollTop: $item.offset().top
-        }, ms);
+        // $(document.body).animate({
+        //     scrollTop: $item.offset().top
+        // }, ms);
     }
     expandAllParents($item){
         var self = this;
@@ -353,7 +356,7 @@ class BookTree {
                     bf = self.createFolder(null, json.id, null, json.title);
                     break;
                 case "bookmark":
-                case "local":
+                case "page":
                     bf = self.createLink(null, json.type, json.id, null, json.source, json.icon, json.title);
                     break;
                 case "separator":
@@ -452,6 +455,25 @@ class BookTree {
             this.onXmlChanged && this.onXmlChanged();
         }
     }
+    updateSource($item, source) {
+        var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
+        source = $.trim(source);
+        if (desc_node) {
+            $item.attr("source", source);
+            desc_node.setAttributeNS(this.MAIN_NS, "source", source);
+            this.onXmlChanged && this.onXmlChanged();
+        }
+    }
+    updateComment($item, comment) {
+        var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
+        comment = $.trim(comment);
+        comment = comment.replace(/\n\r/g, "\n");
+        comment = comment.replace(/[\n\r]/g, " __BR__ ");
+        if (desc_node) {
+            desc_node.setAttributeNS(this.MAIN_NS, "comment", comment);
+            this.onXmlChanged && this.onXmlChanged();
+        }
+    }
     getItemPath($item, separator=' / ') {
         var ar = [$item.find("label").html()];
         while($item){
@@ -516,7 +538,7 @@ class BookTree {
         }
         var bf = new NodeHTMLBuffer(
             `<div id='${id}' class='item ${type}' title='${title}' source='${source}'><input type='checkbox'/><i style='${style}'/><label>${label}</label>`,
-            (type == "local" ? "<div class='origin'></div>" : "") + "</div>");
+            (type == "page" ? "<div class='origin'></div>" : "") + "</div>");
         if (is_new_node) {
             /** append to dom */
             if(!$container.length)
@@ -590,7 +612,7 @@ class BookTree {
             $item.nextAll(".folder-content:first").remove();
         }
         $item.remove();
-        if ($item.hasClass("local") || $item.hasClass("bookmark")) {
+        if ($item.hasClass("page") || $item.hasClass("bookmark")) {
             this.onItemRemoved && this.onItemRemoved(id);
         }
         this.removeItemXml(id);
@@ -607,7 +629,7 @@ class BookTree {
         var r = this.getDescNode(resource);
         if (r) {
             var type = r.getAttributeNS(this.MAIN_NS, "type");
-            if (!(["local", "bookmark"].includes(type))) type = "local"
+            if (!(["page", "bookmark"].includes(type))) type = "page"
             return [type, r];
         }
         return [null, null]

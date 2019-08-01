@@ -327,5 +327,8 @@
     },
     "OPEN_ORIGIN_LINK":{
         "message": "Open Origin Link"
+    },
+    "Property":{
+        "message": "Property"
     }
 }
