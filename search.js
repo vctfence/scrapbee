@@ -44,21 +44,23 @@ function loadXml(rdf){
    var searching = $.trim($("#txtSearch").val());
     if(!searching)
 	return;
-    var search_title, search_body;
+    var search_title, search_body, search_comment;
     $("input[type=checkbox][name=source]:checked").each(function(){
         if(this.value == 'title'){
             search_title = true;
         }else if(this.value == 'body'){
             search_body = true;
+        }else if(this.value == 'comment'){
+            search_comment = true;
         }
     });
-    if(!(search_title || search_body))
+    if(!(search_title || search_body || search_comment))
         return
     $("#btnSearch").prop("disabled", true)
     var xmlhttp=new XMLHttpRequest();
     xmlhttp.onload = function(r) {
 	var tree = new BookTree(r.target.response, rdf)
-	processTree(tree, search_title, search_body)
+	processTree(tree, search_title, search_body, search_comment)
     };
     xmlhttp.onerror = function(err) {
 	// log.info(`load ${rdf} failed, ${err}`)
@@ -74,7 +76,7 @@ function loadXml(rdf){
 function red(a){
     return "<b style='color:red'>"+a+"</b>";
 }
-async function processTree(tree, search_title, search_body){
+async function processTree(tree, search_title, search_body, search_comment){
     var searching = escapeRegExp($.trim($("#txtSearch").val()));
     var match_count = 0;
     function seek(item, body){
@@ -86,38 +88,44 @@ async function processTree(tree, search_title, search_body){
 	}
 	var title_matched = false;
 	var content_matched = false;
+        var comment_matched = false;
 	var re = new RegExp(searching, "i")
 	var re2 = new RegExp(searching, "ig")
-	var m=null;
-        m = item.title.match(re)
-	if(search_title && m){
-	    title_matched = true;
-	    $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
-	}
-	var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
-        m = text.match(re)
-	if(search_body && m){
-	    var pos1 = m.index;
-	    content_matched = true;
-	    if(!title_matched){
-                $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
-		// $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
-	    }
-	    pos1 = Math.max(0, pos1 - 50)
-	    var pos2 = Math.min(text.length - 1, pos1 + 100);
-	    var s = text.substring(pos1, pos2).replace(re2, red);
-	    if(pos1 > 0) s = "..." + s;
-	    if(pos2 < text.length - 1) s = s + "...";
-	    $("<div class='match-content'>").appendTo($("#divResult")).html(s);
-	}else if(title_matched && body.length){
-	    pos1 = 0
-	    pos2 = Math.min(text.length, 150);
-	    var s = text.substring(pos1, pos2).replace(re2, red);
-	    if(pos1 > 0) s = "..." + s;
-	    if(pos2 < text.length - 1) s = s + "...";
-	    $("<div class='match-content'>").appendTo($("#divResult")).html(s);
-	}
-	if(title_matched || content_matched){
+        /** title */
+        title_matched = search_title && !!(item.title.match(re));
+        /** comment */
+        comment_matched = search_comment && !!(item.comment.match(re));
+        /** content */
+        var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
+        var m = text.match(re);
+        content_matched = search_body && !!(m);
+        /** output */
+        /*** title */
+        if(title_matched || comment_matched || content_matched)
+            $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
+        /*** comment */
+        if((title_matched || comment_matched || content_matched) && item.comment)
+	    $(`<div class='match-comment'>`).appendTo($("#divResult")).html(item.comment.replace(re2, red))
+        /*** body */
+        if(title_matched || comment_matched || content_matched){
+            if(content_matched){
+                var pos1 = Math.max(0, m.index - 50)
+	        var pos2 = Math.min(text.length - 1, pos1 + 100);
+	        var s = text.substring(pos1, pos2).replace(re2, red);
+	        if(pos1 > 0) s = "..." + s;
+	        if(pos2 < text.length - 1) s = s + "...";
+	        $("<div class='match-content'>").appendTo($("#divResult")).html(s);
+            }else{
+                var pos1 = 0
+	        var pos2 = Math.min(text.length, 150);
+	        var s = text.substring(pos1, pos2).replace(re2, red);
+	        if(pos1 > 0) s = "..." + s;
+	        if(pos2 < text.length - 1) s = s + "...";
+	        $("<div class='match-content'>").appendTo($("#divResult")).html(s);
+            }
+        }
+        /*** food link */
+	if(title_matched || content_matched || comment_matched){
 	    $(`<a target='_blank' class='match-source'>`).appendTo($("#divResult")).html(item.source).prop("href", item.source)
 	    match_count ++;
 	}

@@ -60,6 +60,21 @@
        width:-moz-fit-content;
        width:50em;
      }
+     .match-comment{
+       color:#555;
+       display:block;
+       text-decoration:none;
+       
+       /* width:fit-content;
+          width:-webkit-fit-content;
+          width:-moz-fit-content; */
+       
+       width:50em;
+       border:1px solid #555;
+       border-radius:5px;
+       margin:10px 0;
+       padding:5px;
+     }
      .match-source{
        color:green;display:block;
        margin-bottom:2em;
@@ -88,6 +103,7 @@
         <input type="" name="" value="" id="txtSearch"/>
         <input type="checkbox" name="source" value="title" checked="true"/> {Title}
         <input type="checkbox" name="source" value="body" /> {Content}
+        <input type="checkbox" name="source" value="comment" checked="true"/> {Comment}
         <input type="submit" name="" value="{Search}" id="btnSearch"/>
       </form>
     </div>

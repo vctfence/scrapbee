@@ -334,13 +334,25 @@
     "Property":{
         "message": "属性"
     },
-    "NODE_TYPE_PAGE":{
+    "Page":{
         "message": "页面"
     },
-    "NODE_TYPE_BOOKMARK":{
+    "Bookmark":{
         "message": "书签"
     },
-    "NODE_TYPE_FOLDER":{
+    "Folder":{
         "message": "文件夹"
+    },
+    "CREATE_TIME":{
+        "message": "创建时间"
+    },
+    "Type":{
+        "message": "类型"
+    },
+    "General":{
+        "message": "常规"
+    },
+    "Comment":{
+        "message": "注释"
     }
 }

@@ -87,7 +87,7 @@ function showDlg(name, data){
         $(document).bind("keyup.dialog", function(e) {
             if (e.key === "Escape") { // escape key maps to keycode `27`
                 $dlg.find("input.button-cancel").click();
-            }else if(e.key === "Enter"){
+            }else if(e.key === "Enter" && e.target.tagName != "TEXTAREA"){
                 $dlg.find("input[type=submit]").click();
             }
         });

@@ -254,14 +254,14 @@ pause`
             $("#txtBackendPath").html("error: " + error);
         });
     }
-    function downloadText(text, filename, callback, saveas=false){
+    function downloadText(text, filename, callback, saveAs=false){
         var blob = new Blob([text], {type : 'text/plain'});
         var objectURL = URL.createObjectURL(blob);
         browser.downloads.download({
             url:objectURL,
             filename: filename,
             conflictAction: "overwrite",
-            saveAs: true
+            saveAs: saveAs
         }).then(function(id){
             var fn = function(downloadDelta){
                 if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){

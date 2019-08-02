@@ -244,7 +244,6 @@ select{
     display:inline-block;
     padding:3px 15px;
     background:#aaa;
-    
     margin-left:3px;
     border-radius:3px 3px 0 0;
     vertical-align:bottom;
@@ -254,7 +253,7 @@ select{
 .tab-page-top-bar span.on{
     background:#09c;
     color:#fff;
-    padding:5px 15px;
+    padding:4px 15px;
 }
 .tab-page{
     /* display:none; */
