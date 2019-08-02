@@ -427,7 +427,7 @@ class BookTree {
                         source: introNode.getAttributeNS(self.MAIN_NS, "source"),
                         icon: introNode.getAttributeNS(self.MAIN_NS, "icon"),
                         title: introNode.getAttributeNS(self.MAIN_NS, "title"),
-                        comment: introNode.getAttributeNS(self.MAIN_NS, "comment"),
+                        comment: introNode.getAttributeNS(self.MAIN_NS, "comment").replace(/ __BR__ /g, "\n"),
                         level
                     }, child);
                 }

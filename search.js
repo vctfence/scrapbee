@@ -94,6 +94,7 @@ async function processTree(tree, search_title, search_body, search_comment){
         /** title */
         title_matched = search_title && !!(item.title.match(re));
         /** comment */
+        item.comment = item.comment.replace(/\n/g, "<br>");
         comment_matched = search_comment && !!(item.comment.match(re));
         /** content */
         var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
