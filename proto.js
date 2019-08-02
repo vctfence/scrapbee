@@ -7,6 +7,14 @@ String.prototype.htmlEncode=function(ignoreAmp){
 	.replace(/ /g,'&nbsp;')
 	.replace(/\'/g,'&#39;');
 }
+String.prototype.htmlDecode=function(){
+    return this.replace(/&amp;/g,'&')
+	.replace(/&quot;/g,'\"')
+	.replace(/&lt;/g,'<')
+	.replace(/&gt;/g,'>')
+	.replace(/&nbsp;/g,' ')
+	.replace(/&#39;/g,"'") ;
+}
 String.prototype.translate=function(){
     return this.fillData(function(s){
 	try{
@@ -15,14 +23,6 @@ String.prototype.translate=function(){
 	    return s;
 	}
     });
-}
-String.prototype.htmlDecode=function(){
-    return this.replace(/&amp;/g,'&')
-	.replace(/&quot;/g,'\"')
-	.replace(/&lt;/g,'<')
-	.replace(/&gt;/g,'>')
-	.replace(/&nbsp;/g,' ')
-	.replace(/&#39;/g,"'") ;
 }
 /*
   html style escape characters

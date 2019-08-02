@@ -174,15 +174,12 @@ menulistener.onProperty = function(){
     var $foc = $(".item.focus");
     if($foc.length){
     	var $label = $(".item.focus label");
-        var c0;
+        var id = $foc.attr("id");
+        var c0 = currTree.getItemComment(id);
     	var t0 = $foc.attr("title");
         var s0 = $foc.attr("source");
-        var id = $foc.attr("id");
-
         var time = "";
         var type = currTree.getItemType($foc);
-        var comment = currTree.getItemComment(id);
-        
         var m = id.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
         if(m){
             var lang = "en";
@@ -193,14 +190,12 @@ menulistener.onProperty = function(){
             var options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric'};
             time = new Date(m[1], m[2]-1, m[3], m[4], m[5]).toLocaleDateString(lang, options);
         }
-        
         var t = type.replace(/^\w/, function(a){return a.toUpperCase()})
         t = `{${t}}`.translate();
-        
-	showDlg("property", {dlg_title:"{Property}".translate(), title: t0.htmlDecode(),
-                             url: s0, id, time, type:t, display_url: type == "folder" ? "none" : "",
-                             comment}).then(function(d){
-                                 
+        var opt = {dlg_title:"{Property}".translate(), title: t0.htmlDecode(),
+                   url: s0, id, time, type:t, display_url: type == "folder" ? "none" : "", comment: c0};
+	showDlg("property", opt).then(function(d){
+            currTree.lockSaving = true;
 	    var t1 = d.title.htmlEncode();
 	    if(t1 != t0){
    		currTree.renameItem($foc, t1);
@@ -209,10 +204,14 @@ menulistener.onProperty = function(){
             if(s1 != s0){
    		currTree.updateSource($foc, s1);
 	    }
-            var c1 = d.comment;
+            var c1 = d.comment.htmlEncode();
             if(c1 != c0){
    		currTree.updateComment($foc, c1);
 	    }
+            currTree.lockSaving = false;
+            if(t1 != t0 || s1 != s0 || c1 != c0){
+                currTree.onXmlChanged();
+            }
 	});
     }
 }
@@ -479,6 +478,8 @@ function loadXml(rdf){
 	    log.error(e.message)
 	}
 	currTree.onXmlChanged=function(){
+            if(currTree.lockSaving)
+                return;
             log.info(`saving changes to rdf`);
             browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
                 browser.runtime.sendMessage({type: 'RDF_EDITED', rdf: currTree.rdf}).then((response) => {});
@@ -730,9 +731,5 @@ document.addEventListener('contextmenu', function(event){
 });
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
-});
-document.addEventListener('keydown', function(event){
-    console.log(event.code)
-    return false;
 });
 console.log("==> main.js loaded");

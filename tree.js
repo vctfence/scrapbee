@@ -218,7 +218,7 @@ class BookTree {
     getItemComment(id) {
         var node = this.getDescNode("urn:scrapbook:item" + id);
         var c = node.getAttributeNS(this.MAIN_NS, "comment") || "";
-        c = c.replace(/ __BR__ /g, "\n");
+        c = c.replace(/ __BR__ /g, "\n").htmlDecode();
         return c;
     }
     getItemFilePath(id) {
@@ -427,7 +427,7 @@ class BookTree {
                         source: introNode.getAttributeNS(self.MAIN_NS, "source"),
                         icon: introNode.getAttributeNS(self.MAIN_NS, "icon"),
                         title: introNode.getAttributeNS(self.MAIN_NS, "title"),
-                        comment: introNode.getAttributeNS(self.MAIN_NS, "comment").replace(/ __BR__ /g, "\n"),
+                        comment: introNode.getAttributeNS(self.MAIN_NS, "comment").replace(/ __BR__ /g, "\n").htmlDecode(),
                         level
                     }, child);
                 }
@@ -468,6 +468,8 @@ class BookTree {
     updateComment($item, comment) {
         var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
         comment = $.trim(comment);
+
+        
         comment = comment.replace(/\n\r/g, "\n");
         comment = comment.replace(/[\n\r]/g, " __BR__ ");
         if (desc_node) {
