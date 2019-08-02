@@ -354,5 +354,8 @@
     },
     "Comment":{
         "message": "注释"
+    },
+    "LOCATE_NODE":{
+        "message": "定位结点"
     }
 }

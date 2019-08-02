@@ -224,12 +224,11 @@ class EditToolBar{
         btn.type="button";
         btn.className="blue-button mark-pen-btn"
         btn.value="<<" //chrome.i18n.getMessage("MARK_PEN");
+        btn.title="{LOCATE_NODE}".translate();
         div.appendChild(btn);
         btn.addEventListener("click", function(e){
             browser.runtime.sendMessage({type: 'LOCATE_ITEM', id:self.scrap_id }).then((response) => {
-                
             }).catch((e) => {
-                
             });
         });
     }

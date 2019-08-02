@@ -330,5 +330,29 @@
     },
     "Property":{
         "message": "Property"
+    },
+    "Page":{
+        "message": "Page"
+    },
+    "Bookmark":{
+        "message": "Bookmark"
+    },
+    "Folder":{
+        "message": "Folder"
+    },
+    "CREATE_TIME":{
+        "message": "Create Time"
+    },
+    "Type":{
+        "message": "Type"
+    },
+    "General":{
+        "message": "General"
+    },
+    "Comment":{
+        "message": "Comment"
+    },
+    "LOCATE_NODE":{
+        "message": "Locate Node"
     }
 }

@@ -309,5 +309,32 @@
     },
     "OPEN_ORIGIN_LINK":{
         "message": "Lien d'origine ouvert"
+    },
+    "Property":{
+        "message": "Propriété"
+    },
+    "Page":{
+        "message": "Page"
+    },
+    "Bookmark":{
+        "message": "Signet"
+    },
+    "Folder":{
+        "message": "Dossier"
+    },
+    "CREATE_TIME":{
+        "message": "Créer du temps"
+    },
+    "Type":{
+        "message": "Type"
+    },
+    "General":{
+        "message": "Général"
+    },
+    "Comment":{
+        "message": "Commentaire"
+    },
+    "LOCATE_NODE":{
+        "message": "Localiser le nœud"
     }
 }
