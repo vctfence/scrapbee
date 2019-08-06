@@ -94,7 +94,6 @@ async function processTree(tree, search_title, search_body, search_comment){
         /** title */
         title_matched = search_title && !!(item.title.match(re));
         /** comment */
-        item.comment = item.comment.replace(/\n/g, "<br>");
         comment_matched = search_comment && !!(item.comment.match(re));
         /** content */
         var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
@@ -102,11 +101,19 @@ async function processTree(tree, search_title, search_body, search_comment){
         content_matched = search_body && !!(m);
         /** output */
         /*** title */
-        if(title_matched || comment_matched || content_matched)
-            $(`<a target='_blank' class='match-title'>`).appendTo($("#divResult")).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
+        if(title_matched || comment_matched || content_matched){
+            var $div = $("<div>").appendTo($("#divResult"));
+            $(`<a target='_blank' class='match-title'>`).appendTo($div).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
+            $(`<a target='_blank' class='locate-button'>&lt;&lt;</a>`).appendTo($div).click(function(){
+                browser.runtime.sendMessage({type: 'LOCATE_ITEM', id: item.id}).then((response) => {
+                }).catch((e) => {
+                }); 
+            });
+        }
         /*** comment */
-        if((title_matched || comment_matched || content_matched) && item.comment)
-	    $(`<div class='match-comment'>`).appendTo($("#divResult")).html(item.comment.replace(re2, red))
+        if((title_matched || comment_matched || content_matched) && item.comment){
+	    $(`<div class='match-comment'>`).appendTo($("#divResult")).html(item.comment.replace(re2, red).replace(/\n/g, "<br>"))
+        }
         /*** body */
         if(title_matched || comment_matched || content_matched){
             if(content_matched){
