@@ -1,5 +1,9 @@
 @-moz-document url-prefix("%%%") {
 
+    #treeview {
+        --themed-globe-icon: url("/icons/globe2.svg") !important;
+    }
+
     html, body, .toolbar, .black-button, .simple-menu, .dlg, .dlg *, #div-form-left, .div-area, .div-area * {
         background: var(--in-content-page-background) !important;
         border-color: var(--tone-5) !important;

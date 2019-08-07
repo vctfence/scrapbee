@@ -1,5 +1,6 @@
 #treeview {
     overflow-x: hidden;
+    --themed-globe-icon: url("/icons/globe.svg");
 }
 .jstree-default .jstree-node {
     margin-left: 16px;

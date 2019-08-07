@@ -1,5 +1,5 @@
 --- ./original/jstree.js	2018-11-07 01:15:47.000000000 +0400
-+++ jstree.js	2019-04-10 14:55:11.547493500 +0400
++++ jstree.js	2019-08-07 14:23:04.467915300 +0400
 @@ -593,7 +593,7 @@
  					return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue));
  				})
@@ -18,7 +18,15 @@
  			_temp1.setAttribute('tabindex','-1');
  			_temp2 = document.createElement('I');
  			_temp2.className = 'jstree-icon jstree-themeicon';
-@@ -1636,7 +1636,7 @@
+@@ -1629,6 +1629,7 @@
+ 									id			: tid,
+ 									text		: d.text || '',
+ 									icon		: d.icon !== undefined ? d.icon : true,
++                                    fallbackIcon: d.fallbackIcon,
+ 									parent		: p,
+ 									parents		: ps,
+ 									children	: d.children || [],
+@@ -1636,7 +1637,7 @@
  									data		: d.data,
  									state		: { },
  									li_attr		: { id : false },
@@ -27,7 +35,7 @@
  									original	: false
  								};
  							for(i in df) {
-@@ -1726,7 +1726,7 @@
+@@ -1726,7 +1727,7 @@
  								data		: null,
  								state		: { },
  								li_attr		: { id : false },
@@ -36,7 +44,7 @@
  								original	: false
  							};
  							for(i in df) {
-@@ -2012,7 +2012,7 @@
+@@ -2012,7 +2013,7 @@
  					data		: null,
  					state		: { },
  					li_attr		: { id : false },
@@ -45,7 +53,7 @@
  					original	: false
  				}, i, tmp, tid;
  			for(i in this._model.default_state) {
-@@ -2127,7 +2127,7 @@
+@@ -2127,7 +2128,7 @@
  					data		: d.data,
  					state		: { },
  					li_attr		: { id : false },
@@ -54,7 +62,7 @@
  					original	: false
  				};
  			for(i in df) {
-@@ -2226,7 +2226,7 @@
+@@ -2226,7 +2227,7 @@
  				data		: null,
  				state		: { },
  				li_attr		: { id : false },
@@ -63,16 +71,19 @@
  				original	: false
  			};
  			for(i in df) {
-@@ -2544,7 +2544,7 @@
+@@ -2542,9 +2543,9 @@
+ 					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
+ 				}
  				else {
- 					node.childNodes[1].childNodes[0].style.backgroundImage = 'url("'+obj.icon+'")';
+-					node.childNodes[1].childNodes[0].style.backgroundImage = 'url("'+obj.icon+'")';
++    				node.childNodes[1].childNodes[0].style.backgroundImage = 'url("' + obj.icon + '")' + (obj.fallbackIcon? ', ' + obj.fallbackIcon: '');
  					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
 -					node.childNodes[1].childNodes[0].style.backgroundSize = 'auto';
 +					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
  					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
  				}
  			}
-@@ -3584,7 +3584,7 @@
+@@ -3584,7 +3585,7 @@
  
  			var c = this.get_container_ul()[0].className;
  			if(!skip_loading) {

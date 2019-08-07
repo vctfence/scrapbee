@@ -247,6 +247,8 @@ class BookmarkTree {
                 n.li_attr.class += " scrapyard-notes";
             }
 
+            n.fallbackIcon = "var(--themed-globe-icon)";
+
             if (!n.icon) {
                 n.icon = "/icons/globe.svg";
                 n.a_attr.class += " generic-icon";

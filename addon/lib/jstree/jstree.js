@@ -1629,6 +1629,7 @@
 									id			: tid,
 									text		: d.text || '',
 									icon		: d.icon !== undefined ? d.icon : true,
+                                    fallbackIcon: d.fallbackIcon,
 									parent		: p,
 									parents		: ps,
 									children	: d.children || [],
@@ -2542,7 +2543,7 @@
 					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
 				}
 				else {
-					node.childNodes[1].childNodes[0].style.backgroundImage = 'url("'+obj.icon+'")';
+    				node.childNodes[1].childNodes[0].style.backgroundImage = 'url("' + obj.icon + '")' + (obj.fallbackIcon? ', ' + obj.fallbackIcon: '');
 					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
 					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
