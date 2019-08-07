@@ -1,7 +1,7 @@
 @-moz-document url-prefix("%%%") {
 
     #treeview {
-        --themed-globe-icon: url("/icons/globe2.svg") !important;
+        --themed-globe-icon: url("%%%icons/globe2.svg") !important;
     }
 
     html, body, .toolbar, .black-button, .simple-menu, .dlg, .dlg *, #div-form-left, .div-area, .div-area * {
@@ -78,7 +78,7 @@
     }
 
     .vakata-context li > a:hover,
-    .vakata-context .vakata-context-hover > a {
+    .vakata-context li.vakata-context-hover > a {
         background-color: var(--tone-4) !important;
         color: var(--tone-7) !important;
     }
@@ -93,10 +93,6 @@
         border-top: 1px solid var(--in-content-box-border-color) !important;
         border-left: 1px solid var(--in-content-box-border-color) !important;
         box-shadow: none !important;
-    }
-
-    li.vakata-context-hover, .vakata-context .vakata-context-hover > a {
-        background-color: var(--in-content-box-background-hover) !important;
     }
 
     .vakata-context li > a .vakata-contextmenu-sep {
