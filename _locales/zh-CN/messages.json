@@ -340,9 +340,6 @@
     "Bookmark":{
         "message": "书签"
     },
-    "Folder":{
-        "message": "文件夹"
-    },
     "CREATE_TIME":{
         "message": "创建时间"
     },
