@@ -5,7 +5,7 @@ export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
 export const NODE_TYPE_NOTES = 6;
 export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
-export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_SHELF];
+export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP];
 
 export const TODO_STATE_TODO = 1;
 export const TODO_STATE_DONE = 4;
@@ -29,14 +29,16 @@ export const TODO_STATES = {
     "DONE": TODO_STATE_DONE
 };
 
-export const TODO_SHELF = -3;
-export const DONE_SHELF = -2;
 export const EVERYTHING_SHELF = -1;
+export const DONE_SHELF = -2;
+export const TODO_SHELF = -3;
+export const FIREFOX_SHELF_ID = -4;
 
 export const TODO_NAME = "TODO";
 export const DONE_NAME = "DONE";
-export const DEFAULT_SHELF_NAME = "default";
 export const EVERYTHING = "everything";
+export const DEFAULT_SHELF_NAME = "default";
+export const FIREFOX_SHELF_NAME = "firefox";
 
 export const DEFAULT_POSITION = 2147483647;
 
@@ -48,6 +50,13 @@ const db = new Dexie("scrapyard");
 
 db.version(1).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date`,
+    blobs: `++id,&node_id,size`,
+    index: `++id,&node_id,*words`,
+    notes: `++id,&node_id`,
+    tags: `++id,name`,
+});
+db.version(2).stores({
+    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
     blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
     notes: `++id,&node_id`,
@@ -83,7 +92,9 @@ class Storage {
                 "todo_state",
                 "date_added",
                 "date_modified",
-                "has_notes"
+                "has_notes",
+                "external",
+                "external_id"
             ].some(k => k === key))
                 delete node[key];
         }
@@ -113,6 +124,26 @@ class Storage {
 
     getNodes(ids) {
         return db.nodes.where("id").anyOf(ids).toArray();
+    }
+
+    getExternalNode(id, kind) {
+        return db.nodes.where("external_id").equals(id).and(n => n.external === kind).first();
+    }
+
+    isExternalNodeExists(id, kind) {
+        return !!db.nodes.where("external_id").equals(id).and(n => n.external === kind).count();
+    }
+
+    deleteExternalNodes(ids, kind) {
+        if (ids)
+            return db.nodes.where("external_id").anyOf(ids).and(n => n.external === kind).delete();
+        else
+            return db.nodes.where("external").equals(kind).delete();
+    }
+
+    deleteMissingExternalNodes(ids, kind) {
+        let set = new Set(ids);
+        return db.nodes.where("external").equals(kind).and(n => n.external_id && !set.has(n.external_id)).delete();
     }
 
     getChildNodes(id) {
@@ -170,7 +201,6 @@ class Storage {
         return db.nodes.where("id").anyOf(children).toArray();
     }
 
-
     async queryNodes(group, options) {
         let {search, tags, types, path, limit, depth, order} = options;
 
@@ -185,7 +215,7 @@ class Storage {
             await this._selectAllChildrenOf(group, subtree);
         }
 
-        let nodes = await where.filter(node => {
+        let filterf = node => {
             let result = path && path !== TODO_NAME && path !== DONE_NAME? !!group: true;
 
             if (types)
@@ -215,7 +245,9 @@ class Storage {
             }
 
             return result;
-        }).toArray();
+        };
+
+        let nodes = await where.filter(filterf).toArray();
 
         if (order === "custom")
             nodes.sort((a, b) => a.pos - b.pos);

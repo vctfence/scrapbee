@@ -104,6 +104,9 @@ window.onload=function(){
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
         //document.getElementById("option-compress-export").checked = settings.compress_export();
         //document.getElementById("option-revoke-archive-url-after").value = settings.archive_url_lifetime();
+        document.getElementById("option-show-firefox-bookmarks").checked = settings.show_firefox_bookmarks();
+        document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
+        document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
         document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
     });
 
@@ -161,13 +164,17 @@ window.onload=function(){
         settings.shallow_export(document.getElementById("option-shallow-export").checked);
         //settings.compress_export(document.getElementById("option-compress-export").checked);
         //settings.archive_url_lifetime(document.getElementById("option-revoke-archive-url-after").value);
+        settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked);
+        settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
+        settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
         settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
-
 
         /* Display saved status for short period */
 
         document.getElementById("options-save-button").value = "Saved";
         document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
+
+        backend.reconcileBrowserBookmarksDB();
 
         setTimeout(function()
             {

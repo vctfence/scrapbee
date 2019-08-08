@@ -170,9 +170,6 @@ export class SearchContext {
             case SEARCH_MODE_CONTENT:
                 this.provider = new ContentSearchProvider(shelf);
                 break;
-            case SEARCH_MODE_FIREFOX:
-                this.provider = new FirefoxSearchProvider(shelf);
-                break;
         }
     }
 

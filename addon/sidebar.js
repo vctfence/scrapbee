@@ -7,11 +7,13 @@ import {isElementInViewport} from "./utils.js"
 import {
     EVERYTHING,
     DEFAULT_SHELF_NAME,
+    FIREFOX_SHELF_NAME,
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF,
     TODO_SHELF,
     DONE_SHELF,
     EVERYTHING_SHELF,
+    FIREFOX_SHELF_ID,
     TODO_NAME,
     DONE_NAME
 } from "./db.js";
@@ -32,9 +34,10 @@ const INPUT_TIMEOUT = 1000;
 function isSpecialShelf(name) {
     name = name.toLocaleUpperCase();
     return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
+        || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
         || name === EVERYTHING.toLocaleUpperCase()
-        || name === TODO_NAME
-        || name === DONE_NAME;
+        || name === TODO_NAME.toLocaleUpperCase()
+        || name === DONE_NAME.toLocaleUpperCase();
 }
 
 function validSearchInput(input) {
@@ -150,7 +153,14 @@ function loadShelves(context, tree) {
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
     `);
 
+    if (settings.show_firefox_bookmarks())
+        shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${FIREFOX_SHELF_NAME}</option>`);
+
     return backend.listShelves().then(shelves => {
+        let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+        if (firefox_shelf)
+            shelves.splice(shelves.indexOf(firefox_shelf), 1);
+
         shelves.sort((a, b) => {
             if (a.name < b.name)
                 return -1;
@@ -170,7 +180,6 @@ function loadShelves(context, tree) {
             if (shelf.name === DEFAULT_SHELF_NAME)
                 option.addClass("option-builtin");
         }
-
 
         let last_shelf_id = settings.last_shelf() || 1;
 
@@ -473,11 +482,11 @@ window.onload = function () {
         performSearch(context, tree);
     });
 
-    $("#shelf-menu-search-firefox").click(() => {
-        $("#search-mode-switch").prop("src", "icons/firefox.svg");
-        context.setMode(SEARCH_MODE_FIREFOX, getCurrentShelf().name);
-        performSearch(context, tree);
-    });
+    // $("#shelf-menu-search-firefox").click(() => {
+    //     $("#search-mode-switch").prop("src", "icons/firefox.svg");
+    //     context.setMode(SEARCH_MODE_FIREFOX, getCurrentShelf().name);
+    //     performSearch(context, tree);
+    // });
 
     let timeout;
     $("#search-input").on("input", e => {

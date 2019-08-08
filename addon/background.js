@@ -123,5 +123,8 @@ browser.runtime.onMessage.addListener(message => {
     }
 });
 
+settings.load(s => {
+    backend.reconcileBrowserBookmarksDB();
+});
 
 console.log("==> background.js loaded");

@@ -1,3 +1,5 @@
+import {settings} from "./settings.js"
+
 import {
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
@@ -6,10 +8,134 @@ import {
     NODE_TYPE_SEPARATOR,
     DEFAULT_SHELF_NAME,
     TODO_NAME,
-    DONE_NAME
+    DONE_NAME, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME
 } from "./db.js"
 
 import Storage from "./db.js"
+
+class BrowserBackend {
+
+    constructor() {
+    }
+
+    newBrowserRootNode() {
+        return {id: FIREFOX_SHELF_ID,
+                pos: -1,
+                icon: "/icons/firefox.svg",
+                name: FIREFOX_SHELF_NAME,
+                uuid: FIREFOX_SHELF_NAME,
+                type: NODE_TYPE_SHELF,
+                external: FIREFOX_SHELF_NAME};
+    }
+
+    _convertType(node) {
+        return ({"folder": NODE_TYPE_GROUP,
+                 "bookmark": NODE_TYPE_BOOKMARK,
+                 "separator": NODE_TYPE_SEPARATOR})[node.type];
+    }
+
+    convert(bookmark, parent) {
+        return {
+            pos: bookmark.index,
+            uri: bookmark.url,
+            name: bookmark.title,
+            type: this._convertType(bookmark),
+            parent_id: parent.id,
+            date_added: bookmark.dateAdded,
+            external: FIREFOX_SHELF_NAME,
+            external_id: bookmark.id
+        };
+    }
+
+    _fromBrowserBookmarks([tree]) {
+        let traverse = (root, visitor) => {
+            let doTraverse = (parent, root) => {
+                visitor(parent, root);
+                if (root.children)
+                    for (let c of root.children) {
+                        doTraverse(root, c);
+                    }
+            };
+
+            doTraverse(null, root);
+        };
+
+        let result = [this.newBrowserRootNode()];
+
+        let builtin = [tree.children.find(n => n.id === "toolbar_____"),
+            tree.children.find(n => n.id === "mobile______"),
+            tree.children.find(n => n.id === "menu________"),
+            tree.children.find(n => n.id === "unfiled_____")].filter(n => !!n);
+
+        for (let n of builtin) {
+            if (!settings.show_firefox_toolbar() && n.id === builtin[0].id) {
+                tree.children.splice(tree.children.indexOf(n), 1);
+                continue;
+            }
+            if (!settings.show_firefox_mobile() && n.id === builtin[1].id) {
+                tree.children.splice(tree.children.indexOf(n), 1);
+                continue;
+            }
+
+            result.push(convert(n));
+        }
+
+        traverse(tree, (parent, node) => {
+            if (node.id !== tree.id && !builtin.find(n => n.id === node.id))
+                result.push(convert(node));
+        });
+
+        console.log(result);
+        return result;
+    }
+
+    async listNodes() {
+        return browser.bookmarks.getTree().then(bookmarks => this._fromBrowserBookmarks(bookmarks));
+    }
+
+    reorderNodes(positions) {
+    }
+
+    setTODOState(states) {
+    }
+
+    async listTODO() {
+    }
+
+    async listDONE() {
+    }
+
+    async createGroup(parent_id, name, node_type = NODE_TYPE_GROUP) {
+    }
+
+    async renameGroup(id, new_name) {
+    }
+
+    async addSeparator(parent_id) {
+    }
+
+    async moveNodes(ids, dest_id) {
+    }
+
+    async copyNodes(ids, dest_id) {
+    }
+
+    async deleteNodes(ids) {
+    }
+
+    async deleteChildNodes(id) {
+    }
+
+    async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
+    }
+
+    async updateBookmark(data) {
+    }
+
+}
+
+let browserBackend = new BrowserBackend();
+
 
 class IDBBackend extends Storage {
 
@@ -197,7 +323,6 @@ class IDBBackend extends Storage {
         let shelf_name = path_list.shift();
         let parent = groups[shelf_name.toLowerCase()];
 
-
         if (!parent) {
             parent = await this.addNode({
                 name: shelf_name,
@@ -375,11 +500,54 @@ class IDBBackend extends Storage {
 
         return this.updateNode(update);
     }
+
+    async reconcileBrowserBookmarksDB() {
+        let browser_ids = [];
+        let begin = new Date().getTime();
+
+        let reconcile = async (d, b) => { // node, bookmark
+            let promises = [];
+
+            for (let bc of b.children) {
+                browser_ids.push(bc.id);
+
+                let node = await this.getExternalNode(bc.id, FIREFOX_SHELF_NAME);
+                if (node) {
+                    node.name = bc.title;
+                    node.uri = bc.url;
+                    node.pos = bc.index;
+                    node.parent_id = d.id;
+                    await this.updateNode(node);
+                }
+                else {
+                    node = await this.addNode(browserBackend.convert(bc, d), false);
+                }
+
+                if (bc.type === "folder")
+                    promises.push(reconcile(node, bc));
+            }
+
+            return Promise.all(promises);
+        };
+
+        if (settings.show_firefox_bookmarks()) {
+            let db_root = await this.getNode(FIREFOX_SHELF_ID);
+            if (!db_root)
+                db_root = await this.addNode(browserBackend.newBrowserRootNode(), false);
+
+            let [browser_root] = await browser.bookmarks.getTree();
+            return reconcile(db_root, browser_root).then(async () => {
+                await this.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
+                console.log("reconciliation time: " + ((new Date().getTime() - begin) / 1000) + "s");
+            });
+        }
+        else {
+            return this.deleteExternalNodes(null, FIREFOX_SHELF_NAME);
+        }
+    }
 }
-
-
 
 // let backend = new HTTPBackend("http://localhost:31800", "default:default");
 let backend = new IDBBackend();
 
-export {backend};
+export {backend, browserBackend};

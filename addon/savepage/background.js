@@ -384,7 +384,6 @@
 
 import {backend} from "../backend.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
-import {FirefoxSearchProvider} from "../search.js";
 import {browseNode} from "../background.js";
 
 /************************************************************************/
@@ -928,7 +927,7 @@ function addListeners()
                 delete message.type;
 
                 if (message.types === "firefox") {
-                    sendResponse(new FirefoxSearchProvider().search(message.search));
+                    //sendResponse(new FirefoxSearchProvider().search(message.search));
                 }
                 else {
                     let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);

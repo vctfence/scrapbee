@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS = {
     archive_url_lifetime: 5,
     shallow_export: false,
 //    compress_export: true,
+    show_firefox_bookmarks: true,
     switch_to_new_bookmark: true
 };
 

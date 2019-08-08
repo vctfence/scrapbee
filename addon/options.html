@@ -155,6 +155,25 @@
                 </td>
             </tr>
             <tr>
+                <td>Display</td>
+                <td>
+                    <div class="panel" id="display" style="display: flex;">
+                        <form>
+                            <fieldset style="border: none;">
+                                <input id="option-show-firefox-bookmarks" type="checkbox"/><label for="option-show-firefox-bookmarks"
+                            >Show Firefox bookmarks shelf</label>
+                                <blockquote style="margin-top: 0; margin-bottom: 0; margin-left: 20px;">
+                                    <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/><label for="option-show-firefox-bookmarks-toolbar"
+                                >Show bookmarks toolbar folder</label><br>
+                                    <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/><label for="option-show-firefox-bookmarks-mobile"
+                                >Show mobile bookmarks folder</label>
+                                </blockquote>
+                            </fieldset>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr>
                 <td>Behavior</td>
                 <td>
                     <div class="panel" id="behavior" style="display: flex;">
@@ -208,7 +227,7 @@
                         (<a href="https://overdodactyl.github.io/ShadowFox/" target="_blank">ShadowFox</a> is required)
                         <i class="help-mark"></i>
                         <span class="tips hide">Paste this code into <b>&lt;Firefox profile directory&gt;/chrome/userContent.css.</b><br/>
-                          You can find path to your Firefox profile at <b>about:support</b> page.</span>
+                          You can find the path to your Firefox profile at <b>about:support</b> page.</span>
                         </p>
                     </div>
                 </td>
@@ -232,7 +251,7 @@
                 <label for="link-check-timeout">Timeout (sec.):</label>
                 <input id="link-check-timeout" type="number" min="1" value="30"/>
                 <input type="checkbox" id="update-icons"><label for="update-icons">Update icons</label>
-                <input type="button" class="blue-button" id="start-check-links" value="Go">
+                <input type="button" class="blue-button" id="start-check-links" value="Check">
             </div>
             <div id="current-link" class="link-info">
                 <div>Checking: </div>
