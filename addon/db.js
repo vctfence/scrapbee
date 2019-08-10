@@ -39,6 +39,9 @@ export const DONE_NAME = "DONE";
 export const EVERYTHING = "everything";
 export const DEFAULT_SHELF_NAME = "default";
 export const FIREFOX_SHELF_NAME = "firefox";
+export const FIREFOX_SHELF_UUID = "browser_bookmarks";
+
+export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID];
 
 export const DEFAULT_POSITION = 2147483647;
 
@@ -108,7 +111,9 @@ class Storage {
         if (reset_order) {
             datum.pos = DEFAULT_POSITION;
         }
-        datum.uuid = UUID.numeric();
+
+        if (!SPECIAL_UUIDS.some(uuid => uuid === datum.uuid))
+            datum.uuid = UUID.numeric();
         datum.date_added = new Date();
         datum.date_modified = datum.date_added;
         datum.id = await db.nodes.add(datum);
@@ -134,16 +139,22 @@ class Storage {
         return !!db.nodes.where("external_id").equals(id).and(n => n.external === kind).count();
     }
 
-    deleteExternalNodes(ids, kind) {
+    async deleteExternalNodes(ids, kind) {
         if (ids)
-            return db.nodes.where("external_id").anyOf(ids).and(n => n.external === kind).delete();
+            ids = await db.nodes.where("external_id").anyOf(ids).and(n => n.external === kind).toArray();
         else
-            return db.nodes.where("external").equals(kind).delete();
+            ids = await db.nodes.where("external").equals(kind).toArray();
+
+        return this.deleteNodes(ids.map(n => n.id));
     }
 
-    deleteMissingExternalNodes(ids, kind) {
-        let set = new Set(ids);
-        return db.nodes.where("external").equals(kind).and(n => n.external_id && !set.has(n.external_id)).delete();
+    async deleteMissingExternalNodes(ids, kind) {
+        let existing = new Set(ids);
+
+        ids = await db.nodes.where("external").equals(kind).and(n => n.external_id && !existing.has(n.external_id))
+            .toArray();
+
+        return this.deleteNodes(ids.map(n => n.id));
     }
 
     getChildNodes(id) {
@@ -288,20 +299,20 @@ class Storage {
         return nodes.filter(n => word_count[n.id] === words.length);
     }
 
-    async deleteNodes(nodes) {
+    async deleteNodes(ids) {
         if (!Array.isArray)
-            nodes = [nodes];
+            ids = [ids];
 
         if (db.tables.some(t => t.name === "blobs"))
-            await db.blobs.where("node_id").anyOf(nodes).delete();
+            await db.blobs.where("node_id").anyOf(ids).delete();
 
         if (db.tables.some(t => t.name === "index"))
-            await db.index.where("node_id").anyOf(nodes).delete();
+            await db.index.where("node_id").anyOf(ids).delete();
 
         if (db.tables.some(t => t.name === "notes"))
-            await db.notes.where("node_id").anyOf(nodes).delete();
+            await db.notes.where("node_id").anyOf(ids).delete();
 
-        return db.nodes.bulkDelete(nodes);
+        return db.nodes.bulkDelete(ids);
     }
 
     async wipeEveritying() {
@@ -426,6 +437,7 @@ class Storage {
     }
 
     async storeNotes(node_id, notes) {
+        let node = await this.getNode(node_id);
         let exists = await db.notes.where("node_id").equals(node_id).count();
 
         if (exists) {
@@ -436,11 +448,11 @@ class Storage {
         else {
             await db.notes.add({
                 node_id: node_id,
-                content: notes
+                content: notes,
+                external: node.external,
+                external_id: node.external_id
             });
         }
-
-        let node = await this.getNode(node_id);
 
         node.has_notes = !!notes;
         return this.updateNode(node);

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="16"
+   height="16"
+   viewBox="0 0 16 16"
+   fill="context-fill"
+   fill-opacity="context-fill-opacity"
+   version="1.1"
+   id="svg112"
+   sodipodi:docname="bookmarksMenu2.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
+  <metadata
+     id="metadata118">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs116" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     id="namedview114"
+     showgrid="false"
+     inkscape:zoom="14.75"
+     inkscape:cx="6.2646255"
+     inkscape:cy="8"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg112" />
+  <path
+     fill-opacity=".05"
+     d="M15,2H1v12c0,0.6,0.5,1,1,1h12c0.6,0,1-0.4,1-1V2L15,2z"
+     id="path104"
+     style="fill:#4f4f54;fill-opacity:1" />
+  <path
+     d="M3,5v1h2V5H3z M3,9h2V8H3V9z M3,12h2v-1H3V12z"
+     id="path106"
+     style="fill:#8c8c90;fill-opacity:1" />
+  <path
+     fill-opacity=".9"
+     d="M6,5v1h7V5H6z M12,8H6v1h6V8z M6,12h7v-1H6V12z"
+     id="path108"
+     style="fill:#8c8c90;fill-opacity:1" />
+  <path
+     d="M7,2V1H1v1v1v11c0,0.5,0.5,1,1,1h12c0.5,0,1-0.5,1-1V2H7z M13.5,14h-11C2.2,14,2,13.8,2,13.5V3h12v10.5 C14,13.8,13.8,14,13.5,14z"
+     id="path110"
+     style="fill:#8c8c90;fill-opacity:1" />
+</svg>

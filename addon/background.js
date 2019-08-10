@@ -1,5 +1,5 @@
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
-import {backend} from "./backend.js";
+import {backend, browserBackend} from "./backend.js";
 import {exportOrg, importOrg, importHtml} from "./import.js";
 import {settings} from "./settings.js";
 import {showNotification} from "./utils.js";
@@ -122,6 +122,11 @@ browser.runtime.onMessage.addListener(message => {
             });
     }
 });
+
+browser.bookmarks.onCreated.addListener(browserBackend.onBookmarkCreated.bind(browserBackend));
+browser.bookmarks.onRemoved.addListener(browserBackend.onBookmarkRemoved.bind(browserBackend));
+browser.bookmarks.onChanged.addListener(browserBackend.onBookmarkChanged.bind(browserBackend));
+browser.bookmarks.onMoved.addListener(browserBackend.onBookmarkMoved.bind(browserBackend));
 
 settings.load(s => {
     backend.reconcileBrowserBookmarksDB();

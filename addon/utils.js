@@ -1,3 +1,5 @@
+import {backend} from "./backend.js";
+
 export async function scriptsAllowed(tabId, frameId = 0) {
     try {
         await browser.tabs.executeScript(tabId, {
@@ -82,4 +84,55 @@ export function isElementInViewport (el) {
         rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
         rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
     );
+}
+
+
+export function getFavicon(host) {
+    let load_url = (url, type, timeout = 30000) => {
+        return new Promise((resolve, reject) => {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", url);
+            xhr.timeout = timeout;
+
+            if (type)
+                xhr.responseType = type;
+
+            xhr.ontimeout = function () {
+                reject();
+            };
+            xhr.onerror = function (e) {
+                reject(e);
+            };
+            xhr.onload = function () {
+                if (this.status === 200)
+                    resolve({response: this.response, type: this.getResponseHeader("content-type")});
+                else
+                    reject();
+            };
+            xhr.send();
+        });
+    };
+
+    let valid_favicon = r => {
+        let valid_type = r.type? r.type.startsWith("image"): true;
+
+        return r && r.response.length && valid_type;
+    };
+
+    let extract_link = r => {
+        if (r.response && r.response.querySelector) {
+            let link = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+            if (link)
+                return new URL(link.href, origin).toString();
+        }
+        return undefined;
+    };
+
+    let origin = new URL(host).origin;
+    let default_icon = origin + "/favicon.ico";
+    let get_html_icon = () => load_url(host, "document").then(extract_link).catch (e => undefined);
+
+    return load_url(default_icon)
+        .then(r => valid_favicon(r)? default_icon: get_html_icon())
+        .catch(get_html_icon);
 }

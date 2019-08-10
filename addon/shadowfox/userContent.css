@@ -131,6 +131,21 @@
         background-image: url("%%%icons/globe2.svg") !important;
     }
 
+    .jstree-default .browser-bookmark-menu > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/bookmarksMenu2.svg") !important;
+    }
+
+    .jstree-default .browser-unfiled-bookmarks > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/unfiledBookmarks2.svg") !important;
+    }
+
+    .jstree-default .browser-bookmark-toolbar > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/bookmarksToolbar2.svg") !important;
+    }
+
+    .jstree-default .browser-logo > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/firefox2.svg") !important;
+    }
 
     input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-scroll li, .simple-menu div  {
         background-color: var(--in-content-box-background) !important;

@@ -562,6 +562,15 @@ window.onload = function () {
                 tree._jstree.redraw_node(node, false, false, true);
             }
         }
+        else if (request.type === "EXTERNAL_NODES_READY"
+                    || request.type === "EXTERNAL_NODE_UPDATED"
+                    || request.type === "EXTERNAL_NODE_REMOVED") {
+            let last_shelf = settings.last_shelf();
+
+            if (last_shelf == EVERYTHING_SHELF || last_shelf == FIREFOX_SHELF_ID) {
+                loadShelves(context, tree);
+            }
+        }
     });
 
     browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {

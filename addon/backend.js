@@ -1,6 +1,8 @@
 import {settings} from "./settings.js"
 
 import {
+    ENDPOINT_TYPES,
+    CONTAINER_TYPES,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -8,14 +10,34 @@ import {
     NODE_TYPE_SEPARATOR,
     DEFAULT_SHELF_NAME,
     TODO_NAME,
-    DONE_NAME, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME
+    DONE_NAME,
+    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID
 } from "./db.js"
 
 import Storage from "./db.js"
+import {getFavicon} from "./utils.js";
 
-class BrowserBackend {
+let backend;
+let browserBackend;
+
+export class BrowserBackend {
 
     constructor() {
+
+    }
+
+    async traverse (root, visitor) {
+        let doTraverse = async (parent, root) => {
+            await visitor(parent, root);
+            let children = CONTAINER_TYPES.some(t => t === root.type)
+                ? await backend.getChildNodes(root.id)
+                : null;
+            if (children)
+                for (let c of children)
+                    await doTraverse(root, c);
+        };
+
+        return doTraverse(null, root);
     }
 
     newBrowserRootNode() {
@@ -23,7 +45,7 @@ class BrowserBackend {
                 pos: -1,
                 icon: "/icons/firefox.svg",
                 name: FIREFOX_SHELF_NAME,
-                uuid: FIREFOX_SHELF_NAME,
+                uuid: FIREFOX_SHELF_UUID,
                 type: NODE_TYPE_SHELF,
                 external: FIREFOX_SHELF_NAME};
     }
@@ -34,7 +56,17 @@ class BrowserBackend {
                  "separator": NODE_TYPE_SEPARATOR})[node.type];
     }
 
-    convert(bookmark, parent) {
+    _toBrowserType(node) {
+        return ({NODE_TYPE_GROUP: "folder",
+                 NODE_TYPE_SHELF: "folder",
+                 NODE_TYPE_ARCHIVE: "bookmark",
+                 NODE_TYPE_BOOKMARK: "bookmark",
+                 NODE_TYPE_NOTES: "separator",
+                 NODE_TYPE_SEPARATOR: "separator"})[node.type];
+    }
+
+
+    convertBookmark(bookmark, parent) {
         return {
             pos: bookmark.index,
             uri: bookmark.url,
@@ -47,94 +79,275 @@ class BrowserBackend {
         };
     }
 
-    _fromBrowserBookmarks([tree]) {
-        let traverse = (root, visitor) => {
-            let doTraverse = (parent, root) => {
-                visitor(parent, root);
-                if (root.children)
-                    for (let c of root.children) {
-                        doTraverse(root, c);
-                    }
-            };
+    async deleteBrowserBookmarks(nodes) {
+        let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
+            && ENDPOINT_TYPES.some(t => t === n.type));
 
-            doTraverse(null, root);
-        };
+        let externalGroups = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
+            &&  n.type === NODE_TYPE_GROUP);
 
-        let result = [this.newBrowserRootNode()];
+        this.muteBrowserListeners(async () => {
+            await Promise.all(externalGroups.map(n => {
+                try {
+                    return browser.bookmarks.removeTree(n.external_id);
+                }
+                catch (e) {
+                    //console.log(e);
+                }
+            }));
 
-        let builtin = [tree.children.find(n => n.id === "toolbar_____"),
-            tree.children.find(n => n.id === "mobile______"),
-            tree.children.find(n => n.id === "menu________"),
-            tree.children.find(n => n.id === "unfiled_____")].filter(n => !!n);
-
-        for (let n of builtin) {
-            if (!settings.show_firefox_toolbar() && n.id === builtin[0].id) {
-                tree.children.splice(tree.children.indexOf(n), 1);
-                continue;
-            }
-            if (!settings.show_firefox_mobile() && n.id === builtin[1].id) {
-                tree.children.splice(tree.children.indexOf(n), 1);
-                continue;
-            }
-
-            result.push(convert(n));
-        }
-
-        traverse(tree, (parent, node) => {
-            if (node.id !== tree.id && !builtin.find(n => n.id === node.id))
-                result.push(convert(node));
+            return Promise.all(externalEndpoints.map(n => {
+                try {
+                    return browser.bookmarks.remove(n.external_id);
+                }
+                catch (e) {
+                    //console.log(e);
+                }
+            }));
         });
-
-        console.log(result);
-        return result;
     }
 
-    async listNodes() {
-        return browser.bookmarks.getTree().then(bookmarks => this._fromBrowserBookmarks(bookmarks));
+    renameBrowserBookmark(node) {
+        if (node.external === FIREFOX_SHELF_NAME) {
+            this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id, {title: node.name}));
+        }
     }
 
-    reorderNodes(positions) {
+    updateBrowserBookmark(node) {
+        if (node.external === FIREFOX_SHELF_NAME) {
+            this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id,
+                {title: node.name,
+                 url: node.uri}));
+        }
     }
 
-    setTODOState(states) {
+    createBrowserBookmark(node, parent_id) {
+        let type = this._toBrowserType(node);
+        return browser.bookmarks.create({url: node.uri,
+                                         title: node.name,
+                                         type: type,
+                                         parentId: parent_id,
+                                         index: type === "folder"? undefined: node.pos})
+                                    .then(bookmark => {
+                                        node.external = FIREFOX_SHELF_NAME;
+                                        node.external_id = bookmark.id;
+                                        return backend.updateNode(node);
+                                    });
     }
 
-    async listTODO() {
+    async moveBrowserBookmarks(nodes, dest_id) {
+        let dest = await backend.getNode(dest_id);
+        let browser_nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
+        let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
+
+        return this.muteBrowserListeners(async () => {
+            if (dest.external === FIREFOX_SHELF_NAME) {
+                await Promise.all(browser_nodes.map(async n =>
+                    browser.bookmarks.move(n.external_id, {parentId: dest.external_id, index: n.pos})
+                ));
+
+                return Promise.all(other_nodes.map(async n => {
+                    try {
+                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                            return this.traverse(n, async (parent, node) => {
+                                await this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id);
+                            });
+                        }
+                        else
+                            return this.createBrowserBookmark(n, dest.external_id)
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }));
+            } else {
+                return Promise.all(browser_nodes.map(async n => {
+                    let id = n.external_id;
+
+                    n.external = null;
+                    n.external_id = null;
+                    await backend.updateNode(n);
+
+                    try {
+                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                            await this.traverse(n, async (parent, node) => {
+                                if (parent) {
+                                    node.external = null;
+                                    node.external_id = null;
+                                    await backend.updateNode(node);
+                                }
+                            });
+                            return browser.bookmarks.removeTree(id);
+                        }
+                        else
+                            return browser.bookmarks.remove(id);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }));
+            }
+        });
     }
 
-    async listDONE() {
+    async copyBrowserBookmarks(nodes, dest_id) {
+        let dest = await backend.getNode(dest_id);
+        let browser_nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
+        //let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
+
+        return this.muteBrowserListeners(async () => {
+            if (dest.external === FIREFOX_SHELF_NAME) {
+                return Promise.all(nodes.map(async n => {
+                    try {
+                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                            return this.traverse(n, async (parent, node) => {
+                                await this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id);
+                            });
+                        }
+                        else
+                            return this.createBrowserBookmark(n, dest.external_id)
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }));
+            } else {
+                return Promise.all(browser_nodes.map(async n => {
+                    n.external = null;
+                    n.external_id = null;
+                    await backend.updateNode(n);
+
+                    try {
+                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                            await this.traverse(n, async (parent, node) => {
+                                if (parent) {
+                                    node.external = null;
+                                    node.external_id = null;
+                                    await backend.updateNode(node);
+                                }
+                            });
+                        }
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }));
+            }
+        });
     }
 
-    async createGroup(parent_id, name, node_type = NODE_TYPE_GROUP) {
+    reorderBrowserBookmarks(nodes) {
+        nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
+
+        return this.muteBrowserListeners(() =>
+            Promise.all(nodes.map(n => browser.bookmarks.move(n.external_id, {index: n.pos - 1})))
+        );
     }
 
-    async renameGroup(id, new_name) {
+    async createBrowserBookmarkFolder(node, parent_id) {
+        if (typeof parent_id !== "object")
+            parent_id = await backend.getNode(parent_id);
+
+        if (parent_id.external === FIREFOX_SHELF_NAME) {
+            return this.muteBrowserListeners(() => {
+                return this.createBrowserBookmark(node, parent_id.external_id);
+            });
+        }
     }
 
-    async addSeparator(parent_id) {
+    onBookmarkCreated(id, bookmark) {
+        (async () => {
+            if (await this.uiLocked())
+                return;
+
+            let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
+            if (parent) {
+                let node = browserBackend.convertBookmark(bookmark, parent);
+
+                if (node.type === NODE_TYPE_BOOKMARK && node.uri)
+                    node.icon = await getFavicon(node.uri);
+
+                node = await backend.addNode(node, false);
+
+                if (node.type === NODE_TYPE_BOOKMARK)
+                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: node});
+            }
+        })();
+    };
+
+    onBookmarkRemoved(id, bookmark) {
+        (async () => {
+            if (await this.uiLocked())
+                return;
+
+            let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
+            if (node) {
+                await backend.deleteNodes([node.id], FIREFOX_SHELF_NAME);
+                browser.runtime.sendMessage({type: "EXTERNAL_NODE_REMOVED", node: node});
+            }
+        })();
+    };
+
+    onBookmarkChanged(id, bookmark) {
+        (async () => {
+            if (await this.uiLocked())
+                return;
+
+            let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
+            if (node) {
+                node.uri = bookmark.url;
+                node.name = bookmark.title;
+                node = await backend.updateNode(node);
+                browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: node});
+            }
+        })();
+    };
+
+    onBookmarkMoved(id, bookmark) {
+        (async () => {
+            if (await this.uiLocked())
+                return;
+
+            let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
+
+            if (parent) {
+                let browser_children = await browser.bookmarks.getChildren(bookmark.parentId);
+                let db_children = [];
+                let node;
+
+                for (let c of browser_children) {
+                    let db_child = await backend.getExternalNode(c.id, FIREFOX_SHELF_NAME);
+
+                    if (db_child) {
+                        if (c.id === id) {
+                            node = db_child;
+                            db_child.parent_id = parent.id;
+                        }
+
+                        db_child.pos = c.index;
+                        db_children.push(db_child);
+                    }
+                }
+
+                await backend.reorderNodes(db_children);
+                browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: node});
+            }
+        })();
+    };
+
+    async uiLocked() {
+        return (await browser.runtime.getBackgroundPage())._globalUILock;
     }
 
-    async moveNodes(ids, dest_id) {
+    async muteBrowserListeners(f) {
+        let backgroundPage = await browser.runtime.getBackgroundPage();
+        backgroundPage._globalUILock = true;
+        try {await f()} catch (e) {console.log(e)}
+        backgroundPage._globalUILock = false;
     }
-
-    async copyNodes(ids, dest_id) {
-    }
-
-    async deleteNodes(ids) {
-    }
-
-    async deleteChildNodes(id) {
-    }
-
-    async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
-    }
-
-    async updateBookmark(data) {
-    }
-
 }
 
-let browserBackend = new BrowserBackend();
+browserBackend = new BrowserBackend();
 
 
 class IDBBackend extends Storage {
@@ -222,6 +435,7 @@ class IDBBackend extends Storage {
     }
 
     reorderNodes(positions) {
+        browserBackend.reorderBrowserBookmarks(positions);
         return this.updateNodes(positions);
     }
 
@@ -336,12 +550,16 @@ class IDBBackend extends Storage {
             if (group) {
                 parent = group;
             }
-            else
-                parent = await this.addNode({
+            else {
+                let node = await this.addNode({
                     parent_id: parent.id,
                     name: name,
                     type: NODE_TYPE_GROUP
                 });
+
+                await browserBackend.createBrowserBookmarkFolder(node, parent);
+                parent = node;
+            }
         }
 
         return parent;
@@ -373,7 +591,10 @@ class IDBBackend extends Storage {
             parent_id: parent_id
         });
 
-        return this.getNode(id);
+        let node = await this.getNode(id);
+        await browserBackend.createBrowserBookmarkFolder(node, parent_id);
+
+        return node;
     }
 
     async renameGroup(id, new_name) {
@@ -384,6 +605,8 @@ class IDBBackend extends Storage {
                 group.name = await this._ensureUnique(group.parent_id, new_name);
             else
                 group.name = new_name;
+
+            browserBackend.renameBrowserBookmark(group);
 
             await this.updateNode(group);
         }
@@ -403,6 +626,8 @@ class IDBBackend extends Storage {
     async moveNodes(ids, dest_id) {
         let nodes = await this.getNodes(ids);
 
+        await browserBackend.moveBrowserBookmarks(nodes, dest_id);
+
         for (let n of nodes) {
             n.parent_id = dest_id;
             n.name = await this._ensureUnique(dest_id, n.name);
@@ -414,6 +639,7 @@ class IDBBackend extends Storage {
 
     async copyNodes(ids, dest_id) {
         let all_nodes = await this.queryFullSubtree(ids);
+        let new_nodes = [];
 
         for (let n of all_nodes) {
             let old_id = n.id;
@@ -429,6 +655,7 @@ class IDBBackend extends Storage {
             Object.assign(n, await this.addNode(n, false));
 
             n.old_id = old_id;
+            new_nodes.push(n);
 
             for (let nn of all_nodes) {
                 if (nn.parent_id === old_id)
@@ -436,11 +663,15 @@ class IDBBackend extends Storage {
             }
         }
 
+        browserBackend.copyBrowserBookmarks(new_nodes.filter(n => ids.some(id => id === n.old_id)), dest_id);
+
         return all_nodes;
     }
 
     async deleteNodes(ids) {
         let all_nodes = await this.queryFullSubtree(ids);
+
+        browserBackend.deleteBrowserBookmarks(all_nodes);
 
         return super.deleteNodes(all_nodes.map(n => n.id));
     }
@@ -452,14 +683,14 @@ class IDBBackend extends Storage {
     }
 
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
-        let group;
+        let group, parent, parent_id;
 
         if (data.parent_id) {
-            data.parent_id = parseInt(data.parent_id);
+            parent_id = data.parent_id = parseInt(data.parent_id);
         }
         else {
             group = await this._getGroup(data.path);
-            data.parent_id = group.id;
+            parent_id = data.parent_id = group.id;
             delete data.path;
         }
 
@@ -469,7 +700,20 @@ class IDBBackend extends Storage {
         data.tag_list = this._splitTags(data.tags);
         this.addTags(data.tag_list);
 
-        return this.addNode(data);
+        let node = await this.addNode(data);
+
+        let browser_bookmark = group && group.external === FIREFOX_SHELF_NAME
+            || (parent = await this.getNode(parent_id)).external === FIREFOX_SHELF_NAME;
+
+        if (browser_bookmark) {
+            if (!parent)
+                parent = await this.getNode(parent_id);
+
+            await browserBackend.muteBrowserListeners(() =>
+                browserBackend.createBrowserBookmark(node, parent.external_id));
+        }
+
+        return node;
     }
 
     async importBookmark(data) {
@@ -498,10 +742,13 @@ class IDBBackend extends Storage {
         update.tag_list = this._splitTags(update.tags);
         this.addTags(update.tag_list);
 
+        browserBackend.updateBrowserBookmark(update);
+
         return this.updateNode(update);
     }
 
     async reconcileBrowserBookmarksDB() {
+        let get_icons = [];
         let browser_ids = [];
         let begin = new Date().getTime();
 
@@ -520,7 +767,10 @@ class IDBBackend extends Storage {
                     await this.updateNode(node);
                 }
                 else {
-                    node = await this.addNode(browserBackend.convert(bc, d), false);
+                    node = await this.addNode(browserBackend.convertBookmark(bc, d), false);
+
+                    if (node.type === NODE_TYPE_BOOKMARK && node.uri)
+                        get_icons.push([node.id, node.uri])
                 }
 
                 if (bc.type === "folder")
@@ -539,6 +789,15 @@ class IDBBackend extends Storage {
             return reconcile(db_root, browser_root).then(async () => {
                 await this.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
                 console.log("reconciliation time: " + ((new Date().getTime() - begin) / 1000) + "s");
+
+                for (let item of get_icons) {
+                    let node = await this.getNode(item[0]);
+                    node.icon = await getFavicon(item[1]);
+                    //console.log(node.icon + " (" + item[1] + ")");
+                    await this.updateNode(node);
+                }
+
+                browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
             });
         }
         else {
@@ -548,6 +807,6 @@ class IDBBackend extends Storage {
 }
 
 // let backend = new HTTPBackend("http://localhost:31800", "default:default");
-let backend = new IDBBackend();
+backend = new IDBBackend();
 
 export {backend, browserBackend};

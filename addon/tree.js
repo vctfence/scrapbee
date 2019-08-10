@@ -13,7 +13,7 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    EVERYTHING, TODO_NAMES, TODO_NAME, FIREFOX_SHELF_NAME
+    EVERYTHING, TODO_NAMES, TODO_NAME, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -204,29 +204,39 @@ class BookmarkTree {
             n.parent = "#";
 
         if (n.type == NODE_TYPE_SHELF && n.external === FIREFOX_SHELF_NAME) {
-            if (!settings.show_firefox_bookmarks())
+            n.li_attr = {"class": "browser-logo"};
+            if (!settings.show_firefox_bookmarks()) {
                 n.state = {hidden: true};
+            }
         }
         else if (n.type == NODE_TYPE_SHELF) {
             n.icon = "/icons/shelf.svg";
-            n.li_attr = {
-                "class": "scrapyard-shelf",
-            }
+            n.li_attr = {"class": "scrapyard-shelf"}
         }
         else if (n.type == NODE_TYPE_GROUP) {
-            if (n.external === FIREFOX_SHELF_NAME && n.external_id === "toolbar_____") {
+            if (n.external === FIREFOX_SHELF_NAME && n.external_id === "menu________") {
+                n.icon = "/icons/bookmarksMenu.svg";
+                n.li_attr = {"class": "browser-bookmark-menu"};
+            }
+            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === "unfiled_____") {
+                n.icon = "/icons/unfiledBookmarks.svg";
+                n.li_attr = {"class": "browser-unfiled-bookmarks"};
+            }
+            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === "toolbar_____") {
+                n.icon = "/icons/bookmarksToolbar.svg";
+                n.li_attr = {"class": "browser-bookmark-toolbar"};
                 if (!settings.show_firefox_toolbar())
                     n.state = {hidden: true};
             }
-
-            if (n.external === FIREFOX_SHELF_NAME && n.external_id === "mobile______") {
+            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === "mobile______") {
                 if (!settings.show_firefox_mobile())
                     n.state = {hidden: true};
             }
-
-            n.icon = "/icons/group.svg";
-            n.li_attr = {
-                "class": "scrapyard-group",
+            else {
+                n.icon = "/icons/group.svg";
+                n.li_attr = {
+                    "class": "scrapyard-group",
+                }
             }
         }
         else if (n.type == NODE_TYPE_SEPARATOR) {
@@ -354,6 +364,9 @@ class BookmarkTree {
         if (operation === "copy_node") {
             return false;
         } else if (operation === "move_node") {
+            if (more.ref && more.ref.id == FIREFOX_SHELF_ID
+                    || parent.id == FIREFOX_SHELF_ID || node.parent == FIREFOX_SHELF_ID)
+                return false;
         }
         return true;
     }
@@ -362,7 +375,15 @@ class BookmarkTree {
         let tree = $(this).jstree(true);
         let parent = tree.get_node(data.parent);
 
-        BookmarkTree.reorderNodes(tree, parent);
+        if (data.parent != data.old_parent) {
+            let node = tree.get_node(data.node);
+
+            backend.moveNodes([node.original.id], parent.original.id).then(new_nodes => {
+                BookmarkTree.reorderNodes(tree, parent);
+            });
+        }
+        else
+            BookmarkTree.reorderNodes(tree, parent);
     }
 
     static reorderNodes(tree, parent) {
@@ -372,6 +393,8 @@ class BookmarkTree {
         for (let i = 0; i < siblings.length; ++i) {
             let node = {};
             node.id = siblings[i].original.id;
+            node.external = siblings[i].original.external;
+            node.external_id = siblings[i].original.external_id;
             node.pos = i + 1;
             positions.push(node);
         }
@@ -526,7 +549,7 @@ class BookmarkTree {
             },
             pasteItem: {
                 label: "Paste",
-                separator_before: ctx_node.original.type === NODE_TYPE_SHELF,
+                separator_before: ctx_node.original.type === NODE_TYPE_SHELF || ctx_node.original.parent_id == FIREFOX_SHELF_ID,
                 _disabled: !(tree.can_paste() && (ctx_node_data.type == NODE_TYPE_GROUP
                     || ctx_node_data.type == NODE_TYPE_SHELF)),
                 action: function () {
@@ -686,12 +709,23 @@ class BookmarkTree {
             case NODE_TYPE_SHELF:
                 delete items.cutItem;
                 delete items.copyItem;
+                if (ctx_node.original.id == FIREFOX_SHELF_ID) {
+                    items = {};
+                }
             case NODE_TYPE_GROUP:
                 //delete items.newSeparatorItem;
                 delete items.openItem;
                 delete items.openOriginalItem;
                 delete items.propertiesItem;
                 delete items.copyLinkItem;
+                if (ctx_node.original.external)
+                    delete items.newNotesItem;
+                if (ctx_node.original.parent_id == FIREFOX_SHELF_ID) {
+                    delete items.cutItem;
+                    delete items.copyItem;
+                    delete items.renameItem;
+                    delete items.deleteItem;
+                }
                 break;
             case NODE_TYPE_NOTES:
             case NODE_TYPE_BOOKMARK:
@@ -733,7 +767,6 @@ class BookmarkTree {
 
         return items;
     }
-
 }
 
 

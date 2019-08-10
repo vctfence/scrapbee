@@ -547,7 +547,7 @@ function initialize()
         if (!("options-maxresourcesize" in object)) object["options-maxresourcesize"] = 50;
         
         if (!("options-maxresourcetime" in object)) object["options-maxresourcetime"] =
-            ("options-resourcetimeout" in object) ? object["options-resourcetimeout"] : 10;  /* Version 9.0-9.1 */
+            ("options-resourcetimeout" in object) ? object["options-resourcetimeout"] : 30;  /* Version 9.0-9.1 */
         
         if (!("options-allowpassive" in object)) object["options-allowpassive"] = false;
         

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="16"
+   height="16"
+   viewBox="0 0 16 16"
+   fill="context-fill"
+   fill-opacity="context-fill-opacity"
+   version="1.1"
+   id="svg1426"
+   sodipodi:docname="unfiledBookmarks2.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
+  <metadata
+     id="metadata1432">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs1430" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     id="namedview1428"
+     showgrid="false"
+     inkscape:zoom="14.75"
+     inkscape:cx="8.3389831"
+     inkscape:cy="8"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1426" />
+  <path
+     fill-opacity=".05"
+     d="M12.7,1H3.3l-.2.6L.1,9,0,9.2V13a2.006,2.006,0,0,0,2,2H14a2.006,2.006,0,0,0,2-2V9.2L15.9,9l-3-7.4L12.7,1Z"
+     id="path1418"
+     style="fill:#4f4f54;fill-opacity:1" />
+  <path
+     d="M12,2l3,7.4V13a.945.945,0,0,1-1,1H2a.945.945,0,0,1-1-1V9.4L4,2h8m.7-1H3.3L.1,9.1,0,9.2V13a2.006,2.006,0,0,0,2,2H14a2.006,2.006,0,0,0,2-2V9.2L15.9,9,12.7,1Z"
+     id="path1420"
+     style="fill:#8c8c90;fill-opacity:1" />
+  <path
+     fill-opacity=".05"
+     d="M14.988,9,12,2H4L.851,9H5.023A2.931,2.931,0,0,0,8,11.6,2.889,2.889,0,0,0,11.012,9Z"
+     id="path1422"
+     style="fill:#4f4f54;fill-opacity:1" />
+  <path
+     d="M10,9A2,2,0,0,1,6,9H0v1H5.184a2.983,2.983,0,0,0,5.633,0H16V9Z"
+     id="path1424"
+     style="fill:#8c8c90;fill-opacity:1" />
+</svg>

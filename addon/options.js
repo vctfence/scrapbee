@@ -89,7 +89,7 @@ window.onload=function(){
             //
             document.getElementById("options-maxframedepth").value = _(object["options-maxframedepth"], 5);
             document.getElementById("options-maxresourcesize").value = _(object["options-maxresourcesize"], 5);
-            document.getElementById("options-maxresourcetime").value = _(object["options-maxresourcetime"], 10);
+            document.getElementById("options-maxresourcetime").value = _(object["options-maxresourcetime"], 30);
             document.getElementById("options-allowpassive").checked = _(object["options-allowpassive"], false);
             document.getElementById("options-refererheader").elements["header"].value = _(object["options-refererheader"], 0);
             document.getElementById("options-forcelazyloads").checked = _(object["options-forcelazyloads"], false);

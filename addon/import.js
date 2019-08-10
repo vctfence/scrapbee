@@ -9,11 +9,11 @@ import {
     DEFAULT_POSITION,
     TODO_STATES,
     TODO_NAMES,
-    EVERYTHING, DEFAULT_SHELF_NAME
+    EVERYTHING, DEFAULT_SHELF_NAME, FIREFOX_SHELF_NAME
 } from "./db.js";
 
 const ORG_EXPORT_VERSION = 1;
-const EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified"];
+const EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id"];
 
 async function prepareReplacement(shelf) {
     shelf = await backend.queryShelf(shelf);
@@ -139,9 +139,14 @@ export async function importOrg(shelf, text) {
         else if (subnodes.length > 1 && subnodes[0].type === "header" && subnodes[1].type === "text") {
             await importLastObject();
 
+            let name = subnodes[1].value;
+
+            if (name === FIREFOX_SHELF_NAME)
+                name = name + " (imported)";
+
             if (level < subnodes[0].level) {
                 level += 1;
-                path.push(subnodes[1].value);
+                path.push(name);
             }
             else {
                 while (level >= subnodes[0].level) {
@@ -149,7 +154,7 @@ export async function importOrg(shelf, text) {
                     level -= 1;
                 }
                 level += 1;
-                path.push(subnodes[1].value);
+                path.push(name);
             }
         }
         else if (subnodes.length && subnodes[0].type === "drawer" && subnodes[0].name === "PROPERTIES") {
@@ -217,30 +222,34 @@ export async function importOrg(shelf, text) {
     await importLastObject();
 }
 
-async function objectToProperties(node, compress) {
+async function objectToProperties(object, compress) {
     let lines = [];
-
-    node = await backend.getNode(node.id);
+    let node = await backend.getNode(object.id);
 
     for (let key of EXPORTED_KEYS) {
+        if (node.external === FIREFOX_SHELF_NAME) {
+            delete node.external;
+            delete node.external_id;
+        }
+
         if (node[key])
-            lines.push(`    :${key}: ${node[key]}`);
+            lines.push(`:${key}: ${node[key]}`);
     }
 
     if (node.type === NODE_TYPE_ARCHIVE) {
         let blob = await backend.fetchBlob(node.id);
         if (blob) {
             if (blob.type)
-                lines.push(`    :mime_type: ${blob.type}`);
+                lines.push(`:mime_type: ${blob.type}`);
 
             if (blob.byte_length)
-                lines.push(`    :byte_length: ${blob.byte_length}`);
+                lines.push(`:byte_length: ${blob.byte_length}`);
 
             let content = compress
                 ? null //LZString.compressToBase64(blob.data)
                 : JSON.stringify(blob.data);
 
-            lines.push(`    :data: ${content}`);
+            lines.push(`:data: ${content}`);
         }
     }
 
@@ -250,10 +259,10 @@ async function objectToProperties(node, compress) {
             ? null //LZString.compressToBase64(notes.content)
             : JSON.stringify(notes.content);
 
-        lines.push(`    :notes: ${content}`);
+        lines.push(`:notes: ${content}`);
     }
 
-    return lines.join("\n");
+    return lines.map(l => {console.log(node.level); return " ".repeat(object.level + 3) + l}).join(`\n`);
 }
 
 export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = false) {
@@ -299,9 +308,9 @@ ${"#+UUID: " + uuid}
 
         if (!shallow) {
             let props = `
-:PROPERTIES:
+${" ".repeat(node.level + 1)}:PROPERTIES:
 ${await objectToProperties(node, compress)}
-:END:`;
+${" ".repeat(node.level + 1)}:END:`;
             org_lines.push(props);
         }
     }
