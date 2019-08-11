@@ -11,7 +11,8 @@ import {
     DEFAULT_SHELF_NAME,
     TODO_NAME,
     DONE_NAME,
-    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID
+    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    isContainer, isEndpoint
 } from "./db.js"
 
 import Storage from "./db.js"
@@ -23,13 +24,12 @@ let browserBackend;
 export class BrowserBackend {
 
     constructor() {
-
     }
 
     async traverse (root, visitor) {
         let doTraverse = async (parent, root) => {
             await visitor(parent, root);
-            let children = CONTAINER_TYPES.some(t => t === root.type)
+            let children = isContainer(root)
                 ? await backend.getChildNodes(root.id)
                 : null;
             if (children)
@@ -80,8 +80,7 @@ export class BrowserBackend {
     }
 
     async deleteBrowserBookmarks(nodes) {
-        let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
-            && ENDPOINT_TYPES.some(t => t === n.type));
+        let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME && isEndpoint(n));
 
         let externalGroups = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
             &&  n.type === NODE_TYPE_GROUP);
@@ -148,7 +147,7 @@ export class BrowserBackend {
 
                 return Promise.all(other_nodes.map(async n => {
                     try {
-                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                        if (isContainer(n)) {
                             return this.traverse(n, async (parent, node) => {
                                 await this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id);
                             });
@@ -169,7 +168,7 @@ export class BrowserBackend {
                     await backend.updateNode(n);
 
                     try {
-                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                        if (isContainer(n)) {
                             await this.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = null;
@@ -199,7 +198,7 @@ export class BrowserBackend {
             if (dest.external === FIREFOX_SHELF_NAME) {
                 return Promise.all(nodes.map(async n => {
                     try {
-                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                        if (isContainer(n)) {
                             return this.traverse(n, async (parent, node) => {
                                 await this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id);
                             });
@@ -218,7 +217,7 @@ export class BrowserBackend {
                     await backend.updateNode(n);
 
                     try {
-                        if (CONTAINER_TYPES.some(t => t === n.type)) {
+                        if (isContainer(n)) {
                             await this.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = null;
@@ -344,6 +343,42 @@ export class BrowserBackend {
         backgroundPage._globalUILock = true;
         try {await f()} catch (e) {console.log(e)}
         backgroundPage._globalUILock = false;
+    }
+
+    async installBrowserListeners() {
+        let backgroundPage = await browser.runtime.getBackgroundPage();
+        if (!backgroundPage._browserListenerOnBookmarkCreated)
+            backgroundPage._browserListenerOnBookmarkCreated = this.onBookmarkCreated.bind(this);
+        if (!backgroundPage._browserListenerOnBookmarkRemoved)
+            backgroundPage._browserListenerOnBookmarkRemoved = this.onBookmarkRemoved.bind(this);
+        if (!backgroundPage._browserListenerOnBookmarkChanged)
+            backgroundPage._browserListenerOnBookmarkChanged = this.onBookmarkChanged.bind(this);
+        if (!backgroundPage._browserListenerOnBookmarkMoved)
+            backgroundPage._browserListenerOnBookmarkMoved = this.onBookmarkMoved.bind(this);
+
+        try {
+            browser.bookmarks.onCreated.addListener(backgroundPage._browserListenerOnBookmarkCreated);
+            browser.bookmarks.onRemoved.addListener(backgroundPage._browserListenerOnBookmarkRemoved);
+            browser.bookmarks.onChanged.addListener(backgroundPage._browserListenerOnBookmarkChanged);
+            browser.bookmarks.onMoved.addListener(backgroundPage._browserListenerOnBookmarkMoved);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+
+    removeBrowserListeners() {
+        try {
+            if (backgroundPage._browserListenerOnBookmarkCreated) {
+                browser.bookmarks.onCreated.removeListener(backgroundPage._browserListenerOnBookmarkCreated);
+                browser.bookmarks.onRemoved.removeListener(backgroundPage._browserListenerOnBookmarkRemoved);
+                browser.bookmarks.onChanged.removeListener(backgroundPage._browserListenerOnBookmarkChanged);
+                browser.bookmarks.onMoved.removeListener(backgroundPage._browserListenerOnBookmarkMoved);
+            }
+        }
+        catch (e) {
+            console.log(e);
+        }
     }
 }
 
@@ -531,7 +566,7 @@ class IDBBackend extends Storage {
     }
 
     // creates all non-existent groups
-    async _getGroup(path) {
+    async getGroupByPath(path) {
         let path_list = this._splitPath(path);
         let groups = await this._queryGroups(path_list);
         let shelf_name = path_list.shift();
@@ -689,7 +724,7 @@ class IDBBackend extends Storage {
             parent_id = data.parent_id = parseInt(data.parent_id);
         }
         else {
-            group = await this._getGroup(data.path);
+            group = await this.getGroupByPath(data.path);
             parent_id = data.parent_id = group.id;
             delete data.path;
         }
@@ -720,11 +755,8 @@ class IDBBackend extends Storage {
         if (data.uuid === "1")
             return;
 
-        let path = data.path;
-        let group;
-
-        group = await this._getGroup(path);
-        data.parent_id = group.id;
+        if (data.type !== NODE_TYPE_SHELF)
+            data.parent_id = data.parent_id? data.parent_id: (await this.getGroupByPath(data.path)).id;
 
         data = Object.assign({}, data);
         data.name = await this._ensureUnique(data.parent_id, data.name);
@@ -781,12 +813,14 @@ class IDBBackend extends Storage {
         };
 
         if (settings.show_firefox_bookmarks()) {
+            browserBackend.installBrowserListeners();
+
             let db_root = await this.getNode(FIREFOX_SHELF_ID);
             if (!db_root)
                 db_root = await this.addNode(browserBackend.newBrowserRootNode(), false);
 
             let [browser_root] = await browser.bookmarks.getTree();
-            return reconcile(db_root, browser_root).then(async () => {
+            await reconcile(db_root, browser_root).then(async () => {
                 await this.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
                 console.log("reconciliation time: " + ((new Date().getTime() - begin) / 1000) + "s");
 
@@ -801,6 +835,7 @@ class IDBBackend extends Storage {
             });
         }
         else {
+            browserBackend.removeBrowserListeners();
             return this.deleteExternalNodes(null, FIREFOX_SHELF_NAME);
         }
     }

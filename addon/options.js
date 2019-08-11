@@ -1,14 +1,15 @@
 import {backend} from "./backend.js"
 import {settings} from "./settings.js"
-import {parseHtml, showNotification} from "./utils.js";
+import {parseHtml, showNotification, getFavicon} from "./utils.js";
 import {
     DEFAULT_SHELF_NAME,
     EVERYTHING,
-    EVERYTHING_SHELF,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK
+    EVERYTHING_SHELF, FIREFOX_SHELF_ID,
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
+    isSpecialShelf
 } from "./db.js";
 
-window.onload=function(){
+window.onload = function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
@@ -100,6 +101,46 @@ window.onload=function(){
          document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
     },false);
 
+    let initLinkChecker = () => {
+        let link_scope = $("#link-scope");
+
+        $("#start-check-links").on("click", startCheckLinks);
+        $("#invalid-links-container").on("click", ".invalid-link", selectNode);
+
+        link_scope.html(`
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
+            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+            }</option>
+    `);
+
+        backend.listShelves().then(shelves => {
+            shelves.sort((a, b) => {
+                if (a.name < b.name)
+                    return -1;
+                if (a.name > b.name)
+                    return 1;
+
+                return 0;
+            });
+
+            let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+            shelves.splice(shelves.indexOf(default_shelf), 1);
+
+            let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+            shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
+
+            shelves = [default_shelf, ...shelves];
+
+            for (let shelf of shelves) {
+                let name =
+                    isSpecialShelf(shelf.name)
+                        ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
+                        : shelf.name;
+                $("<option></option>").appendTo(link_scope).html(name).attr("value", shelf.id);
+            }
+        });
+    };
+
     settings.load(() => {
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
         //document.getElementById("option-compress-export").checked = settings.compress_export();
@@ -108,6 +149,9 @@ window.onload=function(){
         document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
         document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
+        document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
+        document.getElementById("option-export-format").value = _(settings.export_format(), "json");
+        initLinkChecker();
     });
 
     fetch("_locales/en/help.html").then(response => {
@@ -168,6 +212,9 @@ window.onload=function(){
         settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
         settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
         settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
+        settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked);
+        settings.export_format(document.getElementById("option-export-format").value);
+
 
         /* Display saved status for short period */
 
@@ -188,35 +235,6 @@ window.onload=function(){
         navigator.clipboard.writeText(darkStyle);
         showNotification({message: "Dark theme style is copied to the Clipboard."});
     }
-
-
-    let link_scope = $("#link-scope");
-
-    $("#start-check-links").on("click", startCheckLinks);
-    $("#invalid-links-container").on("click", ".invalid-link", selectNode);
-
-    link_scope.html(`
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
-    `);
-
-    backend.listShelves().then(shelves => {
-        shelves.sort((a, b) => {
-            if (a.name < b.name)
-                return -1;
-            if (a.name > b.name)
-                return 1;
-
-            return 0;
-        });
-
-        let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
-        shelves.splice(shelves.indexOf(default_shelf), 1);
-        shelves = [default_shelf, ...shelves];
-
-        for (let shelf of shelves) {
-            $("<option></option>").appendTo(link_scope).html(shelf.name).attr("value", shelf.id);
-        }
-    });
 
     let abort_check_links = false;
 

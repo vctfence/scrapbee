@@ -160,3 +160,7 @@ Array.prototype.removeDups = function(field) {
         return local_array.indexOf(elem) === pos;
     });
 };
+
+String.prototype.capitalizeFirstLetter = function(string) {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+};

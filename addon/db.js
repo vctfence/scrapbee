@@ -33,6 +33,7 @@ export const EVERYTHING_SHELF = -1;
 export const DONE_SHELF = -2;
 export const TODO_SHELF = -3;
 export const FIREFOX_SHELF_ID = -4;
+export const DEFAULT_SHELF_ID = 1;
 
 export const TODO_NAME = "TODO";
 export const DONE_NAME = "DONE";
@@ -44,6 +45,27 @@ export const FIREFOX_SHELF_UUID = "browser_bookmarks";
 export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID];
 
 export const DEFAULT_POSITION = 2147483647;
+
+export const NODE_PROPERTIES =
+    ["id",
+    "pos",
+    "uri",
+    "name",
+    "type",
+    "uuid",
+    "icon",
+    "tags",
+    "tag_list",
+    "details",
+    "parent_id",
+    "todo_date",
+    "todo_state",
+    "date_added",
+    "date_modified",
+    "has_notes",
+    "external",
+    "external_id"
+];
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
@@ -70,6 +92,22 @@ db.on('populate', () => {
     db.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
 });
 
+export function isContainer(node) {
+    return node && CONTAINER_TYPES.some(t => t == node.type);
+}
+
+export function isEndpoint(node) {
+    return node && ENDPOINT_TYPES.some(t => t == node.type);
+}
+
+export function isSpecialShelf(name) {
+    name = name.toLocaleUpperCase();
+    return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
+        || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
+        || name === EVERYTHING.toLocaleUpperCase()
+        || name === TODO_NAME.toLocaleUpperCase()
+        || name === DONE_NAME.toLocaleUpperCase();
+}
 
 class Storage {
     constructor() {
@@ -80,25 +118,7 @@ class Storage {
         node = Object.assign({}, node);
 
         for (let key of Object.keys(node)) {
-            if (!["id",
-                "pos",
-                "uri",
-                "name",
-                "type",
-                "uuid",
-                "icon",
-                "tags",
-                "tag_list",
-                "details",
-                "parent_id",
-                "todo_date",
-                "todo_state",
-                "date_added",
-                "date_modified",
-                "has_notes",
-                "external",
-                "external_id"
-            ].some(k => k === key))
+            if (!NODE_PROPERTIES.some(k => k === key))
                 delete node[key];
         }
 
@@ -328,7 +348,7 @@ class Storage {
         if (db.tables.some(t => t.name === "tags"))
             await db.tags.clear();
 
-        return db.nodes.where("id").notEqual(1).delete();
+        return db.nodes.where("id").noneOf([DEFAULT_SHELF_ID, FIREFOX_SHELF_ID]).delete();
     }
 
     async queryShelf(name) {

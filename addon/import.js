@@ -1,5 +1,8 @@
 import * as org from "./org.js"
+import {ReadLine} from "./utils.js"
 import {backend} from "./backend.js"
+import {settings} from "./settings.js"
+
 //import LZString from "./lib/lz-string.js"
 import {
     NODE_TYPE_SHELF,
@@ -9,25 +12,28 @@ import {
     DEFAULT_POSITION,
     TODO_STATES,
     TODO_NAMES,
-    EVERYTHING, DEFAULT_SHELF_NAME, FIREFOX_SHELF_NAME
+    EVERYTHING, DEFAULT_SHELF_NAME, DEFAULT_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID, NODE_PROPERTIES,
+    isContainer
 } from "./db.js";
 
-const ORG_EXPORT_VERSION = 1;
-const EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id"];
+const EXPORT_VERSION = 1;
 
-async function prepareReplacement(shelf) {
-    shelf = await backend.queryShelf(shelf);
-
-    if (shelf && shelf.name === EVERYTHING) {
+async function prepareNewImport(shelf) {
+    if (shelf === EVERYTHING) {
         return backend.wipeEveritying();
     }
-    else if (shelf && shelf.name === DEFAULT_SHELF_NAME) {
-        return backend.deleteChildNodes(shelf.id);
-    }
-    else if (shelf) {
-        return backend.deleteNodes(shelf.id);
+    else {
+        shelf = await backend.queryShelf(shelf);
+
+        if (shelf && shelf.name === DEFAULT_SHELF_NAME) {
+            return backend.deleteChildNodes(shelf.id);
+        } else if (shelf) {
+            return backend.deleteNodes(shelf.id);
+        }
     }
 }
+
+// ORG /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function traverseOrgNode(node, callback) {
     callback(node);
@@ -37,19 +43,18 @@ function traverseOrgNode(node, callback) {
 }
 
 export async function importOrg(shelf, text) {
-    await prepareReplacement(shelf);
+    await prepareNewImport(shelf);
 
-    let org_lines = new org.Parser().parse(text);
-    let compressed = org_lines.directiveValues["compressed:"] && org_lines.directiveValues["compressed:"] === "t";
+    let compressed = false; //org_lines.directiveValues["compressed:"] && org_lines.directiveValues["compressed:"] === "t";
 
     let path = shelf === EVERYTHING? []: [shelf];
     let level = 0;
 
     let last_object;
 
-    async function importLastObject() {
+    let importLastObject = async function () {
         if (last_object) {
-            // UUIDs currently aren't respected
+            // UUIDs currently aren't accounted
 
             let node;
 
@@ -80,15 +85,17 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                backend.storeNotes(node.id, notes);
+                await backend.storeNotes(node.id, notes);
             }
             else if (note_lines.length) {
-                backend.storeNotes(node.id, note_lines.join("\n"));
+                await backend.storeNotes(node.id, note_lines.join("\n"));
             }
 
             last_object = null;
         }
-    }
+    };
+
+    let org_lines = new org.Parser().parse(text);
 
     for (let line of org_lines.nodes) {
         let subnodes = [];
@@ -141,8 +148,10 @@ export async function importOrg(shelf, text) {
 
             let name = subnodes[1].value;
 
-            if (name === FIREFOX_SHELF_NAME)
-                name = name + " (imported)";
+            if (name && name.toLocaleLowerCase() === FIREFOX_SHELF_NAME)
+                name = settings.capitalize_builtin_shelf_names()
+                    ? name.capitalizeFirstLetter() + " (imported)"
+                    : (name + " (imported)");
 
             if (level < subnodes[0].level) {
                 level += 1;
@@ -222,16 +231,18 @@ export async function importOrg(shelf, text) {
     await importLastObject();
 }
 
+const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id"];
+
 async function objectToProperties(object, compress) {
     let lines = [];
     let node = await backend.getNode(object.id);
 
-    for (let key of EXPORTED_KEYS) {
-        if (node.external === FIREFOX_SHELF_NAME) {
-            delete node.external;
-            delete node.external_id;
-        }
+    if (node.external === FIREFOX_SHELF_NAME) {
+        delete node.external;
+        delete node.external_id;
+    }
 
+    for (let key of ORG_EXPORTED_KEYS) {
         if (node[key])
             lines.push(`:${key}: ${node[key]}`);
     }
@@ -262,30 +273,31 @@ async function objectToProperties(object, compress) {
         lines.push(`:notes: ${content}`);
     }
 
-    return lines.map(l => {console.log(node.level); return " ".repeat(object.level + 3) + l}).join(`\n`);
+    return lines.map(l => " ".repeat(object.level + 3) + l).join(`\n`);
 }
 
-export async function exportOrg(nodes, shelf, uuid, shallow = false, compress = false) {
+export async function exportOrg(file, nodes, shelf, uuid, shallow = false, compress = false) {
     let org_lines = [];
 
     if (!shallow)
-        org_lines.push(
+        file.append(
 `#-*- coding: utf-8 -*-
 #+EXPORT: Scrapyard
-#+VERSION: ${ORG_EXPORT_VERSION}
+#+VERSION: ${EXPORT_VERSION}
 #+NAME: ${shelf}
-${"#+UUID: " + uuid}
+#+UUID: ${uuid}
+#+DATE: ${new Date().toISOString()}
 `);
 
     if (compress)
-        org_lines.push("#+COMPRESSED: t\n");
+        file.append("#+COMPRESSED: t\n");
 
-    org_lines.push("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
+    file.append("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
 
     for (let node of nodes) {
         if (node.type === NODE_TYPE_SHELF || node.type === NODE_TYPE_GROUP) {
             let line = "\n" + "*".repeat(node.level) + " " + node.name;
-            org_lines.push(line);
+            file.append(line);
         }
         else {
             let line = "\n" + "*".repeat(node.level);
@@ -303,7 +315,7 @@ ${"#+UUID: " + uuid}
             if (node.todo_date)
                 line += "\n    DEADLINE: <" + node.todo_date + ">";
 
-            org_lines.push(line);
+            file.append(line);
         }
 
         if (!shallow) {
@@ -311,22 +323,16 @@ ${"#+UUID: " + uuid}
 ${" ".repeat(node.level + 1)}:PROPERTIES:
 ${await objectToProperties(node, compress)}
 ${" ".repeat(node.level + 1)}:END:`;
-            org_lines.push(props);
+            file.append(props);
         }
     }
-
-    let blob = new Blob(org_lines, { type : "text/plain" });
-    let url = URL.createObjectURL(blob);
-
-    setTimeout(function() {
-        window.URL.revokeObjectURL(url);
-    },30000);
-
-    return url;
 }
 
+
+// HTML ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 export async function importHtml(shelf, text) {
-    await prepareReplacement(shelf);
+    await prepareNewImport(shelf);
 
     let html = jQuery.parseHTML(text);
     let root = html.find(e => e.localName === "dl");
@@ -369,3 +375,194 @@ export async function importHtml(shelf, text) {
 
     await traverseHtml(root, path);
 }
+
+
+// JSON ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function parseJSONObject(line) {
+    let object;
+    line = line.trimEnd();
+    try {
+        if (line.endsWith(","))
+            object = JSON.parse(line.slice(0, line.length - 1));
+        else
+            object = JSON.parse(line);
+    }
+    catch (e) {
+        console.log(e)
+    }
+
+    return object;
+}
+
+async function importJSONObject(object) {
+    let node;
+
+    delete object.id;
+    delete object.uuid;
+
+    let notes = object.notes;
+    delete object.notes;
+
+    if (object.type === NODE_TYPE_ARCHIVE) {
+        let data = object.data;
+        let binary = !!object.byte_length;
+
+        delete object.data;
+        delete object.byte_length;
+
+        node = await backend.importBookmark(object);
+
+        if (data) {
+            await backend.storeBlob(node.id, data, object.mime_type);
+
+            if (!binary)
+                await backend.storeIndex(node.id, data.indexWords());
+        }
+    }
+    else {
+        node = await backend.importBookmark(object);
+    }
+
+    if (notes) {
+        await backend.storeNotes(node.id, notes);
+    }
+
+    return node;
+}
+
+function processFirefoxShelf(node) {
+    if (node && node.id === FIREFOX_SHELF_ID) {
+        node.name = settings.capitalize_builtin_shelf_names()
+            ? node.name.capitalizeFirstLetter() + " (imported)"
+            : (node.name + " (imported)");
+    }
+}
+
+export async function importJSON(shelf, file) {
+    await prepareNewImport(shelf);
+
+    let readline = new ReadLine(file);
+    let lines = readline.lines();
+    let meta_line = (await lines.next()).value;
+
+    if (!meta_line || !meta_line.startsWith("[{"))
+        return Promise.reject("invalid JSON");
+
+    let id_map = new Map();
+    let first_object = (await lines.next()).value;
+
+    if (!first_object)
+        return Promise.reject("invalid JSON");
+
+    first_object = parseJSONObject(first_object);
+
+    if (!first_object || !isContainer(first_object))
+        return Promise.reject("invalid JSON");
+
+    id_map.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
+
+    let shelf_node = shelf !== EVERYTHING? await backend.getGroupByPath(shelf): null;
+    if (shelf_node) {
+        id_map.set(first_object.parent_id, shelf_node.id); // root id
+        first_object.parent_id = shelf_node.id;
+    }
+    else
+        processFirefoxShelf(first_object);
+
+    let first_object_id = first_object.id;
+
+    if (first_object.name.toLocaleLowerCase() !== DEFAULT_SHELF_NAME) {
+        first_object = await importJSONObject(first_object);
+        if (first_object_id)
+            id_map.set(first_object_id, first_object.id);
+    }
+
+    for await (let line of lines) {
+        if (line === "]")
+            break;
+
+        let object = parseJSONObject(line);
+        if (object) {
+            processFirefoxShelf(object);
+
+            if (object.type === NODE_TYPE_SHELF && object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME)
+                continue;
+
+            let old_object_id = object.id;
+
+            if (object.parent_id)
+                object.parent_id = id_map.get(object.parent_id);
+
+            object = await importJSONObject(object);
+
+            if (old_object_id && isContainer(object))
+                id_map.set(old_object_id, object.id);
+        }
+    }
+}
+
+
+async function objectToJSON(object, shallow, compress) {
+    let node = await backend.getNode(object.id);
+
+    if (node.external === FIREFOX_SHELF_NAME) {
+        delete node.external;
+        delete node.external_id;
+    }
+
+    for (let key of Object.keys(node)) {
+        if (!NODE_PROPERTIES.some(k => k === key))
+            delete node[key];
+    }
+
+    if (!shallow) {
+        if (node.type === NODE_TYPE_ARCHIVE) {
+            let blob = await backend.fetchBlob(node.id);
+            if (blob) {
+                if (blob.type)
+                    node.mime_type = blob.type;
+
+                if (blob.byte_length)
+                    node.byte_length = blob.byte_length;
+
+                node.data = compress
+                    ? null //LZString.compressToBase64(blob.data)
+                    : blob.data;
+            }
+        }
+
+        let notes = await backend.fetchNotes(node.id);
+        if (notes && notes.content) {
+            node.notes = compress
+                ? null //LZString.compressToBase64(notes.content)
+                : notes.content;
+        }
+    }
+
+    return JSON.stringify(node);
+}
+
+export async function exportJSON(file, nodes, shelf, uuid, shallow = false, compress = false) {
+    let meta = {
+        export: "Scrapyard",
+        version: EXPORT_VERSION,
+        name: shelf,
+        uuid: uuid,
+        date: new Date()
+    };
+
+    if (compress)
+        meta.compressed = true;
+
+    file.append("[" + JSON.stringify(meta) + ",\n");
+
+    let last = nodes[nodes.length - 1];
+
+    for (let node of nodes) {
+        let json = await objectToJSON(node, shallow);
+        file.append(json + (node === last? "\n]": ",\n"));
+    }
+}
+
+

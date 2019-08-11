@@ -13,7 +13,8 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    EVERYTHING, TODO_NAMES, TODO_NAME, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID
+    EVERYTHING, TODO_NAMES, TODO_NAME, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID,
+    isSpecialShelf, isContainer, isEndpoint
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -208,8 +209,12 @@ class BookmarkTree {
             if (!settings.show_firefox_bookmarks()) {
                 n.state = {hidden: true};
             }
+            if (settings.capitalize_builtin_shelf_names())
+                n.text = n.name.capitalizeFirstLetter();
         }
         else if (n.type == NODE_TYPE_SHELF) {
+            if (n.name && isSpecialShelf(n.name) && settings.capitalize_builtin_shelf_names())
+                n.text = n.name.capitalizeFirstLetter();
             n.icon = "/icons/shelf.svg";
             n.li_attr = {"class": "scrapyard-shelf"}
         }
@@ -418,7 +423,7 @@ class BookmarkTree {
             let todo_states = [];
             let marked_nodes = selected_ids.flat().map(id => tree.get_node(id));
 
-            selected_ids = marked_nodes.filter(n => ENDPOINT_TYPES.some(t => t == n.original.type))
+            selected_ids = marked_nodes.filter(n => isEndpoint(n.original))
                 .map(n => parseInt(n.id));
 
             selected_ids.forEach(n => todo_states.push({id: n, todo_state: state}));
@@ -449,7 +454,7 @@ class BookmarkTree {
                 label: "Open All",
                 action: function () {
                     let children = all_nodes.filter(n => ctx_node.children.some(id => id == n.id)
-                            && ENDPOINT_TYPES.some(t => t === n.type));
+                            && isEndpoint(n));
                     children.forEach(c => browser.runtime.sendMessage({type: "BROWSE_NODE", node: c}))
                 }
             },
@@ -664,7 +669,7 @@ class BookmarkTree {
                 separator_before: true,
                 label: "Properties...",
                 action: function () {
-                    if (ENDPOINT_TYPES.some(t => t === ctx_node.original.type)) {
+                    if (isEndpoint(ctx_node.original)) {
                         showDlg("properties", ctx_node_data).then(data => {
                             let live_data = all_nodes.find(n => n.id == ctx_node_data.id);
                             Object.assign(live_data, data);
@@ -745,7 +750,7 @@ class BookmarkTree {
                     delete items[k];
         }
 
-        if (!ENDPOINT_TYPES.some(t => t == ctx_node.original.type)) {
+        if (!isEndpoint(ctx_node.original)) {
             delete items.viewNotesItem;
         }
 

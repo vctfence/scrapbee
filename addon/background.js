@@ -1,8 +1,8 @@
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
-import {backend, browserBackend} from "./backend.js";
-import {exportOrg, importOrg, importHtml} from "./import.js";
+import {isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
+import {backend} from "./backend.js";
+import {exportOrg, exportJSON, importOrg, importJSON, importHtml} from "./import.js";
 import {settings} from "./settings.js";
-import {showNotification} from "./utils.js";
+import {readFile, showNotification, withIDBFile} from "./utils.js";
 
 export function browseNode(node) {
 
@@ -32,26 +32,20 @@ export function browseNode(node) {
                     let objectURL = URL.createObjectURL(object);
                     let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
 
-                    setTimeout(() => {
-                        URL.revokeObjectURL(objectURL);
-                    }, /*settings.archive_url_lifetime() * 60*/ 10  * 1000);
-
                     return browser.tabs.create({
                         "url": archiveURL
                     }).then(tab => {
-                        setTimeout(() => {
-                            browser.tabs.executeScript(tab.id, {
-                                file: "edit-bootstrap.js",
-                                runAt: 'document_end'
-                            }).catch(e => {
-                                setTimeout(() => {
-                                    browser.tabs.executeScript(tab.id, {
-                                        file: "edit-bootstrap.js",
-                                        runAt: 'document_end'
-                                    })
-                                }, 500);
-                            });
-                        }, 500);
+                        let listener = (id, changed, tab) => {
+                            if (id === tab.id && changed.status === "complete") {
+                                browser.tabs.onUpdated.removeListener(listener);
+                                browser.tabs.executeScript(tab.id, {
+                                    file: "edit-bootstrap.js",
+                                });
+                                URL.revokeObjectURL(objectURL);
+                            }
+                        };
+
+                        browser.tabs.onUpdated.addListener(listener);
                     });
                 }
                 else {
@@ -69,7 +63,8 @@ export function browseNode(node) {
 
 /* Internal message listener */
 
-browser.runtime.onMessage.addListener(message => {
+browser.runtime.onMessage.addListener(async message => {
+    let shelf;
     switch (message.type) {
         case "CREATE_BOOKMARK":
             backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
@@ -88,45 +83,38 @@ browser.runtime.onMessage.addListener(message => {
             break;
 
         case "IMPORT_FILE":
-            let reader = new FileReader();
+            shelf = isSpecialShelf(message.file_name)? message.file_name.toLocaleLowerCase(): message.file_name;
 
-            return new Promise((resolve, reject) => {
-                reader.onload = function (re) {
-                    let importF;
+            let importf = ({"JSON": () => importJSON(shelf, message.file),
+                            "ORG":  async () => importOrg(shelf, await readFile(message.file)),
+                            "HTML": async () => importHtml(shelf, await readFile(message.file))})
+                [message.file_ext.toUpperCase()];
 
-                    switch (message.file_ext.toUpperCase()) {
-                        case "ORG":
-                            importF = () => {
-                                return importOrg(message.file_name, re.target.result);
-                            };
-                            break;
-                        case "HTML":
-                            importF = () => {
-                                return importHtml(message.file_name, re.target.result);
-                            };
-                            break;
-                    }
-
-                    if (importF)
-                        return backend.importTransaction(importF).then(() => resolve()).catch(e => reject(e));
-                };
-
-                reader.readAsText(message.file);
-            });
+            return backend.importTransaction(importf);
 
         case "EXPORT_FILE":
-            return exportOrg(message.nodes, message.shelf, message.uuid,
-                settings.shallow_export(), settings.compress_export()).then(url => {
-                    let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_");
-                    return browser.downloads.download({url: url, filename: file_name + ".org", saveAs: false});
-            });
+            shelf = isSpecialShelf(message.shelf) ? message.shelf.toLocaleLowerCase() : message.shelf;
+
+            let format = settings.export_format()? settings.export_format(): "json";
+            let exportf = format === "json"? exportJSON: exportOrg;
+            let idb = await withIDBFile(`export/${new Date().getTime()}/${shelf}.${format}`, "readwrite",
+                async (handle, file, store) =>
+                    exportf(handle, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
+                        settings.compress_export()));
+
+            let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
+            let url = URL.createObjectURL(await idb.file.getFile());
+            let download = await browser.downloads.download({url: url, filename: file_name, saveAs: false});
+            let download_listener = delta => {
+                if (delta.id === download && delta.state && delta.state.current === "complete") {
+                    browser.downloads.onChanged.removeListener(download_listener);
+                    URL.revokeObjectURL(url);
+                    idb.store.clear();
+                }
+            };
+            browser.downloads.onChanged.addListener(download_listener);
     }
 });
-
-browser.bookmarks.onCreated.addListener(browserBackend.onBookmarkCreated.bind(browserBackend));
-browser.bookmarks.onRemoved.addListener(browserBackend.onBookmarkRemoved.bind(browserBackend));
-browser.bookmarks.onChanged.addListener(browserBackend.onBookmarkChanged.bind(browserBackend));
-browser.bookmarks.onMoved.addListener(browserBackend.onBookmarkMoved.bind(browserBackend));
 
 settings.load(s => {
     backend.reconcileBrowserBookmarksDB();

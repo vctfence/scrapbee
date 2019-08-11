@@ -351,13 +351,43 @@ Stream.prototype.hasNext = function () {
     return this.lineNumber < this.totalLines;
 };
 
-if (typeof exports !== "undefined") {
-    exports.Stream = Stream;
+function GeneratorStream(generator) {
+    this.generator = generator;
+    this.nextLine = null;
+    this.lineNumber = 0;
 }
 
-// var Stream = require("./stream.js").Stream;
-// var Lexer  = require("./lexer.js").Lexer;
-// var Node   = require("./node.js").Node;
+GeneratorStream.prototype.peekNextLine = async function () {
+    if (!this.nextLine && !this.nextLine.done)
+        this.nextLine = await this.generator.next();
+
+    return this.nextLine && !this.nextLine.done? this.nextLine.value : null;
+};
+
+GeneratorStream.prototype.getNextLine = async function () {
+    this.lineNumber += 1;
+
+    if (this.nextLine && !this.nextLine.done) {
+        let line = this.nextLine.value;
+        this.nextLine = await this.generator.next();
+        return line;
+    }
+    else if (!this.nextLine) {
+        this.nextLine = await this.generator.next();
+        let line = null;
+        if (!this.nextLine.done) {
+            line = this.nextLine.value;
+            this.nextLine = await this.generator.next();
+        }
+        return line;
+    }
+
+    return null;
+};
+
+GeneratorStream.prototype.hasNext = function () {
+    return !this.nextLine || this.nextLine && !this.nextLine.done;
+};
 
 function Parser() {
     this.inlineParser = new InlineParser();
@@ -403,6 +433,17 @@ Parser.prototype = {
         this.parseDocument();
         this.document.nodes = this.nodes;
         return this.document;
+    },
+
+    advanceDocument: function*() {
+        while (this.lexer.hasNext()) {
+            yield this.parseElement();
+        }
+    },
+
+    objects: async function(stream, options) {
+        this.initStatus(stream, options);
+        return this.advanceDocument();
     },
 
     createErrorReport: function (message) {

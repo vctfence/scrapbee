@@ -383,7 +383,14 @@
 /************************************************************************/
 
 import {backend} from "../backend.js";
-import {DEFAULT_SHELF_NAME, NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../db.js";
+import {
+    DEFAULT_SHELF_NAME,
+    NODE_TYPE_SHELF,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    FIREFOX_SHELF_NAME
+} from "../db.js";
 import {browseNode} from "../background.js";
 
 /************************************************************************/
@@ -415,6 +422,9 @@ var refererValues = new Array();
 
 var originKeys = new Array();
 var originValues = new Array();
+
+var browserBookmarkPath = "firefox/Bookmarks Menu";
+var unfiledBookmarkPath = "firefox/Other Bookmarks";
 
 /************************************************************************/
 
@@ -578,7 +588,18 @@ function initialize()
         allowPassive = object["options-allowpassive"];
         
         refererHeader = object["options-refererheader"];
-        
+
+        backend.getExternalNode("menu________", FIREFOX_SHELF_NAME).then(node => {
+            if (node)
+                browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+        });
+
+        backend.getExternalNode("unfiled_____", FIREFOX_SHELF_NAME).then(node => {
+            if (node)
+                unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+        });
+
+
         addListeners();
     });
 }
@@ -662,6 +683,7 @@ function addListeners()
                     })
                     .catch(e => {
                         chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
+                        alertNotify("Error archiving page.");
                         console.log(e);
                     });
                 backend.storeIndex(message.payload.id, message.data.indexWords());
@@ -876,7 +898,30 @@ function addListeners()
             path[path.length - 1].name = "~";
         }
 
+        if (path.length >= 2 && path[path.length - 1].external === FIREFOX_SHELF_NAME
+                && path[path.length - 2].external_id === "unfiled_____") {
+            path.pop();
+            path[path.length - 1].name = "@";
+        }
+
+        if (path.length >= 2 && path[path.length - 1].external === FIREFOX_SHELF_NAME
+            && path[path.length - 2].external_id === "menu________") {
+            path.pop();
+            path[path.length - 1].name = "@@";
+        }
+
         node.path = path.reverse().map(n => n.name).join("/");
+    }
+
+    function normalizePath(path) {
+        if (path && path.startsWith("~"))
+            return path.replace("~", DEFAULT_SHELF_NAME);
+        else if (path && path.startsWith("@@"))
+            return path.replace("@@", browserBookmarkPath);
+        else if (path && path.startsWith("@"))
+            return path.replace("@", unfiledBookmarkPath);
+
+        return path;
     }
 
     /* External message listener */
@@ -936,8 +981,7 @@ function addListeners()
                         message.types = message.types.concat([NODE_TYPE_SHELF]);
                     }
 
-                    if (message.path && message.path.startsWith("~"))
-                        message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+                    message.path = normalizePath(message.path);
 
                     sendResponse(backend.listNodes(message).then(nodes => {
                         for (let node of nodes) {
@@ -954,8 +998,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_ADD_BOOKMARK":
-                if (message.path && message.path.startsWith("~"))
-                    message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+                message.path = normalizePath(message.path);
 
                 backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
                     browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
@@ -964,8 +1007,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_ADD_ARCHIVE":
-                if (message.path && message.path.startsWith("~"))
-                    message.path = message.path.replace("~", DEFAULT_SHELF_NAME);
+                message.path = normalizePath(message.path);
 
                 backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
                     chrome.tabs.query({ lastFocusedWindow: true, active: true },
@@ -986,7 +1028,6 @@ function addListeners()
                     browseNode(message.node);
 
                 break;
-
         }
     });
 }

@@ -251,9 +251,10 @@ body:not([windows]) fieldset input[type="number"]
     width: 5em;
 }
 
-fieldset label
+input[type="checkbox"], fieldset label
 {
-    /*vertical-align: 2px;*/
+    display: inline-block;
+    vertical-align: middle;
 }
 
 fieldset label:first-child

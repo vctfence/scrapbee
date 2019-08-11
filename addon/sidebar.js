@@ -2,7 +2,8 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isElementInViewport} from "./utils.js"
+import {isElementInViewport, ReadLine} from "./utils.js"
+import {isSpecialShelf} from "./db.js"
 
 import {
     EVERYTHING,
@@ -30,15 +31,6 @@ import {pathToNameExt, showNotification} from "./utils.js";
 
 
 const INPUT_TIMEOUT = 1000;
-
-function isSpecialShelf(name) {
-    name = name.toLocaleUpperCase();
-    return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
-        || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
-        || name === EVERYTHING.toLocaleUpperCase()
-        || name === TODO_NAME.toLocaleUpperCase()
-        || name === DONE_NAME.toLocaleUpperCase();
-}
 
 function validSearchInput(input) {
     return input && input.length > 2;
@@ -75,7 +67,7 @@ function performImport(context, tree, file, file_name, file_ext) {
         .then(() => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
 
-            if (file_name === EVERYTHING) {
+            if (file_name.toLocaleLowerCase() === EVERYTHING) {
                 settings.last_shelf(EVERYTHING_SHELF);
 
                 loadShelves(context, tree).then(() => {
@@ -107,7 +99,7 @@ function performExport(context, tree) {
         ? tree._jstree.get_node("#")
         : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
     let skip_level = root.parents.length;
-    let uuid = special_shelf? shelf: root.original.uuid;
+    let uuid = special_shelf? shelf.toLowerCase(): root.original.uuid;
 
     let nodes = [];
     tree.traverse(root, node => {
@@ -150,11 +142,17 @@ function loadShelves(context, tree) {
     shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${EVERYTHING}</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
+            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+        }</option>
     `);
 
-    if (settings.show_firefox_bookmarks())
-        shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${FIREFOX_SHELF_NAME}</option>`);
+    if (settings.show_firefox_bookmarks()) {
+        let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
+            ? FIREFOX_SHELF_NAME.capitalizeFirstLetter()
+            : FIREFOX_SHELF_NAME;
+        shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
+    }
 
     return backend.listShelves().then(shelves => {
         let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
@@ -170,14 +168,17 @@ function loadShelves(context, tree) {
             return 0;
         });
 
-        let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+        let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(default_shelf), 1);
+        default_shelf.name = settings.capitalize_builtin_shelf_names()
+            ? default_shelf.name.capitalizeFirstLetter()
+            : default_shelf.name;
         shelves = [default_shelf, ...shelves];
 
         for (let shelf of shelves) {
             let option = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
 
-            if (shelf.name === DEFAULT_SHELF_NAME)
+            if (shelf.name.toLowerCase() === DEFAULT_SHELF_NAME)
                 option.addClass("option-builtin");
         }
 
@@ -203,6 +204,7 @@ function loadShelves(context, tree) {
 
 function switchShelf(context, tree, shelf_id) {
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
+    path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
 
     settings.last_shelf(shelf_id);
 
@@ -424,11 +426,12 @@ window.onload = function () {
         $("#file-picker").click();
     });
 
-    $("#file-picker").change((e) => {
+    $("#file-picker").change(async (e) => {
         if (e.target.files.length > 0) {
             let {name, ext} = pathToNameExt($("#file-picker").val());
+            let lname = name.toLowerCase();
 
-            if (name === DEFAULT_SHELF_NAME || name === EVERYTHING || !isSpecialShelf(name)) {
+            if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isSpecialShelf(name)) {
                 let existingOption = $(`#shelfList option:contains("${name}")`);
 
                 if (existingOption.length)

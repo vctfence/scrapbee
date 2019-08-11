@@ -21,7 +21,7 @@
     <div id="div-placeholder" class="div-area div-area-placeholder"></div>
     <div id="div-settings" class="div-area" style="display:none;">
 
-        <table width="" cellspacing="" cellpadding="" border="0" class="form-table">
+        <table width="800px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td>Page Capture</td>
                 <td>
@@ -157,19 +157,39 @@
             <tr>
                 <td>Display</td>
                 <td>
-                    <div class="panel" id="display" style="display: flex;">
-                        <form>
-                            <fieldset style="border: none;">
-                                <input id="option-show-firefox-bookmarks" type="checkbox"/><label for="option-show-firefox-bookmarks"
-                            >Show Firefox bookmarks shelf</label>
-                                <blockquote style="margin-top: 0; margin-bottom: 0; margin-left: 20px;">
-                                    <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/><label for="option-show-firefox-bookmarks-toolbar"
-                                >Show bookmarks toolbar folder</label><br>
-                                    <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/><label for="option-show-firefox-bookmarks-mobile"
-                                >Show mobile bookmarks folder</label>
-                                </blockquote>
-                            </fieldset>
-                        </form>
+                    <div class="panel" id="display" >
+                        <div style="display: flex;">
+                        <div style="flex: 0 0 320px">
+                            <form>
+                                <fieldset style="border: none;">
+                                    <input id="option-show-firefox-bookmarks" type="checkbox"/><label for="option-show-firefox-bookmarks"
+                                >Show Firefox bookmarks shelf</label>
+                                    <blockquote style="margin: 0; margin-left: 20px;">
+                                        <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/><label for="option-show-firefox-bookmarks-toolbar"
+                                    >Show bookmarks toolbar folder</label><br>
+                                        <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/><label for="option-show-firefox-bookmarks-mobile"
+                                    >Show mobile bookmarks folder</label>
+                                    </blockquote>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div style="flex: 0 0 320px; margin-left: 20px;">
+                            <form>
+                                <fieldset style="border: none;">
+                                    <input id="option-capitalize-builtin-shelf-names" type="checkbox"/><label for="option-capitalize-builtin-shelf-names"
+                                >Capitalize builtin shelf names</label>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+
+                    <p style="padding-left: 12px; margin-top: 5px; margin-bottom: 0; padding-bottom: 0;">
+                        <a href="#" id="copy-style-link">Copy</a> dark theme code for userContent.css
+                        (<a href="https://overdodactyl.github.io/ShadowFox/" target="_blank">ShadowFox</a> is required)
+                        <i class="help-mark"></i>
+                        <span class="tips hide">Paste this code into <b>&lt;Firefox profile directory&gt;/chrome/userContent.css.</b><br/>
+                          You can find the path to your Firefox profile at <b>about:support</b> page.</span>
+                    </p>
                     </div>
                 </td>
             </tr>
@@ -190,15 +210,28 @@
                 <td>Export</td>
                 <td>
                     <div class="panel" id="export" style="display: flex;">
-                        <form>
-                            <fieldset style="border: none;">
-                                <input id="option-shallow-export" type="checkbox"/><label for="option-shallow-export">Shallow
-                                export</label>
-                                <i class="help-mark"></i>
-                                <div class="tips hide">Do not export archived content.</div>
-                                <!--input id="option-compress-export" type="checkbox"/><label for="option-compress-export">Compress archived content</label-->
-                            </fieldset>
-                        </form>
+                        <div style="flex: 0 0 320px">
+                            <form>
+                                <fieldset style="border: none;">
+                                    Export format:
+                                    <select id="option-export-format" type="select" style="color: black">
+                                        <option value="json">JSON</option>
+                                        <option value="org">ORG</option>
+                                    </select>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div style="flex: 0 0 320px; margin-left: 20px;">
+                            <form>
+                                <fieldset style="border: none;">
+                                    <input id="option-shallow-export" type="checkbox"/><label for="option-shallow-export">Shallow
+                                    export</label>
+                                    <i class="help-mark"></i>
+                                    <div class="tips hide">Do not export archived content.</div>
+                                    <!--input id="option-compress-export" type="checkbox"/><label for="option-compress-export">Compress archived content</label-->
+                                </fieldset>
+                            </form>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -218,20 +251,13 @@
                     </div>
                 </td>
             </tr-->
-            <tr>
-                <td>Style</td>
-                <td>
-                    <div class="panel" id="style" style="display: flex;">
-                        <p style="padding-left: 18px;">
-                        <a href="#" id="copy-style-link">Copy</a> dark theme code for userContent.css
-                        (<a href="https://overdodactyl.github.io/ShadowFox/" target="_blank">ShadowFox</a> is required)
-                        <i class="help-mark"></i>
-                        <span class="tips hide">Paste this code into <b>&lt;Firefox profile directory&gt;/chrome/userContent.css.</b><br/>
-                          You can find the path to your Firefox profile at <b>about:support</b> page.</span>
-                        </p>
-                    </div>
-                </td>
-            </tr>
+<!--            <tr>-->
+<!--                <td>Style</td>-->
+<!--                <td>-->
+<!--                    <div class="panel" id="style" style="display: flex;">-->
+<!--                    </div>-->
+<!--                </td>-->
+<!--            </tr>-->
             <tr>
                 <td></td>
                 <td><input id="options-save-button" type="button" name="save" value="{Save}" style="float: right;"/>
