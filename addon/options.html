@@ -14,6 +14,7 @@
         <!--a class="left-index" href="#initiate">{Initiate}</a-->
         <a class="left-index" href="#settings">{Setting}</a>
         <a class="left-index" href="#links">{Check Links}</a>
+        <a class="left-index" href="#importrdf">{Import RDF}</a>
         <!--a class="left-index" href="#log">{Log}</a-->
         <a class="left-index" href="#help">{Help}</a>
         <!--a class="left-index" href="#donate">{Donate}</a-->
@@ -102,7 +103,7 @@
                                     </div>
                                     <div>
                                         <input id="options-maxresourcetime" type="number" min="5" max="60"
-                                               value="10"/><label for="options-maxresourcetime">Maximum time for loading
+                                               value="30"/><label for="options-maxresourcetime">Maximum time for loading
                                         a resource (secs)</label>
                                     </div>
                                 </fieldset>
@@ -158,59 +159,68 @@
                 <td>Display</td>
                 <td>
                     <div class="panel" id="display" >
-                        <div style="display: flex;">
-                        <div style="flex: 0 0 320px">
-                            <form>
-                                <fieldset style="border: none;">
-                                    <input id="option-show-firefox-bookmarks" type="checkbox"/><label for="option-show-firefox-bookmarks"
-                                >Show Firefox bookmarks shelf</label>
-                                    <blockquote style="margin: 0; margin-left: 20px;">
-                                        <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/><label for="option-show-firefox-bookmarks-toolbar"
-                                    >Show bookmarks toolbar folder</label><br>
-                                        <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/><label for="option-show-firefox-bookmarks-mobile"
-                                    >Show mobile bookmarks folder</label>
-                                    </blockquote>
-                                </fieldset>
-                            </form>
+                        <div class="double-container">
+                            <div class="double-first">
+                                <form>
+                                    <fieldset style="border: none;">
+                                        <input id="option-show-firefox-bookmarks" type="checkbox"/><label for="option-show-firefox-bookmarks"
+                                    >Show Firefox bookmarks shelf</label>
+                                        <div style="margin: 0; margin-left: 20px; width: max-content;">
+                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/><label for="option-show-firefox-bookmarks-toolbar"
+                                        >Show bookmarks toolbar folder</label><br>
+                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/><label for="option-show-firefox-bookmarks-mobile"
+                                        >Show mobile bookmarks folder</label>
+                                        </div>
+                                    </fieldset>
+                                </form>
+                            </div>
+                            <div class="double-last">
+                                <form>
+                                    <fieldset style="border: none;">
+                                        <input id="option-capitalize-builtin-shelf-names" type="checkbox"/><label for="option-capitalize-builtin-shelf-names"
+                                    >Capitalize builtin shelf names</label>
+                                    </fieldset>
+                                </form>
+                            </div>
                         </div>
-                        <div style="flex: 0 0 320px; margin-left: 20px;">
-                            <form>
-                                <fieldset style="border: none;">
-                                    <input id="option-capitalize-builtin-shelf-names" type="checkbox"/><label for="option-capitalize-builtin-shelf-names"
-                                >Capitalize builtin shelf names</label>
-                                </fieldset>
-                            </form>
-                        </div>
-                    </div>
-
-                    <p style="padding-left: 12px; margin-top: 5px; margin-bottom: 0; padding-bottom: 0;">
-                        <a href="#" id="copy-style-link">Copy</a> dark theme code for userContent.css
-                        (<a href="https://overdodactyl.github.io/ShadowFox/" target="_blank">ShadowFox</a> is required)
-                        <i class="help-mark"></i>
-                        <span class="tips hide">Paste this code into <b>&lt;Firefox profile directory&gt;/chrome/userContent.css.</b><br/>
-                          You can find the path to your Firefox profile at <b>about:support</b> page.</span>
-                    </p>
+                        <p style="padding-left: 12px; margin-top: 5px; margin-bottom: 0; padding-bottom: 0;">
+                            <a href="#" id="copy-style-link">Copy</a> dark theme code for userContent.css
+                            (<a href="https://overdodactyl.github.io/ShadowFox/" target="_blank">ShadowFox</a> is required)
+                            <i class="help-mark"></i>
+                            <span class="tips hide">Paste this code into <b>&lt;Firefox profile directory&gt;/chrome/userContent.css.</b><br/>
+                              You can find the path to your Firefox profile at <b>about:support</b> page.</span>
+                        </p>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td>Behavior</td>
                 <td>
-                    <div class="panel" id="behavior" style="display: flex;">
-                        <form>
-                            <fieldset style="border: none;">
-                                <input id="option-switch-to-bookmark" type="checkbox"/><label for="option-switch-to-bookmark"
-                                    >Automatically switch to the newly created bookmark</label>
-                            </fieldset>
-                        </form>
+                    <div class="panel double-container" id="export">
+                        <div class="double-first">
+                            <form>
+                                <fieldset style="border: none;">
+                                    <input id="option-switch-to-bookmark" type="checkbox"/><label for="option-switch-to-bookmark"
+                                >Automatically switch to newly created bookmarks</label>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="double-last">
+                            <form>
+                                <fieldset style="border: none;">
+                                    <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"/><label for="option-do-not-switch-to-ff-bookmark"
+                                >Do not switch to new Firefox bookmarks</label>
+                                </fieldset>
+                            </form>
+                        </div>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td>Export</td>
                 <td>
-                    <div class="panel" id="export" style="display: flex;">
-                        <div style="flex: 0 0 320px">
+                    <div class="panel double-container" id="export">
+                        <div class="double-first">
                             <form>
                                 <fieldset style="border: none;">
                                     Export format:
@@ -221,7 +231,7 @@
                                 </fieldset>
                             </form>
                         </div>
-                        <div style="flex: 0 0 320px; margin-left: 20px;">
+                        <div class="double-last">
                             <form>
                                 <fieldset style="border: none;">
                                     <input id="option-shallow-export" type="checkbox"/><label for="option-shallow-export">Shallow
@@ -290,5 +300,38 @@
             </div>
         </div>
     </div>
+    <div id="div-importrdf" class="div-area" style="display:none;">
+        <div id="importrdf">
+            <h2>Import Scrapbook Files</h2>
+            <div id="rdf-import-options">
+                <table cellspacing="" cellpadding="" border="0" style="margin-bottom: 5px;">
+                    <tr>
+                        <td>Shelf name:</td>
+                        <td style="display: flex"><input id="rdf-shelf-name" type="text" size="25" value=""/>
+                            <div id="rdf-thread-div">Processing threads:&nbsp;&nbsp;<input id="rdf-import-threads" type="number" min="1" value="5"/></div></td>
+                    </tr>
+                    <tr>
+                        <td>Path to RDF file:&nbsp;&nbsp;</td>
+                        <td>
+                            <input id="rdf-import-path" type="text" size="80" value=""/>
+                            <i class="help-mark"></i>
+                            <span class="tips hide">An absolute path is required, e.g.: <b>d:/notes/scrapbook.rdf</b></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Status:&nbsp;&nbsp;</td>
+                        <td id="rdf-progress-row">ready</td>
+                    </tr>
+                </table>
+                <input type="button" class="blue-button" id="start-rdf-import" value="Import">
+            </div>
+            <div id="invalid-imports-container" class="link-info">
+                Failed imports (try to copy links into the URL-bar and capture them manually):
+                <table id="invalid-imports">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

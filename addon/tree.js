@@ -19,6 +19,9 @@ import {
 
 import {showDlg, alert, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
+import {GetPocket} from "./lib/pocket.js";
+import {dropbox} from "./lib/dropbox.js";
+import {showNotification} from "./utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
@@ -139,6 +142,10 @@ class BookmarkTree {
     traverse(root, visitor) {
         let _tree = this._jstree;
         function doTraverse(root) {
+            if (!settings.show_firefox_toolbar() && root.original && root.original.external_id === "toolbar_____"
+                || !settings.show_firefox_mobile() && root.original && root.original.external_id === "mobile______")
+                return;
+
             visitor(root);
             if (root.children)
                 for (let id of root.children) {
@@ -286,10 +293,10 @@ class BookmarkTree {
                 n.li_attr.class += " scrapyard-notes";
             }
 
-            n.fallbackIcon = "var(--themed-globe-icon)";
+             //n.fallbackIcon = "var(--themed-globe-icon)";
 
             if (!n.icon) {
-                n.icon = "/icons/globe.svg";
+                n.icon = "var(--themed-globe-icon)";
                 n.a_attr.class += " generic-icon";
             }
         }
@@ -409,6 +416,7 @@ class BookmarkTree {
 
     /* context menu listener */
     contextMenu(ctx_node) { // TODO: i18n
+        let self = this;
         let tree = this._jstree;
         let selected_nodes = tree.get_selected(true) || [];
         let multiselect = selected_nodes.length > 1;
@@ -539,6 +547,134 @@ class BookmarkTree {
                     });
                 }
             },
+            shareItem: {
+                separator_before: true,
+                label: "Share",
+                submenu: {
+                    pocketItem: {
+                        label: "Pocket",
+                        icon: "icons/pocket.svg",
+                        action: async function () {
+                            const auth_handler = auth_url => new Promise(async (resolve, reject) => {
+                                let pocket_tab = await browser.tabs.create({url: auth_url});
+                                let listener = async (id, changed, tab) => {
+                                    if (id === pocket_tab.id) {
+                                        if (changed.url && !changed.url.includes("getpocket.com")) {
+                                            await browser.tabs.onUpdated.removeListener(listener);
+                                            browser.tabs.remove(pocket_tab.id);
+                                            resolve();
+                                        }
+                                    }
+                                };
+                                browser.tabs.onUpdated.addListener(listener);
+                            });
+
+                            let pocket = new GetPocket({consumer_key: "87251-b8d5db3009affab6297bc799",
+                                                        access_token: settings.pocket_access_token(),
+                                                        redirect_uri: "https://gchristensen.github.io/scrapyard/",
+                                                        auth_handler: auth_handler,
+                                                        persist_token: token => settings.pocket_access_token(token)});
+
+                            if (selected_nodes) {
+                                let actions = selected_nodes.map(n => ({
+                                    action: "add",
+                                    title: n.original.name,
+                                    url: n.original.uri,
+                                    tags: n.original.tags
+                                }));
+                                await pocket.modify(actions).catch(e => console.log(e));
+
+                                showNotification(`Successfully added item${selected_nodes.length > 1? "s": ""} to Pocket.`)
+                            }
+                        }
+                    },
+                    dropboxItem: {
+                        label: "Dropbox",
+                        icon: "icons/dropbox.png",
+                        action: async function () {
+                            const auth_handler = auth_url => new Promise(async (resolve, reject) => {
+                                let dropbox_tab = await browser.tabs.create({url: auth_url});
+                                let listener = async (id, changed, tab) => {
+                                    if (id === dropbox_tab.id) {
+                                        if (changed.url && !changed.url.includes("dropbox.com")) {
+                                            await browser.tabs.onUpdated.removeListener(listener);
+                                            browser.tabs.remove(dropbox_tab.id);
+                                            resolve(changed.url);
+                                        }
+                                    }
+                                };
+                                browser.tabs.onUpdated.addListener(listener);
+                            });
+                            const token_store = function (key, val) {
+                                return arguments.length > 1
+                                    ? settings[`dropbox_${key}`](val)
+                                    : settings[`dropbox_${key}`]();
+                            };
+                            const authenticate = async () =>
+                                await dropbox.authenticate({client_id: "986piotqb77feik",
+                                                                    redirect_uri: "https://gchristensen.github.io/scrapyard/",
+                                                                    auth_handler: auth_handler});
+                            const upload = async (filename, content, reentry) => {
+                                await authenticate();
+                                return dropbox('files/upload', {
+                                        "path": "/" + filename.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_"),
+                                        "mode": "add",
+                                        "autorename": true,
+                                        "mute": false,
+                                        "strict_conflict": false
+                                    }, content).then(o => console.log(o))
+                                    .catch(xhr => {
+                                        if (!reentry && xhr.status >= 400) {
+                                            token_store("__dbat", "");
+                                            return upload(filename, content, true);
+                                        }
+                                    })
+
+                            };
+
+                            dropbox.setTokenStore(token_store);
+
+                            for (let node of selected_nodes) {
+                                let filename, content;
+
+                                if (node.original.type === NODE_TYPE_ARCHIVE) {
+                                    let blob = await backend.fetchBlob(node.original.id);
+                                    if (blob) {
+                                        if (blob.byte_length) {
+                                            let byteArray = new Uint8Array(blob.byte_length);
+                                            for (let i = 0; i < blob.data.length; ++i)
+                                                byteArray[i] = blob.data.charCodeAt(i);
+
+                                            blob.data = byteArray;
+                                        }
+
+                                        let type = blob.type? blob.type: "text/html";
+                                        filename = node.original.name + (type.endsWith("pdf")? ".pdf": ".html");
+                                        content = new Blob([blob.data],{type: type});
+                                    }
+                                }
+                                else if (node.original.type === NODE_TYPE_BOOKMARK) {
+                                    filename = node.original.name + ".url";
+                                    content = "[InternetShortcut]\nURL=" + node.original.uri;
+                                }
+                                else if (node.original.type === NODE_TYPE_NOTES) {
+                                    let notes = await backend.fetchNotes(node.original.id);
+
+                                    if (notes) {
+                                        filename = node.original.name + ".org";
+                                        content = notes.content;
+                                    }
+                                }
+
+                                if (filename && content) {
+                                    await upload(filename, content);
+                                    showNotification(`Successfully added item${selected_nodes.length > 1? "s": ""} to Dropbox.`)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             cutItem: {
                 separator_before: true,
                 label: "Cut",
@@ -554,14 +690,16 @@ class BookmarkTree {
             },
             pasteItem: {
                 label: "Paste",
-                separator_before: ctx_node.original.type === NODE_TYPE_SHELF || ctx_node.original.parent_id == FIREFOX_SHELF_ID,
-                _disabled: !(tree.can_paste() && (ctx_node_data.type == NODE_TYPE_GROUP
-                    || ctx_node_data.type == NODE_TYPE_SHELF)),
+                separator_before: ctx_node_data.type === NODE_TYPE_SHELF || ctx_node_data.parent_id == FIREFOX_SHELF_ID,
+                _disabled: !(tree.can_paste() && isContainer(ctx_node_data)),
                 action: function () {
                     let buffer = tree.get_buffer();
                     let selection =  Array.isArray(buffer.node)
                         ? buffer.node.map(n => n.original.id)
                         : [buffer.node.original.id];
+
+                    if (self.startProcessingIndication)
+                        self.startProcessingIndication();
 
                     (buffer.mode == "copy_node"
                         ? backend.copyNodes(selection, ctx_node_data.id)
@@ -588,6 +726,12 @@ class BookmarkTree {
                             BookmarkTree.reorderNodes(tree, ctx_node);
 
                             tree.clear_buffer();
+
+                            if (self.stopProcessingIndication)
+                                self.stopProcessingIndication();
+                        }).catch(() => {
+                            if (self.stopProcessingIndication)
+                                self.stopProcessingIndication();
                         });
                 }
             },
@@ -723,6 +867,7 @@ class BookmarkTree {
                 delete items.openOriginalItem;
                 delete items.propertiesItem;
                 delete items.copyLinkItem;
+                delete items.shareItem;
                 if (ctx_node.original.external)
                     delete items.newNotesItem;
                 if (ctx_node.original.parent_id == FIREFOX_SHELF_ID) {
@@ -733,6 +878,7 @@ class BookmarkTree {
                 }
                 break;
             case NODE_TYPE_NOTES:
+                delete items.shareItem.submenu.pocketItem;
             case NODE_TYPE_BOOKMARK:
                 delete items.openOriginalItem;
             case NODE_TYPE_ARCHIVE:

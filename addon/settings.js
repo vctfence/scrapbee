@@ -3,7 +3,7 @@ let BinHandler = {
         if (key === "load")
             return target.__load__;
 
-        return (val) => {
+        return (val, handler) => {
             let bin = target.__bin__;
             if (val === void 0) return bin[key];
             if (val === null) {
@@ -11,7 +11,7 @@ let BinHandler = {
                 delete bin[key]
             }
             else bin[key] = val;
-            chrome.storage.local.set({[target.__key__]: bin});
+            chrome.storage.local.set({[target.__key__]: bin}, () => handler? handler(): null);
             return key in bin ? bin[key] : old
         }
     },
@@ -25,6 +25,7 @@ let BinHandler = {
 
 export const SETTING_KEY = "scrapyard-settings";
 export const DEFAULT_SETTINGS = {
+    frame_depth: 5,
     archive_url_lifetime: 5,
     shallow_export: false,
 //    compress_export: true,

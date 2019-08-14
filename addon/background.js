@@ -1,6 +1,6 @@
 import {isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
-import {backend} from "./backend.js";
-import {exportOrg, exportJSON, importOrg, importJSON, importHtml} from "./import.js";
+import {backend, browserBackend} from "./backend.js";
+import {exportOrg, exportJSON, importOrg, importJSON, importHtml, importRDF} from "./import.js";
 import {settings} from "./settings.js";
 import {readFile, showNotification, withIDBFile} from "./utils.js";
 
@@ -63,7 +63,7 @@ export function browseNode(node) {
 
 /* Internal message listener */
 
-browser.runtime.onMessage.addListener(async message => {
+browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     let shelf;
     switch (message.type) {
         case "CREATE_BOOKMARK":
@@ -87,7 +87,8 @@ browser.runtime.onMessage.addListener(async message => {
 
             let importf = ({"JSON": () => importJSON(shelf, message.file),
                             "ORG":  async () => importOrg(shelf, await readFile(message.file)),
-                            "HTML": async () => importHtml(shelf, await readFile(message.file))})
+                            "HTML": async () => importHtml(shelf, await readFile(message.file)),
+                            "RDF": () => importRDF(shelf, message.file, message.threads)})
                 [message.file_ext.toUpperCase()];
 
             return backend.importTransaction(importf);
@@ -113,6 +114,24 @@ browser.runtime.onMessage.addListener(async message => {
                 }
             };
             browser.downloads.onChanged.addListener(download_listener);
+            break;
+
+        case "UI_LOCK_GET":
+            browserBackend.getUILock();
+            break;
+
+        case "UI_LOCK_RELEASE":
+            browserBackend.releaseUILock();
+            break;
+
+        case "GET_LISTENER_LOCK_STATE":
+            return browserBackend.isListenerLocked();
+
+        case "RECONCILE_BROWSER_BOOKMARK_DB":
+            settings.load(s => {
+                backend.reconcileBrowserBookmarksDB();
+            });
+            break;
     }
 });
 

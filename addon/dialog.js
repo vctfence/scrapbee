@@ -2,7 +2,7 @@
 function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
         return
-    var $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
+    let $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
     $dlg.show();
     data = data || {}
     $dlg.html($dlg.html().replace(/\[([^\[\]]+?)\]/g, function (a, b) {
@@ -14,7 +14,7 @@ function showDlg(name, data, callback) {
                 if (this.value == data[this.name])
                     this.checked = true;
             } else {
-                if (typeof data[this.name] != "undefined")
+                if (typeof data[this.name] != "undefined" && !(this.name === "icon" && data["icon"].startsWith("var(")))
                     this.value = data[this.name];
             }
         }
@@ -26,7 +26,7 @@ function showDlg(name, data, callback) {
     $(".more-properties").hide();
 
     /** return promise object */
-    var p = new Promise(function (resolve, reject) {
+    let p = new Promise(function (resolve, reject) {
         function proceed() {
             var data = {};
             $dlg.find("input").each(function () {
@@ -67,6 +67,13 @@ function showDlg(name, data, callback) {
                 more_properties.text("More");
             }
         });
+
+        let set_default_icon = $dlg.find("#set-default-icon");
+
+        set_default_icon.bind("click.dlg", function () {
+            $dlg.find("#prop-icon").val("");
+        });
+
     });
     return p;
 }

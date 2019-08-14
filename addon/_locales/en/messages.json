@@ -22,6 +22,9 @@
     "Check Links": {
         "message": "Check Links"
     },
+    "Import RDF": {
+        "message": "Import RDF"
+    },
     "Reload": {
         "message": "Reload"
     },
@@ -151,21 +154,6 @@
     "FIREFOX_DOWNLOAD_DIRECTORY":{
         "message": "Firefox Download Directory"
     },
-    "STEP1_TEXT_1": {
-        "message": "Download Scrapyard backend executable and 2 installation files to\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", by just click on the button below."
-    },
-    "STEP1_TEXT_2": {
-        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", start Firefox and download again. (Please use standard version of {Firefox} 60 and later)"
-    },
-    "STEP2_TEXT_1": {
-        "message": "Run the installation script downloaded above manually:"
-    },
-    "STEP2_TEXT_2": {
-        "message": "Run the commands in your terminal:"
-    },
-    "STEP2_TEXT_3": {
-        "message": "You maybe need to run the script as administrator"
-    },
     "STEP3_TEXT_1": {
         "message": "Finish"
     },
@@ -190,12 +178,6 @@
     "Separator": {
         "message": "Separator"
     },
-    "RDF_FILES_TIP": {
-        "message": "Set absolute path of rdf files(ending with extension '.rdf') to register information of scraps，downloaded scraps will be saved in \"data\" folder beside the rdf files.<br/><br> For example： c:\\scrapyard\\test.rdf (Windows)<br> or：<br> /home/userID/scrapyard/test.rdf (Linux)<br>/Users/userID/scrapyard/test.rdf (Mac)<br><br> You can setup multiple rdf files to classify your scraps，<br>You can have different rdfs inside same directory.<br>No need to create these files maunally.<br/><br/> Good news for <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user: ScrapBook rdfs are also supported."
-    },
-    "BACKEND_PORT_TIP":{
-        "message": "TCP port Scrapyard backend listens. e.g. 9900"
-    },
     "_COLOR":{
         "message": " Color"
     },
@@ -216,12 +198,6 @@
     },
     "OPEN_IN_CURRENT_TAB":{
         "message": "Open in current tab"
-    },
-    "OPEN_IN_CURRENT_TAB_TIP":{
-        "message": "By default, Scrapyard opens each scrap in new tab when clicking on an entity, <br>and open scraps in current tab by holding control(meta for Mac) while clicking. <br>You can reverse this by turn on this option. "
-    },
-    "DONATE_WORDS":{
-        "message": "To make Scrapyard grows better, <br/>your donations are very welcome, <br/>thanks for your support !!! <br> <i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapyard/'>Also, please rank 5 stars if you like Scrapyard</i></a>"
     },
     "MORE_DONATE_WAY_TOGGLE":{
         "message": "In other way"

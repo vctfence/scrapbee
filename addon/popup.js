@@ -75,10 +75,14 @@ window.onload = function () {
                 }
                 else {
                     let favicon = new URL(tab.url).origin + "/favicon.ico";
-                    fetch(favicon, {method: "HEAD"})
+                    fetch(favicon, {method: "GET"})
                         .then(response => {
-                            if (response.ok)
-                                $("#bookmark-icon").val(favicon.toString());
+                            let type = response.headers.get("content-type") || "image";
+                            if (response.ok && type.startsWith("image"))
+                                return response.arrayBuffer().then(bytes => {
+                                    if (bytes.byteLength)
+                                        $("#bookmark-icon").val(favicon.toString());
+                                });
                     })
                 }
             }).catch(e => {

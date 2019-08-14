@@ -1,4 +1,4 @@
-// Derived from https://github.com/mooz/org-js
+// Derived from: https://github.com/mooz/org-js
 
 /*
   Copyright (c) 2014 Masafumi Oyamada

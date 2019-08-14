@@ -392,6 +392,7 @@ import {
     FIREFOX_SHELF_NAME
 } from "../db.js";
 import {browseNode} from "../background.js";
+import {getMimetype, loadLocalResource} from "../utils.js";
 
 /************************************************************************/
 
@@ -676,16 +677,25 @@ function addListeners()
             case "STORE_PAGE_HTML":
                 backend.storeBlob(message.payload.id, message.data, "text/html", false)
                     .then(() => {
-                        chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
-                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
+                        // if (message.favicon) {
+                        //     message.payload.icon = message.favicon;
+                        //     backend.updateNode(message.payload);
+                        // }
 
-                        alertNotify("Successfully archived page.");
+                        if (!message.payload.__local_import) {
+                            chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
+                            browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
+                            alertNotify("Successfully archived page.");
+                        }
                     })
                     .catch(e => {
-                        chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
-                        alertNotify("Error archiving page.");
+                        if (!message.payload.__local_import) {
+                            chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
+                            alertNotify("Error archiving page.");
+                        }
                         console.log(e);
                     });
+
                 backend.storeIndex(message.payload.id, message.data.indexWords());
 
                 break;
@@ -731,7 +741,7 @@ function addListeners()
                                (message.location.substr(0,5) == "http:" && message.referer.substr(0,5) == "http:" && message.pagescheme == "http:"));
                 
                 mixedContent = (message.location.substr(0,5) == "http:" && (message.referer.substr(0,6) == "https:" || message.pagescheme == "https:"));
-                
+
                 if (safeContent || (mixedContent && message.passive && allowPassive))
                 { 
                     /* Load same-origin resource - or cross-origin with or without CORS - and add Referer Header */
@@ -805,6 +815,44 @@ function addListeners()
                         
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "send" },checkError);
                     }
+                }
+                else if (message.payload.__local_import) {
+                    if (message.location) {
+                        loadLocalResource(message.location, "binary").then(result => {
+                            if (!result.data)
+                                chrome.tabs.sendMessage(sender.tab.id, {type: "loadFailure", index: message.index,
+                                    reason: "mixed"}, checkError);
+                            else {
+                                var i, binaryString, contentType, allowOrigin;
+                                var byteArray = new Uint8Array(result.data);
+
+                                contentType = "";
+                                binaryString = "";
+                                let signature = [];
+                                for (i = 0; i < byteArray.byteLength; i++) {
+                                    if (i < 4)
+                                        signature.push(byteArray[i].toString(16));
+                                    binaryString += String.fromCharCode(byteArray[i]);
+                                }
+
+                                signature = signature.join("").toUpperCase();
+                                contentType = getMimetype(signature);
+
+                                // currently only CSS loaded as blobs during local import
+                                if (message.location.startsWith("blob:"))
+                                    contentType = "text/css";
+                                else
+                                    contentType = !contentType && result.type? result.type: contentType;
+
+                                chrome.tabs.sendMessage(sender.tab.id, {
+                                    type: "loadSuccess", index: message.index,
+                                    content: binaryString, contenttype: contentType, alloworigin: "*"
+                                }, checkError);
+                            }
+                        });
+                    }
+                    else
+                        chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
                 }
                 else chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
                 
@@ -901,13 +949,13 @@ function addListeners()
         if (path.length >= 2 && path[path.length - 1].external === FIREFOX_SHELF_NAME
                 && path[path.length - 2].external_id === "unfiled_____") {
             path.pop();
-            path[path.length - 1].name = "@";
+            path[path.length - 1].name = "@@";
         }
 
         if (path.length >= 2 && path[path.length - 1].external === FIREFOX_SHELF_NAME
             && path[path.length - 2].external_id === "menu________") {
             path.pop();
-            path[path.length - 1].name = "@@";
+            path[path.length - 1].name = "@";
         }
 
         node.path = path.reverse().map(n => n.name).join("/");
@@ -917,9 +965,9 @@ function addListeners()
         if (path && path.startsWith("~"))
             return path.replace("~", DEFAULT_SHELF_NAME);
         else if (path && path.startsWith("@@"))
-            return path.replace("@@", browserBookmarkPath);
+            return path.replace("@@", unfiledBookmarkPath);
         else if (path && path.startsWith("@"))
-            return path.replace("@", unfiledBookmarkPath);
+            return path.replace("@", browserBookmarkPath);
 
         return path;
     }
@@ -1043,35 +1091,22 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
         // TODO: rework with the account of savepage settings
 
         if (tab.url && tab.url.startsWith("file:")) {
-            let readFile = (url) => {
-                return new Promise((resolve, reject) => {
-                    fetch(url, {mode: 'same-origin'})
-                        .then(function(reps) {
-                            reps.arrayBuffer().then(data => {
-                                let contentType = reps.headers.get("Content-Type");
-                                if (contentType == null)
-                                    contentType = "application/pdf";
+            loadLocalResource(tab.url).then(({data}) => {
+                // let contentType = reps.headers.get("Content-Type");
+                // if (contentType == null)
+                let contentType = "application/pdf";
 
-                                backend.storeBlob(userdata.bookmark.id, data, contentType, false);
+                backend.storeBlob(userdata.bookmark.id, data, contentType, false);
 
-                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
+                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 
-                                alertNotify("Successfully archived page.");
-                            });
-                        })
-                        .catch(error => {
-                            reject(error);
-                        });
-                });
-            };
-
-            readFile(tab.url).then(() => {})
-                .catch(error => {
-                    console.log(error );
-                });
+                alertNotify("Successfully archived page.");
+            })
+            .catch(error => {
+                console.log(error);
+            });
         }
         else {
-
             let xhr = new XMLHttpRequest();
 
             xhr.open("GET", tab.url, true);

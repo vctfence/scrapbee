@@ -64,6 +64,7 @@ var externalSave,swapDevices;  /* from Print Edit WE*/
 
 var passNumber;
 var iconFound;
+var iconIndex;
 
 var crossFrameName = new Array();
 var crossFrameURL = new Array();
@@ -91,17 +92,17 @@ var timeFinish = new Array();
 
 var pageInfoBarText,pageLoaderText,enteredComments;
 
-var payload;
+var added_bookmark;
 
 var selectionElement;
 var skipIfSelected;
 
-function lockDocument() {
+function lockDocument(transparent) {
     if (document.body.firstChild && document.body.firstChild.id !== "scrapyard-waiting") {
         let lock = document.createElement("div");
         lock.id = "scrapyard-waiting";
 
-        lock.style.backgroundColor = "#9995";
+        lock.style.backgroundColor = transparent? "#9995": "white";
         lock.style.zIndex = 2147483647;
         lock.style.position = "fixed";
         lock.style.left = lock.style.right = "0";
@@ -122,6 +123,13 @@ function unlockDocument() {
         document.body.removeChild(lock);
 }
 
+function getBaseURIOf(element) {
+    return added_bookmark && added_bookmark.__local_import? added_bookmark.__local_import_base: element.ownerDocument.baseURI;
+}
+
+function getBaseURI(uri) {
+    return added_bookmark && added_bookmark.__local_import? added_bookmark.__local_import_base: uri;
+}
 
 /************************************************************************/
 
@@ -279,7 +287,6 @@ function addListeners()
             /* Messages from background page */
             
             case "performAction":
-                
                 sendResponse({ });  /* to confirm content script has been loaded */
                 
                 menuAction = message.menuaction;
@@ -287,7 +294,7 @@ function addListeners()
                 externalSave = message.externalsave;
                 swapDevices = message.swapdevices;
 
-                payload = message.payload;
+                added_bookmark = message.payload;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -343,7 +350,7 @@ function addListeners()
                 /* Wait for page to complete loading */
 
                 if (menuAction <= 2)
-                    lockDocument();
+                    lockDocument(!added_bookmark.__local_import);
 
                 if (document.readyState == "complete")
                 {
@@ -492,7 +499,7 @@ function identifyCrossFrames()
     
     timeFinish[0] = performance.now();
     
-    chrome.runtime.sendMessage({ type: "requestCrossFrames" });
+    chrome.runtime.sendMessage({ type: "requestCrossFrames", payload: added_bookmark });
     
     window.setTimeout(function() { gatherStyleSheets(); },200);  /* allow time for cross-origin frames to reply */
 }
@@ -566,7 +573,7 @@ function findStyleSheets(depth,frame,element,crossorigin)
         {
             csstext = element.textContent;
             
-            baseuri = element.ownerDocument.baseURI;
+            baseuri = getBaseURIOf(element);
             
             charset = element.ownerDocument.characterSet;
             
@@ -594,11 +601,11 @@ function findStyleSheets(depth,frame,element,crossorigin)
             {
                 if (!isSchemeDataOrMozExtension(element.href))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     if (element.charset != "") charset = element.charset;
                     else charset = element.ownerDocument.characterSet;
-                    
+
                     rememberURL(element.href,baseuri,"text/css",charset,false);
                 }
             }
@@ -741,7 +748,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             style = frame.getComputedStyle(element,"::first-line");
             csstext += style.getPropertyValue("background-image") + " ";
             
-            baseuri = element.ownerDocument.baseURI;
+            baseuri = getBaseURIOf(element);
             
             regex = /url\(\s*((?:"[^"]+")|(?:'[^']+')|(?:[^\s)]+))\s*\)/gi;  /* image url() */
             
@@ -765,7 +772,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
         {
             csstext = element.getAttribute("style");
             
-            baseuri = element.ownerDocument.baseURI;
+            baseuri = getBaseURIOf(element);
             
             regex = /url\(\s*((?:"[^"]+")|(?:'[^']+')|(?:[^\s)]+))\s*\)/gi;  /* image url() */
             
@@ -791,7 +798,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     if (element.charset != "") charset = element.charset;
                     else charset = element.ownerDocument.characterSet;
@@ -810,7 +817,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
         {
             csstext = element.textContent;
             
-            baseuri = element.ownerDocument.baseURI;
+            baseuri = getBaseURIOf(element);
             
             findCSSURLsInStyleSheet(csstext,baseuri,crossorigin,loadedfonts);
         }
@@ -827,7 +834,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.href))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     if (baseuri != null)
                     {
@@ -842,7 +849,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
                             {
                                 csstext = resourceContent[i];
                                 
-                                baseuri = element.href;
+                                baseuri = getBaseURI(element.href);
                                 
                                 findCSSURLsInStyleSheet(csstext,baseuri,crossorigin,loadedfonts);
                             }
@@ -854,10 +861,10 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
         else if ((element.rel.toLowerCase() == "icon" || element.rel.toLowerCase() == "shortcut icon") && element.href != "")
         {
             iconFound = true;
-            
-            baseuri = element.ownerDocument.baseURI;
-            
-            rememberURL(element.href,baseuri,"image/vnd.microsoft.icon","",false);
+
+            baseuri = getBaseURIOf(element);
+
+            iconIndex = rememberURL(element.href,baseuri,"image/vnd.microsoft.icon","",false);
         }
     }
     
@@ -872,7 +879,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.background))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     rememberURL(element.background,baseuri,"image/png","",false);
                 }
@@ -898,7 +905,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(currentsrc))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     passive = !(element.parentElement.localName == "picture" || element.hasAttribute("srcset") || element.hasAttribute("crossorigin"));
                     
@@ -919,7 +926,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     rememberURL(element.src,baseuri,"image/png","",false);
                 }
@@ -939,7 +946,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
                 {
                     if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                     {
-                        baseuri = element.ownerDocument.baseURI;
+                        baseuri = getBaseURIOf(element);
                         
                         passive = !element.hasAttribute("crossorigin");
                         
@@ -962,7 +969,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
                 {
                     if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                     {
-                        baseuri = element.ownerDocument.baseURI;
+                        baseuri = getBaseURIOf(element);
                         
                         passive = !element.hasAttribute("crossorigin");
                         
@@ -981,7 +988,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
                 {
                     if (!isSchemeDataOrMozExtension(element.poster))  /* exclude existing data uri or moz-extension url */
                     {
-                        baseuri = element.ownerDocument.baseURI;
+                        baseuri = getBaseURIOf(element);
                         
                         rememberURL(element.poster,baseuri,"image/png","",false);
                     }
@@ -1004,7 +1011,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
                     {
                         if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                         {
-                            baseuri = element.ownerDocument.baseURI;
+                            baseuri = getBaseURIOf(element);
                             
                             passive = !element.parentElement.hasAttribute("crossorigin");
                             
@@ -1027,7 +1034,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     charset = element.ownerDocument.characterSet;
                     
@@ -1047,7 +1054,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.data))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     rememberURL(element.data,baseuri,"application/octet-stream","",false);
                 }
@@ -1065,7 +1072,7 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
 
                     rememberURL(element.src,baseuri,"application/octet-stream","",false);
                 }
@@ -1127,9 +1134,9 @@ function findOtherResources(depth,frame,element,crossorigin,nosource,loadedfonts
         {
             if (!iconFound)
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
-                rememberURL("/favicon.ico",baseuri,"image/vnd.microsoft.icon","",false);
+                iconIndex = rememberURL("/favicon.ico",baseuri,"image/vnd.microsoft.icon","",false);
             }
         }
     }
@@ -1307,7 +1314,7 @@ function rememberURL(url,baseuri,mimetype,charset,passive)
     var i,location;
 
     if (savedPage) return -1;  /* ignore new resources when re-saving */
-    
+
     if (baseuri != null)
     {
         location = resolveURL(url,baseuri);
@@ -1358,12 +1365,12 @@ function loadResources()
         {
             resourceCount++;
             
-            documentURL = new URL(document.baseURI);
+            documentURL = new URL(getBaseURI(document.baseURI));
             
             useCORS = (resourceMimeType[i] == "application/font-woff");
 
             chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
-                                         passive: resourcePassive[i], pagescheme: documentURL.protocol, usecors: useCORS });
+                                         passive: resourcePassive[i], pagescheme: documentURL.protocol, usecors: useCORS, payload: added_bookmark });
         }
     }
     
@@ -1413,6 +1420,9 @@ function loadSuccess(index,content,contenttype,alloworigin)
             }
             
         case "image/png":  /* image file */
+        case "image/jpeg":  /* image file */
+        case "image/svg+xml":  /* image file */
+        case "image/gif":  /* image file */
         case "image/vnd.microsoft.icon":  /* icon file */
         case "audio/mpeg":  /* audio file */
         case "video/mp4":  /* video file */
@@ -1514,10 +1524,10 @@ function loadSuccess(index,content,contenttype,alloworigin)
                     {
                         resourceCount++;
                         
-                        documentURL = new URL(document.baseURI);
+                        documentURL = new URL(getBaseURI(document.baseURI));
                         
                         chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
-                                                     passive: resourcePassive[i], pagescheme: documentURL.protocol, useCORS: false });
+                                                     passive: resourcePassive[i], pagescheme: documentURL.protocol, useCORS: false, payload: added_bookmark });
                     }
                 }
             }
@@ -1637,7 +1647,12 @@ function generateHTML()
         
         htmlStrings[htmlStrings.length] = "\n-->\n";
     }
-    
+
+    let iconBase64URI /*= iconIndex !== undefined && resourceStatus[iconIndex] === "success"
+        ? "data:" + resourceMimeType[iconIndex] + ";base64," + btoa(resourceContent[iconIndex])
+        : null;*/
+
+
     /* Release resources */
     
     crossFrameName.length = 0;
@@ -1684,7 +1699,8 @@ function generateHTML()
     // alert(Math.trunc(size/(1024*1024))+"MB");
 
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
-    chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: htmlStrings.join("\n"), payload: payload });
+    chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: htmlStrings.join("\n"), payload: added_bookmark,
+        favicon: iconBase64URI });
 
     htmlStrings.length = 0;
 }
@@ -1803,7 +1819,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
     {
         csstext = element.getAttribute("style");
         
-        baseuri = element.ownerDocument.baseURI;
+        baseuri = getBaseURIOf(element);
         
         csstext = replaceCSSURLs(csstext,baseuri,crossorigin);
         
@@ -1825,7 +1841,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     origurl = element.getAttribute("src");
                     
@@ -1872,7 +1888,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
                 }
                 else csstext = element.textContent;
                 
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 textContent = replaceCSSURLsInStyleSheet(csstext,baseuri,crossorigin);
                 
@@ -1898,12 +1914,12 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             {
                 if (!isSchemeDataOrMozExtension(element.href))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     if (baseuri != null)
                     {
                         location = resolveURL(element.href,baseuri);
-                        
+
                         if (location != null)
                         {
                             for (i = 0; i < resourceLocation.length; i++)
@@ -1918,7 +1934,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
                                 
                                 csstext = csstext.replace(/<\/style>/gi,"<\\/style>");
                                 
-                                baseuri = element.href;
+                                baseuri = getBaseURI(element.href);
                                 
                                 textContent = replaceCSSURLsInStyleSheet(csstext,baseuri,crossorigin);
                                 
@@ -1949,7 +1965,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.href))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("href");
                 
@@ -1996,7 +2012,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.background))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("background");
                 
@@ -2054,7 +2070,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
                 {
                     if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                     {
-                        baseuri = element.ownerDocument.baseURI;
+                        baseuri = getBaseURIOf(element);
                         
                         origurl = element.getAttribute("src");
                         
@@ -2069,7 +2085,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
                 {
                     if (!isSchemeDataOrMozExtension(currentsrc))  /* exclude existing data uri or moz-extension url */
                     {
-                        baseuri = element.ownerDocument.baseURI;
+                        baseuri = getBaseURIOf(element);
                         
                         origurl = (element.src == "") ? "" : element.getAttribute("src");
                         
@@ -2114,7 +2130,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("src");
                 
@@ -2167,7 +2183,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     origurl = element.getAttribute("src");
                     
@@ -2199,7 +2215,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             {
                 if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                 {
-                    baseuri = element.ownerDocument.baseURI;
+                    baseuri = getBaseURIOf(element);
                     
                     origurl = element.getAttribute("src");
                     
@@ -2224,7 +2240,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.poster))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("poster");
                 
@@ -2249,7 +2265,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
                 {
                     if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
                     {
-                        baseuri = element.ownerDocument.baseURI;
+                        baseuri = getBaseURIOf(element);
                         
                         origurl = element.getAttribute("src");
                         
@@ -2294,7 +2310,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("src");
                 
@@ -2315,7 +2331,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.data))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("data");
                 
@@ -2336,7 +2352,7 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             if (!isSchemeDataOrMozExtension(element.src))  /* exclude existing data uri or moz-extension url */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 origurl = element.getAttribute("src");
                 
@@ -2521,10 +2537,12 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             
             if (element.ownerDocument.head.querySelector("base") != null) target = element.ownerDocument.head.querySelector("base").target;
             else target = "";
-            
-            htmltext = "\n    <base href=\"" + element.ownerDocument.baseURI + "\"";
-            if (target != "") htmltext += " target=\"" + target + "\"";
-            htmltext += ">";
+
+            if (!added_bookmark.__local_import) {
+                htmltext = "\n    <base href=\"" + getBaseURIOf(element) + "\"";
+                if (target != "") htmltext += " target=\"" + target + "\"";
+                htmltext += ">";
+            }
             
             htmlStrings[htmlStrings.length] = htmltext;
         }
@@ -2606,9 +2624,9 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
         {
             /* Add favicon if missing */
             
-            if (!iconFound)
+            if (!iconFound && !added_bookmark.__local_import)
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 datauri = replaceURL("/favicon.ico",baseuri,crossorigin);
                 
@@ -2700,8 +2718,10 @@ function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,ind
             state += " Max frame depth = " + maxFrameDepth + ";";
             state += " Max resource size = " + maxResourceSize + "MB;";
             state += " Max resource time = " + maxResourceTime + "s;";
-            
-            htmltext = "\n    <meta name=\"savepage-url\" content=\"" + decodeURIComponent(document.URL) + "\">";
+
+            let original_url = added_bookmark.__local_import? added_bookmark.uri: decodeURIComponent(document.URL);
+
+            htmltext = "\n    <meta name=\"savepage-url\" content=\"" + original_url + "\">";
             htmltext += "\n    <meta name=\"savepage-title\" content=\"" + document.title + "\">";
             htmltext += "\n    <meta name=\"savepage-date\" content=\"" + date.toString() + "\">";
             htmltext += "\n    <meta name=\"savepage-state\" content=\"" + state + "\">";
@@ -3132,7 +3152,7 @@ function extractSavedPageMedia(srcurl)
         {
             if (element.src == srcurl)  /* image/audio/video found */
             {
-                baseuri = element.ownerDocument.baseURI;
+                baseuri = getBaseURIOf(element);
                 
                 if (baseuri != null)
                 {

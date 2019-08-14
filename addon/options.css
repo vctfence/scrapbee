@@ -23,6 +23,13 @@ body{
     height: 100%;
     width:100%;
 }
+
+input[type='text'] {
+    border: 1px solid #777 !important;
+    border-radius: 3px !important;
+    -moz-appearance: none !important;
+}
+
 #div-page{
     display: none;
     background:white;
@@ -294,7 +301,7 @@ a.left-index, a:visited.left-index {
     min-height: 0;
 }
 
-#check-links > h2:first-child {
+.div-area > div > h2:first-child {
     margin-top: 0;
 }
 
@@ -302,19 +309,52 @@ a.left-index, a:visited.left-index {
     flex: 0 1 auto;
 }
 
-#link-check-options {
+#link-check-options, #rdf-import-options {
     line-height: 22px;
     vertical-align: middle;
+    margin-left: 16px;
 }
 
-#start-check-links {
+#rdf-import-options {
+    width: max-content;
+}
+
+#rdf-shelf-name {
+    flex: 0 0 auto;
+}
+
+#rdf-thread-div {
+    flex: 1 0 auto;
+    text-align: right;
+    padding-right: 23px;
+}
+
+#start-rdf-import {
+    float: right;
+    margin-right: 23px;
+}
+
+#rdf-import-threads {
+    width: 50px;
+}
+
+#rdf-progress-row {
+    /*display: none;*/
+    padding-right: 26px;
+}
+
+#rdf-import-progress {
+    width: 100%;
+}
+
+#start-check-links, #start-rdf-import {
     margin-left: 16px;
     height: 22px;
     padding-top: 0;
     padding-bottom: 0;
 }
 
-#invalid-links-container {
+#invalid-links-container, #invalid-imports-container {
     flex: 1 1 auto;
     padding-top: 16px;
     overflow-x: hidden;
@@ -347,6 +387,18 @@ a.left-index, a:visited.left-index {
     overflow: hidden;
 }
 
-.invalid-link {
+.invalid-link, .invalid-import {
     padding-left: 8px;
+}
+
+.double-container {
+    display: flex;
+}
+
+.double-first, .double-last {
+    flex: 0 0 320px;
+}
+
+.double-last {
+    margin-left: 20px;
 }

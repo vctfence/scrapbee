@@ -165,7 +165,7 @@ class Storage {
         else
             ids = await db.nodes.where("external").equals(kind).toArray();
 
-        return this.deleteNodes(ids.map(n => n.id));
+        return this.deleteNodesLowLevel(ids.map(n => n.id));
     }
 
     async deleteMissingExternalNodes(ids, kind) {
@@ -174,7 +174,7 @@ class Storage {
         ids = await db.nodes.where("external").equals(kind).and(n => n.external_id && !existing.has(n.external_id))
             .toArray();
 
-        return this.deleteNodes(ids.map(n => n.id));
+        return this.deleteNodesLowLevel(ids.map(n => n.id));
     }
 
     getChildNodes(id) {
@@ -319,7 +319,7 @@ class Storage {
         return nodes.filter(n => word_count[n.id] === words.length);
     }
 
-    async deleteNodes(ids) {
+    async deleteNodesLowLevel(ids) {
         if (!Array.isArray)
             ids = [ids];
 

@@ -29,10 +29,10 @@ window.onload = function(){
         $("a.left-index").removeClass("focus")
 
         let m;
-        if(m = location.href.match(/#(\w+)$/)){
+        if(m = location.href.match(/#(\w+)$/)) {
             $("#div-" + m[1]).show();
             $("a.left-index[href='#" + m[1] + "']").addClass("focus")
-        }else{
+        } else{
             $("#div-settings").show();
             $("a.left-index[href='#settings']").addClass("focus")
         }
@@ -41,6 +41,7 @@ window.onload = function(){
     switchPane();
 
     $("#copy-style-link").on("click", onCopyStyle);
+    $("#start-rdf-import").on("click", onStartRDFImport);
 
     document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
     
@@ -101,46 +102,6 @@ window.onload = function(){
          document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
     },false);
 
-    let initLinkChecker = () => {
-        let link_scope = $("#link-scope");
-
-        $("#start-check-links").on("click", startCheckLinks);
-        $("#invalid-links-container").on("click", ".invalid-link", selectNode);
-
-        link_scope.html(`
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
-            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
-            }</option>
-    `);
-
-        backend.listShelves().then(shelves => {
-            shelves.sort((a, b) => {
-                if (a.name < b.name)
-                    return -1;
-                if (a.name > b.name)
-                    return 1;
-
-                return 0;
-            });
-
-            let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
-            shelves.splice(shelves.indexOf(default_shelf), 1);
-
-            let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
-            shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
-
-            shelves = [default_shelf, ...shelves];
-
-            for (let shelf of shelves) {
-                let name =
-                    isSpecialShelf(shelf.name)
-                        ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
-                        : shelf.name;
-                $("<option></option>").appendTo(link_scope).html(name).attr("value", shelf.id);
-            }
-        });
-    };
-
     settings.load(() => {
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
         //document.getElementById("option-compress-export").checked = settings.compress_export();
@@ -149,6 +110,7 @@ window.onload = function(){
         document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
         document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
+        document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
         document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
         document.getElementById("option-export-format").value = _(settings.export_format(), "json");
         initLinkChecker();
@@ -208,10 +170,12 @@ window.onload = function(){
         settings.shallow_export(document.getElementById("option-shallow-export").checked);
         //settings.compress_export(document.getElementById("option-compress-export").checked);
         //settings.archive_url_lifetime(document.getElementById("option-revoke-archive-url-after").value);
-        settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked);
+        settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
+            () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
         settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
         settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
         settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
+        settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
         settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked);
         settings.export_format(document.getElementById("option-export-format").value);
 
@@ -220,8 +184,6 @@ window.onload = function(){
 
         document.getElementById("options-save-button").value = "Saved";
         document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
-
-        backend.reconcileBrowserBookmarksDB();
 
         setTimeout(function()
             {
@@ -233,13 +195,126 @@ window.onload = function(){
 
     function onCopyStyle(e) {
         navigator.clipboard.writeText(darkStyle);
-        showNotification({message: "Dark theme style is copied to the Clipboard."});
+        showNotification({message: "Dark theme style is copied to Clipboard."});
+    }
+
+    let importing = false;
+    $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
+    async function onStartRDFImport(e) {
+        if (importing)
+            return;
+
+        let shelf = $("#rdf-shelf-name").val();
+        let path = $("#rdf-import-path").val();
+
+        if (!shelf || !path) {
+            showNotification({message: "Please specify all import parameters."});
+            return;
+        }
+
+        let shelf_node = await backend.queryShelf(shelf);
+        if (isSpecialShelf(shelf) || shelf_node) {
+            showNotification({message: "The specified shelf already exists."});
+            return;
+        }
+
+        importing = true;
+        $("start-rdf-import").prop('disabled', true);
+        $("#rdf-shelf-name").prop('disabled', true);
+        $("#rdf-import-path").prop('disabled', true);
+        $("#rdf-import-threads").prop('disabled', true);
+
+        let progress_row = $("#rdf-progress-row");
+
+        progress_row.text("initializing bookmark directory structure...");
+        //$("#rdf-import-progress").val(0);
+        //$("#rdf-progress-row").show();
+
+        let progressListener = message => {
+            if (message.type === "RDF_IMPORT_PROGRESS") {
+                let bar = $("#rdf-import-progress");
+                if (!bar.length) {
+                    bar = $(`<progress id="rdf-import-progress" max="100" value="0"/>`);
+                    progress_row.empty().append(bar);
+                }
+                bar.val(message.progress);
+            }
+            if (message.type === "RDF_IMPORT_ERROR") {
+                let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}" 
+                                       class="invalid-import">${message.bookmark.name}</a>`;
+                $("#invalid-imports-container").show();
+                $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
+            }
+        };
+
+        browser.runtime.onMessage.addListener(progressListener);
+
+
+        $("#invalid-links-container").show();
+
+        let finalize = () => {
+            browser.runtime.onMessage.removeListener(progressListener);
+
+            $("start-rdf-import").prop('disabled', false);
+            $("#rdf-shelf-name").prop('disabled', false);
+            $("#rdf-import-path").prop('disabled', false);
+            $("#rdf-import-threads").prop('disabled', false);
+
+            $("#rdf-progress-row").text("ready");
+            importing = false;
+        };
+
+        browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
+                                     threads: $("#rdf-import-threads").val()})
+            .then(finalize)
+            .catch(e => {
+                showNotification({message: e.message});
+                finalize();
+            });
     }
 
     let abort_check_links = false;
+    let link_scope = $("#link-scope");
+    let initLinkChecker = () => {
+        $("#start-check-links").on("click", startCheckLinks);
+        $("#invalid-links-container").on("click", ".invalid-link", selectNode);
+
+        link_scope.html(`
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
+            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+            }</option>
+        `);
+
+        backend.listShelves().then(shelves => {
+            shelves.sort((a, b) => {
+                if (a.name < b.name)
+                    return -1;
+                if (a.name > b.name)
+                    return 1;
+
+                return 0;
+            });
+
+            let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+            shelves.splice(shelves.indexOf(default_shelf), 1);
+
+            let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+            shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
+
+            shelves = [default_shelf, ...shelves];
+
+            for (let shelf of shelves) {
+                let name =
+                    isSpecialShelf(shelf.name)
+                        ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
+                        : shelf.name;
+                $("<option></option>").appendTo(link_scope).html(name).attr("value", shelf.id);
+            }
+        });
+    };
 
     function stopCheckLinks() {
-        $("#start-check-links").val("Go");
+        $("#start-check-links").val("Check");
         $("#current-link-title").text("");
         $("#current-link-url").text("");
         $("#current-link").css("visibility", "hidden");
@@ -247,12 +322,12 @@ window.onload = function(){
     }
 
     function startCheckLinks() {
-        if ($("#start-check-links").val() === "Go") {
+        if ($("#start-check-links").val() === "Check") {
 
             $("#start-check-links").val("Stop");
 
             let timeout = parseInt($("#link-check-timeout").val()) * 1000;
-            let update_icons = $("#update-icons").is(":checked"); console.log(update_icons)
+            let update_icons = $("#update-icons").is(":checked");
             let scope = $(`#link-scope option[value='${link_scope.val()}']`).text();
             let path = scope === EVERYTHING ? undefined : scope;
 
@@ -260,7 +335,7 @@ window.onload = function(){
             $("#invalid-links-container").hide();
             $("#invalid-links").html("");
 
-            function checkNodes(nodes) {
+            let checkNodes = function (nodes) {
                 let node = nodes.shift();
                 if (node && !abort_check_links) {
                     if (node.uri) {
@@ -304,12 +379,17 @@ window.onload = function(){
                                 }
                                 else {
                                     link = base + "/favicon.ico";
-                                    fetch(link, {method: "HEAD"}).then(response => {
-                                        if (response.ok) {
-                                            node.icon = link;
-                                            backend.updateNode(node);
-                                        }
-                                    })
+                                    fetch(link, {method: "GET"}).then(response => {
+                                        let type = response.headers.get("content-type") || "image";
+                                        if (response.ok && type.startsWith("image"))
+                                            return response.arrayBuffer().then(bytes => {
+                                                node.icon = bytes.byteLength? link: undefined;
+                                                backend.updateNode(node);
+                                            });
+                                    }).catch(() => {
+                                        node.icon = undefined;
+                                        backend.updateNode(node);
+                                    });
                                 }
                             }
 
@@ -323,7 +403,7 @@ window.onload = function(){
                     abort_check_links = false;
                 else
                     stopCheckLinks();
-            }
+            };
 
             backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]}).then(nodes => {
                 checkNodes(nodes);

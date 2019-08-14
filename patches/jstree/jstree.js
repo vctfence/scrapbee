@@ -2539,11 +2539,11 @@
 				if(obj.icon === false) {
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-hidden';
 				}
-				else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1) {
+				else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1 && !obj.icon.startsWith("var(")) {
 					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
 				}
 				else {
-    				node.childNodes[1].childNodes[0].style.backgroundImage = 'url("' + obj.icon + '")' + (obj.fallbackIcon? ', ' + obj.fallbackIcon: '');
+    				node.childNodes[1].childNodes[0].style.backgroundImage = (obj.icon.startsWith("var(")? obj.icon: 'url("' + obj.icon + '")') + (obj.fallbackIcon? ', ' + obj.fallbackIcon: '');
 					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
 					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';

@@ -1,6 +1,15 @@
-import {backend} from "./backend.js";
 import {getFileStorage} from "./lib/idb-file-storage.js";
-import {importHtml, importOrg} from "./import.js";
+
+export function partition(items, size) {
+    var result = []
+    var n = Math.round(items.length / size);
+
+    while (items.length > 0)
+        result.push(items.splice(0, n));
+
+    return result;
+}
+
 
 export async function scriptsAllowed(tabId, frameId = 0) {
     try {
@@ -13,11 +22,14 @@ export async function scriptsAllowed(tabId, frameId = 0) {
     } catch (e) {}
 }
 
-export function showNotification({message, title='Scrapyard', type = 'info'}) {
-    return browser.notifications.create(`sbi-notification-${type}`, {
-        type: 'basic',
-        title: title,
-        message: message,
+export function showNotification(args) {
+    if (typeof arguments[0] === "string")
+        args = {message: arguments[0]}
+
+    return browser.notifications.create(`sbi-notification-${args.type}`, {
+        type: args.type? args.type: 'basic',
+        title: args.title? args.title: 'Scrapyard',
+        message: args.message,
         iconUrl: '/icons/scrapyard.svg'
     });
 }
@@ -72,12 +84,6 @@ export function parseHtml(htmlText) {
 
 
 export function isElementInViewport (el) {
-
-    //special bonus for those using jQuery
-    if (typeof jQuery === "function" && el instanceof jQuery) {
-        el = el[0];
-    }
-
     var rect = el.getBoundingClientRect();
 
     return (
@@ -86,6 +92,49 @@ export function isElementInViewport (el) {
         rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
         rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
     );
+}
+
+export function getMimetype (signature) {
+    switch (signature) {
+        case '89504E47':
+            return 'image/png';
+        case '47494638':
+            return 'image/gif';
+        case '25504446':
+            return 'application/pdf';
+        case 'FFD8FFDB':
+        case 'FFD8FFE0':
+            return 'image/jpeg';
+        case '504B0304':
+            return 'application/zip';
+        case '3C737667':
+            return 'image/svg+xml';
+        default:
+            return null;
+    }
+}
+
+export async function loadLocalResource(url, type) {
+    let result = {type: "", data: null};
+    try {
+        let response = await fetch(url, {mode: 'same-origin'});
+
+        if (response.ok) {
+            let data = type === "binary"
+                ? await response.arrayBuffer()
+                : await response.text();
+            return {
+                type: response.headers.get("content-type"),
+                data: data
+            };
+        }
+
+        return result;
+    }
+    catch (e) {
+        console.log(e);
+        return result;
+    }
 }
 
 
@@ -173,7 +222,7 @@ export async function withIDBFile(filename, mode, handler) {
 
 export class ReadLine {
     /* options:
-         chunk_size:          The chunk size to be used, in bytes. Default is 64K.
+         chunk_size:          The chunk byte size. Default is 256K.
     */
     constructor(file, options) {
         this.file           = file;
@@ -182,7 +231,7 @@ export class ReadLine {
         this.decoder        = new TextDecoder();
         this.reader         = new FileReader();
 
-        this.chunkSize  = !options || typeof options.chunk_size === 'undefined' ?  64 * 1024 : parseInt(options.chunk_size);
+        this.chunkSize  = !options || typeof options.chunk_size === 'undefined' ?  256 * 1024 : parseInt(options.chunk_size);
     }
 
     async *lines() {

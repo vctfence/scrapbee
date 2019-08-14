@@ -422,6 +422,9 @@ window.onload = function () {
         });
     };
 
+    tree.startProcessingIndication = () => $("#shelf-menu-button").attr("src", "icons/grid.svg");
+    tree.stopProcessingIndication = () => $("#shelf-menu-button").attr("src", "icons/menu.svg");
+
     $("#shelf-menu-import").click(() => {
         $("#file-picker").click();
     });
@@ -429,10 +432,12 @@ window.onload = function () {
     $("#file-picker").change(async (e) => {
         if (e.target.files.length > 0) {
             let {name, ext} = pathToNameExt($("#file-picker").val());
-            let lname = name.toLowerCase();
+            let lname = name.toLocaleLowerCase();
 
-            if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isSpecialShelf(name)) {
-                let existingOption = $(`#shelfList option:contains("${name}")`);
+            if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isSpecialShelf(lname)) {
+                let existingOption = $(`#shelfList option`).filter(function(i, e) {
+                    return e.textContent.toLocaleLowerCase() === lname;
+                });
 
                 if (existingOption.length)
                     confirm("{Warning}", "This will replace '" + name + "'.").then(() => {
@@ -573,6 +578,10 @@ window.onload = function () {
             if (last_shelf == EVERYTHING_SHELF || last_shelf == FIREFOX_SHELF_ID) {
                 loadShelves(context, tree);
             }
+        }
+        else if (request.type === "NODES_IMPORTED") {
+            loadShelves(context, tree);
+            switchShelf(context, tree, request.shelf.id);
         }
     });
 

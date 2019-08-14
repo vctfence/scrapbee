@@ -130,6 +130,11 @@ html,body{
 .dlg *{
     color:#000;
 }
+.dlg input, .dlg select, .selectric {
+    border: 1px solid #777 !important;
+    border-radius: 3px !important;
+    -moz-appearance: none !important;
+}
 .dlg-table{
     display:table;
     overflow:hidden;
@@ -396,4 +401,7 @@ a#more-properties {
     display: inline-block;
 }
 
+a#set-default-icon {
+    text-decoration: none;
+}
 
