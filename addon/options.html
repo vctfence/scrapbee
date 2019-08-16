@@ -307,8 +307,7 @@
                 <table cellspacing="" cellpadding="" border="0" style="margin-bottom: 5px;">
                     <tr>
                         <td>Shelf name:</td>
-                        <td style="display: flex"><input id="rdf-shelf-name" type="text" size="25" value=""/>
-                            <div id="rdf-thread-div">Processing threads:&nbsp;&nbsp;<input id="rdf-import-threads" type="number" min="1" value="5"/></div></td>
+                        <td><input id="rdf-shelf-name" type="text" size="25" value=""/></td>
                     </tr>
                     <tr>
                         <td>Path to RDF file:&nbsp;&nbsp;</td>
@@ -316,6 +315,16 @@
                             <input id="rdf-import-path" type="text" size="80" value=""/>
                             <i class="help-mark"></i>
                             <span class="tips hide">An absolute path is required, e.g.: <b>d:/notes/scrapbook.rdf</b></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Processing threads:</td>
+                        <td style="display: flex"><input id="rdf-import-threads" type="number" min="1" value="5"/>
+                            <div id="rdf-import-quick-div"><input id="rdf-import-quick" type="checkbox"/><label for="rdf-import-quick"
+                                                        >Quick import</label>
+                                <i class="help-mark"></i>
+                                <span class="tips hide">Leave archived files on disk.</span>
+                            </div>
                         </td>
                     </tr>
                     <tr>

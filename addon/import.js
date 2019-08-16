@@ -13,7 +13,7 @@ import {
     TODO_STATES,
     TODO_NAMES,
     EVERYTHING, DEFAULT_SHELF_NAME, DEFAULT_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID, NODE_PROPERTIES,
-    isContainer, NODE_TYPE_SEPARATOR
+    isContainer, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME
 } from "./db.js";
 
 const EXPORT_VERSION = 1;
@@ -667,7 +667,7 @@ function resolveURL(url, base) {
     return result.href;
 }
 
-async function instantiateLinkedResources(html, base, urls, depth) {
+export async function instantiateLinkedResources(html, base, urls, depth) {
     if (depth >= settings.frame_depth())
         return;
 
@@ -707,6 +707,16 @@ async function instantiateLinkedResources(html, base, urls, depth) {
     return doc.documentElement.outerHTML;
 }
 
+export const SCRAPYARD_LOCK_SCREEN =
+    `<div id="scrapyard-waiting" 
+          style="background-color: 
+          white; z-index: 2147483647; 
+          position: fixed; 
+          inset: 0px; 
+          background-image: url(${browser.runtime.getURL("icons/lock.svg")}); 
+          background-repeat: no-repeat; 
+          background-position: center center;"></div>`;
+
 async function importRDFArchive(node, scrapbook_id, root_path) {
     let base = `file://${root_path}/data/${scrapbook_id}/`;
     let index = `${base}index.html`;
@@ -715,9 +725,11 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
     if (!html.data)
         return;
 
+    html = html.data.replace(/<body([^>]*)>/, `<body\$1>${SCRAPYARD_LOCK_SCREEN}`);
+
     let urls = [];
 
-    html = await instantiateLinkedResources(html.data, base, urls, 0);
+    html = await instantiateLinkedResources(html, base, urls, 0);
 
     let blob = new Blob([new TextEncoder().encode(html)], {type: "text/html"});
     let url = URL.createObjectURL(blob);
@@ -775,7 +787,7 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
 
 }
 
-export async function importRDF(shelf, path, threads) {
+export async function importRDF(shelf, path, threads, quick) {
     await prepareNewImport(shelf);
 
     path = path.replace(/\\/g, "/");
@@ -792,8 +804,14 @@ export async function importRDF(shelf, path, threads) {
     let reverse_id_map = new Map();
 
     let shelf_node = await backend.getGroupByPath(shelf);
-    if (shelf_node)
+    if (shelf_node) {
+        if (quick) {
+            shelf_node.external = RDF_EXTERNAL_NAME;
+            shelf_node.uri = rdf_directory;
+            await backend.updateNode(shelf_node);
+        }
         id_map.set(null, shelf_node.id);
+    }
 
     let pos = 0;
     let total = 0;
@@ -814,12 +832,17 @@ export async function importRDF(shelf, path, threads) {
             todo_state: node.__sb_type === "marked"? 1: undefined
         };
 
+        if (quick) {
+            data.external = RDF_EXTERNAL_NAME;
+            data.external_id = node.__sb_id;
+        }
+
         let bookmark = await backend.importBookmark(data);
         id_map.set(node.__sb_id, bookmark.id);
 
         if (data.type === NODE_TYPE_GROUP)
             id_map.set(node.__sb_id, bookmark.id);
-        else if (data.type === NODE_TYPE_ARCHIVE) {
+        else if (!quick && data.type === NODE_TYPE_ARCHIVE) {
             reverse_id_map.set(bookmark.id, node.__sb_id);
             bookmarks.push(bookmark);
             total += 1;
@@ -867,6 +890,6 @@ export async function importRDF(shelf, path, threads) {
         }
     }
 
-    if (bookmarks.length)
+    if (!quick && bookmarks.length)
         setTimeout(() => browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node}), 500);
 }

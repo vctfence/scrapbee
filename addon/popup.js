@@ -1,6 +1,6 @@
 import {
     DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, FIREFOX_SHELF_ID, FIREFOX_BOOKMARK_UNFILED
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, FIREFOX_SHELF_ID, FIREFOX_BOOKMARK_UNFILED, RDF_EXTERNAL_NAME
 } from "./db.js";
 import {BookmarkTree} from "./tree.js";
 import {backend} from "./backend.js";
@@ -39,6 +39,8 @@ window.onload = function () {
         order: "custom"
     }).then(nodes => {
         $("#bookmark-folder").html("");
+
+        nodes = nodes.filter(n => n.external !== RDF_EXTERNAL_NAME);
 
         folder_history = localStorage.getItem("popup-folder-history");
 

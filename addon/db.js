@@ -47,6 +47,8 @@ export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
 export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
 export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
+export const RDF_EXTERNAL_NAME = "rdf";
+
 export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID];
 
 export const DEFAULT_POSITION = 2147483647;

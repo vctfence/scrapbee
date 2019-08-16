@@ -1,10 +1,18 @@
-import {isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./db.js";
+import {isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./db.js";
 import {backend, browserBackend} from "./backend.js";
-import {exportOrg, exportJSON, importOrg, importJSON, importHtml, importRDF} from "./import.js";
+import {
+    exportOrg,
+    exportJSON,
+    importOrg,
+    importJSON,
+    importHtml,
+    importRDF,
+    instantiateLinkedResources, SCRAPYARD_LOCK_SCREEN
+} from "./import.js";
 import {settings} from "./settings.js";
-import {isSpecialPage, notifySpecialPage, readFile, showNotification, withIDBFile} from "./utils.js";
+import {isSpecialPage, loadLocalResource, notifySpecialPage, readFile, showNotification, withIDBFile} from "./utils.js";
 
-export function browseNode(node) {
+export async function browseNode(node) {
 
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
@@ -21,6 +29,76 @@ export function browseNode(node) {
             return browser.tabs.create({"url": url});
 
         case NODE_TYPE_ARCHIVE:
+            if (node.external === RDF_EXTERNAL_NAME) {
+                let path = await backend.computePath(node.id);
+                let rdf_directory = path[0].uri;
+                let base = `file://${rdf_directory}/data/${node.external_id}/`
+                let index = `${base}index.html`;
+
+                let html = await loadLocalResource(index);
+
+                if (!html.data) {
+                    showNotification({message: "Cannot find: " + index});
+                    return;
+                }
+
+                html = html.data.replace(/<body([^>]*)>/, `<body\$1>${SCRAPYARD_LOCK_SCREEN}`);
+
+                let urls = [];
+
+                html = await instantiateLinkedResources(html, base, urls, 0);
+
+                let blob = new Blob([new TextEncoder().encode(html)], {type: "text/html"});
+                let url = URL.createObjectURL(blob);
+
+                urls.push(url);
+
+                let rdf_tab = await browser.tabs.create({url: url, active: true});
+
+                let listener = async (id, changed, tab) => {
+                    if (id === rdf_tab.id && changed.status === "complete") {
+                        browser.tabs.onUpdated.removeListener(listener);
+                        try {
+                            await browser.tabs.executeScript(rdf_tab.id, {file: "savepage/content.js"});
+                        }
+                        catch (e) {
+                            console.log(e);
+                            showNotification({message: "Error loading page"});
+                        }
+
+                        node.__local_import = true;
+                        node.__local_browsing = true;
+                        node.__local_import_base = base;
+                        node.tab_id = rdf_tab.id;
+
+                        setTimeout(async () => {
+                            await browser.tabs.sendMessage(rdf_tab.id, {
+                                type: "performAction",
+                                menuaction: 2,
+                                payload: node
+                            });
+                            browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                        }, 200);
+
+                    }
+                };
+
+                browser.tabs.onUpdated.addListener(listener);
+
+                let completionListener = function(message,sender,sendResponse) {
+                    if (message.type === "BROWSE_PAGE_HTML" && message.payload.tab_id === rdf_tab.id) {
+                        browser.runtime.onMessage.removeListener(completionListener);
+
+                        for (let url of urls) {
+                            URL.revokeObjectURL(url);
+                        }
+                    }
+                };
+
+                browser.runtime.onMessage.addListener(completionListener);
+                return;
+            }
+
             return backend.fetchBlob(node.id).then(blob => {
                 if (blob) {
 
@@ -109,7 +187,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             let importf = ({"JSON": () => importJSON(shelf, message.file),
                             "ORG":  async () => importOrg(shelf, await readFile(message.file)),
                             "HTML": async () => importHtml(shelf, await readFile(message.file)),
-                            "RDF": () => importRDF(shelf, message.file, message.threads)})
+                            "RDF": () => importRDF(shelf, message.file, message.threads, message.quick)})
                 [message.file_ext.toUpperCase()];
 
             return backend.importTransaction(importf);

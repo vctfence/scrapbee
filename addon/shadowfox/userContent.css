@@ -147,6 +147,10 @@
         background-image: url("%%%icons/firefox2.svg") !important;
     }
 
+    .jstree-default .rdf-archive > .jstree-anchor .jstree-themeicon {
+        background-image: url("%%%icons/rdf2.svg") !important;
+    }
+
     input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-scroll li, .simple-menu div  {
         background-color: var(--in-content-box-background) !important;
         border-color: var(--in-content-box-border-color) !important;

@@ -323,10 +323,9 @@ a.left-index, a:visited.left-index {
     flex: 0 0 auto;
 }
 
-#rdf-thread-div {
+#rdf-import-quick-div {
     flex: 1 0 auto;
     text-align: right;
-    padding-right: 23px;
 }
 
 #start-rdf-import {

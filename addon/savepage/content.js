@@ -1699,10 +1699,18 @@ function generateHTML()
     // alert(Math.trunc(size/(1024*1024))+"MB");
 
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
-    chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: htmlStrings.join("\n"), payload: added_bookmark,
-        favicon: iconBase64URI });
 
+    let resultingHTML = htmlStrings.join("\n");
     htmlStrings.length = 0;
+
+    if (added_bookmark.__local_browsing) {
+        document.documentElement.innerHTML = resultingHTML.replace(/^[^<]*<html[^>]*>/, "")
+            .replace(/<\/html>[^>]*$/, "");
+        chrome.runtime.sendMessage({ type: "BROWSE_PAGE_HTML", payload: added_bookmark});
+    }
+    else
+        chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: resultingHTML, payload: added_bookmark,
+            favicon: iconBase64URI });
 }
 
 function extractHTML(depth,frame,element,crossorigin,nosource,parentpreserve,indent)

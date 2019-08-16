@@ -265,7 +265,7 @@ window.onload = function(){
         };
 
         browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
-                                     threads: $("#rdf-import-threads").val()})
+                                     threads: $("#rdf-import-threads").val(), quick: $("#rdf-import-quick").val()})
             .then(finalize)
             .catch(e => {
                 showNotification({message: e.message});

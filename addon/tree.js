@@ -24,7 +24,7 @@ import {
     FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_BOOKMARK_TOOLBAR,
-    FIREFOX_BOOKMARK_MOBILE
+    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -225,6 +225,10 @@ class BookmarkTree {
             if (settings.capitalize_builtin_shelf_names())
                 n.text = n.name.capitalizeFirstLetter();
         }
+        if (n.type == NODE_TYPE_SHELF && n.external === RDF_EXTERNAL_NAME) {
+            n.li_attr = {"class": "rdf-archive"};
+            n.icon = "/icons/rdf.svg";
+        }
         else if (n.type == NODE_TYPE_SHELF) {
             if (n.name && isSpecialShelf(n.name) && settings.capitalize_builtin_shelf_names())
                 n.text = n.name.capitalizeFirstLetter();
@@ -382,7 +386,11 @@ class BookmarkTree {
             return false;
         } else if (operation === "move_node") {
             if (more.ref && more.ref.id == FIREFOX_SHELF_ID
-                    || parent.id == FIREFOX_SHELF_ID || node.parent == FIREFOX_SHELF_ID)
+                || parent.id == FIREFOX_SHELF_ID || node.parent == FIREFOX_SHELF_ID)
+                return false;
+
+            if (node.original.external === RDF_EXTERNAL_NAME && more.ref
+                    && more.ref.original.external !== RDF_EXTERNAL_NAME)
                 return false;
         }
         return true;
@@ -892,6 +900,18 @@ class BookmarkTree {
                             break;
                     }
                 }
+            },
+            rdfPathItem: {
+                separator_before: true,
+                label: "RDF Directory...",
+                action: () => {
+                    showDlg("prompt", {caption: "RDF Directory", label: "Path", title: ctx_node_data.uri})
+                        .then(async data => {
+                            let node = await backend.getNode(ctx_node_data.id);
+                            ctx_node_data.uri = node.uri = data.title;
+                            backend.updateNode(node);
+                    });
+                }
             }
         };
 
@@ -903,6 +923,9 @@ class BookmarkTree {
                 if (ctx_node.original.id == FIREFOX_SHELF_ID) {
                     items = {};
                 }
+                if (ctx_node_data.external !== RDF_EXTERNAL_NAME) {
+                    delete items.rdfPathItem;
+                }
             case NODE_TYPE_GROUP:
                 //delete items.newSeparatorItem;
                 delete items.openItem;
@@ -910,6 +933,8 @@ class BookmarkTree {
                 delete items.propertiesItem;
                 delete items.copyLinkItem;
                 delete items.shareItem;
+                if (ctx_node_data.type === NODE_TYPE_GROUP)
+                    delete items.rdfPathItem;
                 if (ctx_node.original.external)
                     delete items.newNotesItem;
                 if (ctx_node.original.parent_id == FIREFOX_SHELF_ID) {
@@ -917,6 +942,12 @@ class BookmarkTree {
                     delete items.copyItem;
                     delete items.renameItem;
                     delete items.deleteItem;
+                }
+                if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
+                    delete items.cutItem;
+                    delete items.copyItem;
+                    delete items.pasteItem;
+                    delete items.newFolderItem;
                 }
                 break;
             case NODE_TYPE_NOTES:
@@ -929,6 +960,12 @@ class BookmarkTree {
                 delete items.sortItem;
                 delete items.newFolderItem;
                 delete items.renameItem;
+                delete items.rdfPathItem;
+                if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
+                    delete items.cutItem;
+                    delete items.copyItem;
+                    delete items.shareItem.submenu.dropboxItem;
+                }
                 break;
         }
 
