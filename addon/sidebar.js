@@ -3,7 +3,7 @@ import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
 import {isElementInViewport, ReadLine} from "./utils.js"
-import {isSpecialShelf} from "./db.js"
+import {DEFAULT_SHELF_ID, isSpecialShelf} from "./db.js"
 
 import {
     EVERYTHING,
@@ -208,6 +208,11 @@ function switchShelf(context, tree, shelf_id) {
 
     settings.last_shelf(shelf_id);
 
+    if (shelf_id == EVERYTHING_SHELF)
+        $("#shelf-menu-sort").show();
+    else
+        $("#shelf-menu-sort").hide();
+
     context.shelfName = path;
 
     if (canSearch())
@@ -363,7 +368,7 @@ window.onload = function () {
         // TODO: 118n
         confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
             if (name) {
-                backend.deleteNodes(id).then(() => {
+                browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: id}).then(() => {
                     $(`#shelfList option[value="${id}"]`).remove();
 
                     shelf_list.val(1);
@@ -372,6 +377,24 @@ window.onload = function () {
                     invalidateCompletion();
                 });
             }
+        });
+    });
+
+    $("#shelf-menu-sort").click(() => {
+        backend.listNodes({
+            types: [NODE_TYPE_SHELF],
+            order: "custom"
+        }).then(async nodes => {
+            let special = nodes.filter(n => isSpecialShelf(n.name)).sort((a, b) => a.id - b.id);
+            let regular = nodes.filter(n => !isSpecialShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
+            let sorted = [...special, ...regular];
+
+            let positions = [];
+            for (let i = 0; i < sorted.length; ++i)
+                positions.push({id: sorted[i].id, pos: i});
+
+            await browser.runtime.sendMessage({type: "REORDER_NODES", positions: positions});
+            loadShelves(context, tree);
         });
     });
 
@@ -396,34 +419,26 @@ window.onload = function () {
     };
 
     tree.onDeleteShelf = node => {
-        if (isSpecialShelf(node.name)) {
-            // TODO: i18n
-            showNotification({message: "A built-in shelf could not be deleted."});
-            return;
+        $(`#shelfList option[value="${node.id}"]`).remove();
+        shelf_list.selectric('refresh');
+
+        if (!tree._everything) {
+            shelf_list.val(DEFAULT_SHELF_ID);
+            shelf_list.selectric('refresh');
+            switchShelf(context, tree, DEFAULT_SHELF_ID);
+            invalidateCompletion();
         }
-
-        // TODO: 118n
-        confirm("{Warning}", "Do you really want to delete '" + node.name + "'?").then(() => {
-            if (node.name) {
-                backend.deleteNodes(node.id).then(() => {
-                    tree._jstree.delete_node(node.id);
-                    
-                    $(`#shelfList option[value="${node.id}"]`).remove();
-                    shelf_list.selectric('refresh'); 
-
-                    if (!tree._everything) {
-                        shelf_list.val(1);
-                        shelf_list.selectric('refresh');
-                        switchShelf(context, tree, 1);
-                        invalidateCompletion();
-                    }
-                });
-            }
-        });
     };
 
-    tree.startProcessingIndication = () => $("#shelf-menu-button").attr("src", "icons/grid.svg");
-    tree.stopProcessingIndication = () => $("#shelf-menu-button").attr("src", "icons/menu.svg");
+    let processing_timeout;
+    tree.startProcessingIndication = () => {
+        processing_timeout = setTimeout(() =>
+            $("#shelf-menu-button").attr("src", "icons/grid.svg"), 1000)
+    };
+    tree.stopProcessingIndication = () => {
+        $("#shelf-menu-button").attr("src", "icons/menu.svg");
+        clearTimeout(processing_timeout);
+    };
 
     $("#shelf-menu-import").click(() => {
         $("#file-picker").click();
@@ -568,6 +583,13 @@ window.onload = function () {
                     node.a_attr.class += " has-notes";
 
                 tree._jstree.redraw_node(node, false, false, true);
+            }
+        }
+        else if (request.type === "NODES_READY") {
+            let last_shelf = settings.last_shelf();
+
+            if (last_shelf == EVERYTHING_SHELF || last_shelf == message.shelf.id) {
+                loadShelves(context, tree);
             }
         }
         else if (request.type === "EXTERNAL_NODES_READY"

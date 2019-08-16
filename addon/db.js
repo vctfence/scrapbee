@@ -42,6 +42,11 @@ export const DEFAULT_SHELF_NAME = "default";
 export const FIREFOX_SHELF_NAME = "firefox";
 export const FIREFOX_SHELF_UUID = "browser_bookmarks";
 
+export const FIREFOX_BOOKMARK_MENU = "menu________";
+export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
+export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
+export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
+
 export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID];
 
 export const DEFAULT_POSITION = 2147483647;
@@ -219,7 +224,7 @@ class Storage {
         }
     }
 
-    async queryFullSubtree(ids) {
+    async queryFullSubtree(ids, return_ids = false) {
         if (!Array.isArray(ids))
             ids = [ids];
 
@@ -228,6 +233,9 @@ class Storage {
             children.add(n);
             await this._selectAllChildrenOf({id: n}, children);
         }
+
+        if (return_ids)
+            return Array.from(children);
 
         return db.nodes.where("id").anyOf(children).toArray();
     }
@@ -348,7 +356,9 @@ class Storage {
         if (db.tables.some(t => t.name === "tags"))
             await db.tags.clear();
 
-        return db.nodes.where("id").noneOf([DEFAULT_SHELF_ID, FIREFOX_SHELF_ID]).delete();
+        let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true))];
+
+        return db.nodes.where("id").noneOf(retain).delete();
     }
 
     async queryShelf(name) {
@@ -456,21 +466,21 @@ class Storage {
         });
     }
 
-    async storeNotes(node_id, notes) {
+    async storeNotes(node_id, notes, format) {
         let node = await this.getNode(node_id);
         let exists = await db.notes.where("node_id").equals(node_id).count();
 
         if (exists) {
             await db.notes.where("node_id").equals(node_id).modify({
-                content: notes
+                content: notes,
+                format: format
             });
         }
         else {
             await db.notes.add({
                 node_id: node_id,
                 content: notes,
-                external: node.external,
-                external_id: node.external_id
+                format: format
             });
         }
 

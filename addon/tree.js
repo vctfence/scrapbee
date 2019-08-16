@@ -13,8 +13,18 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    EVERYTHING, TODO_NAMES, TODO_NAME, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID,
-    isSpecialShelf, isContainer, isEndpoint
+    EVERYTHING,
+    TODO_NAMES,
+    TODO_NAME,
+    FIREFOX_SHELF_NAME,
+    FIREFOX_SHELF_ID,
+    isSpecialShelf,
+    isContainer,
+    isEndpoint,
+    FIREFOX_BOOKMARK_MENU,
+    FIREFOX_BOOKMARK_UNFILED,
+    FIREFOX_BOOKMARK_TOOLBAR,
+    FIREFOX_BOOKMARK_MOBILE
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -69,6 +79,9 @@ class BookmarkTree {
                 [NODE_TYPE_ARCHIVE]: {
                     "valid_children": []
                 },
+                [NODE_TYPE_NOTES]: {
+                    "valid_children": []
+                },
                 [NODE_TYPE_SEPARATOR]: {
                     "valid_children": []
                 }
@@ -79,7 +92,7 @@ class BookmarkTree {
             dnd: {
                 inside_pos: "last"
             }
-        }).on("move_node.jstree", BookmarkTree.moveNode);
+        }).on("move_node.jstree", BookmarkTree.moveNode.bind(this));
 
         this._jstree = $(element).jstree(true);
 
@@ -121,19 +134,12 @@ class BookmarkTree {
             let external = element.getAttribute("data-external");
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                switch (external) {
-                    case "browser":
-                        let node = this._jstree.get_node(id);
-                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node.original});
-                        break;
-                    default:
-                        backend.getNode(parseInt(id)).then(node => {
-                            if (node) {
-                                //console.log(node);
-                                browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
-                            }
-                        });
-                }
+                backend.getNode(parseInt(id)).then(node => {
+                    if (node) {
+                        //console.log(node);
+                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                    }
+                });
             }
             return false;
         }
@@ -142,8 +148,8 @@ class BookmarkTree {
     traverse(root, visitor) {
         let _tree = this._jstree;
         function doTraverse(root) {
-            if (!settings.show_firefox_toolbar() && root.original && root.original.external_id === "toolbar_____"
-                || !settings.show_firefox_mobile() && root.original && root.original.external_id === "mobile______")
+            if (!settings.show_firefox_toolbar() && root.original && root.original.external_id === FIREFOX_BOOKMARK_TOOLBAR
+                || !settings.show_firefox_mobile() && root.original && root.original.external_id === FIREFOX_BOOKMARK_MOBILE)
                 return;
 
             visitor(root);
@@ -226,21 +232,21 @@ class BookmarkTree {
             n.li_attr = {"class": "scrapyard-shelf"}
         }
         else if (n.type == NODE_TYPE_GROUP) {
-            if (n.external === FIREFOX_SHELF_NAME && n.external_id === "menu________") {
+            if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_MENU) {
                 n.icon = "/icons/bookmarksMenu.svg";
                 n.li_attr = {"class": "browser-bookmark-menu"};
             }
-            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === "unfiled_____") {
+            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_UNFILED) {
                 n.icon = "/icons/unfiledBookmarks.svg";
                 n.li_attr = {"class": "browser-unfiled-bookmarks"};
             }
-            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === "toolbar_____") {
+            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
                 n.icon = "/icons/bookmarksToolbar.svg";
                 n.li_attr = {"class": "browser-bookmark-toolbar"};
                 if (!settings.show_firefox_toolbar())
                     n.state = {hidden: true};
             }
-            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === "mobile______") {
+            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_MOBILE) {
                 if (!settings.show_firefox_mobile())
                     n.state = {hidden: true};
             }
@@ -268,8 +274,7 @@ class BookmarkTree {
                 "class": "show_tooltip",
                 "title": `${n.text}${uri}`,
                 "data-id": n.id,
-                "data-clickable": "true",
-                "data-external": n.browser? "browser": "false"
+                "data-clickable": "true"
             };
 
             if (n.type == NODE_TYPE_ARCHIVE)
@@ -384,15 +389,35 @@ class BookmarkTree {
     }
 
     static moveNode(_, data) {
-        let tree = $(this).jstree(true);
+        let tree = this._jstree; //$(this).jstree(true);
         let parent = tree.get_node(data.parent);
 
         if (data.parent != data.old_parent) {
             let node = tree.get_node(data.node);
 
-            backend.moveNodes([node.original.id], parent.original.id).then(new_nodes => {
-                BookmarkTree.reorderNodes(tree, parent);
-            });
+            if (this.startProcessingIndication)
+                this.startProcessingIndication();
+
+            browser.runtime.sendMessage({type: "MOVE_NODES", node_ids: [node.original.id], dest_id: parent.original.id})
+                .then(async new_nodes => { // keep jstree nodes synchronized with database
+                    for (let n of new_nodes) {
+                        let tree_node = tree.get_node(n.id);
+                        tree_node.original = BookmarkTree.toJsTreeNode(n);
+
+                        let old_original = this.data.find(d => d.id == n.id);
+                        if (old_original)
+                            this.data[this.data.indexOf(old_original)] = n;
+                        else
+                            this.data.push(n);
+                    }
+                    await BookmarkTree.reorderNodes(tree, parent)
+
+                    if (this.stopProcessingIndication)
+                        this.stopProcessingIndication();
+                }).catch(() => {
+                    if (this.stopProcessingIndication)
+                        this.stopProcessingIndication();
+                });
         }
         else
             BookmarkTree.reorderNodes(tree, parent);
@@ -407,11 +432,11 @@ class BookmarkTree {
             node.id = siblings[i].original.id;
             node.external = siblings[i].original.external;
             node.external_id = siblings[i].original.external_id;
-            node.pos = i + 1;
+            node.pos = i;
             positions.push(node);
         }
 
-        backend.reorderNodes(positions);
+        return browser.runtime.sendMessage({type: "REORDER_NODES", positions: positions});
     }
 
     /* context menu listener */
@@ -584,7 +609,7 @@ class BookmarkTree {
                                 }));
                                 await pocket.modify(actions).catch(e => console.log(e));
 
-                                showNotification(`Successfully added item${selected_nodes.length > 1? "s": ""} to Pocket.`)
+                                showNotification(`Successfully added bookmark${selected_nodes.length > 1? "s": ""} to Pocket.`)
                             }
                         }
                     },
@@ -668,7 +693,7 @@ class BookmarkTree {
 
                                 if (filename && content) {
                                     await upload(filename, content);
-                                    showNotification(`Successfully added item${selected_nodes.length > 1? "s": ""} to Dropbox.`)
+                                    showNotification(`Successfully shared bookmark${selected_nodes.length > 1? "s": ""} to Dropbox.`)
                                 }
                             }
                         }
@@ -702,8 +727,8 @@ class BookmarkTree {
                         self.startProcessingIndication();
 
                     (buffer.mode == "copy_node"
-                        ? backend.copyNodes(selection, ctx_node_data.id)
-                        : backend.moveNodes(selection, ctx_node_data.id))
+                        ? browser.runtime.sendMessage({type: "COPY_NODES", node_ids: selection, dest_id: ctx_node_data.id})
+                        : browser.runtime.sendMessage({type: "MOVE_NODES", node_ids: selection, dest_id: ctx_node_data.id}))
                         .then(new_nodes => {
                             switch (buffer.mode) {
                                 case "copy_node":
@@ -718,9 +743,11 @@ class BookmarkTree {
                                 let parent = tree.get_node(n.parent_id);
                                 tree.create_node(parent, BookmarkTree.toJsTreeNode(n), "last");
 
-                                if (!all_nodes.some(d => d.id == n.id)) {
+                                let old_original = all_nodes.find(d => d.id == n.id);
+                                if (old_original)
+                                    all_nodes[all_nodes.indexOf(old_original)] = n;
+                                else
                                     all_nodes.push(n);
-                                }
                             }
 
                             BookmarkTree.reorderNodes(tree, ctx_node);
@@ -795,14 +822,29 @@ class BookmarkTree {
                 label: "Delete",
                 action: () => {
                     if (ctx_node_data.type === NODE_TYPE_SHELF) {
-                        if (this.onDeleteShelf)
-                            this.onDeleteShelf(ctx_node_data);
+                        if (isSpecialShelf(ctx_node_data.name)) {
+                            // TODO: i18n
+                            showNotification({message: "A built-in shelf could not be deleted."});
+                            return;
+                        }
+
+                        confirm("{Warning}", "Do you really want to delete '" + ctx_node_data.name + "'?").then(() => {
+                            if (ctx_node_data.name) {
+                                browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: ctx_node_data.id})
+                                    .then(() => {
+                                        tree.delete_node(ctx_node_data.id);
+
+                                        if (this.onDeleteShelf)
+                                            this.onDeleteShelf(ctx_node_data);
+                                    });
+                            }
+                        });
                     }
                     else {
                         confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
                             let selected_ids = selected_nodes.map(n => n.original.id);
 
-                            backend.deleteNodes(selected_ids).then(() => {
+                            browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: selected_ids}).then(() => {
                                 tree.delete_node(selected_nodes);
                             });
                         });

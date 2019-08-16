@@ -255,9 +255,11 @@ export class BrowserBackend {
 
         nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
 
-        return this.muteBrowserListeners(() =>
-            Promise.all(nodes.map(n => browser.bookmarks.move(n.external_id, {index: n.pos - 1})))
-        );
+        return this.muteBrowserListeners(async () => {
+            for (let n of nodes) {
+                await browser.bookmarks.move(n.external_id, {index: n.pos});
+            }
+        });
     }
 
     async createBrowserBookmarkFolder(node, parent_id) {
@@ -357,14 +359,14 @@ export class BrowserBackend {
                 if (parent) {
                     let browser_children = await browser.bookmarks.getChildren(bookmark.parentId);
                     let db_children = [];
-                    let node;
+                    let updated_node;
 
                     for (let c of browser_children) {
                         let db_child = await backend.getExternalNode(c.id, FIREFOX_SHELF_NAME);
 
                         if (db_child) {
                             if (c.id === id) {
-                                node = db_child;
+                                updated_node = db_child;
                                 db_child.parent_id = parent.id;
                             }
 
@@ -374,7 +376,7 @@ export class BrowserBackend {
                     }
 
                     await backend.reorderNodes(db_children);
-                    browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: node});
+                    browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: updated_node});
                 }
             }
             catch (e) {console.log(e)}
@@ -417,15 +419,17 @@ export class BrowserBackend {
         let ui_context = window !== await browser.runtime.getBackgroundPage();
         //console.log(new Error().stack);
 
-        this.getUILock();
         if (ui_context)
             await browser.runtime.sendMessage({type: "UI_LOCK_GET"});
+        else
+            this.getUILock();
 
         try {await f()} catch (e) {console.log(e);}
 
         if (ui_context)
             await browser.runtime.sendMessage({type: "UI_LOCK_RELEASE"});
-        this.releaseUILock();
+        else
+            this.releaseUILock();
     }
 
     installBrowserListeners() {
@@ -539,8 +543,13 @@ class IDBBackend extends Storage {
         return result;
     }
 
-    reorderNodes(positions) {
-        browserBackend.reorderBrowserBookmarks(positions);
+    async reorderNodes(positions) {
+        try {
+            await browserBackend.reorderBrowserBookmarks(positions);
+        }
+        catch (e) {
+            console.log(e);
+        }
         return this.updateNodes(positions);
     }
 
@@ -931,7 +940,7 @@ class IDBBackend extends Storage {
                 }
 
                 if (get_icons.length)
-                    setTimeout(() => browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"}, 500));
+                    setTimeout(() => browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"}), 500);
 
                 browserBackend.installBrowserListeners();
             });

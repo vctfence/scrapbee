@@ -2,7 +2,7 @@ import {isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} 
 import {backend, browserBackend} from "./backend.js";
 import {exportOrg, exportJSON, importOrg, importJSON, importHtml, importRDF} from "./import.js";
 import {settings} from "./settings.js";
-import {readFile, showNotification, withIDBFile} from "./utils.js";
+import {isSpecialPage, notifySpecialPage, readFile, showNotification, withIDBFile} from "./utils.js";
 
 export function browseNode(node) {
 
@@ -10,8 +10,12 @@ export function browseNode(node) {
         case NODE_TYPE_BOOKMARK:
             let url = node.uri;
             if (url) {
-                if (url.indexOf("://") < 0)
+                try {
+                    new URL(url);
+                }
+                catch (e) {
                     url = "http://" + url;
+                }
             }
 
             return browser.tabs.create({"url": url});
@@ -67,10 +71,27 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     let shelf;
     switch (message.type) {
         case "CREATE_BOOKMARK":
+            if (isSpecialPage(message.data.uri)) {
+                notifySpecialPage();
+                return;
+            }
+
             backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
             });
             break;
+
+        case "COPY_NODES":
+            return backend.copyNodes(message.node_ids, message.dest_id);
+
+        case "MOVE_NODES":
+            return backend.moveNodes(message.node_ids, message.dest_id);
+
+        case "DELETE_NODES":
+            return backend.deleteNodes(message.node_ids);
+
+        case "REORDER_NODES":
+            return backend.reorderNodes(message.positions);
 
         case "BROWSE_NODE":
             browseNode(message.node);

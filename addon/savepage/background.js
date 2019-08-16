@@ -389,10 +389,10 @@ import {
     NODE_TYPE_GROUP,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    FIREFOX_SHELF_NAME
+    FIREFOX_SHELF_NAME, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_MENU
 } from "../db.js";
 import {browseNode} from "../background.js";
-import {getMimetype, loadLocalResource} from "../utils.js";
+import {getMimetype, isSpecialPage, loadLocalResource, notifySpecialPage} from "../utils.js";
 
 /************************************************************************/
 
@@ -590,12 +590,12 @@ function initialize()
         
         refererHeader = object["options-refererheader"];
 
-        backend.getExternalNode("menu________", FIREFOX_SHELF_NAME).then(node => {
+        backend.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
             if (node)
                 browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
         });
 
-        backend.getExternalNode("unfiled_____", FIREFOX_SHELF_NAME).then(node => {
+        backend.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
             if (node)
                 unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
         });
@@ -658,6 +658,11 @@ function addListeners()
         switch (message.type)
         {
             case "CREATE_ARCHIVE":
+                if (isSpecialPage(message.data.uri)) {
+                    notifySpecialPage();
+                    return;
+                }
+
                 backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
                     chrome.tabs.query({ lastFocusedWindow: true, active: true },
                         function(tabs)
@@ -947,13 +952,13 @@ function addListeners()
         }
 
         if (path.length >= 2 && path[path.length - 1].external === FIREFOX_SHELF_NAME
-                && path[path.length - 2].external_id === "unfiled_____") {
+                && path[path.length - 2].external_id === FIREFOX_BOOKMARK_UNFILED) {
             path.pop();
             path[path.length - 1].name = "@@";
         }
 
         if (path.length >= 2 && path[path.length - 1].external === FIREFOX_SHELF_NAME
-            && path[path.length - 2].external_id === "menu________") {
+            && path[path.length - 2].external_id === FIREFOX_BOOKMARK_MENU) {
             path.pop();
             path[path.length - 1].name = "@";
         }
@@ -1046,6 +1051,11 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_ADD_BOOKMARK":
+                if (isSpecialPage(message.uri)) {
+                    notifySpecialPage();
+                    return;
+                }
+
                 message.path = normalizePath(message.path);
 
                 backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
@@ -1136,14 +1146,9 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
     }
 
 
-    if (specialPage(tab.url))  /* special page - no operations allowed */
+    if (isSpecialPage(tab.url))  /* special page - no operations allowed */
     {
-        alertNotify("Cannot be used with these special pages:\n" +
-                    "about:, moz-extension:,\n" +
-                    "https://addons.mozilla.org,\n" +
-                    "chrome:, chrome-extension:,\n" +
-                    "https://chrome.google.com/webstore,\n" +
-                    "view-source:");
+        notifySpecialPage();
     }
     // else if (tab.url.substr(0,5) != "file:" && menuaction >= 3)  /* probably not saved page - view saved page info and extract media operations not allowed */
     // {
@@ -1212,17 +1217,6 @@ function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
         });
 
     }
-}
-
-/************************************************************************/
-
-/* Special page function */
-
-function specialPage(url)
-{
-    return (url.substr(0,6) == "about:" || url.substr(0,7) == "chrome:" || url.substr(0,12) == "view-source:" ||
-            url.substr(0,14) == "moz-extension:" || url.substr(0,26) == "https://addons.mozilla.org" ||
-            url.substr(0,17) == "chrome-extension:" || url.substr(0,34) == "https://chrome.google.com/webstore");
 }
 
 /************************************************************************/

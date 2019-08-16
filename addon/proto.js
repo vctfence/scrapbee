@@ -164,3 +164,13 @@ Array.prototype.removeDups = function(field) {
 String.prototype.capitalizeFirstLetter = function(string) {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
+
+String.prototype.toBinaryString = function () {
+    let binaryString = "";
+    let byteArray = new TextEncoder().encode(this);
+
+    for (let i = 0; i < byteArray.byteLength; i++)
+        binaryString += String.fromCharCode(byteArray[i]);
+
+    return binaryString;
+};

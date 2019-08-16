@@ -1,5 +1,5 @@
 import * as org from "./org.js"
-import {partition, loadLocalResource, ReadLine} from "./utils.js"
+import {partition, loadLocalResource, ReadLine, getFavicon} from "./utils.js"
 import {backend} from "./backend.js"
 import {settings} from "./settings.js"
 
@@ -61,6 +61,9 @@ export async function importOrg(shelf, text) {
             let notes = last_object.notes;
             delete last_object.notes;
 
+            let notes_format = last_object.notes_format;
+            delete last_object.notes_format;
+
             let note_lines = last_object.note_lines;
             delete last_object.note_lines;
 
@@ -85,7 +88,7 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotes(node.id, notes);
+                await backend.storeNotes(node.id, notes, notes_format);
             }
             else if (note_lines.length) {
                 await backend.storeNotes(node.id, note_lines.join("\n"));
@@ -148,7 +151,7 @@ export async function importOrg(shelf, text) {
 
             let name = subnodes[1].value;
 
-            if (name && name.toLocaleLowerCase() === FIREFOX_SHELF_NAME) {
+            if (shelf === EVERYTHING && level === 0 && name && name.toLocaleLowerCase() === FIREFOX_SHELF_NAME) {
                 name = settings.capitalize_builtin_shelf_names()
                     ? name.capitalizeFirstLetter()
                     : name;
@@ -274,6 +277,9 @@ async function objectToProperties(object, compress) {
             : JSON.stringify(notes.content);
 
         lines.push(`:notes: ${content}`);
+
+        if (notes.format)
+            lines.push(`:notes_format: ${notes.format}`);
     }
 
     return lines.map(l => " ".repeat(object.level + 3) + l).join(`\n`);
@@ -407,6 +413,9 @@ async function importJSONObject(object) {
     let notes = object.notes;
     delete object.notes;
 
+    let notes_format = object.notes_format;
+    delete object.notes_format;
+
     if (object.type === NODE_TYPE_ARCHIVE) {
         let data = object.data;
         let binary = !!object.byte_length;
@@ -428,7 +437,7 @@ async function importJSONObject(object) {
     }
 
     if (notes) {
-        await backend.storeNotes(node.id, notes);
+        await backend.storeNotes(node.id, notes, notes_format);
     }
 
     return node;
@@ -462,7 +471,7 @@ export async function importJSON(shelf, file) {
 
     first_object = parseJSONObject(first_object);
 
-    if (!first_object || !isContainer(first_object))
+    if (!first_object)
         return Promise.reject(new Error("invalid JSON formatting"));
 
     let aliased_everything = !first_object.parent_id && shelf !== EVERYTHING;
@@ -486,7 +495,7 @@ export async function importJSON(shelf, file) {
 
     if (first_object.name.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliased_everything) {
         first_object = await importJSONObject(first_object);
-        if (first_object_id)
+        if (first_object_id && isContainer(first_object))
             id_map.set(first_object_id, first_object.id);
     }
 
@@ -554,6 +563,8 @@ async function objectToJSON(object, shallow, compress) {
             node.notes = compress
                 ? null //LZString.compressToBase64(notes.content)
                 : notes.content;
+
+            node.notes_format = notes.format;
         }
     }
 
@@ -848,4 +859,14 @@ export async function importRDF(shelf, path, threads) {
     // result.processingTime = m + "m " + s + "s";
 
     browser.runtime.sendMessage({type: "NODES_IMPORTED", shelf: shelf_node});
+
+    for (let node of bookmarks) {
+        if (node.uri) {
+            node.icon = await getFavicon(node.uri);
+            await backend.updateNode(node);
+        }
+    }
+
+    if (bookmarks.length)
+        setTimeout(() => browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node}), 500);
 }

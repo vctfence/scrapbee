@@ -10,7 +10,6 @@ export function partition(items, size) {
     return result;
 }
 
-
 export async function scriptsAllowed(tabId, frameId = 0) {
     try {
         await browser.tabs.executeScript(tabId, {
@@ -82,6 +81,22 @@ export function parseHtml(htmlText) {
     return doc;
 }
 
+export function isSpecialPage(url)
+{
+    return (url.substr(0,6) === "about:" || url.substr(0,7) === "chrome:"
+        || url.substr(0,12) === "view-source:" || url.substr(0,14) === "moz-extension:"
+        || url.substr(0,26) === "https://addons.mozilla.org" || url.substr(0,17) === "chrome-extension:"
+        || url.substr(0,34) === "https://chrome.google.com/webstore");
+}
+
+export function notifySpecialPage() {
+    showNotification("Scrapyard cannot be used with special pages:\n" +
+        "about:, moz-extension:,\n" +
+        "https://addons.mozilla.org,\n" +
+        "chrome:, chrome-extension:,\n" +
+        "https://chrome.google.com/webstore,\n" +
+        "view-source:");
+}
 
 export function isElementInViewport (el) {
     var rect = el.getBoundingClientRect();

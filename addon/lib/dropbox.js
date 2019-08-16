@@ -62,7 +62,7 @@ export let dropbox = (function () {
 
         if(contentType) r.setRequestHeader('Content-Type', contentType);
         if(apiArgs && (format == 'content-upload' || format == 'content-download'))
-            r.setRequestHeader('Dropbox-API-Arg', JSON.stringify(apiArgs));
+            r.setRequestHeader('Dropbox-API-Arg', JSON.stringify(apiArgs).toBinaryString());
 
         if(handlers.onDownloadProgress) r.addEventListener("progress", handlers.onDownloadProgress);
         if(handlers.onUploadProgress && r.upload) r.upload.addEventListener("progress", handlers.onUploadProgress);
@@ -87,7 +87,7 @@ export let dropbox = (function () {
         };
 
         var requestPayload = (args.length > 2 && format == 'content-upload') ? args[2] : undefined;
-        requestPayload = requestPayload || ( (apiArgs && format == 'rpc') ? JSON.stringify(apiArgs) : null );
+        requestPayload = requestPayload || ( (apiArgs && format == 'rpc') ? JSON.stringify(apiArgs).toBinaryString() : null );
         if(requestPayload){
             r.send(requestPayload);
         } else {

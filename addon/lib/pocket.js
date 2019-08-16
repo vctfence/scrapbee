@@ -30,7 +30,7 @@ export class GetPocket {
                 .then(async response => {
                     if (response.ok)
                         return response.json();
-                    else if (!reentry && response.status === 403) { // Forbidden
+                    else if (!reentry && response.status >= 400) { // Forbidden, etc.
                         if (authorize)
                             options.access_token =
                                 await this.authorize(this.redirect_uri, this.auth_handler, this.persist_token);

@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Notes</title>
-    <link rel="stylesheet" type="text/css" href="notes.css" media="all"/>
     <link rel="stylesheet" type="text/css" href="org.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="notes.css" media="all"/>
 
     <script type="text/javascript" src="lib/jquery.js"></script>
+    <script type="text/javascript" src="lib/marked.js"></script>
     <script type="text/javascript" src="proto.js"></script>
     <script type="module" src="notes.js"></script>
 </head>
@@ -19,13 +20,21 @@
             <div id="content-edit-button" class="content"><textarea id="editor"></textarea></div>
         </div>
         <div id="bottomline">
-            <div id="inserts">
-                <a href="#" id="insert-example">EXAMPLE MARKUP</a>
-                    |&nbsp;<a href="#" id="insert-style">DEFAULT STYLE</a>
-            </div>
-            <div id="full-width-container">
-                <input type="checkbox" id="full-width"/>
-                <label for="full-width">Expand</label>
+            <div id="format-selector">
+                Format:
+                <select id="notes-format">
+                    <option value="text" selected>Text</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="org">Org</option>
+                </select>
+                <span id="inserts">
+                    <a href="#" id="insert-example">EXAMPLE MARKUP</a>
+                        |&nbsp;<a href="#" id="insert-style">DEFAULT STYLE</a>
+                </span>
+                <div id="full-width-container">
+                    <input type="checkbox" id="full-width"/>
+                    <label for="full-width">Expand</label>
+                </div>
             </div>
             <div class="spacer">&nbsp;</div>
             <input type="button" id="close-button" value="Close">

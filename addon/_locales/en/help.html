@@ -65,10 +65,11 @@
 
     <h3>Firefox Bookmarks</h3>
     <p>
-        Scrapyard seamlessly integrates with Frirefox bookmarks, so you do not need to switch to the built-in bookmark
+        Scrapyard seamlessly integrates with Frirefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. You may attach notes and TODO states to Firefox bookmarks displayed in Scrapyard, although
-        they will be lost if the bookmarks are deleted, or after you have unchecked "Show Firefox bookmarks shelf"
-        option in settings.
+        they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
+        option in settings is unchecked. Firefox bookmarks are included in the complete export result, but are imported
+        as a separate Scrapyard shelf, leaving the current Firefox bookmark state intact.
 
     <p style="text-align: center">
         <img src="_locales/en/images/firefox.png">
@@ -89,9 +90,8 @@
         Expired TODO items will be displayed first regardless of the assigned state.</p>
 
     <h3>Markers</h3>
-    <p>If you often review your captures, it may be useful to highlight important key points.
-        At every archived page there is a editing toolbar which provides several types of text markers and also allows
-        to clean pages of unnecessary elements. Page HTML may also be edited with browser development tools, accessible
+    <p>Every archived page has an editing toolbar which provides several types of text markers and also allows
+        to clean pages of unnecessary elements. Page HTML may also be edited with browser development tools accessible
         through F12 keyboard key.</p>
 
     <p style="text-align: center">
@@ -125,9 +125,9 @@
 
     <h3>The "bookmark" and "archive" Commands</h3>
         <p>Use the "bookmark" or "archive" commands with the corresponding parameters to archive a page into the required destination.
-        The folders in the bookmark path will be created automatically if they do not exist. The first folder in the path
-        is always the name of a bookmark shelf. The name of the 'default' shelf may be substituted by '~' character.
-        Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed through "@" and "@@" shortcuts respectively.</p>
+        Folders in the path will be created automatically if they do not exist. The first folder
+        is always interpreted as the name of a bookmark shelf. The name of the "default" shelf may be substituted by "~" character.
+        Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed with "@" and "@@" shortcuts respectively.</p>
 
     <p style="text-align: center">
         <img src="_locales/en/images/capture-nl.png">

@@ -1,5 +1,7 @@
-import {DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
-        NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./db.js";
+import {
+    DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, FIREFOX_SHELF_ID, FIREFOX_BOOKMARK_UNFILED
+} from "./db.js";
 import {BookmarkTree} from "./tree.js";
 import {backend} from "./backend.js";
 
@@ -149,9 +151,17 @@ window.onload = function () {
     });
 
     function addBookmark(node_type) {
-        let node = tree._jstree.get_node($("#bookmark-folder").val());
+        let parent_node = tree._jstree.get_node($("#bookmark-folder").val());
 
-        saveHistory(node, folder_history);
+        if (parent_node.original.id === FIREFOX_SHELF_ID) {
+            let unfiled = tree.data.find(n => n.external_id === FIREFOX_BOOKMARK_UNFILED)
+            if (unfiled)
+                parent_node = tree._jstree.get_node(unfiled.id);
+            else
+                parent_node = tree._jstree.get_node(tree.data.find(n => n.name === DEFAULT_SHELF_NAME).id);
+        }
+
+        saveHistory(parent_node, folder_history);
         browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",
@@ -160,7 +170,7 @@ window.onload = function () {
                                         uri:  $("#bookmark-url").val(),
                                         tags: $("#bookmark-tags").val(),
                                         icon: $("#bookmark-icon").val(),
-                                        parent_id: parseInt(node.id)
+                                        parent_id: parseInt(parent_node.id)
                                     }});
     }
 
