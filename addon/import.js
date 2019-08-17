@@ -737,43 +737,10 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
 
     urls.push(url);
 
-    let import_tab = await browser.tabs.create({url: url, active: false});
     //browser.tabs.hide(tab.id);
 
-    return new Promise((resolve, reject) => {
-        let listener = async (id, changed, tab) => {
-            if (id === import_tab.id && changed.status === "complete") {
-                try {
-                    await browser.tabs.executeScript(import_tab.id, {file: "savepage/content.js"});
-                }
-                catch (e) {
-                    reject(e);
-                }
-
-                node.__local_import = true;
-                node.__local_import_base = `file://${root_path}/data/${scrapbook_id}/`;
-                //node.__local_import_source = `file://${root_path}/data/${scrapbook_id}/`;
-                node.tab_id = import_tab.id;
-
-                setTimeout(async () => {
-                    try {
-                        await browser.tabs.sendMessage(import_tab.id, {
-                            type: "performAction",
-                            menuaction: 2,
-                            payload: node
-                        });
-                        await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
-                    } catch (e) {
-                        reject(e);
-                    }
-                }, 200);
-
-            }
-        };
-
-        browser.tabs.onUpdated.addListener(listener);
-
-        let completionListener = function(message,sender,sendResponse) {
+    return new Promise(async (resolve, reject) => {
+        let completionListener = function(message, sender, sendResponse) {
             if (message.type === "STORE_PAGE_HTML" && message.payload.tab_id === import_tab.id) {
                 browser.tabs.onUpdated.removeListener(listener);
                 browser.runtime.onMessage.removeListener(completionListener);
@@ -788,6 +755,48 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
         };
 
         browser.runtime.onMessage.addListener(completionListener);
+
+        let listener = async (id, changed, tab) => {
+            if (id === import_tab.id && changed.status === "complete") {
+
+                let initializationListener = async function(message, sender, sendResponse) {
+                    if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === import_tab.id) {
+                        browser.runtime.onMessage.removeListener(initializationListener);
+
+                        node.__local_import = true;
+                        node.__local_import_base = `file://${root_path}/data/${scrapbook_id}/`;
+                        node.tab_id = import_tab.id;
+
+                        try {
+                            await browser.tabs.sendMessage(import_tab.id, {
+                                type: "performAction",
+                                menuaction: 2,
+                                payload: node
+                            });
+                        } catch (e) {
+                            reject(e);
+                        }
+                    }
+                };
+
+                browser.runtime.onMessage.addListener(initializationListener);
+
+                try {
+                    try {
+                        await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                    } catch (e) {}
+
+                    await browser.tabs.executeScript(import_tab.id, {file: "savepage/content.js"});
+                }
+                catch (e) {
+                    reject(e);
+                }
+            }
+        };
+
+        browser.tabs.onUpdated.addListener(listener);
+
+        let import_tab = await browser.tabs.create({url: url, active: false});
     });
 
 }

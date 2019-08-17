@@ -738,7 +738,76 @@ function addListeners()
                 break;
                 
             case "loadResource":
-                
+
+                let onloadResource = function()
+                {
+                    var i,binaryString,contentType,allowOrigin;
+                    var byteArray = new Uint8Array(this.response);
+
+                    if (this._refererkey) removeRefererKey(this._refererkey);
+                    if (this._originkey) removeOriginKey(this._originkey);
+
+                    if (this.status == 200)
+                    {
+                        binaryString = "";
+                        for (i = 0; i < byteArray.byteLength; i++) binaryString += String.fromCharCode(byteArray[i]);
+
+                        contentType = this.getResponseHeader("Content-Type");
+                        if (contentType == null) contentType = "";
+
+                        allowOrigin = this.getResponseHeader("Access-Control-Allow-Origin");
+                        if (allowOrigin == null) allowOrigin = "";
+
+                        chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index,
+                            content: binaryString, contenttype: contentType, alloworigin: allowOrigin },checkError);
+                    }
+                    else chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "load:" + this.status },checkError);
+                };
+
+                let onerrorResource = function()
+                {
+                    if (this._refererkey) removeRefererKey(this._refererkey);
+                    if (this._originkey) removeOriginKey(this._originkey);
+
+                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "network" },checkError);
+                };
+
+                let ontimeoutResource = function()
+                {
+                    if (this._refererkey) removeRefererKey(this._refererkey);
+                    if (this._originkey) removeOriginKey(this._originkey);
+
+                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "timeout" },checkError);
+                };
+
+                let removeRefererKey = function(refererkey)
+                {
+                    var j;
+
+                    for (j = 0; j < refererKeys.length; j++)
+                    {
+                        if (refererKeys[j] == refererkey)
+                        {
+                            refererKeys.splice(j,1);
+                            refererValues.splice(j,1);
+                        }
+                    }
+                };
+
+                let removeOriginKey = function (originkey)
+                {
+                    var j;
+
+                    for (j = 0; j < originKeys.length; j++)
+                    {
+                        if (originKeys[j] == originkey)
+                        {
+                            originKeys.splice(j,1);
+                            originValues.splice(j,1);
+                        }
+                    }
+                };
+
                 /* XMLHttpRequest must not be sent if http: resource in https: page or https: referer */
                 /* unless passive mixed content allowed by user option */
                 
@@ -843,7 +912,7 @@ function addListeners()
                                 signature = signature.join("").toUpperCase();
                                 contentType = getMimetype(signature);
 
-                                // currently only CSS loaded as blobs during local import
+                                // currently only CSS is loaded as blobs during local import
                                 if (message.location.startsWith("blob:"))
                                     contentType = "text/css";
                                 else
@@ -860,75 +929,6 @@ function addListeners()
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
                 }
                 else chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
-                
-                function onloadResource()
-                {
-                    var i,binaryString,contentType,allowOrigin;
-                    var byteArray = new Uint8Array(this.response);
-                    
-                    if (this._refererkey) removeRefererKey(this._refererkey);
-                    if (this._originkey) removeOriginKey(this._originkey);
-                    
-                    if (this.status == 200)
-                    {
-                        binaryString = "";
-                        for (i = 0; i < byteArray.byteLength; i++) binaryString += String.fromCharCode(byteArray[i]);
-                        
-                        contentType = this.getResponseHeader("Content-Type");
-                        if (contentType == null) contentType = "";
-                        
-                        allowOrigin = this.getResponseHeader("Access-Control-Allow-Origin");
-                        if (allowOrigin == null) allowOrigin = "";
-                        
-                        chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index, 
-                                                              content: binaryString, contenttype: contentType, alloworigin: allowOrigin },checkError);
-                    }
-                    else chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "load:" + this.status },checkError);
-                }
-                
-                function onerrorResource()
-                {
-                    if (this._refererkey) removeRefererKey(this._refererkey);
-                    if (this._originkey) removeOriginKey(this._originkey);
-                    
-                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "network" },checkError);
-                }
-                
-                function ontimeoutResource()
-                {
-                    if (this._refererkey) removeRefererKey(this._refererkey);
-                    if (this._originkey) removeOriginKey(this._originkey);
-                    
-                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "timeout" },checkError);
-                }
-                
-                function removeRefererKey(refererkey)
-                {
-                    var j;
-                    
-                    for (j = 0; j < refererKeys.length; j++)
-                    {
-                        if (refererKeys[j] == refererkey)
-                        {
-                            refererKeys.splice(j,1);
-                            refererValues.splice(j,1);
-                        }
-                    }
-                }
-                
-                function removeOriginKey(originkey)
-                {
-                    var j;
-                    
-                    for (j = 0; j < originKeys.length; j++)
-                    {
-                        if (originKeys[j] == originkey)
-                        {
-                            originKeys.splice(j,1);
-                            originValues.splice(j,1);
-                        }
-                    }
-                }
                 
                 break;
 
@@ -1094,128 +1094,113 @@ function addListeners()
 
 /* Initiate action function */
 
-function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
+async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
 {
-    function loadDocument() {
-        // provisional capture of PDF, etc.
-        // TODO: rework with the account of savepage settings
-
-        if (tab.url && tab.url.startsWith("file:")) {
-            loadLocalResource(tab.url).then(({data}) => {
-                // let contentType = reps.headers.get("Content-Type");
-                // if (contentType == null)
-                let contentType = "application/pdf";
-
-                backend.storeBlob(userdata.bookmark.id, data, contentType, false);
-
-                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
-
-                alertNotify("Successfully archived page.");
-            })
-            .catch(error => {
-                console.log(error);
-            });
-        }
-        else {
-            let xhr = new XMLHttpRequest();
-
-            xhr.open("GET", tab.url, true);
-            xhr.setRequestHeader("Cache-Control", "no-store");
-
-            xhr.responseType = "arraybuffer";
-            xhr.timeout = maxResourceTime * 1000;
-            xhr.onerror = function (e) {
-                console.log(e)
-            };
-            xhr.onloadend = function () {
-                if (this.status === 200) {
-                    let contentType = this.getResponseHeader("Content-Type");
-                    if (contentType == null)
-                        contentType = "application/pdf";
-
-                    backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
-
-                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
-
-                    alertNotify("Successfully archived page.");
-                }
-            };
-
-            xhr.send()
-        }
-    }
-
-
     if (isSpecialPage(tab.url))  /* special page - no operations allowed */
     {
         notifySpecialPage();
     }
-    // else if (tab.url.substr(0,5) != "file:" && menuaction >= 3)  /* probably not saved page - view saved page info and extract media operations not allowed */
-    // {
-    //     alertNotify("Cannot view saved page information or extract media files for unsaved pages.");
-    // }
     else  /* normal page - save operations allowed, saved page - all operations allowed */
     {
         // Acquire selection html, if present
-        return browser.webNavigation.getAllFrames({tabId: tab.id}).then(async frames => {
-            let selectedHtml;
 
-            if (menuaction <= 2) {
-                for (let frame of frames) {
-                    try {
-                        await browser.tabs.executeScript(tab.id, {
-                            file: "savepage/selection.js",
-                            frameId: frame.frameId
-                        }).then(() => {
-                            return browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: userdata.options})
-                                .then(selection => selectedHtml = selection);
-                        });
+        let selection;
+        let frames = await browser.webNavigation.getAllFrames({tabId: tab.id});
 
-                        if (selectedHtml)
-                            break;
-                    } catch (e) {
-//                        console.error(e);
-                    }
+        if (menuaction <= 2) {
+            for (let frame of frames) {
+                try {
+                    await browser.tabs.executeScript(tab.id, {file: "savepage/selection.js", frameId: frame.frameId});
+
+                    selection =
+                        await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: userdata.options});
+
+                    if (selection)
+                        break;
+                } catch (e) {
+//                  console.error(e);
                 }
             }
+        }
 
-            return selectedHtml;
+        let response;
+        let performAction = () => browser.tabs.sendMessage(tab.id, {type: "performAction", menuaction: menuaction,
+                                        srcurl: srcurl, externalsave: externalsave, swapdevices: swapdevices,
+                                        selection: selection, payload: userdata.bookmark});
 
-        }).then(selection => { // load content-script
-            chrome.tabs.sendMessage(tab.id,{ type: "performAction", menuaction: menuaction, srcurl: srcurl,
-                    externalsave: externalsave, swapdevices: swapdevices,
-                    selection: selection, payload: userdata.bookmark },
-                function(response) {
-                    if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script not loaded in active tab */
-                    {
-                        browser.tabs.executeScript(tab.id, {file: "savepage/content.js"}).then(
-                            function () {
-                                window.setTimeout(  /* allow time for content script to be initialized */
-                                    function () {
-                                        chrome.tabs.sendMessage(tab.id, {
-                                                type: "performAction", menuaction: menuaction, srcurl: srcurl,
-                                                externalsave: externalsave, swapdevices: swapdevices,
-                                                selection: selection, payload: userdata.bookmark
-                                            },
-                                            function (response) {
-                                                if (chrome.runtime.lastError != null || typeof response == "undefined")  /* no response received - content script cannot be loaded in active tab*/
-                                                {
-                                                    alertNotify("Cannot initialize capture script, please retry.");
-                                                } else {
-                                                    chrome.tabs.executeScript(tab.id, {
-                                                        file: "savepage/content-frame.js",
-                                                        allFrames: true
-                                                    });
-                                                }
-                                            });
-                                    }, 200);
-                            }).catch(e => {
-                                loadDocument();
-                            });
-                    }
-                });
-        });
+        try {
+            response = await performAction();
+        } catch (e) {}
 
+        if (typeof response == "undefined") { /* no response received - content script not loaded in active tab */
+            let onScriptInitialized = async (message, sender) => {
+                if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && tab.id === sender.tab.id) {
+                    browser.runtime.onMessage.removeListener(onScriptInitialized);
+
+                    try {
+                        response = await performAction();
+                    } catch (e) {}
+
+                    if (typeof response == "undefined")
+                        alertNotify("Cannot initialize capture script, please retry.");
+
+                }
+            };
+            browser.runtime.onMessage.addListener(onScriptInitialized);
+
+            try {
+                try {
+                    await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                } catch (e) {}
+
+                await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
+            } catch (e) {
+                // provisional capture of PDF, etc.
+                // TODO: rework with the account of savepage settings
+
+                if (tab.url && tab.url.startsWith("file:")) {
+                    loadLocalResource(tab.url).then(response => {
+                        let contentType = response.type? response.type: "application/pdf";
+
+                        backend.storeBlob(userdata.bookmark.id, response.data, contentType, false);
+
+                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
+
+                        alertNotify("Successfully archived page.");
+                    })
+                        .catch(error => {
+                            console.log(error);
+                        });
+                }
+                else {
+                    let xhr = new XMLHttpRequest();
+
+                    xhr.open("GET", tab.url, true);
+                    xhr.setRequestHeader("Cache-Control", "no-store");
+
+                    xhr.responseType = "arraybuffer";
+                    xhr.timeout = maxResourceTime * 1000;
+                    xhr.onerror = function (e) {
+                        console.log(e)
+                    };
+                    xhr.onloadend = function () {
+                        if (this.status === 200) {
+                            let contentType = this.getResponseHeader("Content-Type");
+                            if (contentType == null)
+                                contentType = "application/pdf";
+
+                            backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
+
+                            browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
+
+                            alertNotify("Successfully archived page.");
+                        }
+                    };
+
+                    xhr.send()
+                }
+            }
+        }
     }
 }
 

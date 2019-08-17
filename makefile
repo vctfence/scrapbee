@@ -1,5 +1,6 @@
 test:
-	cd addon; start web-ext run -p "%APPDATA%/Mozilla/Firefox/Profiles/debug" --keep-profile-changes --browser-console
+	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard" --keep-profile-changes --browser-console
+
 
 build:
 	cd addon; web-ext build -i creds web-ext-artifacts .web-extension-id screen.png logo.jpg *.md *.iml updates.json

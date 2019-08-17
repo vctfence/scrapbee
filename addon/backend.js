@@ -887,19 +887,23 @@ class IDBBackend extends Storage {
     async reconcileBrowserBookmarksDB() {
         let get_icons = [];
         let browser_ids = [];
-        let begin = new Date().getTime();
+        let begin_time = new Date().getTime();
+        let db_pool = new Map();
 
         let reconcile = async (d, b) => { // node, bookmark
             for (let bc of b.children) {
                 browser_ids.push(bc.id);
 
-                let node = await this.getExternalNode(bc.id, FIREFOX_SHELF_NAME);
+                let node = db_pool.get(bc.id);
                 if (node) {
-                    node.name = bc.title;
-                    node.uri = bc.url;
-                    node.pos = bc.index;
-                    node.parent_id = d.id;
-                    await this.updateNode(node);
+                    if (node.name !== bc.title || node.uri !== bc.url
+                            || node.pos !== bc.index || node.parent_id !== d.id) {
+                        node.name = bc.title;
+                        node.uri = bc.url;
+                        node.pos = bc.index;
+                        node.parent_id = d.id;
+                        await this.updateNode(node);
+                    }
                 }
                 else {
                     node = await this.addNode(browserBackend.convertBookmark(bc, d), false);
@@ -921,10 +925,16 @@ class IDBBackend extends Storage {
                 db_root = await this.addNode(browserBackend.newBrowserRootNode(), false);
 
             let [browser_root] = await browser.bookmarks.getTree();
+
+            db_pool = new Map((await this.queryFullSubtree(db_root.id)).map(n => [n.external_id, n]));
+
             await reconcile(db_root, browser_root).then(async () => {
+                browser_root = null;
+                db_pool = null;
+
                 await this.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
 
-                //console.log("reconciliation time: " + ((new Date().getTime() - begin) / 1000) + "s");
+                console.log("reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
 
                 browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
 

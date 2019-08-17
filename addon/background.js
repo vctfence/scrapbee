@@ -53,38 +53,6 @@ export async function browseNode(node) {
 
                 urls.push(url);
 
-                let rdf_tab = await browser.tabs.create({url: url, active: true});
-
-                let listener = async (id, changed, tab) => {
-                    if (id === rdf_tab.id && changed.status === "complete") {
-                        browser.tabs.onUpdated.removeListener(listener);
-                        try {
-                            await browser.tabs.executeScript(rdf_tab.id, {file: "savepage/content.js"});
-                        }
-                        catch (e) {
-                            console.log(e);
-                            showNotification({message: "Error loading page"});
-                        }
-
-                        node.__local_import = true;
-                        node.__local_browsing = true;
-                        node.__local_import_base = base;
-                        node.tab_id = rdf_tab.id;
-
-                        setTimeout(async () => {
-                            await browser.tabs.sendMessage(rdf_tab.id, {
-                                type: "performAction",
-                                menuaction: 2,
-                                payload: node
-                            });
-                            browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
-                        }, 200);
-
-                    }
-                };
-
-                browser.tabs.onUpdated.addListener(listener);
-
                 let completionListener = function(message,sender,sendResponse) {
                     if (message.type === "BROWSE_PAGE_HTML" && message.payload.tab_id === rdf_tab.id) {
                         browser.runtime.onMessage.removeListener(completionListener);
@@ -96,6 +64,45 @@ export async function browseNode(node) {
                 };
 
                 browser.runtime.onMessage.addListener(completionListener);
+
+                let listener = async (id, changed, tab) => {
+                    if (id === rdf_tab.id && changed.status === "complete") {
+                        let initializationListener = async function(message, sender, sendResponse) {
+                            if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === rdf_tab.id) {
+                                browser.runtime.onMessage.removeListener(initializationListener);
+
+                                node.__local_import = true;
+                                node.__local_browsing = true;
+                                node.__local_import_base = base;
+                                node.tab_id = rdf_tab.id;
+
+                                await browser.tabs.sendMessage(rdf_tab.id, {
+                                    type: "performAction",
+                                    menuaction: 2,
+                                    payload: node
+                                });
+                            }
+                        };
+                        browser.runtime.onMessage.addListener(initializationListener);
+
+                        browser.tabs.onUpdated.removeListener(listener);
+                        try {
+                            try {
+                                await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                            } catch (e) {}
+
+                            await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
+                        }
+                        catch (e) {
+                            console.log(e);
+                            showNotification({message: "Error loading page"});
+                        }
+                    }
+                };
+
+                browser.tabs.onUpdated.addListener(listener);
+
+                let rdf_tab = await browser.tabs.create({url: url, active: true});
                 return;
             }
 

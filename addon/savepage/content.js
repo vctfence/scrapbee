@@ -287,7 +287,7 @@ function addListeners()
             /* Messages from background page */
             
             case "performAction":
-                sendResponse({ });  /* to confirm content script has been loaded */
+                sendResponse({uuu: "uuu" });  /* to confirm content script has been loaded */
                 
                 menuAction = message.menuaction;
                 
@@ -354,11 +354,11 @@ function addListeners()
 
                 if (document.readyState == "complete")
                 {
-                    window.setTimeout(
-                    function()
-                    {
+                    // window.setTimeout(
+                    // function()
+                    // {
                         performAction(message.srcurl);
-                    },200);
+                    // },200);
                 }
                 else
                 {
@@ -368,7 +368,7 @@ function addListeners()
                         if (document.readyState == "complete") performAction(message.srcurl);
                     },false);
                 }
-                
+
                 break;
                 
             case "loadSuccess":
@@ -402,6 +402,8 @@ function addListeners()
                 break;
         }
     });
+
+    browser.runtime.sendMessage({type: "CAPTURE_SCRIPT_INITIALIZED"});
 }
 
 /************************************************************************/
