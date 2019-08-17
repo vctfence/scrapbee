@@ -225,9 +225,9 @@ class BookmarkTree {
             if (settings.capitalize_builtin_shelf_names())
                 n.text = n.name.capitalizeFirstLetter();
         }
-        if (n.type == NODE_TYPE_SHELF && n.external === RDF_EXTERNAL_NAME) {
+        else if (n.type == NODE_TYPE_SHELF && n.external === RDF_EXTERNAL_NAME) {
             n.li_attr = {"class": "rdf-archive"};
-            n.icon = "/icons/rdf.svg";
+            n.icon = "/icons/tape.svg";
         }
         else if (n.type == NODE_TYPE_SHELF) {
             if (n.name && isSpecialShelf(n.name) && settings.capitalize_builtin_shelf_names())
@@ -389,7 +389,8 @@ class BookmarkTree {
                 || parent.id == FIREFOX_SHELF_ID || node.parent == FIREFOX_SHELF_ID)
                 return false;
 
-            if (node.original.external === RDF_EXTERNAL_NAME && more.ref
+            if (node.original.external !== RDF_EXTERNAL_NAME && parent.original.external === RDF_EXTERNAL_NAME
+                    || node.original.external === RDF_EXTERNAL_NAME && more.ref
                     && more.ref.original.external !== RDF_EXTERNAL_NAME)
                 return false;
         }
@@ -964,6 +965,7 @@ class BookmarkTree {
                 if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
                     delete items.copyItem;
+                    delete items.pasteItem;
                     delete items.shareItem.submenu.dropboxItem;
                 }
                 break;

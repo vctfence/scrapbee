@@ -1,5 +1,5 @@
 import * as org from "./org.js"
-import {partition, loadLocalResource, ReadLine, getFavicon} from "./utils.js"
+import {partition, loadLocalResource, ReadLine, getFavicon, getThemeVar} from "./utils.js"
 import {backend} from "./backend.js"
 import {settings} from "./settings.js"
 
@@ -709,11 +709,12 @@ export async function instantiateLinkedResources(html, base, urls, depth) {
 
 export const SCRAPYARD_LOCK_SCREEN =
     `<div id="scrapyard-waiting" 
-          style="background-color: 
-          white; z-index: 2147483647; 
-          position: fixed; 
+          style="background-color: ${getThemeVar("--theme-background")}; 
+          z-index: 2147483647; 
+          position: fixed;
           inset: 0px; 
-          background-image: url(${browser.runtime.getURL("icons/lock.svg")}); 
+          background-image: url(${browser.runtime.getURL(getThemeVar("--themed-tape-icon"))}); 
+          background-size: 50mm 50mm;
           background-repeat: no-repeat; 
           background-position: center center;"></div>`;
 
@@ -755,12 +756,16 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
                 node.tab_id = import_tab.id;
 
                 setTimeout(async () => {
-                    await browser.tabs.sendMessage(import_tab.id, {
-                        type: "performAction",
-                        menuaction: 2,
-                        payload: node
-                    });
-                    browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                    try {
+                        await browser.tabs.sendMessage(import_tab.id, {
+                            type: "performAction",
+                            menuaction: 2,
+                            payload: node
+                        });
+                        await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                    } catch (e) {
+                        reject(e);
+                    }
                 }, 200);
 
             }
@@ -842,7 +847,7 @@ export async function importRDF(shelf, path, threads, quick) {
 
         if (data.type === NODE_TYPE_GROUP)
             id_map.set(node.__sb_id, bookmark.id);
-        else if (!quick && data.type === NODE_TYPE_ARCHIVE) {
+        else if (data.type === NODE_TYPE_ARCHIVE) {
             reverse_id_map.set(bookmark.id, node.__sb_id);
             bookmarks.push(bookmark);
             total += 1;
@@ -871,15 +876,17 @@ export async function importRDF(shelf, path, threads, quick) {
         }
     };
 
-    //let startTime = new Date().getTime() / 1000;
-    browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: 0});
-    await Promise.all(parts.map(bb => importf(bb)));
+    if (!quick) {
+        //let startTime = new Date().getTime() / 1000;
+        browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: 0});
+        await Promise.all(parts.map(bb => importf(bb)));
 
-    // let loadTime = Math.round(new Date().getTime() / 1000 - startTime);
-    // let m = Math.floor(loadTime / 60);
-    // let s = loadTime - m * 60;
-    //
-    // result.processingTime = m + "m " + s + "s";
+        // let loadTime = Math.round(new Date().getTime() / 1000 - startTime);
+        // let m = Math.floor(loadTime / 60);
+        // let s = loadTime - m * 60;
+        //
+        // result.processingTime = m + "m " + s + "s";
+    }
 
     browser.runtime.sendMessage({type: "NODES_IMPORTED", shelf: shelf_node});
 

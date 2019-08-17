@@ -1,5 +1,11 @@
 @-moz-document url-prefix("%%%") {
 
+    .theme-vars {
+        --theme-version: 0.2;
+        --theme-background: var(--in-content-page-background) !important;
+        --themed-tape-icon: icons/tape2.svg;
+    }
+
     #treeview {
         --themed-globe-icon: url("%%%icons/globe2.svg") !important;
     }
@@ -148,7 +154,7 @@
     }
 
     .jstree-default .rdf-archive > .jstree-anchor .jstree-themeicon {
-        background-image: url("%%%icons/rdf2.svg") !important;
+        background-image: url("%%%icons/tape2.svg") !important;
     }
 
     input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-scroll li, .simple-menu div  {
@@ -253,7 +259,7 @@
         color: #0074D9 !important;
     }
 
-    select#link-scope, select#option-export-format {
+    select#link-scope, select#option-export-format, select#notes-format {
         color: black !important;
     }
 }

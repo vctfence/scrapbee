@@ -306,6 +306,8 @@ window.onload = function() {
         $(`#content-${e.target.id}`).show();
 
         if (e.target.id === "notes-button") {
+            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()});
+
             $("#format-selector").hide();
             //$("#full-width-container").show()
             formatNotes($("#editor").val(), format);
@@ -388,6 +390,7 @@ window.onload = function() {
             $("#inserts").hide();
 
         backend.storeNotes(node_id, $("#editor").val(), format);
+        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()})
     });
 
     $("#close-button").on("click", e => {

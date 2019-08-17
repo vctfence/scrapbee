@@ -6,20 +6,19 @@ This is a development page. Please visit the main site at: https://gchristensen.
 
 ### Background
 
-Since the departure of Scrapbook I have converted all my Scrapbook stuff to an org-mode
+Since the departure of Scrapbook I have converted all my Scrapbook stuff into an org-mode
 based wiki, but it was very painful to add bookmarks there. Because I needed a bookmark 
 manager with some org-mode goodness which I would be able to control from UbiquityWE, 
-I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch to obtain the desired features.
+I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch 
+to obtain the desired features.
 
-### Import from RDF
+### Automation
 
-Although it is possible in principle (for example, through an external python/flask
-based utility which will serve saved Scrapbook files), this is not in author's 
-set of priorities. But you may try to automate this with your own Firefox add-on. The call: 
+The following call from your addon will add the page at the opened tab as an archive/bookmark to Scrapyard. 
 
 ```javascript
 browser.runtime.sendMessage("scrapyard@firefox", {
-    type: "SCRAPYARD_ADD_ARCHIVE",
+    type: "SCRAPYARD_ADD_ARCHIVE", // also "SCRAPYARD_ADD_BOOKMARK"
     name: "bookmark title",
     path:  "shelf/my/directory",
     tags:  "comma,separated",
@@ -27,11 +26,9 @@ browser.runtime.sendMessage("scrapyard@firefox", {
 });
 ``` 
 
-will add the page at the opened tab as an archive to Scrapyard.
-
 ### Project status
 
-Currently the project status is permanent alpha: be prepared for breaking changes, devastating bugs and 
+Currently the project is considered permanent alpha: be prepared for breaking changes, devastating bugs and 
 groundbreaking experiments. Please, backup your data often.
 
 ### Objectives
@@ -53,3 +50,7 @@ groundbreaking experiments. Please, backup your data often.
 * ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
 * ~~Live link auto checker~~ [DONE]
 * Self-hosted cloud-synchronization backend (possibly with bookmark access through the web)
+
+### Changes
+
+See [version history at AMO](https://addons.mozilla.org/en-US/firefox/addon/scrapyard/?src=search).

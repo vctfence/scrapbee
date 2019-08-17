@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body>
-<script type="module" src="lib/jquery.js"></script>
-<script type="module" src="lib/idb-file-storage.js"></script>
-<script type="module" src="proto.js"></script>
-<script type="module" src="db.js"></script>
-<script type="module" src="background.js"></script>
-<script type="module" src="savepage/background.js"></script>
+<head>
+    <meta charset="utf-8">
+    <style>
+        .theme-vars {
+            --theme-background: white;
+            --themed-tape-icon: icons/tape.svg;
+        }
+    </style>
+</head>
+<body class="theme-vars">
+    <script type="module" src="lib/jquery.js"></script>
+    <script type="module" src="lib/idb-file-storage.js"></script>
+    <script type="module" src="proto.js"></script>
+    <script type="module" src="db.js"></script>
+    <script type="module" src="background.js"></script>
+    <script type="module" src="savepage/background.js"></script>
 </body>
 </html>

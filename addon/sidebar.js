@@ -32,6 +32,7 @@ import {pathToNameExt, showNotification} from "./utils.js";
 
 const INPUT_TIMEOUT = 1000;
 
+
 function validSearchInput(input) {
     return input && input.length > 2;
 }

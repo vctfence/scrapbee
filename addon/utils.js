@@ -109,6 +109,15 @@ export function isElementInViewport (el) {
     );
 }
 
+export function getThemeVar(v) {
+    let vars = document.querySelector(".theme-vars");
+    if (vars) {
+        let style = window.getComputedStyle(vars);
+        let value = style.getPropertyValue(v);
+        return value;
+    }
+}
+
 export function getMimetype (signature) {
     switch (signature) {
         case '89504E47':

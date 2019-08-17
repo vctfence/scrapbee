@@ -890,8 +890,6 @@ class IDBBackend extends Storage {
         let begin = new Date().getTime();
 
         let reconcile = async (d, b) => { // node, bookmark
-            let promises = [];
-
             for (let bc of b.children) {
                 browser_ids.push(bc.id);
 
@@ -911,10 +909,8 @@ class IDBBackend extends Storage {
                 }
 
                 if (bc.type === "folder")
-                    promises.push(reconcile(node, bc));
+                    await reconcile(node, bc);
             }
-
-            return Promise.all(promises);
         };
 
         if (settings.show_firefox_bookmarks()) {
@@ -928,15 +924,19 @@ class IDBBackend extends Storage {
             await reconcile(db_root, browser_root).then(async () => {
                 await this.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
 
-                console.log("reconciliation time: " + ((new Date().getTime() - begin) / 1000) + "s");
+                //console.log("reconciliation time: " + ((new Date().getTime() - begin) / 1000) + "s");
 
                 browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
 
                 for (let item of get_icons) {
                     let node = await this.getNode(item[0]);
-                    node.icon = await getFavicon(item[1]);
+                    try {
+                        node.icon = await getFavicon(item[1]);
+                        await this.updateNode(node);
+                    } catch (e) {
+                        console.log(e);
+                    }
                     //console.log(node.icon + " (" + item[1] + ")");
-                    await this.updateNode(node);
                 }
 
                 if (get_icons.length)
