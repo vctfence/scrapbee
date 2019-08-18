@@ -1702,7 +1702,7 @@ function generateHTML()
 
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
 
-    let resultingHTML = htmlStrings.join("\n");
+    let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
     if (added_bookmark.__local_browsing) {

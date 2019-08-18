@@ -503,6 +503,8 @@ function initialize()
         if (!("options-usepageloader" in object)) object["options-usepageloader"] = true;
         
         if (!("options-retaincrossframes" in object)) object["options-retaincrossframes"] = true;
+
+        if (!("options-mergecssimages" in object)) object["options-mergecssimages"] = true;
         
         if (!("options-removeunsavedurls" in object)) object["options-removeunsavedurls"] = true;
         
@@ -1150,10 +1152,10 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
 
             try {
                 try {
-                    await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+                    await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame2.js", allFrames: true});
                 } catch (e) {}
 
-                await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
+                await browser.tabs.executeScript(tab.id, {file: "savepage/content2.js"});
             } catch (e) {
                 // provisional capture of PDF, etc.
                 // TODO: rework with the account of savepage settings
