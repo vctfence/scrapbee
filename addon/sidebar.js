@@ -138,9 +138,9 @@ function invalidateCompletion() {
 }
 
 function loadShelves(context, tree) {
-    return backend.listShelves().then(shelves => {
-        let shelf_list = $("#shelfList");
+    let shelf_list = $("#shelfList");
 
+    return backend.listShelves().then(shelves => {
         shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
@@ -605,6 +605,9 @@ window.onload = function () {
         else if (request.type === "NODES_IMPORTED") {
             loadShelves(context, tree);
             switchShelf(context, tree, request.shelf.id);
+        }
+        else if (request.type === "SHELVES_CHANGED") {
+            loadShelves(context, tree);
         }
     });
 

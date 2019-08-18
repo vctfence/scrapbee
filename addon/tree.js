@@ -921,6 +921,7 @@ class BookmarkTree {
             case NODE_TYPE_SHELF:
                 delete items.cutItem;
                 delete items.copyItem;
+                delete items.newSeparatorItem;
                 if (ctx_node.original.id == FIREFOX_SHELF_ID) {
                     items = {};
                 }

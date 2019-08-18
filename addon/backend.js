@@ -376,7 +376,10 @@ export class BrowserBackend {
                     }
 
                     await backend.reorderNodes(db_children);
-                    browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: updated_node});
+
+                    if (updated_node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
+                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: updated_node});
+                    //browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: updated_node});
                 }
             }
             catch (e) {console.log(e)}

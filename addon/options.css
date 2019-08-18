@@ -361,7 +361,7 @@ a.left-index, a:visited.left-index {
     display: none;
 }
 
-.link-info {
+.link-info, .rdf-link-info {
     margin-left: 16px;
 }
 

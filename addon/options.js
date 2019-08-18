@@ -107,7 +107,7 @@ window.onload = function(){
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
         //document.getElementById("option-compress-export").checked = settings.compress_export();
         //document.getElementById("option-revoke-archive-url-after").value = settings.archive_url_lifetime();
-        document.getElementById("option-show-firefox-bookmarks").checked = settings.show_firefox_bookmarks();
+        document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
         document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
         document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
@@ -178,7 +178,8 @@ window.onload = function(){
         settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
         settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
         settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
-        settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked);
+        settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
+            () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
         settings.export_format(document.getElementById("option-export-format").value);
 
 
@@ -210,7 +211,7 @@ window.onload = function(){
         let path = $("#rdf-import-path").val();
 
         if (!shelf || !path) {
-            showNotification({message: "Please specify all import parameters."});
+            showNotification({message: "Please, specify all import parameters."});
             return;
         }
 
@@ -241,7 +242,7 @@ window.onload = function(){
                 }
                 bar.val(message.progress);
             }
-            if (message.type === "RDF_IMPORT_ERROR") {
+            else if (message.type === "RDF_IMPORT_ERROR") {
                 let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}" 
                                        class="invalid-import">${message.bookmark.name}</a>`;
                 $("#invalid-imports-container").show();
@@ -250,9 +251,6 @@ window.onload = function(){
         };
 
         browser.runtime.onMessage.addListener(progressListener);
-
-
-        $("#invalid-links-container").show();
 
         let finalize = () => {
             browser.runtime.onMessage.removeListener(progressListener);
