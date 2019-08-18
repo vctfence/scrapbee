@@ -17,7 +17,7 @@ to obtain the desired features.
 The following call from your addon will add the page at the opened tab as an archive/bookmark to Scrapyard. 
 
 ```javascript
-browser.runtime.sendMessage("scrapyard@firefox", {
+browser.runtime.sendMessage("scrapyard-we@firefox", {
     type: "SCRAPYARD_ADD_ARCHIVE", // also "SCRAPYARD_ADD_BOOKMARK"
     name: "bookmark title",
     path:  "shelf/my/directory",
