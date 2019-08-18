@@ -53,4 +53,4 @@ groundbreaking experiments. Please, backup your data often.
 
 ### Changes
 
-See [version history at AMO](https://addons.mozilla.org/en-US/firefox/addon/scrapyard/?src=search).
+See [version history at AMO](https://addons.mozilla.org/en-US/firefox/addon/scrapyard/versions/).
