@@ -34,10 +34,7 @@ window.onload = function () {
 
     $("#bookmark-folder").selectric({inheritOriginalWidth: true});
 
-    backend.listNodes({
-        types: [NODE_TYPE_SHELF, NODE_TYPE_GROUP],
-        order: "custom"
-    }).then(nodes => {
+    backend.listGroups().then(nodes => {
         $("#bookmark-folder").html("");
 
         nodes = nodes.filter(n => n.external !== RDF_EXTERNAL_NAME);

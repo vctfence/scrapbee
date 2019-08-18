@@ -162,6 +162,10 @@ class Storage {
         return db.nodes.where("external_id").equals(id).and(n => n.external === kind).first();
     }
 
+    getExternalNodes(kind) {
+        return db.nodes.where("external").equals(kind).toArray();
+    }
+
     isExternalNodeExists(id, kind) {
         return !!db.nodes.where("external_id").equals(id).and(n => n.external === kind).count();
     }
@@ -377,6 +381,15 @@ class Storage {
         return db.nodes.where("parent_id").equals(parent_id)
            .and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase())
            .first();
+    }
+
+    async queryGroups(sort = false) {
+        let nodes = await db.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
+
+        if (sort)
+            return nodes.sort((a, b) => a.pos - b.pos);
+
+        return nodes;
     }
 
     async storeBlob(node_id, data, content_type, compress = false) {

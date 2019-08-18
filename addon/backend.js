@@ -494,7 +494,14 @@ class IDBBackend extends Storage {
     }
 
     listShelves() {
-        return this.queryShelf();
+        return this.queryShelf()
+    }
+
+    listGroups() {
+        return backend.queryGroups(true);
+    }
+
+    invalidateItemCache() {
     }
 
     async listNodes(options //{search, // filter by node name or URL
@@ -926,7 +933,7 @@ class IDBBackend extends Storage {
 
             let [browser_root] = await browser.bookmarks.getTree();
 
-            db_pool = new Map((await this.queryFullSubtree(db_root.id)).map(n => [n.external_id, n]));
+            db_pool = new Map((await this.getExternalNodes(FIREFOX_SHELF_NAME)).map(n => [n.external_id, n]));
 
             await reconcile(db_root, browser_root).then(async () => {
                 browser_root = null;
@@ -934,17 +941,18 @@ class IDBBackend extends Storage {
 
                 await this.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
 
-                console.log("reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
-
+                //console.log("reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
                 browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
 
                 for (let item of get_icons) {
                     let node = await this.getNode(item[0]);
-                    try {
-                        node.icon = await getFavicon(item[1]);
-                        await this.updateNode(node);
-                    } catch (e) {
-                        console.log(e);
+                    if (node) {
+                        try {
+                            node.icon = await getFavicon(item[1]);
+                            await this.updateNode(node);
+                        } catch (e) {
+                            console.log(e);
+                        }
                     }
                     //console.log(node.icon + " (" + item[1] + ")");
                 }
@@ -961,6 +969,8 @@ class IDBBackend extends Storage {
             browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
         }
     }
+
+
 }
 
 // let backend = new HTTPBackend("http://localhost:31800", "default:default");

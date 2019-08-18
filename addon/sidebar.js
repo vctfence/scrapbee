@@ -138,24 +138,24 @@ function invalidateCompletion() {
 }
 
 function loadShelves(context, tree) {
-    let shelf_list = $("#shelfList");
+    return backend.listShelves().then(shelves => {
+        let shelf_list = $("#shelfList");
 
-    shelf_list.html(`
+        shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
             settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
-        }</option>
-    `);
+            }</option>
+        `);
 
-    if (settings.show_firefox_bookmarks()) {
-        let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
-            ? FIREFOX_SHELF_NAME.capitalizeFirstLetter()
-            : FIREFOX_SHELF_NAME;
-        shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
-    }
+        if (settings.show_firefox_bookmarks()) {
+            let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
+                ? FIREFOX_SHELF_NAME.capitalizeFirstLetter()
+                : FIREFOX_SHELF_NAME;
+            shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
+        }
 
-    return backend.listShelves().then(shelves => {
         let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
         if (firefox_shelf)
             shelves.splice(shelves.indexOf(firefox_shelf), 1);
