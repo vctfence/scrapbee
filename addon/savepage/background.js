@@ -1152,10 +1152,10 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
 
             try {
                 try {
-                    await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame2.js", allFrames: true});
+                    await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
                 } catch (e) {}
 
-                await browser.tabs.executeScript(tab.id, {file: "savepage/content2.js"});
+                await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
             } catch (e) {
                 // provisional capture of PDF, etc.
                 // TODO: rework with the account of savepage settings

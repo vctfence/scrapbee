@@ -105,7 +105,7 @@ class EditToolBar {
         div.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
 
         /** body */
-        document.body.style.marginBottom = "100px";
+        document.body.style.marginBottom = "50px";
         document.body.style.paddingLeft = "0px";
         document.body.style.marginLeft = "0px";
 

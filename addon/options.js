@@ -64,6 +64,7 @@ window.onload = function(){
             // document.getElementById("options-usepageloader").checked = object["options-usepageloader"];
             document.getElementById("options-retaincrossframes").checked = _(object["options-retaincrossframes"], true);
             document.getElementById("options-removeunsavedurls").checked = _(object["options-removeunsavedurls"], true);
+            document.getElementById("options-mergecssimages").checked = _(object["options-mergecssimages"], true);
             // document.getElementById("options-includeinfobar").checked = object["options-includeinfobar"];
             // document.getElementById("options-includesummary").checked = object["options-includesummary"];
             // document.getElementById("options-formathtml").checked = object["options-formathtml"];
@@ -141,6 +142,7 @@ window.onload = function(){
                 //"options-usepageloader": document.getElementById("options-usepageloader").checked,
                 "options-retaincrossframes": document.getElementById("options-retaincrossframes").checked,
                 "options-removeunsavedurls": document.getElementById("options-removeunsavedurls").checked,
+                "options-mergecssimages": document.getElementById("options-mergecssimages").checked,
                 //"options-includeinfobar": document.getElementById("options-includeinfobar").checked,
                 //"options-includesummary": document.getElementById("options-includesummary").checked,
                 //"options-formathtml": document.getElementById("options-formathtml").checked,
