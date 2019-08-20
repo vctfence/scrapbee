@@ -210,6 +210,31 @@ class BookmarkTree {
         return text;
     }
 
+    static styleFirefoxFolders(node) {
+        if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_MENU) {
+            node.icon = "/icons/bookmarksMenu.svg";
+            node.li_attr = {"class": "browser-bookmark-menu"};
+            node.special_browser_folder = true;
+        }
+        else if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_UNFILED) {
+            node.icon = "/icons/unfiledBookmarks.svg";
+            node.li_attr = {"class": "browser-unfiled-bookmarks"};
+            node.special_browser_folder = true;
+        }
+        else if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
+            node.icon = "/icons/bookmarksToolbar.svg";
+            node.li_attr = {"class": "browser-bookmark-toolbar"};
+            if (!settings.show_firefox_toolbar())
+                node.state = {hidden: true};
+            node.special_browser_folder = true;
+        }
+        else if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_MOBILE) {
+            if (!settings.show_firefox_mobile())
+                node.state = {hidden: true};
+            node.special_browser_folder = true;
+        }
+    }
+
     static toJsTreeNode(n) {
         n.text = n.name;
 
@@ -224,6 +249,8 @@ class BookmarkTree {
             }
             if (settings.capitalize_builtin_shelf_names())
                 n.text = n.name.capitalizeFirstLetter();
+
+            BookmarkTree.styleFirefoxFolders(n);
         }
         else if (n.type == NODE_TYPE_SHELF && n.external === RDF_EXTERNAL_NAME) {
             n.li_attr = {"class": "rdf-archive"};
@@ -233,33 +260,15 @@ class BookmarkTree {
             if (n.name && isSpecialShelf(n.name) && settings.capitalize_builtin_shelf_names())
                 n.text = n.name.capitalizeFirstLetter();
             n.icon = "/icons/shelf.svg";
-            n.li_attr = {"class": "scrapyard-shelf"}
+            n.li_attr = {"class": "scrapyard-shelf"};
         }
         else if (n.type == NODE_TYPE_GROUP) {
-            if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_MENU) {
-                n.icon = "/icons/bookmarksMenu.svg";
-                n.li_attr = {"class": "browser-bookmark-menu"};
-            }
-            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_UNFILED) {
-                n.icon = "/icons/unfiledBookmarks.svg";
-                n.li_attr = {"class": "browser-unfiled-bookmarks"};
-            }
-            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
-                n.icon = "/icons/bookmarksToolbar.svg";
-                n.li_attr = {"class": "browser-bookmark-toolbar"};
-                if (!settings.show_firefox_toolbar())
-                    n.state = {hidden: true};
-            }
-            else if (n.external === FIREFOX_SHELF_NAME && n.external_id === FIREFOX_BOOKMARK_MOBILE) {
-                if (!settings.show_firefox_mobile())
-                    n.state = {hidden: true};
-            }
-            else {
-                n.icon = "/icons/group.svg";
-                n.li_attr = {
-                    "class": "scrapyard-group",
-                }
-            }
+            n.icon = "/icons/group.svg";
+            n.li_attr = {
+                "class": "scrapyard-group",
+            };
+
+            BookmarkTree.styleFirefoxFolders(n);
         }
         else if (n.type == NODE_TYPE_SEPARATOR) {
             n.text = "─".repeat(40);
@@ -419,7 +428,7 @@ class BookmarkTree {
                         else
                             this.data.push(n);
                     }
-                    await BookmarkTree.reorderNodes(tree, parent)
+                    await BookmarkTree.reorderNodes(tree, parent);
 
                     if (this.stopProcessingIndication)
                         this.stopProcessingIndication();
@@ -472,7 +481,6 @@ class BookmarkTree {
 
             backend.setTODOState(todo_states).then(() => {
                 selected_ids.forEach(id => {
-
                     let node = tree.get_node(id);
                     node.original.todo_state = state;
                     node.a_attr.class = node.a_attr.class.replace(/todo-state-[a-zA-Z]+/g, "");
@@ -939,11 +947,12 @@ class BookmarkTree {
                     delete items.rdfPathItem;
                 if (ctx_node.original.external)
                     delete items.newNotesItem;
-                if (ctx_node.original.parent_id == FIREFOX_SHELF_ID) {
+                if (ctx_node.original.special_browser_folder) {
                     delete items.cutItem;
                     delete items.copyItem;
                     delete items.renameItem;
                     delete items.deleteItem;
+                    delete items.newSeparatorItem;
                 }
                 if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;

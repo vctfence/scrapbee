@@ -236,6 +236,21 @@ function switchShelf(context, tree, shelf_id) {
                 tree.update(nodes, true);
             });
         }
+        else if (shelf_id == FIREFOX_SHELF_ID) {
+            return backend.listNodes({
+                path: path,
+                depth: "subtree",
+                order: "custom"
+            }).then(nodes => {
+                for (let node of nodes) {
+                    if (node.parent_id == FIREFOX_SHELF_ID) {
+                        node.type = NODE_TYPE_SHELF;
+                        node.parent_id = null;
+                    }
+                }
+                tree.update(nodes);
+            });
+        }
         else {
             return backend.listNodes({
                 path: path,
