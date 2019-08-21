@@ -204,11 +204,26 @@ window.onload = function(){
     let importing = false;
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
     async function onStartRDFImport(e) {
-        if (importing)
-            return;
+        let finalize = () => {
+            browser.runtime.onMessage.removeListener(progressListener);
+
+            $("#start-rdf-import").val("Import");
+            $("#rdf-shelf-name").prop('disabled', false);
+            $("#rdf-import-path").prop('disabled', false);
+            $("#rdf-import-threads").prop('disabled', false);
+
+            $("#rdf-progress-row").text("ready");
+            importing = false;
+        };
 
         let shelf = $("#rdf-shelf-name").val();
         let path = $("#rdf-import-path").val();
+
+        if (importing) {
+            browser.runtime.sendMessage({type: "CANCEL_RDF_IMPORT"});
+            finalize();
+            return;
+        }
 
         if (!shelf || !path) {
             showNotification({message: "Please, specify all import parameters."});
@@ -222,7 +237,7 @@ window.onload = function(){
         }
 
         importing = true;
-        $("start-rdf-import").prop('disabled', true);
+        $("#start-rdf-import").val("Cancel");
         $("#rdf-shelf-name").prop('disabled', true);
         $("#rdf-import-path").prop('disabled', true);
         $("#rdf-import-threads").prop('disabled', true);
@@ -251,18 +266,6 @@ window.onload = function(){
         };
 
         browser.runtime.onMessage.addListener(progressListener);
-
-        let finalize = () => {
-            browser.runtime.onMessage.removeListener(progressListener);
-
-            $("start-rdf-import").prop('disabled', false);
-            $("#rdf-shelf-name").prop('disabled', false);
-            $("#rdf-import-path").prop('disabled', false);
-            $("#rdf-import-threads").prop('disabled', false);
-
-            $("#rdf-progress-row").text("ready");
-            importing = false;
-        };
 
         browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
                                      threads: $("#rdf-import-threads").val(),

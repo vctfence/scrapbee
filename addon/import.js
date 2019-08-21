@@ -866,6 +866,16 @@ export async function importRDF(shelf, path, threads, quick) {
     let progress = 0;
     let parts = bookmarks.length > threads? partition(bookmarks, threads): bookmarks.map(b => [b]);
 
+    let cancelled = false;
+
+    let cancelListener = function(message, sender, sendResponse) {
+        if (message.type === "CANCEL_RDF_IMPORT")
+            cancelled = true;
+    };
+
+    browser.runtime.onMessage.addListener(cancelListener);
+
+
     let importf = async (items) => {
         if (items.length) {
             let bookmark = items.shift();
@@ -881,7 +891,9 @@ export async function importRDF(shelf, path, threads, quick) {
             }
 
             browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: percent});
-            await importf(items);
+
+            if (!cancelled)
+                await importf(items);
         }
     };
 
@@ -908,4 +920,6 @@ export async function importRDF(shelf, path, threads, quick) {
 
     if (!quick && bookmarks.length)
         setTimeout(() => browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node}), 500);
+
+    browser.runtime.onMessage.removeListener(cancelListener);
 }
