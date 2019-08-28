@@ -173,7 +173,7 @@ browser.menus.create({
     id: "scrapbee-capture-url",
     title: browser.i18n.getMessage("CaptureUrl"),
     contexts: ["page", "selection", "frame", "editable"],
-    documentUrlPatterns: ["http://*/*",  "https://*/*"],
+    documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/link.svg", "32": "icons/link.svg"},
     onclick: function(info, tab){
         browser.sidebarAction.isOpen({}).then(result => {

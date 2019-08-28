@@ -552,7 +552,7 @@ function switchRdf(rdf){
 }
 function requestUrlSaving(itemId){
     withCurrTab(function(tab){
-	var icon = tab.favIconUrl;
+	var icon = tab.favIconUrl || "";
 	var ref_id;
 	function Next(){
 	    var $container = null;
