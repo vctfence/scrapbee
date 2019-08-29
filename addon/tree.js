@@ -1,4 +1,4 @@
-import {backend} from "./backend.js"
+import {backend, dropboxBackend} from "./backend.js"
 
 import {
     ENDPOINT_TYPES,
@@ -24,13 +24,12 @@ import {
     FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_BOOKMARK_TOOLBAR,
-    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME
+    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
-import {dropbox} from "./lib/dropbox.js";
 import {showNotification} from "./utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
@@ -252,6 +251,12 @@ class BookmarkTree {
 
             BookmarkTree.styleFirefoxFolders(n);
         }
+        else if (n.type == NODE_TYPE_SHELF && n.external === CLOUD_EXTERNAL_NAME) {
+            if (settings.capitalize_builtin_shelf_names())
+                n.text = n.name.capitalizeFirstLetter();
+            n.li_attr = {"class": "cloud-shelf"};
+            n.icon = "var(--themed-cloud-icon)";
+        }
         else if (n.type == NODE_TYPE_SHELF && n.external === RDF_EXTERNAL_NAME) {
             n.li_attr = {"class": "rdf-archive"};
             n.icon = "/icons/tape.svg";
@@ -448,6 +453,7 @@ class BookmarkTree {
         for (let i = 0; i < siblings.length; ++i) {
             let node = {};
             node.id = siblings[i].original.id;
+            node.uuid = siblings[i].original.uuid;
             node.external = siblings[i].original.external;
             node.external_id = siblings[i].original.external_id;
             node.pos = i;
@@ -536,14 +542,14 @@ class BookmarkTree {
             newFolderItem: {
                 label: "New Folder",
                 action: function () {
-                    backend.createGroup(ctx_node_data.id, "New Folder").then(group => {
+                    backend.createGroup(ctx_node_data.id, "New Folder").then(async group => {
                         BookmarkTree.toJsTreeNode(group);
                         tree.deselect_all(true);
 
                         let group_node = tree.get_node(tree.create_node(ctx_node, group));
                         tree.select_node(group_node);
 
-                        BookmarkTree.reorderNodes(tree, ctx_node);
+                        await BookmarkTree.reorderNodes(tree, ctx_node);
 
                         tree.edit(group_node, null, (node, success, cancelled) => {
                             if (success && !cancelled)
@@ -634,48 +640,6 @@ class BookmarkTree {
                         label: "Dropbox",
                         icon: "icons/dropbox.png",
                         action: async function () {
-                            const auth_handler = auth_url => new Promise(async (resolve, reject) => {
-                                let dropbox_tab = await browser.tabs.create({url: auth_url});
-                                let listener = async (id, changed, tab) => {
-                                    if (id === dropbox_tab.id) {
-                                        if (changed.url && !changed.url.includes("dropbox.com")) {
-                                            await browser.tabs.onUpdated.removeListener(listener);
-                                            browser.tabs.remove(dropbox_tab.id);
-                                            resolve(changed.url);
-                                        }
-                                    }
-                                };
-                                browser.tabs.onUpdated.addListener(listener);
-                            });
-                            const token_store = function (key, val) {
-                                return arguments.length > 1
-                                    ? settings[`dropbox_${key}`](val)
-                                    : settings[`dropbox_${key}`]();
-                            };
-                            const authenticate = async () =>
-                                await dropbox.authenticate({client_id: "986piotqb77feik",
-                                                                    redirect_uri: "https://gchristensen.github.io/scrapyard/",
-                                                                    auth_handler: auth_handler});
-                            const upload = async (filename, content, reentry) => {
-                                await authenticate();
-                                return dropbox('files/upload', {
-                                        "path": "/" + filename.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_"),
-                                        "mode": "add",
-                                        "autorename": true,
-                                        "mute": false,
-                                        "strict_conflict": false
-                                    }, content).then(o => console.log(o))
-                                    .catch(xhr => {
-                                        if (!reentry && xhr.status >= 400) {
-                                            token_store("__dbat", "");
-                                            return upload(filename, content, true);
-                                        }
-                                    })
-
-                            };
-
-                            dropbox.setTokenStore(token_store);
-
                             for (let node of selected_nodes) {
                                 let filename, content;
 
@@ -709,7 +673,7 @@ class BookmarkTree {
                                 }
 
                                 if (filename && content) {
-                                    await upload(filename, content);
+                                    await dropboxBackend.upload("/", filename, content);
                                     showNotification(`Successfully shared bookmark${selected_nodes.length > 1? "s": ""} to Dropbox.`)
                                 }
                             }
@@ -847,12 +811,22 @@ class BookmarkTree {
 
                         confirm("{Warning}", "Do you really want to delete '" + ctx_node_data.name + "'?").then(() => {
                             if (ctx_node_data.name) {
+
+                                if (self.startProcessingIndication)
+                                    self.startProcessingIndication();
+
                                 browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: ctx_node_data.id})
                                     .then(() => {
+                                        if (self.stopProcessingIndication)
+                                            self.stopProcessingIndication();
+
                                         tree.delete_node(ctx_node_data.id);
 
                                         if (this.onDeleteShelf)
                                             this.onDeleteShelf(ctx_node_data);
+                                    }).catch(() => {
+                                        if (self.stopProcessingIndication)
+                                            self.stopProcessingIndication();
                                     });
                             }
                         });
@@ -861,8 +835,17 @@ class BookmarkTree {
                         confirm("{Warning}", "{ConfirmDeleteItem}").then(() => {
                             let selected_ids = selected_nodes.map(n => n.original.id);
 
+                            if (self.startProcessingIndication)
+                                self.startProcessingIndication();
+
                             browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: selected_ids}).then(() => {
+                                if (self.stopProcessingIndication)
+                                    self.stopProcessingIndication();
+
                                 tree.delete_node(selected_nodes);
+                            }).catch(() => {
+                                if (self.stopProcessingIndication)
+                                    self.stopProcessingIndication();
                             });
                         });
                     }

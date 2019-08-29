@@ -694,6 +694,8 @@ function addListeners()
                             browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
                             alertNotify("Successfully archived page.");
                         }
+
+                        backend.storeIndex(message.payload.id, message.data.indexWords());
                     })
                     .catch(e => {
                         if (!message.payload.__local_import) {
@@ -702,9 +704,6 @@ function addListeners()
                         }
                         console.log(e);
                     });
-
-                backend.storeIndex(message.payload.id, message.data.indexWords());
-
                 break;
 
             /* Messages from content script */

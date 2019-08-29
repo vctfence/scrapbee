@@ -63,14 +63,25 @@
 
     <p>In the bookmark tree archived pages are marked with the italic font, while ordinary bookmarks have the regular one.</p>
 
+    <h3>Cloud Bookmarking</h3>
+    <p>
+        Adding or copying and pasting bookmarks into a special shelf named "Cloud" makes them available across the different
+        machines which use the same cloud provider, configurable at the add-on settings. It is also possible to add
+        bookmarks to the "Cloud" shelf from Android devices using <a href="#">Scrapyard for Android</a>.
+    </p>
+
+    <p style="text-align: center">
+        <img src="_locales/en/images/cloud.png">
+    </p>
+
     <h3>Firefox Bookmarks</h3>
     <p>
-        Scrapyard seamlessly integrates with Frirefox bookmarks, so there is no need to switch to the built-in bookmark
+        Scrapyard seamlessly integrates with Frirefox bookmarks, and there is no need to switch to the built-in bookmark
         manager. You may attach notes and TODO states to Firefox bookmarks displayed in Scrapyard, although
         they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
-        option in settings is unchecked. Firefox bookmarks are included in the complete export result, but are imported
+        option in settings is unchecked. Firefox bookmarks are included in the export, but are imported
         as a separate Scrapyard shelf, leaving the current Firefox bookmark state intact.
-
+    </p>
     <p style="text-align: center">
         <img src="_locales/en/images/firefox.png">
     </p>
@@ -148,9 +159,8 @@
     <p>If you often save bookmarks with similar properties to the same destination, it is possible to create custom
         capture commands with predefined parameters. "CAPTURE" link at the bottom-right of UbiquityWE command editor allows
         to insert a template of such command. In addition to the predefined parameters, custom capture commands allow to
-        specify (comma-separated) CSS selectors for elements that will be filtered and deleted automatically.
-        For example, if the ".article-body,.comments" selectors are specified, only the content of these HTML elements
-        will be captured. A custom CSS-style could be inserted into the resulting document through the "style" option.</p>
+        specify (comma-separated) CSS selectors for elements that will be filtered or deleted automatically.
+        A custom CSS-style could be inserted into the captured document through the "style" option.</p>
 
     <p style="text-align: center">
         <img src="_locales/en/images/custom-command.png">

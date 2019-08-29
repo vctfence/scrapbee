@@ -78,7 +78,11 @@ export let dropbox = (function () {
                 var apiResponse = JSON.parse( r.getResponseHeader('dropbox-api-result') || r.responseText );
                 if(endpoint=='auth/token/revoke') tokenStore('__dbat', '');
                 handlers.onComplete && handlers.onComplete( apiResponse, r.response, r);
-                promise && promisectl.resolve && promisectl.resolve( apiResponse, r.response, r );
+
+                if (format == 'content-download')
+                    promise && promisectl.resolve && promisectl.resolve( [apiResponse, r.response] );
+                else
+                    promise && promisectl.resolve && promisectl.resolve( apiResponse, r.response, r );
             } else {
                 var er = handlers.onError && handlers.onError(r);
                 promise && promisectl.reject && promisectl.reject(r);

@@ -13,6 +13,7 @@
     <div id="div-form-left">
         <!--a class="left-index" href="#initiate">{Initiate}</a-->
         <a class="left-index" href="#settings">{Setting}</a>
+        <a class="left-index" href="#cloud">{Cloud}</a>
         <a class="left-index" href="#links">{Check Links}</a>
         <a class="left-index" href="#importrdf">{Import RDF}</a>
         <!--a class="left-index" href="#log">{Log}</a-->
@@ -249,32 +250,53 @@
                     </div>
                 </td>
             </tr>
-            <!--tr>
-                <td>Archives</td>
-                <td>
-                    <div class="panel" id="misc" style="display: flex;">
-                        <form>
-                            <fieldset style="border: none;">
-                                <input id="option-revoke-archive-url-after" type="number" min="1"
-                                       value=""/><label for="option-revoke-archive-url-after">Revoke archive URLs after (min)</label>
-                                <i class="help-mark"></i>
-                                <div class="tips hide">Saves memory, but it will be not possible to refresh open archived pages after this amount of time.</div>
-
-                            </fieldset>
-                        </form>
-                    </div>
-                </td>
-            </tr-->
-<!--            <tr>-->
-<!--                <td>Style</td>-->
-<!--                <td>-->
-<!--                    <div class="panel" id="style" style="display: flex;">-->
-<!--                    </div>-->
-<!--                </td>-->
-<!--            </tr>-->
             <tr>
                 <td></td>
                 <td><input id="options-save-button" type="button" name="save" value="{Save}" style="float: right;"/>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="div-cloud" class="div-area" style="display:none;">
+
+        <table width="800px" cellspacing="" cellpadding="" border="0" class="form-table">
+            <tr>
+                <td style="width: 98px">State</td>
+                <td>
+                    <div class="panel double-container">
+                        <div class="double-first">
+                            <form>
+                                <fieldset style="border: none; display: flex; align-items: center;">
+                                    <input type="checkbox" id="option-enable-cloud"><label for="option-enable-cloud">Enable cloud</label>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="double-last">
+                            <form>
+                                <fieldset style="border: none; display: flex; align-items: center;">
+                                    <input type="checkbox" id="option-cloud-manual-sync"><label for="option-cloud-manual-sync">Manual synchronization only</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">Synchronize only using "Reload" button.</span>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Providers</td>
+                <td>
+                    <div class="panel" style="">
+                        <form>
+                            <fieldset style="border: none; display: flex; align-items: center;">
+                                <!--input type="radio" id="provider-dropbox" checked><label for="provider-dropbox"-->
+                                <a href="http://dropbox.com" target="_blank">Dropbox</a>&nbsp;<!--/label-->
+                                <span> (may be a subject of <a href="https://help.dropbox.com/accounts-billing/settings-sign-in/computer-limit" target="_blank"
+                                >certain limitations</a>)</span>
+                                <input type="button" class="blue-button" id="auth-dropbox" value="Sign in" style="margin-left: 10px;">
+                            </fieldset>
+                        </form>
+                    </div>
                 </td>
             </tr>
         </table>

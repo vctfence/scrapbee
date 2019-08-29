@@ -4803,14 +4803,17 @@
 				dom.removeClass('jstree-themeicon-custom ' + old).css("background","").removeAttr("rel");
 				if(old === false) { this.show_icon(obj); }
 			}
-			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1) {
+			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1 && !obj.icon.startsWith("var(")) {
 				dom.removeClass(old).css("background","");
 				dom.addClass(icon + ' jstree-themeicon-custom').attr("rel",icon);
 				if(old === false) { this.show_icon(obj); }
 			}
 			else {
 				dom.removeClass(old).css("background","");
-				dom.addClass('jstree-themeicon-custom').css("background", "url('" + icon + "') center center no-repeat").attr("rel",icon);
+				dom.addClass('jstree-themeicon-custom').css("background",
+                    (icon.startsWith("var(")? icon: 'url("' + icon + '")') + " center center no-repeat")
+                    .css("background-size", "16px 16px")
+                    .attr("rel",icon);
 				if(old === false) { this.show_icon(obj); }
 			}
 			return true;

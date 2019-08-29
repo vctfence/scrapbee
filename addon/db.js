@@ -1,3 +1,5 @@
+import {readBlob} from "./utils.js";
+
 export const NODE_TYPE_SHELF = 1;
 export const NODE_TYPE_GROUP = 2;
 export const NODE_TYPE_BOOKMARK = 3;
@@ -29,11 +31,12 @@ export const TODO_STATES = {
     "DONE": TODO_STATE_DONE
 };
 
+export const DEFAULT_SHELF_ID = 1;
 export const EVERYTHING_SHELF = -1;
 export const DONE_SHELF = -2;
 export const TODO_SHELF = -3;
 export const FIREFOX_SHELF_ID = -4;
-export const DEFAULT_SHELF_ID = 1;
+export const CLOUD_SHELF_ID = -5;
 
 export const TODO_NAME = "TODO";
 export const DONE_NAME = "DONE";
@@ -41,6 +44,7 @@ export const EVERYTHING = "everything";
 export const DEFAULT_SHELF_NAME = "default";
 export const FIREFOX_SHELF_NAME = "firefox";
 export const FIREFOX_SHELF_UUID = "browser_bookmarks";
+export const CLOUD_SHELF_NAME = "cloud";
 
 export const FIREFOX_BOOKMARK_MENU = "menu________";
 export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
@@ -49,7 +53,9 @@ export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
 export const RDF_EXTERNAL_NAME = "rdf";
 
-export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID];
+export const CLOUD_EXTERNAL_NAME = "cloud";
+
+export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID, CLOUD_EXTERNAL_NAME];
 
 export const DEFAULT_POSITION = 2147483647;
 
@@ -111,6 +117,7 @@ export function isSpecialShelf(name) {
     name = name.toLocaleUpperCase();
     return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
         || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
+        || name === CLOUD_SHELF_NAME.toLocaleUpperCase()
         || name === EVERYTHING.toLocaleUpperCase()
         || name === TODO_NAME.toLocaleUpperCase()
         || name === DONE_NAME.toLocaleUpperCase();
@@ -132,17 +139,20 @@ class Storage {
         return node;
     }
 
-    async addNode(datum, reset_order = true) {
+    async addNode(datum, reset_order = true, new_uuid = true, reset_dates = true) {
         datum = this._sanitizeNode(datum);
 
-        if (reset_order) {
+        if (reset_order)
             datum.pos = DEFAULT_POSITION;
+
+        if (!SPECIAL_UUIDS.some(uuid => uuid === datum.uuid) && new_uuid)
+            datum.uuid = UUID.numeric();
+
+        if (reset_dates) {
+            datum.date_added = new Date();
+            datum.date_modified = datum.date_added;
         }
 
-        if (!SPECIAL_UUIDS.some(uuid => uuid === datum.uuid))
-            datum.uuid = UUID.numeric();
-        datum.date_added = new Date();
-        datum.date_modified = datum.date_added;
         datum.id = await db.nodes.add(datum);
         return datum;
     }
@@ -193,7 +203,7 @@ class Storage {
     }
 
     async updateNodes(nodes) {
-        return db.transaction('rw', db.nodes, async () => {
+        //return db.transaction('rw', db.nodes, async () => {
             for (let n of nodes) {
                 n = this._sanitizeNode(n);
 
@@ -202,8 +212,8 @@ class Storage {
                 n.date_modified = new Date();
                 await db.nodes.where("id").equals(id).modify(n);
             }
-            return nodes;
-        });
+        //     return nodes;
+        // });
     }
 
     async updateNode(node) {
@@ -230,20 +240,40 @@ class Storage {
         }
     }
 
-    async queryFullSubtree(ids, return_ids = false) {
+    async queryFullSubtree(ids, return_ids = false, preorder = false) {
         if (!Array.isArray(ids))
             ids = [ids];
 
         let children = new Set();
-        for (let n of ids) {
-            children.add(n);
-            await this._selectAllChildrenOf({id: n}, children);
+        for (let id of ids) {
+            children.add(id);
+            await this._selectAllChildrenOf({id: id}, children);
         }
 
         if (return_ids)
             return Array.from(children);
 
-        return db.nodes.where("id").anyOf(children).toArray();
+        let result = await db.nodes.where("id").anyOf(children).toArray();
+
+        if (preorder) {
+            let ordered_nodes = [];
+            let traverse = (root, container) => {
+                container.push(root);
+
+                for (let c of result.filter(n => n.parent_id === root.id))
+                    if (isContainer(c))
+                        traverse(c, container);
+                    else
+                        container.push(c);
+            };
+
+            for (let id of ids)
+                traverse(result.find(n => n.id === id), ordered_nodes);
+
+            return ordered_nodes;
+        }
+
+        return result;
     }
 
     async queryNodes(group, options) {
@@ -334,7 +364,7 @@ class Storage {
     }
 
     async deleteNodesLowLevel(ids) {
-        if (!Array.isArray)
+        if (!Array.isArray(ids))
             ids = [ids];
 
         if (db.tables.some(t => t.name === "blobs"))
@@ -362,7 +392,9 @@ class Storage {
         if (db.tables.some(t => t.name === "tags"))
             await db.tags.clear();
 
-        let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true))];
+        let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
+            ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
+            ...(await this.queryFullSubtree(CLOUD_SHELF_ID, true))];
 
         return db.nodes.where("id").noneOf(retain).delete();
     }
@@ -392,7 +424,7 @@ class Storage {
         return nodes;
     }
 
-    async storeBlob(node_id, data, content_type, compress = false) {
+    async storeBlobLowLevel(node_id, data, content_type, compress = false) {
         let node = await this.getNode(node_id);
 
         let byte_length;
@@ -481,7 +513,7 @@ class Storage {
         });
     }
 
-    async storeNotes(node_id, notes, format) {
+    async storeNotesLowLevel(node_id, notes, format) {
         let node = await this.getNode(node_id);
         let exists = await db.notes.where("node_id").equals(node_id).count();
 
@@ -547,6 +579,117 @@ class Storage {
         return handler();
     }
 
+}
+
+
+export class JSONStorage {
+    constructor(meta) {
+        this.meta = meta || {};
+        this.meta.next_id = 1;
+        this.meta.date = new Date().getTime();
+        this.objects = [];
+    }
+
+    static fromJSON(json) {
+        let storage = new JSONStorage();
+        storage.objects = JSON.parse(json);
+
+        storage.meta = storage.objects.length? storage.objects.shift() || {}: {};
+
+        if (!storage.meta.next_id)
+            storage.meta.next_id = 1;
+
+        if (!storage.meta.date)
+            storage.meta.date = new Date().getTime();
+
+        return storage;
+    }
+
+    serialize() {
+        this.meta.date = new Date().getTime();
+        return JSON.stringify([this.meta, ...this.objects], null, 1);
+    }
+
+    _sanitizeNode(node) {
+        node = Object.assign({}, node);
+
+        for (let key of Object.keys(node)) {
+            if (!NODE_PROPERTIES.some(k => k === key))
+                delete node[key];
+        }
+
+        return node;
+    }
+
+    async addNode(datum, reset_order = true) {
+        datum = this._sanitizeNode(datum);
+
+        if (reset_order)
+            datum.pos = DEFAULT_POSITION;
+
+        datum.uuid = UUID.numeric();
+        datum.date_added = new Date().getTime();
+        datum.date_modified = datum.date_added;
+        datum.id = this.meta.next_id++;
+        this.objects.push(datum);
+
+        return datum;
+    }
+
+    async getNode(id, is_uuid = false) {
+        if (is_uuid)
+            return this.objects.find(n => n.uuid === id);
+
+        return this.objects.find(n => n.id == id);
+    }
+
+    getNodes(ids) {
+        return this.objects.filter(n => ids.some(id => id == n.id));
+    }
+
+    async updateNode(node) {
+        if (node) {
+            //node = this._sanitizeNode(node);
+            node = Object.assign({}, node);
+
+            //let id = node.id;
+            delete node.id;
+            let existing = this.objects.find(n => n.uuid === node.uuid);
+
+            if (existing) {
+                existing = Object.assign(existing, node);
+                existing.date_modified = new Date().getTime();
+                return existing;
+            }
+        }
+    }
+
+    async updateNodes(nodes) {
+        for (let node of nodes)
+            this.updateNode(node);
+    }
+
+    async deleteNodes(nodes) {
+        if (!Array.isArray(nodes))
+            nodes = [nodes];
+
+        for (let node of nodes) {
+            let existing = this.objects.find(n => n.uuid === node.uuid);
+            this.objects.splice(this.objects.indexOf(existing), 1);
+        }
+    }
+
+    async moveNode(node, dest) {
+        let existing = this.objects.find(n => n.uuid === node.uuid);
+        let cloud_dest = this.objects.find(n => n.uuid === dest.uuid);
+
+        existing.pos = node.pos;
+        existing.parent_id = cloud_dest.id;
+    }
+
+    async queryNodes() {
+        return this.objects;
+    }
 }
 
 

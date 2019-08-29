@@ -1,4 +1,4 @@
-import {backend} from "./backend.js"
+import {backend, cloudBackend, dropboxBackend} from "./backend.js"
 import {settings} from "./settings.js"
 import {parseHtml, showNotification, getFavicon} from "./utils.js";
 import {
@@ -42,6 +42,13 @@ window.onload = function(){
 
     $("#copy-style-link").on("click", onCopyStyle);
     $("#start-rdf-import").on("click", onStartRDFImport);
+
+    $("#auth-dropbox").on("click", async () => {
+        console.log("uuu")
+        await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
+        $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
+
+    });
 
     document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
     
@@ -106,7 +113,6 @@ window.onload = function(){
     settings.load(() => {
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
         //document.getElementById("option-compress-export").checked = settings.compress_export();
-        //document.getElementById("option-revoke-archive-url-after").value = settings.archive_url_lifetime();
         document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
         document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
@@ -114,7 +120,28 @@ window.onload = function(){
         document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
         document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
         document.getElementById("option-export-format").value = _(settings.export_format(), "json");
+
+        document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
+
+        $("#option-enable-cloud").on("change", e => {
+            settings.cloud_enabled(e.target.checked,
+                async () => {
+                    if (e.target.checked)
+                        await cloudBackend.authenticate();
+                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"})
+                });
+        });
+
+        document.getElementById("option-cloud-manual-sync").checked = settings.cloud_manual_sync();
+
+        $("#option-cloud-manual-sync").on("change", e => {
+            settings.cloud_manual_sync(e.target.checked);
+        });
+
         initLinkChecker();
+
+        if (dropboxBackend.isAuthenticated())
+            $("#auth-dropbox").val("Sign out");
     });
 
     fetch("_locales/en/help.html").then(response => {
@@ -171,7 +198,6 @@ window.onload = function(){
 
         settings.shallow_export(document.getElementById("option-shallow-export").checked);
         //settings.compress_export(document.getElementById("option-compress-export").checked);
-        //settings.archive_url_lifetime(document.getElementById("option-revoke-archive-url-after").value);
         settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
             () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
         settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
@@ -181,7 +207,6 @@ window.onload = function(){
         settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
             () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
         settings.export_format(document.getElementById("option-export-format").value);
-
 
         /* Display saved status for short period */
 

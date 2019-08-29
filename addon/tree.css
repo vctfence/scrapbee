@@ -1,6 +1,8 @@
 #treeview {
     overflow-x: hidden;
     --themed-globe-icon: url("/icons/globe.svg");
+    --themed-cloud-icon: url("/icons/cloud.svg");
+    --themed-cloud-sync-icon: url("/icons/cloud_sync.svg");
 }
 .jstree-default .jstree-node {
     margin-left: 16px;

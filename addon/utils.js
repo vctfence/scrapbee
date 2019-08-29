@@ -243,6 +243,25 @@ export async function withIDBFile(filename, mode, handler) {
     return {file, store};
 }
 
+export function readBlob(blob, mode) {
+    return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.onloadend = () => {
+            resolve(reader.result);
+        };
+        reader.onerror = e => {
+            reject(e);
+        };
+
+        if (mode === "binarystring")
+            reader.readAsBinaryString(blob);
+        else if (mode === "binary")
+            reader.readAsArrayBuffer(blob);
+        else
+            reader.readAsText(blob, "utf-8");
+    });
+}
+
 
 export class ReadLine {
     /* options:

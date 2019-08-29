@@ -238,6 +238,11 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 backend.reconcileBrowserBookmarksDB();
             });
             break;
+        case "RECONCILE_CLOUD_BOOKMARK_DB":
+            settings.load(s => {
+                backend.reconcileCloudBookmarksDB();
+            });
+            break;
     }
 });
 

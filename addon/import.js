@@ -13,7 +13,7 @@ import {
     TODO_STATES,
     TODO_NAMES,
     EVERYTHING, DEFAULT_SHELF_NAME, DEFAULT_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID, NODE_PROPERTIES,
-    isContainer, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME
+    isContainer, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME, CLOUD_SHELF_NAME, CLOUD_SHELF_ID, CLOUD_EXTERNAL_NAME
 } from "./db.js";
 
 const EXPORT_VERSION = 1;
@@ -77,7 +77,7 @@ export async function importOrg(shelf, text) {
                 node = await backend.importBookmark(last_object);
 
                 if (data) {
-                    await backend.storeBlob(node.id, data, last_object.mime_type);
+                    await backend.storeBlobLowLevel(node.id, data, last_object.mime_type);
 
                     if (!binary)
                         await backend.storeIndex(node.id, data.indexWords());
@@ -88,10 +88,10 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotes(node.id, notes, notes_format);
+                await backend.storeNotesLowLevel(node.id, notes, notes_format);
             }
             else if (note_lines.length) {
-                await backend.storeNotes(node.id, note_lines.join("\n"));
+                await backend.storeNotesLowLevel(node.id, note_lines.join("\n"));
             }
 
             last_object = null;
@@ -151,7 +151,9 @@ export async function importOrg(shelf, text) {
 
             let name = subnodes[1].value;
 
-            if (shelf === EVERYTHING && level === 0 && name && name.toLocaleLowerCase() === FIREFOX_SHELF_NAME) {
+            if (shelf === EVERYTHING && level === 0 && name
+                    && (name.toLocaleLowerCase() === FIREFOX_SHELF_NAME
+                            || name.toLocaleLowerCase() === CLOUD_SHELF_NAME)) {
                 name = settings.capitalize_builtin_shelf_names()
                     ? name.capitalizeFirstLetter()
                     : name;
@@ -188,8 +190,22 @@ export async function importOrg(shelf, text) {
                             break;
                         case "date_added":
                         case "date_modified":
-                            if (property.value)
-                                last_object[property.name] = new Date(property.value);
+                            let unix_time = new Date().getTime();
+
+                            if (property.value) {
+                                unix_time = parseInt(property.value);
+
+                                if (isNaN(unix_time))
+                                    unix_time = new Date(property.value).getTime();
+
+                                if (isNaN(unix_time))
+                                    unix_time = new Date().getTime();
+
+                                last_object[property.name] = new Date(unix_time);
+                            }
+                            else
+                                last_object[property.name] = new Date(unix_time);
+
                             break;
                         default:
                             if (property.value)
@@ -243,14 +259,29 @@ async function objectToProperties(object, compress) {
     let lines = [];
     let node = await backend.getNode(object.id);
 
-    if (node.external === FIREFOX_SHELF_NAME) {
+    if (node.external === FIREFOX_SHELF_NAME || node.external === CLOUD_EXTERNAL_NAME) {
         delete node.external;
         delete node.external_id;
     }
 
     for (let key of ORG_EXPORTED_KEYS) {
-        if (node[key])
+        if (node[key]) {
+            if (key === "date_added" || key === "date_modified")
+                try {
+                    if (node[key] instanceof Date)
+                        node[key] = node[key].getTime();
+                    else
+                        node[key] = new Date(node[key]).getTime();
+
+                    if (isNaN(node[key]))
+                        node[key] = new Date(node[key]).getTime();
+                }
+                catch (e) {
+                    node[key] = new Date().getTime();
+                }
+
             lines.push(`:${key}: ${node[key]}`);
+        }
     }
 
     if (node.type === NODE_TYPE_ARCHIVE) {
@@ -404,8 +435,30 @@ function parseJSONObject(line) {
     return object;
 }
 
+function convertJSONDate(date) {
+    let unix_time = new Date().getTime();
+
+    if (date) {
+        unix_time = parseInt(date);
+
+        if (isNaN(unix_time))
+            unix_time = new Date(date).getTime();
+
+        if (isNaN(unix_time))
+            unix_time = new Date().getTime();
+    }
+
+    return new Date(unix_time);
+}
+
 async function importJSONObject(object) {
     let node;
+
+    if (object.date_added)
+        object.date_added = convertJSONDate(object.date_added);
+
+    if (object.date_modified)
+        object.date_modified = convertJSONDate(object.date_modified);
 
     delete object.id;
     delete object.uuid;
@@ -426,7 +479,7 @@ async function importJSONObject(object) {
         node = await backend.importBookmark(object);
 
         if (data) {
-            await backend.storeBlob(node.id, data, object.mime_type);
+            await backend.storeBlobLowLevel(node.id, data, object.mime_type);
 
             if (!binary)
                 await backend.storeIndex(node.id, data.indexWords());
@@ -437,14 +490,14 @@ async function importJSONObject(object) {
     }
 
     if (notes) {
-        await backend.storeNotes(node.id, notes, notes_format);
+        await backend.storeNotesLowLevel(node.id, notes, notes_format);
     }
 
     return node;
 }
 
-function renameFirefoxShelf(node) {
-    if (node && node.id === FIREFOX_SHELF_ID) {
+function renameSpecialShelves(node) {
+    if (node && (node.id === FIREFOX_SHELF_ID || node.id === CLOUD_SHELF_ID)) {
         node.name = settings.capitalize_builtin_shelf_names()
             ? node.name.capitalizeFirstLetter()
             : node.name;
@@ -491,7 +544,7 @@ export async function importJSON(shelf, file) {
 
     let first_object_id = first_object.id;
 
-    renameFirefoxShelf(first_object);
+    renameSpecialShelves(first_object);
 
     if (first_object.name.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliased_everything) {
         first_object = await importJSONObject(first_object);
@@ -505,7 +558,7 @@ export async function importJSON(shelf, file) {
 
         let object = parseJSONObject(line);
         if (object) {
-            renameFirefoxShelf(object);
+            renameSpecialShelves(object);
 
             if (object.type === NODE_TYPE_SHELF && object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME
                 && !aliased_everything)
@@ -532,7 +585,7 @@ export async function importJSON(shelf, file) {
 async function objectToJSON(object, shallow, compress) {
     let node = await backend.getNode(object.id);
 
-    if (node.external === FIREFOX_SHELF_NAME) {
+    if (node.external === FIREFOX_SHELF_NAME || node.external === CLOUD_EXTERNAL_NAME) {
         delete node.external;
         delete node.external_id;
     }
@@ -540,6 +593,20 @@ async function objectToJSON(object, shallow, compress) {
     for (let key of Object.keys(node)) {
         if (!NODE_PROPERTIES.some(k => k === key))
             delete node[key];
+
+        if (key === "date_added" || key === "date_modified")
+            try {
+                if (node[key] instanceof Date)
+                    node[key] = node[key].getTime();
+                else
+                    node[key] = new Date(node[key]).getTime();
+
+                if (isNaN(node[key]))
+                    node[key] = new Date(node[key]).getTime();
+            }
+            catch (e) {
+                node[key] = new Date().getTime();
+            }
     }
 
     if (!shallow) {
