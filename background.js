@@ -1,6 +1,7 @@
 import {settings, global} from "./settings.js"
 import {log} from "./message.js"
 import {showNotification} from "./utils.js"
+import {scriptsAllowed, sendTabContentMessage} from "./utils.js"
 
 /* logging */
 String.prototype.htmlEncode=function(ignoreAmp){
@@ -121,11 +122,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return showNotification(request.message, request.title, request.notify_type)
     }
 });
-function withCurrTab(fn){
-    browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
-        fn.apply(null, [tabs[0]]);
-    });
-}
 /* build menu */
 browser.menus.remove("scrapbee-capture-selection");
 browser.menus.remove("scrapbee-capture-page");
@@ -138,11 +134,11 @@ browser.menus.create({
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
     onclick: function(){
-        withCurrTab(function(t){
-            browser.windows.get(t.windowId).then((win) => {
-                console.log(win)
-            })
-        })
+        // withCurrTab(function(t){
+        //     browser.windows.get(t.windowId).then((win) => {
+        //         console.log(win)
+        //     })
+        // })
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
@@ -185,6 +181,18 @@ browser.menus.create({
         });
     }
 }, function(){});
+
+browser.menus.create({
+    id: "scrapbee-capture-advance",
+    title: "高级...", // browser.i18n.getMessage("CaptureAdvance"),
+    contexts: ["page", "selection", "frame", "editable"],
+    documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
+    icons: {"16": "icons/advance.svg", "32": "icons/advance.svg"},
+    onclick: function(info, tab){
+        sendTabContentMessage(tab, {type: 'SAVE_ADVANCE_REQUEST'});
+    }
+} , function(){});
+
 /* add-on toolbar icon */
 browser.browserAction.onClicked.addListener(function(){
     browser.sidebarAction.open()
@@ -197,6 +205,7 @@ function updateMenu(url) {
     browser.menus.update("scrapbee-capture-selection", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-page", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-url", {enabled: enabled, visible: enabled});
+    browser.menus.update("scrapbee-capture-advance", {enabled: enabled, visible: enabled});
 }
 browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tabInfo){
     updateMenu(tabInfo.url)

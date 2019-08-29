@@ -1,6 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js"
-import {scriptsAllowed, showNotification, getColorFilter, genItemId, gtv} from "./utils.js"
+import {scriptsAllowed, showNotification, getColorFilter, genItemId, gtv, sendTabContentMessage} from "./utils.js"
 import {log} from "./message.js"
 import {SimpleDropdown} from "./control.js"
 // import {getMainMimeExt} from "./libs/mime.types.js"
@@ -582,59 +582,58 @@ function requestUrlSaving(itemId){
 	}
     });
 }
-function executeScriptsInTab(tab_id, files){
-    return new Promise((resolve, reject) => {
-        function sendone(){
-            if(files.length){
-                var f = files.shift();
-                browser.tabs.executeScript(tab_id, {file: f}).then(() => {
-                    sendone();
-                }).catch(reject);
-            }else{
-                resolve();
-            }
-        }
-        sendone();
-    })
-}
 function requestPageSaving(itemId, selection){
     return new Promise((resolve, reject) => {
         withCurrTab(async function(tab){
             var ico = "icons/loading.gif"
-            if (!(await scriptsAllowed(tab.id))) {
-	        var err = "Add-on content script is not allowed on this page";
-	        log.error(err)
-	        showNotification({message: err, title: "Error"});
-	        reject()
-            }else{
-                log.debug("status", tab.status)
-                if(tab.status == "loading"){
-                    showNotification({message: `Waiting for page loading, please do not make any options on this page before capturing finished`, title: "Info"});
-                }
-                executeScriptsInTab(tab.id, [
-                    "libs/mime.types.js",
-                    "libs/jquery-3.3.1.js",
-                    "libs/md5.js",
-                    "proto.js",
-                    "dialog.js",
-                    "content_script.js"
-                ]).then(function(){
-                    currTree.createLink(getCurrContainer(), "page", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
-                    log.debug("content scripts injected")
-                    browser.tabs.sendMessage(tab.id, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(have_icon){
-                        var item = {}
-                        item.tabId = tab.id;
-                        item.id = itemId;
-                        item.have_icon = have_icon;
-                        resolve(item);
-                    }).catch((err) => {
-                        currTree.removeItem($("#"+itemId))
-                        log.debug(err.message)
-                    });
-                }).catch((err) => {
-                    log.error(err.message)
-                });
-            }
+            currTree.createLink(getCurrContainer(), "page", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
+            log.debug("content scripts injected")
+            sendTabContentMessage(tab, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(have_icon){
+                var item = {}
+                item.tabId = tab.id;
+                item.id = itemId;
+                item.have_icon = have_icon;
+                resolve(item);
+            }).catch((err) => {
+                currTree.removeItem($("#"+itemId))
+                log.debug(err.message)
+            });
+            
+            // var ico = "icons/loading.gif"
+            // if (!(await scriptsAllowed(tab.id))) {
+	    //     var err = "Add-on content script is not allowed on this page";
+	    //     log.error(err)
+	    //     showNotification({message: err, title: "Error"});
+	    //     reject()
+            // }else{
+            //     log.debug("status", tab.status)
+            //     if(tab.status == "loading"){
+            //         showNotification({message: `Waiting for page loading, please do not make any options on this page before capturing finished`, title: "Info"});
+            //     }
+            //     executeScriptsInTab(tab.id, [
+            //         "libs/mime.types.js",
+            //         "libs/jquery-3.3.1.js",
+            //         "libs/md5.js",
+            //         "proto.js",
+            //         "dialog.js",
+            //         "content_script.js"
+            //     ]).then(function(){
+            //         currTree.createLink(getCurrContainer(), "page", itemId, getCurrRefId(), tab.url, ico, tab.title, true, true);
+            //         log.debug("content scripts injected")
+            //         browser.tabs.sendMessage(tab.id, {type: selection?'SAVE_PAGE_SELECTION':'SAVE_PAGE', rdf_path: currTree.rdf_path, scrapId: itemId}).then(function(have_icon){
+            //             var item = {}
+            //             item.tabId = tab.id;
+            //             item.id = itemId;
+            //             item.have_icon = have_icon;
+            //             resolve(item);
+            //         }).catch((err) => {
+            //             currTree.removeItem($("#"+itemId))
+            //             log.debug(err.message)
+            //         });
+            //     }).catch((err) => {
+            //         log.error(err.message)
+            //     });
+            // }
         });
     });
 }
@@ -694,6 +693,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	}else{
 	    log.error("rdf have not been loaded")
 	}
+    }else if(request.type == 'SAVE_ADVANCE_REQUEST'){
+        alert("aaaaa", "bbbb")
     }else if(request.type == 'LOCATE_ITEM'){
         return new Promise((resolve, reject) => {
             var $item = currTree.getItemById(request.id);

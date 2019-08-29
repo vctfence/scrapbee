@@ -266,6 +266,10 @@ if(!window.scrapbee_injected){
                     reject(Error("a task already exists on this page"))
                 }
             });
+        }else if(request.type == "SAVE_ADVANCE_REQUEST"){
+            return new Promise((resolve, reject) => {
+                alert("todo: show adv dialog here")
+            });
         }
         return false;
     });
