@@ -165,6 +165,9 @@ class Storage {
     }
 
     getNodes(ids) {
+        if (!ids)
+            return db.nodes.toArray();
+
         return db.nodes.where("id").anyOf(ids).toArray();
     }
 
@@ -235,10 +238,10 @@ class Storage {
         let group_children = await db.nodes.where("parent_id").equals(node.id).toArray();
 
         if (group_children && group_children.length) {
-            for (node of group_children) {
-                for (let c of group_children.map(c => c.id))
-                    children.add(c);
-                await this._selectAllChildrenOf(node, children);
+            for (let child of group_children) {
+                children.push(child);
+                if (isContainer(child))
+                    await this._selectAllChildrenOf(child, children);
             }
         }
     }
@@ -247,36 +250,17 @@ class Storage {
         if (!Array.isArray(ids))
             ids = [ids];
 
-        let children = new Set();
+        let children = [];
         for (let id of ids) {
-            children.add(id);
-            await this._selectAllChildrenOf({id: id}, children);
+            let node = await this.getNode(id);
+            children.push(node);
+            await this._selectAllChildrenOf(node, children);
         }
 
         if (return_ids)
-            return Array.from(children);
+            return children.map(n => n.id);
 
-        let result = await db.nodes.where("id").anyOf(children).toArray();
-
-        if (preorder) {
-            let ordered_nodes = [];
-            let traverse = (root, container) => {
-                container.push(root);
-
-                for (let c of result.filter(n => n.parent_id === root.id))
-                    if (isContainer(c))
-                        traverse(c, container);
-                    else
-                        container.push(c);
-            };
-
-            for (let id of ids)
-                traverse(result.find(n => n.id === id), ordered_nodes);
-
-            return ordered_nodes;
-        }
-
-        return result;
+        return children;
     }
 
     async queryNodes(group, options) {

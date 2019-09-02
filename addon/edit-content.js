@@ -119,14 +119,28 @@ class EditToolBar {
         /** modify dom button */
         var btn = document.createElement("input");
         btn.type = "button";
-        btn.className = "blue-button"
+        btn.id = "btn-edit-document";
+        btn.className = "blue-button";
         btn.value = chrome.i18n.getMessage("MODIFY_DOM_ON");
         div.appendChild(btn);
         btn.addEventListener("click", function () {
             editing = !editing;
-            self.toggleDomEdit(editing)
+            // self.toggleDomEdit(editing)
             this.value = chrome.i18n.getMessage(editing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
-            $(this).prop("disabled", false)
+            // $(this).prop("disabled", false)
+            document.designMode = document.designMode === "on"? "off": "on";
+        });
+
+        $(div).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
+                         Text-select unneeded content (including images and other media) and press Del key on keyboard. 
+                       </span></div>`);
+
+        $(".help-mark", div).hover(function(e){
+            console.log($(this).next(".tips.hide"))
+            console.log(e)
+            $(this).next(".tips.hide").show().css({"margin-top": "-10px"});
+        }, function(){
+            $(this).next(".tips.hide").hide();
         });
 
         /** mark pen button */
@@ -199,7 +213,7 @@ class EditToolBar {
         }
         $m.css({
             position: 'absolute',
-            zIndex: 2147483647,
+            zIndex: 2147483646,
             border: "1px solid #999",
             background: "#fff",
             display: "none",

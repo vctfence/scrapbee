@@ -11,8 +11,17 @@ import {
     DEFAULT_SHELF_NAME,
     TODO_NAME,
     DONE_NAME,
-    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
-    isContainer, isEndpoint, CLOUD_EXTERNAL_NAME, CLOUD_SHELF_ID, CLOUD_SHELF_NAME, JSONStorage, NODE_TYPE_NOTES
+    FIREFOX_SHELF_ID,
+    FIREFOX_SHELF_NAME,
+    FIREFOX_SHELF_UUID,
+    isContainer,
+    isEndpoint,
+    CLOUD_EXTERNAL_NAME,
+    CLOUD_SHELF_ID,
+    CLOUD_SHELF_NAME,
+    JSONStorage,
+    NODE_TYPE_NOTES,
+    EVERYTHING
 } from "./db.js"
 
 import Storage from "./db.js"
@@ -999,6 +1008,22 @@ class IDBBackend extends Storage {
 
     listShelves() {
         return this.queryShelf()
+    }
+
+    async listShelfNodes(shelf) {
+        let nodes = [];
+
+        if (shelf === EVERYTHING)
+            nodes = await this.getNodes();
+        else {
+            let shelf_node = await this.queryShelf(shelf);
+            nodes = await this.queryFullSubtree(shelf_node.id);
+        }
+
+        if (nodes)
+            nodes.sort((a, b) => a.pos - b.pos);
+
+        return nodes;
     }
 
     listGroups() {

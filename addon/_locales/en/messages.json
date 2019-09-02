@@ -80,10 +80,10 @@
         "message": "Save"
     },
     "MODIFY_DOM_ON": {
-        "message": "Page Cleaning"
+        "message": "Edit Document"
     },
     "MODIFY_DOM_OFF": {
-        "message": "Stop Page Cleaning"
+        "message": "Finish Editing"
     },
     "MARK_PEN": {
         "message": "Marker Pen"

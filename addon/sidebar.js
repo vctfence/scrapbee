@@ -239,9 +239,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
             });
         }
         else if (shelf_id == EVERYTHING_SHELF) {
-            return backend.listNodes({
-                order: "custom"
-            }).then(nodes => {
+            return backend.listShelfNodes(EVERYTHING).then(nodes => {
                 tree.update(nodes, true);
                 if (syncronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
@@ -249,11 +247,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
             });
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
-            return backend.listNodes({
-                path: path,
-                depth: "root+subtree",
-                order: "custom"
-            }).then(nodes => {
+            return backend.listShelfNodes(path).then(nodes => {
                 tree.update(nodes);
                 if (syncronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
@@ -261,11 +255,9 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
             });
         }
         else if (shelf_id == FIREFOX_SHELF_ID) {
-            return backend.listNodes({
-                path: path,
-                depth: "subtree",
-                order: "custom"
-            }).then(nodes => {
+            return backend.listShelfNodes(path).then(nodes => {
+                nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
+
                 for (let node of nodes) {
                     if (node.parent_id == FIREFOX_SHELF_ID) {
                         node.type = NODE_TYPE_SHELF;
@@ -276,11 +268,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
             });
         }
         else {
-            return backend.listNodes({
-                path: path,
-                depth: "root+subtree",
-                order: "custom"
-            }).then(nodes => {
+            return backend.listShelfNodes(path).then(nodes => {
                 tree.update(nodes);
             });
         }

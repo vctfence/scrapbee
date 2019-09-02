@@ -238,18 +238,19 @@
     /*height: 31px;*/
 }
 
-.jstree-default .extended-todo .todo-path {
+.jstree-default .extended-todo span.todo-path {
     font-size: 80%;
     font-weight: normal;
     font-style: normal;
     color: #777;
     white-space: nowrap;
+    text-decoration: none;
 }
 
 .jstree-default .extended-todo .todo-details {
     color: #777;
     font-style: normal;
-    font-weight: normal
+    font-weight: normal;
 }
 
 

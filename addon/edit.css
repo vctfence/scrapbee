@@ -171,3 +171,27 @@
     animation-timing-function: linear;
     animation-iteration-count: 1;
 }
+
+.help-mark {
+    width:16px;
+    height:16px;
+    margin-left: 4px;
+    background-image: url(icons/help-mark.svg);
+    background-size: 16px 16px;
+    vertical-align:middle;
+    display:inline-block;
+}
+
+.tips {
+    border-radius:5px;
+    border:1px solid #555;
+    background: #d2d2d2;
+    padding:5px;
+    margin-bottom:5px;
+    text-align:left;
+}
+
+.tips.hide {
+    display: none;
+    position: absolute;
+}
