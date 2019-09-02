@@ -184,7 +184,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         case "BROWSE_NOTES":
             browser.tabs.create({
-                "url": "notes.html#" + message.node.uuid + ":" + message.node.id
+                "url": "notes.html#" + message.uuid + ":" + message.id
             });
             break;
 
@@ -243,11 +243,28 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 backend.reconcileCloudBookmarksDB();
             });
             break;
+
+        case "ENABLE_CLOUD_BACKGROUND_SYNC":
+            settings.load(s => {
+                startCloudBackgroundSync(s);
+            });
+            break;
     }
 });
 
-settings.load(s => {
-    backend.reconcileBrowserBookmarksDB();
+function startCloudBackgroundSync(s) {
+    if (s.cloud_background_sync())
+        window._backgroundSyncInterval = setInterval(
+            () => backend.reconcileCloudBookmarksDB(),
+            15 * 60 * 1000);
+    else
+        if (window._backgroundSyncInterval)
+            clearInterval(window._backgroundSyncInterval);
+}
+
+settings.load(async s => {
+    await backend.reconcileBrowserBookmarksDB();
+    startCloudBackgroundSync(s);
 });
 
 console.log("==> background.js loaded");

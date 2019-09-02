@@ -216,13 +216,16 @@ class Storage {
         // });
     }
 
-    async updateNode(node) {
+    async updateNode(node, reset_date = true) {
         if (node && node.id) {
             node = this._sanitizeNode(node);
 
             let id = node.id;
             //delete node.id;
-            node.date_modified = new Date();
+
+            if (reset_date)
+                node.date_modified = new Date();
+
             await db.nodes.update(id, node);
         }
         return node;
@@ -621,6 +624,22 @@ export class JSONStorage {
         return node;
     }
 
+    _sanitizeDate(date) {
+        if (date) {
+            let result;
+
+            if (date instanceof Date)
+                result = date.getTime()
+            else
+                result = new Date(date).getTime();
+
+            if (!isNaN(result))
+                return result;
+        }
+
+        return new Date().getTime();
+    }
+
     async addNode(datum, reset_order = true) {
         datum = this._sanitizeNode(datum);
 
@@ -628,8 +647,19 @@ export class JSONStorage {
             datum.pos = DEFAULT_POSITION;
 
         datum.uuid = UUID.numeric();
-        datum.date_added = new Date().getTime();
-        datum.date_modified = datum.date_added;
+
+        let now = new Date().getTime();
+
+        if (!datum.date_added)
+            datum.date_added = now;
+        else
+            datum.date_added = this._sanitizeDate(datum.date_added);
+
+        if (!datum.date_modified)
+            datum.date_modified = now;
+        else
+            datum.date_modified = this._sanitizeDate(datum.date_modified);
+
         datum.id = this.meta.next_id++;
         this.objects.push(datum);
 
@@ -658,6 +688,7 @@ export class JSONStorage {
 
             if (existing) {
                 existing = Object.assign(existing, node);
+                existing.date_added = this._sanitizeDate(existing.date_added);
                 existing.date_modified = new Date().getTime();
                 return existing;
             }

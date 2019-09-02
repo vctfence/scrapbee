@@ -1,0 +1,41 @@
+<resources>
+    <string name="app_name">Scrapyard</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_tools">Tools</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_send">Send</string>
+    <string name="providersHeading">Cloud Providers</string>
+    <string name="dropbox">Dropbox</string>
+    <string name="signIn">Sign in</string>
+    <string name="signOut">Sign out</string>
+    <string name="saveLocationHeading">Shared Content Destination</string>
+    <string name="cloud">cloud</string>
+    <string name="cloudPathStart">cloud/</string>
+    <string name="shared">shared</string>
+    <string name="scrapyardURL">https://gchristensen.github.io/scrapyard/</string>
+    <string name="appDescription">Scrapyard Android application allows to share links and content into <font fgcolor='#FF0099CC'>&#x200B;Scrapyard</font> \"Cloud\" folder.</string>
+    <string name="dropboxAPIKey">986piotqb77feik</string>
+    <string name="needToConfigureCloudProvider">A cloud provider needs to be configured</string>
+    <string name="successfullyShared">Successfully shared to Scrapyard</string>
+    <string name="sharingToScrapyard">Sharing to Scrapyard...</string>
+    <string name="todoState">TODO state:</string>
+    <string name="bookmarkToScrapyard">Bookmark to Scrapyard</string>
+    <string name="todoToScrapyard">Add TODO to Scrapyard</string>
+    <string name="details">Details:</string>
+    <string name="errorAccessingCloud">Error accessing cloud</string>
+
+    <string-array name="todo_states">
+        <item>TODO</item>
+        <item>WAITING</item>
+        <item>POSTPONED</item>
+    </string-array>
+</resources>

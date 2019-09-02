@@ -132,10 +132,11 @@ window.onload = function(){
                 });
         });
 
-        document.getElementById("option-cloud-manual-sync").checked = settings.cloud_manual_sync();
+        document.getElementById("option-cloud-background-sync").checked = settings.cloud_background_sync();
 
-        $("#option-cloud-manual-sync").on("change", e => {
-            settings.cloud_manual_sync(e.target.checked);
+        $("#option-cloud-background-sync").on("change", e => {
+            settings.cloud_background_sync(e.target.checked,
+                () => browser.runtime.sendMessage({type: "ENABLE_CLOUD_BACKGROUND_SYNC"}));
         });
 
         initLinkChecker();
@@ -158,6 +159,20 @@ window.onload = function(){
 
     function onClickSave(event)
     {
+        //document.getElementById("options-save-button").value = "Saved";
+        //document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
+
+        $("#options-save-button").addClass("flash-button");
+
+        setTimeout(function()
+            {
+                //document.getElementById("options-save-button").value = "Save";
+                //document.getElementById("options-save-button").style.setProperty("font-weight","normal","");
+
+                $("#options-save-button").removeClass("flash-button");
+            }
+            ,1000);
+
         chrome.storage.local.set({"savepage-settings":
             {
                 /* General options */
@@ -207,18 +222,6 @@ window.onload = function(){
         settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
             () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
         settings.export_format(document.getElementById("option-export-format").value);
-
-        /* Display saved status for short period */
-
-        document.getElementById("options-save-button").value = "Saved";
-        document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
-
-        setTimeout(function()
-            {
-                document.getElementById("options-save-button").value = "Save";
-                document.getElementById("options-save-button").style.setProperty("font-weight","normal","");
-            }
-            ,1000);
     }
 
     function onCopyStyle(e) {

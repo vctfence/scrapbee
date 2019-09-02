@@ -747,7 +747,7 @@ class BookmarkTree {
                 separator_before: true,
                 label: "Open Notes",
                 action: () => {
-                    browser.runtime.sendMessage({type: "BROWSE_NOTES", node: ctx_node_data});
+                    browser.runtime.sendMessage({type: "BROWSE_NOTES", id: ctx_node_data.id, uuid: ctx_node_data.uuid});
                 }
             },
             todoItem: {

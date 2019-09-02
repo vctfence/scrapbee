@@ -73,16 +73,11 @@ class EditToolBar {
         });
 
         let btn = $("#scrapyard-save-doc-button");
+        btn.addClass("flash-button");
 
-        btn.val("Saved");
-        btn.attr("style", "font-weight: bold !important");
-
-        setTimeout(function()
-            {
-                btn.val("Save");
-                btn.attr("style", "font-weight: normal !important");
-            }
-            ,1000);
+        setTimeout(function() {
+                btn.removeClass("flash-button");
+            },1000);
     }
 
     buildTools() {

@@ -243,7 +243,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
                 order: "custom"
             }).then(nodes => {
                 tree.update(nodes, true);
-                if (syncronize && settings.cloud_enabled() && !settings.cloud_manual_sync()) {
+                if (syncronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
                 }
             });
@@ -255,7 +255,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
                 order: "custom"
             }).then(nodes => {
                 tree.update(nodes);
-                if (syncronize && settings.cloud_enabled() && !settings.cloud_manual_sync()) {
+                if (syncronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
                 }
             });
@@ -314,11 +314,6 @@ window.onload = function () {
     var btn = document.getElementById("btnLoad");
     btn.onclick = function () {
         loadShelves(context, tree);
-
-        if (settings.cloud_manual_sync()
-                && (settings.last_shelf() == EVERYTHING_SHELF || settings.last_shelf() == CLOUD_SHELF_ID)) {
-            browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
-        }
     };
 
     var btn = document.getElementById("btnSet");

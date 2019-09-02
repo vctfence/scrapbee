@@ -191,6 +191,19 @@ export class DropboxBackend {
         }, db.serialize())
     }
 
+    async getLastModified() {
+        try {
+            let meta = await dropbox("files/get_metadata", {
+                "path": DROPBOX_INDEX_PATH
+            });
+
+            if (meta && meta.server_modified)
+                return new Date(meta.server_modified);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 dropboxBackend = new DropboxBackend();
@@ -203,6 +216,7 @@ export class CloudBackend {
         switch (provider) {
             default:
                 this._backend = dropboxBackend;
+                this.getLastModified = this._backend.getLastModified;
         }
     }
 
@@ -222,6 +236,10 @@ export class CloudBackend {
 
     async getTree(root) {
         let db = await this._backend.getDB();
+
+        if (!db)
+            return null;
+
         let list = await db.queryNodes();
         root = root? root: this.newCloudRootNode();
 
@@ -1513,6 +1531,7 @@ class IDBBackend extends Storage {
         let cloud_ids = [];
         let begin_time = new Date().getTime();
         let db_pool = new Map();
+        let download_icons = [];
         let download_notes = [];
         let download_data = [];
 
@@ -1532,14 +1551,17 @@ class IDBBackend extends Storage {
                             cloud_date = new Date(cloud_date);
 
                         if (node_date.getTime() < cloud_date.getTime()) {
-                            if (cc.type === NODE_TYPE_NOTES || cc.has_notes) {
-                                node.notes_format = cc.notes_format;
-                                download_notes.push(node);
-                            }
-
                             let id = node.id;
                             node = Object.assign(node, cc);
                             node.id = id;
+                            node.parent_id = d.id;
+
+                            if (cc.type === NODE_TYPE_NOTES || cc.has_notes)
+                                download_notes.push(node);
+
+                            if (!node.icon)
+                                download_icons.push(node);
+
                             await this.updateNode(node);
                         }
                     }
@@ -1564,6 +1586,9 @@ class IDBBackend extends Storage {
                         node.byte_length = cc.byte_length;
                         download_data.push(node);
                     }
+
+                    if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && !node.icon)
+                        download_icons.push(node);
                 }
 
                 if (cc.type === NODE_TYPE_GROUP)
@@ -1572,16 +1597,22 @@ class IDBBackend extends Storage {
         };
 
         if (settings.cloud_enabled()) {
-            let cloud_root = await cloudBackend.getTree();
-
-            if (!cloud_root)
-                return;
-
             let db_root = await this.getNode(CLOUD_SHELF_ID);
             if (!db_root) {
                 db_root = await this.addNode(cloudBackend.newCloudRootNode(), false);
                 try {await browser.runtime.sendMessage({type: "SHELVES_CHANGED"})} catch (e) {console.log(e)}
             }
+
+            let cloud_last_modified = await cloudBackend.getLastModified();
+
+            if (db_root.date_modified && cloud_last_modified
+                    && db_root.date_modified.getTime() === cloud_last_modified.getTime())
+                return;
+
+            let cloud_root = await cloudBackend.getTree();
+
+            if (!cloud_root)
+                return;
 
             browser.runtime.sendMessage({type: "CLOUD_SYNC_START"});
 
@@ -1593,21 +1624,37 @@ class IDBBackend extends Storage {
 
                 await this.deleteMissingExternalNodes(cloud_ids, CLOUD_EXTERNAL_NAME);
 
-                //console.log("cloud reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
+                console.log("cloud reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
 
                 for (let notes_node of download_notes) {
                     let notes = await cloudBackend.fetchCloudNotes(notes_node);
-                    await backend.storeNotesLowLevel(notes_node.id, notes, notes_node.notes_format);
+                    if (notes)
+                        await backend.storeNotesLowLevel(notes_node.id, notes, notes_node.notes_format);
                 }
 
                 for (let archive of download_data) {
                     let data = await cloudBackend.fetchCloudData(archive);
 
-                    await backend.storeBlobLowLevel(archive.id, data, archive.content_type);
+                    if (data) {
+                        await backend.storeBlobLowLevel(archive.id, data, archive.content_type);
 
-                    if (!archive.byte_length)
-                        await backend.storeIndex(archive.id, data.indexWords());
+                        if (!archive.byte_length)
+                            await backend.storeIndex(archive.id, data.indexWords());
+                    }
                 }
+
+                for (let node of download_icons) {
+                    if (node.uri)
+                        try {
+                            node.icon = await getFavicon(node.uri);
+                            await this.updateNode(node);
+                        } catch (e) {
+                            console.log(e);
+                        }
+                }
+
+                db_root.date_modified = cloud_last_modified;
+                await backend.updateNode(db_root, false);
 
                 browser.runtime.sendMessage({type: "CLOUD_SYNC_END"});
                 browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
