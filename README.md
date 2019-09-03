@@ -53,11 +53,11 @@ groundbreaking experiments. Please, backup your data often.
 
 ### Current status of cloud support
 
-Curetnly cloud bookmarking is implemented on the basis of Dropbox HTTP API, which is by definition a mock
+Currently cloud bookmarking is implemented on the basis of Dropbox HTTP API, which is by definition a mock
 implementation - since there is no real database, the speed of operations is inversely proportional to
 the amount of bookmarks you have there. When author will get enough donations to buy a brand-new laptop
 for comfortable development (probably never, but you may change this), there will be a dedicated cloud 
-backend with real db, ability to backup all bookmark there, bookmark browsing on mobile platforms, et cetera, et cetera.
+backend with a real DB, ability to backup all bookmark there, bookmark browsing on mobile platforms, et cetera, et cetera.
 
 ### Changes
 
