@@ -289,19 +289,20 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        return this.withCloudDB(async db => {
-            let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-            for (let node of cloud_nodes) {
-                if (node.has_notes)
-                    await db.deleteNotes(node);
+        if (cloud_nodes.length)
+            return this.withCloudDB(async db => {
+                for (let node of cloud_nodes) {
+                    if (node.has_notes)
+                        await db.deleteNotes(node);
 
-                if (node.type === NODE_TYPE_ARCHIVE)
-                    await db.deleteData(node);
-            }
+                    if (node.type === NODE_TYPE_ARCHIVE)
+                        await db.deleteData(node);
+                }
 
-            return db.deleteNodes(cloud_nodes);
-        }, e => showNotification(CLOUD_ERROR_MESSAGE));
+                return db.deleteNodes(cloud_nodes);
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }
 
     async renameCloudBookmark(node) {

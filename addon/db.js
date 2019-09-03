@@ -254,7 +254,8 @@ class Storage {
         for (let id of ids) {
             let node = await this.getNode(id);
             children.push(node);
-            await this._selectAllChildrenOf(node, children);
+            if (isContainer(node))
+                await this._selectAllChildrenOf(node, children);
         }
 
         if (return_ids)
