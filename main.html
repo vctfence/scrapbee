@@ -24,7 +24,8 @@
           <div class="tool-button reload" title="{Reload}" id="btnLoad"></div>
           <div class="tool-button help" title="{Help}" id="btnHelp"></div>
           <div class="tool-button search" title="{Search}" id="btnSearch"></div>
-          <a href="options.html#announcement" target="_blank" style="position:relative;display:inline-block;text-decoration:none;vertical-align:bottom;">
+          <a href="options.html#announcement" target="_blank"
+             style="position:relative;display:inline-block;text-decoration:none;vertical-align:bottom;">
             <div class="tool-button announcement" title="{Announcement}" id=""></div>
             <i class="red-dot" id="announcement-red-dot"></i>
           </a>
@@ -46,7 +47,7 @@
       <div class="dlg">
         <div class="dlg-box">
           <div class="dlg-title">[dlg_title]</div>
-          <form class="dlg-table" style="overflow:hidden;">
+          <form class="dlg-table" style="overflow:hidden;margin-top:10px;">
             <div class="row">
               <div class="cell">[message]</div>
             </div>
@@ -65,7 +66,7 @@
       <div class="dlg">
         <div class="dlg-box">
           <div class="dlg-title">[dlg_title]</div>
-          <form class="dlg-table" style="overflow:hidden;">
+          <form class="dlg-table" style="overflow:hidden;margin-top:10px;">
             <div class="row">
               <div class="cell">[message]</div>
             </div>
@@ -83,24 +84,23 @@
       <div class="dlg">
         <div class="dlg-box">
           <div class="dlg-title">{New Folder}</div>
-          <form class="dlg-table" style="overflow:hidden;">
-            <div class="row">
-              <div class="cell" style="width:50px;text-align:right;">{Title}</div>
-              <div class="cell"><input type="" name="title" value="" size="50" style="width:100%"/></div>
-            </div>
-            <div class="row">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
-                <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
+          <form style="overflow:hidden;margin-top:10px;">
+            <div class="dlg-table" style="border:1px solid #999;">
+              <div class="row">
+                <div class="cell" style="width:50px;text-align:right;">{Title}</div>
+                <div class="cell" style="padding-top:10px;"><input type="" name="title" value="" size="50" style="width:100%"/></div>
+              </div>
+              <div class="row">
+                <div class="cell"></div>
+                <div class="cell">
+                  <input type="radio" name="pos" value="root"/><label>{As Root Node}</label>
+                  <input type="radio" name="pos" value="current" checked/><label>{At Current Position}</label>
+                </div>
               </div>
             </div>
-            <div class="row">
-              <div class="cell"></div>
-              <div class="cell">
-                <input type="submit" value="{DLG_OK}" />
-                <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
-              </div>
+            <div style="text-align:right;margin-top:10px;margin-bottom:10px;">
+              <input type="submit" value="{DLG_OK}" />
+              <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
             </div>
           </form>
         </div>
@@ -124,6 +124,25 @@
                 <div class="cell" style="width:50px;text-align:right;">URL</div>
                 <div class="cell"><input type="text" name="url" value="" style="width:100%"/></div>
               </div>
+              <div class="row" style="display:[display_icon]">
+                <div class="cell" style="width:50px;text-align:right;">{Icon}</div>
+                <div class="cell" style="position:relative;">
+                  <input type="text" name="icon" value="" style="width:100%;"/>
+                </div>
+              </div>
+              <div class="row" style="display:[display_icon]">
+                <div class="cell" style="width:50px;text-align:right;"></div>
+                <div class="cell" style="position:relative;">
+                  <span name="btnDefaultIcon" class="blue-button">{Default}</span>
+                  <span name="btnClearIcon" class="blue-button">{Clear}</span>
+                  <!-- <input type="button" id="aaa" name="icon_file_selector_button" style="" value="{Select}"/>
+                       <input type="file" name="icon_file_selector" style="display:none;"/> -->
+                </div>
+              </div>  
+              <div class="row" style="display:none">
+                <div class="cell" style="width:50px;text-align:right;">Tag</div>
+                <div class="cell"><input type="text" name="tag" value="" style="width:100%"/></div>
+              </div>
               <div class="row">
                 <div class="cell" style="border-bottom:1px solid #999;padding:0;"></div>
                 <div class="cell" style="border-bottom:1px solid #999;padding:0;"></div>
@@ -144,7 +163,7 @@
             <div class="tab-page" style="border:1px solid #999;width:100%;">
               <textarea name="comment" style="width:100%;height:150px;resize:none;border:none;"></textarea>
             </div>
-            <div style="white-space:nowrap;margin-top:10px;">
+            <div class="row" style="white-space:nowrap;margin-top:10px;">
               <div class="cell"></div>
               <div class="cell" style="text-align:right;">
                 <input type="submit" class="" value="{DLG_OK}"/>

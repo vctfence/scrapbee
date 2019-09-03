@@ -16,14 +16,15 @@ function initMover(){
     var saveingLocked = false;
     var tree0, tree1;
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        if(request.type == 'RDF_EDITED'){
-	    if(request.rdf == tree0.rdf){
+        if(request.type == 'FILE_CONTENT_CHANGED'){
+	    if(request.filename == tree0.rdf && request.srcToken != tree0.unique_id){
                 var $box = $("#tree0");
-                if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
+                // if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
                 loadXml(tree0.rdf, $box, 0)
-	    }else if(request.rdf == tree1.rdf){
+	    }
+            if(request.filename == tree1.rdf && request.srcToken != tree1.unique_id){
                 var $box = $("#tree1");
-                if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
+                // if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
                 loadXml(tree1.rdf, $box, 1)
             }
         }
@@ -152,8 +153,8 @@ function initMover(){
                 var id = genItemId();
                 var rid = item.level == 0 ? ref_id : null;
                 if(item.nodeType == "bookmark" || item.nodeType == "page"){
-                    var src = srcTree.rdf_path + 'data/' + item.id;
-                    var dest = destTree.rdf_path + 'data/' + id;
+                    var src = srcTree.rdfPath + 'data/' + item.id;
+                    var dest = destTree.rdfPath + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).then((response) => {
                         var icon = item.icon.replace(item.id, id)
                         destTree.createLink($dest, item.type, id, rid, item.source, icon, item.title, false, true);
@@ -189,6 +190,7 @@ function initMover(){
                 });
             }
             await srcTree.saveXml();
+            await destTree.saveXml();
         }
         waitingDlg.hide();
     });
@@ -237,8 +239,7 @@ function initMover(){
                 currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {
                         if(!saveingLocked){
-                            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
-                                browser.runtime.sendMessage({type: 'RDF_EDITED', rdf: currTree.rdf}).then((response) => {});
+                            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf, boardcast:true, srcToken: currTree.unique_id}).then((response) => {
                                 resolve();
                             });
                         }else{

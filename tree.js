@@ -31,9 +31,10 @@ class NodeHTMLBuffer {
 class BookTree {
     constructor(xmlString, rdf_full_file, options={}) {
         var self = this;
+        this.unique_id = randRange(0, 99999999); 
         this.options = options;
         this.rdf = rdf_full_file;
-        this.rdf_path = rdf_full_file.replace(/[^\/\\]*$/, "");
+        this.rdfPath = rdf_full_file.replace(/[^\/\\]*$/, "");
         this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
         this.namespaces = this.getNameSpaces();
         Object.keys(this.namespaces).forEach(function(k) {
@@ -68,13 +69,20 @@ class BookTree {
         else
             this.$top_container.find(".item input[type='checkbox']").css('display', 'none');
     }
-    translateResource(r, rdf_path, id) {
-        return r.replace(
+    translateResource(r, rdfPath, id) {
+        /** scrap data */
+        var r = r.replace(
             /^resource\:\/\/scrapbook/,
-            settings.backend_url + "file-service/" + rdf_path
-        ).replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
+            settings.backend_url + "file-service/" + rdfPath
+        )
+        /** local file */
+        if((/^(\/|(\[a-z]\:))/).test(r)){
+            r =  settings.backend_url + "file-service/" + r;
+        }
+        r = r.replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
             return b + "/"
         });
+        return r;
     }
     listenUserEvents($container) {
         var self = this;
@@ -215,17 +223,28 @@ class BookTree {
             prev_t = t;
         });
     }
+    getItemIcon(id) {
+        var node = this.getDescNode("urn:scrapbook:item" + id);
+        var c = node.getAttributeNS(this.MAIN_NS, "icon") || "";
+        return c;
+    }
     getItemComment(id) {
         var node = this.getDescNode("urn:scrapbook:item" + id);
         var c = node.getAttributeNS(this.MAIN_NS, "comment") || "";
         c = c.replace(/ __BR__ /g, "\n").htmlDecode();
         return c;
     }
+    getItemTag(id) {
+        var node = this.getDescNode("urn:scrapbook:item" + id);
+        var c = node.getAttributeNS(this.MAIN_NS, "tag") || "";
+        c = c.htmlDecode();
+        return c;
+    }
     getItemFilePath(id) {
-        return (this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/")
+        return (this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/")
     }    
     getItemIndexPage(id) {
-        return (settings.backend_url + "file-service/" + this.rdf_path + "data/" + id + "/").replace(/\/{2,}/g, "/") + "?scrapbee_refresh=" + new Date().getTime()
+        return (settings.backend_url + "file-service/" + this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/") + "?scrapbee_refresh=" + new Date().getTime()
     }
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {
@@ -239,10 +258,10 @@ class BookTree {
         }
     }
     scrollToItem($item, ms, mostTop){
-        document.body.scrollTop = $item.offset().top - mostTop;
-        // $(document.body).animate({
-        //     scrollTop: $item.offset().top
-        // }, ms);
+        // document.body.scrollTop = $item.offset().top - mostTop;
+        $(document.body).animate({
+            scrollTop: $item.offset().top - mostTop
+        }, ms);
     }
     expandAllParents($item){
         var self = this;
@@ -435,12 +454,15 @@ class BookTree {
         }
         await processer(nodes);
     }
+    unlockItem($item){
+        $item.removeAttr("disabled");
+    }
     updateItemIcon($item, icon) {
         var id = $item.attr("id");
         if(icon){
-            $item.find("i").css("background-image", "url(" + this.translateResource(icon, this.rdf_path, id) + ")");
+            $item.find("i").css("background-image", "url(" + this.translateResource(icon, this.rdfPath, id) + ")");
         }else{
-            $item[0].find("i")[0].style.removeProperty("background-image");
+            $item.find("i")[0].style.removeProperty("background-image");
         }
         var node = this.getDescNode("urn:scrapbook:item" + id);
         if (node) node.setAttributeNS(this.MAIN_NS, "icon", icon);
@@ -468,15 +490,21 @@ class BookTree {
     updateComment($item, comment) {
         var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
         comment = $.trim(comment);
-
-        
         comment = comment.replace(/\n\r/g, "\n");
         comment = comment.replace(/[\n\r]/g, " __BR__ ");
-        if (desc_node) {
+        if(desc_node) {
             desc_node.setAttributeNS(this.MAIN_NS, "comment", comment);
             this.onXmlChanged && this.onXmlChanged();
         }
     }
+    updateTag($item, tag) {
+        var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
+        tag = $.trim(tag);
+        if(desc_node) {
+            desc_node.setAttributeNS(this.MAIN_NS, "tag", tag);
+            this.onXmlChanged && this.onXmlChanged();
+        }
+    }    
     getItemPath($item, separator=' / ') {
         var ar = [$item.find("label").html()];
         while($item){
@@ -505,6 +533,8 @@ class BookTree {
             return this.$top_container.find("#"+id);
     }
     getContainerById(id) {
+        if(id == "urn:scrapbook:root")
+            return this.$top_container;
         var $item = this.getItemById(id);
         return $item.next(".folder-content"); 
     }
@@ -514,6 +544,14 @@ class BookTree {
     }
     getFocusedItem(){
         return this.$top_container.find(".item.focus");
+    }
+    getCurrRefId(){
+        var $f = this.$top_container.find(".item.focus");
+        if($f.length){
+    	    if(!$f.hasClass("folder")){
+    	        return $f.attr("id");
+    	    }
+        }
     }
     getCurrContainer(){
         var $container;
@@ -527,9 +565,18 @@ class BookTree {
         }else{
     	    $container = this.$top_container;
         }
-        return $container;;
+        return $container;
+    }
+    getCurrFolderId(){
+        var $f = this.$top_container.find(".item.focus");
+        if($f.hasClass("folder")){
+            return $f.attr("id");
+        }else{
+            var $c = this.getParentFolderItem($f);
+            return $c ? $c.attr("id") : null;
+        }
     }    
-    createLink($container, type, id, ref_id, source, icon, title, wait, is_new_node) {
+    createLink($container, type, id, ref_id, source, icon, title, wait, is_new_node, comment="", tag="") {
         title = $.trim(title);
         if (wait) icon = "icons/loading.gif";
         /** create item element */
@@ -537,7 +584,7 @@ class BookTree {
         var style="";
         /** show icon */
         if (icon) {
-            style = "background-image:url(" + this.translateResource(icon, this.rdf_path, id) + ");";
+            style = "background-image:url(" + this.translateResource(icon, this.rdfPath, id) + ");";
         }
         var bf = new NodeHTMLBuffer(
             `<div id='${id}' class='item ${type}' title='${title}' source='${source}'><input type='checkbox'/><i style='${style}'/><label>${label}</label>`,
@@ -545,7 +592,7 @@ class BookTree {
         if (is_new_node) {
             /** append to dom */
             if(!$container.length)
-                $container = $(".folder.root");
+                $container = this.$top_container;
             var $item = $(bf.flatten());
             if (ref_id) {
                 var $ref = this.getItemById(ref_id);
@@ -561,7 +608,7 @@ class BookTree {
             if (wait) $item.attr("disabled", "1");
             /** add new node to doc */    
             var folder_id = this.getContainerFolderId($container);
-            this.createScrapXml(folder_id, type, id, ref_id, title, source, icon);
+            this.createScrapXml(folder_id, type, id, ref_id, title, source, wait ? "" : icon, comment, tag);
             this.showCheckBoxes(this.options.checkboxes);
         }        
         return bf;
@@ -691,7 +738,7 @@ class BookTree {
             this.onXmlChanged && this.onXmlChanged();
         }
     }
-    createScrapXml(folder_id, type, id, ref_id, title, source, icon) {
+    createScrapXml(folder_id, type, id, ref_id, title, source, icon, comment, tag) {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
         if (seq_node) {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
@@ -708,7 +755,8 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "type", type);
             node.setAttributeNS(this.MAIN_NS, "title", title);
             node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
-            node.setAttributeNS(this.MAIN_NS, "comment", "");
+            node.setAttributeNS(this.MAIN_NS, "comment", comment);
+            // node.setAttributeNS(this.MAIN_NS, "tag", tag);
             node.setAttributeNS(this.MAIN_NS, "source", source);
             node.setAttributeNS(this.MAIN_NS, "icon", icon);
             this.xmlDoc.documentElement.appendChild(node);

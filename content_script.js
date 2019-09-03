@@ -4,7 +4,11 @@
   ====================
 */
 if(!window.scrapbee_injected){
+    ///////////////////////////////
     window.scrapbee_injected = true;
+    var currDialog;
+    var dlgDownload;
+    ///////////////////////////////
     function stringifyArgs(args){
         var ar = Array.from(args); 
         ar.forEach(function(v, i){
@@ -38,7 +42,6 @@ if(!window.scrapbee_injected){
             browser.runtime.sendMessage({type:'LOG', logtype: type, content});
         }
     }
-    var dlgDownload;
     /* clone parent and all of the ancestors to root, return parent */
     function cloneParents(p){
         var pp, cc;
@@ -187,9 +190,7 @@ if(!window.scrapbee_injected){
             }
             /*** download resources and callback */
             var downloaded = 0;
-            
             Array.from(div.querySelectorAll("*[mark_remove='1']")).forEach(el => el.remove());
-            
             var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title};
             function end(){
                 dlgDownload.addRow("CSS", "index.css", "index.css", "<font style='color:#cc5500'>buffered</font>")
@@ -240,40 +241,93 @@ if(!window.scrapbee_injected){
         }
         return images.join("\n");
     }
+    function startBookmark(rdf, rdfPath, itemId){
+        browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((url) => {
+            // if(icon.match(/^data:image/i)) // base64
+            var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
+            browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
+                // var icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
+                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: true, rdf, itemId});
+                // todo: showNotification({message: `Capture url "${document.title}" done`, title: "Info"});
+            });
+        });
+    }
+    function startCapture(saveType, rdf, rdfPath, itemId){
+        if(lock()){            
+            dlgDownload = new DialogTable('Download', 'Waiting...', function(r){
+                unlock();
+                dlgDownload.remove();
+            });
+            dlgDownload.hideButton()
+            dlgDownload.addHeader("type", "source", "destination", "status");
+            dlgDownload.show();            
+            dlgDownload.hint = "Gethering resources...";
+            getContent(saveType == "SAVE_SELECTION").then(data => {
+                dlgDownload.hint = "Saving data...";
+                saveData(data, rdfPath, itemId).then(() => {
+                    dlgDownload.showButton();
+                    dlgDownload.hint = "All done";
+                    var have_icon = !!(data.res[data.res.length - 1].blob);
+                    browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon, rdf, itemId});
+                });
+            });
+        }
+    }
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         log.debug("content script recv msg:", request.type)
-        if(request.type == "SAVE_PAGE" || request.type == "SAVE_PAGE_SELECTION"){
+        if(request.type == "SAVE_ADVANCE_REQUEST"){
             return new Promise((resolve, reject) => {
+                var url =  browser.extension.getURL("advcap.html");
                 if(lock()){
-                    dlgDownload = new DialogTable('Download', 'Waiting...', function(r){
-                        unlock()
-                        dlgDownload.remove()
-                    });
-                    dlgDownload.hideButton()
-                    dlgDownload.addHeader("type", "source", "destination", "status")
-                    dlgDownload.show()                
-                    dlgDownload.hint = "Gethering resources...";
-                    getContent(request.type == "SAVE_PAGE_SELECTION").then((data)=>{
-                        dlgDownload.hint = "Saving data...";
-                        saveData(data, request.rdf_path, request.scrapId).then(()=>{
-                            dlgDownload.showButton()
-                            dlgDownload.hint = "All done";
-                            var have_icon = !!(data.res[data.res.length - 1].blob);
-                            resolve(have_icon);
-                        });
-                    });
+                    var w = new DialogIframe("capture", url, "");
+                    currDialog = w;
+                    w.show();
+                    w.onload=function(){
+                        browser.runtime.sendMessage({type:'TAB_INNER_CALL',
+                                                     dest: "CAPTURER_DLG",
+                                                     action: "INIT_FORM",
+                                                     title: document.title,
+                                                     url: location.href}).then(function(){});
+                        resolve();
+                    }
                 }else{
-                    reject(Error("a task already exists on this page"))
+                    reject(Error("a task already exists on this page"));
                 }
             });
-        }else if(request.type == "SAVE_ADVANCE_REQUEST"){
-            return new Promise((resolve, reject) => {
-                alert("todo: show adv dialog here")
+        }else if(request.type == 'SAVE_PAGE_REQUEST' || request.type == 'SAVE_SELECTION_REQUEST'){
+            browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "page", title: document.title, url: location.href}).then((r) => {
+                startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfPath, r.itemId);
             });
+        }else if(request.type == 'SAVE_URL_REQUEST'){
+            browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
+                startBookmark(r.rdf, r.rdfPath, r.itemId);
+            });
+        }else if(request.type == "TAB_INNER_CALL" && request.dest == "CONTENT_PAGE"){
+            if(request.action == "CANCEL_CAPTURE"){
+                currDialog.remove();
+                unlock();
+            }else if(request.action == "START_CAPTURE"){
+                currDialog.remove();
+                unlock();
+                browser.runtime.sendMessage({type: "IS_SIDEBAR_OPENED"}).then(isSidebarOpened => { // check sidebar of current window
+                    if(isSidebarOpened){
+                        /** send to all window ??? */
+                        var request_new = request;
+                        request_new.type = 'CREATE_MIRROR_NODE';
+                        request_new.ico = "";
+                        browser.runtime.sendMessage(request_new)
+                    }
+                    if(request.saveType == "SAVE_URL"){
+                        startBookmark(request.rdf, request.rdfPath, request.itemId);
+                    }else{
+                        startCapture(request.saveType, request.rdf, request.rdfPath, request.itemId)
+                    }
+                });
+            }
         }
         return false;
     });
-    function saveData(data, rdf_path, scrapId){
+    function saveData(data, rdfPath, scrapId){
         log.debug("save data ...")
         var saved_blobs = 0;
         var {itemId, title, html, css, res} = data;
@@ -281,10 +335,10 @@ if(!window.scrapbee_injected){
         function savePage(resolve, reject){
             if((saved_blobs) == res.length){
                 html = ['<!Doctype html>', html,].join("\n");
-                var path = `${rdf_path}/data/${scrapId}/index.css`;
+                var path = `${rdfPath}/data/${scrapId}/index.css`;
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: css, path}).then((response) => {
                     dlgDownload.updateCell(res.length, 3, "<font style='color:#0055ff'>saved</font>")
-                    var path = `${rdf_path}/data/${scrapId}/index.html`;
+                    var path = `${rdfPath}/data/${scrapId}/index.html`;
                     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: html, path}).then((response) => {
                         dlgDownload.updateCell(res.length+1, 3, "<font style='color:#0055ff'>saved</font>")
                         log.debug("capture, all done")
@@ -300,7 +354,7 @@ if(!window.scrapbee_injected){
                         try{
                             var reg = new RegExp(item.hex, "g" )
                             if(item.hex)html = html.replace(reg, item.saveas);
-                            item.path = `${rdf_path}/data/${scrapId}/${item.saveas}`;
+                            item.path = `${rdfPath}/data/${scrapId}/${item.saveas}`;
                             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: item}).then((response) => {
                                 dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>")
                                 saved_blobs++;

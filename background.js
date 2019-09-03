@@ -108,10 +108,27 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }else{
             return ajaxFormPost(settings.backend_url + "savebinfile", {filename, file})
         }
+    }else if(request.type == 'DOWNLOAD_FILE'){
+        var {url, itemId, filename} = request;
+        return ajaxFormPost(settings.backend_url + "download", {url, itemId, filename});
     }else if(request.type == 'SAVE_TEXT_FILE'){
         var filename = request.path;
         var content = request.text;
-        return ajaxFormPost(settings.backend_url + "savefile", {filename, content})
+        return new Promise((resolve, reject) => {
+            ajaxFormPost(settings.backend_url + "savefile", {filename, content}).then(response => {
+                if(request.boardcast){
+                    browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
+                    browser.tabs.query({}).then(function(tabs){
+                        for (let tab of tabs) {
+                            browser.tabs.sendMessage(tab.id, {type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken});
+                        }
+                    });
+                }
+                resolve(response)
+            }).catch(error => {
+                reject(error);
+            })
+        })
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
         return ajaxFormPost(settings.backend_url + "fs/move", {src, dest})
@@ -120,6 +137,15 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return ajaxFormPost(settings.backend_url + "fs/copy", {src, dest})
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type)
+    }else if(request.type == 'TAB_INNER_CALL'){
+        return browser.tabs.sendMessage(sender.tab.id, request);
+    }else if(request.type == 'IS_SIDEBAR_OPENED'){
+        return browser.sidebarAction.isOpen({});
+        // browser.tabs.sendMessage(sender.tab.id, request)
+    }else if(request.type == 'GET_TAB_FAVICON'){
+        return new Promise((resolve, reject) => {
+            resolve(sender.tab.favIconUrl);
+        });
     }
 });
 /* build menu */
@@ -133,7 +159,7 @@ browser.menus.create({
     documentUrlPatterns: ["http://*/*", "https://*/*", "file://*/*"],
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
-    onclick: function(){
+    onclick: function(info, tab){
         // withCurrTab(function(t){
         //     browser.windows.get(t.windowId).then((win) => {
         //         console.log(win)
@@ -143,7 +169,8 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             }else{
-                browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
+                sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST'});
+                // browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
             }
         });
     }
@@ -154,13 +181,14 @@ browser.menus.create({
     contexts: ["page", "selection", "frame", "editable"],
     documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/page.svg", "32": "icons/page.svg"},
-    onclick: function(){
+    onclick: function(info, tab){
         // browser.sidebarAction.open()
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             }else{
-                browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
+                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST'});
+                // browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
             }
         });
     }
@@ -176,23 +204,23 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             }else{
-                browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
+                sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST'});
+                // browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
             }
         });
     }
 }, function(){});
-
 browser.menus.create({
     id: "scrapbee-capture-advance",
-    title: "高级...", // browser.i18n.getMessage("CaptureAdvance"),
+    title: browser.i18n.getMessage("CaptureAdvance"),
     contexts: ["page", "selection", "frame", "editable"],
     documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/advance.svg", "32": "icons/advance.svg"},
     onclick: function(info, tab){
-        sendTabContentMessage(tab, {type: 'SAVE_ADVANCE_REQUEST'});
+        sendTabContentMessage(tab, {type: 'SAVE_ADVANCE_REQUEST'}).then(()=>{
+        });
     }
 } , function(){});
-
 /* add-on toolbar icon */
 browser.browserAction.onClicked.addListener(function(){
     browser.sidebarAction.open()
@@ -243,7 +271,6 @@ function ajaxFormPost(url, json){
         request.send(formData);
     });
 }
-
 // browser.browserAction.onClicked.addListener(() => {
 //     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
 //         browser.tabs.executeScript(tabs[0].id, { code: 'document.contentType' }, ([ mimeType ]) => {
@@ -251,7 +278,6 @@ function ajaxFormPost(url, json){
 //         });
 //     })
 // });
-
 // browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
 //     var saving = browser.tabs.saveAsPDF({});
 // });
