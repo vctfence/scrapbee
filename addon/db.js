@@ -239,6 +239,7 @@ class Storage {
 
         if (group_children && group_children.length) {
             for (let child of group_children) {
+                console.log(children);
                 children.push(child);
                 if (isContainer(child))
                     await this._selectAllChildrenOf(child, children);
@@ -273,9 +274,10 @@ class Storage {
 
         let searchrx = search? new RegExp(search, "i"): null;
 
-        let subtree = new Set();
+        let subtree = [];
         if (group && (depth === "subtree" || depth === "root+subtree")) {
             await this._selectAllChildrenOf(group, subtree);
+            subtree = new Set(subtree.map(n => n.id));
         }
 
         let filterf = node => {
