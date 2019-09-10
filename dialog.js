@@ -5,21 +5,25 @@ var Dialog = class{
         this.el.innerHTML = `
   <div class="scrapbee-dlg-cover">
     <div class="scrapbee-dlg">
-      <div class="scrapbee-dlg-title">
-        ${title}
-      </div>
-      <div class="scrapbee-dlg-content">
-        <div class="scrapbee-dlg-content-inner">
-          ${content}
+      <div class="scrapbee-dlg-frame">
+        <div class="scrapbee-dlg-title">
+          ${title}
+        </div>
+        <div class="scrapbee-dlg-content">
+            ${content}
         </div>
       </div>
     </div>
   </div>`;
-        document.body.appendChild(this.el)
+        document.body.appendChild(this.el);
+        /** prevent user in host page selection lose */
+        this.el.addEventListener('mousedown', function(e){
+            e.preventDefault();
+        });
         this.hide();
     }
     set content(c){
-        this.findChild(".scrapbee-dlg-content-inner").innerHTML = c;
+        this.findChild(".scrapbee-dlg-content").innerHTML = c;
     }
     set title(t){
         this.findChild(".scrapbee-dlg-title").innerHTML = t;
@@ -29,7 +33,7 @@ var Dialog = class{
     }
     hide(){
         this.el.style.display = "none"
-   }
+    }
     remove(){
         this.el.remove()
     }
@@ -112,7 +116,26 @@ var DialogTable = class extends Dialog {
     updateCell(x, y, s){
         this.tbody.querySelectorAll("tr")[x].querySelectorAll("td")[y].innerHTML=s;
     }
-    hideRow(x){
-        this.tbody.querySelectorAll("tr")[x].style.display = "none";
+}
+var www=this;
+var DialogIframe = class extends Dialog {
+    constructor(title, src, parentWindow) {
+        super(title, '');
+        this.content = `<iframe></iframe>`;
+        this.iframe = this.findChild("iframe");
+        this.iframe.style.width="100%";
+        this.iframe.style.height="100%";
+        this.iframe.style.border="0px solid #555"
+        this.iframe.src = src;
+        var self=this; 
+        this.iframe.onload=(function(){
+            self.onload && self.onload()
+        })
+    }
+    get body(){
+        return this.iframe.contentDocument.body;
+    }
+    get iframeWindow(){
+        return this.iframe.contentWindow;
     }
 }

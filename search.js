@@ -92,9 +92,9 @@ async function processTree(tree, search_title, search_body, search_comment){
 	var re = new RegExp(searching, "i")
 	var re2 = new RegExp(searching, "ig")
         /** title */
-        title_matched = search_title && !!(item.title.match(re));
+        title_matched = search_title && re.test(item.title);
         /** comment */
-        comment_matched = search_comment && !!(item.comment.match(re));
+        comment_matched = search_comment && re.test(item.comment);
         /** content */
         var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
         var m = text.match(re);
@@ -161,7 +161,7 @@ async function processTree(tree, search_title, search_body, search_comment){
 	if(item.nodeType == "bookmark" || item.nodeType == "page"){
             try{
                 if(item.icon){
-                    item.icon = tree.translateResource(item.icon, tree.rdf_path, item.id)
+                    item.icon = tree.translateResource(item.icon, tree.rdfPath, item.id)
                 }
 		q.addTask(item);
             }catch(e){

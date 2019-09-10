@@ -336,5 +336,48 @@ function getUrlParams(url){
     }
     return params;
 }
-
-export{gtv, gtev, scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp, getUrlParams};
+function executeScriptsInTab(tab_id, files){
+    return new Promise((resolve, reject) => {
+        function sendone(){
+            if(files.length){
+                var f = files.shift();
+                browser.tabs.executeScript(tab_id, {file: f}).then(() => {
+                    sendone();
+                }).catch(reject);
+            }else{
+                resolve();
+            }
+        }
+        sendone();
+    })
+}
+function sendTabContentMessage(tab, data){
+    return new Promise(async (resolve, reject) => {
+        if (!(await scriptsAllowed(tab.id))) {
+	    var e = "Add-on content script is not allowed on this page";
+	    showNotification({message: e, title: "Error"});
+	    // reject(Error(e))
+        }else{
+            if(tab.status == "loading"){
+                showNotification({message: `Waiting for page loading, please do not make any options on this page before capturing finished`, title: "Info"});
+            }
+            return executeScriptsInTab(tab.id, [
+                "libs/mime.types.js",
+                "libs/jquery-3.3.1.js",
+                "libs/md5.js",
+                "proto.js",
+                "dialog.js",
+                "content_script.js"
+            ]).then(function(){
+                browser.tabs.sendMessage(tab.id, data).then(function(have_icon){
+                    resolve(have_icon);
+                }).catch(function(err){
+                    reject(err);
+                });
+            }).catch(function(err){
+                reject(err);
+            });
+        }
+    });
+}
+export{gtv, gtev, scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp, getUrlParams, sendTabContentMessage};
