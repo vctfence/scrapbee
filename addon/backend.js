@@ -802,7 +802,7 @@ export class BrowserBackend {
                     if (node.type === NODE_TYPE_BOOKMARK && node.uri)
                         node.icon = await getFavicon(node.uri);
 
-                    node = await backend.addNode(node, false);
+                    node = await backend.addNode(node);
 
                     if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: node});
@@ -906,7 +906,7 @@ export class BrowserBackend {
     releaseUILock() {
         this._uiSemaphore -= 1;
     }
-    
+
     // checks if UI operation wants to to mute browser bookmark listeners to avoid bookmark doubling
     isUILocked() {
         return !!this._uiSemaphore;
