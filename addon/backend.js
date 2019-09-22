@@ -1246,9 +1246,12 @@ class IDBBackend extends Storage {
         });
 
         let node = await this.getNode(id);
-        let parent = await this.getNode(parent_id);
-        await browserBackend.createBrowserBookmarkFolder(node, parent);
-        await cloudBackend.createCloudBookmarkFolder(node, parent);
+
+        if (parent_id) {
+            let parent = await this.getNode(parent_id);
+            await browserBackend.createBrowserBookmarkFolder(node, parent);
+            await cloudBackend.createCloudBookmarkFolder(node, parent);
+        }
 
         return node;
     }

@@ -239,7 +239,6 @@ class Storage {
 
         if (group_children && group_children.length) {
             for (let child of group_children) {
-                console.log(children);
                 children.push(child);
                 if (isContainer(child))
                     await this._selectAllChildrenOf(child, children);
