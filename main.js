@@ -609,7 +609,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             currTree.createLink(currTree.getContainerById(request.folderId), request.nodeType, request.itemId,
                                 request.refId, request.url, request.ico, request.title,
                                 true,   // waiting
-                                true);  // is new node (create xml node)
+                                true,
+                                request.comment);  // is new node (create xml node)
             currTree.lockRdfSaving = false;
         }
     }else if(request.type == 'UPDATE_FINISHED_NODE'){

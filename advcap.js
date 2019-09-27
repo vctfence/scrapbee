@@ -66,12 +66,14 @@ $(document).ready(async function(){
         var refId = currTree.getCurrRefId();
         var folderId = currTree.getCurrFolderId();  // folder or root folder
         var ico = "resource://scrapbook/data/" + itemId + "/favicon.ico";
+        var comment = document.body.querySelector("#txComment").value;
         if(folderId == "tree1")
             folderId = "urn:scrapbook:root";
-        currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico);
+        currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
+        // currTree.updateComment(currTree.getItemById(itemId), comment);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
             browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "START_CAPTURE",
-                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType}).then(() => {
+                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment}).then(() => {
                                              // can not reach here, because this dialog already removed now
                                          });
         });
