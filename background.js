@@ -204,8 +204,8 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             }else{
-                sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST'});
-                // browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
+                // sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST'});
+                browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
             }
         });
     }

@@ -583,14 +583,38 @@ function switchRdf(rdf){
         }
     });
 }
-// function updateMenuItem(t){
-//     browser.contextMenus.removeAll(function(){
-//         browser.contextMenus.create({id: "catch", title: `catch ${t}`, onclick:function(){}});
-//     });
-// }
-// function getFocusedWindow(callback){
-//     // return browser.windows.getLastFocused().then((win) => callback(win));
-// }
+function requestUrlSaving(itemId){
+    withCurrTab(function(tab){
+       var icon = tab.favIconUrl;
+       var ref_id;
+       function Next(){
+           var $container = null;
+           var $f = $(".item.focus");
+           if($f.length){
+               if($f.hasClass("folder")){
+                   $container = $f.next(".folder-content");
+               }else{
+                   ref_id=$f.attr("id");
+                   $container = $f.parent(".folder-content");
+               }
+           }else{
+               $container = $(".root.folder-content");
+           }
+           currTree.createLink(currTree.getCurrContainer(), "bookmark", itemId, currTree.getCurrRefId(), tab.url, icon, tab.title, false, true);
+           showNotification({message: `Capture url "${tab.title}" done`, title: "Info"});
+       }
+       if(icon && icon.match(/^data:image/i)){
+           var rdf_path = settings.getLastRdfPath();
+           var filename = `${rdf_path}/data/${itemId}/favicon.ico`;
+           $.post(settings.backend_url + "download", {url: icon, itemId: itemId, filename: filename}, function(r){
+               icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
+               Next();
+           })
+       }else{
+           Next();
+       }
+    });
+}
 /* receive message from background page */
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'UPDATE_CONTEXTMENU_REQUEST'){
@@ -602,6 +626,15 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 loadXml(currTree.rdf);
             }
         }
+    }else if(request.type == 'SAVE_URL_REQUEST'){
+       if(currTree && currTree.rendered) {
+           browser.windows.getLastFocused().then(function(win){
+               if(win.id == thisWindowId)
+                   requestUrlSaving(genItemId());
+           });
+       }else{
+           log.error("rdf have not been loaded")
+       }
     }else if(request.type == 'CREATE_MIRROR_NODE'){
         /** do not trigger rdf saving */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
@@ -609,8 +642,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             currTree.createLink(currTree.getContainerById(request.folderId), request.nodeType, request.itemId,
                                 request.refId, request.url, request.ico, request.title,
                                 true,   // waiting
-                                true,
-                                request.comment);  // is new node (create xml node)
+                                true,   // is new node (create xml node)
+                                request.comment);  
             currTree.lockRdfSaving = false;
         }
     }else if(request.type == 'UPDATE_FINISHED_NODE'){

@@ -169,8 +169,8 @@ ScrapbeeElement.prototype.getLinkResources=function(){
     this.el.setAttribute("mark_remove", "1");
     var r=[]
     if(this.el.rel=="shortcut icon"){
-	r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"})
-	this.el.href="favicon.ico"
+	// r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"})
+	// this.el.href="favicon.ico"
     }else{
 	this.el.href=""
     }

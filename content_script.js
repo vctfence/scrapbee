@@ -176,50 +176,51 @@ if(!window.scrapbee_injected){
                     }
                 }
             });
-            if(!res.find(item => {return item.type == "image" && item.filename == "favicon.ico"})){
-                res.push({type:"image", "url": location.origin + "/favicon.ico", filename:"favicon.ico"});
-            }
-            /*** add main css tag */
-            var mc = document.createElement("link")
-            mc.rel="stylesheet";
-            mc.href="index.css";
-            mc.media="screen";
-            var head = div.getElementsByTagName("head");
-            if(head.length){
-                head[0].appendChild(mc);
-            }
-            /*** download resources and callback */
-            var downloaded = 0;
-            Array.from(div.querySelectorAll("*[mark_remove='1']")).forEach(el => el.remove());
-            var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title};
-            function end(){
-                dlgDownload.addRow("CSS", "index.css", "index.css", "<font style='color:#cc5500'>buffered</font>")
-                dlgDownload.addRow("HTML", "index.html", "index.html", "<font style='color:#cc5500'>buffered</font>")
-                resolve(result)
-            }
-            if(res.length){
-                res.forEach(function(r, i){
-                    dlgDownload.addRow("", truncate(r.url, 32), "", "<font style='color:#cc5500'>downloading..</font>")
-                    downloadFile(r.url, function(b){
-                        var ext = getMainMimeExt(b.type) || "";
-                        r.saveas = r.filename || (r.hex+ext)
-                        if(b) r.blob = b;
-                        downloaded ++;
-                        // log.info(`downloaded ${downloaded}/${res.length}`)
-                        dlgDownload.updateCell(i, 0, b.type)
-                        dlgDownload.updateCell(i, 2, r.saveas)
-                        if(b.type)
-                            dlgDownload.updateCell(i, 3, "<font style='color:#cc5500'>buffered</font>")
-                        else
-                            dlgDownload.hideRow(i);
-                        if(downloaded == res.length){
-                            end();
-                        }
+            browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((icon_url) => {
+                if(icon_url && !res.find(item => {return item.type == "image" && item.filename == "favicon.ico"})){
+                    res.push({type:"image", "url": location.origin + "/favicon.ico", filename:"favicon.ico"});
+                }
+                /*** add main css tag */
+                var mc = document.createElement("link")
+                mc.rel="stylesheet";
+                mc.href="index.css";
+                mc.media="screen";
+                var head = div.getElementsByTagName("head");
+                if(head.length){
+                    head[0].appendChild(mc);
+                }
+                /*** download resources and callback */
+                var downloaded = 0;
+                Array.from(div.querySelectorAll("*[mark_remove='1']")).forEach(el => el.remove());
+                var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title, have_icon: !!icon_url};
+                function end(){
+                    dlgDownload.addRow("CSS", "index.css", "index.css", "<font style='color:#cc5500'>buffered</font>")
+                    dlgDownload.addRow("HTML", "index.html", "index.html", "<font style='color:#cc5500'>buffered</font>")
+                    resolve(result)
+                }
+                if(res.length){
+                    res.forEach(function(r, i){
+                        dlgDownload.addRow("", truncate(r.url, 32), "", "<font style='color:#cc5500'>downloading..</font>")
+                        downloadFile(r.url, function(b){
+                            var ext = getMainMimeExt(b.type) || "";
+                            r.saveas = r.filename || (r.hex+ext)
+                            if(b) r.blob = b;
+                            downloaded ++;
+                            dlgDownload.updateCell(i, 0, b.type)
+                            dlgDownload.updateCell(i, 2, r.saveas)
+                            if(b.type)
+                                dlgDownload.updateCell(i, 3, "<font style='color:#cc5500'>buffered</font>")
+                            else
+                                dlgDownload.hideRow(i);
+                            if(downloaded == res.length){
+                                end();
+                            }
+                        });
                     });
-                });
-            }else{
-                end();
-            }
+                }else{
+                    end();
+                }
+            });
         });
     };
     /* message listener */
@@ -247,7 +248,7 @@ if(!window.scrapbee_injected){
             var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
             browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
                 // var icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: true, rdf, itemId});
+                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: !!url, rdf, itemId});
                 // todo: showNotification({message: `Capture url "${document.title}" done`, title: "Info"});
             });
         });
@@ -267,8 +268,8 @@ if(!window.scrapbee_injected){
                 saveData(data, rdfPath, itemId).then(() => {
                     dlgDownload.showButton();
                     dlgDownload.hint = "All done";
-                    var have_icon = !!(data.res[data.res.length - 1].blob);
-                    browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon, rdf, itemId});
+                    // var have_icon = !!(data.res[data.res.length - 1].blob);
+                    browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: data.have_icon, rdf, itemId});
                 });
             });
         }
