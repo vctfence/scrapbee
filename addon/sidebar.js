@@ -658,31 +658,32 @@ window.onload = function () {
         switch (message.type) {
             case "SCRAPYARD_SWITCH_SHELF":
                 if (message.name) {
-                    let [shelf, ...path] = message.name.split("/");
+                    let external_path = backend.expandPath(message.name);
+                    let [shelf, ...path] = external_path.split("/");
 
                     backend.queryShelf(shelf).then(shelf => {
                         if (shelf) {
                             shelf_list.val(shelf.id);
                             shelf_list.selectric("refresh");
                             switchShelf(context, tree, shelf.id).then(() => {
-                                backend._queryGroup(message.name).then(group => {
+                                backend._queryGroup(external_path).then(group => {
                                     if (group) {
                                         let node = tree._jstree.get_node(group.id + "");
                                         tree._jstree.open_node(node);
                                         tree._jstree.deselect_all();
                                         tree._jstree.select_node(node);
 
-                                        node = document.getElementById(request.node.id.toString());
-                                        if (!isElementInViewport(node)) {
-                                            node.scrollIntoView();
+                                        let element = document.getElementById(node.id.toString());
+                                        if (!isElementInViewport(element)) {
+                                            element.scrollIntoView();
                                             $("#treeview").scrollLeft(0);
                                         }
                                     }
                                 });
                             });
                         } else {
-                            if (!isSpecialShelf(message.name)) {
-                                backend.createGroup(null, message.name, NODE_TYPE_SHELF).then(shelf => {
+                            if (!isSpecialShelf(external_path)) {
+                                backend.createGroup(null, external_path, NODE_TYPE_SHELF).then(shelf => {
                                     if (shelf) {
                                         settings.last_shelf(shelf.id);
                                         loadShelves(context, tree).then();

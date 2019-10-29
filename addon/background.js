@@ -32,7 +32,7 @@ export async function browseNode(node) {
             if (node.external === RDF_EXTERNAL_NAME) {
                 let path = await backend.computePath(node.id);
                 let rdf_directory = path[0].uri;
-                let base = `file://${rdf_directory}/data/${node.external_id}/`
+                let base = `file://${rdf_directory}/data/${node.external_id}/`;
                 let index = `${base}index.html`;
 
                 let html = await loadLocalResource(index);

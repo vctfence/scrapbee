@@ -785,8 +785,13 @@ export const SCRAPYARD_LOCK_SCREEN =
           background-repeat: no-repeat; 
           background-position: center center;"></div>`;
 
+
+function localRDFScheme(path) {
+    return (path && !path.startsWith("http")? "file://": "") + path;
+}
+
 async function importRDFArchive(node, scrapbook_id, root_path) {
-    let base = `file://${root_path}/data/${scrapbook_id}/`;
+    let base = localRDFScheme(`${root_path}/data/${scrapbook_id}/`);
     let index = `${base}index.html`;
     let html = await loadLocalResource(index);
 
@@ -831,7 +836,7 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
                         browser.runtime.onMessage.removeListener(initializationListener);
 
                         node.__local_import = true;
-                        node.__local_import_base = `file://${root_path}/data/${scrapbook_id}/`;
+                        node.__local_import_base = localRDFScheme(`${root_path}/data/${scrapbook_id}/`);
                         node.tab_id = import_tab.id;
 
                         try {
@@ -875,7 +880,7 @@ export async function importRDF(shelf, path, threads, quick) {
 
     let rdf_directory = path.substring(0, path.lastIndexOf("/"));
 
-    let xml = await loadLocalResource("file://" + path);
+    let xml = await loadLocalResource(localRDFScheme(path));
 
     if (!xml.data)
         return Promise.reject(new Error("RDF file not found."));

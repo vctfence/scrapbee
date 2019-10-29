@@ -101,11 +101,13 @@
         border-top: 1px solid var(--in-content-box-border-color) !important;
         border-left: 1px solid var(--in-content-box-border-color) !important;
         box-shadow: none !important;
+        background: transparent !important;
     }
 
     .vakata-context li > a .vakata-contextmenu-sep {
         border-left: 1px solid var(--in-content-box-border-color) !important;
         box-shadow: none !important;
+        background: transparent !important;
     }
 
     .vakata-context li > a.vakata-context-parent {

@@ -432,31 +432,31 @@ var unfiledBookmarkPath = "firefox/Other Bookmarks";
 /* Initialize on browser startup */
 
 chrome.runtime.getPlatformInfo(
-function(PlatformInfo)   
+function(PlatformInfo)
 {
     platformOS = PlatformInfo.os;
-    
+
     chrome.storage.local.set({ "environment-platformos": platformOS });
-    
+
     platformArch = PlatformInfo.arch;
-    
+
     chrome.storage.local.set({ "environment-platformarch": platformArch });
-    
+
     isFirefox = (navigator.userAgent.indexOf("Firefox") >= 0);
-    
+
     chrome.storage.local.set({ "environment-isfirefox": isFirefox });
-    
+
     if (isFirefox)
     {
         chrome.runtime.getBrowserInfo(
         function(info)
         {
             ffVersion = info.version.substr(0,info.version.indexOf("."));
-            
+
             chrome.storage.local.set({ "environment-ffversion": ffVersion });
-            
+
             ffPrintEditId = "printedit-we@DW-dev";
-            
+
             initialize();
         });
     }
@@ -466,7 +466,7 @@ function(PlatformInfo)
         function(extensionInfo)
         {
             gcPrintEditId = (extensionInfo.installType == "normal") ? "olnblpmehglpcallpnbgmikjblmkopia" : "dhblkjgdjeojbefdmhibhpgnpicdijbj";  /* normal or development (unpacked) */
-            
+
             initialize();
         });
     }
@@ -480,128 +480,117 @@ function initialize()
         object = object["savepage-settings"]? object["savepage-settings"]: {};
 
         var contexts = new Array();
-        
+
         /* Initialize or migrate options */
-        
+
         /* General options */
-        
+
         if (!("options-buttonaction" in object)) object["options-buttonaction"] =
             ("options-savebuttonaction" in object) ? object["options-savebuttonaction"] : 2;  /* Version 2.0-2.1 */
-        
+
         if (!("options-newbuttonaction" in object)) object["options-newbuttonaction"] =
             ("options-buttonaction" in object) ? mapActions[object["options-buttonaction"]] : 1;  /* Version 3.0-12.8 */
 
         if (!("options-showsubmenu" in object)) object["options-showsubmenu"] =
             ("options-showmenuitem" in object) ? object["options-showmenuitem"] : true;  /* Version 3.0-5.0 */
-        
+
         if (!("options-showwarning" in object)) object["options-showwarning"] = true;
-        
+
         if (!("options-showurllist" in object)) object["options-showurllist"] = false;
-        
+
         if (!("options-promptcomments" in object)) object["options-promptcomments"] = false;
-        
+
         if (!("options-usepageloader" in object)) object["options-usepageloader"] = true;
-        
+
         if (!("options-retaincrossframes" in object)) object["options-retaincrossframes"] = true;
 
         if (!("options-mergecssimages" in object)) object["options-mergecssimages"] = true;
-        
+
         if (!("options-removeunsavedurls" in object)) object["options-removeunsavedurls"] = true;
-        
+
         if (!("options-includeinfobar" in object)) object["options-includeinfobar"] =
             ("options-includenotification" in object) ? object["options-includenotification"] : false;  /* Version 7.4 */
-        
+
         if (!("options-includesummary" in object)) object["options-includesummary"] = false;
-        
+
         if (!("options-formathtml" in object)) object["options-formathtml"] = false;
-        
+
         if (!("options-savedfilename" in object))
         {
             object["options-savedfilename"] = "%TITLE%";
-            
+
             if ("options-prefixfilename" in object && "options-prefixtext" in object && object["options-prefixfilename"])
                 object["options-savedfilename"] = object["options-prefixtext"].replace(/%DOMAIN%/g,"%HOST%") + object["options-savedfilename"];
-            
+
             if ("options-suffixfilename" in object && "options-suffixtext" in object && object["options-suffixfilename"])
                 object["options-savedfilename"] = object["options-savedfilename"] + object["options-suffixtext"].replace(/%DOMAIN%/g,"%HOST%");
         }
-        
+
         if (!("options-replacespaces" in object)) object["options-replacespaces"] = false;
-        
+
         if (!("options-replacechar" in object)) object["options-replacechar"] = "-";
-        
+
         if (!("options-maxfilenamelength" in object)) object["options-maxfilenamelength"] = 150;
-        
+
         /* Saved Items options */
-        
+
         if (!("options-savehtmlimagesall" in object)) object["options-savehtmlimagesall"] =
             ("options-saveallhtmlimages" in object) ? object["options-saveallhtmlimages"] : true;  /* Version 2.0-3.0 */
-        
+
         if (!("options-savehtmlaudiovideo" in object)) object["options-savehtmlaudiovideo"] = true;
-        
+
         if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = false;
-        
+
         if (!("options-savecssimagesall" in object)) object["options-savecssimagesall"] =
             ("options-saveallcssimages" in object) ? object["options-saveallcssimages"] : true;  /* Version 2.0-3.0 */
-        
+
         if (!("options-savecssfontswoff" in object)) object["options-savecssfontswoff"] =
             ("options-saveallcustomfonts" in object) ? object["options-saveallcustomfonts"] : true;  /* Version 2.0-3.0 */
-        
+
         if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = true;
-        
+
         if (!("options-savescripts" in object)) object["options-savescripts"] =
             ("options-saveallscripts" in object) ? object["options-saveallscripts"] : false;  /* Version 2.0-3.0 */
-        
+
         /* Advanced options */
-        
+
         if (!("options-maxframedepth" in object)) object["options-maxframedepth"] =
             ("options-saveframedepth" in object) ? object["options-saveframedepth"] : 5;  /* Version 2.0-2.1 */
-        
+
         if (!("options-maxresourcesize" in object)) object["options-maxresourcesize"] = 50;
-        
+
         if (!("options-maxresourcetime" in object)) object["options-maxresourcetime"] =
             ("options-resourcetimeout" in object) ? object["options-resourcetimeout"] : 30;  /* Version 9.0-9.1 */
-        
+
         if (!("options-allowpassive" in object)) object["options-allowpassive"] = false;
-        
+
         if (!("options-refererheader" in object)) object["options-refererheader"] = 0;
-        
+
         if (!("options-forcelazyloads" in object)) object["options-forcelazyloads"] = false;
-        
+
         if (!("options-purgeelements" in object)) object["options-purgeelements"] = true;
-        
+
         if (!("options-maxframedepth-9.0" in object))
         {
             object["options-maxframedepth"] = 5;
             object["options-maxframedepth-9.0"] = true;
         }
-        
+
         /* Update stored options */
-        
+
         chrome.storage.local.set({"savepage-settings": object});
-        
+
         /* Initialize local options */
-        
+
         buttonAction = 2; //object["options-newbuttonaction"];
-        
+
         showSubmenu = object["options-showsubmenu"];
-        
+
         maxResourceTime = object["options-maxresourcetime"];
-        
+
         allowPassive = object["options-allowpassive"];
-        
+
         refererHeader = object["options-refererheader"];
-
-        backend.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
-            if (node)
-                browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
-        });
-
-        backend.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
-            if (node)
-                unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
-        });
-
 
         addListeners();
     });
@@ -614,12 +603,12 @@ function initialize()
 function addListeners()
 {
     /* Web request listeners */
-    
+
     chrome.webRequest.onBeforeSendHeaders.addListener(
     function(details)
     {
         var i,j;
-        
+
         for (i = 0; i < details.requestHeaders.length; i++)
         {
             if (details.requestHeaders[i].name == "savepage-referer")
@@ -632,7 +621,7 @@ function addListeners()
                     }
                 }
             }
-            
+
             if (details.requestHeaders[i].name == "savepage-origin")
             {
                 for (j = 0; j < originKeys.length; j++)
@@ -644,13 +633,13 @@ function addListeners()
                 }
             }
         }
-        
+
         return { requestHeaders: details.requestHeaders };
     },
     { urls: ["<all_urls>"], types: ["xmlhttprequest"] },["blocking","requestHeaders"]);
-    
+
     /* Message received listener */
-    
+
     chrome.runtime.onMessage.addListener(
     function(message,sender,sendResponse)
     {
@@ -707,37 +696,37 @@ function addListeners()
                 break;
 
             /* Messages from content script */
-            
+
             case "setPageType":
-                
+
                 tabPageTypes[sender.tab.id] = message.pagetype;
-                
+
                 updateBrowserAction(sender.tab.id,sender.tab.url);
-                
+
                 updateContextMenus();
-                
+
                 break;
-                
+
             case "setSaveState":
-                
+
                 tabSaveStates[sender.tab.id] = message.savestate;
-                
+
                 updateBrowserAction(sender.tab.id,sender.tab.url);
-                
+
                 break;
-                
+
             case "requestCrossFrames":
-                
+
                 chrome.tabs.sendMessage(sender.tab.id,{ type: "requestCrossFrames" },checkError);
-                
+
                 break;
-                
+
             case "replyCrossFrame":
-                
+
                 chrome.tabs.sendMessage(sender.tab.id,{ type: "replyCrossFrame", name: message.name, url: message.url, html: message.html, fonts: message.fonts },checkError);
-                
+
                 break;
-                
+
             case "loadResource":
 
                 let onloadResource = function()
@@ -811,20 +800,20 @@ function addListeners()
 
                 /* XMLHttpRequest must not be sent if http: resource in https: page or https: referer */
                 /* unless passive mixed content allowed by user option */
-                
+
                 safeContent = (message.location.substr(0,6) == "https:" ||
                                (message.location.substr(0,5) == "http:" && message.referer.substr(0,5) == "http:" && message.pagescheme == "http:"));
-                
+
                 mixedContent = (message.location.substr(0,5) == "http:" && (message.referer.substr(0,6) == "https:" || message.pagescheme == "https:"));
 
                 if (safeContent || (mixedContent && message.passive && allowPassive))
-                { 
+                {
                     /* Load same-origin resource - or cross-origin with or without CORS - and add Referer Header */
-                    
+
                     try
                     {
                         xhr = new XMLHttpRequest();
-                        
+
                         xhr.open("GET",message.location,true);
 
                         refererURL = new URL(message.referer);
@@ -871,23 +860,23 @@ function addListeners()
                         }
 
                         xhr.setRequestHeader("Cache-Control","no-store");
-                        
+
                         xhr.responseType = "arraybuffer";
                         xhr.timeout = maxResourceTime*1000;
                         xhr.onload = onloadResource;
                         xhr.onerror = onerrorResource;
                         xhr.ontimeout = ontimeoutResource;
-                        
+
                         xhr._tabId = sender.tab.id;
                         xhr._index = message.index;
-                        
+
                         xhr.send();  /* throws exception if url is invalid */
                     }
                     catch(e)
                     {
                         if (xhr._refererkey) removeRefererKey(xhr._refererkey);
                         if (xhr._originkey) removeOriginKey(xhr._originkey);
-                        
+
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "send" },checkError);
                     }
                 }
@@ -930,7 +919,7 @@ function addListeners()
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
                 }
                 else chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
-                
+
                 break;
 
             case "saveDone":
@@ -965,17 +954,6 @@ function addListeners()
         }
 
         node.path = path.reverse().map(n => n.name).join("/");
-    }
-
-    function normalizePath(path) {
-        if (path && path.startsWith("~"))
-            return path.replace("~", DEFAULT_SHELF_NAME);
-        else if (path && path.startsWith("@@"))
-            return path.replace("@@", unfiledBookmarkPath);
-        else if (path && path.startsWith("@"))
-            return path.replace("@", browserBookmarkPath);
-
-        return path;
     }
 
     /* External message listener */
@@ -1035,7 +1013,7 @@ function addListeners()
                         message.types = message.types.concat([NODE_TYPE_SHELF]);
                     }
 
-                    message.path = normalizePath(message.path);
+                    message.path = backend.expandPath(message.path);
 
                     sendResponse(backend.listNodes(message).then(nodes => {
                         for (let node of nodes) {
@@ -1057,7 +1035,7 @@ function addListeners()
                     return;
                 }
 
-                message.path = normalizePath(message.path);
+                message.path = backend.expandPath(message.path);
 
                 backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
                     browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
@@ -1066,7 +1044,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_ADD_ARCHIVE":
-                message.path = normalizePath(message.path);
+                message.path = backend.expandPath(message.path);
 
                 backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
                     chrome.tabs.query({ lastFocusedWindow: true, active: true },

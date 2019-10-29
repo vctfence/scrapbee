@@ -21,7 +21,7 @@ import {
     CLOUD_SHELF_NAME,
     JSONStorage,
     NODE_TYPE_NOTES,
-    EVERYTHING
+    EVERYTHING, FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED
 } from "./db.js"
 
 import Storage from "./db.js"
@@ -977,6 +977,31 @@ class IDBBackend extends Storage {
 
     constructor() {
         super();
+
+        settings.load(() => {
+            if (settings.show_firefox_bookmarks()) {
+                this.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
+                    if (node)
+                        this._browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+                });
+
+                this.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
+                    if (node)
+                        this._unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+                });
+            }
+        });
+    }
+
+    expandPath(path) {
+        if (path && path.startsWith("~"))
+            return path.replace("~", DEFAULT_SHELF_NAME);
+        else if (path && path.startsWith("@@"))
+            return path.replace("@@", this._unfiledBookmarkPath);
+        else if (path && path.startsWith("@"))
+            return path.replace("@", this._browserBookmarkPath);
+
+        return path;
     }
 
     _normalizePath(path) {
