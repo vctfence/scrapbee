@@ -669,7 +669,7 @@ function traverseRDFTree(doc, visitor) {
     const ns_resolver = ns => namespaces.get(ns);
     const NS_NC = ns_resolver("NC");
     const NS_RDF = ns_resolver("RDF");
-    const NS_SCRAPBOOK = ns_resolver("NS1");
+    const NS_SCRAPBOOK = ns_resolver(Array.from(namespaces.keys()).find(k => (/NS\d+/i).test(k)));
 
     let xselect = path => doc.evaluate(path, doc, ns_resolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
 
