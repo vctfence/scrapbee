@@ -139,7 +139,7 @@ class Storage {
         return node;
     }
 
-    async addNode(datum, reset_order = true, new_uuid = true, reset_dates = true) {
+    async addNode(datum, reset_order = true, reset_dates = true, new_uuid = true) {
         datum = this._sanitizeNode(datum);
 
         if (reset_order)

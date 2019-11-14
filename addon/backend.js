@@ -1470,7 +1470,7 @@ class IDBBackend extends Storage {
         data.tag_list = this._splitTags(data.tags);
         this.addTags(data.tag_list);
 
-        return this.addNode(data, false, true, false);
+        return this.addNode(data, false,false);
     }
 
     async updateBookmark(data) {
@@ -1628,7 +1628,7 @@ class IDBBackend extends Storage {
                     cc.parent_id = d.id;
                     cc.external = CLOUD_EXTERNAL_NAME;
                     cc.external_id = cc.uuid;
-                    node = await this.addNode(cc, false, false);
+                    node = await this.addNode(cc, false, true,false);
 
                     if (cc.type === NODE_TYPE_NOTES || cc.has_notes) {
                         node.notes_format = cc.notes_format;
