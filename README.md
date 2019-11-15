@@ -14,7 +14,7 @@ to obtain the desired features.
 
 ### Automation
 
-The following call from your addon will add the page at the opened tab as an archive/bookmark to Scrapyard. 
+The following call from your addon will add the page at the active tab as an archive/bookmark to Scrapyard. 
 
 ```javascript
 browser.runtime.sendMessage("scrapyard-we@firefox", {
