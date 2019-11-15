@@ -65,7 +65,7 @@
                 <div class="dlg">
                     <div class="dlg-box">
                         <div class="dlg-title">{Properties}</div>
-                        <div class="dlg-prop-table" style="overflow:hidden;">
+                        <div class="dlg-prop-table" style="overflow: hidden; margin-top: 4px;">
                             <div class="prop-row">
                                 <label for="prop-name" class="cell">{Name}: </label>
                                 <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
@@ -86,10 +86,12 @@
                                 <label for="prop-date" class="cell">{Date}: </label>
                                 <input id="prop-date" class="dialog-input" type="" name="todo_date" value="" style="width:100%"/>
                             </div>
-                            <div class="prop-row">
-                                <label for="prop-added" class="cell">{Added on}: </label>
-                                <input id="prop-added" type="" name="date_added" value="" style="width:100%"
-                                       readonly="true"/>
+                            <div class="prop-row more-properties">
+                                <div>
+                                    <div><label for="prop-uuid" class="cell">{UUID}: </label></div>
+                                    <div style="float: right;"><a id="copy-reference-url" href="#">copy reference</a></div>
+                                </div>
+                                <input id="prop-uuid" readonly="true" type="" name="uuid" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row more-properties">
                                 <div>
@@ -97,6 +99,11 @@
                                     <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
                                 </div>
                                 <input id="prop-icon" type="" name="icon" value="" style="width:100%"/>
+                            </div>
+                            <div class="prop-row more-properties">
+                                <label for="prop-added" class="cell">{Added on}: </label>
+                                <input id="prop-added" type="" name="date_added" value="" style="width:100%"
+                                       readonly="true"/>
                             </div>
                             <div class="prop-row">
                                 <a id="more-properties" href="#">More</a>

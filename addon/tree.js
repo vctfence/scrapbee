@@ -24,7 +24,7 @@ import {
     FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_BOOKMARK_TOOLBAR,
-    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME
+    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME, CLOUD_SHELF_NAME
 } from "./db.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
@@ -148,7 +148,8 @@ class BookmarkTree {
         let _tree = this._jstree;
         function doTraverse(root) {
             if (!settings.show_firefox_toolbar() && root.original && root.original.external_id === FIREFOX_BOOKMARK_TOOLBAR
-                || !settings.show_firefox_mobile() && root.original && root.original.external_id === FIREFOX_BOOKMARK_MOBILE)
+                || !settings.show_firefox_mobile() && root.original && root.original.external_id === FIREFOX_BOOKMARK_MOBILE
+                || root.original && root.original.uuid === CLOUD_EXTERNAL_NAME)
                 return;
 
             visitor(root);

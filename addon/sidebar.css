@@ -148,7 +148,7 @@ html,body{
     overflow:hidden;
 }
 .dlg-table .row .cell{
-    display:table-cell;    
+    display:table-cell;
     line-height:20px;
     vertical-align:middle;
     padding:15px 5px 0 5px;
@@ -401,7 +401,7 @@ a#more-properties {
     display: inline-block;
 }
 
-a#set-default-icon {
+a#set-default-icon, a#copy-reference-url {
     text-decoration: none;
 }
 

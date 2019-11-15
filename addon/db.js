@@ -145,7 +145,7 @@ class Storage {
         if (reset_order)
             datum.pos = DEFAULT_POSITION;
 
-        if (!SPECIAL_UUIDS.some(uuid => uuid === datum.uuid) && new_uuid)
+        if (new_uuid)
             datum.uuid = UUID.numeric();
 
         if (reset_dates) {
@@ -155,6 +155,13 @@ class Storage {
 
         datum.id = await db.nodes.add(datum);
         return datum;
+    }
+
+    isNodeExists(uuid) {
+        if (!uuid)
+            return false;
+
+        return db.nodes.where("uuid").equals(uuid).count();
     }
 
     getNode(id, is_uuid = false) {
@@ -179,8 +186,8 @@ class Storage {
         return db.nodes.where("external").equals(kind).toArray();
     }
 
-    isExternalNodeExists(id, kind) {
-        return !!db.nodes.where("external_id").equals(id).and(n => n.external === kind).count();
+    async isExternalNodeExists(id, kind) {
+        return !!(await db.nodes.where("external_id").equals(id).and(n => n.external === kind).count());
     }
 
     async deleteExternalNodes(ids, kind) {
@@ -253,12 +260,14 @@ class Storage {
         let children = [];
         for (let id of ids) {
             let node = await this.getNode(id);
-            children.push(node);
-            if (isContainer(node))
-                await this._selectAllChildrenOf(node, children);
+            if (node) {
+                children.push(node);
+                if (isContainer(node))
+                    await this._selectAllChildrenOf(node, children);
+            }
         }
 
-        if (return_ids)
+        if (children.length && return_ids)
             return children.map(n => n.id);
 
         return children;

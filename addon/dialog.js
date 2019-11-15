@@ -1,3 +1,4 @@
+import {showNotification} from "./utils.js";
 
 function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
@@ -74,6 +75,13 @@ function showDlg(name, data, callback) {
             $dlg.find("#prop-icon").val("");
         });
 
+        let copy_reference = $dlg.find("#copy-reference-url");
+
+        copy_reference.bind("click.dlg", function () {
+            let url = "ext+scrapyard://" + $dlg.find("#prop-uuid").val();
+            navigator.clipboard.writeText(url);
+            //showNotification({message: url});
+        });
     });
     return p;
 }

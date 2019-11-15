@@ -461,7 +461,7 @@ async function importJSONObject(object) {
         object.date_modified = convertJSONDate(object.date_modified);
 
     delete object.id;
-    delete object.uuid;
+    //delete object.uuid;
 
     let notes = object.notes;
     delete object.notes;

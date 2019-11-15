@@ -13,6 +13,10 @@
         font-size: 12pt;
     }
 
+    code {
+        font-size: 10pt;
+    }
+
     #help-content a, #help-content a:visited {
         font-size: 12pt;
         color: #0074D9;
@@ -26,6 +30,10 @@
         font-size: 16px;
         padding: 0 20px;
         padding-top: 20px;
+    }
+
+    #help-content h4 {
+        font-size: 14px;
     }
 </style>
 
@@ -41,25 +49,23 @@
     <h3>Capturing Pages</h3>
     <p>
         To capture a web-page or its fragment, select the page part you want to archive, open Scrapyard popup window
-        by clicking the icon on browser toolbar, choose the necessary destination folder and press the "Bookmark"
-        or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button stores the
-        current selection, the whole page (if there is no active selection) or the whole document, if the opened link
-        is not a web-page. <br/><br/>
+        by clicking the icon on the browser toolbar, choose the necessary destination folder and press the "Bookmark"
+        or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button stores the current selection, the whole page (if there is no active selection) or the whole document, if the opened link is not a web-page. <br/><br/>
 
-        <div style="text-align: center">
+    <div style="text-align: center">
         <img src="_locales/en/images/capture-popup.png">
-        </div>
+    </div>
     </p>
 
     <h3>Bookmark Shelves</h3>
     <p>
-        It is possible to create unlimited amount of bookmark shelves to structure your captures.
+        It is possible to create an unlimited amount of bookmark shelves to structure your captures.
         The shelf named "everything" allows to browse and search through all existing shelves. Scrapyard built-in
         shelves are listed in bold font and cannot be deleted or renamed (including the "default" one).</p>
 
-        <p style="text-align: center">
-            <img src="_locales/en/images/shelves.png">
-        </p>
+    <p style="text-align: center">
+        <img src="_locales/en/images/shelves.png">
+    </p>
 
     <p>In the bookmark tree archived pages are marked with the italic font, while ordinary bookmarks have the regular one.</p>
 
@@ -77,10 +83,10 @@
 
     <h3>Firefox Bookmarks</h3>
     <p>
-        Scrapyard seamlessly integrates with Frirefox bookmarks, so there is no need to switch to the built-in bookmark
+        Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. You may attach notes and TODO states to Firefox bookmarks displayed in Scrapyard, although
         they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
-        option in settings is unchecked. Firefox bookmarks are included in the export, but are imported
+        option in settings is unchecked. Firefox bookmarks are included in the export but are imported
         as a separate Scrapyard shelf, leaving the current Firefox bookmark state intact.
     </p>
     <p style="text-align: center">
@@ -103,8 +109,8 @@
 
     <h3>Markers</h3>
     <p>Every archived page provides an editing toolbar which offers several types of text markers and also allows
-        to clean pages of unnecessary elements. Page HTML may also be edited with browser development tools accessible
-        through "F12" keyboard key.</p>
+        to clean pages of unnecessary elements. Page HTML may also be edited through the browser development tools accessible
+        by "F12" keyboard key.</p>
 
     <p style="text-align: center">
         <img src="_locales/en/images/markers.png">
@@ -115,15 +121,31 @@
     <h3>Notes</h3>
 
     <p>It is possible to attach notes to every bookmark or even create dedicated note-only bookmarks. Items with
-        non-empty notes are marked by underlined text in the bookmark tree.
+        non-empty notes are highlighted by the underlined text in the bookmark tree.
         The notes may contain a brief document summary or any other relevant information and could be entered in
-    plain text, <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>
+        plain text, <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>
         or <a href="https://orgmode.org/manual/Markup.html" target="_blank">org-mode markup</a>. A short CSS-style may be placed
         at the first lines of the text to modify its appearance, org notes may have a table of contents.
-        Insert an example markup at the note editor to explore what options are available.</p>
+        Insert an example markup into the note editor to explore what options are available.</p>
 
     <p style="text-align: center">
         <img src="_locales/en/images/notes.png">
+    </p>
+
+    <h4>Cross-references</h4>
+    <p>To make a reference to a Scrapyard bookmark or archive from the note markup create a link with the following URL:
+        <b><code>ext+scrapyard://&lt;BOOKMARK UUID&gt;</code></b>, for example:</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
+
+    <p>When necessary, it is possible to add a hash with a link description:</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7#short-bookmark-description</code></b>
+
+    <p>To refer the notes of a bookmark add <b><code>notes:</code></b> before the UUID:</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://notes:A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
+
+    <p>Bookmark UUID is available from its property dialog:</p>
+    <p style="text-align: center">
+        <img src="_locales/en/images/references.png">
     </p>
 
     <h2>Advanced features</h2>
@@ -132,12 +154,12 @@
     <p>
         It is possible to issue commands to Scrapyard through the natural language interface offered by
         <a href="https://gchristensen.github.io/ubiquitywe/"  target="_blank">UbiquityWE</a> extension.
-        To control Scrapyard by text commands just install UbiquityWE. In the most cases the command interface
-        allows to significantly reduce number of actions needed to create a bookmark or archive.
+        To control Scrapyard by text commands just install UbiquityWE. In most cases, the command interface
+        allows to significantly reduce the number of actions needed to create a bookmark or archive.
     </p>
 
     <h3>The "bookmark" and "archive" Commands</h3>
-        <p>Use the "bookmark" or "archive" commands with the corresponding parameters to archive a page into the specified destination.
+    <p>Use the "bookmark" or "archive" commands with the corresponding parameters to archive a page into the specified destination.
         Folders in the path will be created automatically if they do not exist. The first folder in the bookmark path
         is always interpreted as the name of a bookmark shelf. The name of the "default" shelf may be substituted by "~" character.
         Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed with "@" and "@@" shortcuts respectively.</p>

@@ -14,6 +14,7 @@ import {
     FIREFOX_SHELF_ID,
     FIREFOX_SHELF_NAME,
     FIREFOX_SHELF_UUID,
+    SPECIAL_UUIDS,
     isContainer,
     isEndpoint,
     CLOUD_EXTERNAL_NAME,
@@ -1470,7 +1471,10 @@ class IDBBackend extends Storage {
         data.tag_list = this._splitTags(data.tags);
         this.addTags(data.tag_list);
 
-        return this.addNode(data, false,false);
+        let force_new_uuid = data.uuid
+            && ((await this.isNodeExists(data.uuid)) || SPECIAL_UUIDS.some(uuid => uuid === data.uuid));
+
+        return this.addNode(data, false,false,!data.uuid || force_new_uuid);
     }
 
     async updateBookmark(data) {
@@ -1537,7 +1541,8 @@ class IDBBackend extends Storage {
 
             let db_root = await this.getNode(FIREFOX_SHELF_ID);
             if (!db_root) {
-                db_root = await this.addNode(browserBackend.newBrowserRootNode(), false);
+                db_root = await this.addNode(browserBackend.newBrowserRootNode(),
+                    false, true, false);
                 browser.runtime.sendMessage({type: "SHELVES_CHANGED"});
             }
 
@@ -1653,7 +1658,7 @@ class IDBBackend extends Storage {
         if (settings.cloud_enabled()) {
             let db_root = await this.getNode(CLOUD_SHELF_ID);
             if (!db_root) {
-                db_root = await this.addNode(cloudBackend.newCloudRootNode(), false);
+                db_root = await this.addNode(cloudBackend.newCloudRootNode(), false, true, false);
                 try {await browser.runtime.sendMessage({type: "SHELVES_CHANGED"})} catch (e) {console.log(e)}
             }
 
@@ -1712,7 +1717,7 @@ class IDBBackend extends Storage {
 
                 browser.runtime.sendMessage({type: "CLOUD_SYNC_END"});
                 browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
-            });
+            }).catch(e => console.error(e));
         }
         else {
             await this.deleteExternalNodes(null, CLOUD_EXTERNAL_NAME);

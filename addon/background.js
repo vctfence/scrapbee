@@ -12,7 +12,7 @@ import {
 import {settings} from "./settings.js";
 import {isSpecialPage, loadLocalResource, notifySpecialPage, readFile, showNotification, withIDBFile} from "./utils.js";
 
-export async function browseNode(node) {
+export async function browseNode(node, external_tab) {
 
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
@@ -26,7 +26,9 @@ export async function browseNode(node) {
                 }
             }
 
-            return browser.tabs.create({"url": url});
+            return (external_tab
+                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": true})
+                        : browser.tabs.create({"url": url}));
 
         case NODE_TYPE_ARCHIVE:
             if (node.external === RDF_EXTERNAL_NAME) {
@@ -102,7 +104,9 @@ export async function browseNode(node) {
 
                 browser.tabs.onUpdated.addListener(listener);
 
-                let rdf_tab = await browser.tabs.create({url: url, active: true});
+                let rdf_tab = await (external_tab
+                                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": true})
+                                        : browser.tabs.create({"url": url}));
                 return;
             }
 
@@ -121,21 +125,22 @@ export async function browseNode(node) {
                     let objectURL = URL.createObjectURL(object);
                     let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
 
-                    return browser.tabs.create({
-                        "url": archiveURL
-                    }).then(tab => {
-                        let listener = (id, changed, tab) => {
-                            if (id === tab.id && changed.status === "complete") {
-                                browser.tabs.onUpdated.removeListener(listener);
-                                browser.tabs.executeScript(tab.id, {
-                                    file: "edit-bootstrap.js",
-                                });
-                                URL.revokeObjectURL(objectURL);
-                            }
-                        };
+                    return (external_tab
+                                ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": true})
+                                : browser.tabs.create({"url": archiveURL}))
+                            .then(tab => {
+                                let listener = (id, changed, tab) => {
+                                    if (id === tab.id && changed.status === "complete") {
+                                        browser.tabs.onUpdated.removeListener(listener);
+                                        browser.tabs.executeScript(tab.id, {
+                                            file: "edit-bootstrap.js",
+                                        });
+                                        URL.revokeObjectURL(objectURL);
+                                    }
+                                };
 
-                        browser.tabs.onUpdated.addListener(listener);
-                    });
+                                browser.tabs.onUpdated.addListener(listener);
+                            });
                 }
                 else {
                     showNotification({message: "No data is stored."});
@@ -143,9 +148,10 @@ export async function browseNode(node) {
             });
 
         case NODE_TYPE_NOTES:
-            return browser.tabs.create({
-                "url": "notes.html#" + node.uuid + ":" + node.id
-            });
+            return (external_tab
+                        ? browser.tabs.update(external_tab.id, {"url": "notes.html#" + node.uuid + ":" + node.id,
+                                                                "loadReplace": true})
+                        : browser.tabs.create({"url": "notes.html#" + node.uuid + ":" + node.id}));
     }
 }
 
@@ -179,22 +185,23 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             return backend.reorderNodes(message.positions);
 
         case "BROWSE_NODE":
-            browseNode(message.node);
+            browseNode(message.node, message.tab);
             break;
 
         case "BROWSE_NOTES":
-            browser.tabs.create({
-                "url": "notes.html#" + message.uuid + ":" + message.id
-            });
+            (message.tab
+                ? browser.tabs.update(message.tab.id, {"url": "notes.html#" + message.uuid + ":" + message.id,
+                                                       "loadReplace": true})
+                : browser.tabs.create({"url": "notes.html#" + message.uuid + ":" + message.id}));
             break;
 
         case "IMPORT_FILE":
             shelf = isSpecialShelf(message.file_name)? message.file_name.toLocaleLowerCase(): message.file_name;
 
-            let importf = ({"JSON": () => importJSON(shelf, message.file),
+            let importf = ({"JSON": async () => importJSON(shelf, message.file),
                             "ORG":  async () => importOrg(shelf, await readFile(message.file)),
                             "HTML": async () => importHtml(shelf, await readFile(message.file)),
-                            "RDF": () => importRDF(shelf, message.file, message.threads, message.quick)})
+                            "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)})
                 [message.file_ext.toUpperCase()];
 
             return backend.importTransaction(importf);

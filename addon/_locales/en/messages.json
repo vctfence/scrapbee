@@ -97,6 +97,9 @@
     "Icon": {
         "message": "Icon"
     },
+    "UUID": {
+        "message": "UUID"
+    },
     "Donate": {
         "message": "Donate"
     },
@@ -174,7 +177,7 @@
     },
     "ENTITY_SIZE": {
         "message": "Entity Size"
-    },    
+    },
     "Language": {
         "message": "lanugage"
     },
@@ -186,7 +189,7 @@
     },
     "Appearance":{
         "message": "Appearance"
-    },    
+    },
     "Scrap":{
         "message": "scrap"
     },
@@ -204,7 +207,7 @@
     },
     "MORE_DONATE_WAY_TOGGLE":{
         "message": "In other way"
-    },    
+    },
     "MORE_DONATE_WAY":{
         "message": ""
     },
