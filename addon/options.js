@@ -51,7 +51,7 @@ window.onload = function(){
     });
 
     document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
-    
+
     let _ = (v, d) => {return v !== undefined? v: d;};
 
     chrome.storage.local.get("savepage-settings",
@@ -118,6 +118,7 @@ window.onload = function(){
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
         document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
         document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
+        document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
         document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
         document.getElementById("option-export-format").value = _(settings.export_format(), "json");
 
@@ -218,6 +219,7 @@ window.onload = function(){
         settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
         settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
         settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
+        settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
         settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
         settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
             () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));

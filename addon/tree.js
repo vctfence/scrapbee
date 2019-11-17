@@ -133,10 +133,18 @@ class BookmarkTree {
             let external = element.getAttribute("data-external");
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                backend.getNode(parseInt(id)).then(node => {
+                backend.getNode(parseInt(id)).then(async node => {
                     if (node) {
                         //console.log(node);
-                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+
+                        let active_tab;
+
+                        if (settings.open_bookmark_in_active_tab()) {
+                            let active_tabs = await browser.tabs.query({active: true, currentWindow: true});
+                            active_tab = e.button === 0 && active_tabs && active_tabs.length? active_tabs[0] : undefined;
+                        }
+
+                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node, tab: active_tab, preserveHistory: true});
                     }
                 });
             }

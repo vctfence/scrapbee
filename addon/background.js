@@ -12,7 +12,7 @@ import {
 import {settings} from "./settings.js";
 import {isSpecialPage, loadLocalResource, notifySpecialPage, readFile, showNotification, withIDBFile} from "./utils.js";
 
-export async function browseNode(node, external_tab) {
+export async function browseNode(node, external_tab, preserve_history) {
 
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
@@ -27,7 +27,7 @@ export async function browseNode(node, external_tab) {
             }
 
             return (external_tab
-                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": true})
+                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
                         : browser.tabs.create({"url": url}));
 
         case NODE_TYPE_ARCHIVE:
@@ -105,7 +105,7 @@ export async function browseNode(node, external_tab) {
                 browser.tabs.onUpdated.addListener(listener);
 
                 let rdf_tab = await (external_tab
-                                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": true})
+                                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
                                         : browser.tabs.create({"url": url}));
                 return;
             }
@@ -126,7 +126,7 @@ export async function browseNode(node, external_tab) {
                     let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
 
                     return (external_tab
-                                ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": true})
+                                ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": !preserve_history})
                                 : browser.tabs.create({"url": archiveURL}))
                             .then(tab => {
                                 let listener = (id, changed, tab) => {
@@ -150,7 +150,7 @@ export async function browseNode(node, external_tab) {
         case NODE_TYPE_NOTES:
             return (external_tab
                         ? browser.tabs.update(external_tab.id, {"url": "notes.html#" + node.uuid + ":" + node.id,
-                                                                "loadReplace": true})
+                                                                "loadReplace": !preserve_history})
                         : browser.tabs.create({"url": "notes.html#" + node.uuid + ":" + node.id}));
     }
 }
@@ -185,7 +185,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             return backend.reorderNodes(message.positions);
 
         case "BROWSE_NODE":
-            browseNode(message.node, message.tab);
+            browseNode(message.node, message.tab, message.preserveHistory);
             break;
 
         case "BROWSE_NOTES":
