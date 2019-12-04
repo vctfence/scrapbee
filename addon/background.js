@@ -195,6 +195,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 : browser.tabs.create({"url": "notes.html#" + message.uuid + ":" + message.id}));
             break;
 
+        case "BROWSE_ORG_REFERENCE":
+            location.href = message.link;
+            break;
+
         case "IMPORT_FILE":
             shelf = isSpecialShelf(message.file_name)? message.file_name.toLocaleLowerCase(): message.file_name;
 

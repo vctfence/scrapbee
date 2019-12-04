@@ -20,10 +20,10 @@ Paragraphs are separated by at least one empty line.
 
 *** Formatting
 
-*bold* 
-/italic/ 
-_underlined_ 
-+strikethrough+ 
+*bold*
+/italic/
+_underlined_
++strikethrough+
 =monospaced=
 and ~code~
 
@@ -46,7 +46,7 @@ http://orgmode.org - link without a description.
     1. Numbered item.
     2. Another item.
 - [ ] Item yet to be done.
-- [X] Item that has been done.  
+- [X] Item that has been done.
 
 
 *** Definition List
@@ -86,9 +86,9 @@ o.attr = "string";
 
 *** Verbatim text
 
-: Text to be displayed verbatim (as-is), without markup 
-: (*bold* does not change font), e.g., for source code. 
-: Line breaks are respected. 
+: Text to be displayed verbatim (as-is), without markup
+: (*bold* does not change font), e.g., for source code.
+: Line breaks are respected.
 
 
 *** Table
@@ -103,13 +103,13 @@ o.attr = "string";
 
 *** Images
 
-Referenced image: 
+Referenced image:
 
 [[https://upload.wikimedia.org/wikipedia/commons/6/60/Cat_silhouette.svg][Cat silhouette]]
 
 From data URL:
 
-[[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC][Cat silhouette]] 
+[[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC][Cat silhouette]]
 `;
 
 let ORG_DEFAULT_STYLE = `#+CSS: .notes {width: 600px;} p {text-align: justify;}`;
@@ -130,8 +130,8 @@ Paragraphs are separated by at least one empty line.
 ### Formatting
 
 **bold** __text__
-*italic* _text_ 
-~~strikethrough~~ 
+*italic* _text_
+~~strikethrough~~
 and \`monospaced\`
 
 A horizontal line, fill-width across the page:
@@ -155,7 +155,7 @@ http://orgmode.org - link without a description.
     1. Third item.
 
 
-### Code 
+### Code
 
 Inline \`code\`
 
@@ -190,7 +190,7 @@ To be or not to be, that is the question.
 
 ### Images
 
-Referenced image: 
+Referenced image:
 
 ![Cat silhouette](https://upload.wikimedia.org/wikipedia/commons/6/60/Cat_silhouette.svg)
 
@@ -296,6 +296,11 @@ window.onload = function() {
         }
     }
 
+    $("#notes").on("click", "a[href^='org-protocol://']", e => {
+        e.preventDefault();
+        browser.runtime.sendMessage({type: "BROWSE_ORG_REFERENCE", link: e.target.href});
+    });
+
     $("#tabbar a").on("click", e => {
         e.preventDefault();
 
@@ -351,7 +356,7 @@ window.onload = function() {
     $("#editor").on("blur", e => {
         if (node_id) {
             backend.storeNotes(node_id, e.target.value, format);
-            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value})
+            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
         }
     });
 
