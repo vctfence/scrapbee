@@ -877,6 +877,8 @@ class BookmarkTree {
                                     tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
                                 }
                                 tree.redraw_node(ctx_node, true, false, true);
+
+                                $("#" + live_data.id).prop('title', `${live_data.name}\x0A${live_data.uri}`);
                             });
                         });
                     }
