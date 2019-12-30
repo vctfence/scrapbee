@@ -538,7 +538,7 @@ export class CloudBackend {
 
         return this.withCloudDB(async db => {
             for (let n of nodes) {
-                await db.updateNode({uuid: n.uuid, pos: n.pos});
+                await db.updateNode({uuid: n.uuid, pos: n.pos}, true);
             }
         }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }

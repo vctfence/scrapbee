@@ -612,7 +612,7 @@ export class JSONStorage {
         node = Object.assign({}, node);
 
         for (let key of Object.keys(node)) {
-            if (!NODE_PROPERTIES.some(k => k === key))
+            if (!node[key] || !NODE_PROPERTIES.some(k => k === key))
                 delete node[key];
         }
 
@@ -672,13 +672,18 @@ export class JSONStorage {
         return this.objects.filter(n => ids.some(id => id == n.id));
     }
 
-    async updateNode(node) {
+    async updateNode(node, update_pos = false) {
         if (node) {
-            //node = this._sanitizeNode(node);
-            node = Object.assign({}, node);
+            node = this._sanitizeNode(node);
 
-            //let id = node.id;
             delete node.id;
+            delete node.parent_id;
+            delete node.external;
+            delete node.external_id;
+
+            if (!update_pos)
+                delete node.pos;
+
             let existing = this.objects.find(n => n.uuid === node.uuid);
 
             if (existing) {
