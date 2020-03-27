@@ -29,7 +29,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 ### Project status
 
 Currently the project is considered permanent alpha: be prepared for breaking changes, devastating bugs and 
-groundbreaking experiments. Please, backup your data often.
+groundbreaking experiments. Please, backup your Firefox profile often.
 
 ### Objectives
 
