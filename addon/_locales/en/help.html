@@ -7,10 +7,14 @@
         padding: 0 20%;
     }
 
-    #help-content p {
-        padding: 0 20px;
+    #help-content p, #help-content li {
+        padding: 0 28px;
         text-align: justify;
         font-size: 12pt;
+    }
+
+    #help-content li {
+        padding-bottom: 8px;
     }
 
     code {
@@ -24,25 +28,33 @@
 
     #help-content h2 {
         padding-top: 20px;
+        font-size: 22px;
     }
 
     #help-content h3 {
-        font-size: 16px;
+        font-size: 18px;
         padding: 0 20px;
         padding-top: 20px;
     }
 
     #help-content h4 {
         font-size: 14px;
+        padding-left: 26px;
     }
+
 </style>
 
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
-    <p>Scrapyard is a Firefox extension where you can store and organize bookmarks, page fragments or complete documents
+    <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page fragments or complete documents
         in unlimited quantities. By utilizing browser local storage Scrapyard does not require
         external tools to operate and allows to import/export data in
         <a href="https://orgmode.org" target="_blank">org-mode</a> or <a href="https://www.json.org/">JSON</a> formats.</p>
+
+    <p>
+        Scrapyard sidebar could be opened with a <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
+        customizable</a> keyboard shortcut <code>Alt+Y</code>.
+    </p>
 
     <h2>General features</h2>
 
@@ -50,7 +62,9 @@
     <p>
         To capture a web-page or its fragment, select the page part you want to archive, open Scrapyard popup window
         by clicking the icon on the browser toolbar, choose the necessary destination folder and press the "Bookmark"
-        or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button stores the current selection, the whole page (if there is no active selection) or the whole document, if the opened link is not a web-page. <br/><br/>
+        or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button stores
+        the current selection, the whole page (if there is no active selection) or the whole document, if the opened
+        link is not a web-page. <br/><br/>
 
     <div style="text-align: center">
         <img src="_locales/en/images/capture-popup.png">
@@ -132,7 +146,7 @@
         <img src="_locales/en/images/notes.png">
     </p>
 
-    <h4>Cross-references</h4>
+    <h4>Referencing to a bookmark or archive</h4>
     <p>To make a reference to a Scrapyard bookmark or archive from the note markup create a link with the following URL:
         <b><code>ext+scrapyard://&lt;BOOKMARK UUID&gt;</code></b>, for example:</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
@@ -149,6 +163,30 @@
     </p>
 
     <h2>Advanced features</h2>
+
+    <h3>Importing RDF archives of the legacy ScrapBook extension</h3>
+    <p>
+        Steps that are necessary to import a ScrapBook RDF file into Scrapyard:
+        <ol>
+            <li>Open Scrapyard settings and navigate to the "Import RDF" tab.</li>
+            <li>Specify the new shelf name where the archive should be imported.</li>
+            <li>Specify the full absolute path to the <code>scrapbook.rdf</code> file being imported.
+                On Linux it is only possible to import RDF files exposed through HTTP, so an URL should be used instead.</li>
+            <li>Check the "Quick import" flag if you want to import bookmark and directory structure only. All archive
+            files will be left on disk in this case.</li>
+        </ol>
+    </p>
+
+    <h4>Notes</h4>
+    <p>To import RDF on Linux you need to set up a web server, for example <a href="https://www.lighttpd.net/" target="_blank">lighttpd</a>,
+        that will make the root <b>scrapbook.rdf</b> file along with all saved pages from the <b>data</b> directory available through HTTP.
+        Then you need to specify an URL pointing to the <b>scrabook.rdf</b>, for example: <b>http://localhost/scrabook.rdf</b>.
+    </p>
+
+    <p>By default, all ScrapBook archives are imported into Firefox local storage which makes them readily available
+        in Scrapyard. If for some reason you need to leave them on disk, use the "Quick import" option, although access
+        time to the archived pages will be greater in this case. Quick import works on Windows only.
+    </p>
 
     <h3>Natural Language Interface (optional)</h3>
     <p>

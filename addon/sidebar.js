@@ -116,7 +116,7 @@ function performExport(context, tree) {
     $("#shelf-menu-button").attr("src", "icons/grid.svg");
 
     return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
-            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+        $("#shelf-menu-button").attr("src", "icons/menu.svg");
     }).catch(e => {
         console.log(e.message);
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
@@ -146,7 +146,7 @@ function loadShelves(context, tree, synchronize = true) {
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
             settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
-            }</option>
+        }</option>
         `);
 
         if (settings.cloud_enabled()) {
@@ -213,7 +213,7 @@ function loadShelves(context, tree, synchronize = true) {
     });
 }
 
-function switchShelf(context, tree, shelf_id, syncronize = true) {
+function switchShelf(context, tree, shelf_id, synchronize = true) {
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
     settings.last_shelf(shelf_id);
@@ -241,7 +241,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
         else if (shelf_id == EVERYTHING_SHELF) {
             return backend.listShelfNodes(EVERYTHING).then(nodes => {
                 tree.update(nodes, true);
-                if (syncronize && settings.cloud_enabled()) {
+                if (synchronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
                 }
             });
@@ -249,7 +249,7 @@ function switchShelf(context, tree, shelf_id, syncronize = true) {
         else if (shelf_id == CLOUD_SHELF_ID) {
             return backend.listShelfNodes(path).then(nodes => {
                 tree.update(nodes);
-                if (syncronize && settings.cloud_enabled()) {
+                if (synchronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
                 }
             });
@@ -333,20 +333,22 @@ window.onload = function () {
         showDlg("prompt", {caption: "Create Shelf", label: "Name"}).then(data => {
             let name;
             if (name = data.title) {
-               // let existingOption = $(`#shelfList option:contains("${name}")`);
+                // let existingOption = $(`#shelfList option:contains("${name}")`);
                 let selectedOption = $(`#shelfList option[value='${shelf_list.val()}']`);
 
                 if (!isSpecialShelf(name)) {
                     backend.createGroup(null, name, NODE_TYPE_SHELF).then(shelf => {
                         if (shelf) {
-                            selectedOption.removeAttr("selected");
-                            $("<option></option>").appendTo(shelf_list)
-                                .html(shelf.name)
-                                .attr("value", shelf.id)
-                                .attr("selected", true);
-
-                            shelf_list.selectric('refresh');
-                            switchShelf(context, tree, shelf.id);
+                            settings.last_shelf(shelf.id);
+                            // selectedOption.removeAttr("selected");
+                            // $("<option></option>").appendTo(shelf_list)
+                            //     .html(shelf.name)
+                            //     .attr("value", shelf.id)
+                            //     .attr("selected", true);
+                            //
+                            // shelf_list.selectric('refresh');
+                            //switchShelf(context, tree, shelf.id);
+                            loadShelves(context, tree);
                             invalidateCompletion();
                         }
                     });
@@ -369,12 +371,12 @@ window.onload = function () {
                 let newName;
                 if (newName = data.title) {
                     backend.renameGroup(id, newName).then(() => {
-                            selectedOption.text(newName);
-                            tree.renameRoot(newName)
+                        selectedOption.text(newName);
+                        tree.renameRoot(newName)
 
-                            shelf_list.selectric('refresh');
-                            invalidateCompletion()
-                        });
+                        shelf_list.selectric('refresh');
+                        invalidateCompletion()
+                    });
                 }
             });
         } else {
@@ -564,7 +566,7 @@ window.onload = function () {
 
     $(document).on("click", function(e) {
         if (!event.target.matches("#shelf-menu-button")
-               && !event.target.matches("#search-mode-switch"))
+            && !event.target.matches("#search-mode-switch"))
             $(".simple-menu").hide();
     });
 
@@ -621,8 +623,8 @@ window.onload = function () {
             }
         }
         else if (request.type === "EXTERNAL_NODES_READY"
-                    || request.type === "EXTERNAL_NODE_UPDATED"
-                    || request.type === "EXTERNAL_NODE_REMOVED") {
+            || request.type === "EXTERNAL_NODE_UPDATED"
+            || request.type === "EXTERNAL_NODE_REMOVED") {
             let last_shelf = settings.last_shelf();
 
             if (last_shelf == EVERYTHING_SHELF || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID) {
@@ -703,7 +705,5 @@ window.onload = function () {
         loadShelves(context, tree);
     });
 };
-
-
 
 console.log("==> sidebar.js loaded");

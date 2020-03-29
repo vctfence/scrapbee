@@ -1,8 +1,8 @@
 {
-    "version": "0.4.3",
+    "version": "0.4.4",
     "applications": {
         "gecko": {
-            "id": "scrapyard-we@firefox",
+            "id": "scrapyard@firefox",
             "strict_min_version": "60.0"
         }
     },
@@ -35,6 +35,14 @@
         "default_title": "Scrapyard",
         "default_panel": "sidebar.html",
         "default_icon": "icons/scrapyard.svg"
+    },
+    "commands": {
+        "_execute_sidebar_action": {
+            "suggested_key": {
+                "default": "Alt+Y"
+            },
+            "description": "Open Scrapyard in sidebar"
+        }
     },
     "background": {
         "page": "background.html"
