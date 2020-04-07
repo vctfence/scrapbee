@@ -347,36 +347,65 @@
         <div id="importrdf">
             <h2>Import Scrapbook Files</h2>
             <div id="rdf-import-options">
-                <table cellspacing="" cellpadding="" border="0" style="margin-bottom: 5px;">
-                    <tr>
-                        <td>Shelf name:</td>
-                        <td><input id="rdf-shelf-name" type="text" size="25" value=""/></td>
-                    </tr>
-                    <tr>
-                        <td>Path to RDF file:&nbsp;&nbsp;</td>
-                        <td>
-                            <input id="rdf-import-path" type="text" size="80" value=""/>
-                            <i class="help-mark"></i>
-                            <span class="tips hide">An absolute path is required, e.g.: <b>d:/notes/scrapbook.rdf</b><br>
-                            See help for more details for importing on Linux.</b></span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Processing threads:</td>
-                        <td style="display: flex"><input id="rdf-import-threads" type="number" min="1" value="5"/>
-                            <div id="rdf-import-quick-div"><input id="rdf-import-quick" type="checkbox"/><label for="rdf-import-quick"
-                                                        >Quick import</label>
-                                <i class="help-mark"></i>
-                                <span class="tips hide">Leave archived files on disk, read-only.</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Status:&nbsp;&nbsp;</td>
-                        <td id="rdf-progress-row">ready</td>
-                    </tr>
-                </table>
-                <input type="button" class="blue-button" id="start-rdf-import" value="Import">
+                <div style="width: max-content">
+                    <table cellspacing="" cellpadding="" border="0" style="margin-bottom: 5px;">
+                        <tr>
+                            <td>Shelf name:</td>
+                            <td><input id="rdf-shelf-name" type="text" size="60" value="Imported RDF"/></td>
+                        </tr>
+                        <tr>
+                            <td>URL of the RDF file:&nbsp;&nbsp;</td>
+                            <td>
+                                <input id="rdf-import-path" type="text" size="60" value="http://localhost/scrapbook.rdf"/>
+                                <!--i class="help-mark"></i>
+                                <span class="tips hide">For example: <b>http://localhost/scrapbook.rdf</b></span-->
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Processing threads:</td>
+                            <td style="display: flex"><input id="rdf-import-threads" type="number" min="1" value="5"/>
+                                <!--div id="rdf-import-quick-div"><input id="rdf-import-quick" type="checkbox"/><label for="rdf-import-quick"
+                                                            >Quick import</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">Leave archived files on disk, read-only.</span>
+                                </div-->
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Status:&nbsp;&nbsp;</td>
+                            <td id="rdf-progress-row">ready</td>
+                        </tr>
+                    </table>
+                    <input type="button" class="blue-button" id="start-rdf-import" value="Import">
+                </div>
+                <br><br>
+                <p>Starting from Firefox 74 there is no easy way to import legacy ScrapBook RDF archives. The current process requires
+                    familiarity with <a href="https://en.wikipedia.org/wiki/Command-line_interface" target="_blank">command prompt</a>.</p>
+                <p>
+                <h3>The following steps are required to import a legacy RDF archive on any OS:</h3>
+                    <ol>
+                        <li>
+                            Install <a href="http://python.org" target="_blank">Python</a> version 3+.
+                        </li>
+                        <li>
+                            Open the command prompt.
+                        </li>
+                        <li>
+                            Using the <b>cd</b> command navigate to the folder that contains <b>scrapbook.rdf</b>
+                            file to be imported.
+                        </li>
+                        <li>
+                            From this folder execute the following command: <b>python -m http.server 80</b> which
+                            will start a HTTP server on the port 80 with the <b>scrapbook.rdf</b> at its root.
+                        </li>
+                        <li>
+                            Fill in the name of the Scrapyard shelf where the archive should be imported and press the "Import" button.
+                        </li>
+                        <li>
+                            Close the command prompt when the import is finished.
+                        </li>
+                    </ol>
+                </p>
             </div>
             <div id="invalid-imports-container" class="rdf-link-info">
                 Failed imports (try to copy links into the URL-bar and capture them manually):
