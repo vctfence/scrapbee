@@ -215,22 +215,51 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
             let format = settings.export_format()? settings.export_format(): "json";
             let exportf = format === "json"? exportJSON: exportOrg;
-            let idb = await withIDBFile(`export/${new Date().getTime()}/${shelf}.${format}`, "readwrite",
-                async (handle, file, store) =>
-                    exportf(handle, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
-                        settings.compress_export()));
+            let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
 
-            let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
-            let url = URL.createObjectURL(await idb.file.getFile());
-            let download = await browser.downloads.download({url: url, filename: file_name, saveAs: false});
+            // currently the entire exported file is stored in memory
+
+            let file = {
+                content: [],
+                append: function(text) {
+                    this.content.push(text);
+                }
+            };
+
+            await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
+                settings.compress_export());
+
+            let blob = new Blob(file.content, { type : "text/plain" });
+            let url = URL.createObjectURL(blob);
+
+            let download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
             let download_listener = delta => {
                 if (delta.id === download && delta.state && delta.state.current === "complete") {
                     browser.downloads.onChanged.removeListener(download_listener);
                     URL.revokeObjectURL(url);
-                    idb.store.clear();
                 }
             };
             browser.downloads.onChanged.addListener(download_listener);
+
+            // when IDBMutableFile had getFile method, it was possible to efficiently export file to local storage:
+
+            // let idb = await withIDBFile(`export/${new Date().getTime()}/${shelf}.${format}`, "readwrite",
+            //     async (handle, file, store) => {
+            //         exportf(handle, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
+            //             settings.compress_export());
+            // });
+            //
+            // let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
+            // let url = URL.createObjectURL(await idb.file.getFile());
+            // let download = await browser.downloads.download({url: url, filename: file_name, saveAs: false});
+            // let download_listener = delta => {
+            //     if (delta.id === download && delta.state && delta.state.current === "complete") {
+            //         browser.downloads.onChanged.removeListener(download_listener);
+            //         URL.revokeObjectURL(url);
+            //         idb.store.clear();
+            //     }
+            // };
+            // browser.downloads.onChanged.addListener(download_listener);
             break;
 
         case "UI_LOCK_GET":

@@ -166,7 +166,7 @@
 
     <h3>Importing RDF archives of the legacy ScrapBook extension</h3>
     <p>
-        Steps that are necessary to import a ScrapBook RDF file into Scrapyard:
+        The following steps that are necessary to import a ScrapBook RDF file into Scrapyard:
         <ol>
             <li>Open Scrapyard settings and navigate to the "Import RDF" tab.</li>
             <li>Specify the new shelf name where the archive should be imported.</li>
@@ -185,8 +185,12 @@
 
     <p>By default, all ScrapBook archives are imported into Firefox local storage which makes them readily available
         in Scrapyard. If for some reason you need to leave them on disk, use the "Quick import" option, although access
-        time to the archived pages will be greater in this case. Quick import works on Windows only.
+        time to the archived pages will be greater in this case. It is not possible to add new items into the
+        shelf created by quick import. Quick import works on Windows only.
     </p>
+
+    <p>RDF import may fail due to low disk space which imposes Firefox restrictions on the local storage or due to
+        excessive amount of items, which may overload Firefox memory garbage collector.</p>
 
     <h3>Natural Language Interface (optional)</h3>
     <p>
