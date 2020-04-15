@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../libs/jquery-3.3.1.js"></script>
+    <script type="module" src="../proto.js"></script>
+    <script type="module" src="browser_action.js"></script>
+    <style type="text/css" media="screen">
+     input[type=button]{
+       padding:5px 20px;
+       appearance: none;
+       -moz-appearance: none;
+       border-radius:5px;
+       border:1px solid;
+       background:#079;
+       color:#fff;
+       cursor:pointer;
+       display:block;
+       width:100%;
+     }
+     input[type=button]:disabled{
+       background:#555;
+     }
+    </style>
+  </head>
+  <body>
+    <input type="button" id="btnSetting" value="{Setting}..." />
+    <input type="button" id="btnOpenInSidebar" value="{OPEN_IN_SIDEBAR}" />
+    <input type="button" id="btnCapturePage" value="{CapturePage}" />
+    <input type="button" id="btnCaptureSelection" value="{CaptureSelection}" />
+    <input type="button" id="btnCaptureUrl" value="{CaptureUrl}" />
+    <input type="button" id="btnCaptureAdv" value="{CaptureAdvance}" />
+  </body>
+</html>

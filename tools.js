@@ -1,31 +1,26 @@
-import {BookTree} from "./tree.js";
-import {settings} from "./settings.js"
-import {SimpleDropdown} from "./control.js"
-import {genItemId} from "./utils.js"
+import {BookTree} from "./tree.js";;
+import {settings} from "./settings.js";
+import {SimpleDropdown} from "./control.js";
+import {genItemId, refreshTree} from "./utils.js";
 
 function initMover(){
     var mulitCheck;
     $("#multi-select").change(function(){
         mulitCheck = this.checked;
-        
         if(tree0)
-            tree0.showCheckBoxes(this.checked)
+            tree0.showCheckBoxes(this.checked);
         if(tree1)
-            tree1.showCheckBoxes(this.checked)
+            tree1.showCheckBoxes(this.checked);
     });
     var saveingLocked = false;
     var tree0, tree1;
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if(request.type == 'FILE_CONTENT_CHANGED'){
 	    if(request.filename == tree0.rdf && request.srcToken != tree0.unique_id){
-                var $box = $("#tree0");
-                // if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
-                loadXml(tree0.rdf, $box, 0)
+                refresh(tree0);
 	    }
             if(request.filename == tree1.rdf && request.srcToken != tree1.unique_id){
-                var $box = $("#tree1");
-                // if($box.is(":visible"))alert("{SAME_RDF_MODIFIED}".translate());
-                loadXml(tree1.rdf, $box, 1)
+                refresh(tree1);
             }
         }
     });
@@ -36,25 +31,15 @@ function initMover(){
         });
     });
     function refresh(tree){
-        return new Promise((resolve, reject) => {
-            var treeId = tree == tree0 ? 0 : 1;
-            var expended_ids = [];
-            tree.$top_container.find(".item.folder.expended").each(function(){
-                expended_ids.push(this.id)
-            });
-            loadXml(tree.rdf, $("#tree" + treeId), treeId).then(() => {
-                expended_ids.forEach((id) => {
-                    tree.toggleFolder(tree.getItemById(id), true)
-                    tree.showCheckBoxes(mulitCheck);
-                });
-                resolve();
-            });
-        });
+        var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
+        $tree.next(".path-box").html("/");
+        refreshTree(tree, loadXml, tree.rdf, $tree, tree == tree0 ? 0 : 1);
     }
     $(".delete-button").each(function(i){
         $(this).click(async function(){
             var tree = i == 0 ? tree0 : tree1;
             var other = i == 0 ? tree1 : tree0;
+            var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
             var proceed = false;
             function cfm(){
                 proceed = proceed || confirm("{ConfirmDeleteItem}".translate());
@@ -76,6 +61,7 @@ function initMover(){
             }
             if(proceed){
                 await tree.saveXml();
+                $tree.next(".path-box").html("/");
             }
             if(tree0.rdf == tree1.rdf){
                 refresh(other);
@@ -92,7 +78,7 @@ function initMover(){
         var $foc = srcTree.getFocusedItem();
         // var [type, introNode] = srcTree.getLiNodeType(liXmlNode)
         /** get rdf item id (none folder)*/
-        var $foc_dest = destTree.getFocusedItem()
+        var $foc_dest = destTree.getFocusedItem();
         var ref_id;
         if($foc_dest.length && !$foc_dest.hasClass("folder")){
             ref_id = $foc_dest.attr("id");
@@ -107,7 +93,7 @@ function initMover(){
             srcTree.getCheckedItemsInfo(1).forEach(function(item){
                 if(item.checkLevel == 0){
                     topNodes.push(item.node);
-                    topInfos.push({id:item.id, type:item.type, domElement:item.domElement})
+                    topInfos.push({id:item.id, type:item.type, domElement:item.domElement});
                 }
             });
             if(!topNodes.length)
@@ -115,12 +101,12 @@ function initMover(){
         }else{
             var id = $foc.attr("id");
             var type = srcTree.getItemType($foc);
-            var domElement = $foc[0]
+            var domElement = $foc[0];
             if(!id)
                 return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
             var liXmlNode = srcTree.getItemXmlNode(id);
             topNodes.push(liXmlNode);
-            topInfos.push({id, type, domElement})
+            topInfos.push({id, type, domElement});
         }
         /** operation validate */
         if($foc_dest.length && srcTree.rdf == destTree.rdf && moveType == "FS_MOVE"){
@@ -134,14 +120,13 @@ function initMover(){
                             }     
                         }else{ /** rdf = descendant of src folder, means move src folder as its descendant */
                             if($foc_dest.closest($(`#${r.id}`).next(".folder-content")).length){
-                                console.log(r.id)
                                 throw Error("{ERROR_MOVE_FOLER_INTO_ITSELF}".translate());
                             }
                         }
                     }
                 });
             }catch(e){
-                return alert(e.message)
+                return alert(e.message);
             }
         }
         /** show  waiting dialog */
@@ -156,7 +141,7 @@ function initMover(){
                     var src = srcTree.rdfPath + 'data/' + item.id;
                     var dest = destTree.rdfPath + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).then((response) => {
-                        var icon = item.icon.replace(item.id, id)
+                        var icon = item.icon.replace(item.id, id);
                         destTree.createLink($dest, item.type, id, rid, item.source, icon, item.title, false, true);
                         resolve()
                     }).catch((e) => {
@@ -164,8 +149,8 @@ function initMover(){
                     });
                 }else if(item.nodeType == "seq"){
                     destTree.createFolder($dest, id, rid, item.title, true);
-                    parents[item.level+1]=(destTree.getItemById(id).next(".folder-content"))
-                    resolve()
+                    parents[item.level+1]=(destTree.getItemById(id).next(".folder-content"));
+                    resolve();
                 }else if(item.nodeType == "separator"){
                     destTree.createSeparator($dest, id, rid, true);
                     resolve();
@@ -196,10 +181,10 @@ function initMover(){
     });
     var selected_rdfs = [];
     $(".drop-box").each(function(i){
-        var $label = $(this).find(".label") 
+        var $label = $(this).find(".label");
         var drop = new SimpleDropdown(this, [], false);
         var paths = settings.getRdfPaths();
-        drop.clear()
+        drop.clear();
         drop.onchange=function(title, value){
             selected_rdfs[i] = value;
             var $box = $("#tree" + i);
@@ -210,7 +195,7 @@ function initMover(){
                     loadXml(value, $box, i);
                     $("#node-mover .tool-button").prop("disabled", !selected_rdfs[1]);
                 }
-            })
+            });
             $box.next(".path-box").html("/");
             $("#node-mover .tool-button").prop("disabled", true);
         };
@@ -226,16 +211,16 @@ function initMover(){
         return new Promise((resolve, reject) => {
             var xmlhttp=new XMLHttpRequest();
             xmlhttp.onload = async function(r) {
-	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: $("#multi-select").is(":checked")})
+	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: $("#multi-select").is(":checked")});
                 if(treeId == 0)
-                    tree0 = currTree
+                    tree0 = currTree;
                 else if(treeId == 1)
-                    tree1 = currTree
+                    tree1 = currTree;
 	        await currTree.renderTree($box);
 	        currTree.onChooseItem=function(itemId){
-                    var t = currTree.getItemPath(currTree.getItemById(itemId))
-                    $box.next(".path-box").html(`<bdi>${t}</bdi>`)
-	        }
+                    var t = currTree.getItemPath(currTree.getItemById(itemId));
+                    $box.next(".path-box").html(`<bdi>${t}</bdi>`);
+	        };
                 currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {
                         if(!saveingLocked){
@@ -243,14 +228,14 @@ function initMover(){
                                 resolve();
                             });
                         }else{
-                            reject()
+                            reject();
                         }
                     });
-	        }
-                resolve();
+	        };
+                resolve(currTree);
             };
             xmlhttp.onerror = function(err) {
-	        log.info(`load ${rdf} failed, ${err}`)
+	        log.info(`load ${rdf} failed, ${err}`);
             };
             xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
             xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
@@ -262,4 +247,4 @@ function initMover(){
         });
     }
 }
-export {initMover}
+export {initMover};

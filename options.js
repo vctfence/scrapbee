@@ -1,11 +1,11 @@
-import {settings, global} from "./settings.js"
-import {log} from "./message.js"
-import {initMover} from "./tools.js"
-import {gtev} from "./utils.js"
+import {settings, global} from "./settings.js";
+import {log} from "./message.js";
+import {initMover} from "./tools.js";
+import {gtev} from "./utils.js";
 
 function getAsync(file) {
     var r;
-    var z, i, elmnt, file, xhttp;
+    var z, i, elmnt, xhttp;
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4) {
@@ -14,7 +14,7 @@ function getAsync(file) {
             }
             if (this.status == 404) {}
         }
-    }
+    };
     xhttp.open("GET", file, false); // async
     xhttp.send();
     return r;
@@ -67,11 +67,12 @@ function showConfiguration(){
             settings.set('focused_fg_color', $("input[name=focused_fg_color]").val().replace("#", ""), true);
             var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
             settings.set('font_size', size, true);
+            settings.set('font_name', $("input[name=font_name]").val(), true);
             settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
-            alert("Save failed")
+            alert("Save failed");
         }
     });
     var paths = settings.getRdfPaths();
@@ -97,6 +98,9 @@ function showConfiguration(){
     });
     jscolor.installByClassName("jscolor");
     $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
+
+    $("input[name=font_name]").val(settings.font_name);
+    
     $("input[name=line_spacing]").val(settings.line_spacing).trigger("input");
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
@@ -105,7 +109,7 @@ window.onload=async function(){
     await settings.loadFromStorage();
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
-    if(["en", "zh-CN", "fr"].indexOf(ui) > -1){
+    if(["en", "zh-CN", "fr"].indexOf(ui) > -1) {
         lang = ui;
     }
     document.title = document.title.translate();
@@ -114,7 +118,7 @@ window.onload=async function(){
     /** export / import */
     $("input[name='export']").click(async function(){
         var json = await settings.getJson();
-        downloadText(JSON.stringify(json, null, 2), "scrapbee_configure.json", null, true)
+        downloadText(JSON.stringify(json, null, 2), "scrapbee_configure.json", null, true);
     });
     $("input[name='import']").click(async function(){
         document.getElementById("import_file").onchange=function(){
@@ -131,7 +135,7 @@ window.onload=async function(){
                 }
             };
             fileReader.readAsText(fileToLoad, "UTF-8");
-        }
+        };
         document.getElementById("import_file").click();
     });
     /** mover */
@@ -144,13 +148,13 @@ window.onload=async function(){
         var parentOffset = $(this).parent().offset(); 
         var relX = e.pageX - parentOffset.left;
         var relY = e.pageY - parentOffset.top;
-        $(this).next(".tips.hide").show().css({left: relX+"px", top: relY +"px"})
+        $(this).next(".tips.hide").show().css({left: relX+"px", top: relY +"px"});
     }, function(){
         $(this).next(".tips.hide").hide();
     });
     /** more donation */
     if($.trim($("#divMoreDonateWay>div").text())){
-        $("#divMoreDonateWay").show()
+        $("#divMoreDonateWay").show();
         $("#divMoreDonateWay>a").click(function(){
             $("#divMoreDonateWay>div").toggle();
             return false;
@@ -166,30 +170,34 @@ window.onload=async function(){
     }
     function applyArea(){
         $(".div-area").hide();
-        $("a.left-index").removeClass("focus")
-        var m;
-        if(m=location.href.match(/#(\w+)$/)){
+        $("a.left-index").removeClass("focus");
+        var m = location.href.match(/#(\w+)$/);
+        if(m){
             $("#div-"+m[1]).show();
-            $("a.left-index[href='#" + m[1] + "']").addClass("focus")
+            $("a.left-index[href='#" + m[1] + "']").addClass("focus");
         }else{
             $("#div-configure").show();
-            $("a.left-index[href='#configure']").addClass("focus")
+            $("a.left-index[href='#configure']").addClass("focus");
         }
     }
     window.onhashchange=()=>applyArea();
-    applyArea()
+    applyArea();
+
     $("#donate").click(()=>window.open('http://PayPal.me/VFence', '_blank'));
     $("#btnDownloadBackend").click(function(){
         function Next(){
             const extRoot = "moz-extension://" + global.extension_id;
             // var binDir = extRoot + "/bin/"
-            var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/v1.7.1/";
-            // or -> "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/"
+            // var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/v1.7.1/";
+            var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/";
             var src_exec = "scrapbee_backend";
-            if(global.platform=="mac")
-                src_exec += "_mac"
-            else if(global.platform=="linux")
-                src_exec += "_lnx"
+            if(global.platform_os == "mac")
+                src_exec += "_mac";
+            else if(global.platform_os == "linux")
+                src_exec += "_lnx";
+            if(global.platform_arch == "x86-64"){
+                src_exec += "_64"; 
+            }
             src_exec += global.platform=="windows"?".exe":"";
             var dest_exec = "scrapbee_backend" + (global.platform=="windows"?".exe":"");
             /** download backend executable */
@@ -201,9 +209,9 @@ window.onload=async function(){
                                 "description":"Scrapbee backend",
                                 "name":"scrapbee_backend",
                                 "path":filename, /** path to downloaded backend executable */
-                                "type":"stdio"}
+                                "type":"stdio"};
                     /*** download json */
-                    var jstr = JSON.stringify(json, null, 2)
+                    var jstr = JSON.stringify(json, null, 2);
                     downloadText(jstr, "scrapbee/scrapbee_backend.json", function(){
                         var download_path = filename.replace(/[^\\\/]*$/,"");
                         function done(){ /** download installation script done */
@@ -224,7 +232,7 @@ window.onload=async function(){
             });
         }
         $("#txtBackendPath").show();
-        $("#txtBackendPath").html("Downloading...") // todo: error output
+        $("#txtBackendPath").html("Downloading...");  // todo: error output
         setTimeout(Next, 1000);
     });
     function installBat(backend_path){
@@ -234,7 +242,7 @@ reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapbee_b
 reg delete "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /f\r
 reg add "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
 echo done\r
-pause`
+pause`;
     }
     function downloadFile(src, dest, callback){
         browser.downloads.download({
@@ -245,10 +253,10 @@ pause`
         }).then(function(id){
             var fn = function(downloadDelta){
                 if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
-                    callback && callback(id)
+                    if(callback)callback(id);
                     browser.downloads.onChanged.removeListener(fn);
                 }
-            }
+            };
             browser.downloads.onChanged.addListener(fn);
         }).catch(function (error) {
             $("#txtBackendPath").html("error: " + error);
@@ -265,11 +273,11 @@ pause`
         }).then(function(id){
             var fn = function(downloadDelta){
                 if(downloadDelta.id == id && (downloadDelta.state && downloadDelta.state.current == "complete")){
-                    callback && callback(id)
+                    if(callback)callback(id);
                     URL.revokeObjectURL(objectURL);
                     browser.downloads.onChanged.removeListener(fn);
                 }
-            }
+            };
             browser.downloads.onChanged.addListener(fn);
         }).catch(function (error) {
             $("#txtBackendPath").html("error: " + error);
@@ -296,4 +304,4 @@ pause`
             $line.addClass(item.logtype);
         });
     });
-}
+};

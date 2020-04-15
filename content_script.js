@@ -20,17 +20,17 @@ if(!window.scrapbee_injected){
             }
             ar[i] = v;
         });
-        return ar.join(', ')
+        return ar.join(', ');
     }
     var log = {
         info: function(){
-            log.sendLog("info", stringifyArgs(arguments))
+            log.sendLog("info", stringifyArgs(arguments));
         },
         error: function(){
-            log.sendLog("error", stringifyArgs(arguments))
+            log.sendLog("error", stringifyArgs(arguments));
         },
         warning: function(){
-            log.sendLog("warning", stringifyArgs(arguments))
+            log.sendLog("warning", stringifyArgs(arguments));
         },
         debug: function(){
             // log.sendLog("debug", stringifyArgs(arguments))
@@ -41,7 +41,7 @@ if(!window.scrapbee_injected){
         sendLog: function(type, content){
             browser.runtime.sendMessage({type:'LOG', logtype: type, content});
         }
-    }
+    };
     /* clone parent and all of the ancestors to root, return parent */
     function cloneParents(p){
         var pp, cc;
@@ -80,7 +80,7 @@ if(!window.scrapbee_injected){
             var notification = new Notification(msg, {tag:"scrapbee-tag"});
             notification.onshow = function () {
                 setTimeout(notification.close.bind(notification), 5000);
-            }
+            };
         }
         if (!("Notification" in window)) {
             //
@@ -99,8 +99,8 @@ if(!window.scrapbee_injected){
         separator = separator || '...';
         var sepLen = separator.length,
             charsToShow = strLen - sepLen,
-            frontChars = Math.ceil(charsToShow/2),
-            backChars = Math.floor(charsToShow/2);
+            frontChars = Math.ceil(charsToShow / 2),
+            backChars = Math.floor(charsToShow / 2);
         return fullStr.substr(0, frontChars) + 
             separator + 
             fullStr.substr(fullStr.length - backChars);
@@ -132,15 +132,15 @@ if(!window.scrapbee_injected){
                         }
                     }
                 }else{
-                    reject("no selection activated")
+                    reject("no selection activated");
                 }
             }else{
                 div.appendChild(document.documentElement.cloneNode(true));
             }
-            var __dlg = div.querySelector(".scrapbee-dlg-container")
+            var __dlg = div.querySelector(".scrapbee-dlg-container");
             if(__dlg) __dlg.remove();
             /** css */
-            var css=[]
+            var css = [];
             for(let sheet of document.styleSheets){
                 try{
                     var rule = sheet.rules || sheet.cssRules;
@@ -164,7 +164,7 @@ if(!window.scrapbee_injected){
             }
             /** resources */
             var res = [];
-            var distinct = {}
+            var distinct = {};
             div.childNodes.iterateAll(function(item){
                 if(item.nodeType == 1){
                     var el = new ScrapbeeElement(item).processResources();
@@ -177,11 +177,11 @@ if(!window.scrapbee_injected){
                 }
             });
             browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((icon_url) => {
-                if(icon_url && !res.find(item => {return item.type == "image" && item.filename == "favicon.ico"})){
+                if(icon_url && !res.find(item => {return item.type == "image" && item.filename == "favicon.ico";})){
                     res.push({type:"image", "url": location.origin + "/favicon.ico", filename:"favicon.ico"});
                 }
                 /*** add main css tag */
-                var mc = document.createElement("link")
+                var mc = document.createElement("link");
                 mc.rel="stylesheet";
                 mc.href="index.css";
                 mc.media="screen";
@@ -193,39 +193,46 @@ if(!window.scrapbee_injected){
                 var downloaded = 0;
                 Array.from(div.querySelectorAll("*[mark_remove='1']")).forEach(el => el.remove());
                 var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title, have_icon: !!icon_url};
-                function end(){
-                    dlgDownload.addRow("CSS", "index.css", "index.css", "<font style='color:#cc5500'>buffered</font>")
-                    dlgDownload.addRow("HTML", "index.html", "index.html", "<font style='color:#cc5500'>buffered</font>")
-                    resolve(result)
-                }
-                if(res.length){
-                    res.forEach(function(r, i){
-                        dlgDownload.addRow("", truncate(r.url, 32), "", "<font style='color:#cc5500'>downloading..</font>")
-                        downloadFile(r.url, function(b){
-                            var ext = getMainMimeExt(b.type) || "";
-                            r.saveas = r.filename || (r.hex+ext)
-                            if(b) r.blob = b;
-                            downloaded ++;
-                            dlgDownload.updateCell(i, 0, b.type)
-                            dlgDownload.updateCell(i, 2, r.saveas)
-                            if(b.type)
-                                dlgDownload.updateCell(i, 3, "<font style='color:#cc5500'>buffered</font>")
-                            else
-                                dlgDownload.hideRow(i);
-                            if(downloaded == res.length){
-                                end();
-                            }
-                        });
+                res.forEach(function(r, i){
+                    var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
+                    dlgDownload.addRow("", "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>", "", `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignor</span>`);
+                    var span = dlgDownload.getCell(i, 3).querySelector("span");
+                    span.onclick = function(e){ // ignor this resource (cancel downloading)
+                        downloaded ++;
+                        dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>canceled</font>");
+                        if(downloaded == res.length){
+                            resolve(result);
+                        }
+                    };
+                    downloadFile(r.url, function(b){
+                        var ext = getMainMimeExt(b.type) || "";
+                        r.saveas = r.filename || (r.hex + ext);
+                        if(b)
+                            r.blob = b;
+                        else{
+                            dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                        }
+                        downloaded ++;
+                        dlgDownload.updateCell(i, 0, b.type);
+                        dlgDownload.updateCell(i, 2, r.saveas);
+                        if(b.type)
+                            dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
+                        if(downloaded == res.length){
+                            resolve(result);
+                        }
                     });
-                }else{
-                    end();
+                });
+                dlgDownload.addRow("text/css", "index.css", "index.css", "<font style='color:#005500'>buffered</font>");
+                dlgDownload.addRow("text/html", "index.html", "index.html", "<font style='color:#005500'>buffered</font>");
+                if(!res.length){
+                    resolve(result);
                 }
             });
         });
     };
     /* message listener */
     function getAllCssLoaded(){
-        var css=[]
+        var css = [];
         for(let sheet of document.styleSheets){
             try{
                 for (let rule of sheet.cssRules){
@@ -236,7 +243,7 @@ if(!window.scrapbee_injected){
         return css.join("\n");
     }
     function getImages(){
-        var images=[]
+        var images = [];
         for(let image of document.images){
             images.push(image.src);
         }
@@ -254,50 +261,56 @@ if(!window.scrapbee_injected){
         });
     }
     function startCapture(saveType, rdf, rdfPath, itemId){
-        if(lock()){            
-            dlgDownload = new DialogTable('Download', 'Waiting...', function(r){
+        if(lock()){
+            dlgDownload = new DialogDownloadTable('Download', 'Waiting...', function(){
+                dlgDownload.hideButton()
+                dlgDownload.addHeader("type", "source", "destination", "status");
+                dlgDownload.show();            
+                dlgDownload.hint = "Gethering resources...";
+                getContent(saveType == "SAVE_SELECTION").then(data => {
+                    dlgDownload.hint = "Saving data...";
+                    saveData(data, rdfPath, itemId).then(() => {
+                        dlgDownload.showButton();
+                        dlgDownload.hint = "All done";
+                        // var have_icon = !!(data.res[data.res.length - 1].blob);
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: data.have_icon, rdf, itemId});
+                    });
+                });
+            }, function(r){
                 unlock();
                 dlgDownload.remove();
             });
-            dlgDownload.hideButton()
-            dlgDownload.addHeader("type", "source", "destination", "status");
-            dlgDownload.show();            
-            dlgDownload.hint = "Gethering resources...";
-            getContent(saveType == "SAVE_SELECTION").then(data => {
-                dlgDownload.hint = "Saving data...";
-                saveData(data, rdfPath, itemId).then(() => {
-                    dlgDownload.showButton();
-                    dlgDownload.hint = "All done";
-                    // var have_icon = !!(data.res[data.res.length - 1].blob);
-                    browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: data.have_icon, rdf, itemId});
-                });
-            });
+            
         }
     }
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         log.debug("content script recv msg:", request.type)
         if(request.type == "SAVE_ADVANCE_REQUEST"){
-            return new Promise((resolve, reject) => {
-                var url =  browser.extension.getURL("advcap.html");
-                if(lock()){
-                    var w = new DialogIframe("{CAPTURE}".translate(), url, "");
-                    currDialog = w;
-                    w.show();
-                    w.onload=function(){
+            if(oldLockListener)
+                reject(Error("a task already exists on this page"));
+            if(lock()){   
+                return new Promise((resolve, reject) => {
+                    var url =  browser.extension.getURL("advcap.html");
+                    var w = new DialogIframe("{CAPTURE}".translate(), url, function(){
                         browser.runtime.sendMessage({type:'TAB_INNER_CALL',
                                                      dest: "CAPTURER_DLG",
                                                      action: "INIT_FORM",
                                                      title: document.title,
                                                      url: location.href}).then(function(){});
                         resolve();
-                    }
-                }else{
-                    reject(Error("a task already exists on this page"));
-                }
-            });
+
+                    });
+                    currDialog = w;
+                    w.show();
+                });
+            }
         }else if(request.type == 'SAVE_PAGE_REQUEST' || request.type == 'SAVE_SELECTION_REQUEST'){
+            if(oldLockListener)
+                reject(Error("a task already exists on this page"));
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "page", title: document.title, url: location.href}).then((r) => {
                 startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfPath, r.itemId);
+            }).catch(function (error) {
+                alert(error)
             });
         }else if(request.type == 'SAVE_URL_REQUEST'){
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
@@ -316,12 +329,12 @@ if(!window.scrapbee_injected){
                         var request_new = request;
                         request_new.type = 'CREATE_MIRROR_NODE';
                         request_new.ico = "";
-                        browser.runtime.sendMessage(request_new)
+                        browser.runtime.sendMessage(request_new);
                     }
                     if(request.saveType == "SAVE_URL"){
                         startBookmark(request.rdf, request.rdfPath, request.itemId);
                     }else{
-                        startCapture(request.saveType, request.rdf, request.rdfPath, request.itemId)
+                        startCapture(request.saveType, request.rdf, request.rdfPath, request.itemId);
                     }
                 });
             }
@@ -329,7 +342,7 @@ if(!window.scrapbee_injected){
         return false;
     });
     function saveData(data, rdfPath, scrapId){
-        log.debug("save data ...")
+        log.debug("save data ...");
         var saved_blobs = 0;
         var {itemId, title, html, css, res} = data;
         // log.info(itemId, title, html, css, res)
@@ -338,11 +351,11 @@ if(!window.scrapbee_injected){
                 html = ['<!Doctype html>', html,].join("\n");
                 var path = `${rdfPath}/data/${scrapId}/index.css`;
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: css, path}).then((response) => {
-                    dlgDownload.updateCell(res.length, 3, "<font style='color:#0055ff'>saved</font>")
+                    dlgDownload.updateCell(res.length, 3, "<font style='color:#0055ff'>saved</font>");
                     var path = `${rdfPath}/data/${scrapId}/index.html`;
                     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: html, path}).then((response) => {
-                        dlgDownload.updateCell(res.length+1, 3, "<font style='color:#0055ff'>saved</font>")
-                        log.debug("capture, all done")
+                        dlgDownload.updateCell(res.length+1, 3, "<font style='color:#0055ff'>saved</font>");
+                        log.debug("capture, all done");
                         resolve();
                     });
                 });
@@ -353,16 +366,16 @@ if(!window.scrapbee_injected){
                 res.forEach(function(item, i){
                     if(item.blob){
                         try{
-                            var reg = new RegExp(item.hex, "g" )
+                            var reg = new RegExp(item.hex, "g" );
                             if(item.hex)html = html.replace(reg, item.saveas);
                             item.path = `${rdfPath}/data/${scrapId}/${item.saveas}`;
                             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: item}).then((response) => {
-                                dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>")
+                                dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
                                 saved_blobs++;
                                 savePage(resolve, reject);
                             });
                         }catch(e){
-                            log.error(e.message)
+                            log.error(e.message);
                         }
                     }else{ // not valid blob
                         saved_blobs++;
@@ -396,12 +409,12 @@ if(!window.scrapbee_injected){
                     callback(false);
                 }
             };
-            oReq.onerror=function(e){
+            oReq.onerror = function(e){
                 callback(false);
-            }
+            };
             oReq.send();
         }catch(e){
-            log.error(`download file error, ${e}`)
+            log.error(`download file error, ${e}`);
             callback(false);
         }
     }
@@ -417,7 +430,7 @@ if(!window.scrapbee_injected){
         head.appendChild(link);
     }
     var extension_id = browser.i18n.getMessage("@@extension_id");
-    loadCss("content_script", `moz-extension://${extension_id}/content_script.css`)
-    loadCss("content_script", `moz-extension://${extension_id}/dialog.css`)
+    loadCss("content_script", `moz-extension://${extension_id}/content_script.css`);
+    loadCss("content_script", `moz-extension://${extension_id}/dialog.css`);
 }
-console.log("[content_script.js] loaded")
+console.log("[content_script.js] loaded");

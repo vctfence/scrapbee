@@ -19,7 +19,7 @@
    xml:space="preserve"
    id="svg6"
    sodipodi:docname="selection.svg"
-   inkscape:version="0.92.2 2405546, 2018-03-11"><metadata
+   inkscape:version="0.92.4 5da689c313, 2019-01-14"><metadata
    id="metadata12"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
          rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs
@@ -36,9 +36,9 @@
    inkscape:window-height="1023"
    id="namedview8"
    showgrid="false"
-   inkscape:zoom="27.812867"
-   inkscape:cx="3.483764"
-   inkscape:cy="10.117171"
+   inkscape:zoom="4.9166668"
+   inkscape:cx="-54.401644"
+   inkscape:cy="-3.4483509"
    inkscape:window-x="1920"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
@@ -67,6 +67,6 @@
    style="display:none;">
 </g>
 <path
-   style="opacity:1;vector-effect:none;fill:#333333;fill-opacity:1;stroke:none;stroke-width:3;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+   style="opacity:1;vector-effect:none;fill:#008080;fill-opacity:1;stroke:none;stroke-width:3;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
    d="M 5.1367188 2.9667969 C 3.9316297 2.9667969 2.9609375 3.9374882 2.9609375 5.1425781 L 2.9609375 10.263672 L 5.1015625 10.263672 L 5.1015625 6.2753906 C 5.1015625 5.3173337 5.2647423 5.0996094 6.1757812 5.0996094 L 10.205078 5.0996094 L 10.191406 2.9667969 L 5.1367188 2.9667969 z M 13.701172 2.9667969 L 13.701172 5.1074219 L 17.689453 5.1074219 C 18.647509 5.1074219 18.863281 5.2686485 18.863281 6.1796875 L 18.863281 10.208984 L 20.998047 10.197266 L 20.998047 5.1425781 C 20.998047 3.9374891 20.027356 2.9667969 18.822266 2.9667969 L 13.701172 2.9667969 z M 18.857422 13.71875 L 18.857422 17.707031 C 18.857422 18.665087 18.694242 18.882812 17.783203 18.882812 L 13.753906 18.882812 L 13.767578 21.015625 L 18.822266 21.015625 C 20.027355 21.015625 20.998047 20.044934 20.998047 18.839844 L 20.998047 13.71875 L 18.857422 13.71875 z M 5.0820312 13.796875 L 2.9492188 13.810547 L 2.9492188 18.865234 C 2.9492188 20.070323 3.9199102 21.041016 5.125 21.041016 L 10.246094 21.041016 L 10.246094 18.900391 L 6.2578125 18.900391 C 5.2997561 18.900391 5.0820314 18.737211 5.0820312 17.826172 L 5.0820312 13.796875 z "
    id="path898" /></svg>

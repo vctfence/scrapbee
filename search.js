@@ -1,6 +1,6 @@
-import {settings} from "./settings.js"
-import {BookTree} from "./tree.js"
-import {getUrlParams} from "./utils.js"
+import {settings} from "./settings.js";
+import {BookTree} from "./tree.js";
+import {getUrlParams} from "./utils.js";
 
 function Queue(maxWorkingTasks, workingFn){
     this.tasks = [];
@@ -13,20 +13,20 @@ function Queue(maxWorkingTasks, workingFn){
 Queue.prototype.addTask=function(task){
     this.tasks.push(task);
     this.taskCount++;
-}
+};
 Queue.prototype.start=function(task){
     this.popWork();
-}
+};
 Queue.prototype.popWork=function(){
     var self = this;
     // console.log(this.doneCount , this.taskCount)
     if(this.doneCount == this.taskCount){
-    	this.onfinished && this.onfinished();
+    	if(this.onfinished)this.onfinished();
     	return;
     }
     while(self.workingTasks < self.maxWorkingTasks){
 	if(!this.tasks.length)
-	    break	
+	    break;
 	self.workingTasks++;
 	var t = this.tasks.shift();
 	self.workingFn(t, function(){
@@ -35,7 +35,7 @@ Queue.prototype.popWork=function(){
 	    self.popWork();
 	});
     }
-}
+};
 // ===============================================
 function escapeRegExp(text) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -55,12 +55,12 @@ function loadXml(rdf){
         }
     });
     if(!(search_title || search_body || search_comment))
-        return
-    $("#btnSearch").prop("disabled", true)
+        return;
+    $("#btnSearch").prop("disabled", true);
     var xmlhttp=new XMLHttpRequest();
     xmlhttp.onload = function(r) {
-	var tree = new BookTree(r.target.response, rdf)
-	processTree(tree, search_title, search_body, search_comment)
+	var tree = new BookTree(r.target.response, rdf);
+	processTree(tree, search_title, search_body, search_comment);
     };
     xmlhttp.onerror = function(err) {
 	// log.info(`load ${rdf} failed, ${err}`)
@@ -89,8 +89,8 @@ async function processTree(tree, search_title, search_body, search_comment){
 	var title_matched = false;
 	var content_matched = false;
         var comment_matched = false;
-	var re = new RegExp(searching, "i")
-	var re2 = new RegExp(searching, "ig")
+	var re = new RegExp(searching, "ig");
+        var re2 = new RegExp(searching.htmlEncode(), "ig");
         /** title */
         title_matched = search_title && re.test(item.title);
         /** comment */
@@ -103,7 +103,7 @@ async function processTree(tree, search_title, search_body, search_comment){
         /*** title */
         if(title_matched || comment_matched || content_matched){
             var $div = $("<div>").appendTo($("#divResult"));
-            $(`<a target='_blank' class='match-title'>`).appendTo($div).html(item.title.replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`))
+            $(`<a target='_blank' class='match-title'>`).appendTo($div).html(item.title.htmlEncode().replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`));
             $(`<a target='_blank' class='locate-button'>&lt;&lt;</a>`).appendTo($div).click(function(){
                 browser.runtime.sendMessage({type: 'LOCATE_ITEM', id: item.id}).then((response) => {
                 }).catch((e) => {
@@ -112,19 +112,19 @@ async function processTree(tree, search_title, search_body, search_comment){
         }
         /*** comment */
         if((title_matched || comment_matched || content_matched) && item.comment){
-	    $(`<div class='match-comment'>`).appendTo($("#divResult")).html(item.comment.replace(re2, red).replace(/\n/g, "<br>"))
+	    $(`<div class='match-comment'>`).appendTo($("#divResult")).html(item.comment.htmlEncode().replace(re2, red).replace(/\n/g, "<br>"));
         }
         /*** body */
         if(title_matched || comment_matched || content_matched){
             if(content_matched){
-                var pos1 = Math.max(0, m.index - 50)
+                var pos1 = Math.max(0, m.index - 50);
 	        var pos2 = Math.min(text.length - 1, pos1 + 100);
 	        var s = text.substring(pos1, pos2).replace(re2, red);
 	        if(pos1 > 0) s = "..." + s;
 	        if(pos2 < text.length - 1) s = s + "...";
 	        $("<div class='match-content'>").appendTo($("#divResult")).html(s);
             }else{
-                var pos1 = 0
+                var pos1 = 0;
 	        var pos2 = Math.min(text.length, 150);
 	        var s = text.substring(pos1, pos2).replace(re2, red);
 	        if(pos1 > 0) s = "..." + s;
@@ -134,7 +134,7 @@ async function processTree(tree, search_title, search_body, search_comment){
         }
         /*** food link */
 	if(title_matched || content_matched || comment_matched){
-	    $(`<a target='_blank' class='match-source'>`).appendTo($("#divResult")).html(item.source).prop("href", item.source)
+	    $(`<a target='_blank' class='match-source'>`).appendTo($("#divResult")).html(item.source).prop("href", item.source);
 	    match_count ++;
 	}
     }
@@ -142,34 +142,34 @@ async function processTree(tree, search_title, search_body, search_comment){
 	var url = tree.getItemIndexPage(item.id);
 	if(item.type=="page"){
 	    $.get(url+"?time="+Math.random(),function(r){
-		seek(item, r)
+		seek(item, r);
 		callback();
 	    }).fail(function(){
 		callback();
 	    });
 	}else{
-	    seek(item, "")
+	    seek(item, "");
 	    callback();
 	}
     });
     q.onfinished=function(){
-	var i18n_result = browser.i18n.getMessage("RESULTS_FOUND")
-	$("<div>").appendTo($("#divResult")).html(match_count + i18n_result)
-	$("#btnSearch").prop("disabled", false)
-    }
+	var i18n_result = browser.i18n.getMessage("RESULTS_FOUND");
+	$("<div>").appendTo($("#divResult")).html(match_count + i18n_result);
+	$("#btnSearch").prop("disabled", false);
+    };
     await tree.iterateLiNodes(async function(item){
 	if(item.nodeType == "bookmark" || item.nodeType == "page"){
             try{
                 if(item.icon){
-                    item.icon = tree.translateResource(item.icon, tree.rdfPath, item.id)
+                    item.icon = tree.translateResource(item.icon, tree.rdfPath, item.id);
                 }
 		q.addTask(item);
             }catch(e){
-                console.log(e)
+                console.log(e);
             }
 	}
     });
-    q.start()
+    q.start();
 }
 $(document).ready(async function(){
     await settings.loadFromStorage();
@@ -182,7 +182,7 @@ $(document).ready(async function(){
     $("#searchForm").submit(function(){
 	$("#divResult").html("");
 	var rdf = $("#lstRdfs").val();
-	if(rdf)loadXml(rdf)
+	if(rdf)loadXml(rdf);
         return false;
     });
     var params = getUrlParams(location.href);

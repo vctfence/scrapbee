@@ -1,42 +1,61 @@
 import {settings} from "./settings.js"
 import {BookTree} from "./tree.js"
 import {log} from "./message.js"
+import {genItemId, refreshTree} from "./utils.js"
 
 var currTree;
-function loadXml(rdf, $box, treeId){
-    $("#path-box").html(`<bdi>/</bdi>`);
-    $("input[type=button]").prop("disabled", true);
-    $box.html("loading...");
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onload = async function(r) {
-	currTree = new BookTree(r.target.response, rdf);
-	await currTree.renderTree($box);
-        currTree.onChooseItem = function(itemId) {
-            var t = currTree.getItemPath(currTree.getItemById(itemId));
-            $("#path-box").html(`<bdi>${t}</bdi>`);
-	}
-        $("input[type=button]").prop("disabled", false);
-    };
-    xmlhttp.onerror = function(err) {
-	log.info(`load ${rdf} failed, ${err}`);
-    };
-    xmlhttp.open("GET", "http://localhost:9900/file-service/" + rdf, false);
-    xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
-    xmlhttp.setRequestHeader('cache-control', 'max-age=0');
-    xmlhttp.setRequestHeader('expires', '0');
-    xmlhttp.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
-    xmlhttp.setRequestHeader('pragma', 'no-cache');
-    xmlhttp.send();
+
+function loadXml(rdf, $box){
+    return new Promise((resolve, reject) => {
+        $("#path-box").html(`<bdi>/</bdi>`);
+        $("input[type=button]").prop("disabled", true);
+        $box.html("loading...");
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onload = async function(r) {
+	    currTree = new BookTree(r.target.response, rdf, {lockDraging: true});
+	    await currTree.renderTree($box);
+            currTree.onChooseItem = function(itemId) {
+                var t = currTree.getItemPath(currTree.getItemById(itemId));
+                $("#path-box").html(`<bdi>${t}</bdi>`);
+	    }
+            $("input[type=button]").prop("disabled", false);
+            /** restore status */
+            if(settings.last_rdf == rdf){
+                if(settings.advcap_last_opened_folders){
+                    settings.advcap_last_opened_folders.split(",").forEach(function(id){
+                        currTree.toggleFolder(currTree.getItemById(id), true);
+                    });
+                }
+                if(settings.advcap_last_focused){
+                    var $item = currTree.getItemById(settings.advcap_last_focused);
+                    currTree.focusItem($item);
+                    currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+                    currTree.onChooseItem(settings.advcap_last_focused);
+                }
+            }
+            resolve(currTree);
+        };
+        xmlhttp.onerror = function(err) {
+	    log.info(`load ${rdf} failed, ${err}`);
+        };
+        xmlhttp.open("GET", `http://localhost:${settings.backend_port}/file-service/` + rdf, false);
+        xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
+        xmlhttp.setRequestHeader('cache-control', 'max-age=0');
+        xmlhttp.setRequestHeader('expires', '0');
+        xmlhttp.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
+        xmlhttp.setRequestHeader('pragma', 'no-cache');
+        xmlhttp.send();
+    });
 }
+
 $(document).ready(async function(){
     document.body.innerHTML = document.body.innerHTML.translate();
-    
-    function randRange(a, b){
-        return Math.floor(Math.random() * (b-a+1)) + a;
-    }
-    function genItemId(){
-        return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
-    }
+    // function randRange(a, b){
+    //     return Math.floor(Math.random() * (b-a+1)) + a;
+    // }
+    // function genItemId(){
+    //     return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
+    // }
     $("input[type=button]").prop("disabled", true);
     /** add folder */
     var button = document.body.querySelector("#btnAddFoder");
@@ -69,6 +88,12 @@ $(document).ready(async function(){
         var comment = document.body.querySelector("#txComment").value;
         if(folderId == "tree1")
             folderId = "urn:scrapbook:root";
+
+        var folderIds = currTree.getExpendedFolderIds().join(",");
+        settings.set('advcap_last_rdf',rdf , true);
+        settings.set('advcap_last_focused',currTree.getFocusedItem().attr("id") , true);
+        settings.set('advcap_last_opened_folders',folderIds , true);
+
         currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
         // currTree.updateComment(currTree.getItemById(itemId), comment);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
@@ -83,22 +108,32 @@ $(document).ready(async function(){
     await settings.loadFromStorage();
     var paths = settings.getRdfPaths();
     settings.getRdfPathNames().forEach(function(k, i){
-	$("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs"));
+	var $opt = $("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs"));
+        if(paths[i] == settings.advcap_last_rdf){
+            $opt.prop("selected", true);
+        }
     });
     $("#lstRdfs").change(function(){
-        loadXml($(this).val(), $box, 1)
+        loadXml($(this).val(), $box);
     });
+    
     $("#lstRdfs").change();
 });
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == "TAB_INNER_CALL" && request.dest == "CAPTURER_DLG"){
-        return new Promise(function(resolve, reject){
+        return new Promise(function(resolve, reject){            
             $("#txTitle").val(request.title);
             $("#txUrl").val(request.url);
         });
     }else if(request.type == 'FILE_CONTENT_CHANGED'){
         if(request.filename == currTree.rdf && request.srcToken != currTree.unique_id){
-            $("#lstRdfs").change(); /** reload tree */
+            if(currTree){
+                refreshTree(currTree, loadXml, currTree.rdf, $("#tree1"));
+            }else{
+                $("#lstRdfs").change(); /** reload tree */
+            }
         }
     }
 });
+
+
