@@ -34,12 +34,12 @@ export let browserBackend;
 export let cloudBackend;
 export let dropboxBackend;
 
-const DROPBOX_APP_PATH = "/Apps/Scrapyard";
-const DROPBOX_INDEX_PATH = "/Apps/Scrapyard/index.json";
+const DROPBOX_APP_PATH = "/Cloud";
+const DROPBOX_INDEX_PATH = "/Cloud/index.json";
 
 export class DropboxBackend {
     constructor() {
-        this.APP_KEY = "986piotqb77feik";
+        this.APP_KEY = "0y7co3j1k4oc7up";
 
         this.auth_handler = auth_url => new Promise(async (resolve, reject) => {
             let dropbox_tab = await browser.tabs.create({url: auth_url});

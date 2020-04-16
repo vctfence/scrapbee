@@ -28,8 +28,8 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class DropboxProvider implements CloudProvider {
 
-    final String DROPBOX_APP_PATH = "/Apps/Scrapyard";
-    final String DROPBOX_INDEX_PATH = "/Apps/Scrapyard/index.json";
+    final String DROPBOX_APP_PATH = "/Cloud";
+    final String DROPBOX_INDEX_PATH = "/Cloud/index.json";
 
     DbxClientV2 client;
 

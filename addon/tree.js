@@ -664,7 +664,9 @@ class BookmarkTree {
                                         }
 
                                         let type = blob.type? blob.type: "text/html";
-                                        filename = node.original.name + (type.endsWith("pdf")? ".pdf": ".html");
+                                        filename = node.original.name
+                                        if (!(filename.endsWith("pdf") || filename.endsWith("html")))
+                                            filename = node.original.name + (type.endsWith("pdf")? ".pdf": ".html");
                                         content = new Blob([blob.data],{type: type});
                                     }
                                 }
