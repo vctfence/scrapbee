@@ -288,6 +288,7 @@ function ajaxFormPost(url, json){
         }, 150);
     });
 }
+
 // browser.browserAction.onClicked.addListener(() => {
 //     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
 //         browser.tabs.executeScript(tabs[0].id, { code: 'document.contentType' }, ([ mimeType ]) => {
@@ -295,6 +296,7 @@ function ajaxFormPost(url, json){
 //         });
 //     })
 // });
+
 // browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
 //     var saving = browser.tabs.saveAsPDF({});
 // });
