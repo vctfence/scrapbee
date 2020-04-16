@@ -283,7 +283,9 @@ function ajaxFormPost(url, json){
             reject(Error(err));
         };
         request.open("POST", url, false);
-        request.send(formData);
+        setTimeout(function(){
+            request.send(formData);
+        }, 150);
     });
 }
 // browser.browserAction.onClicked.addListener(() => {
