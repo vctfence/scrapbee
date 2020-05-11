@@ -1,5 +1,5 @@
---- ./original/jstree.js	2019-08-29 11:44:38.865888700 +0400
-+++ jstree.js	2019-08-29 11:46:12.694171600 +0400
+--- original/jstree.js	2020-05-11 16:23:33.796772000 +0400
++++ jstree.js	2020-05-11 16:23:47.240737000 +0400
 @@ -593,7 +593,7 @@
  					return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue));
  				})
@@ -44,6 +44,17 @@
  								original	: false
  							};
  							for(i in df) {
+@@ -1823,8 +1824,8 @@
+ 						// 2) populate children (foreach)
+ 						for(i = 0, j = dat.length; i < j; i++) {
+ 							if (!m[dat[i].parent.toString()]) {
+-								this._data.core.last_error = { 'error' : 'parse', 'plugin' : 'core', 'id' : 'core_07', 'reason' : 'Node with invalid parent', 'data' : JSON.stringify({ 'id' : dat[i].id.toString(), 'parent' : dat[i].parent.toString() }) };
+-								this.settings.core.error.call(this, this._data.core.last_error);
++								//this._data.core.last_error = { 'error' : 'parse', 'plugin' : 'core', 'id' : 'core_07', 'reason' : 'Node with invalid parent', 'data' : JSON.stringify({ 'id' : dat[i].id.toString(), 'parent' : dat[i].parent.toString() }) };
++								//this.settings.core.error.call(this, this._data.core.last_error);
+ 								continue;
+ 							}
+ 
 @@ -2012,7 +2013,7 @@
  					data		: null,
  					state		: { },

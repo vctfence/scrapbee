@@ -381,6 +381,7 @@ class BookmarkTree {
         this._jstree.refresh(true, () => state? state.state: null);
     }
 
+    // Used to make a flat list in the tree-view (e.g. in search)
     list(nodes, state_key) {
         if (state_key)
             this.stateKey = TREE_STATE_PREFIX + state_key;
