@@ -65,10 +65,14 @@ function communicate(command, body, callback){
     };
     backend_inst_port.onMessage.addListener(listener);
 }
-function startWebServer(port){
+function startWebServer(port, try_times){
+    // if(try_times < 1)
+    //     return  Promise.reject(Error("only one dialog can be showed"));
     return new Promise((resolve, reject) => {
         if(web_launched){
             resolve();
+        } else if(try_times < 1){
+            reject(Error("only one dialog can be showed"));
         } else if(web_launching){
             function wait(){
                 setTimeout(function(){
@@ -87,9 +91,7 @@ function startWebServer(port){
                 web_launching = false;
                 if(r.Serverstate != "ok"){
                     log.error(`failed to start backend service: ${r.Error}`);
-                    startWebServer(port).then(() => {
-                        resolve();
-                    });
+                    return startWebServer(port, try_times - 1);
                 }else{
                     var version = r.Version || 'unknown';
                     backend_version = version;
@@ -106,7 +108,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'START_WEB_SERVER_REQUEST'){
         if(request.force)
             web_launched = false;
-        return startWebServer(request.port);
+        return startWebServer(request.port, request.try_times);
     }else if(request.type == 'LOG'){
         log.sendLog(request.logtype, request.content);
     }else if(request.type == 'CLEAR_LOG'){

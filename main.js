@@ -233,6 +233,10 @@ function showRdfList(){
     var lastRdf = settings.last_rdf;
     var saw = false;
     var paths = settings.getRdfPaths();
+
+    if(paths.length == 0)
+        $(".root.folder-content").html("{NO_RDF_SETTED_HINT}".translate());
+
     drop = drop || new SimpleDropdown($(".drop-button")[0], []);
     drop.clear();
     drop.onchange=(function(title, value){
@@ -366,8 +370,11 @@ settings.onchange=function(key, value){
     }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
         applyAppearance();
     }else if(key == "backend_port"){
-        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, force: true}).then((response) => {
+        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, force: true, try_times: 5}).then((response) => {
             loadAll();
+        }).catch((e) => {
+            log.error("failed to start backend, please check installation and settings");
+            $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
         });
     }
 };
@@ -449,8 +456,11 @@ window.onload=async function(){
     });
     /**  */
     applyAppearance();
-    browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port}).then((response) => {
+    browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, try_times: 5}).then((response) => {
         loadAll();
+    }).catch((e) => {
+        log.error("failed to start backend, please check installation and settings");
+        $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
     });
     /** announcement */
     var ann = browser.i18n.getMessage("announcement_content");
@@ -468,8 +478,9 @@ window.onload=async function(){
     }
 };
 function loadXml(rdf){
-    currTree=null;
-    if(!rdf)return;
+    currTree = null;
+    if(!rdf) return Promise.reject(Error("invalid rdf path"));
+    
     return new Promise((resolve, reject) => {
         $(".root.folder-content").html("{Loading...}".translate());
         var rdfPath = rdf.replace(/[^\/\\]*$/, "");
@@ -546,6 +557,7 @@ function loadXml(rdf){
         };
         xmlhttp.onerror = function(err) {
             log.info(`load ${rdf} failed, ${err}`);
+            reject(err)
         };
         xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
@@ -557,28 +569,35 @@ function loadXml(rdf){
     });
 }
 function switchRdf(rdf){
-    currTree = null;
     log.info(`switch to rdf "${rdf}"`);
-    if(!$.trim(rdf)){
-        $(".root.folder-content").html("Invaid rdf path.");
-        return;
-    }
-    $(".root.folder-content").html("{Loading...}".translate());
-    /** check rdf exists */
-    $.post(settings.backend_url + "isfile/", {path: rdf}, function(r){
-        if(r == "yes"){
-            loadXml(rdf);
-        }else if(rdf){
-            /** show it need to create rdf */
-            $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());
-            $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
-                initRdf(rdf, function(){
-                    loadXml(rdf);
-                });
-                return false;
-            });
+    return new Promise((resolve, reject) => {
+        if(currTree && rdf == currTree.rdf)
+            return resolve();
+        currTree = null;
+        if(!$.trim(rdf)){
+            $(".root.folder-content").html("Invaid rdf path.");
+            reject();
         }
-    });
+        $(".root.folder-content").html("{Loading...}".translate());
+        /** check rdf exists */
+        $.post(settings.backend_url + "isfile/", {path: rdf}, function(r){
+            if(r == "yes"){
+                loadXml(rdf).then(()=>{
+                    resolve();
+                });
+            }else if(rdf){
+                /** show it need to create rdf */
+                $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());
+                $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
+                    initRdf(rdf, function(){
+                        loadXml(rdf).then(() => {
+                            resolve();
+                        });
+                    });
+                });
+            }
+        });
+    })
 }
 function requestUrlSaving(itemId){
     withCurrTab(function(tab){
@@ -678,6 +697,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             if($(".dlg-cover:visible").length){
                 return reject();
             }
+            // switchRdf()
             if(currTree && currTree.rendered && sender.tab.windowId == thisWindowId) {
                 var $item = currTree.getItemById(request.id);
                 if($item.length){
@@ -701,5 +721,3 @@ browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });
 console.log("==> main.js loaded");
-
-

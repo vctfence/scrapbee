@@ -436,46 +436,50 @@ class BookTree {
         var level = 0;
         async function processer(nodes, parentId=null) {
             for (let child of nodes) {
-                var [nodeType, introNode] = self.getLiNodeType(child);
-                if (nodeType == "seq") { // folder
-                    var seqNode = introNode;
-                    var about = introNode.getAttributeNS(self.NS_RDF, "about");
-                    if (about) {
-                        var id = null;
-                        var desc_node = self.getDescNode(about);
-                        if(desc_node){
-                            id = desc_node.getAttributeNS(self.MAIN_NS, "id");
-                            var title = desc_node.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
-                            desc_node.setAttributeNS(self.MAIN_NS, "title", title);  // temporarily replace html entity
-                            await fn({
-                                parentId: parentId,
-                                nodeType: 'seq',
-                                id: id,
-                                title: title,
-                                level
-                            }, child);
+                try{
+                    var [nodeType, introNode] = self.getLiNodeType(child);
+                    if (nodeType == "seq") { // folder
+                        var seqNode = introNode;
+                        var about = introNode.getAttributeNS(self.NS_RDF, "about");
+                        if (about) {
+                            var id = null;
+                            var desc_node = self.getDescNode(about);
+                            if(desc_node){
+                                id = desc_node.getAttributeNS(self.MAIN_NS, "id");
+                                var title = desc_node.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
+                                desc_node.setAttributeNS(self.MAIN_NS, "title", title);  // temporarily replace html entity
+                                await fn({
+                                    parentId: parentId,
+                                    nodeType: 'seq',
+                                    id: id,
+                                    title: title,
+                                    level
+                                }, child);
+                            }
+                            level++;
+                            await processer(seqNode.children, id);
+                            level--;
                         }
-                        level++;
-                        await processer(seqNode.children, id);
-                        level--;
+                    } else if(nodeType == "separator") {
+                        var id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");
+                        await fn({ nodeType: 'separator', id: id, parentId: parentId, level}, child);
+                    } else if(nodeType) {   // scrap
+                        var title = introNode.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
+                        introNode.setAttributeNS(self.MAIN_NS, "title", title); // temporarily replace html entity 
+                        await fn({
+                            parentId: parentId,
+                            nodeType: nodeType,
+                            id: introNode.getAttributeNS(self.MAIN_NS, "id"),
+                            type: nodeType,
+                            source: introNode.getAttributeNS(self.MAIN_NS, "source"),
+                            icon: introNode.getAttributeNS(self.MAIN_NS, "icon"),
+                            title: title,
+                            comment: (introNode.getAttributeNS(self.MAIN_NS, "comment") || "").replace(/ __BR__ /g, "\n"),
+                            level
+                        }, child);
                     }
-                } else if(nodeType == "separator") {
-                    var id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");
-                    await fn({ nodeType: 'separator', id: id, parentId: parentId, level}, child);
-                } else if(nodeType) {   // scrap
-                    var title = introNode.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
-                    introNode.setAttributeNS(self.MAIN_NS, "title", title); // temporarily replace html entity 
-                    await fn({
-                        parentId: parentId,
-                        nodeType: nodeType,
-                        id: introNode.getAttributeNS(self.MAIN_NS, "id"),
-                        type: nodeType,
-                        source: introNode.getAttributeNS(self.MAIN_NS, "source"),
-                        icon: introNode.getAttributeNS(self.MAIN_NS, "icon"),
-                        title: title,
-                        comment: introNode.getAttributeNS(self.MAIN_NS, "comment").replace(/ __BR__ /g, "\n"),
-                        level
-                    }, child);
+                }catch(e){
+                    log.error("node error: ", nodeType)
                 }
             }
         }

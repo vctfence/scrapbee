@@ -15,9 +15,9 @@ Queue.prototype.addTask=function(task){
     this.taskCount++;
 };
 Queue.prototype.start=function(task){
-    this.popWork();
+    this.popTask();
 };
-Queue.prototype.popWork=function(){
+Queue.prototype.popTask=function(){
     var self = this;
     // console.log(this.doneCount , this.taskCount)
     if(this.doneCount == this.taskCount){
@@ -32,7 +32,7 @@ Queue.prototype.popWork=function(){
 	self.workingFn(t, function(){
 	    self.workingTasks--;
 	    self.doneCount++;
-	    self.popWork();
+	    self.popTask();
 	});
     }
 };
@@ -57,6 +57,7 @@ function loadXml(rdf){
     if(!(search_title || search_body || search_comment))
         return;
     $("#btnSearch").prop("disabled", true);
+    $("img.loading").show();
     var xmlhttp=new XMLHttpRequest();
     xmlhttp.onload = function(r) {
 	var tree = new BookTree(r.target.response, rdf);
@@ -76,6 +77,24 @@ function loadXml(rdf){
 function red(a){
     return "<b style='color:red'>"+a+"</b>";
 }
+// function extractContent(html) {
+//     return body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
+//     return (new DOMParser).parseFromString(html, "text/html").documentElement.textContent;
+// }
+function extractContent(html) {
+    var span = document.createElement('span');
+    span.innerHTML = html;
+    span.querySelectorAll("script").forEach(function(n){
+        n.parentNode.removeChild(n);
+    });
+    span.querySelectorAll("noscript").forEach(function(n){
+        n.parentNode.removeChild(n);
+    });
+    span.querySelectorAll("style").forEach(function(n){
+        n.parentNode.removeChild(n);
+    });
+    return  span.innerText;
+}
 async function processTree(tree, search_title, search_body, search_comment){
     var searching = escapeRegExp($.trim($("#txtSearch").val()));
     var match_count = 0;
@@ -89,16 +108,16 @@ async function processTree(tree, search_title, search_body, search_comment){
 	var title_matched = false;
 	var content_matched = false;
         var comment_matched = false;
-	var re = new RegExp(searching, "ig");
+	var re = new RegExp(searching, "i");
         var re2 = new RegExp(searching.htmlEncode(), "ig");
         /** title */
         title_matched = search_title && re.test(item.title);
         /** comment */
         comment_matched = search_comment && re.test(item.comment);
         /** content */
-        var text = body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
+        var text = extractContent(body);
         var m = text.match(re);
-        content_matched = search_body && !!(m);
+        content_matched = search_body && (m && m.length > 0);
         /** output */
         /*** title */
         if(title_matched || comment_matched || content_matched){
@@ -156,6 +175,7 @@ async function processTree(tree, search_title, search_body, search_comment){
 	var i18n_result = browser.i18n.getMessage("RESULTS_FOUND");
 	$("<div>").appendTo($("#divResult")).html(match_count + i18n_result);
 	$("#btnSearch").prop("disabled", false);
+        $("img.loading").hide();
     };
     await tree.iterateLiNodes(async function(item){
 	if(item.nodeType == "bookmark" || item.nodeType == "page"){

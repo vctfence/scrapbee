@@ -1,3 +1,6 @@
+body{
+    transform:none !important;
+}
 .scrapbee-edit-bar{
     background: #aaa !important;
     border-top: 1px solid #999 !important;
@@ -6,13 +9,30 @@
     position: fixed !important;
     vertical-align: middle !important;
     line-height: 40px !important;
-    bottom: 0 !important;
+    bottom:0;
+    left:0;
+    right:0;
     z-index: 2147483647 !important;
     text-align:left !important;
     color:#000 !important;
 }
+.scrapbee-edit-lock{
+    position:absolute !important;
+    background-color:#aaa;
+    right:30px;
+    top:-20px;
+    height:20px;
+    line-height:20px;
+    cursor:pointer;
+    border-radius:5px 5px 0 0;
+    width:50px;
+    height:20px;
+    background-size:20px 15px;
+    background-position:center center;
+    background-repeat:no-repeat;
+}
 .scrapbee-icon{
-    vertical-Align:middle !important;
+    vertical-align:middle !important;
     margin-Left:10px !important;
     width :20px !important;
     height : 20px !important;
@@ -45,6 +65,7 @@
     font-weight:normal !important;
     vertical-align:middle;
     min-height:auto !important;
+    box-shadow:none;
 }
 .scrapbee-edit-bar input[type=button].blue-button{
     background:#09c !important;
@@ -73,7 +94,6 @@
 .scrapbee-menu.show{
     display: block !important;
 }
-
 .scrapbee-marker{
     height:14px !important;
     color:#333 !important;

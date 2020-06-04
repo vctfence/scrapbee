@@ -29,7 +29,7 @@ function loadCss(id, href){
     var head  = document.getElementsByTagName('head')[0];
     var link  = document.createElement('link');
     link.id = id;
-    link.rel  = 'stylesheet';
+    link.rel = 'stylesheet';
     link.type = 'text/css';
     link.href = href;
     link.media = 'all';
@@ -42,30 +42,36 @@ class EditToolBar{
         this.scrap_path = scrap_path;
         this.scrap_id = scrap_id;
         this.buildTools();
+        this.locked = false;
+
         window.addEventListener("mousedown", function(e){
             if(e.button == 0) {
+                /** remove dom node by cleaner */
                 if(!isDescendant(self.div, e.target) /** out of toolbar */
                    && self.last && self.editing){
                     e.preventDefault();
                     self.last.parentNode.removeChild(self.last);
                     self.last=null;
-                    /** check next target */
+                    /** check next hover target after current target removed */
                     var em = new Event('mousemove');
                     em.pageX = e.pageX;
                     em.pageY = e.pageY;
                     window.dispatchEvent(em);
                 }
-                /** hide marker-pen menu when click somewhere */
+                /** hide marker-pen menu when click somewhere else */
                 if(!$(e.target).hasClass("mark-pen-btn")){
                     if($(self.menu).is(":visible")){
                         e.preventDefault();
-                        $(self.menu).removeClass("show");
+                        self.hideMarkerMenu();
+                        self.hideEditBar();
+                        // $(self.div).trigger("mouseout");
+                        // $(self.div).hide()
                     }
                 }
             }
         });
         window.addEventListener("mousemove", function(e){
-            console.log(self.editing);
+            /** hover dom node by cleaner */
             if(self.editing){
                 var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
                 if(dom && !isDescendant(self.div, dom)){
@@ -115,6 +121,29 @@ class EditToolBar{
             alert(e.message);
         });
     }
+    hideEditBar(){
+        var self=this;
+        console.log("--->",$(this.div).hasClass('hover'))
+        if(!this.locked && !this.editing && !($(self.menu).is(":visible")) && !($(this.div).hasClass('hover'))){
+            $(this.div).stop(true);
+            if(this.moveTimeout){
+                clearTimeout(this.moveTimeout);
+            }
+            this.moveTimeout=setTimeout(function(){
+                $(self.div).animate({bottom:"-40px"}, 1000);    
+            }, 1000);
+        }
+    }
+    showEditBar(){
+        if(this.moveTimeout){
+            clearTimeout(this.moveTimeout)
+            this.moveTimeout=null;
+        }
+        $(this.div).animate({bottom:"0px"}, 200);
+    }
+    hideMarkerMenu(){
+        $(this.menu).removeClass("show");
+    }
     buildTools(){
         var self = this;
         var editing=false;
@@ -128,6 +157,7 @@ class EditToolBar{
         div.className = "scrapbee-edit-bar";
         document.body.appendChild(div);
         this.div=div;
+        // div.style.bottom = "-40px"
         /** icon */
         var img = document.createElement("img");
         img.className="scrapbee-icon";
@@ -156,6 +186,7 @@ class EditToolBar{
         div.appendChild(btn);
         btn.addEventListener("click", function(){
             editing=!editing;
+            self.locked=!self.locked;
             self.toggleDomEdit(editing);
             this.value=chrome.i18n.getMessage(editing?"MODIFY_DOM_OFF":"MODIFY_DOM_ON");
             $(this).prop("disabled", false);
@@ -178,6 +209,9 @@ class EditToolBar{
             if(e.key == "Escape"){
                 if($(self.menu).is(":visible"))btnMarkPen.click(999);
                 if(editing) btnDomClean.click();
+                self.hideMarkerMenu();
+                self.hideEditBar();
+                self.toggleDomEdit(false);
             }
         });
         /** mark pen menu */
@@ -185,7 +219,8 @@ class EditToolBar{
         /** marker cleaner */
         var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
             e.preventDefault();
-            $(self.menu).removeClass("show");
+            self.hideMarkerMenu();
+            self.hideEditBar();
             if(self.isSelectionOn()){
                 clearMarkPen();
             }else{
@@ -199,7 +234,8 @@ class EditToolBar{
                            "scrapbee-marker-b1", "scrapbee-marker-b2", "scrapbee-marker-b3", "scrapbee-marker-b4"]){
             var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
                 e.preventDefault();
-                $(self.menu).removeClass("show");
+                self.hideMarkerMenu();
+                self.hideEditBar();
                 if(self.isSelectionOn()){
                     mark(child);
                 }else{
@@ -231,6 +267,29 @@ class EditToolBar{
             }).catch((e) => {
             });
         });
+        /** show/hide/lock*/
+        var lock = document.createElement("div");
+        lock.className = "scrapbee-edit-lock";
+        div.appendChild(lock);
+        lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/unlock.svg)`;
+        div.addEventListener("mouseenter", function(e){ // mouseover
+            // console.log(e.relatedTarget)
+            $(div).addClass("hover")
+            $(div).stop(true);
+            self.showEditBar();
+        });
+        div.addEventListener("mouseleave", function(e){ // mouseout
+            $(div).removeClass("hover")
+            // console.log(e.relatedTarget)
+            if(div != e.relatedTarget)
+                self.hideEditBar();
+        });
+        lock.addEventListener("click", function(){
+            self.locked=!self.locked;
+            var img=self.locked?"lock":"unlock";
+            lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/${img}.svg)`;
+        });
+        self.hideEditBar();
     }
 }
 if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){

@@ -114,6 +114,9 @@ window.onload=async function(){
     }
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+
+    $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
+    
     $("#div-help").html(getAsync("_locales/" + lang + "/help.html"));
     /** export / import */
     $("input[name='export']").click(async function(){
@@ -155,10 +158,6 @@ window.onload=async function(){
     /** more donation */
     if($.trim($("#divMoreDonateWay>div").text())){
         $("#divMoreDonateWay").show();
-        $("#divMoreDonateWay>a").click(function(){
-            $("#divMoreDonateWay>div").toggle();
-            return false;
-        });
     }
     $("input[name='add']").click(function(){
         createRdfField("", "");
