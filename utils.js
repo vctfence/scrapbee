@@ -301,8 +301,8 @@ function getVersionParts(v){
     }
 }
 function gtv(a, b){
-    var a = getVersionParts(a);
-    var b = getVersionParts(b);
+    a = getVersionParts(a);
+    b = getVersionParts(b);
     for(var i=0; i<b.length; i++){
         if(parseInt(a[i]) > parseInt(b[i])){
             return true;
@@ -313,8 +313,8 @@ function gtv(a, b){
     return false;
 }
 function gtev(a, b){
-    var a = getVersionParts(a);
-    var b = getVersionParts(b);
+    a = getVersionParts(a);
+    b = getVersionParts(b);
     for(var i=0; i<b.length; i++){
         if(parseInt(a[i]) < parseInt(b[i])){
             return false;
@@ -329,8 +329,8 @@ function getUrlParams(url){
         m = m[0].match(/\w+=[^\&\=\?\# ]+/g);
         if(m) {
             m.forEach((s)=>{
-                var [key, value] = s.split("=")
-                params[key] = value;
+                var [key, value] = s.split("=");
+                params[key] = decodeURIComponent(value);
             });
         }
     }
@@ -349,7 +349,7 @@ function executeScriptsInTab(tab_id, files){
             }
         }
         sendone();
-    })
+    });
 }
 function sendTabContentMessage(tab, data){
     return new Promise(async (resolve, reject) => {
@@ -359,15 +359,15 @@ function sendTabContentMessage(tab, data){
 	    // reject(Error(e))
         }else{
             if(tab.status == "loading"){
-                showNotification({message: `Waiting for page loading, please do not make any options on this page before capturing finished`, title: "Info"});
+                showNotification({message: `Waiting for page loading, please do not make any operations on this page before capturing finished`, title: "Info"});
             }
             return executeScriptsInTab(tab.id, [
-                "libs/mime.types.js",
-                "libs/jquery-3.3.1.js",
-                "libs/md5.js",
-                "proto.js",
-                "dialog.js",
-                "content_script.js"
+                "/libs/mime.types.js",
+                "/libs/jquery-3.3.1.js",
+                "/libs/md5.js",
+                "/proto.js",
+                "/dialog.js",
+                "/content_script.js"
             ]).then(function(){
                 browser.tabs.sendMessage(tab.id, data).then(function(have_icon){
                     resolve(have_icon);
@@ -380,4 +380,31 @@ function sendTabContentMessage(tab, data){
         }
     });
 }
-export{gtv, gtev, scriptsAllowed, showNotification, getColorFilter, randRange, genItemId, comp, getUrlParams, sendTabContentMessage};
+function refreshTree(){
+    var params = Array.from(arguments);
+    var tree = params.shift();
+    var fnLoad = params.shift();
+    var expended_ids = tree.getExpendedFolderIds();
+    var multiCheck = tree.options.checkboxes;
+    return new Promise((resolve, reject) => {
+        var p = fnLoad.apply(null, params);
+        p.then((tree) => {
+            expended_ids.forEach((id) => {
+                tree.toggleFolder(tree.getItemById(id), true);
+                tree.showCheckBoxes(multiCheck);
+            });
+            resolve();
+        });
+    });
+}
+export{gtv,
+       gtev,
+       scriptsAllowed,
+       showNotification,
+       getColorFilter,
+       randRange,
+       genItemId,
+       comp,
+       getUrlParams,
+       sendTabContentMessage,
+       refreshTree};

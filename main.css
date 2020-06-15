@@ -124,7 +124,7 @@ html,body{
     height:22px;
     content:'';
     mask-size:22px 22px;
-    background:#070;
+    background:#000;
     display:inline-block;
 }
 .tool-button:hover:before{
@@ -205,7 +205,7 @@ select{
     line-height:45px;
     vertical-align:middle !important;
     border-radius: 5px;
-    border: 1px solid #f00;
+    border: 1px solid #000;
     display:inline-block;
     white-space:nowrap;
     cursor:default;
@@ -219,11 +219,11 @@ select{
     font-size:14px;
     line-height:20px;
     padding:0 0 0 7px;
-    color:#f00;
+    color:#000;
 }
 .drop-button .button{
     /* border-left:1px solid #f00; */
-    color:#f00;
+    color:#000;
     text-align:center;
     width:20px;
     height:20px;

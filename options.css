@@ -462,3 +462,12 @@ h2{
 .log-line.debug{
     color:#0ff;
 }
+#div-announcement li{
+    width:-moz-fit-content;
+    font-size:14px;
+}
+#div-announcement li.caution{
+    color:#f00;
+    background:#ff0;
+    front-weight:bold;
+}

@@ -1,30 +1,30 @@
-import {settings, global} from "./settings.js"
-import {log} from "./message.js"
-import {showNotification} from "./utils.js"
-import {scriptsAllowed, sendTabContentMessage} from "./utils.js"
+import {settings, global} from "./settings.js";
+import {log} from "./message.js";
+import {showNotification} from "./utils.js";
+import {scriptsAllowed, sendTabContentMessage} from "./utils.js";
 
 /* logging */
 String.prototype.htmlEncode=function(ignoreAmp){
     var s=this;
-    if(!ignoreAmp)s=s.replace(/&/g,'&amp;')
+    if(!ignoreAmp)s=s.replace(/&/g,'&amp;');
     return s.replace(/</g,'&lt;')
         .replace(/>/g,'&gt;')
         .replace(/\"/g,'&quot;')
         .replace(/ /g,'&nbsp;')
         .replace(/\'/g,'&#39;');
-}
+};
 var log_pool = [];
 log.sendLog = function(logtype, content){
     if(typeof content != "string"){
         content = String(content);
     }
-    var log = {logtype:logtype, content: content.htmlEncode()}
+    var log = {logtype:logtype, content: content.htmlEncode()};
     log_pool.push(log);
     browser.runtime.sendMessage({type:'LOGGING', log});
-}
+};
 log.clear = function(){
     log_pool = [];
-}
+};
 /* log version and platform */
 browser.runtime.getBrowserInfo().then(async function(info) {
     await settings.loadFromStorage();
@@ -36,10 +36,12 @@ browser.runtime.getBrowserInfo().then(async function(info) {
         log.error("Only Firefox version after 60 is supported");
     }
     log.info("platform = " + navigator.platform);
+    startWebServer(settings.backend_port);
 });
 /* backend*/
 var backend_inst_port;
-var web_started;
+var web_launched;
+var web_launching;
 var backend_version;
 function connectBackendInst(){
     if(!backend_inst_port){
@@ -50,7 +52,7 @@ function connectBackendInst(){
             }else{
                 log.error(`backend disconnected`);
             }
-        });    
+        });
     }
 }
 function communicate(command, body, callback){
@@ -63,23 +65,38 @@ function communicate(command, body, callback){
     };
     backend_inst_port.onMessage.addListener(listener);
 }
-function startWebServer(port){
+function startWebServer(port, try_times){
+    // if(try_times < 1)
+    //     return  Promise.reject(Error("only one dialog can be showed"));
     return new Promise((resolve, reject) => {
-        if(web_started){
+        if(web_launched){
             resolve();
-        }else{
+        } else if(try_times < 1){
+            reject(Error("only one dialog can be showed"));
+        } else if(web_launching){
+            function wait(){
+                setTimeout(function(){
+                    if(!web_launching && web_launched){
+                        resolve();
+                    }else{
+                        wait();
+                    }
+                }, 1000);
+            }
+            wait();
+        } else {
+            web_launching = true;
             log.info(`start backend service on port ${port}.`);
             communicate("web-server", {addr: `127.0.0.1:${port}`, port}, function(r){
+                web_launching = false;
                 if(r.Serverstate != "ok"){
-                    log.error(`failed to start backend service: ${r.Error}`)
-                    startWebServer(port).then(() => {
-                        resolve()
-                    });
+                    log.error(`failed to start backend service: ${r.Error}`);
+                    return startWebServer(port, try_times - 1);
                 }else{
-                    var version = r.Version || 'unknown'
+                    var version = r.Version || 'unknown';
                     backend_version = version;
-                    log.info(`backend service started, version = ${version} (wanted >= 1.7.0)`)
-                    web_started = true;
+                    log.info(`backend service started, version = ${version} (wanted >= 1.7.0)`);
+                    web_launched = true;
                     browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                     resolve();
                 }
@@ -90,14 +107,14 @@ function startWebServer(port){
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'START_WEB_SERVER_REQUEST'){
         if(request.force)
-            web_started = false;
-        return startWebServer(request.port);
+            web_launched = false;
+        return startWebServer(request.port, request.try_times);
     }else if(request.type == 'LOG'){
-        log.sendLog(request.logtype, request.content)
+        log.sendLog(request.logtype, request.content);
     }else if(request.type == 'CLEAR_LOG'){
-        __log_clear__()
+        __log_clear__();
     }else if(request.type == 'GET_ALL_LOG_REQUEST'){
-        return Promise.resolve({logs: log_pool})
+        return Promise.resolve({logs: log_pool});
     }else if(request.type == 'GET_BACKEND_VERSION'){
         return Promise.resolve(backend_version);
     }else if(request.type == 'SAVE_BLOB_ITEM'){
@@ -106,7 +123,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if(!file){
             return Promise.reject(Error('empty blob'));
         }else{
-            return ajaxFormPost(settings.backend_url + "savebinfile", {filename, file})
+            return ajaxFormPost(settings.backend_url + "savebinfile", {filename, file});
         }
     }else if(request.type == 'DOWNLOAD_FILE'){
         var {url, itemId, filename} = request;
@@ -124,19 +141,19 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                         }
                     });
                 }
-                resolve(response)
+                resolve(response);
             }).catch(error => {
                 reject(error);
-            })
-        })
+            });
+        });
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.backend_url + "fs/move", {src, dest})
+        return ajaxFormPost(settings.backend_url + "fs/move", {src, dest});
     }else if(request.type == 'FS_COPY'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.backend_url + "fs/copy", {src, dest})
+        return ajaxFormPost(settings.backend_url + "fs/copy", {src, dest});
     }else if(request.type == 'NOTIFY'){
-        return showNotification(request.message, request.title, request.notify_type)
+        return showNotification(request.message, request.title, request.notify_type);
     }else if(request.type == 'TAB_INNER_CALL'){
         return browser.tabs.sendMessage(sender.tab.id, request);
     }else if(request.type == 'IS_SIDEBAR_OPENED'){
@@ -167,7 +184,7 @@ browser.menus.create({
         // })
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
-                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
+                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
                 sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST'});
                 // browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
@@ -185,7 +202,7 @@ browser.menus.create({
         // browser.sidebarAction.open()
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
-                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
+                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
                 sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST'});
                 // browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
@@ -202,10 +219,10 @@ browser.menus.create({
     onclick: function(info, tab){
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
-                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
+                showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST'});
-                // browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
+                // sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST'});
+                browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
             }
         });
     }
@@ -223,7 +240,7 @@ browser.menus.create({
 } , function(){});
 /* add-on toolbar icon */
 browser.browserAction.onClicked.addListener(function(){
-    browser.sidebarAction.open()
+    // browser.sidebarAction.open()
 });
 // browser.browserAction.onClicked.removeListener(listener)
 // browser.browserAction.onClicked.hasListener(listener)
@@ -236,15 +253,15 @@ function updateMenu(url) {
     browser.menus.update("scrapbee-capture-advance", {enabled: enabled, visible: enabled});
 }
 browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tabInfo){
-    updateMenu(tabInfo.url)
+    updateMenu(tabInfo.url);
 });
 browser.tabs.onActivated.addListener(function(activeInfo){
     browser.tabs.get(activeInfo.tabId).then((tabInfo)=>{
-        updateMenu(tabInfo.url)
+        updateMenu(tabInfo.url);
     });
 });
 browser.tabs.onCreated.addListener(function(tabInfo){
-    updateMenu(tabInfo.url)
+    updateMenu(tabInfo.url);
 });
 /* http request */
 function ajaxFormPost(url, json){
@@ -255,20 +272,22 @@ function ajaxFormPost(url, json){
         }
         var request=new XMLHttpRequest();
         request.onload = function(r) {
-        }
+        };
         request.onreadystatechange=function(){
             if(request.readyState == 4 && request.status == 200){
                 resolve(request.responseText);
             }else if(request.status == 500){
-                log.error(request.responseText)
-                reject(Error(request.responseText))
+                log.error(request.responseText);
+                reject(Error(request.responseText));
             }
-        }
+        };
         request.onerror = function(err) {
             reject(Error(err));
         };
         request.open("POST", url, false);
-        request.send(formData);
+        setTimeout(function(){
+            request.send(formData);
+        }, 150);
     });
 }
 // browser.browserAction.onClicked.addListener(() => {

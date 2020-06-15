@@ -1,12 +1,12 @@
-String.prototype.htmlEncode=function(ignoreAmp){
-  var s=this;
-  if(!ignoreAmp)s=s.replace(/&/g,'&amp;')
+String.prototype.htmlEncode = function(ignoreWs){
+    var s = this;
+    s = s.replace(/&/g,'&amp;');
+    if(!ignoreWs)s = s.replace(/ /g,'&nbsp;');
     return s.replace(/</g,'&lt;')
 	.replace(/>/g,'&gt;')
 	.replace(/\"/g,'&quot;')
-	.replace(/ /g,'&nbsp;')
 	.replace(/\'/g,'&#39;');
-}
+};
 String.prototype.htmlDecode=function(){
     return this.replace(/&amp;/g,'&')
 	.replace(/&quot;/g,'\"')
@@ -14,7 +14,7 @@ String.prototype.htmlDecode=function(){
 	.replace(/&gt;/g,'>')
 	.replace(/&nbsp;/g,' ')
 	.replace(/&#39;/g,"'") ;
-}
+};
 String.prototype.translate=function(){
     return this.fillData(function(s){
 	try{
@@ -23,7 +23,7 @@ String.prototype.translate=function(){
 	    return s;
 	}
     });
-}
+};
 /*
   html style escape characters
   @chars: chars be escaped
@@ -31,10 +31,10 @@ String.prototype.translate=function(){
 */
 String.prototype.escape = function(chars, slashed) {
     return this.replace(new RegExp((slashed ? "\\\\":"") + "([" + chars + "])", "g"), function(a, b) {
-        return "&#" + b.charCodeAt(0) +";"
+        return "&#" + b.charCodeAt(0) +";";
     });
-}
-/* replace placeholders inside string whith given data */
+};
+/* replace placeholders inside string with given data */
 String.prototype.fillData = function(data) {
     /** value getter */
     function v(s){
@@ -43,7 +43,7 @@ String.prototype.fillData = function(data) {
 	}
         var parts = s.split("."), d = data, r;
         for (let p of parts){
-            if(p){r = d[p]; d = r}
+            if(p){r = d[p]; d = r;}
             if(!d) break;
         }
         return r;
@@ -73,13 +73,13 @@ String.prototype.fillData = function(data) {
     return s.replace(/\&\#(\d+)\;/g, function(a, b){
         return String.fromCharCode(parseInt(b));
     });
-}
+};
 String.prototype.shorten = function storten(l){
     if(this.length > l){
-        return this.substring(0,l) + "..."
+        return this.substring(0,l) + "...";
     }
     return this;
-}
+};
 Date.prototype.format=function(fmt){
     var o={
 	"M+":this.getMonth()+1,
@@ -99,17 +99,17 @@ Date.prototype.format=function(fmt){
 	}
     }
     return fmt;
-}
+};
 String.prototype.isHexColor=function(){
     return this.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}||[0-9a-f]{8})$/i);
-}
+};
 NodeList.prototype.forEach = Array.prototype.forEach;
 NodeList.prototype.iterateAll = function(fn){
     this.forEach(function(item){
         fn(item);
         item.childNodes.iterateAll(fn);
     });
-}
+};
 
 function ScrapbeeElement(el){
     this.el = el;
@@ -136,10 +136,10 @@ ScrapbeeElement.prototype.processResources=function(){
 }
 ScrapbeeElement.prototype.getCommonResources=function(){
     var bg = this.style.backgroundImage;
-    var m, r=[];
+    var m, r = [];
     if(m = bg.match(/^url\(['"]?(.+?)['"]?\)/)){
-	var hex = hex_md5(m[1])
-        r.push({tag:this.el.tagName, type:"image", url:m[1], hex: hex})
+	var hex = hex_md5(m[1]);
+        r.push({tag:this.el.tagName, type:"image", url:m[1], hex: hex});
 	this.el.style.backgroundImage = "url('" + hex + "')";
     }else if(m = bg.match(/^data:image\/(.+?);base64,(.+)/)){
 	var hex = hex_md5(bg);
@@ -147,7 +147,7 @@ ScrapbeeElement.prototype.getCommonResources=function(){
 	this.el.style.backgroundImage = hex;
     }
     return r;
-}
+};
 ScrapbeeElement.prototype.getImgResources=function(){
     var r=[];
     if(this.el.getAttribute("src")){
@@ -156,32 +156,33 @@ ScrapbeeElement.prototype.getImgResources=function(){
 	this.el.src = hex;
     }
     return r;
-}
+};
 ScrapbeeElement.prototype.getScriptResources=function(){
     this.el.setAttribute("mark_remove", "1");
     return [];
-}
+};
 ScrapbeeElement.prototype.getStyleResources=function(){
     this.el.setAttribute("mark_remove", "1");
     return [];
-}
+};
 ScrapbeeElement.prototype.getLinkResources=function(){
     this.el.setAttribute("mark_remove", "1");
-    var r=[]
+    var r=[];
     if(this.el.rel=="shortcut icon"){
-	r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"})
-	this.el.href="favicon.ico"
+	r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"});
+	this.el.href="favicon.ico";
     }else{
-	this.el.href=""
+	this.el.href="";
     }
     return r;
-}
+};
 ScrapbeeElement.prototype.getIframeResources=function(){
     this.el.setAttribute("mark_remove", "1");
     return [];
-}
+};
 ScrapbeeElement.prototype.getBaseResources=function(){
     this.el.setAttribute("mark_remove", "1");
     return [];
-}
+};
+
 true;

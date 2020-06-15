@@ -17,7 +17,7 @@ function isDescendant(parent, child) {
 function loadCssInline(id, href){
     $(`*[id='${id}']`).remove();
     $.get(href, null, null, "text").done(function(data, textStatus, jqXHR) {
-        var el = document.createElement("style")
+        var el = document.createElement("style");
         el.innerHTML = data;
         el.id = id;
         var head  = document.getElementsByTagName('head')[0];
@@ -29,7 +29,7 @@ function loadCss(id, href){
     var head  = document.getElementsByTagName('head')[0];
     var link  = document.createElement('link');
     link.id = id;
-    link.rel  = 'stylesheet';
+    link.rel = 'stylesheet';
     link.type = 'text/css';
     link.href = href;
     link.media = 'all';
@@ -40,32 +40,38 @@ class EditToolBar{
         var self = this;
         this.$cap = $("<div>").appendTo(document.body);
         this.scrap_path = scrap_path;
-        this.scrap_id = scrap_id
-        this.buildTools()
+        this.scrap_id = scrap_id;
+        this.buildTools();
+        this.locked = false;
+
         window.addEventListener("mousedown", function(e){
             if(e.button == 0) {
+                /** remove dom node by cleaner */
                 if(!isDescendant(self.div, e.target) /** out of toolbar */
                    && self.last && self.editing){
                     e.preventDefault();
                     self.last.parentNode.removeChild(self.last);
                     self.last=null;
-                    /** check next target */
+                    /** check next hover target after current target removed */
                     var em = new Event('mousemove');
                     em.pageX = e.pageX;
                     em.pageY = e.pageY;
                     window.dispatchEvent(em);
                 }
-                /** hide marker-pen menu when click somewhere */
+                /** hide marker-pen menu when click somewhere else */
                 if(!$(e.target).hasClass("mark-pen-btn")){
                     if($(self.menu).is(":visible")){
                         e.preventDefault();
-                        $(self.menu).removeClass("show");
+                        self.hideMarkerMenu();
+                        self.hideEditBar();
+                        // $(self.div).trigger("mouseout");
+                        // $(self.div).hide()
                     }
                 }
             }
         });
         window.addEventListener("mousemove", function(e){
-            console.log(self.editing)
+            /** hover dom node by cleaner */
             if(self.editing){
                 var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
                 if(dom && !isDescendant(self.div, dom)){
@@ -101,19 +107,42 @@ class EditToolBar{
         var self = this;
         self.last = null;
         self.editing = on;
-        self.$cap.hide()
+        self.$cap.hide();
         $(this.div).find("input[type=button]").prop("disabled", on);
         document.body.style.cursor=self.editing?"crosshair":"";
     }
     saveDoc(){
         var self=this;
-        var doc = document.documentElement.cloneNode(true)
+        var doc = document.documentElement.cloneNode(true);
         $(doc).find(".scrapbee-edit-bar").remove();
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: $(doc).html(), path: self.scrap_path+"index.html"}).then((response) => {
-            alert("Content saved")
+            alert("Content saved");
         }).catch((e) => {
-            alert(e.message)
+            alert(e.message);
         });
+    }
+    hideEditBar(){
+        var self=this;
+        console.log("--->",$(this.div).hasClass('hover'))
+        if(!this.locked && !this.editing && !($(self.menu).is(":visible")) && !($(this.div).hasClass('hover'))){
+            $(this.div).stop(true);
+            if(this.moveTimeout){
+                clearTimeout(this.moveTimeout);
+            }
+            this.moveTimeout=setTimeout(function(){
+                $(self.div).animate({bottom:"-40px"}, 1000);    
+            }, 1000);
+        }
+    }
+    showEditBar(){
+        if(this.moveTimeout){
+            clearTimeout(this.moveTimeout)
+            this.moveTimeout=null;
+        }
+        $(this.div).animate({bottom:"0px"}, 200);
+    }
+    hideMarkerMenu(){
+        $(this.menu).removeClass("show");
     }
     buildTools(){
         var self = this;
@@ -121,16 +150,17 @@ class EditToolBar{
         var extension_id = browser.i18n.getMessage("@@extension_id");
         /** load editing css */
         // loadCss("scrapbee_editing_css", `moz-extension://${extension_id}/edit.css`)
-        loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`)
+        loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/edit_markers.css`);
         /** toolbar */
         $(".scrapbee-edit-bar").remove();
         var div = document.createElement("div");
-        div.className = "scrapbee-edit-bar"
+        div.className = "scrapbee-edit-bar";
         document.body.appendChild(div);
         this.div=div;
+        // div.style.bottom = "-40px"
         /** icon */
         var img = document.createElement("img");
-        img.className="scrapbee-icon"
+        img.className="scrapbee-icon";
         img.src = `moz-extension://${extension_id}/icons/bee.png`;
         div.appendChild(img);
         div.innerHTML+=" ScrapBee&nbsp;&nbsp;";
@@ -141,7 +171,7 @@ class EditToolBar{
         /** save button */
         var btn = document.createElement("input");
         btn.type="button";
-        btn.className="yellow-button"
+        btn.className="yellow-button";
         btn.value=chrome.i18n.getMessage("save");
         div.appendChild(btn);
         btn.addEventListener("click", function(){
@@ -151,20 +181,21 @@ class EditToolBar{
         var btn = document.createElement("input");
         var btnDomClean =  btn;
         btn.type="button";
-        btn.className="blue-button"
+        btn.className="blue-button";
         btn.value=chrome.i18n.getMessage("MODIFY_DOM_ON");
         div.appendChild(btn);
         btn.addEventListener("click", function(){
             editing=!editing;
-            self.toggleDomEdit(editing)
+            self.locked=!self.locked;
+            self.toggleDomEdit(editing);
             this.value=chrome.i18n.getMessage(editing?"MODIFY_DOM_OFF":"MODIFY_DOM_ON");
-            $(this).prop("disabled", false)
+            $(this).prop("disabled", false);
         });
         /** mark pen button */
         var btn = document.createElement("input");
         var btnMarkPen = btn;
         btn.type="button";
-        btn.className="blue-button mark-pen-btn"
+        btn.className="blue-button mark-pen-btn";
         btn.value=chrome.i18n.getMessage("MARK_PEN");
         div.appendChild(btn);
         btn.addEventListener("click", function(e){
@@ -178,14 +209,18 @@ class EditToolBar{
             if(e.key == "Escape"){
                 if($(self.menu).is(":visible"))btnMarkPen.click(999);
                 if(editing) btnDomClean.click();
+                self.hideMarkerMenu();
+                self.hideEditBar();
+                self.toggleDomEdit(false);
             }
         });
         /** mark pen menu */
         var $m = $("<div class='scrapbee-menu'>").appendTo(this.div);
         /** marker cleaner */
         var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
-            e.preventDefault()
-            $(self.menu).removeClass("show");
+            e.preventDefault();
+            self.hideMarkerMenu();
+            self.hideEditBar();
             if(self.isSelectionOn()){
                 clearMarkPen();
             }else{
@@ -198,8 +233,9 @@ class EditToolBar{
                            "scrapbee-marker-a4", "scrapbee-marker-a5", "scrapbee-marker-a6",
                            "scrapbee-marker-b1", "scrapbee-marker-b2", "scrapbee-marker-b3", "scrapbee-marker-b4"]){
             var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
-                e.preventDefault()
-                $(self.menu).removeClass("show");
+                e.preventDefault();
+                self.hideMarkerMenu();
+                self.hideEditBar();
                 if(self.isSelectionOn()){
                     mark(child);
                 }else{
@@ -212,18 +248,18 @@ class EditToolBar{
         /** reload button */
         var btn = document.createElement("input");
         btn.type="button";
-        btn.className="blue-button"
+        btn.className="blue-button";
         btn.value=chrome.i18n.getMessage("Reload");
         div.appendChild(btn);
         btn.addEventListener("click", function(){
-            window.location.reload()
+            window.location.reload();
         });
         /** locate button */
         var btn = document.createElement("input");
         var btnMarkPen = btn;
         btn.type="button";
-        btn.className="blue-button mark-pen-btn"
-        btn.value="<<" //chrome.i18n.getMessage("MARK_PEN");
+        btn.className="blue-button mark-pen-btn";
+        btn.value="<<";  //chrome.i18n.getMessage("MARK_PEN");
         btn.title="{LOCATE_NODE}".translate();
         div.appendChild(btn);
         btn.addEventListener("click", function(e){
@@ -231,13 +267,36 @@ class EditToolBar{
             }).catch((e) => {
             });
         });
+        /** show/hide/lock*/
+        var lock = document.createElement("div");
+        lock.className = "scrapbee-edit-lock";
+        div.appendChild(lock);
+        lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/unlock.svg)`;
+        div.addEventListener("mouseenter", function(e){ // mouseover
+            // console.log(e.relatedTarget)
+            $(div).addClass("hover")
+            $(div).stop(true);
+            self.showEditBar();
+        });
+        div.addEventListener("mouseleave", function(e){ // mouseout
+            $(div).removeClass("hover")
+            // console.log(e.relatedTarget)
+            if(div != e.relatedTarget)
+                self.hideEditBar();
+        });
+        lock.addEventListener("click", function(){
+            self.locked=!self.locked;
+            var img=self.locked?"lock":"unlock";
+            lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/${img}.svg)`;
+        });
+        self.hideEditBar();
     }
 }
 if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
-    var path = RegExp.$1;
+    var path = decodeURIComponent(RegExp.$1);
     var scrap_id = RegExp.$2;
     if(platform!="windows"){
-        path = `/${path}`
+        path = `/${path}`;
     }
     new EditToolBar(path, scrap_id);
 }

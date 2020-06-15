@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "ScrapBee",
-    "version": "1.9.0",
+    "version": "1.11.0",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -44,7 +44,9 @@
 	"default_icon": {
 	    "16": "icons/bee.png",
 	    "32": "icons/bee.png"
-	}
+	},
+        "default_title": "ScrapBee",
+        "default_popup": "popup/browser_action.html"
     },
     "content_scripts": [
         {

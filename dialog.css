@@ -30,7 +30,7 @@
 .scrapbee-dlg *{
     color:#222;
 }
-.scrapbee-dlg input[type=button]{
+.blue-button, .scrapbee-dlg input[type=button]{
     padding:5px 20px;
     appearance: none;
     -moz-appearance: none;

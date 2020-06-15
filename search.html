@@ -40,7 +40,7 @@
      input[type=button]::-moz-focus-inner{
        border:none;
      }     
-     input[type=button]:disabled{
+     input[type=submit]:disabled{
        background:#555;
      }
      input[type=checkbox]{
@@ -99,6 +99,10 @@
        margin-right:5px;
        vertical-align:middle;
      }
+     img.loading{
+       vertical-align:middle;
+       display:none;
+     }
     </style>
   </head>
   <body>
@@ -111,6 +115,7 @@
         <input type="checkbox" name="source" value="body" /> {Content}
         <input type="checkbox" name="source" value="comment" checked="true"/> {Comment}
         <input type="submit" name="" value="{Search}" id="btnSearch"/>
+        <img src="icons/loading.gif" class="loading" alt="" />
       </form>
     </div>
     <div id="divResult" class="some_class" style="margin-top:70px;position:relative;margin-bottom:50px;margin-left:30px;">
