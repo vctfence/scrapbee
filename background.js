@@ -26,22 +26,50 @@ log.clear = function(){
     log_pool = [];
 };
 /* log version and platform */
-browser.runtime.getBrowserInfo().then(async function(info) {
+var browser_info_status = "";
+function loadBrowserInfo(){
+    return new Promise((resolve, reject) => {
+        if(browser_info_status == "loaded"){
+            resolve();
+        } else if(browser_info_status == "loading"){
+            function wait(){
+                setTimeout(function(){
+                    if(browser_info_status == "loaded"){
+                        resolve();
+                    }else{
+                        wait();
+                    }
+                }, 1000);
+            }
+            wait();
+        } else {
+            browser_info_status = "loading";
+            browser.runtime.getBrowserInfo().then(function(info) {
+                var manifest = browser.runtime.getManifest();
+                log.info("ScrapBee version = " + manifest.version);
+                log.info("browser = " + info.name + " " + info.version);
+                var main_version = parseInt(info.version.replace(/\..+/, ""));
+                if(info.name != "Firefox" || main_version < 60){
+                    var em = "Only Firefox version after 60 is supported";
+                    log.error(em);
+                    browser_info_status = "error";
+                    reject(Error(em))
+                }else{
+                    log.info("platform = " + navigator.platform);
+                    browser_info_status = "loaded";
+                    resolve();
+                }
+            });
+        }
+    });
+}
+loadBrowserInfo().then(async () => {
     await settings.loadFromStorage();
-    var manifest = browser.runtime.getManifest();
-    log.info("ScrapBee version = " + manifest.version);
-    log.info("browser = " + info.name + " " + info.version);
-    var main_version = parseInt(info.version.replace(/\..+/, ""));
-    if(info.name != "Firefox" || main_version < 60){
-        log.error("Only Firefox version after 60 is supported");
-    }
-    log.info("platform = " + navigator.platform);
-    startWebServer(settings.backend_port);
-});
+    startWebServer(settings.backend_port, 5, "background");
+})
 /* backend*/
 var backend_inst_port;
-var web_launched;
-var web_launching;
+var web_status;
 var backend_version;
 function connectBackendInst(){
     if(!backend_inst_port){
@@ -65,18 +93,18 @@ function communicate(command, body, callback){
     };
     backend_inst_port.onMessage.addListener(listener);
 }
-function startWebServer(port, try_times){
+function startWebServer(port, try_times, debug){
     // if(try_times < 1)
-    //     return  Promise.reject(Error("only one dialog can be showed"));
+    //     return  Promise.reject(Error("start web server: too many times tried"));
     return new Promise((resolve, reject) => {
-        if(web_launched){
+        if(web_status == "launched"){
             resolve();
         } else if(try_times < 1){
-            reject(Error("only one dialog can be showed"));
-        } else if(web_launching){
+            reject(Error("start web server: too many times tried"));
+        } else if(web_status == "launching"){
             function wait(){
                 setTimeout(function(){
-                    if(!web_launching && web_launched){
+                    if(web_status == "launched"){
                         resolve();
                     }else{
                         wait();
@@ -85,30 +113,32 @@ function startWebServer(port, try_times){
             }
             wait();
         } else {
-            web_launching = true;
-            log.info(`start backend service on port ${port}.`);
-            communicate("web-server", {addr: `127.0.0.1:${port}`, port}, function(r){
-                web_launching = false;
-                if(r.Serverstate != "ok"){
-                    log.error(`failed to start backend service: ${r.Error}`);
-                    return startWebServer(port, try_times - 1);
-                }else{
-                    var version = r.Version || 'unknown';
-                    backend_version = version;
-                    log.info(`backend service started, version = ${version} (wanted >= 1.7.0)`);
-                    web_launched = true;
-                    browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
-                    resolve();
-                }
-            });
+            web_status = "launching";
+            loadBrowserInfo().then(() => {
+                log.info(`start backend service on port ${port}.`);
+                communicate("web-server", {addr: `127.0.0.1:${port}`, port}, function(r){
+                    if(r.Serverstate != "ok"){
+                        log.error(`failed to start backend service: ${r.Error}`);
+                        web_status = "error";
+                        return startWebServer(port, try_times - 1, debug);
+                    }else{
+                        var version = r.Version || 'unknown';
+                        backend_version = version;
+                        log.info(`backend service started (caller: ${debug}), version = ${version} (wanted >= 1.7.0)`);
+                        web_status = "launched";
+                        browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
+                        resolve();
+                    }
+                });
+            })
         }
     });
 };
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == 'START_WEB_SERVER_REQUEST'){
         if(request.force)
-            web_launched = false;
-        return startWebServer(request.port, request.try_times);
+            web_status = "";
+        return startWebServer(request.port, request.try_times, "sidebar");
     }else if(request.type == 'LOG'){
         log.sendLog(request.logtype, request.content);
     }else if(request.type == 'CLEAR_LOG'){
