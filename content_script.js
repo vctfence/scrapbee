@@ -114,15 +114,17 @@ if(!window.scrapbee_injected){
             if(sele){
                 var selection = window.getSelection();
                 if(selection.rangeCount > 0){
-                    var range = window.getSelection().getRangeAt(0);
-                    parentEl = range.commonAncestorContainer;
-                    var p = cloneParents(parentEl);
-                    var c = range.cloneContents();
-                    if(p){
-                        div.appendChild(p.getRootNode());
-                        p.appendChild(c);
-                    }else{
-                        div.appendChild(c);
+                    for(var i=0;i<selection.rangeCount;i++){
+                        var range = selection.getRangeAt(i);
+                        parentEl = range.commonAncestorContainer;
+                        var p = cloneParents(parentEl);
+                        var c = range.cloneContents();
+                        if(p){
+                            div.appendChild(p.getRootNode());
+                            p.appendChild(c);
+                        }else{
+                            div.appendChild(c);
+                        }
                     }
                     var html = div.firstChild;
                     if(html && html.tagName.toLowerCase() == "html"){
