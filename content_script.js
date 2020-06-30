@@ -351,18 +351,19 @@ if(!window.scrapbee_injected){
         // log.info(itemId, title, html, css, res)
         function savePage(resolve, reject){
             if((saved_blobs) == res.length){
-                // html = ['<!Doctype html>', html,].join("\n");
-
                 var node = document.doctype;
-                var doctype = "<!DOCTYPE "
-                    + node.name
-                    + (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '')
-                    + (!node.publicId && node.systemId ? ' SYSTEM' : '') 
-                    + (node.systemId ? ' "' + node.systemId + '"' : '')
-                    + '>';
-
-                html = [doctype, html].join("\n");
-                var path = `${rdfPath}/data/${scrapId}/index.css`;
+                if(node){
+                    var doctype = "<!DOCTYPE "
+                        + node.name
+                        + (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '')
+                        + (!node.publicId && node.systemId ? ' SYSTEM' : '') 
+                        + (node.systemId ? ' "' + node.systemId + '"' : '')
+                        + '>';
+                    html = [doctype, html].join("\n");
+                    var path = `${rdfPath}/data/${scrapId}/index.css`;
+                }else{
+                    html = ['<!Doctype html>', html,].join("\n");
+                }
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: css, path}).then((response) => {
                     dlgDownload.updateCell(res.length, 3, "<font style='color:#0055ff'>saved</font>");
                     var path = `${rdfPath}/data/${scrapId}/index.html`;
