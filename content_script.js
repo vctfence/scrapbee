@@ -115,6 +115,7 @@ if(!window.scrapbee_injected){
                 var selection = window.getSelection();
                 if(selection.rangeCount > 0){
                     for(var i=0;i<selection.rangeCount;i++){
+                        console.log("append range ", i)
                         var range = selection.getRangeAt(i);
                         parentEl = range.commonAncestorContainer;
                         var p = cloneParents(parentEl);
