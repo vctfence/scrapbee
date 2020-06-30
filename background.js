@@ -46,7 +46,7 @@ function loadBrowserInfo(){
             browser_info_status = "loading";
             browser.runtime.getBrowserInfo().then(function(info) {
                 var manifest = browser.runtime.getManifest();
-                log.info("ScrapBee version = " + manifest.version);
+                log.info("version = " + manifest.version);
                 log.info("browser = " + info.name + " " + info.version);
                 var main_version = parseInt(info.version.replace(/\..+/, ""));
                 if(info.name != "Firefox" || main_version < 60){

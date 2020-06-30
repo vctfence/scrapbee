@@ -293,10 +293,10 @@
         "message": "No source node selected"
     },
     "MOVE_TO": {
-        "message": "move to"
+        "message": "move to "
     },
     "COPY_TO": {
-        "message": "copy to"
+        "message": "copy to "
     },
     "Left": {
         "message": "left"
