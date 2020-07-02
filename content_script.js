@@ -165,13 +165,15 @@ if(!window.scrapbee_injected){
                     }
                 }
             }
-            /** resources */
+            /** gether resources and inline styles */
             var res = [];
             var distinct = {};
             div.childNodes.iterateAll(function(item){
                 if(item.nodeType == 1){
-                    var el = new ScrapbeeElement(item).processResources();
-                    for(let r of el){
+                    var el = new ScrapbeeElement(item)
+                    var resources = el.processResources();
+                    // el.processInlineStyle();
+                    for(let r of resources){
                         if(!distinct[r.url]){
                             distinct[r.url] = 1;
                             res.push(r);
@@ -198,7 +200,8 @@ if(!window.scrapbee_injected){
                 var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title, have_icon: !!icon_url};
                 res.forEach(function(r, i){
                     var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
-                    dlgDownload.addRow("", "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>", "", `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignor</span>`);
+                    dlgDownload.addRow("", "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>", "",
+                                       `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignor</span>`);
                     var span = dlgDownload.getCell(i, 3).querySelector("span");
                     span.onclick = function(e){ // ignor this resource (cancel downloading)
                         downloaded ++;
@@ -234,24 +237,24 @@ if(!window.scrapbee_injected){
         });
     };
     /* message listener */
-    function getAllCssLoaded(){
-        var css = [];
-        for(let sheet of document.styleSheets){
-            try{
-                for (let rule of sheet.cssRules){
-                    css.push(rule.cssText+"");
-                }
-            }catch(e){}
-        }
-        return css.join("\n");
-    }
-    function getImages(){
-        var images = [];
-        for(let image of document.images){
-            images.push(image.src);
-        }
-        return images.join("\n");
-    }
+    // function getAllCssLoaded(){
+    //     var css = [];
+    //     for(let sheet of document.styleSheets){
+    //         try{
+    //             for (let rule of sheet.cssRules){
+    //                 css.push(rule.cssText+"");
+    //             }
+    //         }catch(e){}
+    //     }
+    //     return css.join("\n");
+    // }
+    // function getImages(){
+    //     var images = [];
+    //     for(let image of document.images){
+    //         images.push(image.src);
+    //     }
+    //     return images.join("\n");
+    // }
     function startBookmark(rdf, rdfPath, itemId){
         browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((url) => {
             // if(icon.match(/^data:image/i)) // base64
@@ -352,6 +355,7 @@ if(!window.scrapbee_injected){
         function savePage(resolve, reject){
             if((saved_blobs) == res.length){
                 var node = document.doctype;
+                var path = `${rdfPath}/data/${scrapId}/index.css`;
                 if(node){
                     var doctype = "<!DOCTYPE "
                         + node.name
@@ -360,7 +364,6 @@ if(!window.scrapbee_injected){
                         + (node.systemId ? ' "' + node.systemId + '"' : '')
                         + '>';
                     html = [doctype, html].join("\n");
-                    var path = `${rdfPath}/data/${scrapId}/index.css`;
                 }else{
                     html = ['<!Doctype html>', html,].join("\n");
                 }

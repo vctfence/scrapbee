@@ -110,12 +110,16 @@ NodeList.prototype.iterateAll = function(fn){
         item.childNodes.iterateAll(fn);
     });
 };
-
 function ScrapbeeElement(el){
     this.el = el;
 }
+ScrapbeeElement.prototype.processInlineStyle=function(){
+    if(this.el.style.cssText){
+        // console.log(this.el.style.cssText)
+        this.el.setAttribute("style", this.el.style.cssText);
+    }
+}
 ScrapbeeElement.prototype.processResources=function(){
-    this.style = window.getComputedStyle(this.el, false);
     var t = this.el.tagName.toLowerCase().replace(/^\w/, function(m){return m.toUpperCase();});
     var fn = "get" + t + "Resources";
     var res = this.getCommonResources();
@@ -135,7 +139,8 @@ ScrapbeeElement.prototype.processResources=function(){
     return r;
 }
 ScrapbeeElement.prototype.getCommonResources=function(){
-    var bg = this.style.backgroundImage;
+    var style = window.getComputedStyle(this.el, false);
+    var bg = style.backgroundImage;
     var m, r = [];
     if(m = bg.match(/^url\(['"]?(.+?)['"]?\)/)){
 	var hex = hex_md5(m[1]);
@@ -198,5 +203,4 @@ ScrapbeeElement.prototype.getBaseResources=function(){
     this.el.setAttribute("mark_remove", "1");
     return [];
 };
-
 true;
