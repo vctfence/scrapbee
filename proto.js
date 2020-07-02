@@ -148,6 +148,20 @@ ScrapbeeElement.prototype.getCommonResources=function(){
     }
     return r;
 };
+ScrapbeeElement.prototype.getBodyResources=function(){
+    var r=[];
+    if(this.el.background){
+        var bg = window.getComputedStyle(document.body, null).getPropertyValue('background-image').split(/'|"/)[1];
+        var hex = hex_md5(bg);
+        var filename = hex;
+        bg.replace(/\.\w+$/,function(a){
+            filename = hex + a;
+        });
+	r.push({tag:this.el.tagName, type:"body", url:bg, filename});
+	this.el.background = filename;
+    }
+    return r;
+}
 ScrapbeeElement.prototype.getImgResources=function(){
     var r=[];
     if(this.el.getAttribute("src")){
