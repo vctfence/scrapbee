@@ -31,84 +31,87 @@ export async function browseNode(node, external_tab, preserve_history) {
                         : browser.tabs.create({"url": url}));
 
         case NODE_TYPE_ARCHIVE:
-            if (node.external === RDF_EXTERNAL_NAME) {
-                let path = await backend.computePath(node.id);
-                let rdf_directory = path[0].uri;
-                let base = `file://${rdf_directory}/data/${node.external_id}/`;
-                let index = `${base}index.html`;
 
-                let html = await loadLocalResource(index);
+            // No local RDFs since Firefox 74
 
-                if (!html.data) {
-                    showNotification({message: "Cannot find: " + index});
-                    return;
-                }
-
-                html = html.data.replace(/<body([^>]*)>/, `<body\$1>${SCRAPYARD_LOCK_SCREEN}`);
-
-                let urls = [];
-
-                html = await instantiateLinkedResources(html, base, urls, 0);
-
-                let blob = new Blob([new TextEncoder().encode(html)], {type: "text/html"});
-                let url = URL.createObjectURL(blob);
-
-                urls.push(url);
-
-                let completionListener = function(message,sender,sendResponse) {
-                    if (message.type === "BROWSE_PAGE_HTML" && message.payload.tab_id === rdf_tab.id) {
-                        browser.runtime.onMessage.removeListener(completionListener);
-
-                        for (let url of urls) {
-                            URL.revokeObjectURL(url);
-                        }
-                    }
-                };
-
-                browser.runtime.onMessage.addListener(completionListener);
-
-                let listener = async (id, changed, tab) => {
-                    if (id === rdf_tab.id && changed.status === "complete") {
-                        let initializationListener = async function(message, sender, sendResponse) {
-                            if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === rdf_tab.id) {
-                                browser.runtime.onMessage.removeListener(initializationListener);
-
-                                node.__local_import = true;
-                                node.__local_browsing = true;
-                                node.__local_import_base = base;
-                                node.tab_id = rdf_tab.id;
-
-                                await browser.tabs.sendMessage(rdf_tab.id, {
-                                    type: "performAction",
-                                    menuaction: 2,
-                                    payload: node
-                                });
-                            }
-                        };
-                        browser.runtime.onMessage.addListener(initializationListener);
-
-                        browser.tabs.onUpdated.removeListener(listener);
-                        try {
-                            try {
-                                await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
-                            } catch (e) {}
-
-                            await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
-                        }
-                        catch (e) {
-                            console.log(e);
-                            showNotification({message: "Error loading page"});
-                        }
-                    }
-                };
-
-                browser.tabs.onUpdated.addListener(listener);
-
-                let rdf_tab = await (external_tab
-                                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
-                                        : browser.tabs.create({"url": url}));
-                return;
-            }
+            // if (node.external === RDF_EXTERNAL_NAME) {
+            //     let path = await backend.computePath(node.id);
+            //     let rdf_directory = path[0].uri;
+            //     let base = `file://${rdf_directory}/data/${node.external_id}/`;
+            //     let index = `${base}index.html`;
+            //
+            //     let html = await loadLocalResource(index);
+            //
+            //     if (!html.data) {
+            //         showNotification({message: "Cannot find: " + index});
+            //         return;
+            //     }
+            //
+            //     html = html.data.replace(/<body([^>]*)>/, `<body\$1>${SCRAPYARD_LOCK_SCREEN}`);
+            //
+            //     let urls = [];
+            //
+            //     html = await instantiateLinkedResources(html, base, urls, 0);
+            //
+            //     let blob = new Blob([new TextEncoder().encode(html)], {type: "text/html"});
+            //     let url = URL.createObjectURL(blob);
+            //
+            //     urls.push(url);
+            //
+            //     let completionListener = function(message,sender,sendResponse) {
+            //         if (message.type === "BROWSE_PAGE_HTML" && message.payload.tab_id === rdf_tab.id) {
+            //             browser.runtime.onMessage.removeListener(completionListener);
+            //
+            //             for (let url of urls) {
+            //                 URL.revokeObjectURL(url);
+            //             }
+            //         }
+            //     };
+            //
+            //     browser.runtime.onMessage.addListener(completionListener);
+            //
+            //     let listener = async (id, changed, tab) => {
+            //         if (id === rdf_tab.id && changed.status === "complete") {
+            //             let initializationListener = async function(message, sender, sendResponse) {
+            //                 if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === rdf_tab.id) {
+            //                     browser.runtime.onMessage.removeListener(initializationListener);
+            //
+            //                     node.__local_import = true;
+            //                     node.__local_browsing = true;
+            //                     node.__local_import_base = base;
+            //                     node.tab_id = rdf_tab.id;
+            //
+            //                     await browser.tabs.sendMessage(rdf_tab.id, {
+            //                         type: "performAction",
+            //                         menuaction: 2,
+            //                         payload: node
+            //                     });
+            //                 }
+            //             };
+            //             browser.runtime.onMessage.addListener(initializationListener);
+            //
+            //             browser.tabs.onUpdated.removeListener(listener);
+            //             try {
+            //                 try {
+            //                     await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
+            //                 } catch (e) {}
+            //
+            //                 await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
+            //             }
+            //             catch (e) {
+            //                 console.log(e);
+            //                 showNotification({message: "Error loading page"});
+            //             }
+            //         }
+            //     };
+            //
+            //     browser.tabs.onUpdated.addListener(listener);
+            //
+            //     let rdf_tab = await (external_tab
+            //                             ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
+            //                             : browser.tabs.create({"url": url}));
+            //     return;
+            // }
 
             return backend.fetchBlob(node.id).then(blob => {
                 if (blob) {

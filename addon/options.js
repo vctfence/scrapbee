@@ -9,11 +9,14 @@ import {
     isSpecialShelf
 } from "./db.js";
 
-window.onload = function(){
+window.onload = async function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
+    const urlParams = new URLSearchParams(window.location.search);
+
     $("#div-page").css("display", "table-row");
+    let link_scope_elt = $("#link-scope");
 
     let darkStyle;
 
@@ -146,7 +149,7 @@ window.onload = function(){
             $("#auth-dropbox").val("Sign out");
     });
 
-    fetch("_locales/en/help.html").then(response => {
+    fetch("help.html").then(response => {
         return response.text();
     }).then(text => {
         $("#div-help").html(text);
@@ -231,6 +234,8 @@ window.onload = function(){
         showNotification({message: "Dark theme style is copied to Clipboard."});
     }
 
+    // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
+
     let importing = false;
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
     async function onStartRDFImport(e) {
@@ -288,7 +293,7 @@ window.onload = function(){
                 bar.val(message.progress);
             }
             else if (message.type === "RDF_IMPORT_ERROR") {
-                let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}" 
+                let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}"
                                        class="invalid-import">${message.bookmark.name}</a>`;
                 $("#invalid-imports-container").show();
                 $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
@@ -307,13 +312,26 @@ window.onload = function(){
             });
     }
 
+    // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    let autoStartCheckLinks = !!urlParams.get("repairIcons");
+    let autoLinkCheckScope;
+
+    if (autoStartCheckLinks) {
+        $("#update-icons").prop("checked", true);
+        let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
+        link_scope_elt.replaceWith(scopePath[scopePath.length - 1].name + "&nbsp;&nbsp;");
+        autoLinkCheckScope = scopePath.map(g => g.name).join("/");
+        startCheckLinks();
+    }
+
     let abort_check_links = false;
-    let link_scope = $("#link-scope");
-    let initLinkChecker = () => {
+
+    function initLinkChecker() {
         $("#start-check-links").on("click", startCheckLinks);
         $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
-        link_scope.html(`
+        link_scope_elt.html(`
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
             settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
             }</option>
@@ -342,10 +360,10 @@ window.onload = function(){
                     isSpecialShelf(shelf.name)
                         ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
                         : shelf.name;
-                $("<option></option>").appendTo(link_scope).html(name).attr("value", shelf.id);
+                $("<option></option>").appendTo(link_scope_elt).html(name).attr("value", shelf.id);
             }
         });
-    };
+    }
 
     function stopCheckLinks() {
         $("#start-check-links").val("Check");
@@ -353,6 +371,10 @@ window.onload = function(){
         $("#current-link-url").text("");
         $("#current-link").css("visibility", "hidden");
         abort_check_links = false;
+
+        if ($("#update-icons").is(":checked")) {
+            setTimeout(() => browser.runtime.sendMessage({type: "NODES_UPDATED"}), 500);
+        }
     }
 
     function startCheckLinks() {
@@ -360,10 +382,16 @@ window.onload = function(){
 
             $("#start-check-links").val("Stop");
 
-            let timeout = parseInt($("#link-check-timeout").val()) * 1000;
             let update_icons = $("#update-icons").is(":checked");
-            let scope = $(`#link-scope option[value='${link_scope.val()}']`).text();
-            let path = scope === EVERYTHING ? undefined : scope;
+            let path;
+
+            if (autoStartCheckLinks) {
+                path = autoLinkCheckScope;
+            }
+            else {
+                let scope = $(`#link-scope option[value='${link_scope_elt.val()}']`).text();
+                path = scope === EVERYTHING ? undefined : scope;
+            }
 
             $("#current-link").css("visibility", "visible");
             $("#invalid-links-container").hide();
@@ -378,7 +406,7 @@ window.onload = function(){
 
                         let xhr = new XMLHttpRequest();
                         xhr.open("GET", node.uri);
-                        xhr.timeout = timeout;
+                        xhr.timeout = parseInt($("#link-check-timeout").val()) * 1000;
                         xhr.ontimeout = function () {this._timedout = true};
                         xhr.onerror = function (e) {console.log(e)};
                         xhr.onloadend = function (e) {
@@ -391,6 +419,11 @@ window.onload = function(){
 
                                 let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
                                 $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
+
+                                if (update_icons) {
+                                    node.icon = undefined;
+                                    backend.updateNode(node);
+                                }
                             }
                             else if (update_icons) {
                                 let link;
@@ -398,7 +431,6 @@ window.onload = function(){
                                 let type = this.getResponseHeader("Content-Type");
 
                                 if (type && type.toLowerCase().startsWith("text/html")) {
-
                                     let doc = parseHtml(this.responseText);
                                     link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
 
@@ -413,6 +445,7 @@ window.onload = function(){
                                 }
                                 else {
                                     link = base + "/favicon.ico";
+
                                     fetch(link, {method: "GET"}).then(response => {
                                         let type = response.headers.get("content-type") || "image";
                                         if (response.ok && type.startsWith("image"))
@@ -420,6 +453,10 @@ window.onload = function(){
                                                 node.icon = bytes.byteLength? link: undefined;
                                                 backend.updateNode(node);
                                             });
+                                        else {
+                                            node.icon = undefined;
+                                            backend.updateNode(node);
+                                        }
                                     }).catch(() => {
                                         node.icon = undefined;
                                         backend.updateNode(node);
@@ -453,4 +490,5 @@ window.onload = function(){
         e.preventDefault();
         browser.runtime.sendMessage({type: "SELECT_NODE", node: {id: parseInt(e.target.getAttribute("data-id"))}});
     }
+
 };

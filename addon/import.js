@@ -775,14 +775,14 @@ export async function instantiateLinkedResources(html, base, urls, depth) {
 }
 
 export const SCRAPYARD_LOCK_SCREEN =
-    `<div id="scrapyard-waiting" 
-          style="background-color: ${getThemeVar("--theme-background")}; 
-          z-index: 2147483647; 
+    `<div id="scrapyard-waiting"
+          style="background-color: ${getThemeVar("--theme-background")};
+          z-index: 2147483647;
           position: fixed;
-          inset: 0px; 
-          background-image: url(${browser.runtime.getURL(getThemeVar("--themed-tape-icon"))}); 
+          inset: 0px;
+          background-image: url(${browser.runtime.getURL(getThemeVar("--themed-tape-icon"))});
           background-size: 50mm 50mm;
-          background-repeat: no-repeat; 
+          background-repeat: no-repeat;
           background-position: center center;"></div>`;
 
 
@@ -868,7 +868,7 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
 
         browser.tabs.onUpdated.addListener(listener);
 
-        let import_tab = await browser.tabs.create({url: url, active: false});
+        var import_tab = await browser.tabs.create({url: url, active: false});
     });
 
 }

@@ -1,0 +1,24 @@
+Index: addon/lib/selectric/jquery.selectric.js
+===================================================================
+--- addon/lib/selectric/jquery.selectric.js	(revision 73c37e0b903e5ef0eede3184392b2c59656c77cd)
++++ addon/lib/selectric/jquery.selectric.js	(date 1592907800125)
+@@ -676,11 +676,15 @@
+           e.preventDefault();
+           e.stopPropagation();
+         },
+-        click: function() {
++        // click: function() {
++        //   _this.select($(this).data('index'));
++        //
++        //   // Chrome doesn't close options box if select is wrapped with a label
++        //   // We need to 'return false' to avoid that
++        //   return false;
++        // },
++        mouseup: function(e) {
+           _this.select($(this).data('index'));
+-
+-          // Chrome doesn't close options box if select is wrapped with a label
+-          // We need to 'return false' to avoid that
+           return false;
+         }
+       });

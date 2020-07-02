@@ -174,42 +174,26 @@
         <img src="_locales/en/images/references.png">
     </p>
 
+    <h3>Import/Export</h3>
+
+    <p>Scrapyard allows to import bookmarks in Netscape HTML format which you may obtain from Firefox, Chrome or other
+    web-browsers. It is also allows to import and export its own collections of bookmarks or archived pages in ORG and
+    JSON formats through the corresponding item in the shelf operations menu:</p>
+    <p style="text-align: center">
+        <img src="_locales/en/images/impexp.png">
+    </p>
+
+    <p>See "Import RDF" section of the add-on settings page for the detailed instructions on importing legacy ScrapBook
+        RDF archives.</p>
+
     <h2>Advanced features</h2>
-
-    <!--h3>Importing RDF archives of the legacy ScrapBook extension</h3>
-    <p>
-        The following steps that are necessary to import a ScrapBook RDF file into Scrapyard:
-        <ol>
-            <li>Open Scrapyard settings and navigate to the "Import RDF" tab.</li>
-            <li>Specify the new shelf name where the archive should be imported.</li>
-            <li>Specify the full absolute path to the <code>scrapbook.rdf</code> file being imported.
-                On Linux it is only possible to import RDF files exposed through HTTP, so an URL should be used instead.</li>
-            <li>Check the "Quick import" flag if you want to import bookmark and directory structure only. All archive
-            files will be left on disk in this case.</li>
-        </ol>
-    </p>
-
-    <h4>Notes</h4>
-    <p>To import RDF on Linux you need to set up a web server, for example <a href="https://www.lighttpd.net/" target="_blank">lighttpd</a>,
-        that will make the root <b>scrapbook.rdf</b> file along with all saved pages from the <b>data</b> directory available through HTTP.
-        Then you need to specify an URL pointing to the <b>scrabook.rdf</b>, for example: <b>http://localhost/scrabook.rdf</b>.
-    </p>
-
-    <p>By default, all ScrapBook archives are imported into Firefox local storage which makes them readily available
-        in Scrapyard. If for some reason you need to leave them on disk, use the "Quick import" option, although access
-        time to the archived pages will be greater in this case. It is not possible to add new items into the
-        shelf created by quick import. Quick import works on Windows only.
-    </p>
-
-    <p>RDF import may fail due to low disk space which imposes Firefox restrictions on the local storage or due to
-        excessive amount of items, which may overload Firefox memory garbage collector.</p-->
 
     <h3>Natural Language Interface (optional)</h3>
     <p>
         It is possible to issue commands to Scrapyard through the natural language interface offered by
         <a href="https://gchristensen.github.io/ubiquitywe/"  target="_blank">UbiquityWE</a> extension.
         To control Scrapyard by text commands just install UbiquityWE. In most cases, the command interface
-        allows to significantly reduce the number of actions needed to create a bookmark or archive.
+        allows to significantly reduce the number of actions needed to create a bookmark or a page archive.
     </p>
 
     <h3>The "bookmark" and "archive" Commands</h3>

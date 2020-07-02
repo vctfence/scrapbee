@@ -35,7 +35,7 @@ import {showNotification} from "./utils.js";
 export const TREE_STATE_PREFIX = "tree-state-";
 
 class BookmarkTree {
-    constructor(element, inline=false) {
+    constructor(element, inline= false) {
         this._element = element;
         this._inline = inline;
 
@@ -286,6 +286,7 @@ class BookmarkTree {
         }
         else if (n.type == NODE_TYPE_SEPARATOR) {
             n.text = "─".repeat(40);
+            n.icon = false;
             n.a_attr = {
                 "class": "separator-node"
             };
@@ -810,6 +811,14 @@ class BookmarkTree {
                     }
                 }
             },
+            repairIconsItem: {
+                separator_before: true,
+                label: "Repair icons...",
+                action: async () => {
+                    let query = `?repairIcons=true&scope=${ctx_node_data.id}`
+                    browser.tabs.create({url: `/options.html${query}#links`, active: true});
+                }
+            },
             deleteItem: {
                 separator_before: true,
                 label: "Delete",
@@ -969,6 +978,7 @@ class BookmarkTree {
                 delete items.newFolderItem;
                 delete items.renameItem;
                 delete items.rdfPathItem;
+                delete items.repairIconsItem;
                 if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
                     delete items.copyItem;

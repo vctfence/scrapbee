@@ -615,6 +615,10 @@ window.onload = function () {
                 tree._jstree.redraw_node(node, false, false, true);
             }
         }
+        else if (request.type === "NODES_UPDATED") {
+            let last_shelf = settings.last_shelf();
+            switchShelf(context, tree, last_shelf, false);
+        }
         else if (request.type === "NODES_READY") {
             let last_shelf = settings.last_shelf();
 
