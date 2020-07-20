@@ -196,7 +196,10 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == "CAPTURE_TABS"){
         browser.tabs.query({currentWindow: true}).then(function(tabs){
             for(let tab of tabs){
-                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST', autoClose: true}, true);
+                var url = tab.url;
+                var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
+                if(enabled)
+                    sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST', autoClose: true}, true);
             }
         });
     }
