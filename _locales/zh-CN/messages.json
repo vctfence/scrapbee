@@ -96,7 +96,10 @@
     },
     "CaptureAdvance": {
         "message": "高级抓取..."
-    },    
+    },
+    "CaptureTabs": {
+        "message": "抓取多个标签"
+    },
     "Download": {
         "message": "下载"
     },

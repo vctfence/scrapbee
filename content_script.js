@@ -197,7 +197,7 @@ if(!window.scrapbee_injected){
                 /*** download resources and callback */
                 var downloaded = 0;
                 Array.from(div.querySelectorAll("*[mark_remove='1']")).forEach(el => el.remove());
-                var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title, have_icon: !!icon_url};
+                var result = {html: div.innerHTML.trim(), res:res, css: css.join("\n"), title: document.title, haveIcon: !!icon_url};
                 res.forEach(function(r, i){
                     var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
                     dlgDownload.addRow("", "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>", "",
@@ -261,12 +261,12 @@ if(!window.scrapbee_injected){
             var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
             browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
                 // var icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: !!url, rdf, itemId});
+                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: !!url, rdf, itemId});
                 // todo: showNotification({message: `Capture url "${document.title}" done`, title: "Info"});
             });
         });
     }
-    function startCapture(saveType, rdf, rdfPath, itemId){
+    function startCapture(saveType, rdf, rdfPath, itemId, autoClose){
         if(lock()){
             dlgDownload = new DialogDownloadTable('Download', 'Waiting...', function(){
                 dlgDownload.hideButton()
@@ -278,15 +278,18 @@ if(!window.scrapbee_injected){
                     saveData(data, rdfPath, itemId).then(() => {
                         dlgDownload.showButton();
                         dlgDownload.hint = "All done";
-                        // var have_icon = !!(data.res[data.res.length - 1].blob);
-                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', have_icon: data.have_icon, rdf, itemId});
+                        // var haveIcon = !!(data.res[data.res.length - 1].blob);
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: data.haveIcon, rdf, itemId});
+                        if(autoClose){
+                            unlock();
+                            dlgDownload.remove();
+                        }
                     });
                 });
             }, function(r){
                 unlock();
                 dlgDownload.remove();
             });
-            
         }
     }
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -314,7 +317,7 @@ if(!window.scrapbee_injected){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "page", title: document.title, url: location.href}).then((r) => {
-                startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfPath, r.itemId);
+                startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfPath, r.itemId, request.autoClose);
             }).catch(function (error) {
                 alert(error)
             });

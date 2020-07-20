@@ -96,7 +96,10 @@
     },
     "CaptureAdvance": {
         "message": "Capture Advanced..."
-    },    
+    },
+    "CaptureTabs": {
+        "message": "Capture Tabs"
+    },
     "Download": {
         "message": "Download"
     },

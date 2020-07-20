@@ -1,6 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js";
-import {scriptsAllowed, showNotification, getColorFilter, genItemId, gtv, sendTabContentMessage} from "./utils.js";
+import {showNotification, getColorFilter, genItemId, gtv, sendTabContentMessage} from "./utils.js";
 import {refreshTree} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown} from "./control.js";
@@ -666,7 +666,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == 'UPDATE_FINISHED_NODE'){
         /** update node in sidebar only in the same window, sidebar in other windows will reloaded after icon updated */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
-            var icon = request.have_icon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
+            var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
             if(sender.tab.windowId != thisWindowId)
                 currTree.lockRdfSaving = true;
             currTree.updateItemIcon($("#"+request.itemId), icon);
@@ -679,7 +679,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if(currTree && currTree.rendered) {
                     try{
                         var itemId = genItemId();
-                        var icon = request.have_icon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
+                        var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
                         currTree.lockRdfSaving = true;
                         currTree.createLink(currTree.getCurrContainer(), request.nodeType, itemId, currTree.getCurrRefId(), request.url, icon, request.title, true, true);
                         currTree.lockRdfSaving = false;

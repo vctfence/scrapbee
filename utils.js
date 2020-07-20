@@ -1,14 +1,19 @@
-async function scriptsAllowed(tabId, frameId = 0) {
-    var a = false;
-    try {
-        await browser.tabs.executeScript(tabId, {
-            frameId: frameId,
-            runAt: 'document_start',
-            code: 'true;'
-        });
-        a = true;
-    } catch (e) {}
-    return a;
+function scriptsAllowed(tabId, frameId = 0) {
+    return new Promise((resolve, reject) => {
+        try{
+            browser.tabs.executeScript(tabId, {
+                frameId: frameId,
+                runAt: 'document_start',
+                code: 'true;'
+            }).then(()=>{
+                resolve();
+            }).catch((e)=>{
+                reject(e);
+            });
+        }catch(e){
+            reject(e)
+        }
+    });
 }
 function showNotification({message, title='', type = 'info'}) {
     return browser.notifications.create(`sbi-notification-${type}`, {
@@ -351,15 +356,12 @@ function executeScriptsInTab(tab_id, files){
         sendone();
     });
 }
-function sendTabContentMessage(tab, data){
-    return new Promise(async (resolve, reject) => {
-        if (!(await scriptsAllowed(tab.id))) {
-	    var e = "Add-on content script is not allowed on this page";
-	    showNotification({message: e, title: "Error"});
-	    // reject(Error(e))
-        }else{
+function sendTabContentMessage(tab, data, silent=false){
+    return new Promise((resolve, reject) => {
+        scriptsAllowed(tab.id).then(function(){
             if(tab.status == "loading"){
-                showNotification({message: `Waiting for page loading, please do not make any operations on this page before capturing finished`, title: "Info"});
+                if(!silent)
+                    showNotification({message: `Waiting for page loading, please do not make any operations on this page before capturing finished`, title: "Info"});
             }
             return executeScriptsInTab(tab.id, [
                 "/libs/mime.types.js",
@@ -369,15 +371,20 @@ function sendTabContentMessage(tab, data){
                 "/dialog.js",
                 "/content_script.js"
             ]).then(function(){
-                browser.tabs.sendMessage(tab.id, data).then(function(have_icon){
-                    resolve(have_icon);
+                browser.tabs.sendMessage(tab.id, data).then(function(haveIcon){
+                    resolve(haveIcon);
                 }).catch(function(err){
                     reject(err);
                 });
             }).catch(function(err){
                 reject(err);
             });
-        }
+        }).catch((e) => {
+	    var e = "Add-on content script is not allowed on this page";
+	    if(!slient)
+                showNotification({message: e, title: "Error"});
+	    reject(Error(e))
+        });
     });
 }
 function refreshTree(){
@@ -399,7 +406,6 @@ function refreshTree(){
 }
 export{gtv,
        gtev,
-       scriptsAllowed,
        showNotification,
        getColorFilter,
        randRange,

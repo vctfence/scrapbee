@@ -1,7 +1,7 @@
 import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {showNotification} from "./utils.js";
-import {scriptsAllowed, sendTabContentMessage} from "./utils.js";
+import {sendTabContentMessage} from "./utils.js";
 
 /* logging */
 String.prototype.htmlEncode=function(ignoreAmp){
@@ -192,6 +192,12 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == 'GET_TAB_FAVICON'){
         return new Promise((resolve, reject) => {
             resolve(sender.tab.favIconUrl);
+        });
+    }else if(request.type == "CAPTURE_TABS"){
+        browser.tabs.query({currentWindow: true}).then(function(tabs){
+            for(let tab of tabs){
+                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST', autoClose: true}, true);
+            }
         });
     }
 });
