@@ -272,7 +272,7 @@ if(!window.scrapbee_injected){
                 dlgDownload.hideButton()
                 dlgDownload.addHeader("type", "source", "destination", "status");
                 dlgDownload.show();            
-                dlgDownload.hint = "Gethering resources...";
+                dlgDownload.hint = "Gathering resources...";
                 getContent(saveType == "SAVE_SELECTION").then(data => {
                     dlgDownload.hint = "Saving data...";
                     saveData(data, rdfPath, itemId).then(() => {
