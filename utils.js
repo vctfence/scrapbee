@@ -1,18 +1,8 @@
 function scriptsAllowed(tabId, frameId = 0) {
-    return new Promise((resolve, reject) => {
-        try{
-            browser.tabs.executeScript(tabId, {
+    return browser.tabs.executeScript(tabId, {
                 frameId: frameId,
                 runAt: 'document_start',
                 code: 'true;'
-            }).then(()=>{
-                resolve();
-            }).catch((e)=>{
-                reject(e);
-            });
-        }catch(e){
-            reject(e)
-        }
     });
 }
 function showNotification({message, title='', type = 'info'}) {
@@ -381,7 +371,7 @@ function sendTabContentMessage(tab, data, silent=false){
             });
         }).catch((e) => {
 	    var e = "Add-on content script is not allowed on this page";
-	    if(!slient)
+	    if(!silent)
                 showNotification({message: e, title: "Error"});
 	    reject(Error(e))
         });
