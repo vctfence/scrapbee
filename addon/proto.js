@@ -133,7 +133,7 @@ String.prototype.indexWords = function () {
             .replace(/<script(?:.|\n)*<\/script>/gm, '')
             .replace(/<(?:.|\n)*?>/gm, '')
             .replace(/\n/g, '')
-            .replace(/(?:\s|[^\w])+/g, ' ')
+            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ')
             .split(" ")
             .filter(s => s && s.length > 2)
             .map(s => s.toLocaleUpperCase())
