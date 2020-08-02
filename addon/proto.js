@@ -1,3 +1,34 @@
+let BROWSER_VERSION;
+let NON_WORD_REGEX;
+
+browser.runtime.getBrowserInfo().then(info => {
+    BROWSER_VERSION = parseInt(info.version.split("."));
+    NON_WORD_REGEX = BROWSER_VERSION && BROWSER_VERSION < 78
+        ? new RegExp("(?:\\s|[^\\w])+", "g")
+        : new RegExp("(?:\\p{Z}|[^\\p{L}-])+", "ug");
+});
+
+String.prototype.indexWords = function () {
+    try {
+        return Array.from(new Set(this
+            .substring(this.indexOf("<body>"))
+            .replace(/<style(?:.|\n)*<\/style>/gm, '')
+            .replace(/<script(?:.|\n)*<\/script>/gm, '')
+            .replace(/<(?:.|\n)*?>/gm, '')
+            .replace(/\n/g, '')
+            .replace(NON_WORD_REGEX, ' ')
+            .split(" ")
+            .filter(s => s && s.length > 2)
+            .map(s => s.toLocaleUpperCase())
+        ));
+    }
+    catch (e) {
+        console.log(e)
+        console.log("Index creation has failed.")
+        return [];
+    }
+};
+
 String.prototype.htmlEncode = function (ignoreAmp, ignoreQuotes) {
     var s = this;
     if (!ignoreAmp) s = s.replace(/&/g, '&amp;')
@@ -124,26 +155,6 @@ NodeList.prototype.iterateAll = function (fn) {
         item.childNodes.iterateAll(fn);
     });
 }
-
-String.prototype.indexWords = function () {
-    try {
-        return Array.from(new Set(this
-            .substring(this.indexOf("<body>"))
-            .replace(/<style(?:.|\n)*<\/style>/gm, '')
-            .replace(/<script(?:.|\n)*<\/script>/gm, '')
-            .replace(/<(?:.|\n)*?>/gm, '')
-            .replace(/\n/g, '')
-            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ')
-            .split(" ")
-            .filter(s => s && s.length > 2)
-            .map(s => s.toLocaleUpperCase())
-        ));
-    }
-    catch (e) {
-        console.log("Index creation has failed.")
-        return [];
-    }
-};
 
 Array.prototype.removeDups = function(field) {
     if (field) {

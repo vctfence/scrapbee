@@ -966,7 +966,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_SHELVES":
-                if (sender.extensionId !== "ubiquitywe@firefox")
+                if (sender.id !== "ubiquitywe@firefox")
                     return;
 
                 sendResponse(backend.listNodes({
@@ -977,7 +977,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_GROUPS":
-                if (sender.extensionId !== "ubiquitywe@firefox")
+                if (sender.id !== "ubiquitywe@firefox")
                     return;
 
                 sendResponse(backend.listNodes({
@@ -989,7 +989,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_TAGS":
-                if (sender.extensionId !== "ubiquitywe@firefox")
+                if (sender.id !== "ubiquitywe@firefox")
                     return;
 
                 sendResponse(backend.queryTags().then(tags => {
@@ -998,7 +998,7 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_NODES":
-                if (sender.extensionId !== "ubiquitywe@firefox")
+                if (sender.id !== "ubiquitywe@firefox")
                     return;
 
                 delete message.type;
