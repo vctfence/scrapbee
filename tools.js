@@ -1,7 +1,7 @@
 import {BookTree} from "./tree.js";;
 import {settings} from "./settings.js";
 import {SimpleDropdown} from "./control.js";
-import {genItemId, refreshTree} from "./utils.js";
+import {genItemId, refreshTree, httpRequest} from "./utils.js";
 
 function initMover(){
     var mulitCheck;
@@ -247,4 +247,77 @@ function initMover(){
         });
     }
 }
-export {initMover};
+function exportTree(rdf, name, includeSeparator, openInNewTab){
+    return new Promise((resolve, reject)=>{
+        httpRequest(settings.backend_url + "file-service/" + rdf).then(async (response)=>{
+            var tree = new BookTree(response, rdf);
+            var buffer = [`<title>${name}</title>`];
+            await tree.iterateLiNodes(async function(item){
+                if(item.nodeType == "seq"){
+                    buffer.push("<li>" + item.title + "</li>");
+                    buffer.push("<ul>");
+                }else if(item.nodeType == "separator"){
+                    if(includeSeparator)
+                        buffer.push(`<hr/>`);
+                }else{
+                    var type = item.nodeType;
+                    var nt = openInNewTab ? " target='_blank'" : "";
+                    if(type == "bookmark"){
+                        buffer.push(`<li><a href='${item.source}'${nt}>${item.title}</a></li>`);    
+                    }else if(type == "page"){
+                        buffer.push(`<li><a href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
+                    }
+                }
+            }, null, function(item){
+                buffer.push("</ul>");
+            });
+            var path = rdf.replace(/\.rdf\s*$/i, ".html");
+            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: buffer.join(""), path: path}).then((response) => {
+                resolve()
+            });
+        });
+    });
+}
+function initExporter(){
+    function showDlg(name){
+        if($(".dlg-cover:visible").length == 0){
+            var $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
+            $dlg.show()
+        }
+    }
+    function hideDlg(name){
+        var $dlg = $(".dlg-cover.dlg-" + name).hide();
+    }
+    var paths = settings.getRdfPaths();
+    var $drop = $("#exporter #select-rdf");
+    var paths = settings.getRdfPaths();
+    if(paths){
+        var names = settings.getRdfPathNames();
+	names.forEach(function(n, i){
+            var $opt = $("<option>").appendTo($drop);
+            $opt.html(names[i]);
+            $opt.prop("value", paths[i]);
+	});
+    }
+    $drop.change(function(e){
+        var path = $(this).find("option:selected").attr("value").replace(/\.rdf\s*$/i, ".html");
+        $(this).parent().next("div").find("span.path").html(path)
+    });
+    $drop.change();
+    $("#btnExport").click(function(){
+        var self = this;
+        var rdf = $drop.find("option:selected").attr("value");
+        var name = $drop.find("option:selected").html();
+        // $(this).prop("disabled", "true");
+        var includeSeparator = $("#exporter #include-separator").is(":checked");
+        var openInNewTab = $("#exporter #open-in-new-tab").is(":checked");
+        showDlg("wait");
+        exportTree(rdf, name, includeSeparator, openInNewTab).then(()=>{
+            setTimeout(()=>{
+                // $(self).prop("disabled", null);
+                hideDlg("wait");
+            }, 2000)
+        });
+    });
+}
+export {initMover, initExporter};

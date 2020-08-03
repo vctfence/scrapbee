@@ -1,6 +1,6 @@
 import {settings, global} from "./settings.js";
 import {log} from "./message.js";
-import {initMover} from "./tools.js";
+import {initMover, initExporter} from "./tools.js";
 import {gtev} from "./utils.js";
 
 function getAsync(file) {
@@ -116,8 +116,18 @@ window.onload=async function(){
     document.body.innerHTML = document.body.innerHTML.translate();
 
     $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
-    
     $("#div-help").html(getAsync("_locales/" + lang + "/help.html"));
+
+    $(".tab-button").each((i, el)=>{
+        $(el).click((e)=>{
+            $(".tab-button").removeClass("focused");
+            $(e.target).addClass("focused");
+            $(".tab-content").hide();
+            $(".tab-content").eq(i).show();
+        });
+    });
+    $(".tab-button").eq(0).click();
+    
     /** export / import */
     $("input[name='export']").click(async function(){
         var json = await settings.getJson();
@@ -143,15 +153,32 @@ window.onload=async function(){
     });
     /** mover */
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
-        if(gtev(version, '1.7.0'))
+        if(gtev(version, '1.7.0')){
             initMover();
+            initExporter();
+        }
     });
+    function findOffsetParent(el){
+        var r = document.body;
+        var p = el.parentNode;
+        while(p){
+            var style =  window.getComputedStyle(p, null).getPropertyValue('position');
+            if(style == "absolute" || style == "relative"){
+                r = p;
+                break;
+            }
+            p = p.parentNode;
+        }
+        return r;
+    }
     /** help mark */
     $(".help-mark, .warn-mark").hover(function(e){
-        var parentOffset = $(this).parent().offset(); 
-        var relX = e.pageX - parentOffset.left;
-        var relY = e.pageY - parentOffset.top;
-        $(this).next(".tips.hide").show().css({left: relX+"px", top: relY +"px"});
+        var parent = findOffsetParent(e.target);
+        var offset = parent.getBoundingClientRect();
+        $(this).next(".tips.hide").show().css({
+            left: e.clientX - offset.left + "px",
+            top:  e.clientY - offset.top + "px",
+        });
     }, function(){
         $(this).next(".tips.hide").hide();
     });
@@ -181,7 +208,6 @@ window.onload=async function(){
     }
     window.onhashchange=()=>applyArea();
     applyArea();
-
     $("#donate").click(()=>window.open('http://PayPal.me/VFence', '_blank'));
     $("#btnDownloadBackend").click(function(){
         function Next(){
@@ -292,8 +318,10 @@ pause`;
             if(b)
                 $div.scrollTop($div[0].scrollHeight - $div.height());
         }else if(request.type == "BACKEND_SERVICE_STARTED"){
-            if(gtev(version, '1.7.0'))
+            if(gtev(version, '1.7.0')){
                 initMover();
+                initExporter();
+            }
         }
     });
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {

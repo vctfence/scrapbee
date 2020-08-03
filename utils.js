@@ -394,6 +394,29 @@ function refreshTree(){
         });
     });
 }
+
+function httpRequest(url){
+    return new Promise((resolve, reject)=>{
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onload = function(r) {
+            resolve(r.target.response);
+	    
+        };
+        xmlhttp.onerror = function(err) {
+            reject(err)
+	    // log.info(`load ${rdf} failed, ${err}`)
+        };
+        console.log(url)
+        xmlhttp.open("GET", url, false);
+        xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
+        xmlhttp.setRequestHeader('cache-control', 'max-age=0');
+        xmlhttp.setRequestHeader('expires', '0');
+        xmlhttp.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
+        xmlhttp.setRequestHeader('pragma', 'no-cache');
+        xmlhttp.send();
+    })
+
+}
 export{gtv,
        gtev,
        showNotification,
@@ -403,4 +426,5 @@ export{gtv,
        comp,
        getUrlParams,
        sendTabContentMessage,
-       refreshTree};
+       refreshTree,
+       httpRequest};

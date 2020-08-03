@@ -436,7 +436,7 @@ class BookTree {
         this.listenUserEvents($container);
         this.showCheckBoxes(this.options.checkboxes);
     }
-    async iterateLiNodes(fn, nodes=null) {
+    async iterateLiNodes(fn, nodes=null, fn2=null) {
         var self = this;
         nodes = nodes || this.getSeqNode("urn:scrapbook:root").children;
         var level = 0;
@@ -450,21 +450,24 @@ class BookTree {
                         if (about) {
                             var id = null;
                             var desc_node = self.getDescNode(about);
+                            var data;
                             if(desc_node){
                                 id = desc_node.getAttributeNS(self.MAIN_NS, "id");
                                 var title = desc_node.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
                                 desc_node.setAttributeNS(self.MAIN_NS, "title", title);  // temporarily replace html entity
-                                await fn({
+                                data = {
                                     parentId: parentId,
                                     nodeType: 'seq',
                                     id: id,
                                     title: title,
                                     level
-                                }, child);
+                                }
+                                await fn(data, child);
                             }
                             level++;
                             await processer(seqNode.children, id);
                             level--;
+                            if(fn2 && desc_node)fn2(data, child)
                         }
                     } else if(nodeType == "separator") {
                         var id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");

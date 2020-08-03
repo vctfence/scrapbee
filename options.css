@@ -237,10 +237,9 @@ h2{
 #node-mover{
     padding:160px 30px;
     box-sizing:border-box;
-    border:0px solid;
     position:absolute;
     left:30px;
-    top:60px;
+    top:30px;
     right:30px;
     bottom:60px;
     border-radius:5px;
@@ -436,19 +435,30 @@ h2{
 .scrapbee-dlg .waiting-gif{
     border-radius:15px;
     border:1px solid #555;
+    border-top:none;
     width:66px;
 }
+.tab-button.focused{
+    background:#555;
+    color:#fff;
+    border:none;
+}
 .tab-button{
+    background:#aaa;
+    color:#555;
+    border:1px solid;
     display:inline-block;
     font-weight:bold;
-    background:#555;
     padding:5px 10px 7px 10px;
     border-radius:0 0 10px 10px;
-    color:#fff;
     font-size:12px;
     cursor:default;
     cursor:pointer;
     margin-left:1px;
+}
+.tab-content{
+    position:absolute;bottom:0px;top:30px;left:0px;right:0px;
+    display:none;
 }
 .log-line.info{
     color:#7d7;
@@ -470,4 +480,39 @@ h2{
     color:#f00;
     background:#ff0;
     front-weight:bold;
+}
+#exporter .row{
+    margin:0 0 10px 0px;
+}
+span.header{
+    width:50px;text-align:right;display:inline-block;
+}
+
+
+
+.dlg-cover{
+    position:fixed;
+    z-index:999999999;
+    width:100%;
+    height:100%;
+    background:#0005;
+    top:0;
+    left:0;
+    text-align:center;
+    line-height:100%;
+    display: flex;
+    align-items: center;
+}
+.dlg{
+    vartical-align:center;
+    text-align:center;
+    background:#ccc;
+    margin:auto;
+    padding:15px;
+    border-radius:5px;
+    border:1px solid #777;
+    overflow:hidden;
+    /* -webkit-box-sizing: border-box; */
+    /* -moz-box-sizing: border-box; */
+    /* box-sizing: border-box; */
 }
