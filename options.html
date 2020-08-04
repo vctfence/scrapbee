@@ -236,10 +236,16 @@
           </div>
         </div>
         <!-- tool2 -->
-        <div id="exporter" style="" class="tab-content">
-          <div style="margin:30px;padding:30px;border:1px solid;display;width:-moz-fit-content;">
+        <div id="exporter" class="tab-content">
+          <div style="margin:30px;padding:30px;border:1px solid #555;border-radius:5px;display;width:-moz-fit-content;">
             <div class="row">
-              <span class="header">Source:</span> <select id="select-rdf" name="aaa" autocomplate="off"></select>
+              <span class="header">Export Type:</span>
+              <select autocomplate="off">
+                <option>HTML page only</option>
+              </select>
+            </div>
+            <div class="row">
+              <span class="header">Source:</span> <select id="select-rdf" autocomplate="off"></select>
             </div>
             <div class="row">
               <span class="header">To:</span> <span class="path"></span>  
@@ -262,9 +268,11 @@
           </div>
         </div>
       </div>
+      <!-- console -->
       <div id="div-log" class="div-area" style="display:none;height:100%;position:relative">
         <div class="console"></div>
       </div>
+      <!-- waiting dialog -->
       <div class="dlg-cover dlg-wait" style="display:none;">
         <div class="dlg" style="width:200px;height:50px;display:flex">
           <img src="icons/loading.gif" class="" alt="" style="margin:auto;width:30px" />

@@ -68,9 +68,9 @@ var DialogWaiting = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
         this.el.innerHTML = `
-  <div class="scrapbee-dlg-cover">
+  <div class="scrapbee-dlg-cover waiting">
     <div class="scrapbee-dlg">
-     <img src="icons/loading-big.gif" class="waiting-gif"/>
+     <img src="icons/loading.gif" class="waiting-gif"/>
     </div>
   </div>`;
     }

@@ -177,7 +177,7 @@ function initMover(){
             await srcTree.saveXml();
             await destTree.saveXml();
         }
-        waitingDlg.hide();
+        waitingDlg.remove();
     });
     var selected_rdfs = [];
     $(".drop-box").each(function(i){
@@ -279,15 +279,6 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
     });
 }
 function initExporter(){
-    function showDlg(name){
-        if($(".dlg-cover:visible").length == 0){
-            var $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
-            $dlg.show()
-        }
-    }
-    function hideDlg(name){
-        var $dlg = $(".dlg-cover.dlg-" + name).hide();
-    }
     var paths = settings.getRdfPaths();
     var $drop = $("#exporter #select-rdf");
     var paths = settings.getRdfPaths();
@@ -308,14 +299,13 @@ function initExporter(){
         var self = this;
         var rdf = $drop.find("option:selected").attr("value");
         var name = $drop.find("option:selected").html();
-        // $(this).prop("disabled", "true");
         var includeSeparator = $("#exporter #include-separator").is(":checked");
         var openInNewTab = $("#exporter #open-in-new-tab").is(":checked");
-        showDlg("wait");
+        var waitingDlg = new DialogWaiting();
+        waitingDlg.show();
         exportTree(rdf, name, includeSeparator, openInNewTab).then(()=>{
             setTimeout(()=>{
-                // $(self).prop("disabled", null);
-                hideDlg("wait");
+                waitingDlg.remove();
             }, 2000)
         });
     });

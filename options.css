@@ -420,29 +420,6 @@ h2{
     background-color:#555;
     color:#fff;
 }
-/* ============================
-   dialog override
-   ============================ */
-.scrapbee-dlg{
-    width:50%;
-    text-align:center;
-    margin:auto;
-    vertical-align:middle;
-    position:relative;
-    overflow:hidden;
-    border:none !important;
-}
-.scrapbee-dlg .waiting-gif{
-    border-radius:15px;
-    border:1px solid #555;
-    border-top:none;
-    width:66px;
-}
-.tab-button.focused{
-    background:#555;
-    color:#fff;
-    border:none;
-}
 .tab-button{
     background:#aaa;
     color:#555;
@@ -481,38 +458,47 @@ h2{
     background:#ff0;
     front-weight:bold;
 }
+/* ============================
+   exporter
+   ============================ */
 #exporter .row{
     margin:0 0 10px 0px;
 }
-span.header{
-    width:50px;text-align:right;display:inline-block;
+#exporter .path{
+    background:#eee;
+    padding:5px;
+    border-radius:3px;
 }
-
-
-
-.dlg-cover{
-    position:fixed;
-    z-index:999999999;
-    width:100%;
-    height:100%;
-    background:#0005;
-    top:0;
-    left:0;
+#exporter span.header{
+    width:80px;
+    text-align:right;
+    display:inline-block;
+}
+/* ============================
+   dialog override
+   ============================ */
+.scrapbee-dlg-cover.waiting .scrapbee-dlg{
+    width:200px;
+    height:50px;
     text-align:center;
-    line-height:100%;
+    margin:auto;
+    vertical-align:middle;
+    overflow:hidden;
+    border:none !important;
+    background:#aaa;
     display: flex;
     align-items: center;
-}
-.dlg{
-    vartical-align:center;
-    text-align:center;
-    background:#ccc;
-    margin:auto;
-    padding:15px;
     border-radius:5px;
-    border:1px solid #777;
-    overflow:hidden;
-    /* -webkit-box-sizing: border-box; */
-    /* -moz-box-sizing: border-box; */
-    /* box-sizing: border-box; */
+}
+.scrapbee-dlg-cover.waiting .waiting-gif{
+    margin:auto;
+    width:25px;
+}
+/* ============================
+   tab page
+   ============================ */
+.tab-button.focused{
+    background:#555;
+    color:#fff;
+    border:none;
 }
