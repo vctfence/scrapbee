@@ -46,14 +46,14 @@
     mask-image:url(icons/checkbox-on.svg);
 }
 .item.page{
-    color:#eee;
+    color:#000;
     display:block;
     background-repeat:no-repeat;
     background-position:0px 0px;
     margin:0 0 5px 0;
 }
 .item.bookmark{
-    color:#ae0;
+    color:#050;
     display:block;
     background-repeat:no-repeat;
     margin:0 0 5px 0;

@@ -250,29 +250,97 @@ function initMover(){
 function exportTree(rdf, name, includeSeparator, openInNewTab){
     return new Promise((resolve, reject)=>{
         httpRequest(settings.backend_url + "file-service/" + rdf).then(async (response)=>{
+            // 'SAVE_BLOB_ITEM'
+
+            var blob = await fetch("icons/item.gif").then(r => r.blob());
+            var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/item.gif");
+            browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
+
+            var blob = await fetch("icons/folder.gif").then(r => r.blob());
+            var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/folder.gif");
+            browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
+
+            var blob = await fetch("icons/openfolder.gif").then(r => r.blob());
+            var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/openfolder.gif");
+            browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
+
+
+            
             var tree = new BookTree(response, rdf);
             var buffer = [`<title>${name}</title>`];
             await tree.iterateLiNodes(async function(item){
                 if(item.nodeType == "seq"){
-                    buffer.push("<li>" + item.title + "</li>");
+                    buffer.push("<li class='seq'><img src='data/resources/folder.gif'/>" + item.title + "</li>");
                     buffer.push("<ul>");
                 }else if(item.nodeType == "separator"){
                     if(includeSeparator)
                         buffer.push(`<hr/>`);
                 }else{
                     var type = item.nodeType;
+                    var icon = tree.translateResourceAsRelative(item.icon);
+
+                    if(icon == "") icon = "data/resources/item.gif";
+                    
                     var nt = openInNewTab ? " target='_blank'" : "";
                     if(type == "bookmark"){
-                        buffer.push(`<li><a href='${item.source}'${nt}>${item.title}</a></li>`);    
+                        buffer.push(`<li class='bookmark'><img src='${icon}'/><a href='${item.source}'${nt}>${item.title}</a></li>`);    
                     }else if(type == "page"){
-                        buffer.push(`<li><a href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
+                        buffer.push(`<li><img src='${icon}'/><a class='page' href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
                     }
                 }
             }, null, function(item){
                 buffer.push("</ul>");
             });
+
+            buffer.push(`
+ <style>
+ .bookmark{color:#050}
+ .page{color:#333}
+ ul{
+   display:none;
+   margin-top:0;
+   margin-bottom:0;
+   margin-left:1.5em;
+   padding:0;
+ }
+ li{cursor:default;list-style: none;}
+ li img{
+   width:1em;
+   height:1em;
+   vertical-align:middle;
+   margin-right:5px;
+ }
+
+</style>
+`)
+            
+buffer.push(`
+<script>
+  NodeList.prototype.forEach = Array.prototype.forEach;
+  var nodes = document.querySelectorAll("li");
+  nodes.forEach(function(item){
+    if(item.className == "seq"){
+      item.onclick=function(){
+        var ul = this.nextElementSibling;
+
+
+if(this.getAttribute("opened") !== "1"){
+  this.setAttribute("opened", "1")
+  this.querySelector("img").src = "data/resources/openfolder.gif"
+}else{
+  this.setAttribute("opened", "0")
+  this.querySelector("img").src = "data/resources/folder.gif"
+}
+        if(ul && ul.tagName == "UL"){
+          ul.style.display= ul.style.display == "block" ? "none" : "block";
+        }
+      }
+    }
+  });
+</script>`);
+            
             var path = rdf.replace(/\.rdf\s*$/i, ".html");
-            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: buffer.join(""), path: path}).then((response) => {
+            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: buffer.join("\n"), path: path}).then((response) => {
                 resolve()
             });
         });

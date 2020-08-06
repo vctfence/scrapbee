@@ -151,12 +151,17 @@ window.onload=async function(){
         };
         document.getElementById("import_file").click();
     });
-    /** mover */
-    browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
+    /** tools */
+    function initTools(version){
         if(gtev(version, '1.7.0')){
             initMover();
             initExporter();
+        }else{
+            log.error("Can not initiate tools, backend 1.7.0 or later required.")
         }
+    }
+    browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
+        initTools(version);
     });
     function findOffsetParent(el){
         var r = document.body;
@@ -318,10 +323,7 @@ pause`;
             if(b)
                 $div.scrollTop($div[0].scrollHeight - $div.height());
         }else if(request.type == "BACKEND_SERVICE_STARTED"){
-            if(gtev(version, '1.7.0')){
-                initMover();
-                initExporter();
-            }
+            initTools(request.version);
         }
     });
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {

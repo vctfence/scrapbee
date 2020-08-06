@@ -69,6 +69,17 @@ class BookTree {
         else
             this.$top_container.find(".item input[type='checkbox']").css('display', 'none');
     }
+    translateResourceAsRelative(r) {
+        if(/^resource\:/.test(r)){ /** scrap data */
+            r = r.replace(/^resource\:\/\/scrapbook\//, "");
+        }else if((/^(\/|(\[a-z]\:))/).test(r)){ /** local file */
+            r =  "file://" + r;
+        }
+        r = r.replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
+            return b + "/";
+        });
+        return r;
+    }
     translateResource(r, rdfPath, id) {
         /** scrap data */
         r = r.replace(
