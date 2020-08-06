@@ -250,8 +250,6 @@ function initMover(){
 function exportTree(rdf, name, includeSeparator, openInNewTab){
     return new Promise((resolve, reject)=>{
         httpRequest(settings.backend_url + "file-service/" + rdf).then(async (response)=>{
-            // 'SAVE_BLOB_ITEM'
-
             var blob = await fetch("icons/item.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/item.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
@@ -264,8 +262,6 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/openfolder.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
 
-
-            
             var tree = new BookTree(response, rdf);
             var buffer = [`<title>${name}</title>`];
             await tree.iterateLiNodes(async function(item){
@@ -278,24 +274,21 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
                 }else{
                     var type = item.nodeType;
                     var icon = tree.translateResourceAsRelative(item.icon);
-
                     if(icon == "") icon = "data/resources/item.gif";
-                    
                     var nt = openInNewTab ? " target='_blank'" : "";
                     if(type == "bookmark"){
                         buffer.push(`<li class='bookmark'><img src='${icon}'/><a href='${item.source}'${nt}>${item.title}</a></li>`);    
                     }else if(type == "page"){
-                        buffer.push(`<li><img src='${icon}'/><a class='page' href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
+                        buffer.push(`<li class='page' ><img src='${icon}'/><a href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
                     }
                 }
             }, null, function(item){
                 buffer.push("</ul>");
             });
-
             buffer.push(`
  <style>
- .bookmark{color:#050}
- .page{color:#333}
+ .bookmark a{color:#050}
+ .page a{color:#333}
  ul{
    display:none;
    margin-top:0;
@@ -310,10 +303,8 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
    vertical-align:middle;
    margin-right:5px;
  }
-
 </style>
-`)
-            
+`);
 buffer.push(`
 <script>
   NodeList.prototype.forEach = Array.prototype.forEach;
@@ -321,16 +312,14 @@ buffer.push(`
   nodes.forEach(function(item){
     if(item.className == "seq"){
       item.onclick=function(){
+        if(this.getAttribute("opened") !== "1"){
+          this.setAttribute("opened", "1")
+          this.querySelector("img").src = "data/resources/openfolder.gif"
+        }else{
+          this.setAttribute("opened", "0")
+          this.querySelector("img").src = "data/resources/folder.gif"
+        }
         var ul = this.nextElementSibling;
-
-
-if(this.getAttribute("opened") !== "1"){
-  this.setAttribute("opened", "1")
-  this.querySelector("img").src = "data/resources/openfolder.gif"
-}else{
-  this.setAttribute("opened", "0")
-  this.querySelector("img").src = "data/resources/folder.gif"
-}
         if(ul && ul.tagName == "UL"){
           ul.style.display= ul.style.display == "block" ? "none" : "block";
         }
@@ -338,7 +327,6 @@ if(this.getAttribute("opened") !== "1"){
     }
   });
 </script>`);
-            
             var path = rdf.replace(/\.rdf\s*$/i, ".html");
             browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: buffer.join("\n"), path: path}).then((response) => {
                 resolve()
