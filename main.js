@@ -434,6 +434,13 @@ window.onload=async function(){
         });
         // runtime.openOptionsPage()
     };
+    var btn = document.getElementById("btnTool");
+    btn.onclick = function(){
+        // window.open("options.html#tool", "_scrapbee_option")
+        browser.tabs.create({
+            "url": "options.html#tool"
+        });
+    };    
     var btn = document.getElementById("btnHelp");
     btn.onclick = function(){
         // window.open("options.html#help", "_scrapbee_option")

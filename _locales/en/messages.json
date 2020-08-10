@@ -278,7 +278,7 @@
         "message": "With this tool, you can move or copy nodes and their contents between 2 RDFs (book trees), draging and deleting nodes within one RDF are also available here."
     },
     "NODE_MOVER_WARN_TIP":{
-        "message": "<b>BE CAREFUL!!! THIS IS AN EXPERIMENTAL-FEATURE.</b> <br>Please make sure you have backup of your data before using this tool. <br>Actions on heavy nodes are not recommended. <br>Do not make changes anywhere else while using this tool or it possibly causes conflicts."
+        "message": "<b>BE CAREFUL</b><br>Please make sure you have backup of your data before using this tool.<br>Do not make changes anywhere else while using this tool or it possibly causes conflicts."
     },
     "Tool":{
         "message": "Tool"
@@ -286,6 +286,9 @@
     "Node Mover": {
         "message": "Node Mover"
     },
+    "Exporter": {
+        "message": "Exporter"
+    },    
     "Done": {
         "message": "Done"
     },
@@ -390,5 +393,24 @@
     },
     "NO_RDF_SETTED_HINT": {
         "message": "No rdf setted, please check <a href='options.html' target='_blank'>settings</a>"
+    },
+    "EXPORTER_TYPE": {
+        "message": "Type"
+    },
+    "EXPORTER_HTML_PAGE": {
+        "message": "HTML Page"
+    },
+    "EXPORTER_SOURCE": {
+        "message": "Source"
+    },
+    "EXPORTER_EXPORT_AS": {
+        "message": "Export As"
+    },
+    "EXPORTER_INCLUDE_SEPARATOR": {
+        "message": "Include separator"
+    },
+    "EXPORTER_OPEN_LINKS_IN_NEW_TAB": {
+        "message": "Open links in new tab"
     }
+    
 }

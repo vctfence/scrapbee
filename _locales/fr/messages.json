@@ -266,7 +266,7 @@
         "message": "Avec cet outil, vous pouvez déplacer ou copier des nœuds et leur contenu entre 2 RDF (arborescences de livre). Le dragage et la suppression de nœuds dans un RDF sont également disponibles ici."
     },
     "NODE_MOVER_WARN_TIP":{
-        "message": "<b>ATTENTION!!! Ceci est une fonctionalité expérimentale!</b> <br>Assurez-vous d'avoir fait une sauvegarde de toutes vos données avant d'utiliser cet outil.<br>Les actions sur les noeuds importants ne sont pas recommandées.<br> Ne pas faire de changement ailleurs alors que vous utilisez l'outil car cela peut causer des conflits."
+        "message": "<b>ATTENTION</b><br>Veuillez vous assurer d'avoir une sauvegarde de vos données avant d'utiliser cet outil.<br>N'effectuez aucune modification ailleurs en utilisant cet outil sous peine de provoquer des conflits."
     },
     "Tool":{
         "message": "Outil de gestion"
@@ -274,6 +274,9 @@
     "Node Mover": {
         "message": "Gestion des noeuds"
     },
+    "Exporter": {
+        "message": "Exportateur"
+    },        
     "Done": {
         "message": "Fait"
     },
@@ -372,6 +375,23 @@
     },
     "NO_RDF_SETTED_HINT": {
         "message": "Aucun rdf réglé, veuillez vérifier les <a href='options.html' target='_blank'>paramètres</a>"
-    }
-    
+    },
+    "EXPORTER_TYPE": {
+        "message": "Type"
+    },
+    "EXPORTER_HTML_PAGE": {
+        "message": "Page HTML"
+    },
+    "EXPORTER_SOURCE": {
+        "message": "La Source"
+    },
+    "EXPORTER_EXPORT_AS": {
+        "message": "Exporter sous"
+    },
+    "EXPORTER_INCLUDE_SEPARATOR": {
+        "message": "Inclure le séparateur"
+    },
+    "EXPORTER_OPEN_LINKS_IN_NEW_TAB": {
+        "message": "Ouvrir les liens dans un nouvel onglet"
+    }    
 }

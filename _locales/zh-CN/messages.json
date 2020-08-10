@@ -281,13 +281,16 @@
         "message": "本工具可以实现两个RDF树之间的结点移动或复制，此处也允许单个RDF树内的结点拖动和删除"
     },
     "NODE_MOVER_WARN_TIP":{
-        "message": "<b>注意!!! 这是一个实验性功能</b> <br>使用前请确保已进行数据备份<br>不建议针对大型结点使用<br>使用此工具时不要在别处进行修改操作以免引起冲突"
+        "message": "<b>注意</b><br>使用前请确保已进行数据备份<br>使用此工具时不要在别处进行修改操作以免引起冲突"
     },
     "Tool":{
         "message": "工具"
     },
     "Node Mover": {
         "message": "结点迁移"
+    },
+    "Exporter": {
+        "message": "导出工具"
     },
     "Done": {
         "message": "完成"
@@ -393,5 +396,23 @@
     },
     "NO_RDF_SETTED_HINT": {
         "message": "没有可用rdf，请检查 <a href='options.html' target='_blank'>设置</a>"
+    },
+    "EXPORTER_TYPE": {
+        "message": "类型"
+    },    
+    "EXPORTER_HTML_PAGE": {
+        "message": "HTML页面"
+    },
+    "EXPORTER_SOURCE": {
+        "message": "来源"
+    },
+    "EXPORTER_EXPORT_AS": {
+        "message": "导出为"
+    },
+    "EXPORTER_INCLUDE_SEPARATOR": {
+        "message": "导出分隔线"
+    },
+    "EXPORTER_OPEN_LINKS_IN_NEW_TAB": {
+        "message": "在新标签打开链接"
     }
 }

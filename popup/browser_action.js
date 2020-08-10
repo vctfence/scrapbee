@@ -7,6 +7,10 @@ window.onload=function(){
         browser.tabs.create({"url": "../options.html"});
         window.close();
     });
+    $("#btnTool").click(function(){
+        browser.tabs.create({"url": "../options.html#tool"});
+        window.close();
+    });    
     $("#btnOpenInSidebar").click(function(){
         browser.sidebarAction.open();
         window.close();

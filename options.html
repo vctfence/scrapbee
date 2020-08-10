@@ -176,15 +176,10 @@
       </div>
       <div id="div-help" class="div-area" style="display:none;"></div>
       <div id="div-tool" class="div-area" style="display:none;position:relative;padding-top:0">
-
-        
         <div style="text-align:left;padding-left:15px;position:absolute;top:0;width:100%">
           <span class="tab-button">{Node Mover}</span>
-          <span class="tab-button">Exporter</span>
+          <span class="tab-button">{Exporter}</span>
         </div>
-
-
-        
         <!-- tool1 -->
         <div class="tab-content">
           <div style="margin-left:30px;margin-right:30px;">
@@ -239,27 +234,27 @@
         <div id="exporter" class="tab-content">
           <div style="margin:30px;padding:30px;border:1px solid #555;border-radius:5px;display;width:-moz-fit-content;">
             <div class="row">
-              <span class="header">Export Type:</span>
+              <span class="header">{EXPORTER_TYPE}: </span>
               <select autocomplate="off">
-                <option>HTML page only</option>
+                <option>{EXPORTER_HTML_PAGE}</option>
               </select>
             </div>
             <div class="row">
-              <span class="header">Source:</span> <select id="select-rdf" autocomplate="off"></select>
+              <span class="header">{EXPORTER_SOURCE}:</span> <select id="select-rdf" autocomplate="off"></select>
             </div>
             <div class="row">
-              <span class="header">To:</span> <span class="path"></span>  
+              <span class="header">{EXPORTER_EXPORT_AS}:</span> <span class="path"></span>  
             </div>
             <div class="row">
               <span class="header"></span>
               <label>
-                <input id="include-separator" type="checkbox" name="" value="" checked=""/>include separator
+                <input id="include-separator" type="checkbox" name="" value="" checked=""/>{EXPORTER_INCLUDE_SEPARATOR}
               </label> 
             </div>
             <div class="row">
               <span class="header"></span>
               <label>
-                <input id="open-in-new-tab" type="checkbox" name="" value="" checked=""/>open links in new tab
+                <input id="open-in-new-tab" type="checkbox" name="" value="" checked=""/>{EXPORTER_OPEN_LINKS_IN_NEW_TAB}
               </label> 
             </div>
             <div style="">

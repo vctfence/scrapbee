@@ -156,8 +156,9 @@ window.onload=async function(){
         if(gtev(version, '1.7.0')){
             initMover();
             initExporter();
+            log.info("Tools initiated successfully.")
         }else{
-            log.error("Can not initiate tools, backend 1.7.0 or later required.")
+            log.error("Can not initiate tools, make sure backend 1.7.0 or later installed.")
         }
     }
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {

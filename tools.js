@@ -288,7 +288,7 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
             buffer.push(`
  <style>
  .bookmark a{color:#050}
- .page a{color:#333}
+ .page a{color:#000}
  ul{
    display:none;
    margin-top:0;

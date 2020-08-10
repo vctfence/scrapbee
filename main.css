@@ -136,6 +136,9 @@ html,body{
 .tool-button.help:before{
     mask-image:url(icons/help.svg);
 }
+.tool-button.tool:before{
+    mask-image:url(icons/tool.svg);
+}
 .tool-button.reload:before{
     mask-image:url(icons/reload.svg);
 }

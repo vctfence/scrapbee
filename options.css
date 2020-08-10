@@ -296,6 +296,15 @@ h2{
     box-sizing:border-box;
     padding:10px;
 }
+#node-mover .item.folder{
+    color:#eee;
+}
+#node-mover .item.page{
+    color:#eee;
+}
+#node-mover .item.bookmark{
+    color:#6f0;
+}
 #node-mover .toolbar{
     left:0;
     height:30px;
@@ -465,7 +474,8 @@ h2{
     margin:0 0 10px 0px;
 }
 #exporter .path{
-    background:#eee;
+    color:blue;
+    /* background:#eee; */
     padding:5px;
     border-radius:3px;
 }
