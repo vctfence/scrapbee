@@ -41,9 +41,8 @@ class EditToolBar{
         this.$cap = $("<div>").appendTo(document.body);
         this.scrap_path = scrap_path;
         this.scrap_id = scrap_id;
-        this.buildTools();
         this.locked = false;
-
+        this.buildTools();
         window.addEventListener("mousedown", function(e){
             if(e.button == 0) {
                 /** remove dom node by cleaner */
@@ -144,9 +143,9 @@ class EditToolBar{
     hideMarkerMenu(){
         $(this.menu).removeClass("show");
     }
-    buildTools(){
+    async buildTools(){
         var self = this;
-        var editing=false;
+        var editing = false;
         var extension_id = browser.i18n.getMessage("@@extension_id");
         /** load editing css */
         // loadCss("scrapbee_editing_css", `moz-extension://${extension_id}/edit.css`)
@@ -184,9 +183,10 @@ class EditToolBar{
         btn.className="blue-button";
         btn.value=chrome.i18n.getMessage("MODIFY_DOM_ON");
         div.appendChild(btn);
+        
         btn.addEventListener("click", function(){
             editing=!editing;
-            self.locked=!self.locked;
+            // self.locked=!self.locked;
             self.toggleDomEdit(editing);
             this.value=chrome.i18n.getMessage(editing?"MODIFY_DOM_OFF":"MODIFY_DOM_ON");
             $(this).prop("disabled", false);
@@ -285,11 +285,22 @@ class EditToolBar{
                 self.hideEditBar();
         });
         lock.addEventListener("click", function(){
-            self.locked=!self.locked;
-            var img=self.locked?"lock":"unlock";
-            lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/${img}.svg)`;
+            lockme(!self.locked);
         });
-        self.hideEditBar();
+        function lockme(yn){
+            self.locked = yn;
+            var img = yn?"lock":"unlock";
+            lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/${img}.svg)`;
+        }
+        // hide edit bar on start or lock it
+        var settings = await browser.runtime.sendMessage({type: 'GET_SETTINGS'});
+
+        if(settings.lock_editbar == "on"){
+            lockme(true);
+            $(this.div).css({bottom:"0px"});   
+        }else{
+            self.hideEditBar();
+        }
     }
 }
 if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){

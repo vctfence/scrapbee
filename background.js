@@ -193,6 +193,10 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return new Promise((resolve, reject) => {
             resolve(sender.tab.favIconUrl);
         });
+    }else if(request.type == 'GET_SETTINGS'){
+        return new Promise((resolve, reject) => {
+            resolve(settings);
+        });
     }else if(request.type == "CAPTURE_TABS"){
         browser.tabs.query({currentWindow: true}).then(function(tabs){
             for(let tab of tabs){

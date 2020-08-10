@@ -73,7 +73,10 @@ settings.set('focused_bg_color', '07a');
 settings.set('font_size', '12');
 settings.set('font_name', '');
 settings.set('line_spacing', '5');
+
 settings.set('open_in_current_tab', "off");
+settings.set('lock_editbar', "off");
+
 settings.set('announcement_showed', "");
 // settings.loadFromStorage();
 /* =================================================== */

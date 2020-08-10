@@ -70,6 +70,7 @@ function showConfiguration(){
             settings.set('font_name', $("input[name=font_name]").val(), true);
             settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
+            settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed");
@@ -98,12 +99,11 @@ function showConfiguration(){
     });
     jscolor.installByClassName("jscolor");
     $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
-
-    $("input[name=font_name]").val(settings.font_name);
-    
+    $("input[name=font_name]").val(settings.font_name);    
     $("input[name=line_spacing]").val(settings.line_spacing).trigger("input");
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
+    $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
 }
 window.onload=async function(){
     await settings.loadFromStorage();
