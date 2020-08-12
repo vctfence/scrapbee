@@ -68,5 +68,15 @@
     "options_ui": {
         "open_in_tab": true,
         "page": "options.html"
+    },
+    "commands": {
+        "_execute_sidebar_action": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+B",
+                "linux": "Ctrl+Shift+B",
+                "mac": "MacCtrl+Shift+B"
+            },
+            "description": "Toggle Scrapbee Sidebar"
+        }
     }
 }
