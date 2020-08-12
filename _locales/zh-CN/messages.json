@@ -341,9 +341,9 @@
         "message": "打开所有项目"
     },
     "OPEN_ORIGIN_LINK":{
-        "message": "打开原始链接"
+        "message": "打开链接"
     },
-    "Property":{
+    "Properties":{
         "message": "属性"
     },
     "Page":{
