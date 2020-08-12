@@ -176,7 +176,7 @@ menulistener.onProperty = function(){
         var t = type.replace(/^\w/, function(a){return a.toUpperCase();});
         t = `{${t}}`.translate();
 
-        var opt = {dlg_title:"{Property}".translate(), title: (t0||""),
+        var opt = {dlg_title:"{Properties}".translate(), title: (t0||""),
                    url: s0, id, time, type:t,
                    display_url: type == "folder" ? "none" : "",
                    display_icon: type == "folder" ? "none" : "",
