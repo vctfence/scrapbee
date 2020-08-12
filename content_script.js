@@ -201,9 +201,9 @@ if(!window.scrapbee_injected){
                 res.forEach(function(r, i){
                     var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
                     dlgDownload.addRow("", "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>", "",
-                                       `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignor</span>`);
+                                       `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignore</span>`);
                     var span = dlgDownload.getCell(i, 3).querySelector("span");
-                    span.onclick = function(e){ // ignor this resource (cancel downloading)
+                    span.onclick = function(e){ // ignore this resource (cancel downloading)
                         downloaded ++;
                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>canceled</font>");
                         if(downloaded == res.length){
