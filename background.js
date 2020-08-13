@@ -94,8 +94,8 @@ function communicate(command, body, callback){
     backend_inst_port.onMessage.addListener(listener);
 }
 function startWebServer(port, try_times, debug){
-    // if(try_times < 1)
-    //     return  Promise.reject(Error("start web server: too many times tried"));
+    if(try_times < 1)
+        return  Promise.reject(Error("start web server: too many times tried"));
     return new Promise((resolve, reject) => {
         if(web_status == "launched"){
             resolve();
