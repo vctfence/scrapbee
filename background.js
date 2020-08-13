@@ -71,31 +71,39 @@ loadBrowserInfo().then(async () => {
 var backend_inst_port;
 var web_status;
 var backend_version;
-function connectBackendInst(){
-    if(!backend_inst_port){
-        backend_inst_port = browser.runtime.connectNative("scrapbee_backend");
-        backend_inst_port.onDisconnect.addListener((p) => {
-            if (p.error) {
-                log.error(`backend disconnected due to an error: ${p.error.message}`);
-            }else{
-                log.error(`backend disconnected`);
-            }
-        });
-    }
-}
 function communicate(command, body, callback){
-    connectBackendInst();
-    body.command=command;
-    backend_inst_port.postMessage(JSON.stringify(body));
-    var listener = (response) => {
-        callback(response);
-        backend_inst_port.onMessage.removeListener(listener);
-    };
-    backend_inst_port.onMessage.addListener(listener);
+    return new Promise((resolve, reject)=>{
+        if(!backend_inst_port){
+            backend_inst_port = browser.runtime.connectNative("scrapbee_backend");
+            backend_inst_port.onDisconnect.addListener((p) => {
+                if (p.error) {
+                    var em = `backend disconnected due to an error: ${p.error.message}`
+                    // log.error(em);
+                    reject(Error(em));
+                }else{
+                    var em = `backend disconnected`;
+                    log.error(em);
+                    reject(Error(em));
+                }
+            });
+        }
+        if(backend_inst_port.error){
+            reject(backend_inst_port.error);
+        }else{
+            body.command = command;
+            backend_inst_port.postMessage(JSON.stringify(body));
+            var listener = (response) => {
+                resolve(response)
+                backend_inst_port.onMessage.removeListener(listener);
+            };
+            backend_inst_port.onMessage.addListener(listener);
+        }
+    });
 }
 function startWebServer(port, try_times, debug){
-    if(try_times < 1)
-        return  Promise.reject(Error("start web server: too many times tried"));
+    if(web_status == "failed"){
+        return  Promise.reject(Error("start web server: failed"));
+    }
     return new Promise((resolve, reject) => {
         if(web_status == "launched"){
             resolve();
@@ -116,10 +124,16 @@ function startWebServer(port, try_times, debug){
             web_status = "launching";
             loadBrowserInfo().then(() => {
                 log.info(`start backend service on port ${port}.`);
-                communicate("web-server", {addr: `127.0.0.1:${port}`, port}, function(r){
+                communicate("web-server", {addr: `127.0.0.1:${port}`, port}).then(function(r){
                     if(r.Serverstate != "ok"){
                         log.error(`failed to start backend service: ${r.Error}`);
                         web_status = "error";
+                        if(try_times == 0){
+                            web_status = "failed";
+                            var ms = "start web server: too many times tried";
+                            reject(Error(ms));
+                            log.error(ms);
+                        }
                         return startWebServer(port, try_times - 1, debug);
                     }else{
                         var version = r.Version || 'unknown';
@@ -129,6 +143,10 @@ function startWebServer(port, try_times, debug){
                         browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                         resolve();
                     }
+                }).catch((e)=>{
+                    log.error(e.message);
+                    web_status = "failed";
+                    reject(e);
                 });
             })
         }
