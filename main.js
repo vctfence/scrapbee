@@ -624,7 +624,7 @@ function requestUrlSaving(itemId){
                $container = $(".root.folder-content");
            }
            currTree.createLink(currTree.getCurrContainer(), "bookmark", itemId, currTree.getCurrRefId(), tab.url, icon, tab.title, false, true);
-           showNotification({message: `Capture url "${tab.title}" done`, title: "Info"});
+           showNotification({message: `Save bookmark "${tab.title}" done`, title: "Info"});
        }
        if(icon && icon.match(/^data:image/i)){
            var rdf_path = settings.getLastRdfPath();
