@@ -82,7 +82,7 @@ function communicate(command, body, callback){
                     reject(Error(em));
                 }else{
                     var em = `backend disconnected`;
-                    log.error(em);
+                    // log.error(em);
                     reject(Error(em));
                 }
             });
@@ -107,8 +107,6 @@ function startWebServer(port, try_times, debug){
     return new Promise((resolve, reject) => {
         if(web_status == "launched"){
             resolve();
-        } else if(try_times < 1){
-            reject(Error("start web server: too many times tried"));
         } else if(web_status == "launching"){
             function wait(){
                 setTimeout(function(){
