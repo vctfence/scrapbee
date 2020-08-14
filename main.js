@@ -63,6 +63,10 @@ function showDlg(name, data, onshowed){
     }
     $(document).unbind("keyup.dialog");
     /** return promise object */
+
+    var contextmenu = $(document.body).attr("contextmenu");
+    $(document.body).attr("contextmenu", "");
+    
     var p = new Promise(function(resolve, reject){
         $(document).bind("keyup.dialog", function(e) {
             if (e.key === "Escape") { // escape key maps to keycode `27`
@@ -84,10 +88,13 @@ function showDlg(name, data, onshowed){
                 }
             });
             $dlg.remove();
+            $(document.body).attr("contextmenu", contextmenu);
             resolve(data);
         });
         $dlg.find("input.button-cancel").bind("click.dlg", function(){
             $dlg.remove();
+            $(document.body).attr("contextmenu", contextmenu);
+            reject();
         });
     });
     if(onshowed)onshowed($dlg);
@@ -181,7 +188,6 @@ menulistener.onProperty = function(){
                    display_url: type == "folder" ? "none" : "",
                    display_icon: type == "folder" ? "none" : "",
                    comment: c0, tag: tag0, icon: icon0};
-
         showDlg("property", opt, function($dlg){
             $dlg.find("span[name=btnDefaultIcon]").click(function(){
                 $("input[name=icon").val(`resource://scrapbook/data/${id}/favicon.ico`);
@@ -191,7 +197,7 @@ menulistener.onProperty = function(){
                 $("input[name=icon").val('');
                 return false;
             });
-        }).then(function(d){
+        }).then(function(d){            
             currTree.lockRdfSaving = true;
             var t1 = d.title;
             if(t1 != t0){
@@ -720,8 +726,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }
 });
 document.addEventListener('contextmenu', function(event){
-    if($(".dlg-cover:visible").length)
-        event.preventDefault();
+    // if($(".dlg-cover:visible").length)
+    //     event.preventDefault();
     return false;
 });
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
