@@ -1,7 +1,10 @@
 import {showNotification, sendTabContentMessage} from "../utils.js"
+import {settings, global} from "../settings.js";
 import {log} from "../message.js";
 
-window.onload=function(){
+window.onload=async function(){
+    await settings.loadFromStorage();
+    
     document.body.innerHTML = document.body.innerHTML.translate();
     $("#btnSetting").click(function(){
         browser.tabs.create({"url": "../options.html"});
@@ -21,7 +24,8 @@ window.onload=function(){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             } else {
                 browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
-                    sendTabContentMessage(tabs[0], {type: 'SAVE_PAGE_REQUEST'}).then(function(){
+                    var autoClose = settings.auto_close_saving_dialog == "on";
+                    sendTabContentMessage(tabs[0], {type: 'SAVE_PAGE_REQUEST', autoClose}).then(function(){
                         window.close();
                     }).catch(function(e){
                         window.close();
@@ -36,7 +40,8 @@ window.onload=function(){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             } else {
                 browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
-                    sendTabContentMessage(tabs[0], {type: 'SAVE_SELECTION_REQUEST'}).then(function(){
+                    var autoClose = settings.auto_close_saving_dialog == "on";
+                    sendTabContentMessage(tabs[0], {type: 'SAVE_SELECTION_REQUEST', autoClose}).then(function(){
                         window.close();
                     }).catch(function(e){
                         window.close();

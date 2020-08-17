@@ -393,5 +393,11 @@
     },
     "EXPORTER_OPEN_LINKS_IN_NEW_TAB": {
         "message": "Ouvrir les liens dans un nouvel onglet"
+    },
+    "LOCK_EDITBAR": {
+        "message":""
+    },
+    "AUTO_CLOSE_SAVING_DIALOG": {
+        "message":""
     }    
 }

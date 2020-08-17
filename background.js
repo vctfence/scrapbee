@@ -245,7 +245,8 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST'});
+                var autoClose = settings.auto_close_saving_dialog == "on";
+                sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST', autoClose});
                 // browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
             }
         });
@@ -263,8 +264,8 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST'});
-                // browser.runtime.sendMessage({type: 'SAVE_PAGE_REQUEST'});
+                var autoClose = settings.auto_close_saving_dialog == "on";
+                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST', autoClose});
             }
         });
     }

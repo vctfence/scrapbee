@@ -411,6 +411,12 @@
     },
     "EXPORTER_OPEN_LINKS_IN_NEW_TAB": {
         "message": "Open links in new tab"
+    },
+    "LOCK_EDITBAR": {
+        "message":"Lock Editbar"
+    },
+    "AUTO_CLOSE_SAVING_DIALOG": {
+        "message":"Auto Close Saving Dialog"
     }
     
 }

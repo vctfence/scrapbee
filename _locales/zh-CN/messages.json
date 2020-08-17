@@ -414,5 +414,11 @@
     },
     "EXPORTER_OPEN_LINKS_IN_NEW_TAB": {
         "message": "在新标签打开链接"
+    },
+    "LOCK_EDITBAR": {
+        "message":"锁定编辑栏"
+    },
+    "AUTO_CLOSE_SAVING_DIALOG": {
+        "message":"自动关闭保存对话框"
     }
 }

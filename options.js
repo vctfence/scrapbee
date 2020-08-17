@@ -71,6 +71,7 @@ function showConfiguration(){
             settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
+            settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed");
@@ -104,6 +105,7 @@ function showConfiguration(){
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
     $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
+    $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
 }
 window.onload=async function(){
     await settings.loadFromStorage();
