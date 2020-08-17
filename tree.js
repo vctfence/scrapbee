@@ -115,12 +115,12 @@ class BookTree {
         var token = $container.prop("scrapbee_tree_token") || randRange(0, 99999999);
         $(document).unbind('.BookTree' + token);
         $container.prop("scrapbee_tree_token", token);
+        // mouse down (focus items)
         $(document).bind("mousedown.BookTree" + token, function (e) {
             if(e.target.tagName != "INPUT"){
                 if(!$(e.target).closest($container).length)
                     return;
                 var $el = getItemNode(e.target);
-
                 if ($el) {
                     if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("page") || $el.hasClass("bookmark")) {
                         if(self.onChooseItem)self.onChooseItem($el.attr("id"));
@@ -136,6 +136,17 @@ class BookTree {
                 }
             }
         });
+        // hack middle clicking
+        $(document).on("mousedown", function (e1) {
+            $(document).one("mouseup", function (e2) {
+                if (e1.which == 2 && e1.target == e2.target) {
+                    var e3 = $.event.fix(e2);
+                    e3.type = "click";
+                    $(e2.target).trigger(e3)
+                }
+            });
+        });
+        // click nodes
         $(document).bind("click.BookTree" + token, function (e) {
             if(!$(e.target).closest($container).length)
                 return;
@@ -164,6 +175,7 @@ class BookTree {
                 }
             }
         });
+        // mouse up
         $(document).bind("mouseup.BookTree" + token, function (e) {
             /** toggle checkboxs recursively */
             if(e.target.tagName == "INPUT" && e.button == 0){
@@ -185,6 +197,7 @@ class BookTree {
             $ref_item = null;
             $container.find(".drag-into").removeClass("drag-into");
         });
+        // mouse move
         var $prev_ref, prev_t;
         $(document).bind("mousemove.BookTree" + token, function (e) {
             if (!dragging) return;
