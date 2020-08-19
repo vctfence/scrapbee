@@ -1,7 +1,7 @@
 import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {showNotification} from "./utils.js";
-import {sendTabContentMessage} from "./utils.js";
+import {sendTabContentMessage, executeScriptsInTab} from "./utils.js";
 
 /* logging */
 String.prototype.htmlEncode=function(ignoreAmp){
@@ -200,11 +200,33 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return ajaxFormPost(settings.backend_url + "fs/copy", {src, dest});
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type);
+    }else if(request.type == 'CALL_IFRAME'){
+        request.type = request.action;
+        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});
+    }else if(request.type == 'GET_IFRAMES'){
+        var tabId = sender.tab.id;
+        return new Promise((resolve, reject) => {
+            return browser.webNavigation.getAllFrames({tabId}).then((ar)=>{
+                ar.shift();
+                resolve(ar);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }else if(request.type == 'INJECT_IFRAME'){
+        var tabId = sender.tab.id;
+        return executeScriptsInTab(tabId, [
+            "/libs/mime.types.js",
+            "/libs/jquery-3.3.1.js",
+            "/libs/md5.js",
+            "/proto.js",
+            "/dialog.js",
+            "/content_script.js"
+        ], request.frameId);
     }else if(request.type == 'TAB_INNER_CALL'){
         return browser.tabs.sendMessage(sender.tab.id, request);
     }else if(request.type == 'IS_SIDEBAR_OPENED'){
         return browser.sidebarAction.isOpen({});
-        // browser.tabs.sendMessage(sender.tab.id, request)
     }else if(request.type == 'GET_TAB_FAVICON'){
         return new Promise((resolve, reject) => {
             resolve(sender.tab.favIconUrl);

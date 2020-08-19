@@ -122,7 +122,6 @@ class EditToolBar{
     }
     hideEditBar(){
         var self=this;
-        console.log("--->",$(this.div).hasClass('hover'))
         if(!this.locked && !this.editing && !($(self.menu).is(":visible")) && !($(this.div).hasClass('hover'))){
             $(this.div).stop(true);
             if(this.moveTimeout){
@@ -183,7 +182,6 @@ class EditToolBar{
         btn.className="blue-button";
         btn.value=chrome.i18n.getMessage("MODIFY_DOM_ON");
         div.appendChild(btn);
-        
         btn.addEventListener("click", function(){
             editing=!editing;
             // self.locked=!self.locked;
@@ -294,7 +292,6 @@ class EditToolBar{
         }
         // hide edit bar on start or lock it
         var settings = await browser.runtime.sendMessage({type: 'GET_SETTINGS'});
-
         if(settings.lock_editbar == "on"){
             lockme(true);
             $(this.div).css({bottom:"0px"});   

@@ -331,14 +331,25 @@ function getUrlParams(url){
     }
     return params;
 }
-function executeScriptsInTab(tab_id, files){
+function executeScriptsInTab(tabId, files, frameId=0){
     return new Promise((resolve, reject) => {
+        // console.log("tabid " + tabId)
+        // console.log("frameid " + frameId)
         function sendone(){
             if(files.length){
                 var f = files.shift();
-                browser.tabs.executeScript(tab_id, {file: f}).then(() => {
-                    sendone();
-                }).catch(reject);
+                // injection into page -> about:debugging, about:addons causes an error
+                try{
+                    browser.tabs.executeScript(tabId, {file: f, frameId, runAt: "document_start"}).then(() => { // frameId, allFrames
+                        sendone();
+                    }).catch((e)=>{
+                        // console.log(e)
+                        reject(e)
+                    });
+                }catch(e){
+                    // console.log(e)
+                    reject(e)
+                }
             }else{
                 resolve();
             }
@@ -346,22 +357,22 @@ function executeScriptsInTab(tab_id, files){
         sendone();
     });
 }
-function sendTabContentMessage(tab, data, silent=false){
+function sendTabContentMessage(tab, data, silent=false, frameId=0){
     return new Promise((resolve, reject) => {
         scriptsAllowed(tab.id).then(function(){
             if(tab.status == "loading"){
                 if(!silent)
                     showNotification({message: `Waiting for page loading, please do not make any operations on this page before capturing finished`, title: "Info"});
             }
-            return executeScriptsInTab(tab.id, [
+            executeScriptsInTab(tab.id, [
                 "/libs/mime.types.js",
                 "/libs/jquery-3.3.1.js",
                 "/libs/md5.js",
                 "/proto.js",
                 "/dialog.js",
                 "/content_script.js"
-            ]).then(function(){
-                browser.tabs.sendMessage(tab.id, data).then(function(haveIcon){
+            ], frameId).then(function(){
+                browser.tabs.sendMessage(tab.id, data, {frameId}).then(function(haveIcon){
                     resolve(haveIcon);
                 }).catch(function(err){
                     reject(err);
@@ -394,13 +405,11 @@ function refreshTree(){
         });
     });
 }
-
 function httpRequest(url){
     return new Promise((resolve, reject)=>{
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onload = function(r) {
             resolve(r.target.response);
-	    
         };
         xmlhttp.onerror = function(err) {
             reject(err)
@@ -415,7 +424,6 @@ function httpRequest(url){
         xmlhttp.setRequestHeader('pragma', 'no-cache');
         xmlhttp.send();
     })
-
 }
 export{gtv,
        gtev,
@@ -426,5 +434,6 @@ export{gtv,
        comp,
        getUrlParams,
        sendTabContentMessage,
+       executeScriptsInTab,
        refreshTree,
        httpRequest};

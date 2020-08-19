@@ -1,3 +1,7 @@
+// let HEX_FUN = hex_md5;
+var HEX_FUN = function(s){
+    return hex_md5(s).substr(0, 15);
+}
 String.prototype.htmlEncode = function(ignoreWs){
     var s = this;
     s = s.replace(/&/g,'&amp;');
@@ -110,6 +114,14 @@ NodeList.prototype.iterateAll = function(fn){
         item.childNodes.iterateAll(fn);
     });
 };
+DocumentFragment.prototype.html = function(){
+    var self = this;
+    return Array.prototype.reduce.call(
+        self.childNodes, 
+        (result, node) => result + (node.outerHTML || node.nodeValue),
+        ''
+    );    
+}
 function ScrapbeeElement(el){
     this.el = el;
 }
@@ -140,14 +152,14 @@ ScrapbeeElement.prototype.processResources=function(){
 }
 ScrapbeeElement.prototype.getCommonResources=function(){
     var style = window.getComputedStyle(this.el, false);
-    var bg = style.backgroundImage;
+    var bg = style.backgroundImage || this.el.style.backgroundImage;
     var m, r = [];
     if(m = bg.match(/^url\(['"]?(.+?)['"]?\)/)){
-	var hex = hex_md5(m[1]);
+	var hex = HEX_FUN(m[1]);
         r.push({tag:this.el.tagName, type:"image", url:m[1], hex: hex});
 	this.el.style.backgroundImage = "url('" + hex + "')";
     }else if(m = bg.match(/^data:image\/(.+?);base64,(.+)/)){
-	var hex = hex_md5(bg);
+	var hex = HEX_FUN(bg);
 	r.push({tag:this.el.tagName, type:"image", url:bg, hex: hex});
 	this.el.style.backgroundImage = hex;
     }
@@ -157,7 +169,7 @@ ScrapbeeElement.prototype.getBodyResources=function(){
     var r=[];
     if(this.el.background){
         var bg = window.getComputedStyle(document.body, null).getPropertyValue('background-image').split(/'|"/)[1];
-        var hex = hex_md5(bg);
+        var hex = HEX_FUN(bg);
         var filename = hex;
         bg.replace(/\.\w+$/,function(a){
             filename = hex + a;
@@ -170,8 +182,8 @@ ScrapbeeElement.prototype.getBodyResources=function(){
 ScrapbeeElement.prototype.getImgResources=function(){
     var r=[];
     if(this.el.getAttribute("src")){
-	var hex = hex_md5(this.el.src);
-	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex:hex});
+	var hex = HEX_FUN(this.el.src);
+	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
 	this.el.src = hex;
     }
     return r;
@@ -188,7 +200,7 @@ ScrapbeeElement.prototype.getLinkResources=function(){
     this.el.setAttribute("mark_remove", "1");
     var r=[];
     if(this.el.rel=="shortcut icon"){
-	r.push({tag:this.el.tagName, type:"image", url:this.el.href, filename:"favicon.ico"});
+	r.push({tag:this.el.tagName, type:"image", url:this.el.href, saveas:"favicon.ico"});
 	this.el.href="favicon.ico";
     }else{
 	this.el.href="";
@@ -196,7 +208,7 @@ ScrapbeeElement.prototype.getLinkResources=function(){
     return r;
 };
 ScrapbeeElement.prototype.getIframeResources=function(){
-    this.el.setAttribute("mark_remove", "1");
+    // this.el.setAttribute("mark_remove", "1");
     return [];
 };
 ScrapbeeElement.prototype.getBaseResources=function(){

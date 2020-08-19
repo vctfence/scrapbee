@@ -1,6 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js";
-import {showNotification, getColorFilter, genItemId, gtv, sendTabContentMessage} from "./utils.js";
+import {showNotification, getColorFilter, genItemId, gtv} from "./utils.js";
 import {refreshTree} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown} from "./control.js";
