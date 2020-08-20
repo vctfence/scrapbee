@@ -253,7 +253,7 @@ browser.menus.remove("scrapbee-capture-url");
 browser.menus.create({
     id: "scrapbee-capture-selection",
     title: browser.i18n.getMessage("CaptureSelection"),
-    contexts: ["page", "selection", "frame", "editable"],
+    contexts: ["page", "selection", "frame", "editable", "audio", "video", "link", "image", "password", "tab"],
     documentUrlPatterns: ["http://*/*", "https://*/*", "file://*/*"],
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
@@ -277,7 +277,7 @@ browser.menus.create({
 browser.menus.create({
     id: "scrapbee-capture-page",
     title: browser.i18n.getMessage("CapturePage"),
-    contexts: ["page", "selection", "frame", "editable"],
+    contexts: ["page", "selection", "frame", "editable", "audio", "video", "link", "image", "password", "tab"],
     documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/page.svg", "32": "icons/page.svg"},
     onclick: function(info, tab){
@@ -295,7 +295,7 @@ browser.menus.create({
 browser.menus.create({
     id: "scrapbee-capture-url",
     title: browser.i18n.getMessage("CaptureUrl"),
-    contexts: ["page", "selection", "frame", "editable"],
+    contexts: ["page", "selection", "frame", "editable", "audio", "video", "link", "image", "password", "tab"],
     documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/link.svg", "32": "icons/link.svg"},
     onclick: function(info, tab){
@@ -312,7 +312,7 @@ browser.menus.create({
 browser.menus.create({
     id: "scrapbee-capture-advance",
     title: browser.i18n.getMessage("CaptureAdvance"),
-    contexts: ["page", "selection", "frame", "editable"],
+    contexts: ["page", "selection", "frame", "editable", "audio", "video", "link", "image", "password", "tab"],    
     documentUrlPatterns: ["http://*/*",  "https://*/*", "file://*/*"],
     icons: {"16": "icons/advance.svg", "32": "icons/advance.svg"},
     onclick: function(info, tab){
