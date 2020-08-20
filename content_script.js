@@ -226,7 +226,6 @@ if(!window.scrapbee_injected){
                         saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
                         frameId: frameId
                     });
-                    console.log(_res)
                     RESULT = RESULT.concat(_res);
                     iframe.setAttribute("src", name + "/index.html");
                 }catch(e){
@@ -286,7 +285,7 @@ if(!window.scrapbee_injected){
                     var downloaded = 0;
                     res.forEach(function(r, i){
                         var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
-                        var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "GENERATED";
+                        var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
                         if(r.type == "image"){
                             dlgDownload.addRow("", sourceLink, "",
                                                `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignore</span>`);
@@ -302,16 +301,17 @@ if(!window.scrapbee_injected){
                                 var ext = getMainMimeExt(b.type) || "";
                                 r.filename = r.path + (r.saveas || (r.hex + ext));
                                 blobfile[r.hex] = (r.saveas || (r.hex + ext));
-                                if(b)
+                                if(b){
                                     r.blob = b;
-                                else{
+                                    dlgDownload.updateCell(i, 0, b.type);
+                                    if(b.type)
+                                        dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
+                                }else{
                                     dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                    r.failed = 1;
                                 }
                                 downloaded ++;
-                                dlgDownload.updateCell(i, 0, b.type);
                                 dlgDownload.updateCell(i, 2, r.filename);
-                                if(b.type)
-                                    dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
                                 if(downloaded == res.length){
                                     resolve();
                                 }
@@ -332,6 +332,10 @@ if(!window.scrapbee_injected){
                 return new Promise((resolve, reject)=>{
                     var saved = 0;
                     res.forEach(function(item, i){
+                        if(item.failed){
+                            saved ++;
+                            return;
+                        }
                         if(item.blob){
                             try{
                                 item.path = `${rdfPath}/data/${itemId}/${item.filename}`;
@@ -386,7 +390,7 @@ if(!window.scrapbee_injected){
                 unlock();
                 dlgDownload.remove();
             }
-        }, function(r){ // click cancel
+        }, function(r){ // click ok
             unlock();
             dlgDownload.remove();
         });

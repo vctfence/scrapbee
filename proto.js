@@ -151,8 +151,12 @@ ScrapbeeElement.prototype.processResources=function(){
     return r;
 }
 ScrapbeeElement.prototype.getCommonResources=function(){
-    var style = window.getComputedStyle(this.el, false);
-    var bg = style.backgroundImage || this.el.style.backgroundImage;
+    // do not work because the element will not be appended into the document
+    // var style = window.getComputedStyle(this.el, false);
+    var style = this.el.style;
+    
+    var bg = style.backgroundImage;
+    
     var m, r = [];
     if(m = bg.match(/^url\(['"]?(.+?)['"]?\)/)){
 	var hex = HEX_FUN(m[1]);
@@ -168,20 +172,31 @@ ScrapbeeElement.prototype.getCommonResources=function(){
 ScrapbeeElement.prototype.getBodyResources=function(){
     var r=[];
     if(this.el.background){
-        var bg = window.getComputedStyle(document.body, null).getPropertyValue('background-image').split(/'|"/)[1];
-        var hex = HEX_FUN(bg);
-        var filename = hex;
-        bg.replace(/\.\w+$/,function(a){
-            filename = hex + a;
-        });
-	r.push({tag:this.el.tagName, type:"body", url:bg, filename});
-	this.el.background = filename;
+        try{
+            var baseURI = this.el.baseURI.replace(/\/[^\/]+$/, "/");
+
+            // do not work because the element will not be appended into the document
+            // var bg = window.getComputedStyle(this.el, null).getPropertyValue('background-image').split(/'|"/)[1];
+
+            // body.background can be a relative uri, we want it to be absolute
+            var bg = new URL(this.el.background, baseURI).href;
+            
+            var hex = HEX_FUN(bg);
+            var saveas = hex;
+            bg.replace(/\.\w+$/,function(a){
+                saveas = hex + a; // hex + ext
+            });
+	    r.push({tag:this.el.tagName, type:"body", url:bg, saveas, type: "image"});
+	    this.el.background = saveas;
+        }catch(e){
+            console.log("failed to fetch background src: " + e)
+        }
     }
     return r;
 }
 ScrapbeeElement.prototype.getImgResources=function(){
     var r=[];
-    if(this.el.getAttribute("src")){
+    if(this.el.getAttribute("src")){ // always absolute uri?
 	var hex = HEX_FUN(this.el.src);
 	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
 	this.el.src = hex;
