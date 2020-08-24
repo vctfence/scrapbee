@@ -144,8 +144,31 @@ if(!window.scrapbee_injected){
         });
     }
     /* capture content */
-    function gatherContent(isForSelection, name="index", path=""){
+    async function gatherContent(isForSelection, name="index", path=""){
         var doc = document;
+
+        var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+
+        
+        
+        // injext all frames
+        if(settings.saving_save_frames == "on"){
+            await browser.runtime.sendMessage({type: "GET_IFRAMES"}).then(async function(ar){
+                for(var i=0;i<ar.length;i++){
+                    var f = ar[i];
+                    doc.querySelectorAll("iframe,frame").forEach((iframe, i) => {
+                        if(f.url == iframe.src){
+                            iframe.setAttribute("scrapbee_frame_id", f.frameId);
+                        }
+                    });
+                    try{
+                        await browser.runtime.sendMessage({type: "INJECT_IFRAME", frameId: f.frameId});
+                    }catch(e){
+                        console.log("invalid url: ", f.url) // about:debugging, about:addons causes an error
+                    }
+                }
+            });
+        }
         return new Promise(async (resolve, reject) => {
             /** html */
             var content = null;
@@ -212,24 +235,26 @@ if(!window.scrapbee_injected){
             /*** remove tags not wanted */
             segment.querySelectorAll("*[mark_remove='1']").forEach(el => el.remove());
             /*** frames */
-            var frames = segment.querySelectorAll("iframe");
-            for(var i=0;i<frames.length;i++){
-                var iframe = frames[i];
-                var frameId = parseInt(iframe.getAttribute("scrapbee_frame_id"));
-                try{
-                    var name = "iframe" + (i + 1);
-                    var [_res, a, b] = await browser.runtime.sendMessage({
-                        type: "CALL_IFRAME",
-                        action:"GATHER_CONTENT",
-                        path: name + "/",
-                        name: name,
-                        saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
-                        frameId: frameId
-                    });
-                    RESULT = RESULT.concat(_res);
-                    iframe.setAttribute("src", name + "/index.html");
-                }catch(e){
-                    // consele.log(e) // can not log?
+            if(settings.saving_save_frames == "on"){
+                var frames = segment.querySelectorAll("iframe, frame");
+                for(var i=0;i<frames.length;i++){
+                    var iframe = frames[i];
+                    var frameId = parseInt(iframe.getAttribute("scrapbee_frame_id"));
+                    try{
+                        var name = "iframe" + (i + 1);
+                        var [_res, a, b] = await browser.runtime.sendMessage({
+                            type: "CALL_IFRAME",
+                            action:"GATHER_CONTENT",
+                            path: name + "/",
+                            name: name,
+                            saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
+                            frameId: frameId
+                        });
+                        RESULT = RESULT.concat(_res);
+                        iframe.setAttribute("src", name + "/index.html");
+                    }catch(e){
+                        // consele.log(e) // can not log?
+                    }
                 }
             }
             /*** html page and css */
@@ -249,34 +274,22 @@ if(!window.scrapbee_injected){
             });
         });
     }
-    async function startCapture(saveType, rdf, rdfPath, itemId, autoClose){
+    async function startCapture(saveType, rdf, rdfPath, itemId, autoClose=false){
         if(!lock()) return;
-        // injext all frames
-        var frames = [];
-        await browser.runtime.sendMessage({type: "GET_IFRAMES"}).then(async function(ar){
-            frames = ar;
-            for(var i=0;i<ar.length;i++){
-                var f = ar[i];
-                document.querySelectorAll("iframe").forEach((iframe, i) => {
-                    if(f.url == iframe.src){
-                        iframe.setAttribute("scrapbee_frame_id", f.frameId);
-                    }
-                });
-                try{
-                    await browser.runtime.sendMessage({type: "INJECT_IFRAME", frameId: f.frameId});
-                }catch(e){
-                    console.log("invalid url: ", f.url) // about:debugging, about:addons causes an error
-                }
-            }
-        });
+
         dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
+            var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+            autoClose = settings.auto_close_saving_dialog == "on" || autoClose;
+            
             dlgDownload.hideButton()
             dlgDownload.addHeader("type", "source", "destination", "status");
             dlgDownload.show();            
             dlgDownload.hint = "Gathering resources...";
             var res = []
+
             // toplevel page
             var [r, title, haveIcon] = await gatherContent(saveType == "SAVE_SELECTION");
+
             res = res.concat(r);
             dlgDownload.hint = "Saving data...";
             var blobfile = {};
@@ -416,7 +429,6 @@ if(!window.scrapbee_injected){
                 });
             }
         }else if(request.type == "GATHER_CONTENT") {
-            // alert(location.href)
             return gatherContent(request.saveType == "SAVE_SELECTION", request.name, request.path);
         }else if(request.type == 'SAVE_PAGE_REQUEST' || request.type == 'SAVE_SELECTION_REQUEST'){
             if(oldLockListener)

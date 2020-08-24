@@ -72,6 +72,7 @@ function showConfiguration(){
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
+            settings.set('saving_save_frames', $("input[name=saving_save_frames]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed");
@@ -106,6 +107,7 @@ function showConfiguration(){
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
     $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
     $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
+    $("input[name=saving_save_frames]").prop("checked", settings.saving_save_frames=="on");
 }
 window.onload=async function(){
     await settings.loadFromStorage();
@@ -116,10 +118,8 @@ window.onload=async function(){
     }
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-
     $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
     $("#div-help").html(getAsync("_locales/" + lang + "/help.html"));
-
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{
             $(".tab-button").removeClass("focused");
@@ -129,7 +129,6 @@ window.onload=async function(){
         });
     });
     $(".tab-button").eq(0).click();
-    
     /** export / import */
     $("input[name='export']").click(async function(){
         var json = await settings.getJson();

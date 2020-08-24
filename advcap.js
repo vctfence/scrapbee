@@ -98,7 +98,7 @@ $(document).ready(async function(){
         // currTree.updateComment(currTree.getItemById(itemId), comment);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
             browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "START_CAPTURE",
-                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment}).then(() => {
+                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment, settings}).then(() => {
                                              // can not reach here, because this dialog already removed now
                                          });
         });
@@ -121,7 +121,7 @@ $(document).ready(async function(){
 });
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == "TAB_INNER_CALL" && request.dest == "CAPTURER_DLG"){
-        return new Promise(function(resolve, reject){            
+        return new Promise(function(resolve, reject){
             $("#txTitle").val(request.title);
             $("#txUrl").val(request.url);
         });

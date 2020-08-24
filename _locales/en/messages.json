@@ -417,6 +417,8 @@
     },
     "AUTO_CLOSE_SAVING_DIALOG": {
         "message":"Auto Close Saving Dialog"
+    },
+    "SAVING_SAVE_FRAMES" : {
+        "message":"Save Frames"
     }
-    
 }

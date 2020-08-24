@@ -24,8 +24,7 @@ window.onload=async function(){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             } else {
                 browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
-                    var autoClose = settings.auto_close_saving_dialog == "on";
-                    sendTabContentMessage(tabs[0], {type: 'SAVE_PAGE_REQUEST', autoClose}).then(function(){
+                    sendTabContentMessage(tabs[0], {type: 'SAVE_PAGE_REQUEST'}).then(function(){
                         window.close();
                     }).catch(function(e){
                         window.close();
@@ -40,8 +39,7 @@ window.onload=async function(){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             } else {
                 browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
-                    var autoClose = settings.auto_close_saving_dialog == "on";
-                    sendTabContentMessage(tabs[0], {type: 'SAVE_SELECTION_REQUEST', autoClose}).then(function(){
+                    sendTabContentMessage(tabs[0], {type: 'SAVE_SELECTION_REQUEST'}).then(function(){
                         window.close();
                     }).catch(function(e){
                         window.close();

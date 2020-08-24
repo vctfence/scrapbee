@@ -233,7 +233,9 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }else if(request.type == 'GET_SETTINGS'){
         return new Promise((resolve, reject) => {
-            resolve(settings);
+            settings.loadFromStorage().then(()=>{
+                resolve(settings);
+            })
         });
     }else if(request.type == "CAPTURE_TABS"){
         browser.tabs.query({currentWindow: true}).then(function(tabs){
@@ -267,8 +269,7 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                var autoClose = settings.auto_close_saving_dialog == "on";
-                sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST', autoClose});
+                sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST'});
                 // browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
             }
         });
@@ -286,8 +287,7 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                var autoClose = settings.auto_close_saving_dialog == "on";
-                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST', autoClose});
+                sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST'});
             }
         });
     }

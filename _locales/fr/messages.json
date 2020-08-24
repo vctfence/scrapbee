@@ -395,9 +395,12 @@
         "message": "Ouvrir les liens dans un nouvel onglet"
     },
     "LOCK_EDITBAR": {
-        "message":""
+        "message":"Verrouiller la barre d'édition"
     },
     "AUTO_CLOSE_SAVING_DIALOG": {
-        "message":""
+        "message":"Boîte de dialogue d'enregistrement à fermeture automatique"
+    },
+    "SAVING_SAVE_FRAMES" : {
+        "message":"Enregistrer les cadres"
     }    
 }
