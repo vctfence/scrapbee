@@ -263,7 +263,7 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
 
             var tree = new BookTree(response, rdf);
-            var buffer = [`<title>${name}</title>`];
+            var buffer = [`<title>${name}</title>`, "<meta charset='UTF-8'/>"];
             await tree.iterateLiNodes(async function(item){
                 if(item.nodeType == "seq"){
                     buffer.push("<li class='seq'><img src='data/resources/folder.gif'/>" + item.title + "</li>");

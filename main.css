@@ -213,8 +213,10 @@ select{
     display:inline-block;
     white-space:nowrap;
     cursor:default;
-    border-left:1px solid #f00;
-    border-right:1px solid #f00;
+    /* background:#f00; */
+        padding-top:5px;
+
+
 }
 .drop-button>*{
     display:inline-block;

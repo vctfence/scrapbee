@@ -32,6 +32,8 @@ body{
     background-repeat:no-repeat;
 }
 .scrapbee-icon{
+    border:none !important;
+    background:none !important;
     vertical-align:middle !important;
     margin-Left:10px !important;
     width :20px !important;
