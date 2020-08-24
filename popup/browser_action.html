@@ -19,16 +19,19 @@
      input[type=button]:disabled{
        background:#555;
      }
+     input.yellow{
+       background:#f70;
+     }
     </style>
   </head>
   <body>
-    <input type="button" id="btnSetting" value="{Setting}..." />
-    <input type="button" id="btnTool" value="{Tool}..." />
-    <input type="button" id="btnOpenInSidebar" value="{OPEN_IN_SIDEBAR}" />
     <input type="button" id="btnCapturePage" value="{CapturePage}" />
     <input type="button" id="btnCaptureSelection" value="{CaptureSelection}" />
     <input type="button" id="btnCaptureUrl" value="{CaptureUrl}" />
     <input type="button" id="btnCaptureAdv" value="{CaptureAdvance}" />
     <input type="button" id="btnCaptureTabs" value="{CaptureTabs}" />
+    <input type="button" class="yellow" id="btnOpenInSidebar" value="{OPEN_IN_SIDEBAR}" />
+    <input type="button" class="yellow" id="btnTool" value="{Tool}..." />
+    <input type="button" class="yellow" id="btnSetting" value="{Setting}..." />
   </body>
 </html>
