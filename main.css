@@ -205,14 +205,16 @@ select{
 }
 /* */
 .drop-button{
-    line-height:45px;
+    margin:auto;
+    line-height:100px;
     vertical-align:middle !important;
     border-radius: 5px;
-    border: 1px solid #000;
+    /* border: 1px solid #000; */
     display:inline-block;
     white-space:nowrap;
     cursor:default;
-    vertical-align:bottom;
+    border-left:1px solid #f00;
+    border-right:1px solid #f00;
 }
 .drop-button>*{
     display:inline-block;
