@@ -200,6 +200,7 @@ ScrapbeeElement.prototype.getImgResources=function(){
 	var hex = HEX_FUN(this.el.src);
 	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
 	this.el.src = hex;
+        this.el.srcset = "";
     }
     return r;
 };
