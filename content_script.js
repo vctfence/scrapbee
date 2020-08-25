@@ -146,11 +146,7 @@ if(!window.scrapbee_injected){
     /* capture content */
     async function gatherContent(isForSelection, name="index", path=""){
         var doc = document;
-
         var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
-
-        
-        
         // injext all frames
         if(settings.saving_save_frames == "on"){
             await browser.runtime.sendMessage({type: "GET_IFRAMES"}).then(async function(ar){
@@ -245,7 +241,7 @@ if(!window.scrapbee_injected){
                         var [_res, a, b] = await browser.runtime.sendMessage({
                             type: "CALL_IFRAME",
                             action:"GATHER_CONTENT",
-                            path: name + "/",
+                            path: path + name + "/",
                             name: name,
                             saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
                             frameId: frameId
@@ -276,20 +272,16 @@ if(!window.scrapbee_injected){
     }
     async function startCapture(saveType, rdf, rdfPath, itemId, autoClose=false){
         if(!lock()) return;
-
         dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
             var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
             autoClose = settings.auto_close_saving_dialog == "on" || autoClose;
-            
             dlgDownload.hideButton()
             dlgDownload.addHeader("type", "source", "destination", "status");
             dlgDownload.show();            
             dlgDownload.hint = "Gathering resources...";
             var res = []
-
             // toplevel page
             var [r, title, haveIcon] = await gatherContent(saveType == "SAVE_SELECTION");
-
             res = res.concat(r);
             dlgDownload.hint = "Saving data...";
             var blobfile = {};

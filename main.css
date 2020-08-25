@@ -214,9 +214,7 @@ select{
     white-space:nowrap;
     cursor:default;
     /* background:#f00; */
-        padding-top:5px;
-
-
+    padding-top:5px;
 }
 .drop-button>*{
     display:inline-block;
@@ -257,7 +255,6 @@ select{
     border-radius:3px 3px 0 0;
     vertical-align:bottom;
     color:#000;
-    
 }
 .tab-page-top-bar span.on{
     background:#09c;
