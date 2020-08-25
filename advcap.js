@@ -98,7 +98,7 @@ $(document).ready(async function(){
         // currTree.updateComment(currTree.getItemById(itemId), comment);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
             browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "START_CAPTURE",
-                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment, settings}).then(() => {
+                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment}).then(() => {
                                              // can not reach here, because this dialog already removed now
                                          });
         });
