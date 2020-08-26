@@ -440,11 +440,11 @@ window.onload=async function(){
         });
         // runtime.openOptionsPage()
     };
-    var btn = document.getElementById("btnTool");
+    var btn = document.getElementById("btnTools");
     btn.onclick = function(){
         // window.open("options.html#tool", "_scrapbee_option")
         browser.tabs.create({
-            "url": "options.html#tool"
+            "url": "options.html#tools"
         });
     };    
     var btn = document.getElementById("btnHelp");
