@@ -283,7 +283,7 @@ if(!window.scrapbee_injected){
             // toplevel page
             var [r, title, haveIcon] = await gatherContent(saveType == "SAVE_SELECTION");
             res = res.concat(r);
-            dlgDownload.hint = "Saving data...";
+            dlgDownload.hint = "Downloading...";
             var blobfile = {};
             function download(){
                 return new Promise((resolve, reject)=>{
@@ -333,6 +333,7 @@ if(!window.scrapbee_injected){
                 });
             }
             await download();
+            dlgDownload.hint = "Saving data...";
             function save(){
                 return new Promise((resolve, reject)=>{
                     var saved = 0;
