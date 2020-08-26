@@ -10,8 +10,8 @@ window.onload=async function(){
         browser.tabs.create({"url": "../options.html"});
         window.close();
     });
-    $("#btnTool").click(function(){
-        browser.tabs.create({"url": "../options.html#tool"});
+    $("#btnTools").click(function(){
+        browser.tabs.create({"url": "../options.html#tools"});
         window.close();
     });    
     $("#btnOpenInSidebar").click(function(){
