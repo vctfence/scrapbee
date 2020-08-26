@@ -421,9 +421,6 @@
     "AUTO_CLOSE_SAVING_DIALOG": {
         "message":"自动关闭保存对话框"
     },
-    "AUTO_CLOSE_SAVING_DIALOG": {
-        "message":"自动关闭保存对话框"
-    },
     "SAVING_SAVE_FRAMES" : {
         "message":"保存框架"
     }
