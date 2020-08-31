@@ -1,18 +1,9 @@
 import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {showNotification} from "./utils.js";
-import {sendTabContentMessage, executeScriptsInTab} from "./utils.js";
+import {sendTabContentMessage, executeScriptsInTab, ajaxFormPost, gtev} from "./utils.js";
 
 /* logging */
-String.prototype.htmlEncode=function(ignoreAmp){
-    var s=this;
-    if(!ignoreAmp)s=s.replace(/&/g,'&amp;');
-    return s.replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/\"/g,'&quot;')
-        .replace(/ /g,'&nbsp;')
-        .replace(/\'/g,'&#39;');
-};
 var log_pool = [];
 log.sendLog = function(logtype, content){
     if(typeof content != "string"){
@@ -136,7 +127,10 @@ function startWebServer(port, try_times, debug){
                     }else{
                         var version = r.Version || 'unknown';
                         backend_version = version;
-                        log.info(`backend service started (caller: ${debug}), version = ${version} (wanted >= 1.7.0)`);
+                        log.info(`backend service started (${debug}), version = ${version}`);
+                        if(!gtev(version, '1.7.2')){
+                            log.error(`backend >= 1.7.2 wanted for full functions, please update`)
+                        }
                         web_status = "launched";
                         browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
                         resolve();
@@ -175,23 +169,19 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         var {url, itemId, filename} = request;
         return ajaxFormPost(settings.backend_url + "download", {url, itemId, filename});
     }else if(request.type == 'SAVE_TEXT_FILE'){
-        var filename = request.path;
-        var content = request.text;
-        return new Promise((resolve, reject) => {
-            ajaxFormPost(settings.backend_url + "savefile", {filename, content}).then(response => {
-                if(request.boardcast){
-                    browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
-                    browser.tabs.query({}).then(function(tabs){
-                        for (let tab of tabs) {
-                            browser.tabs.sendMessage(tab.id, {type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken});
-                        }
+        if(request.backup){
+            return new Promise((resolve, reject)=>{
+                backupFile(request.path).finally(()=>{
+                    saveTextFile(request).then((response)=>{
+                        resolve(response);
+                    }).catch(e=>{
+                        reject(e);
                     });
-                }
-                resolve(response);
-            }).catch(error => {
-                reject(error);
+                })
             });
-        });
+        }else{
+            return saveTextFile(request);
+        }
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
         return ajaxFormPost(settings.backend_url + "fs/move", {src, dest});
@@ -246,8 +236,56 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     sendTabContentMessage(tab, {type: 'SAVE_PAGE_REQUEST', autoClose: true}, true);
             }
         });
+    }else if(request.type == "BACKUP_FILE"){
+        return backupFile(request.path);
     }
 });
+function saveTextFile(request){
+    var filename = request.path;
+    var content = request.text;
+    return new Promise((resolve, reject) => {
+        ajaxFormPost(settings.backend_url + "savefile", {filename, content}).then(response => {
+            if(request.boardcast){
+                browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
+                // if(request.tab){
+                //     browser.tabs.sendMessage(request.tab.id, {type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken});
+                // }
+            }
+            resolve(response);
+        }).catch(error => {
+            reject(error);
+        });
+    });
+}
+function backupFile(src){
+    return new Promise((resolve, reject) => {
+        try{
+            var dest = src.replace(/([\\\/])([^\\\/]+?)(\.\w*)?$/, function(a, b, c, d){
+                return b + "backup" + b + c + "_" + (new Date().format("yyyyMMdd")) + (d || "");
+            })
+        }catch(e){
+            log.error(e.message);
+        }
+        $.post(settings.backend_url + "isfile/", {path: dest}, function(r){
+            if(r == "no"){
+                ajaxFormPost(settings.backend_url + "fs/copy", {src, dest}).then((response) => {
+                    if(response == "ok"){
+                        log.info(`backup success: ${dest}`);
+                        resolve();
+                    }else{
+                        log.error(`backup failed: ${response}`);
+                        reject(Error(response));
+                    }
+                }).catch((e) => {
+                    log.error(`backup failed: ${dest}`);
+                    reject(e);
+                });
+            }else{
+                resolve();
+            }
+        });
+    });
+}
 /* build menu */
 browser.menus.remove("scrapbee-capture-selection");
 browser.menus.remove("scrapbee-capture-page");
@@ -260,17 +298,11 @@ browser.menus.create({
     icons: {"16": "icons/selection.svg", "32": "icons/selection.svg"},
     enabled: true,
     onclick: function(info, tab){
-        // withCurrTab(function(t){
-        //     browser.windows.get(t.windowId).then((win) => {
-        //         console.log(win)
-        //     })
-        // })
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
                 sendTabContentMessage(tab, {type: 'SAVE_SELECTION_REQUEST'});
-                // browser.runtime.sendMessage({type: 'SAVE_PAGE_SELECTION_REQUEST'});
             }
         });
     }
@@ -303,7 +335,6 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                // sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST'});
                 browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
             }
         });
@@ -345,33 +376,6 @@ browser.tabs.onActivated.addListener(function(activeInfo){
 browser.tabs.onCreated.addListener(function(tabInfo){
     updateMenu(tabInfo.url);
 });
-/* http request */
-function ajaxFormPost(url, json){
-    return new Promise((resolve, reject) => {
-        var formData = new FormData();
-        for(var k in json){
-            formData.append(k, json[k]);
-        }
-        var request=new XMLHttpRequest();
-        request.onload = function(r) {
-        };
-        request.onreadystatechange=function(){
-            if(request.readyState == 4 && request.status == 200){
-                resolve(request.responseText);
-            }else if(request.status == 500){
-                log.error(request.responseText);
-                reject(Error(request.responseText));
-            }
-        };
-        request.onerror = function(err) {
-            reject(Error(err));
-        };
-        request.open("POST", url, false);
-        setTimeout(function(){
-            request.send(formData);
-        }, 150);
-    });
-}
 // browser.browserAction.onClicked.addListener(() => {
 //     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
 //         browser.tabs.executeScript(tabs[0].id, { code: 'document.contentType' }, ([ mimeType ]) => {

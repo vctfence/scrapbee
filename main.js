@@ -513,8 +513,15 @@ function loadXml(rdf){
                 if(currTree.lockRdfSaving)
                     return;
                 log.info(`saving changes to rdf`);
-                browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf, boardcast: true, srcToken: currTree.unique_id}).then((response) => {
-                    log.info(`save changes to rdf, done`);
+                browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE',
+                                             text: currTree.xmlSerialized(),
+                                             path: currTree.rdf,
+                                             backup: true,
+                                             boardcast: true,
+                                             srcToken: currTree.unique_id}).then((response) => {
+                    log.info(`rdf updated`);
+                }).catch(e => {
+                    log.error(`failed to update rdf: ${e}`);
                 });
             };
             currTree.onItemRemoved=function(id){

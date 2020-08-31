@@ -2,9 +2,9 @@
 var HEX_FUN = function(s){
     return hex_md5(s).substr(0, 15);
 }
-String.prototype.htmlEncode = function(ignoreWs){
+String.prototype.htmlEncode = function(ignoreWs, ignoreAmp){
     var s = this;
-    s = s.replace(/&/g,'&amp;');
+    if(!ignoreAmp)s=s.replace(/&/g,'&amp;');
     if(!ignoreWs)s = s.replace(/ /g,'&nbsp;');
     return s.replace(/</g,'&lt;')
 	.replace(/>/g,'&gt;')

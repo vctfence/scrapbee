@@ -224,7 +224,7 @@ function initMover(){
                 currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {
                         if(!saveingLocked){
-                            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf, boardcast:true, srcToken: currTree.unique_id}).then((response) => {
+                            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf, backup: true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {
                                 resolve();
                             });
                         }else{

@@ -124,6 +124,9 @@ class BookTree {
                 if ($el) {
                     if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("page") || $el.hasClass("bookmark")) {
                         if(self.onChooseItem)self.onChooseItem($el.attr("id"));
+                        // var ref_node = self.getLiNode("urn:scrapbook:item" + $el.attr("id"));
+                        // console.log($el.attr("id"))
+                        // console.log(ref_node.nextElementSibling)
                     }            
                     if (e.button == 0) {
                         e.preventDefault();
@@ -201,10 +204,8 @@ class BookTree {
         var $prev_ref, prev_t;
         $(document).bind("mousemove.BookTree" + token, function (e) {
             if (!dragging) return;
-            
             var $el = self.getItemY($container, e.pageY) || $ref_item;
             $ref_item = $el;
-            
             var drag_mark = $("<hr class='drag-mark'/>");
             if ($el) {
                 $container.find(".drag-into").removeClass("drag-into");
@@ -263,10 +264,8 @@ class BookTree {
         var node = this.getDescNode("urn:scrapbook:item" + id);
         var c = node.getAttributeNS(this.MAIN_NS, "comment") || "";
         c = c.replace(/ __BR__ /g, "\n");
-
         c = c.htmlDecode(); // temporary solution for html entity
         node.setAttributeNS(this.MAIN_NS, "comment", c); // temporarily replace html entity
-        
         return c;
     }
     getItemTag(id) {
@@ -756,13 +755,16 @@ class BookTree {
     moveItemXml(id, folder_id, ref_id, move_type) {
         var node = this.getLiNode("urn:scrapbook:item" + id);
         if (node) {
+            // log.info(`${id} ${folder_id} ${ref_id} ${move_type}`)
+            // log.info(move_type)
             var nn = node.cloneNode();
             var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
+            // log.info(seq_node)
             var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
             if (move_type == 1) {
                 seq_node.insertBefore(nn, ref_node);
             } else if (move_type == 2) {
-                seq_node.insertBefore(nn, ref_node.nextSibling);
+                seq_node.insertBefore(nn, ref_node.nextElementSibling);
             } else if (move_type == 3) {
                 seq_node.appendChild(nn);
             }

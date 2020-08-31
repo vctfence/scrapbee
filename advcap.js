@@ -64,7 +64,7 @@ $(document).ready(async function(){
         if(!title) return;
         currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
-                                     path: currTree.rdf, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
+                                     path: currTree.rdf, backup:true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
     }
     /** cancle capture */
     var button = document.body.querySelector("#btnCancel");
@@ -96,7 +96,7 @@ $(document).ready(async function(){
 
         currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
         // currTree.updateComment(currTree.getItemById(itemId), comment);
-        browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
+        browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', backup: true, text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
             browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "START_CAPTURE",
                                          title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment}).then(() => {
                                              // can not reach here, because this dialog already removed now

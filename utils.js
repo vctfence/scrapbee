@@ -310,10 +310,14 @@ function gtv(a, b){
 function gtev(a, b){
     a = getVersionParts(a);
     b = getVersionParts(b);
-    for(var i=0; i<b.length; i++){
-        if(parseInt(a[i]) < parseInt(b[i])){
-            return false;
+    try{
+        for(var i=0; i<b.length; i++){
+            if(parseInt(a[i]) < parseInt(b[i])){
+                return false;
+            }
         }
+    }catch(e){
+        return false;
     }
     return true;
 }
@@ -415,7 +419,7 @@ function httpRequest(url){
             reject(err)
 	    // log.info(`load ${rdf} failed, ${err}`)
         };
-        console.log(url)
+        // console.log(url)
         xmlhttp.open("GET", url, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
@@ -424,6 +428,33 @@ function httpRequest(url){
         xmlhttp.setRequestHeader('pragma', 'no-cache');
         xmlhttp.send();
     })
+}
+/* http request */
+function ajaxFormPost(url, json){
+    return new Promise((resolve, reject) => {
+        var formData = new FormData();
+        for(var k in json){
+            formData.append(k, json[k]);
+        }
+        var request=new XMLHttpRequest();
+        request.onload = function(r) {
+        };
+        request.onreadystatechange=function(){
+            if(request.readyState == 4 && request.status == 200){
+                resolve(request.responseText);
+            }else if(request.status == 500){
+                log.error(request.responseText);
+                reject(Error(request.responseText));
+            }
+        };
+        request.onerror = function(err) {
+            reject(Error(err));
+        };
+        request.open("POST", url, false);
+        setTimeout(function(){
+            request.send(formData);
+        }, 150);
+    });
 }
 export{gtv,
        gtev,
@@ -436,4 +467,5 @@ export{gtv,
        sendTabContentMessage,
        executeScriptsInTab,
        refreshTree,
-       httpRequest};
+       httpRequest,
+       ajaxFormPost};
