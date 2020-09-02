@@ -2,6 +2,17 @@
 var HEX_FUN = function(s){
     return hex_md5(s).substr(0, 15);
 }
+function NumberRange(a,b){
+    this.a=parseFloat(a);
+    this.b=parseFloat(b);
+};
+NumberRange.prototype.random=function(diff){
+  var n=diff;
+  while(n==diff){
+	n=Math.floor(Math.random() * (this.b-this.a+1)) + this.a;
+  }
+  return n;
+};
 String.prototype.htmlEncode = function(ignoreWs, ignoreAmp){
     var s = this;
     if(!ignoreAmp)s=s.replace(/&/g,'&amp;');
@@ -124,6 +135,16 @@ DocumentFragment.prototype.html = function(){
 }
 function ScrapbeeElement(el){
     this.el = el;
+    var uniqueId = el.getAttribute("scrapbee_unique_id");
+    if(uniqueId){
+        this.el.removeAttribute("scrapbee_unique_id");
+        this.originEl = document.querySelector(`*[scrapbee_unique_id='${uniqueId}']`);
+        this.originEl.removeAttribute("scrapbee_unique_id");
+    }
+}
+ScrapbeeElement.prototype.getFullUrl=function(url){
+    var baseURI = this.el.baseURI.replace(/\/[^\/]+$/, "/");
+    return new URL(url, baseURI).href;
 }
 ScrapbeeElement.prototype.processInlineStyle=function(){
     if(this.el.style.cssText){
@@ -132,6 +153,9 @@ ScrapbeeElement.prototype.processInlineStyle=function(){
     }
 }
 ScrapbeeElement.prototype.processResources=function(){
+    if(!this.originEl)
+        return [];
+    
     var t = this.el.tagName.toLowerCase().replace(/^\w/, function(m){return m.toUpperCase();});
     var fn = "get" + t + "Resources";
     var res = this.getCommonResources();
@@ -152,46 +176,48 @@ ScrapbeeElement.prototype.processResources=function(){
 }
 ScrapbeeElement.prototype.getCommonResources=function(){
     // do not work because the element will not be appended into the document
-    // var style = window.getComputedStyle(this.el, false);
-    var style = this.el.style;
-    
-    var bg = style.backgroundImage;
-    
-    var m, r = [];
-    if(m = bg.match(/^url\(['"]?(.+?)['"]?\)/)){
-	var hex = HEX_FUN(m[1]);
-        r.push({tag:this.el.tagName, type:"image", url:m[1], hex: hex});
-	this.el.style.backgroundImage = "url('" + hex + "')";
-    }else if(m = bg.match(/^data:image\/(.+?);base64,(.+)/)){
-	var hex = HEX_FUN(bg);
-	r.push({tag:this.el.tagName, type:"image", url:bg, hex: hex});
-	this.el.style.backgroundImage = hex;
+    try{
+        var self = this;
+        var style = window.getComputedStyle(this.originEl, false);
+        var bg = style.backgroundImage;
+        var m, r = [];
+        var regexpUrl = /url\(['"]?(.+?)['"]?\)/;
+        if(bg.match(regexpUrl)){
+            this.el.style.backgroundImage=bg.replace(regexpUrl, function(a, b){
+                var url = bg;
+                var hex = HEX_FUN(url);
+                r.push({tag:self.el.tagName, type:"image", url:b, hex: hex});
+                return "url(" + hex + ")";
+            });
+        }else if(m = bg.match(/data:image\/(.+?);base64,(.+)/)){
+	    var hex = HEX_FUN(bg);
+	    r.push({tag:this.el.tagName, type:"image", url:bg, hex: hex});
+	    this.el.style.backgroundImage = hex;
+        }
+    }catch(e){
+        console.log(`ScrapbeeElement.getCommonResources: ${e}`)
     }
     return r;
 };
 ScrapbeeElement.prototype.getBodyResources=function(){
     var r=[];
-    if(this.el.background){
-        try{
-            var baseURI = this.el.baseURI.replace(/\/[^\/]+$/, "/");
-
-            // do not work because the element will not be appended into the document
-            // var bg = window.getComputedStyle(this.el, null).getPropertyValue('background-image').split(/'|"/)[1];
-
-            // body.background can be a relative uri, we want it to be absolute
-            var bg = new URL(this.el.background, baseURI).href;
-            
-            var hex = HEX_FUN(bg);
-            var saveas = hex;
-            bg.replace(/\.\w+$/,function(a){
-                saveas = hex + a; // hex + ext
-            });
-	    r.push({tag:this.el.tagName, type:"body", url:bg, saveas, type: "image"});
-	    this.el.background = saveas;
-        }catch(e){
-            console.log("failed to fetch background src: " + e)
-        }
-    }
+    // var style = window.getComputedStyle(this.originEl, false);
+    // var bg = style.backgroundImage.replace(/url\(['"]?(.+?)['"]?\)/, function(a, b){
+    //     return b;
+    // });
+    // if(bg && bg != "none"){
+    //     try{
+    //         var hex = HEX_FUN(bg);
+    //         var saveas = hex;
+    //         bg.replace(/\.\w+$/,function(a){
+    //             saveas = hex + a; // hex + ext
+    //         });
+    //         r.push({tag:this.el.tagName, type:"body", url:bg, saveas, type: "image"});
+    //         this.el.background = saveas;
+    //     }catch(e){
+    //         console.log(`ScrapbeeElement.getBodyResources: ${e}`)
+    //     }
+    // }
     return r;
 }
 ScrapbeeElement.prototype.getImgResources=function(){

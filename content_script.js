@@ -107,7 +107,6 @@ if(!window.scrapbee_injected){
     };
     function cloneSegment(doc, isForSelection){
         return new Promise((resolve, reject) => {
-            /** html */
             var content = null;
             var segment = new DocumentFragment(); // doc.createElement("div");
             if(isForSelection){
@@ -168,6 +167,10 @@ if(!window.scrapbee_injected){
         return new Promise(async (resolve, reject) => {
             /** html */
             var content = null;
+            /** set unique id */
+            document.querySelectorAll("*").forEach(el => {
+                el.setAttribute("scrapbee_unique_id", "el" + new NumberRange(0,999999999).random());
+            });            
             var segment = await cloneSegment(doc, isForSelection)
             /** css */
             var css = [];
