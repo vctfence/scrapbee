@@ -42,23 +42,6 @@ if(!window.scrapbee_injected){
             browser.runtime.sendMessage({type:'LOG', logtype: type, content});
         }
     };
-    /* clone parent and all of the ancestors to root, return parent */
-    function cloneParents(p){
-        var pp, cc;
-        // ... -> HTMLHtmlElement(html) -> HTMLDocument -> null
-        while(p){
-            if(p.nodeType == 1){
-                var t = p.cloneNode(false);
-                if(!cc) cc = t;
-                if(pp)t.appendChild(pp);
-                pp = t;
-                if(p.tagName.toLowerCase() == "html")
-                    break;
-            }
-            p = p.parentNode;
-        }
-        return cc;
-    }
     var oldLockListener;
     function lockListener(event){
         event.preventDefault();
@@ -108,20 +91,36 @@ if(!window.scrapbee_injected){
     function cloneSegment(doc, isForSelection){
         return new Promise((resolve, reject) => {
             var content = null;
-            var segment = new DocumentFragment(); // doc.createElement("div");
+            var segment = new DocumentFragment();
             if(isForSelection){
                 var selection = window.getSelection();
                 if(selection.rangeCount > 0){
                     for(var i=0;i<selection.rangeCount;i++){
                         var range = selection.getRangeAt(i);
-                        parentEl = range.commonAncestorContainer;
-                        var p = cloneParents(parentEl);
-                        var c = range.cloneContents();
-                        if(p){
-                            segment.appendChild(p.getRootNode());
-                            p.appendChild(c);
-                        }else{
-                            segment.appendChild(c);
+                        var commonAncestor = range.commonAncestorContainer;
+                        var content = range.cloneContents();
+                        for(var p=commonAncestor,pr=content;p;p=p.parentNode){
+                            var pn, stop, exist;
+                            // console.log(p.tagName, p.id, uid, p)
+                            if(p.nodeType == 1){
+                                var uid = p.getAttribute("scrapbee_unique_id");
+                                if(uid){
+                                    pn = segment.querySelector(`*[scrapbee_unique_id='${uid}']`);
+                                    exist = !!pn;
+                                }
+                            }else{
+                                continue;
+                            }
+                            stop = exist || (p.tagName == "HTML");
+                            pn = pn || p.cloneNode(false);
+                            pn.appendChild(pr);
+                            if(stop){
+                                if(!exist){
+                                    segment.appendChild(pn);
+                                }
+                                break;
+                            }
+                            pr = pn;
                         }
                     }
                     var html = segment.firstChild;
@@ -255,10 +254,14 @@ if(!window.scrapbee_injected){
                         // consele.log(e) // can not log?
                     }
                 }
-            }
+            }         
             /*** html page and css */
             RESULT.push({type: "text", mime:"text/css", saveas: `${path}index.css`, content: css.join("\n")});
             RESULT.push({type: "text", mime:"text/html", url: doc.location.href, saveas: `${path}index.html`, content: segment.html().trim()});
+            /** remove unique id */
+            document.querySelectorAll("*").forEach(el => {
+                el.removeAttribute("scrapbee_unique_id");
+            });                     
             resolve([RESULT, doc.title, haveIcon]);
         });
     };
