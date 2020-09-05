@@ -139,7 +139,6 @@ function ScrapbeeElement(el){
     if(uniqueId){
         this.el.removeAttribute("scrapbee_unique_id");
         this.originEl = document.querySelector(`*[scrapbee_unique_id='${uniqueId}']`);
-        this.originEl.removeAttribute("scrapbee_unique_id");
     }
 }
 ScrapbeeElement.prototype.getFullUrl=function(url){
@@ -161,7 +160,7 @@ ScrapbeeElement.prototype.processResources=function(){
     var res = this.getCommonResources();
     var dict = {}, r=[];
     if(this[fn] instanceof Function){
-	var f = this[fn]();
+	var f = this[fn]() || [];
 	for(let s of f){
 	    res.push(s);
 	}
@@ -198,7 +197,13 @@ ScrapbeeElement.prototype.getCommonResources=function(){
         console.log(`ScrapbeeElement.getCommonResources: ${e}`)
     }
     return r;
-};
+}
+ScrapbeeElement.prototype.getInputResources=function(){
+    this.el.setAttribute("value", this.el.value);
+}
+ScrapbeeElement.prototype.getTextareaResources=function(){
+    this.el.innerHTML = this.el.value;
+}
 ScrapbeeElement.prototype.getBodyResources=function(){
     var r=[];
     // var style = window.getComputedStyle(this.originEl, false);

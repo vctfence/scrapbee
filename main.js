@@ -683,6 +683,12 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                                 request.comment);  
             currTree.lockRdfSaving = false;
         }
+    }else if(request.type == 'REMOVE_FAILED_NODE'){
+        if(currTree && currTree.rendered && request.rdf == currTree.rdf){
+            currTree.updateItemIcon($("#"+request.itemId), icon);
+            currTree.removeItem($("#"+request.itemId));
+            currTree.lockRdfSaving = false;
+        }
     }else if(request.type == 'UPDATE_FINISHED_NODE'){
         /** update node in sidebar only in the same window, sidebar in other windows will reloaded after icon updated */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){

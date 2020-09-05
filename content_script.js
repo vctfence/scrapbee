@@ -58,25 +58,6 @@ if(!window.scrapbee_injected){
         window.removeEventListener("beforeunload", oldLockListener);
         oldLockListener = null;
     }
-    function notifyMe(msg) {
-        function Next(){
-            var notification = new Notification(msg, {tag:"scrapbee-tag"});
-            notification.onshow = function () {
-                setTimeout(notification.close.bind(notification), 5000);
-            };
-        }
-        if (!("Notification" in window)) {
-            //
-        } else if (Notification.permission === "granted") {
-            Next();
-        } else if (Notification.permission !== 'denied') {
-            Notification.requestPermission(function (permission) {
-                if (permission === "granted") {
-                    Next();
-                }
-            });
-        }
-    }
     function truncate(fullStr, strLen, separator) {
         if (fullStr.length <= strLen) return fullStr;
         separator = separator || '...';
@@ -88,50 +69,78 @@ if(!window.scrapbee_injected){
             separator + 
             fullStr.substr(fullStr.length - backChars);
     };
+    function getLeavesIn(node) {
+        var nodes = [];
+        function getLeaves(node) {
+            if (node.nodeType == 3) {
+                nodes.push(node);
+            } else {
+                if(!node.hasChildNodes()){
+                    nodes.push(node);
+                }
+                for (var i = 0, len = node.childNodes.length; i < len; ++i) {
+                    getLeaves(node.childNodes[i]);
+                }
+            }
+        }
+        getLeaves(node);
+        return nodes;
+    }
     function cloneSegment(doc, isForSelection){
         return new Promise((resolve, reject) => {
             var content = null;
             var segment = new DocumentFragment();
             if(isForSelection){
                 var selection = window.getSelection();
-                if(selection.rangeCount > 0){
-                    for(var i=0;i<selection.rangeCount;i++){
-                        var range = selection.getRangeAt(i);
-                        var commonAncestor = range.commonAncestorContainer;
-                        var content = range.cloneContents();
-                        for(var p=commonAncestor,pr=content;p;p=p.parentNode){
-                            var pn, stop, exist;
-                            // console.log(p.tagName, p.id, uid, p)
-                            if(p.nodeType == 1){
-                                var uid = p.getAttribute("scrapbee_unique_id");
-                                if(uid){
-                                    pn = segment.querySelector(`*[scrapbee_unique_id='${uid}']`);
-                                    exist = !!pn;
-                                }
-                            }else{
-                                continue;
-                            }
-                            stop = exist || (p.tagName == "HTML");
-                            pn = pn || p.cloneNode(false);
-                            pn.appendChild(pr);
-                            if(stop){
-                                if(!exist){
+                if(selection.rangeCount == 0){
+                    return reject("no selection activated");
+                }
+                for(var i=0;i<selection.rangeCount;i++){
+                    var range = selection.getRangeAt(i);
+                    var rangeContent = range.cloneContents();
+                    var commonAncestor = range.commonAncestorContainer;
+                    var leaves = getLeavesIn(rangeContent);
+                    leaves.forEach(thisNode => {
+                        if(thisNode.nodeType == 1){
+                            var _uid = thisNode.getAttribute("scrapbee_unique_id");
+                            var refNode = document.querySelector(`*[scrapbee_unique_id='${_uid}']`);
+                        }else{
+                            var refNode = thisNode;
+                        }
+                        for(var c=refNode,pr=null;c;){
+                            var pn = c.cloneNode(false);
+                            if(c.nodeType == 1){
+                                var uid = c.getAttribute("scrapbee_unique_id");
+                                var p = segment.querySelector(`*[scrapbee_unique_id='${uid}']`);
+                                var exist = !!p;
+                                if(!exist && c.tagName == "HTML"){
                                     segment.appendChild(pn);
+                                    p = pn;
+                                    exist = true;
                                 }
-                                break;
+                                if(pr){
+                                    if(exist) // time to append to segment
+                                        p.appendChild(pr);
+                                    else  // as parent of previous node chain
+                                        pn.appendChild(pr);
+                                }
+                                if(exist) break;
                             }
                             pr = pn;
+                            if(c.parentNode == rangeContent) { // pure text node 
+                                c = commonAncestor;
+                            }else{
+                                c = c.parentNode;
+                            }
                         }
+                    });
+                }
+                var html = segment.firstChild;
+                if(html && html.tagName.toLowerCase() == "html"){
+                    var heads = doc.getElementsByTagName("head");
+                    if(heads.length){
+                        html.insertBefore(heads[0].cloneNode(true), html.firstChild);
                     }
-                    var html = segment.firstChild;
-                    if(html && html.tagName.toLowerCase() == "html"){
-                        var heads = doc.getElementsByTagName("head");
-                        if(heads.length){
-                            html.insertBefore(heads[0].cloneNode(true), html.firstChild);
-                        }
-                    }
-                }else{
-                    reject("no selection activated");
                 }
             }else{
                 segment.appendChild(doc.documentElement.cloneNode(true));
@@ -169,8 +178,12 @@ if(!window.scrapbee_injected){
             /** set unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.setAttribute("scrapbee_unique_id", "el" + new NumberRange(0,999999999).random());
-            });            
-            var segment = await cloneSegment(doc, isForSelection)
+            });
+            try{
+                var segment = await cloneSegment(doc, isForSelection)
+            }catch(e){
+                reject(e)
+            }
             /** css */
             var css = [];
             for(let sheet of doc.styleSheets){
@@ -254,14 +267,14 @@ if(!window.scrapbee_injected){
                         // consele.log(e) // can not log?
                     }
                 }
-            }         
+            }
             /*** html page and css */
             RESULT.push({type: "text", mime:"text/css", saveas: `${path}index.css`, content: css.join("\n")});
             RESULT.push({type: "text", mime:"text/html", url: doc.location.href, saveas: `${path}index.html`, content: segment.html().trim()});
             /** remove unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.removeAttribute("scrapbee_unique_id");
-            });                     
+            });       
             resolve([RESULT, doc.title, haveIcon]);
         });
     };
@@ -280,14 +293,21 @@ if(!window.scrapbee_injected){
         if(!lock()) return;
         dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
             var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+            var res = [];
+            // toplevel page
             autoClose = settings.auto_close_saving_dialog == "on" || autoClose;
             dlgDownload.hideButton()
             dlgDownload.addHeader("type", "source", "destination", "status");
-            dlgDownload.show();            
-            dlgDownload.hint = "Gathering resources...";
-            var res = []
-            // toplevel page
-            var [r, title, haveIcon] = await gatherContent(saveType == "SAVE_SELECTION");
+            dlgDownload.hint = "Gathering resources...";            
+            dlgDownload.show();
+            try{
+                var [r, title, haveIcon] = await gatherContent(saveType == "SAVE_SELECTION");
+            }catch(e){
+                browser.runtime.sendMessage({type:'REMOVE_FAILED_NODE', haveIcon, rdf, itemId});
+                dlgDownload.remove();
+                unlock();
+                return alert(e);
+            }
             res = res.concat(r);
             dlgDownload.hint = "Downloading...";
             var blobfile = {};
