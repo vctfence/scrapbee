@@ -219,9 +219,16 @@ window.onload=async function(){
     $("#btnDownloadBackend").click(function(){
         function Next(){
             const extRoot = "moz-extension://" + global.extension_id;
-            // var binDir = extRoot + "/bin/"
-            // var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/v1.7.1/";
-            var binDir = "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/";
+
+            var sources = [
+                // extRoot + "/bin/",
+                // "https://raw.githubusercontent.com/vctfence/scrapbee_backend/v1.7.1/",
+                "https://raw.githubusercontent.com/vctfence/scrapbee_backend/master/",
+                "https://gitee.com/vctfence/scrapbee_backend/raw/master/"];
+
+            var sourceId = $("input[name='download_source']:checked").val();
+            var binDir = sources[sourceId];
+
             var src_exec = "scrapbee_backend";
             if(global.platform_os == "mac")
                 src_exec += "_mac";

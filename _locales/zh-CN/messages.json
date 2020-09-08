@@ -423,5 +423,11 @@
     },
     "SAVING_SAVE_FRAMES" : {
         "message":"保存框架"
+    },
+    "DOWNLOAD_SOURCE_1" : {
+        "message":"源1"
+    },
+    "DOWNLOAD_SOURCE_2" : {
+        "message":"源2"
     }
 }

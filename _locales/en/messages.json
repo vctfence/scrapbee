@@ -420,5 +420,11 @@
     },
     "SAVING_SAVE_FRAMES" : {
         "message":"Save Frames"
+    },
+    "DOWNLOAD_SOURCE_1" : {
+        "message":"Source 1"
+    },
+    "DOWNLOAD_SOURCE_2" : {
+        "message":"Source 2"
     }
 }

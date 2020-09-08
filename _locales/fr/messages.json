@@ -402,5 +402,11 @@
     },
     "SAVING_SAVE_FRAMES" : {
         "message":"Enregistrer les cadres"
+    },
+    "DOWNLOAD_SOURCE_1" : {
+        "message":"Source 1"
+    },
+    "DOWNLOAD_SOURCE_2" : {
+        "message":"Source 2"
     }    
 }
