@@ -33,7 +33,7 @@
 
 /* Use wrapper function to separate namespace from main content script */
 
-"use strict";
+//"use strict";
 
 frameScript();
 
@@ -65,7 +65,7 @@ else
 function onLoadPage()
 {
     /* Add listeners */
-    
+
     addListeners();
 }
 
@@ -76,39 +76,37 @@ function onLoadPage()
 function addListeners()
 {
     /* Message received listener */
-    
     chrome.runtime.onMessage.addListener(
     function(message,sender,sendResponse)
     {
         var i,key,win,parentwin,doctype,htmltext;
         var loadedfonts = new Array();
-        
+
         switch (message.type)
         {
             /* Messages from background page */
-                
+
             case "requestFrames":
-                
                 markFrames(0,window,document.documentElement);
-                
+
                 key = "";
                 win = document.defaultView;
                 parentwin = win.parent;
-                
+
                 while (win != window.top)
                 {
                     for (i = 0; i < parentwin.frames.length; i++)
                     {
                       if (parentwin.frames[i] == win) break;
                     }
-                    
+
                     key = "-" + i + key;
                     win = parentwin;
                     parentwin = parentwin.parent;
                 }
-                
+
                 key = "0" + key;
-                
+
                 document.fonts.forEach(  /* CSS Font Loading Module */
                 function(font)
                 {
@@ -117,22 +115,22 @@ function addListeners()
                         loadedfonts.push({ family: font.family, weight: font.weight, style: font.style, stretch: font.stretch });
                     }
                 });
-                
+
                 doctype = document.doctype;
-                
+
                 if (doctype != null)
                 {
                     htmltext = '<!DOCTYPE ' + doctype.name + (doctype.publicId ? ' PUBLIC "' + doctype.publicId + '"' : '') +
                                ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>';
                 }
                 else htmltext = "";
-                
+
                 htmltext += document.documentElement.outerHTML;
-                
+
                 htmltext = htmltext.replace(/<head([^>]*)>/,"<head$1><base href=\"" + document.baseURI + "\">");
-                
-                chrome.runtime.sendMessage({ type: "replyFrame", key: key, url: document.baseURI, html: htmltext, fonts: loadedfonts });
-                
+
+                chrome.runtime.sendMessage({ type: "replyFrameRelay", key: key, url: document.baseURI, html: htmltext, fonts: loadedfonts });
+
                 break;
         }
     });
@@ -145,31 +143,31 @@ function addListeners()
 function markFrames(depth,frame,element)
 {
     var i,key,win,parentwin;
-    
+
     /* Handle nested frames and child elements */
-    
+
     if (element.localName == "iframe" || element.localName == "frame")  /* frame elements */
     {
         key = "";
         win = element.contentWindow;
         parentwin = win.parent;
-        
+
         while (win != window.top)
         {
             for (i = 0; i < parentwin.frames.length; i++)
             {
               if (parentwin.frames[i] == win) break;
             }
-            
+
             key = "-" + i + key;
             win = parentwin;
             parentwin = parentwin.parent;
         }
-        
+
         key = "0" + key;
-        
+
         element.setAttribute("data-savepage-key",key);
-        
+
         try
         {
             if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before naming */

@@ -697,6 +697,15 @@ function addListeners()
 
             /* Messages from content script */
 
+            case "requestFramesRelay":
+                chrome.tabs.sendMessage(sender.tab.id, { type: "requestFrames" });
+                break;
+
+            case "replyFrameRelay":
+                message.type = "replyFrame";
+                chrome.tabs.sendMessage(sender.tab.id, message);
+                break;
+
             case "setPageType":
 
                 tabPageTypes[sender.tab.id] = message.pagetype;
@@ -966,9 +975,6 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_SHELVES":
-                if (sender.id !== "ubiquitywe@firefox")
-                    return;
-
                 sendResponse(backend.listNodes({
                     types: [NODE_TYPE_SHELF]
                 }).then(nodes => {
@@ -977,9 +983,6 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_GROUPS":
-                if (sender.id !== "ubiquitywe@firefox")
-                    return;
-
                 sendResponse(backend.listNodes({
                     types: [NODE_TYPE_SHELF, NODE_TYPE_GROUP]
                 }).then(nodes => {
@@ -989,18 +992,12 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_LIST_TAGS":
-                if (sender.id !== "ubiquitywe@firefox")
-                    return;
-
                 sendResponse(backend.queryTags().then(tags => {
                     return tags.map(t => ({name: t.name.toLocaleLowerCase()}))
                 }));
                 break;
 
             case "SCRAPYARD_LIST_NODES":
-                if (sender.id !== "ubiquitywe@firefox")
-                    return;
-
                 delete message.type;
 
                 if (message.types === "firefox") {
@@ -1129,10 +1126,12 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
 
             try {
                 try {
-                    await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
-                } catch (e) {}
+                    await browser.tabs.executeScript(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
+                } catch (e) {
+                    console.error(e);
+                }
 
-                await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
+                await browser.tabs.executeScript(tab.id, {file: "/savepage/content.js"});
             } catch (e) {
                 // provisional capture of PDF, etc.
                 // TODO: rework with the account of savepage settings
