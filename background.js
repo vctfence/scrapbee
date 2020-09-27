@@ -1,7 +1,7 @@
 import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {showNotification} from "./utils.js";
-import {sendTabContentMessage, executeScriptsInTab, ajaxFormPost, gtev} from "./utils.js";
+import {sendTabContentMessage, executeScriptsInTab, ajaxFormPost, gtev, downloadFile} from "./utils.js";
 
 /* logging */
 var log_pool = [];
@@ -238,6 +238,14 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }else if(request.type == "BACKUP_FILE"){
         return backupFile(request.path);
+    }else if(request.type == "IS_FILE"){
+        return new Promise((resolve, reject) => {
+            $.post(settings.backend_url + "isfile/", {path: file}, function(r){
+                resolve(r != "no");
+            });
+        });
+    }else if(request.type == "DOWNLOAD_FILE"){
+        return downloadFile(rquest.url);
     }
 });
 function saveTextFile(request){

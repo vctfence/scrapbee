@@ -338,6 +338,8 @@ if(!window.scrapbee_injected){
                                     if(b.type)
                                         dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
                                 }else{
+                                    if(r.saveas == "favicon.ico")
+                                        haveIcon = false;
                                     dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
                                     r.failed = 1;
                                 }

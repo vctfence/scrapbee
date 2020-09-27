@@ -456,6 +456,36 @@ function ajaxFormPost(url, json){
         }, 150);
     });
 }
+function downloadFile(url){
+    return new Promise((resolve, reject)=>{
+        try{
+            var oReq = new XMLHttpRequest();
+            oReq.open("GET", url, true);
+            oReq.responseType = "blob";
+            // oReq.onload = function(oEvent) {
+            //     if(oReq.response){
+            //         resolve(oReq.response);
+            //     }else{
+            //         reject();
+            //     }
+            // };
+            oReq.onreadystatechange=function(){
+                if(request.readyState == 4 && request.status == 200){
+                    console.log(oReq.response)
+                    resolve(oReq.response);
+                }else if(request.status == 500){
+                    reject(Error(request.responseText));
+                }
+            };
+            oReq.onerror = function(e){
+                reject(e);
+            };
+            oReq.send();
+        }catch(e){
+            reject();
+        }
+    });
+}
 export{gtv,
        gtev,
        showNotification,
