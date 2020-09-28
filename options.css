@@ -62,10 +62,7 @@ input[type=button]:disabled, input[type=button]:disabled:hover{
 input[type=button]:hover{
     background:#080;
 }
-.rdf-row>input[type=button], input[type=button].narrow{
-    padding:5px 10px;
-}
-#txtBackendPath{
+.download-path{
     border-radius:5px;
     border:1px solid;
     background:#ccc;
@@ -75,8 +72,25 @@ input[type=button]:hover{
 .form-table input[type=button]::-moz-focus-inner{
     border:none;
 }
-#rdf-area input[type=text]{
-    width:450px;
+.rdf-row>input[type=button], input[type=button].narrow{
+    padding:5px 10px;
+}
+#rdf-area div{
+    margin-bottom:3px;
+    white-space:nowrap;
+}
+#rdf-area div span:nth-of-type(1){
+    display:inline-block;
+    /* width:50px; */
+    /* color:#f00; */
+    /* border:1px solid; */
+    text-align:right;
+}
+#rdf-area div input[type=text]:nth-of-type(1){
+    width:100px;
+}
+#rdf-area div input[type=text]:nth-of-type(2){
+    width:440px;
 }
 .form-table input[type=checkbox]{
     /* margin-top:8px; */
@@ -91,28 +105,34 @@ input[type=button]:hover{
 .form-table>tbody>tr>td:first-child{
     vertical-align:top;
     text-align:right;
-    text-decoration:underline;
+    /* text-decoration:underline; */
     font-weight:bold;
-    padding-top:4px;
     font-size:15px;
     white-space:nowrap;
+    padding-top:0;
 }
 div.panel{
     border-radius:5px;
-    border:1px solid #777;
+    /* border:1px solid #777; */
     padding:10px;
     white-space:nowrap;
 }
-.form-table.inner>tbody>tr>td:first-child{
+.form-table.inner>tbody>tr>td:first-child,
+.form-table.inner>tbody>tr>td:nth-child(3),
+.form-table.inner>tbody>tr>td:nth-child(5){
     vertical-align:middle;
+    padding-right:5px;
     text-align:right;
     font-weight:normal;
     text-decoration:none;
     font-size:12px;
 }
-.form-table>tbody>tr>td{
-    padding:5px 5px;
+.form-table.inner input{
+    vertical-align:bottom;
 }
+/* .form-table>tbody>tr>td{ */
+/*     padding:5px 5px; */
+/* } */
 .form-table.inner>tbody>tr>td{
     padding:0px 0px;
 }
@@ -132,22 +152,18 @@ div.panel{
     border-right:3px solid #079;
     background:#bbb;
 }
-#rdf-area div{
-    margin-bottom:3px;
-    white-space:nowrap;
-}
-#rdf-area div input:first-child{
-    width:100px;
-}
 .tips{
     border-radius:5px;
     border:1px solid #777;
     background:#cc9;
-    padding:5px;
+    padding:10px;
     margin-bottom:5px;
     text-align:left;
     font-weight:normal;
     white-space:normal;
+}
+.fit-content{
+    width:-moz-fit-content;
 }
 .tips.hide{
     display:none;
@@ -170,6 +186,10 @@ div.panel{
 }
 h2{
     font-size:18px;
+}
+li.h3{
+    font-size:14px;
+    font-weight:bold;
 }
 .embeded-log-text{
     background:#555;
@@ -511,4 +531,9 @@ h2{
     background:#555;
     color:#fff;
     border:none;
+}
+hr{
+    border:none;
+    background:#777;
+    height:1px;
 }

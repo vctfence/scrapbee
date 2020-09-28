@@ -300,7 +300,7 @@ class EditToolBar{
         }
     }
 }
-if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
+if(location.href.match(/\http:\/\/\w+\:\d+\/file-service\/\w+\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
     var path = decodeURIComponent(RegExp.$1);
     var scrap_id = RegExp.$2;
     if(platform!="windows"){

@@ -443,7 +443,7 @@ function ajaxFormPost(url, json){
             if(request.readyState == 4 && request.status == 200){
                 resolve(request.responseText);
             }else if(request.status == 500){
-                log.error(request.responseText);
+                console.log("error", "pwd" + json.pwd)
                 reject(Error(request.responseText));
             }
         };
@@ -498,4 +498,5 @@ export{gtv,
        executeScriptsInTab,
        refreshTree,
        httpRequest,
-       ajaxFormPost};
+       ajaxFormPost,
+       downloadFile};

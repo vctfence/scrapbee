@@ -190,7 +190,7 @@ function initMover(){
             var $box = $("#tree" + i);
             $label.html(title || "");
             $box.html("");
-            $.post(settings.backend_url + "isfile/", {path: value}, function(r){
+            $.post(settings.getBackendAddress() + "isfile/", {path: value, pwd: settings.backend_pwd}, function(r){
                 if(r == "yes"){
                     loadXml(value, $box, i);
                     $("#node-mover .tool-button").prop("disabled", !selected_rdfs[1]);
@@ -237,7 +237,7 @@ function initMover(){
             xmlhttp.onerror = function(err) {
 	        log.info(`load ${rdf} failed, ${err}`);
             };
-            xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
+            xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
             xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
             xmlhttp.setRequestHeader('cache-control', 'max-age=0');
             xmlhttp.setRequestHeader('expires', '0');
@@ -249,7 +249,7 @@ function initMover(){
 }
 function exportTree(rdf, name, includeSeparator, openInNewTab){
     return new Promise((resolve, reject)=>{
-        httpRequest(settings.backend_url + "file-service/" + rdf).then(async (response)=>{
+        httpRequest(settings.getFileServiceAddress() + rdf).then(async (response)=>{
             var blob = await fetch("icons/item.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/item.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});

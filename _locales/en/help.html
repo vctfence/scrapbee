@@ -5,8 +5,56 @@ an extension acts "partly" like ScrapBook under Firefox Quantum.
 <p>With ScrapBee, you can save web page scraps to local storage, and manage scraps in browser sidebar。</p>
 <h2>What's RDF?</h2>
 RDF is ScrapBee/ScrapBook's data file in which properties of scraps stored in. And downloaded scraps will be saved in "data" folder beside the RDF file.
-<h2>Install/Configure</h2>
-After ScrapBee addon installed, please follow a few steps of <a href="#install">Guide of Installation</a> before using ScrapBee.
+<h2>Install and Run Backend Program</h2>
+<p>
+Scrapbee needs a "special backend program" to work normaly. There 2 modes to install and start the backend program, automatically or manually, please choose one of them.
+</p>
+<li class="h3">Install</li>
+<p>
+  1. Automatically <br/>
+  Follow steps in <a href="#area=install">Install</a> guidance page to install backend program for automatically mode.
+</p>
+<p>
+  2. Manually<br>Just click <a href="" class="download_exe">Source 1</a> to download backend program to your disk.
+</p>
+<li class="h3">Configure</li>
+<p>
+  1. Automatically <br/>
+  Just input a port for backend program to listen, please ensure it's not used by other program. Default: 9900. 
+</p>
+<p>
+  2. Manually<br>
+  Input web address as backend program service. Format: http://[host]:[port], default: http://127.0.0.1:9901。
+</p>
+<li class="h3">Run</li>
+<p>
+  1. Automatically <br/>
+  The backend program will be started while starting Firefox.
+</p>
+<p>
+  2. Manually<br>
+  Run background program in console before start Firefox. 
+</p>
+Command: <span style="color:#050">scrapbee_backend web-server [port] [host]</span><br/><br/>
+For example (Windows): <br/>
+<span style="color:#050">cd D:\Download<br/>scrapbee_backend web-server 9901 127.0.0.1</span><br/><br/>
+Linux or Mac:
+<p style="color:#050;margin-top:0">cd ~/Download</p>
+Make sure executable permission added to backend program: <br>
+<span style="color:#050">chmod +x scrapbee_backend</span>
+<p style="color:#050">./scrapbee_backend web-server 9901 127.0.0.1</p>
+<li class="h3">Password</li>
+Password can be set to make backend service safer, only 0-9 and a-z are accecptable.
+<p>
+  1. Automatically <br/>
+  Just input password and save.
+</p>
+<p>
+  2. Manually <br/>
+  Input password and save, also need to add passwod argument when you start backend program:
+  <br> <span style="color:#050">scrapbee_backend web-server [port] [host] [password]</span><br/>
+  <br/>For example (Windows):  <br/><span style="color:#050">scrapbee_backend web-server 9901 127.0.0.1 secret</span>
+</p>
 <h2>How to use?</h2>
 <img src="image/hints/01.png" class="" alt="" />
 <p class=""> Click on ScrapBee Icon, ScrapBee will be opened in sidebar(Mark1), create folders in sidebar if needed.(Mark2) </p>
@@ -85,7 +133,14 @@ install.sh(Mac)
 <h4>Still does not work?</h4>
 Check the <a href="#log">log</a>, there are maybe infomation shows what happend.
 <br>Restart Firefox, this helps sometime.
-<br>Or, you can make questions in our github repo: <a href="https://github.com/vctfence/scrapbee">https://github.com/vctfence/scrapbee</a>
+<br>Or, you can make questions in our github repo:
+
+
+<ul id="">
+  <a href="https://github.com/vctfence/scrapbee" target="_blank">https://github.com/vctfence/scrapbee</a> (frontend) <br>
+  <a href="https://github.com/vctfence/scrapbee_backend" target="_blank">https://github.com/vctfence/scrapbee_backend</a> (backend)
+</ul>
+
 <br>Or email me to  <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
 <h2>Backup</h2>
 ScrapBee provides no page data backup function, please backup data folder manually.

@@ -124,38 +124,44 @@
     "RDF Files":{
         "message": "RDF Files"
     },
+    "Backend":{
+        "message": "Backend"
+    },    
     "Backend Port":{
         "message": "Backend Port"
     },
+    "Backend Address":{
+        "message": "Backend Address"
+    },    
     "Background": {
         "message": "Background"
     },
     "FIREFOX_DOWNLOAD_DIRECTORY":{
         "message": "Firefox Download Directory"
     },
+    "CUSTOM_INSTALL_TIP": {
+        "message": "All steps here are gide to install backend which will be started in 'Automatically' mode.<br/> \"{FIREFOX_DOWNLOAD_DIRECTORY}\" below means default download directory set in browser Preference (Files and Applications - Downloads)."
+    },
     "STEP1_TEXT_1": {
-        "message": "Download ScrapBee backend executable and 2 installation files to\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", by just click on the button below."
+        "message": "Download ScrapBee backend executable to\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", by just click on the button below."
     },
     "STEP1_TEXT_2": {
-        "message": "You maybe meet problem that Firefox does not download the 3 files correctly, then you can close Firefox and remove files under\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", start Firefox and download again. (Please use standard version of {Firefox} 60 or later)"
+        "message": "Please ensure https://raw.githubusercontent.com accessable. <br><br>You maybe meet problem that Firefox does not download the program correctly, then you can close Firefox and remove existing program under\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", start Firefox and download again. (Please use standard version of {Firefox} 60 or later)"
     },
     "STEP2_TEXT_1": {
-        "message": "Run the installation script downloaded above manually:"
-    },
-    "STEP2_TEXT_2": {
-        "message": "Run the commands in your terminal:"
-    },
-    "STEP2_TEXT_3": {
-        "message": "You maybe need to run the script as administrator"
+        "message": "Download installation scripts to \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\""
     },
     "STEP3_TEXT_1": {
-        "message": "Finish RDF part in "
+        "message": "Run installation scripts"
     },
-    "STEP4_TEXT_1": {
+    "STEP3_TEXT_2": {
+        "message": "Run the commands in your terminal:"
+    },
+    "STEP3_TEXT_3": {
+        "message": "You maybe need to run the script as administrator"
+    },
+    "STEP4_TEXT": {
         "message": "Restart {Firefox}"
-    },
-    "STEP5_TEXT_1": {
-        "message": "Enjoy"
     },
     "BASIC_TEXT": {
         "message": "Foreground"
@@ -186,6 +192,9 @@
     },
     "Separator": {
         "message": "Separator"
+    },
+    "BACKEND_TIP": {
+        "message": "Scrapbee needs a \"special backend program\" to work normaly.<br/><br/>There 2 modes to install and start the backend program, automatically or manually, see <a href=\"#area=help&scroll=help_install\">help</a>."
     },
     "RDF_FILES_TIP": {
         "message": "Set absolute path of RDF files(ending with extension '.rdf') to register information of scraps, downloaded scraps will be saved in \"data\" folder beside the RDF files.<br/><br> For example: c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> You can setup multiple RDF files to classify your scraps.<br>You can have multiple RDF files inside same directory.<br>No need to create these files maunally(Some XML tags are needed for an empty RDF file).<br>For <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> user: ScrapBook RDFs are also supported.<br><br><b>Click on the '+' button below to register a new RDF, input an alias into 'Name' and absolute file path into 'File'</b>"
@@ -426,5 +435,29 @@
     },
     "DOWNLOAD_SOURCE_2" : {
         "message":"Source 2"
+    },
+    "DOWNLOAD_SOURCE_1" : {
+        "message": "源1"
+    },
+    "DOWNLOAD_SOURCE_2" : {
+        "message": "源2"
+    },
+    "Automatically" : {
+        "message": "Automatically"
+    },
+    "Manually" : {
+        "message": "Manually"
+    },
+    "Port": {
+        "message": "Port"
+    },
+    "Password": {
+        "message": "Password"
+    },
+    "Address": {
+        "message": "Address"
+    },
+    "BACKEND_PROGRAM": {
+        "message": "Backend Program"
     }
 }

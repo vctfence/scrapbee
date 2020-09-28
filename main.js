@@ -100,9 +100,9 @@ function showDlg(name, data, onshowed){
     if(onshowed)onshowed($dlg);
     return p;
 }
-function alert(title, message){
-    return showDlg("alert", {dlg_title:title.translate(), message:message.translate()});
-}
+// function alert(title, message){
+//     return showDlg("alert", {dlg_title:title.translate(), message:message.translate()});
+// }
 function confirm(title, message){
     return showDlg("confirm", {dlg_title:title.translate(), message:message.translate()});
 }
@@ -229,8 +229,8 @@ menulistener.onProperty = function(){
 menulistener.onOpenFolder = function(){
     if($(".item.focus").length){
         var id = $(".item.focus").attr("id");
-        var path = currTree.getItemFilePath(id);
-        $.post(settings.backend_url + "filemanager/", {path:path}, function(r){});
+        var path = currTree.getItemFilePath(id);        
+        $.post(settings.getBackendAddress() + "filemanager/", {path, pwd:settings.backend_pwd}, function(r){});
     }
 };
 var drop;
@@ -375,8 +375,9 @@ settings.onchange=function(key, value){
         showRdfList();
     }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
         applyAppearance();
-    }else if(key == "backend_port"){
-        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, force: true, try_times: 5}).then((response) => {
+    }else if(key == "backend"){
+        $(".root.folder-content").html("{Loading...}".translate());
+        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', force: true, try_times: 5}).then((response) => {
             loadAll();
         }).catch((e) => {
             log.error("failed to start backend, please check installation and settings");
@@ -391,7 +392,7 @@ function loadAll(){
     /** open file manager */
     $("#btnFileManager").click(function(){
         var rdfPath = currTree.rdfPath;
-        $.post(settings.backend_url + "filemanager/", {path:rdfPath}, function(r){
+        $.post(settings.getBackendAddress() + "filemanager/", {path:rdfPath, pwd:settings.backend_pwd}, function(r){
             // 
         });
     });
@@ -493,7 +494,6 @@ window.onload=async function(){
 function loadXml(rdf){
     currTree = null;
     if(!rdf) return Promise.reject(Error("invalid rdf path"));
-    
     return new Promise((resolve, reject) => {
         $(".root.folder-content").html("{Loading...}".translate());
         var rdfPath = rdf.replace(/[^\/\\]*$/, "");
@@ -508,9 +508,10 @@ function loadXml(rdf){
                 log.info(`rdf loaded in ${cost}ms`);
             }catch(e){
                 log.error(e.message);
+                return;
             }
             currTree.onXmlChanged = function(){
-                if(currTree.lockRdfSaving)
+                if(currTree && currTree.lockRdfSaving)
                     return;
                 log.info(`saving changes to rdf`);
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE',
@@ -525,12 +526,12 @@ function loadXml(rdf){
                 });
             };
             currTree.onItemRemoved=function(id){
-                $.post(settings.backend_url + "deletedir/", {path: rdfPath + "data/" + id}, function(r){});
+                $.post(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd}, function(r){});
             };
             currTree.onOpenContent=function(itemId, url, newTab, isLocal){
                 var method = newTab ? "create" : "update";
                 if(/^file\:/.test(url)){
-                    url = settings.backend_url + "file-service/" + url.replace(/.{7}/,'');
+                    url = settings.getFileServiceAddress() + url.replace(/.{7}/,'');
                 }
                 browser.tabs[method]({ url: url }, function (tab) {});
             };
@@ -579,7 +580,7 @@ function loadXml(rdf){
             log.info(`load ${rdf} failed, ${err}`);
             reject(err)
         };
-        xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
+        xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');
@@ -591,8 +592,8 @@ function loadXml(rdf){
 function switchRdf(rdf){
     log.info(`switch to rdf "${rdf}"`);
     return new Promise((resolve, reject) => {
-        if(currTree && rdf == currTree.rdf)
-            return resolve();
+        // if(currTree && rdf == currTree.rdf)
+        //     return resolve();
         currTree = null;
         if(!$.trim(rdf)){
             $(".root.folder-content").html("Invaid rdf path.");
@@ -600,7 +601,7 @@ function switchRdf(rdf){
         }
         $(".root.folder-content").html("{Loading...}".translate());
         /** check rdf exists */
-        $.post(settings.backend_url + "isfile/", {path: rdf}, function(r){
+        $.post(settings.getBackendAddress() + "isfile/", {path: rdf, pwd: settings.backend_pwd}, function(r){
             if(r == "yes"){
                 loadXml(rdf).then(()=>{
                     resolve();
@@ -642,7 +643,7 @@ function requestUrlSaving(itemId){
        if(icon && icon.match(/^data:image/i)){
            var rdf_path = settings.getLastRdfPath();
            var filename = `${rdf_path}/data/${itemId}/favicon.ico`;
-           $.post(settings.backend_url + "download", {url: icon, itemId: itemId, filename: filename}, function(r){
+           $.post(settings.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: settings.backend_pwd}, function(r){
                icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
                Next();
            });
@@ -747,3 +748,9 @@ browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });
 console.log("==> main.js loaded");
+
+
+window.addEventListener("keydown", function(){
+
+    console.log(8)
+}); 

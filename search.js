@@ -66,7 +66,7 @@ function loadXml(rdf){
     xmlhttp.onerror = function(err) {
 	// log.info(`load ${rdf} failed, ${err}`)
     };
-    xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
+    xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
     xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
     xmlhttp.setRequestHeader('cache-control', 'max-age=0');
     xmlhttp.setRequestHeader('expires', '0');
@@ -160,7 +160,7 @@ async function processTree(tree, search_title, search_body, search_comment){
     var q = new Queue(50, function(item, callback){
 	var url = tree.getItemIndexPage(item.id);
 	if(item.type=="page"){
-	    $.get(url+"?time="+Math.random(),function(r){
+	    $.get(url+"&time="+Math.random(),function(r){
 		seek(item, r);
 		callback();
 	    }).fail(function(){

@@ -38,7 +38,8 @@ function loadXml(rdf, $box){
         xmlhttp.onerror = function(err) {
 	    log.info(`load ${rdf} failed, ${err}`);
         };
-        xmlhttp.open("GET", `http://localhost:${settings.backend_port}/file-service/` + rdf, false);
+        var address = settings.getFileServiceAddress();
+        xmlhttp.open("GET", `${address}/${rdf}`, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');

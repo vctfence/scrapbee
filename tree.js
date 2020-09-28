@@ -84,11 +84,11 @@ class BookTree {
         /** scrap data */
         r = r.replace(
             /^resource\:\/\/scrapbook/,
-            settings.backend_url + "file-service/" + rdfPath
+            settings.getFileServiceAddress() + rdfPath
         );
         /** local file */
         if((/^(\/|(\[a-z]\:))/).test(r)){
-            r =  settings.backend_url + "file-service/" + r;
+            r =  settings.getFileServiceAddress() + r;
         }
         r = r.replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
             return b + "/";
@@ -284,7 +284,7 @@ class BookTree {
         return (this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/");
     }    
     getItemIndexPage(id) {
-        return (settings.backend_url + "file-service/" + this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/") + "?scrapbee_refresh=" + new Date().getTime();
+        return (settings.getFileServiceAddress() + this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime();
     }
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {

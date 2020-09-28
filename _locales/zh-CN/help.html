@@ -1,12 +1,59 @@
 <h2>ScrapBee是什么?</h2>
 ScrapBee 是一个继承了一些<a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a>特性的火狐Quantum扩展，
 至少，它可以读写ScrapBook遗留下来的的文档(当然，也可以新建)。<br>由于ScrapBook没有支持火狐Quantum，所以在期望中，ScrapBee是一个用于部分替代ScrapBook的火狐Quantum扩展.
-
 <p>有了ScrapBee，您可以保存网页内容到本地存储，并且可以在火狐侧边栏中进行管理。</p>
 <h2>什么是RDF?</h2>
 RDF是ScrapBee及ScrapBook的主要数据文件，用于登记已下载数据的各类相关信息。同时，下载内容被保存到同一目录下的"data"文件夹。
-<h2>安装/设置</h2>
-安装ScrapBee之后, 只需完成<a href="#install">安装向导</a>中的几个简单步骤，即可开始使用ScrapBee</a>。
+<h2 id="help_install">安装和运行后端程序</h2>
+<p>
+  Scrapbee需要运行一个专用的"后端程序"才能正常工作。 有两种方式安装和运行后端程序，分别为自动或者手动运行，请任选其一。
+</p>
+<li class="h3">安装</li>
+<p>
+  1. 自动 <br/>
+  在 <a href="#area=install">安装</a> 引导页面为自动运行方式安装后端程序。
+</p>
+<p>
+  2. 手动<br>点击 <a href="" class="download_exe">源1</a> 下载后端程序到硬盘。
+</p>
+<li class="h3">设置</li>
+<p>
+ 1. 自动 <br/>
+ 只需要输入一个希望程序监听的端口, 确保端口没有被其它程序占用。默认为 9900。
+</p>
+<p>
+  2. 手动<br>
+  需填入后端 web 服务地址, 形式：http://[host]:[port], 默认为： http://127.0.0.1:9901。
+</p>
+<li class="h3">运行</li>
+<p>
+  1. 自动 <br/>
+  启动火狐时，后端程序会自动随之运行。
+</p>
+<p>
+  2. 手动<br>
+  在运行火狐之前，需要以命令行方式手工启动后端程序。
+</p>
+命令形式为：<span style="color:#050">scrapbee_backend web-server [port] [host]</span><br/><br/>
+例如 (Windows)：<br/>
+<span style="color:#050">cd D:\Download<br/>scrapbee_backend web-server 9901 127.0.0.1</span><br/><br/>
+Linux 或 Mac:
+<p style="color:#050;margin-top:0">cd ~/Download</p>
+确保为程序添加了可执行权限：<br>
+<span style="color:#050">chmod +x scrapbee_backend</span>
+<p style="color:#050">./scrapbee_backend web-server 9901 127.0.0.1</p>
+<li class="h3">密码</li>
+可以设置密码使后端服务更安全，密码只能包含数字0-9和字母a-z。
+<p>
+  1. 自动 <br/>
+  只需要输入密码并保存。
+</p>
+<p>
+  2. 手动 <br/>
+  输入密码并保存，还需要在运行后端程序时添加密码参数：
+  <br> <span style="color:#050">scrapbee_backend web-server [port] [host] [password]</span><br/>
+  <br/>以 Windows 为例:  <br/><span style="color:#050">scrapbee_backend web-server 9901 127.0.0.1 secret</span>
+</p>
 <h2>使用</h2>
 <img src="image/hints/01.png" class="" alt="" />
 <p class=""> 点击ScrapBee图标，在测边栏中打开ScrapBee（图示1），需要的话，在侧边栏中新建所需文件夹（图示2） </p>
@@ -82,7 +129,11 @@ install.sh(Mac)
 <h4>仍然有未解决问题？</h4>
 查看<a href="#log">日志</a>，你可能找到一些线索.
 <br>重启火狐有时也能解决一些问题
-<br>也可以在github代码库中提问 <a href="https://github.com/vctfence/scrapbee">https://github.com/vctfence/scrapbee</a>
+<br>也可以在github代码库中提问
+<ul id="">
+  <a href="https://github.com/vctfence/scrapbee" target="_blank">https://github.com/vctfence/scrapbee</a> (前端) <br>
+  <a href="https://github.com/vctfence/scrapbee_backend" target="_blank">https://github.com/vctfence/scrapbee_backend</a> (后端)
+</ul>
 <br>或者发邮件到 <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
 <h2>备份</h2>
 ScrapBee不提供页面数据的备份功能，请经常手工备份data目录

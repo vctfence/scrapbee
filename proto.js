@@ -1,4 +1,10 @@
 // let HEX_FUN = hex_md5;
+
+var key="backend_port"
+
+console.log(["backend_port", "backend_address", "backend_type"].indexOf(key))
+
+
 var HEX_FUN = function(s){
     return hex_md5(s).substr(0, 15);
 }
@@ -12,6 +18,17 @@ NumberRange.prototype.random=function(diff){
 	n=Math.floor(Math.random() * (this.b-this.a+1)) + this.a;
   }
   return n;
+};
+NumberRange.prototype.forEach=function(fn,step){
+    if(!step)step=1;
+    if(isNaN(this.a)||isNaN(this.b))return;
+    var n=step>0?this.a:-this.a;
+    var m=step>0?this.b:-this.b;
+    var s=Math.abs(step);
+    var counter=0;
+    for(var i=n;i<=m;i+=step){
+	if(fn.apply(this,[i, counter++])===false)break;
+    }
 };
 String.prototype.htmlEncode = function(ignoreWs, ignoreAmp){
     var s = this;
