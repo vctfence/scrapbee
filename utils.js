@@ -498,4 +498,5 @@ export{gtv,
        executeScriptsInTab,
        refreshTree,
        httpRequest,
-       ajaxFormPost};
+       ajaxFormPost,
+       downloadFile};
