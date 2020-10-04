@@ -35,7 +35,7 @@
     "sidebar_action": {
         "default_title": "ScrapBee",
         "default_panel": "main.html",
-        "default_icon": "icons/bee.png"
+        "default_icon": "icons/bee.png"z
     },
     "background": {
         "page": "background.html"
