@@ -187,7 +187,7 @@ class BookTree {
                     $(e.target).parents(".folder-content").prev("div").find("input").prop("checked", false);
                 }
             }
-            /** end of item draging */
+            /** end of item dragging */
             if (!dragging) return;
             dragging = false;
             $container.find(".drag-mark").remove();
@@ -230,7 +230,7 @@ class BookTree {
                 } else {
                     t = (relY > $el.height() * 0.5) ? 2 : 1;
                 }
-                /** show draging mark */
+                /** show dragging mark */
                 if((!$prev_ref || ($prev_ref[0] != $el[0])) || prev_t != t){
                     $container.find(".drag-mark").remove();
                     if (t == 1) {

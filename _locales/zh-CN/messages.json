@@ -137,13 +137,13 @@
        "message": "火狐下载目录"
     },
     "CUSTOM_INSTALL_TIP": {
-        "message": "注，此处的步骤仅用于\"自动\"方式运行的后端程序的安装。<br/> 以下\"火狐下载目录\"指浏览器默认的下载目录，可以在浏览器首选项里找到和设置 (文件与应用程序 - 下载)"
+        "message": "注，以下流程仅用于安装以\"自动\"方式运行的后端程序。<br/> 以下\"火狐下载目录\"指浏览器默认的下载目录，可以在浏览器首选项里找到和设置 (文件与应用程序 - 下载)"
     },
     "STEP1_TEXT_1": {
         "message": "下载ScrapBee后端可执行文件到 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\"，只需点击下方按钮。"
     },
     "STEP1_TEXT_2": {
-        "message": "请确保 https://raw.githubusercontent.com 可访问，如果下载遇到问题，可以尝试手工下载, 见帮助<br><br>重复下载时，您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\" 中的已有可执行文件，再次启动{Firefox}后重新下载。另外，请使用{Firefox}60及以后的标准版{Firefox}。"
+        "message": "请确保 https://raw.githubusercontent.com 可访问，如果下载遇到问题，可以尝试手工下载, 见帮助<br><br>重复下载时，您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\" 中的已有可执行文件，再次启动{Firefox}后重新下载。另外，请使用{Firefox}60以上的标准版{Firefox}。"
     },
     "STEP2_TEXT_1": {
         "message": "下载安装脚本到 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\""
@@ -194,10 +194,10 @@
         "message": "分隔符"
     },
     "BACKEND_TIP": {
-        "message": "Scrapbee需要运行一个 \"专用后端程序\" 才能正常工作。<br/><br/>有两种方式安装和运行后端程序，分别为自动或者手动方式，请参考 <a href=\"#area=help&scroll=help_install\">帮助</a>。"
+        "message": "ScrapBee需要运行一个 \"专用后端程序\" 才能正常工作。<br/><br/>有两种方式安装和运行后端程序，分别为自动或者手动方式，请参考 <a href=\"#area=help&scroll=help_install\">帮助</a>。"
     },
     "RDF_FILES_TIP": {
-        "message": "设置RDF文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到RDF文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个RDF文件来实现{Scrap}的分类，可以在同一文件夹下放置多个RDF文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的RDF文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加RDF，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
+        "message": "设置RDF文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到RDF文件所在目录下的data文件夹），请参考 <a href='#area=help&scroll=help_rdf'>帮助</a>。<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个RDF文件来实现{Scrap}的分类，可以在同一文件夹下放置多个RDF文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的RDF文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加RDF，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
     },
     "BACKEND_PORT_TIP":{
         "message": "后端服务监听的TCP端口，比如9900"
@@ -398,7 +398,7 @@
         "message": "在侧边栏打开"
     },
     "FAIL_START_BACKEND_HINT": {
-        "message": "加载后端服务失败，请检查<a href='options.html#install' target='_blank'>安装</a>和<a href='options.html' target='_blank'>设置</a>"
+        "message": "加载后端服务失败，请检查<a href='options.html#area=install' target='_blank'>安装</a>和<a href='options.html' target='_blank'>设置</a>"
     },
     "NO_RDF_SETTED_HINT": {
         "message": "没有可用rdf，请检查 <a href='options.html' target='_blank'>设置</a>"

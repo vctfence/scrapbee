@@ -579,7 +579,7 @@ function loadXml(rdf){
         xmlhttp.onerror = function(err) {
             log.info(`load ${rdf} failed, ${err}`);
             reject(err)
-        };
+        };        
         xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
@@ -601,6 +601,7 @@ function switchRdf(rdf){
         }
         $(".root.folder-content").html("{Loading...}".translate());
         /** check rdf exists */
+
         $.post(settings.getBackendAddress() + "isfile/", {path: rdf, pwd: settings.backend_pwd}, function(r){
             if(r == "yes"){
                 loadXml(rdf).then(()=>{

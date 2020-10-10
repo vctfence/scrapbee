@@ -81,8 +81,13 @@ String.prototype.fillData = function(data) {
         return r;
     }
     var c = 1;
+    /** protect escaped brace */
+    var s = this.replace(/\\([\{\}])/g, function(a, b) {
+        var code = b.charCodeAt(0);
+        return `&#${code};`; 
+    });
     /** escape slashed special characters (become normal) */
-    var s = this.replace(/\{([\s\S]+)\}/g, function(a, b) {
+    s = s.replace(/\{([\s\S]+)\}/g, function(a, b) {
         return "{" + b.escape("?:!", true) + "}";
     });
     /** replace all placeholder recursively */

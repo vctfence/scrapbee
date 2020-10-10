@@ -15,6 +15,7 @@ body{
     z-index: 2147483647 !important;
     text-align:left !important;
     color:#000 !important;
+    padding:0 !important;
 }
 .scrapbee-edit-lock{
     position:absolute !important;

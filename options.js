@@ -162,7 +162,7 @@ window.onload=async function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
-    $("#div-help>div").html(getAsync("_locales/" + lang + "/help.html"));
+    $("#div-help>div").html(getAsync("_locales/" + lang + "/help.html").translate());
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{
             $(".tab-button").removeClass("focused");
@@ -328,7 +328,7 @@ window.onload=async function(){
             var filename = dwInfo.filename;
             var download_path = filename.replace(/[^\\\/]*$/, "");
             var json = {"allowed_extensions": ["scrapbee@scrapbee.org"],
-                        "description": "Scrapbee backend",
+                        "description": "ScrapBee backend",
                         "name": "scrapbee_backend",
                         "path": download_path + "" + dest, /** path to downloaded backend executable */
                         "type": "stdio"};

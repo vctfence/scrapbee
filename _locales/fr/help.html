@@ -1,10 +1,70 @@
 <h2>What's ScrapBee?</h2>
 ScrapBee est une extension pour Firefox Quantum essayant de reproduire les fonctionalités de l'extension <a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a>. ScrapBee est capable de lire et d'écrire des pages sauvées avec ScrapBook et d'en sauver de nouvelles. Comme le pasage de Firefox à la version Quantum n'a pas assuré de compatibilité accendante et à rendu Scrapbook inutilisable, ScrapBee a l'ambition de prendre la relève pour les nouvelles versions de Firefox.
 <p>Avec ScrapBee, vous pouvez sauver sur un disque local des "scraps", c'est-à-dire des pages web entières ou des sélections puis les gérer dans un panneau latéral du navigateur.</p>
-<h2>Qu'est-ce que RDF?</h2>
-RDF est un format de fichier XML utilisé par ScrapBokk et ScrapBee pour décrire les propriétés des documents sauvegardés. Les documents eux-mêmes et leurs fichiers associés (images notamment) sont sauvés dans un répertoire "data" situé à côté du fichier RDF.
-<h2>Installation/Paramétrage</h2>
-Après l'installation de ScrapBee en téléchargeant l'extension au format "xpi", terminez la configuration en suivant l'étape <a href="#initiate">Initialisation</a> avant de l'utiliser. N'oubliez pas notamment de donner le chemin d'accès d'au moins un fichier RDF (soit vers un emplacement existant, soit vers un nouvel emplacement, ScrapBee créant alors le répertoire et le fichier).
+
+
+<!-- install -->
+<h2 id="help_install">Installer et exécuter le programme backend</h2>
+<p>
+  ScrapBee a besoin d'un "programme backend spécial" pour fonctionner normalement. Il existe 2 modes pour installer et démarrer le programme backend, automatiquement ou manuellement, veuillez en choisir un.
+</p>
+
+<li class="h3">Installer</li>
+<p>
+  1. Automatiquement <br/>
+  Suivez les étapes de la page de conseils d'<a href="#area=install">installation</a> pour installer le programme principal en mode automatique.
+</p>
+<p>
+  2. Manuellement<br>
+  Cliquez simplement sur <a href="" class="download_exe">Source 1</a> pour télécharger le programme principal sur votre disque.
+</p>
+<li class="h3">Paramétrage</li>
+<p>
+  1. Automatiquement <br/>
+  Entrez simplement un port pour le programme backend à écouter, veuillez vous assurer qu'il n'est pas utilisé par un autre programme. Par défaut: 9900.
+</p>
+<p>
+  2. Manuellement<br>
+  Saisissez l'adresse Web en tant que service de programme backend. Format: http: // [hôte]: [port], par défaut: http://127.0.0.1:9901。
+</p>
+<li class="h3">Run</li>
+<p>
+  1. Automatiquement <br/>
+  Le programme backend sera lancé lors du démarrage de Firefox.
+</p>
+<p>
+  2. Manuellement<br>
+  Exécutez le programme backend dans la console avant de démarrer Firefox.
+</p>
+Command: <span style="color:#050">scrapbee_backend web-server [port] [host]</span><br/><br/>
+Par exemple (Windows): <br/>
+<span style="color:#050">cd D:\Download<br/>scrapbee_backend web-server 9901 127.0.0.1</span><br/><br/>
+Linux ou Mac:
+<p style="color:#050;margin-top:0">cd ~/Download</p>
+Assurez-vous que l'autorisation exécutable a été ajoutée au programme backend: <br>
+<span style="color:#050">chmod +x scrapbee_backend</span>
+<p style="color:#050">./scrapbee_backend web-server 9901 127.0.0.1</p>
+<li class="h3">Mot de passe</li>
+Le mot de passe peut être défini pour rendre le service backend plus sûr, seuls 0-9 et a-z sont acceptables.
+<p>
+  1. Automatiquement <br/>
+  Entrez simplement le mot de passe et enregistrez.
+</p>
+<p>
+  2. Manuellement <br/>
+  Entrez le mot de passe et enregistrez, vous devez également ajouter un argument de mot de passe lorsque vous démarrez le programme principal:
+  <br> <span style="color:#050">scrapbee_backend web-server [port] [host] [password]</span><br/>
+  <br/>Par exemple (Windows): <br/><span style="color:#050">scrapbee_backend web-server 9901 127.0.0.1 secret</span>
+</p>
+<!-- rdf -->
+<h2 id="help_rdf">RDF des dossiers</h2>
+<p>RDF est un format de fichier XML utilisé par ScrapBokk et ScrapBee pour décrire les propriétés des documents sauvegardés. Les documents eux-mêmes et leurs fichiers associés (images notamment) sont sauvés dans un répertoire "data" situé à côté du fichier RDF.
+</p>
+<li class="h3">Paramétrage</li>
+<p>Les fichiers RDF doivent être définis avant d'utiliser ScrapBee, vous pouvez avoir plusieurs éléments de fichier RDF, donner un nom et un chemin de fichier absolu pour chaque élément.
+  Ensuite, vous verrez les noms affichés dans la liste déroulante en haut de la barre latérale. Voir l'image pour référence:</p>
+<img src="image/hints/rdf.png" class="" alt="" />
+<!-- use -->
 <h2>Comment utiliser ScrapBee?</h2>
 <img src="image/hints/01.png" class="" alt="" />
 <p class=""> Cliquez sur l'icône de ScrapBee (Marque 1) permet d'ouvrir le panneau latéral de ScrapBee. Si besoin, créer des dossiers ou des séparateurs dans le panneau (Marque 2).</p>
@@ -18,10 +78,10 @@ Après l'installation de ScrapBee en téléchargeant l'extension au format "xpi"
 Pendant une capture, le panneau latéral de ScrapBee doit rester ouvert, l'entrée correspondant à la page web en cours de sauvegarde se positionnant après l'entrée courante.
 <h2>Résolution d'incidents</h2>
 <h4>Port</h4>
-Si ScrapBee en fonctionne plus et que vous avez dans la  <a href="#log">page de logs</a> un message du type:
+Si ScrapBee en fonctionne plus et que vous avez dans la  <a href="#area=log">page de logs</a> un message du type:
 <div class="embeded-log-text"> error: listen tcp :9900: bind: address already in use</div>, il faut essayer d'arrêter le process correspondant (scrapbee_backend) (<b>En général, cela correspond à un arrêt anormal de Firefox</b>). Sur Linux, essayez:
 <div class="embeded-log-text">fuser -k 9900/tcp</div>
-Ou sélectionnez un autre numéro de port dans les  <a href="#settings">Paramètres</a>
+Ou sélectionnez un autre numéro de port dans les  <a href="#area=configure">Paramètres</a>
 <h4>Permissions du système de fichiers</h4>
 N'enregistrez vos fichiers RDF que dans un répertoire accessible à l'utilisateur courant. Sur Window utilisez un répertoire de votre espace personnel ou un sous-répertoire de la racine comme c:\foobar par exemple.
 <h4>Détection d'un malware ou d'un cheval de Troie (trojan)</h4>
@@ -37,7 +97,7 @@ scrapbee_backend.json: (<b>Attention:</b> remplacez "<b><i>FIREFOX-DOWNLOAD-DIRE
   "allowed_extensions": [<br />
   "scrapbee@scrapbee.org"<br />
   ],<br />
-  "description": "Scrapbee backend",<br />
+  "description": "ScrapBee backend",<br />
   "name": "scrapbee_backend",<br />
   "path": "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/scrapbee_backend",<br />
   "type": "stdio"<br />
@@ -76,9 +136,13 @@ install.sh(Mac)
   echo done<br />
 </div>
 <h4>Problème persistant?</h4>
-Vérifiez la <a href="#log">page de logs</a>, il peut y avoir des informations sur le dysfonctionnement.
+Vérifiez la <a href="#area=log">page de logs</a>, il peut y avoir des informations sur le dysfonctionnement.
 <br>Redémarrez Firefox, cela marche parfois!
-<br>Sinon posez votre question ou exposez votre problème sous forme d'"issue" sur le dépôt Git: <a href="https://github.com/vctfence/scrapbee">https://github.com/vctfence/scrapbee</a>
+<br>Sinon posez votre question ou exposez votre problème sous forme d'"issue" sur le dépôt Git:
+<ul id="">
+  <a href="https://github.com/vctfence/scrapbee" target="_blank">https://github.com/vctfence/scrapbee</a> (frontend) <br>
+  <a href="https://github.com/vctfence/scrapbee_backend" target="_blank">https://github.com/vctfence/scrapbee_backend</a> (backend)
+</ul>
 <br>Ou envoyez un courrier à <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
 <h2>Sauvegarde</h2>
 ScrapBee n'a aucune fonction de sauvegarde, sauvez régulièrement les répertoires où se trouvent vos fichiers RDF et les documents sauvegardés.

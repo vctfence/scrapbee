@@ -98,8 +98,6 @@ function startWebServer(try_times, debug){
     function showInfo(r){
         var version = r.Version || 'unknown';
         backend_version = version;
-
-        
         settings.set("backend_version", version, true)
         log.info(`backend service started (${debug}), version = ${version}`);
         if(!gtev(version, '1.7.2')){
@@ -143,7 +141,7 @@ function startWebServer(try_times, debug){
             } else {
                 web_status = "launching";
                 loadBrowserInfo().then(() => {
-                    log.info(`start backend service on port ${port}. pwd ${pwd}`);
+                    log.info(`start backend service on port ${port}. pwd = '${pwd}'`);
                     communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
                         if(r.Serverstate != "ok"){ 
                             log.error(`failed to start backend service: ${r.Error}`);

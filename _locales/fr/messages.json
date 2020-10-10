@@ -127,29 +127,29 @@
     "FIREFOX_DOWNLOAD_DIRECTORY":{
         "message": "Répertoire de téléchargements de Firefox"
     },
+    "CUSTOM_INSTALL_TIP": {
+        "message": "Toutes les étapes ici sont guidées pour installer le backend qui sera démarré en mode 'Automatiquement'<br/> \"{FIREFOX_DOWNLOAD_DIRECTORY}\" ci-dessous signifie le répertoire de téléchargement par défaut défini dans les préférences du navigateur (Fichiers et applications - Téléchargements)"
+    },
     "STEP1_TEXT_1": {
-        "message": "Télécharger le programme backend de Scrapbee et les 2 fichiers d'installation dans \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", en cliquant simplement sur le bouton ci-dessous."
+        "message": "Télécharger le programme backend de ScrapBee et les 2 fichiers d'installation dans \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", en cliquant simplement sur le bouton ci-dessous."
     },
     "STEP1_TEXT_2": {
-        "message": "En cas de problème pour télécharger le programme et les 2 fichiers, arrêter Firefox et supprimer les fichiers dans \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", relancer Firefox puis le téléchargement. Compatible avec les versions standard de {Firefox} postérieures à 60."
+        "message": "Veuillez vous assurer https://raw.githubusercontent.com accessible. <br><br>Vous rencontrez peut-être le problème que Firefox ne télécharge pas correctement le programme, vous pouvez alors fermer Firefox et supprimer l'exécutable existant dans\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", démarrez Firefox et téléchargez à nouveau. (Veuillez utiliser la version standard de {Firefox} 60 ou une version ultérieure"
     },
     "STEP2_TEXT_1": {
-        "message": "Lancer manuellement le script d'installation téléchargé:"
-    },
-    "STEP2_TEXT_2": {
-        "message": "Lancer les commandes dans une fenêtre de console:"
-    },
-    "STEP2_TEXT_3": {
-        "message": "Il faut peut-être exécuter le script comme administrateurr"
+        "message": "Télécharger les scripts d'installation vers \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\""
     },
     "STEP3_TEXT_1": {
-        "message": "Terminer la configuration des fichiers RDF dans "
+        "message": "Lancer manuellement le script d'installation téléchargé:"
     },
-    "STEP4_TEXT_1": {
+    "STEP3_TEXT_2": {
+        "message": "Lancer les commandes dans une fenêtre de console:"
+    },
+    "STEP3_TEXT_3": {
+        "message": "Il faut peut-être exécuter le script comme administrateurr"
+    },
+    "STEP4_TEXT": {
         "message": "Relancer {Firefox}"
-    },
-    "STEP5_TEXT_1": {
-        "message": "Apprécier l'extension"
     },
     "BASIC_TEXT": {
         "message": "Couleur du texte"
@@ -175,11 +175,14 @@
     "Separator": {
         "message": "Séparateur"
     },
+    "BACKEND_TIP": {
+        "message": "ScrapBee a besoin d'un \"programme backend spécial\" pour fonctionner normalement.<br/><br/>Il existe 2 modes pour installer et démarrer le programme backend, automatiquement ou manuellement. <a href=\"#area=help&scroll=help_install\">help</a>"
+    },    
     "RDF_FILES_TIP": {
-        "message": "Editez le chemin des fichiers RDF (avec une extension '.rdf') contenant les informations sur les documents téléchargés qui sont sauvés dans un répertoire \"data\" au même niveau que le fichier RDF.<br /><br /> Par exemple, c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br /><br /> Vous pouvez utiliser plusieurs fichiers RDF pour organiser vos documents.<br /> Il est possible d'avoir plusieurs fichiers RDF dans un même répertoire.<br /> Scrapbee initialise le fichier RDF si nécessaire (tags XML).<br />Les fichiers RDF créés par l'ancienne extension <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> sont supportés.<br /><br /><b>Cliquez sur le bouton '+' ci-dessous pour enregistrer un nouveau RDF, choississez un alias dans le champ 'Nom' et le chemin absolu dans le champ 'Fichier'.</b>"
+        "message": "Editez le chemin des fichiers RDF (avec une extension '.rdf') contenant les informations sur les documents téléchargés qui sont sauvés dans un répertoire \"data\" au même niveau que le fichier RDF. <a href='#area=help&scroll=help_rdf'>help</a><br /><br /> Par exemple, c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br /><br /> Vous pouvez utiliser plusieurs fichiers RDF pour organiser vos documents.<br /> Il est possible d'avoir plusieurs fichiers RDF dans un même répertoire.<br /> ScrapBee initialise le fichier RDF si nécessaire (tags XML).<br />Les fichiers RDF créés par l'ancienne extension <a href=\"https://en.wikipedia.org/wiki/ScrapBook\" target=\"_blank\">ScrapBook</a> sont supportés.<br /><br /><b>Cliquez sur le bouton '+' ci-dessous pour enregistrer un nouveau RDF, choississez un alias dans le champ 'Nom' et le chemin absolu dans le champ 'Fichier'.</b>"
     },
     "BACKEND_PORT_TIP":{
-        "message": "Port TCP utilisé pour communiquer avec le programme backend de Scrapbee e.g. 9900"
+        "message": "Port TCP utilisé pour communiquer avec le programme backend de ScrapBee e.g. 9900"
     },
     "_COLOR":{
         "message": ""
@@ -191,7 +194,7 @@
         "message": "scrap"
     },
     "COLOR_TIP":{
-        "message": "Paramétrisation de la couleur de certains éléments pour modifier l'apparence de Scrapbee. <br>Les couleurs sont dans un format hexadécimal #FFFFFF ou #FFF"
+        "message": "Paramétrisation de la couleur de certains éléments pour modifier l'apparence de ScrapBee. <br>Les couleurs sont dans un format hexadécimal #FFFFFF ou #FFF"
     },
     "ALREADY_DOWNLOADED_TO": {
         "message": "déjà téléchargé dans"
@@ -203,10 +206,10 @@
         "message": "Ouvrir dans l'onglet courant"
     },
     "OPEN_IN_CURRENT_TAB_TIP":{
-        "message": "Par défaut, Scrapbee ouvre chaque page sauvée dans un nouvel onglet lors d'un simple clic dans le panneau latéral. Il utilise l'onglet courant si la touche Ctrl est enfoncée pendant le clic (touche Méta sur Mac) ou si le bouton du milieu est utilisé. Ce comportement est inversé si l'option est sélectionnée. "
+        "message": "Par défaut, ScrapBee ouvre chaque page sauvée dans un nouvel onglet lors d'un simple clic dans le panneau latéral. Il utilise l'onglet courant si la touche Ctrl est enfoncée pendant le clic (touche Méta sur Mac) ou si le bouton du milieu est utilisé. Ce comportement est inversé si l'option est sélectionnée. "
     },
     "DONATE_WORDS":{
-        "message": "Pour encourager les améliorations de Scrapbee, <br />toute donation est la bienvenue.<br />Merci pour votre support !!! <br /> <i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>Donnez un bonne note à Scrapbook!</i></a>"
+        "message": "Pour encourager les améliorations de ScrapBee, <br />toute donation est la bienvenue.<br />Merci pour votre support !!! <br /> <i><a target='_blank' href='https://addons.mozilla.org/en-US/firefox/addon/scrapbee/'>Donnez un bonne note à Scrapbook!</i></a>"
     },
     "MORE_DONATE_WAY_TOGGLE":{
         "message": "In other way"
@@ -281,7 +284,7 @@
         "message": "Fait"
     },
     "STORAGE_WARN": {
-        "message": "Pour l'instant, Scrapbee utilise le stockage local pour sauvegarder les préférences, déactivez le nettoyage automatique du stockage si vous l'avez positionné."
+        "message": "Pour l'instant, ScrapBee utilise le stockage local pour sauvegarder les préférences, déactivez le nettoyage automatique du stockage si vous l'avez positionné."
     },
     "NO_SOURCE_NODE_SELECTED": {
         "message": "Aucun noeud source sélectionné"
@@ -371,7 +374,7 @@
         "message": "Ouvrir dans la barre latérale"
     },
     "FAIL_START_BACKEND_HINT": {
-        "message": "Impossible de démarrer le backend, veuillez vérifier <a href='options.html#install' target='_blank'>l'installation</a> et les <a href='options.html' target='_blank'>paramètres</a>"
+        "message": "Impossible de démarrer le backend, veuillez vérifier <a href='options.html#area=install' target='_blank'>l'installation</a> et les <a href='options.html' target='_blank'>paramètres</a>"
     },
     "NO_RDF_SETTED_HINT": {
         "message": "Aucun rdf réglé, veuillez vérifier les <a href='options.html' target='_blank'>paramètres</a>"
@@ -408,5 +411,23 @@
     },
     "DOWNLOAD_SOURCE_2" : {
         "message":"Source 2"
-    }    
+    },
+    "Automatically" : {
+        "message": "Automatiquement"
+    },
+    "Manually" : {
+        "message": "Manuellement"
+    },
+    "Port": {
+        "message": "Port"
+    },
+    "Password": {
+        "message": "Mot de passe"
+    },    
+    "Address": {
+        "message": "Address"
+    },
+    "BACKEND_PROGRAM": {
+        "message": "Programme Backend"
+    }
 }

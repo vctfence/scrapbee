@@ -76,7 +76,7 @@
                 "linux": "Ctrl+Shift+B",
                 "mac": "MacCtrl+Shift+B"
             },
-            "description": "Toggle Scrapbee Sidebar"
+            "description": "Toggle ScrapBee Sidebar"
         }
     }
 }
