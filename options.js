@@ -45,9 +45,30 @@ ${FILE_I18N} <input type="text" name="value"/>
         }
     });
 }
+
+function touchRdf(rdf){
+    return new Promise((resolve, reject)=>{
+        $.post(settings.getBackendAddress() + "isfile/", {path: rdf, pwd: settings.backend_pwd}, function(r){
+            if(r != "yes"){
+                var content = `<?xml version="1.0"?>
+<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
+</RDF:RDF>`;
+                browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
+                    resolve();
+                }).catch((err) => {
+                    reject(err);
+                });
+            }else{
+                resolve();
+            }
+        });
+    });
+}
+
 function showConfiguration(){
     $("#rdf-area").html("");
-    $("input[name='save']").click(function(){
+    $("input[name='save']").click(async function(){
         try{
             var pwd = $.trim($("input[name=backend_pwd]").val());
             if(pwd){
@@ -55,13 +76,19 @@ function showConfiguration(){
                     throw Error("invalid password format");
                 }
             }
-            var names=[];
-            var paths=[];
-            $("#rdf-area div input:first-child").each(function(){
-                var t = $.trim(this.value);
-                names.push(t+"\n");
-                paths.push($.trim($(this).next("input").val())+"\n");
+            var names = [];
+            var paths = [];
+            var touch = [];
+            $("#rdf-area div input:nth-of-type(1)").each(function(){
+                var n = $.trim(this.value);
+                names.push(n + "\n");
+                var p = $.trim($(this).next("input").val());
+                paths.push(p + "\n");
+                touch.push(touchRdf(p));
             });
+
+            await Promise.all(touch);
+
             settings.set('rdf_paths', paths.join(""), true);
             settings.set('rdf_path_names', names.join(""), true);
 
@@ -135,7 +162,7 @@ window.onload=async function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
-    $("#div-help").html(getAsync("_locales/" + lang + "/help.html"));
+    $("#div-help>div").html(getAsync("_locales/" + lang + "/help.html"));
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{
             $(".tab-button").removeClass("focused");

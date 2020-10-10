@@ -606,17 +606,18 @@ function switchRdf(rdf){
                 loadXml(rdf).then(()=>{
                     resolve();
                 });
-            }else if(rdf){
-                /** show it need to create rdf */
-                $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());
-                $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
-                    initRdf(rdf, function(){
-                        loadXml(rdf).then(() => {
-                            resolve();
-                        });
-                    });
-                });
             }
+            // else if(rdf){
+            //     /** show it need to create rdf */
+            //     $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());
+            //     $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
+            //         initRdf(rdf, function(){
+            //             loadXml(rdf).then(() => {
+            //                 resolve();
+            //             });
+            //         });
+            //     });
+            // }
         });
     })
 }
