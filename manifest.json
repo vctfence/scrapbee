@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "ScrapBee",
-    "version": "2.0.7",
+    "version": "2.0.8",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -35,7 +35,7 @@
     "sidebar_action": {
         "default_title": "ScrapBee",
         "default_panel": "main.html",
-        "default_icon": "icons/bee.png"z
+        "default_icon": "icons/bee.png"
     },
     "background": {
         "page": "background.html"
