@@ -123,7 +123,7 @@ async function processTree(tree, search_title, search_body, search_comment){
         if(title_matched || comment_matched || content_matched){
             var $div = $("<div>").appendTo($("#divResult"));
             $(`<a target='_blank' class='match-title'>`).appendTo($div).html(item.title.htmlEncode().replace(re2, red)).prop("href", url).prepend($(`<img class='icon' src='${item.icon}'>`));
-            $(`<a target='_blank' class='locate-button'>&lt;&lt;</a>`).appendTo($div).click(function(){
+            $(`<a target='_blank' class='locate-button' title='locate in sidebar'>&lt;&lt;</a>`).appendTo($div).click(function(){
                 browser.runtime.sendMessage({type: 'LOCATE_ITEM', id: item.id}).then((response) => {
                 }).catch((e) => {
                 }); 
