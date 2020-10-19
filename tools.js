@@ -42,7 +42,7 @@ function initMover(){
             var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
             var proceed = false;
             function cfm(){
-                proceed = proceed || confirm("{ConfirmDeleteItem}".translate());
+                proceed = confirm("{ConfirmDeleteItem}".translate());
                 return proceed;
             }
             if($("#multi-select").is(":checked")){
@@ -63,7 +63,7 @@ function initMover(){
                 await tree.saveXml();
                 $tree.next(".path-box").html("/");
             }
-            if(tree0.rdf == tree1.rdf){
+            if(proceed && tree0.rdf == tree1.rdf){
                 refresh(other);
             }
         });

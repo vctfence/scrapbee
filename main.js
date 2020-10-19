@@ -1,7 +1,7 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js";
 import {showNotification, getColorFilter, genItemId, gtv} from "./utils.js";
-import {refreshTree} from "./utils.js";
+import {refreshTree, touchRdf} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown} from "./control.js";
 
@@ -377,7 +377,7 @@ settings.onchange=function(key, value){
         applyAppearance();
     }else if(key == "backend"){
         $(".root.folder-content").html("{Loading...}".translate());
-        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', force: true, try_times: 5}).then((response) => {
+        browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 5}).then((response) => {
             loadAll();
         }).catch((e) => {
             log.error("failed to start backend, please check installation and settings");
@@ -431,7 +431,7 @@ window.onload=async function(){
     /** */
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
-        if(currTree && currTree.rdf)loadXml(currTree.rdf);
+        if(drop && drop.value)loadXml(drop.value);
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
@@ -470,7 +470,7 @@ window.onload=async function(){
     });
     /**  */
     applyAppearance();
-    browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, try_times: 5}).then((response) => {
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
         loadAll();
     }).catch((e) => {
         log.error("failed to start backend, please check installation and settings");
@@ -577,7 +577,8 @@ function loadXml(rdf){
             resolve(currTree);
         };
         xmlhttp.onerror = function(err) {
-            log.info(`load ${rdf} failed, ${err}`);
+            $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
+            log.error(`load ${rdf} failed, ${err}`);
             reject(err)
         };        
         xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
@@ -601,13 +602,10 @@ function switchRdf(rdf){
         }
         $(".root.folder-content").html("{Loading...}".translate());
         /** check rdf exists */
-
-        $.post(settings.getBackendAddress() + "isfile/", {path: rdf, pwd: settings.backend_pwd}, function(r){
-            if(r == "yes"){
-                loadXml(rdf).then(()=>{
-                    resolve();
-                });
-            }
+        touchRdf(settings.getBackendAddress(), rdf, settings.backend_pwd).then(function(r){
+            loadXml(rdf).then(()=>{
+                resolve();
+            });
             // else if(rdf){
             //     /** show it need to create rdf */
             //     $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());

@@ -1,7 +1,7 @@
 import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
-import {gtev} from "./utils.js";
+import {gtev, touchRdf} from "./utils.js";
 
 function getAsync(file) {
     var r;
@@ -46,36 +46,22 @@ ${FILE_I18N} <input type="text" name="value"/>
     });
 }
 
-function touchRdf(rdf){
-    return new Promise((resolve, reject)=>{
-        $.post(settings.getBackendAddress() + "isfile/", {path: rdf, pwd: settings.backend_pwd}, function(r){
-            if(r != "yes"){
-                var content = `<?xml version="1.0"?>
-<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
-</RDF:RDF>`;
-                browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
-                    resolve();
-                }).catch((err) => {
-                    reject(err);
-                });
-            }else{
-                resolve();
-            }
-        });
-    });
-}
-
 function showConfiguration(){
     $("#rdf-area").html("");
     $("input[name='save']").click(async function(){
         try{
+            // backend
             var pwd = $.trim($("input[name=backend_pwd]").val());
             if(pwd){
                 if(!pwd.match(/^[0-9a-zA-Z]+$/)){
                     throw Error("invalid password format");
                 }
             }
+            settings.set('backend_type', $("input[name=backend_type]:checked").val(), true);
+            settings.set('backend_port', $("input[name=backend_port]").val(), true);
+            settings.set('backend_address', $("input[name=backend_address]").val(), true);
+            settings.set('backend_pwd', $("input[name=backend_pwd]").val(), true);
+            // rdf list
             var names = [];
             var paths = [];
             var touch = [];
@@ -84,19 +70,12 @@ function showConfiguration(){
                 names.push(n + "\n");
                 var p = $.trim($(this).next("input").val());
                 paths.push(p + "\n");
-                touch.push(touchRdf(p));
+                touch.push(touchRdf(settings.getBackendAddress(), p, settings.backend_pwd));
             });
-
-            await Promise.all(touch);
-
+            Promise.all(touch);
             settings.set('rdf_paths', paths.join(""), true);
             settings.set('rdf_path_names', names.join(""), true);
-
-            settings.set('backend_type', $("input[name=backend_type]:checked").val(), true);
-            settings.set('backend_port', $("input[name=backend_port]").val(), true);
-            settings.set('backend_address', $("input[name=backend_address]").val(), true);
-            settings.set('backend_pwd', $("input[name=backend_pwd]").val(), true);
-            
+            // apparence
             settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""), true);
             settings.set('font_color', $("input[name=font_color]").val().replace("#", ""), true);
             settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""), true);
@@ -107,6 +86,7 @@ function showConfiguration(){
             settings.set('font_size', size, true);
             settings.set('font_name', $("input[name=font_name]").val(), true);
             settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
+            // behavior
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
@@ -202,9 +182,9 @@ window.onload=async function(){
         if(gtev(version, '1.7.0')){
             initMover();
             initExporter();
-            log.info("Tools initiated successfully.")
+            log.info("tools initiated successfully.")
         }else{
-            log.error("Can not initiate tools, make sure backend 1.7.0 or later installed.")
+            log.error("can not initiate tools, make sure backend 1.7.0 or later installed.")
         }
     }
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
@@ -257,7 +237,6 @@ window.onload=async function(){
         }
     });
     $(`input[name=backend_type]:checked`).click();
-
     if(settings.backend_path){
         $("#txtBackendPath").show();
         $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);

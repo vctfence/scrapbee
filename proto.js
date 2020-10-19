@@ -1,10 +1,5 @@
 // let HEX_FUN = hex_md5;
 
-var key="backend_port"
-
-console.log(["backend_port", "backend_address", "backend_type"].indexOf(key))
-
-
 var HEX_FUN = function(s){
     return hex_md5(s).substr(0, 15);
 }

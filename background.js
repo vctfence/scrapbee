@@ -91,17 +91,17 @@ function communicate(command, body, callback){
         }
     });
 }
-function startWebServer(try_times, debug){
+function startWebServer(try_times){
     if(web_status == "failed"){
-        return  Promise.reject(Error("start web server: failed"));
+        return  Promise.reject(Error("connect web server: failed"));
     }
     function showInfo(r){
         var version = r.Version || 'unknown';
         backend_version = version;
         settings.set("backend_version", version, true)
-        log.info(`backend service started (${debug}), version = ${version}`);
-        if(!gtev(version, '1.7.2')){
-            log.error(`backend >= 1.7.2 wanted for full functions, please update`)
+        log.info(`connect web server: connected, version = ${version}`);
+        if(!gtev(version, '1.7.3')){
+            log.error(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version`)
         }
         web_status = "launched";
         browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
@@ -113,18 +113,24 @@ function startWebServer(try_times, debug){
             if(web_status == "launched"){
                 resolve();
             }else if(settings.backend_type == "address"){
-                web_status = "launched"
                 var address = settings.getBackendAddress();
-                log.info(`connect backend address: ${address}`);
+                log.info(`connect web server: address = ${address}`);
                 $.get(address + `serverinfo/?pwd=${settings.backend_pwd}`, function(r){
-                    showInfo(r);
-                    resolve();
+                    if(r.Serverstate == "ok"){
+                        web_status == "launched"
+                        showInfo(r);
+                        resolve();
+                    }else{
+                        return startWebServer(try_times - 1);
+                    }
                 }).fail(function(e){
-                    if(e.status > 0){
+                    if(e.status > 0){ // old backend
+                        web_status == "launched"
                         showInfo({});
                         resolve();
                     }else{
-                        log.error("Failed to connect backend")
+                        var em = "connect web server: failed to connect backend";
+                        reject(Error(em));
                     }
                 });
             } else if(web_status == "launching"){
@@ -141,38 +147,39 @@ function startWebServer(try_times, debug){
             } else {
                 web_status = "launching";
                 loadBrowserInfo().then(() => {
-                    log.info(`start backend service on port ${port}. pwd = '${pwd}'`);
+                    log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
                     communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
                         if(r.Serverstate != "ok"){ 
                             log.error(`failed to start backend service: ${r.Error}`);
                             web_status = "error";
-                            if(try_times == 0){
+                            if(try_times > 0){
+                                return startWebServer(try_times - 1);
+                            }else{
                                 web_status = "failed";
-                                var ms = "start web server: too many times tried";
-                                reject(Error(ms));
-                                log.error(ms);
+                                var ms = "connect web server: too many times tried";
+                                return reject(Error(ms));
                             }
-                            return startWebServer(try_times - 1, debug);
                         }else{
                             showInfo(r);
                             resolve();
                         }
-                    }).catch((e)=>{
-                        log.error(e.message);
-                        web_status = "failed";
-                        reject(e);
-                    });
+                    })
                 })
             }
         });
-    })
+    }).catch((e)=>{
+        log.error(e.message);
+        web_status = "failed";
+    });
+};
+settings.onchange=function(key, value){
+    if(key == "backend"){
+        web_status = ""
+        startWebServer(5);
+    }
 };
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if(request.type == 'START_WEB_SERVER_REQUEST'){
-        if(request.force)
-            web_status = "";
-        return startWebServer(request.try_times, "sidebar");
-    }else if(request.type == 'LOG'){
+    if(request.type == 'LOG'){
         log.sendLog(request.logtype, request.content);
     }else if(request.type == 'CLEAR_LOG'){
         __log_clear__();
@@ -269,6 +276,20 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }else if(request.type == "DOWNLOAD_FILE"){
         return downloadFile(rquest.url);
+    }else if(request.type == "WAIT_WEB_SERVER"){
+        return new Promise((resolve, reject) => {
+            function check(){
+                // log.info(web_status)
+                if(web_status == "launched"){
+                    resolve()
+                }else if(web_status == "failed"){
+                    reject();
+                }else{
+                    setTimeout(function(r){check()}, 1000);
+                }
+            }
+            setTimeout(function(r){check()}, 1000);
+        });
     }
 });
 function saveTextFile(request){
