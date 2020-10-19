@@ -398,7 +398,7 @@
         "message": "在侧边栏打开"
     },
     "FAIL_START_BACKEND_HINT": {
-        "message": "加载后端服务失败，请检查<a href='options.html#area=install' target='_blank'>安装</a>和<a href='options.html' target='_blank'>设置</a>"
+        "message": "加载后端服务失败，请检查 <a href='options.html#area=install' target='_blank'>安装</a> 和 <a href='options.html' target='_blank'>设置</a>"
     },
     "NO_RDF_SETTED_HINT": {
         "message": "没有可用rdf，请检查 <a href='options.html' target='_blank'>设置</a>"

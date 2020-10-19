@@ -93,7 +93,7 @@ Si vous ne pouvez pas télécharger les scripts d'installation (blocage par des 
 <br /> <br />
 scrapbee_backend.json: (<b>Attention:</b> remplacez "<b><i>FIREFOX-DOWNLOAD-DIRECTORY</i></b>" par le chemin vers votre <b>répertoire de téléchargement Firefox</b>)
 <div class="embeded-log-text">
-  {<br />
+  \{<br />
   "allowed_extensions": [<br />
   "scrapbee@scrapbee.org"<br />
   ],<br />
@@ -101,7 +101,7 @@ scrapbee_backend.json: (<b>Attention:</b> remplacez "<b><i>FIREFOX-DOWNLOAD-DIRE
   "name": "scrapbee_backend",<br />
   "path": "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/scrapbee_backend",<br />
   "type": "stdio"<br />
-  }<br />
+  \}<br />
 </div>
 install.bat(Windows, CODEPAGE UTF-8):
 <div class="embeded-log-text">
@@ -117,7 +117,7 @@ install.sh(Linux)
 <div class="embeded-log-text">
   #!/bin/bash<br />
   chmod +x scrapbee_backend<br />
-  dest="${HOME}/.mozilla/native-messaging-hosts"<br />
+  dest="$\{HOME\}/.mozilla/native-messaging-hosts"<br />
   if [ ! -d "$dest" ];then<br />
   &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p "$dest"<br />
   fi<br />
@@ -128,7 +128,7 @@ install.sh(Mac)
 <div class="embeded-log-text">
   #!/bin/bash<br />
   chmod +x scrapbee_backend<br />
-  dest="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
+  dest="$\{HOME\}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
   if [ ! -d $dest ];then<br />
   &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p $dest<br />
   fi<br />

@@ -100,7 +100,7 @@ Please try to re-download the backend:
 <br /> <br />
 scrapbee_backend.json: (<b>Important:</b> replace "<b><i>FIREFOX-DOWNLOAD-DIRECTORY</i></b>" to your real <b>FireFox DOWNLOAD DIRECTORY</b>)
 <div class="embeded-log-text">
-  {<br />
+  \{<br />
   "allowed_extensions": [<br />
   "scrapbee@scrapbee.org"<br />
   ],<br />
@@ -108,7 +108,7 @@ scrapbee_backend.json: (<b>Important:</b> replace "<b><i>FIREFOX-DOWNLOAD-DIRECT
   "name": "scrapbee_backend",<br />
   "path": "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/scrapbee_backend",<br />
   "type": "stdio"<br />
-  }<br />
+  \}<br />
 </div>
 install.bat(Windows, CODEPAGE UTF-8):
 <div class="embeded-log-text">
@@ -124,7 +124,7 @@ install.sh(Linux)
 <div class="embeded-log-text">
   #!/bin/bash<br />
   chmod +x scrapbee_backend<br />
-  dest="${HOME}/.mozilla/native-messaging-hosts"<br />
+  dest="$\{HOME\}/.mozilla/native-messaging-hosts"<br />
   if [ ! -d "$dest" ];then<br />
   &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p "$dest"<br />
   fi<br />
@@ -135,7 +135,7 @@ install.sh(Mac)
 <div class="embeded-log-text">
   #!/bin/bash<br />
   chmod +x scrapbee_backend<br />
-  dest="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
+  dest="$\{HOME\}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
   if [ ! -d $dest ];then<br />
   &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p $dest<br />
   fi<br />
