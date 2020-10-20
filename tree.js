@@ -413,7 +413,7 @@ class BookTree {
     async renderTree($container) {
         var self = this;
         this.$top_container = $container;
-        $container.html("");
+        $container.empty();
         var buffers={};
         var bufferlist=[];
         buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        

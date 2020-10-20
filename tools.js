@@ -32,7 +32,7 @@ function initMover(){
     });
     function refresh(tree){
         var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
-        $tree.next(".path-box").html("/");
+        $tree.next(".path-box").find("bdi").text("/");
         refreshTree(tree, loadXml, tree.rdf, $tree, tree == tree0 ? 0 : 1);
     }
     $(".delete-button").each(function(i){
@@ -61,7 +61,7 @@ function initMover(){
             }
             if(proceed){
                 await tree.saveXml();
-                $tree.next(".path-box").html("/");
+                $tree.next(".path-box").find("bdi").text("/");
             }
             if(proceed && tree0.rdf == tree1.rdf){
                 refresh(other);
@@ -195,8 +195,8 @@ function initMover(){
                     loadXml(value, $box, i);
                     $("#node-mover .tool-button").prop("disabled", !selected_rdfs[1]);
                 }
-            });
-            $box.next(".path-box").html("/");
+            });            
+            $box.next(".path-box").find("bdi").text("/");
             $("#node-mover .tool-button").prop("disabled", true);
         };
         if(paths){
@@ -219,7 +219,7 @@ function initMover(){
 	        await currTree.renderTree($box);
 	        currTree.onChooseItem=function(itemId){
                     var t = currTree.getItemPath(currTree.getItemById(itemId));
-                    $box.next(".path-box").html(`<bdi>${t}</bdi>`);
+                    $box.next(".path-box").find("bdi").html(t);
 	        };
                 currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {

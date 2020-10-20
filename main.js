@@ -246,7 +246,7 @@ function showRdfList(){
     drop = drop || new SimpleDropdown($(".drop-button")[0], []);
     drop.clear();
     drop.onchange=(function(title, value){
-        $(".drop-button .label").html(title || "");
+        $(".drop-button .label").text(title || "");
         if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
     });
     if(paths){
@@ -376,7 +376,7 @@ settings.onchange=function(key, value){
     }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
         applyAppearance();
     }else if(key == "backend"){
-        $(".root.folder-content").html("{Loading...}".translate());
+        $(".root.folder-content").empty().text("{Loading...}".translate());
         browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 5}).then((response) => {
             loadAll();
         }).catch((e) => {
@@ -495,7 +495,7 @@ function loadXml(rdf){
     currTree = null;
     if(!rdf) return Promise.reject(Error("invalid rdf path"));
     return new Promise((resolve, reject) => {
-        $(".root.folder-content").html("{Loading...}".translate());
+        $(".root.folder-content").empty().text("{Loading...}".translate());
         var rdfPath = rdf.replace(/[^\/\\]*$/, "");
         var rdf_file = rdf.replace(/.*[\/\\]/, "");
         var xmlhttp=new XMLHttpRequest();
@@ -597,7 +597,7 @@ function switchRdf(rdf){
         //     return resolve();
         currTree = null;
         if(!$.trim(rdf)){
-            $(".root.folder-content").html("Invaid rdf path.");
+            $(".root.folder-content").empty().text("Invaid rdf path.");
             reject();
         }
         $(".root.folder-content").html("{Loading...}".translate());

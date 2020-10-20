@@ -47,7 +47,7 @@ ${FILE_I18N} <input type="text" name="value"/>
 }
 
 function showConfiguration(){
-    $("#rdf-area").html("");
+    $("#rdf-area").empty();
     $("input[name='save']").click(async function(){
         try{
             // backend
@@ -141,7 +141,7 @@ window.onload=async function(){
     }
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-    $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
+    // $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
     $("#div-help>div").html(getAsync("_locales/" + lang + "/help.html").translate());
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{
@@ -344,14 +344,14 @@ window.onload=async function(){
                 settings.set('backend_path', download_path, true);
                 if(settings.backend_path){
                     $(self).next(".download-path").show()
-                    $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
+                    $(self).next(".download-path").text("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
                 }
             }).catch((e) => {
                 alert(e)
             });
         }
         $("#txtBackendPath").show();
-        $("#txtBackendPath").html("Downloading...");  // todo: error output
+        $("#txtBackendPath").text("Downloading...");  // todo: error output
         setTimeout(Start, 1000);
     });
 

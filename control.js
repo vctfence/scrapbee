@@ -15,7 +15,7 @@ class SimpleDropdown{
     }
     clear(){
         this.$menu.hide();
-        this.$menu.html("");
+        this.$menu.empty();
         this.select(null, null)
     }
     addItem(title, value){
