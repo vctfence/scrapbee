@@ -10,21 +10,20 @@
     "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'",
     "permissions": [
         "activeTab",
-        "bookmarks",
         "contextMenus",
         "downloads",
-        "file:///*",
-        "http://*/*",
-        "https://*/*",
-        "menus",
-        "nativeMessaging",
-        "notifications",
         "storage",
         "tabs",
         "unlimitedStorage",
         "webNavigation",
         "webRequest",
-        "webRequestBlocking"
+        "webRequestBlocking",
+        "file:///*",
+        "http://*/*",
+        "https://*/*",
+        "menus",
+        "nativeMessaging",
+        "notifications"
     ],
     "applications": {
         "gecko": {
