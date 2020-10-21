@@ -79,14 +79,15 @@
                 <br>
                 <br>Windows:
                 <br>open <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;\scrapbee</i>
-                <br>Run install.bat ({STEP3_TEXT_3})
+                <br>{EXECUTE} install.bat ({STEP3_TEXT_3})
               </div>
             </td>
           </tr>
           <tr class="hr"><td colspan="2"><hr/></td></tr>
           <tr>
             <td>{Step}-4</td>
-            <td>              <div>{STEP4_TEXT}</div>
+            <td>
+              <div>{STEP4_TEXT}</div>
             </td>
           </tr>          
         </table>
@@ -103,7 +104,7 @@
               <div class="panel" style="vertical-align:top;padding:0">
                 <table class="form-table inner" width="" cellspacing="10" cellpadding="" border="0">
                   <tr>
-                    <td> {type} </td>
+                    <td>{type}</td>
                     <td>
                       <label><input type="radio" name="backend_type" value="port" checked/> {Automatically}</label>
                       <label><input type="radio" name="backend_type" value="address" /> {Manually}</label>

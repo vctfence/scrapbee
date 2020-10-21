@@ -131,7 +131,7 @@
         "message": "Toutes les étapes ici sont guidées pour installer le backend qui sera démarré en mode 'Automatiquement'<br/> \"{FIREFOX_DOWNLOAD_DIRECTORY}\" ci-dessous signifie le répertoire de téléchargement par défaut défini dans les préférences du navigateur (Fichiers et applications - Téléchargements)"
     },
     "STEP1_TEXT_1": {
-        "message": "Télécharger le programme backend de ScrapBee et les 2 fichiers d'installation dans \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/screepbee/\", en cliquant simplement sur le bouton ci-dessous."
+        "message": "Téléchargez l'exécutable du backend ScrapBee vers \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", en cliquant simplement sur le bouton ci-dessous."
     },
     "STEP1_TEXT_2": {
         "message": "Veuillez vous assurer https://raw.githubusercontent.com accessible. <br><br>Vous rencontrez peut-être le problème que Firefox ne télécharge pas correctement le programme, vous pouvez alors fermer Firefox et supprimer l'exécutable existant dans\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\", démarrez Firefox et téléchargez à nouveau. (Veuillez utiliser la version standard de {Firefox} 60 ou une version ultérieure"
@@ -429,5 +429,8 @@
     },
     "BACKEND_PROGRAM": {
         "message": "Programme Backend"
+    },
+    "Execute": {
+        "message": "Exécutez"
     }
 }

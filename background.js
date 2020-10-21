@@ -101,7 +101,7 @@ function startWebServer(try_times){
         settings.set("backend_version", version, true)
         log.info(`connect web server: connected, version = ${version}`);
         if(!gtev(version, '1.7.3')){
-            log.error(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version`)
+            log.error(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version.`)
         }
         web_status = "launched";
         browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});

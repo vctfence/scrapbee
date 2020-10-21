@@ -453,5 +453,8 @@
     },
     "BACKEND_PROGRAM": {
         "message": "后端程序"
+    },
+    "Execute": {
+        "message": "运行"
     }
 }
