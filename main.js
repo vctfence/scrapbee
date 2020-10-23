@@ -77,11 +77,13 @@ function showDlg(name, data, onshowed){
         });
         $dlg.find("form").submit(function(){
             var data = {};
-            $dlg.find("input,textarea").each(function(){
+            $dlg.find("input,textarea,select").each(function(){
                 if(this.name){
                     if(this.type=="radio"){
                         if(this.checked)
                             data[this.name] = $(this).val();
+                    }else if(this.type=="select"){
+                        data[this.name] = $(this).val();
                     }else{
                         data[this.name] = $(this).val();
                     }
@@ -118,20 +120,26 @@ menulistener.onOpenAll = function(){
         }
     }, [liXmlNode]);
 };
+
 menulistener.onSort1 = function(){
-    confirm("{Sort}", "{ConfirmSorting}").then(async function(){
-        await currTree.sortTree(true);
+    showDlg("sort", {}).then(async function(d){
+        var $target = null;
+        if(d.target == "selection"){
+            $target = currTree.getFocusedItem();
+        }
+        await currTree.sortTree(d.sort_by, $target, d.order == "asc");
         currTree.onXmlChanged();
         await currTree.renderTree($(".root.folder-content"));
+        currTree.restoreStatus();
     });
 };
-menulistener.onSort2 = function(){
-    confirm("{Sort}", "{ConfirmSorting}").then(async function(){
-        await currTree.sortTree(false);
-        currTree.onXmlChanged();
-        await currTree.renderTree($(".root.folder-content"));
-    });
-};
+// menulistener.onSort2 = function(){
+//     confirm("{Sort}", "{ConfirmSorting}").then(async function(){
+//         await currTree.sortTree(false);
+//         currTree.onXmlChanged();
+//         await currTree.renderTree($(".root.folder-content"));
+//     });
+// };
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
         currTree.removeItem($(".item.focus"));
@@ -558,20 +566,23 @@ function loadXml(rdf){
                 settings.set('sidebar_last_opened_folders',folderIds , true);
             };
             /** restore status */
-            if(settings.last_rdf == rdf){
-                if(settings.sidebar_last_opened_folders){
-                    settings.sidebar_last_opened_folders.split(",").forEach(function(id){
-                        currTree.toggleFolder(currTree.getItemById(id), true);
-                    });
-                }
-                if(settings.sidebar_last_focused){
-                    var $item = currTree.getItemById(settings.sidebar_last_focused);
-                    if($item.length){
-                        currTree.focusItem($item);
-                        currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+            currTree.restoreStatus=function(){
+                if(settings.last_rdf == rdf){
+                    if(settings.sidebar_last_opened_folders){
+                        settings.sidebar_last_opened_folders.split(",").forEach(function(id){
+                            currTree.toggleFolder(currTree.getItemById(id), true);
+                        });
+                    }
+                    if(settings.sidebar_last_focused){
+                        var $item = currTree.getItemById(settings.sidebar_last_focused);
+                        if($item.length){
+                            currTree.focusItem($item);
+                            currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+                        }
                     }
                 }
             }
+            currTree.restoreStatus();
             /** history */
             settings.set('last_rdf', rdf, true);
             resolve(currTree);
@@ -593,8 +604,6 @@ function loadXml(rdf){
 function switchRdf(rdf){
     log.info(`switch to rdf "${rdf}"`);
     return new Promise((resolve, reject) => {
-        // if(currTree && rdf == currTree.rdf)
-        //     return resolve();
         currTree = null;
         if(!$.trim(rdf)){
             $(".root.folder-content").empty().text("Invaid rdf path.");
@@ -606,17 +615,6 @@ function switchRdf(rdf){
             loadXml(rdf).then(()=>{
                 resolve();
             });
-            // else if(rdf){
-            //     /** show it need to create rdf */
-            //     $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());
-            //     $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
-            //         initRdf(rdf, function(){
-            //             loadXml(rdf).then(() => {
-            //                 resolve();
-            //             });
-            //         });
-            //     });
-            // }
         });
     })
 }

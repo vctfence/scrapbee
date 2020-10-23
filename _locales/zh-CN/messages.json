@@ -456,5 +456,27 @@
     },
     "Execute": {
         "message": "运行"
+    },
+    "Date": {
+        "message": "日期"
+    },
+    "Order":{
+        "message": "顺序"
+    },
+    "Target":{
+        "message": "目标"
+    },
+    "SORT_BY": {
+        "message": "排序依据"
+    },
+    "WHOLE_TREE": {
+        "message": "整个树"
+    },
+    "Ascending":{
+        "message":  "升序"
+    },
+    "Descending":{
+        "message":  "降序"
     }
+    
 }

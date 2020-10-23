@@ -432,5 +432,26 @@
     },
     "Execute": {
         "message": "Exécutez"
+    },
+    "Date": {
+        "message": "Date"
+    },
+    "Order":{
+        "message": "Ordonner"
+    },
+    "Target":{
+        "message": "cible"
+    },
+    "SORT_BY": {
+        "message": "Trier par"
+    },
+    "WHOLE_TREE": {
+        "message": "arbre entier"
+    },
+    "Ascending":{
+        "message":  "Ascendant"
+    },
+    "Descending":{
+        "message":  "Descendant"
     }
 }

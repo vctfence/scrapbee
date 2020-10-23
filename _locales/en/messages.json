@@ -460,7 +460,28 @@
     "BACKEND_PROGRAM": {
         "message": "Backend Program"
     },
-    "EXECUTE": {
+    "Execute": {
         "message": "Execute"
+    },
+    "Date": {
+        "message": "Date"
+    },
+    "Order":{
+        "message": "Order"
+    },
+    "Target":{
+        "message": "Target"
+    },
+    "SORT_BY": {
+        "message": "Sort By"
+    },
+    "WHOLE_TREE": {
+        "message": "Whole Tree"
+    },
+    "Ascending":{
+        "message":  "Ascending"
+    },
+    "Descending":{
+        "message":  "Descending"
     }
 }

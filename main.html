@@ -175,6 +175,48 @@
         </div>
       </div>
     </div>
+
+    <!-- dlg sort -->
+    <div class="dlg-cover dlg-sort" style="display:none;">
+      <div class="dlg">
+        <div class="dlg-box">
+          <div class="dlg-title">{SORT}</div>
+          <form class="dlg-table" style="overflow:hidden;">
+            <div class="row">
+              <div class="cell" style="width:50px;text-align:right;">{SORT_BY}</div>
+              <div class="cell">
+                <select name="sort_by" autocomplate="off">
+                  <option value="title">{title}</option>
+                  <option value="date">{date}</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="cell" style="width:50px;text-align:right;">{Order}</div>
+              <div class="cell">
+                <input type="radio" name="order" value="asc" checked="true" autocomplete="off"/> {Ascending}
+                <input type="radio" name="order" value="desc" autocomplete="off"/> {Descending}
+              </div>
+            </div>
+            <div class="row">
+              <div class="cell" style="width:50px;text-align:right;">{Target}</div>
+              <div class="cell">
+                <input type="radio" name="target" value="selection" checked="true" autocomplete="off"/>{Selection}
+                <input type="radio" name="target" value="whole_tree" autocomplete="off"/>{WHOLE_TREE}
+              </div>
+            </div>
+            <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:30px;text-align:right;">
+              <div class="cell"></div>
+              <div class="cell" style="text-align:center;">
+                <input type="submit" class="" value="{DLG_OK}"/>
+                <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- dlg prompt -->
     <div class="dlg-cover dlg-prompt" style="display:none;">
       <div class="dlg">
@@ -196,47 +238,57 @@
         </div>
       </div>
     </div>
+
+    <!-- main content -->
     <div class="root folder-content">{Starting...}</div>
+
+    <!-- menu -->
     <menu type="context" id="popup-menu-folder">
       <menuitem id="menuProperty" label="{Properties}" icon="icons/property.svg"></menuitem>
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
-      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
-      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
       <menu type="context">
-        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
-        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+        <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
+        <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
       </menu>
       <menu type="context">
+        <menuitem id="menuSort1" label="{Sort}" icon="icons/sort_a_z.svg"></menuitem>
+        <!-- <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem> -->
         <menuitem id="menuOpenAll" label="{OPEN_ALL_ITEMS}" icon="icons/openall.svg"></menuitem>
       </menu>
     </menu>
     <menu type="context" id="popup-menu-separator">
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
-      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
-      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
       <menu type="context">
-        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
-        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+        <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
+        <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
+      </menu>
+      <menu type="context">
+        <menuitem id="menuSort1" label="{Sort}" icon="icons/sort_a_z.svg"></menuitem>
+        <!-- <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem> -->
       </menu>
     </menu>    
     <menu type="context" id="popup-menu-link">
       <menuitem id="menuOpenOriginLink" label="{OPEN_ORIGIN_LINK}" icon="icons/open_origin.svg"></menuitem>
-      <menuitem id="menuProperty" label="{Properties}"" icon="icons/property.svg"></menuitem>
-      <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
-      <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
-      <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
-      <menuitem id="menuOpenFolder" label="{Open Folder}" icon="icons/openfolderblack.svg"></menuitem>
       <menu type="context">
-        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
-        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+        <menuitem id="menuProperty" label="{Properties}"" icon="icons/property.svg"></menuitem>
+        <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
+      </menu>
+      <menu type="context">
+        <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
+        <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
+      </menu>
+      <menu type="context">
+        <menuitem id="menuOpenFolder" label="{Open Folder}" icon="icons/openfolderblack.svg"></menuitem>
+        <menuitem id="menuSort1" label="{Sort}" icon="icons/sort_a_z.svg"></menuitem>
+        <!-- <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem> -->
       </menu>
     </menu>
     <menu type="context" id="popup-menu-body">
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>
       <menu type="context">
-        <menuitem id="menuSort1" label="{Sort}(A->Z)" icon="icons/sort_a_z.svg"></menuitem>
-        <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem>
+        <menuitem id="menuSort1" label="{Sort}" icon="icons/sort_a_z.svg"></menuitem>
+        <!-- <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem> -->
       </menu>
     </menu>
   </body>
