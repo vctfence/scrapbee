@@ -385,7 +385,7 @@ settings.onchange=function(key, value){
         applyAppearance();
     }else if(key == "backend"){
         $(".root.folder-content").empty().text("{Loading...}".translate());
-        browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 5}).then((response) => {
+        browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
             loadAll();
         }).catch((e) => {
             log.error("failed to start backend, please check installation and settings");
@@ -591,7 +591,10 @@ function loadXml(rdf){
             $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
             log.error(`load ${rdf} failed, ${err}`);
             reject(err)
-        };        
+        };
+
+        // log.info("requesting " + settings.getFileServiceAddress() + rdf)
+        
         xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
@@ -746,9 +749,3 @@ browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });
 console.log("==> main.js loaded");
-
-
-window.addEventListener("keydown", function(){
-
-    console.log(8)
-}); 

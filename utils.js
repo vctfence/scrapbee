@@ -442,8 +442,8 @@ function ajaxFormPost(url, json){
         request.onreadystatechange=function(){
             if(request.readyState == 4 && request.status == 200){
                 resolve(request.responseText);
-            }else if(request.status == 500){
-                console.log("error", "pwd" + json.pwd)
+            }else if(request.status >= 400){
+                // console.log("error", "pwd" + json.pwd)
                 reject(Error(request.responseText));
             }
         };
@@ -451,9 +451,7 @@ function ajaxFormPost(url, json){
             reject(Error(err));
         };
         request.open("POST", url, false);
-        setTimeout(function(){
-            request.send(formData);
-        }, 150);
+        request.send(formData);
     });
 }
 function downloadFile(url){

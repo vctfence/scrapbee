@@ -277,13 +277,17 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == "DOWNLOAD_FILE"){
         return downloadFile(rquest.url);
     }else if(request.type == "WAIT_WEB_SERVER"){
+        var times = request.try_times;
         return new Promise((resolve, reject) => {
             function check(){
+                times --;
                 // log.info(web_status)
-                if(web_status == "launched"){
+                if(times < 1){
+                    reject(Error("max times tried"));
+                }else if(web_status == "launched"){
                     resolve()
                 }else if(web_status == "failed"){
-                    reject();
+                    reject(Error("backend failed"));
                 }else{
                     setTimeout(function(r){check()}, 1000);
                 }

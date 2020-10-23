@@ -25,7 +25,7 @@ settings.getBackendAddress=function(){
 settings.getFileServiceAddress=function(){
     var b = settings.getBackendAddress() + "file-service/";;
     if(gtev(settings.backend_version, "1.7.3")){
-        b += (settings.backend_pwd || "pwd") + "/";    
+        b += "pwd/" + (settings.backend_pwd || "empty") + "/";    
     }
     return b;
 }

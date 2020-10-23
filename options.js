@@ -141,7 +141,7 @@ window.onload=async function(){
     }
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-    // $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<b>V$1</b>"))
+    $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<h2>V$1</h2>"))
     $("#div-help>div").html(getAsync("_locales/" + lang + "/help.html").translate());
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{

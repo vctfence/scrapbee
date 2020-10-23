@@ -324,6 +324,7 @@ if(!window.scrapbee_injected){
                             span.onclick = function(e){ // ignore this resource (cancel downloading)
                                 downloaded ++;
                                 dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>canceled</font>");
+                                r.failed = 1;
                                 if(downloaded == res.length){
                                     resolve();
                                 }

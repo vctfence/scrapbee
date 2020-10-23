@@ -66,6 +66,7 @@ var DialogYesNo = class extends Dialog {
 var DialogWaiting = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
+        this.el.innerHTML = "";
         var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover waiting"})
         var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
         this.newElement(dlg, "img", {className: "waiting-gif", src: "icons/loading.gif"})
