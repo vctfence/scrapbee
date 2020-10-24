@@ -115,6 +115,8 @@ class EditToolBar{
         var doc = document.documentElement.cloneNode(true);
         $(doc).find(".scrapbee-edit-bar").remove();
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: $(doc).html(), path: self.scrap_path+"index.html"}).then((response) => {
+
+            console.log(response)
             alert("Content saved");
         }).catch((e) => {
             alert(e.message);
@@ -300,11 +302,22 @@ class EditToolBar{
         }
     }
 }
-if(location.href.match(/\http:\/\/localhost\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
+if(location.href.match(/\http:\/\/\w+\:\d+\/file-service\/pwd\/\w+\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
     var path = decodeURIComponent(RegExp.$1);
-    var scrap_id = RegExp.$2;
-    if(platform!="windows"){
+    if(platform != "windows"){
         path = `/${path}`;
     }
+    var scrap_id = RegExp.$2;
+    $.get(location.href, function(r) {
+        new EditToolBar(path, scrap_id);
+    }).fail(function(e){
+        // alert("error occurred");
+    });
+}else if(location.href.match(/\http:\/\/\w+\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
+    var path = decodeURIComponent(RegExp.$1);
+    if(platform != "windows"){
+        path = `/${path}`;
+    }
+    var scrap_id = RegExp.$2;
     new EditToolBar(path, scrap_id);
 }

@@ -56,7 +56,7 @@ function loadBrowserInfo(){
 }
 loadBrowserInfo().then(async () => {
     await settings.loadFromStorage();
-    startWebServer(settings.backend_port, 5, "background");
+    startWebServer(5, "background");
 })
 /* backend*/
 var backend_inst_port;
@@ -91,65 +91,95 @@ function communicate(command, body, callback){
         }
     });
 }
-function startWebServer(port, try_times, debug){
+function startWebServer(try_times){
     if(web_status == "failed"){
-        return  Promise.reject(Error("start web server: failed"));
+        return  Promise.reject(Error("connect web server: failed"));
+    }
+    function showInfo(r){
+        var version = r.Version || 'unknown';
+        backend_version = version;
+        settings.set("backend_version", version, true)
+        log.info(`connect web server: connected, version = ${version}`);
+        if(!gtev(version, '1.7.3')){
+            log.error(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version.`)
+        }
+        web_status = "launched";
+        browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
     }
     return new Promise((resolve, reject) => {
-        if(web_status == "launched"){
-            resolve();
-        } else if(web_status == "launching"){
-            function wait(){
-                setTimeout(function(){
-                    if(web_status == "launched"){
+        settings.loadFromStorage().then(()=>{
+            var port = settings.backend_port;
+            var pwd = settings.backend_pwd;
+            if(web_status == "launched"){
+                resolve();
+            }else if(settings.backend_type == "address"){
+                var address = settings.getBackendAddress();
+                log.info(`connect web server: address = ${address}`);
+                $.get(address + `serverinfo/?pwd=${settings.backend_pwd}`, function(r){
+                    if(r.Serverstate == "ok"){
+                        web_status == "launched"
+                        showInfo(r);
                         resolve();
                     }else{
-                        wait();
+                        return startWebServer(try_times - 1);
                     }
-                }, 1000);
-            }
-            wait();
-        } else {
-            web_status = "launching";
-            loadBrowserInfo().then(() => {
-                log.info(`start backend service on port ${port}.`);
-                communicate("web-server", {addr: `127.0.0.1:${port}`, port}).then(function(r){
-                    if(r.Serverstate != "ok"){
-                        log.error(`failed to start backend service: ${r.Error}`);
-                        web_status = "error";
-                        if(try_times == 0){
-                            web_status = "failed";
-                            var ms = "start web server: too many times tried";
-                            reject(Error(ms));
-                            log.error(ms);
-                        }
-                        return startWebServer(port, try_times - 1, debug);
-                    }else{
-                        var version = r.Version || 'unknown';
-                        backend_version = version;
-                        log.info(`backend service started (${debug}), version = ${version}`);
-                        if(!gtev(version, '1.7.2')){
-                            log.error(`backend >= 1.7.2 wanted for full functions, please update`)
-                        }
-                        web_status = "launched";
-                        browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
+                }).fail(function(e){
+                    if(e.status > 0){ // old backend
+                        web_status == "launched"
+                        showInfo({});
                         resolve();
+                    }else{
+                        var em = "connect web server: failed to connect backend";
+                        reject(Error(em));
                     }
-                }).catch((e)=>{
-                    log.error(e.message);
-                    web_status = "failed";
-                    reject(e);
                 });
-            })
-        }
+            } else if(web_status == "launching"){
+                function wait(){
+                    setTimeout(function(){
+                        if(web_status == "launched"){
+                            resolve();
+                        }else{
+                            wait();
+                        }
+                    }, 1000);
+                }
+                wait();
+            } else {
+                web_status = "launching";
+                loadBrowserInfo().then(() => {
+                    log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
+                    communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
+                        if(r.Serverstate != "ok"){ 
+                            log.error(`failed to start backend service: ${r.Error}`);
+                            web_status = "error";
+                            if(try_times > 0){
+                                return startWebServer(try_times - 1);
+                            }else{
+                                web_status = "failed";
+                                var ms = "connect web server: too many times tried";
+                                return reject(Error(ms));
+                            }
+                        }else{
+                            showInfo(r);
+                            resolve();
+                        }
+                    })
+                })
+            }
+        });
+    }).catch((e)=>{
+        log.error(e.message);
+        web_status = "failed";
     });
 };
+settings.onchange=function(key, value){
+    if(key == "backend"){
+        web_status = ""
+        startWebServer(5);
+    }
+};
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if(request.type == 'START_WEB_SERVER_REQUEST'){
-        if(request.force)
-            web_status = "";
-        return startWebServer(request.port, request.try_times, "sidebar");
-    }else if(request.type == 'LOG'){
+    if(request.type == 'LOG'){
         log.sendLog(request.logtype, request.content);
     }else if(request.type == 'CLEAR_LOG'){
         __log_clear__();
@@ -163,11 +193,11 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if(!file){
             return Promise.reject(Error('empty blob'));
         }else{
-            return ajaxFormPost(settings.backend_url + "savebinfile", {filename, file});
+            return ajaxFormPost(settings.getBackendAddress() + "savebinfile", {filename, file, pwd: settings.backend_pwd});
         }
     }else if(request.type == 'DOWNLOAD_FILE'){
         var {url, itemId, filename} = request;
-        return ajaxFormPost(settings.backend_url + "download", {url, itemId, filename});
+        return ajaxFormPost(settings.getBackendAddress() + "download", {url, itemId, filename, pwd: settings.backend_pwd});
     }else if(request.type == 'SAVE_TEXT_FILE'){
         if(request.backup){
             return new Promise((resolve, reject)=>{
@@ -184,15 +214,15 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.backend_url + "fs/move", {src, dest});
+        return ajaxFormPost(settings.getBackendAddress() + "fs/move", {src, des, pwd: settings.backend_pwd});
     }else if(request.type == 'FS_COPY'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.backend_url + "fs/copy", {src, dest});
+        return ajaxFormPost(settings.getBackendAddress() + "fs/copy", {src, dest, pwd: settings.backend_pwd});
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type);
     }else if(request.type == 'CALL_IFRAME'){
         request.type = request.action;
-        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});
+        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId, pwd: settings.backend_pwd});
     }else if(request.type == 'GET_IFRAMES'){
         var tabId = sender.tab.id;
         return new Promise((resolve, reject) => {
@@ -240,19 +270,37 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return backupFile(request.path);
     }else if(request.type == "IS_FILE"){
         return new Promise((resolve, reject) => {
-            $.post(settings.backend_url + "isfile/", {path: file}, function(r){
+            $.post(settings.getBackendAddress() + "isfile/", {path: file, pwd: settings.backend_pwd}, function(r){
                 resolve(r != "no");
             });
         });
     }else if(request.type == "DOWNLOAD_FILE"){
         return downloadFile(rquest.url);
+    }else if(request.type == "WAIT_WEB_SERVER"){
+        var times = request.try_times;
+        return new Promise((resolve, reject) => {
+            function check(){
+                times --;
+                // log.info(web_status)
+                if(times < 1){
+                    reject(Error("max times tried"));
+                }else if(web_status == "launched"){
+                    resolve()
+                }else if(web_status == "failed"){
+                    reject(Error("backend failed"));
+                }else{
+                    setTimeout(function(r){check()}, 1000);
+                }
+            }
+            setTimeout(function(r){check()}, 1000);
+        });
     }
 });
 function saveTextFile(request){
     var filename = request.path;
     var content = request.text;
     return new Promise((resolve, reject) => {
-        ajaxFormPost(settings.backend_url + "savefile", {filename, content}).then(response => {
+        ajaxFormPost(settings.getBackendAddress() + "savefile", {filename, content, pwd: settings.backend_pwd}).then(response => {
             if(request.boardcast){
                 browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
                 // if(request.tab){
@@ -274,9 +322,9 @@ function backupFile(src){
         }catch(e){
             log.error(e.message);
         }
-        $.post(settings.backend_url + "isfile/", {path: dest}, function(r){
+        $.post(settings.getBackendAddress() + "isfile/", {path: dest, pwd: settings.backend_pwd}, function(r){
             if(r == "no"){
-                ajaxFormPost(settings.backend_url + "fs/copy", {src, dest}).then((response) => {
+                ajaxFormPost(settings.getBackendAddress() + "fs/copy", {src, dest, pwd: settings.backend_pwd}).then((response) => {
                     if(response == "ok"){
                         log.info(`backup success: ${dest}`);
                         resolve();

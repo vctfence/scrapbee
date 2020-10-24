@@ -7,16 +7,16 @@ var currTree;
 
 function loadXml(rdf, $box){
     return new Promise((resolve, reject) => {
-        $("#path-box").html(`<bdi>/</bdi>`);
+        // $("#path-box bdi").empty();
         $("input[type=button]").prop("disabled", true);
-        $box.html("loading...");
+        $box.empty().text("loading...");
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
 	    currTree = new BookTree(r.target.response, rdf, {lockDraging: true});
 	    await currTree.renderTree($box);
             currTree.onChooseItem = function(itemId) {
                 var t = currTree.getItemPath(currTree.getItemById(itemId));
-                $("#path-box").html(`<bdi>${t}</bdi>`);
+                $("#path-box bdi").html(t);
 	    }
             $("input[type=button]").prop("disabled", false);
             /** restore status */
@@ -38,7 +38,8 @@ function loadXml(rdf, $box){
         xmlhttp.onerror = function(err) {
 	    log.info(`load ${rdf} failed, ${err}`);
         };
-        xmlhttp.open("GET", `http://localhost:${settings.backend_port}/file-service/` + rdf, false);
+        var address = settings.getFileServiceAddress();
+        xmlhttp.open("GET", `${address}/${rdf}`, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');
@@ -108,7 +109,7 @@ $(document).ready(async function(){
     await settings.loadFromStorage();
     var paths = settings.getRdfPaths();
     settings.getRdfPathNames().forEach(function(k, i){
-	var $opt = $("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs"));
+	var $opt = $("<option></option>").attr("value", paths[i]).text(k).appendTo($("#lstRdfs"));
         if(paths[i] == settings.advcap_last_rdf){
             $opt.prop("selected", true);
         }

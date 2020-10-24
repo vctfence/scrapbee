@@ -32,7 +32,7 @@ function initMover(){
     });
     function refresh(tree){
         var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
-        $tree.next(".path-box").html("/");
+        $tree.next(".path-box").find("bdi").text("/");
         refreshTree(tree, loadXml, tree.rdf, $tree, tree == tree0 ? 0 : 1);
     }
     $(".delete-button").each(function(i){
@@ -42,7 +42,7 @@ function initMover(){
             var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
             var proceed = false;
             function cfm(){
-                proceed = proceed || confirm("{ConfirmDeleteItem}".translate());
+                proceed = confirm("{ConfirmDeleteItem}".translate());
                 return proceed;
             }
             if($("#multi-select").is(":checked")){
@@ -61,9 +61,9 @@ function initMover(){
             }
             if(proceed){
                 await tree.saveXml();
-                $tree.next(".path-box").html("/");
+                $tree.next(".path-box").find("bdi").text("/");
             }
-            if(tree0.rdf == tree1.rdf){
+            if(proceed && tree0.rdf == tree1.rdf){
                 refresh(other);
             }
         });
@@ -190,13 +190,13 @@ function initMover(){
             var $box = $("#tree" + i);
             $label.html(title || "");
             $box.html("");
-            $.post(settings.backend_url + "isfile/", {path: value}, function(r){
+            $.post(settings.getBackendAddress() + "isfile/", {path: value, pwd: settings.backend_pwd}, function(r){
                 if(r == "yes"){
                     loadXml(value, $box, i);
                     $("#node-mover .tool-button").prop("disabled", !selected_rdfs[1]);
                 }
-            });
-            $box.next(".path-box").html("/");
+            });            
+            $box.next(".path-box").find("bdi").text("/");
             $("#node-mover .tool-button").prop("disabled", true);
         };
         if(paths){
@@ -219,7 +219,7 @@ function initMover(){
 	        await currTree.renderTree($box);
 	        currTree.onChooseItem=function(itemId){
                     var t = currTree.getItemPath(currTree.getItemById(itemId));
-                    $box.next(".path-box").html(`<bdi>${t}</bdi>`);
+                    $box.next(".path-box").find("bdi").html(t);
 	        };
                 currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {
@@ -237,7 +237,7 @@ function initMover(){
             xmlhttp.onerror = function(err) {
 	        log.info(`load ${rdf} failed, ${err}`);
             };
-            xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
+            xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
             xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
             xmlhttp.setRequestHeader('cache-control', 'max-age=0');
             xmlhttp.setRequestHeader('expires', '0');
@@ -249,7 +249,7 @@ function initMover(){
 }
 function exportTree(rdf, name, includeSeparator, openInNewTab){
     return new Promise((resolve, reject)=>{
-        httpRequest(settings.backend_url + "file-service/" + rdf).then(async (response)=>{
+        httpRequest(settings.getFileServiceAddress() + rdf).then(async (response)=>{
             var blob = await fetch("icons/item.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/item.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});

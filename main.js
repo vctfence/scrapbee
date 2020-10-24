@@ -1,7 +1,7 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js";
 import {showNotification, getColorFilter, genItemId, gtv} from "./utils.js";
-import {refreshTree} from "./utils.js";
+import {refreshTree, touchRdf} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown} from "./control.js";
 
@@ -77,11 +77,13 @@ function showDlg(name, data, onshowed){
         });
         $dlg.find("form").submit(function(){
             var data = {};
-            $dlg.find("input,textarea").each(function(){
+            $dlg.find("input,textarea,select").each(function(){
                 if(this.name){
                     if(this.type=="radio"){
                         if(this.checked)
                             data[this.name] = $(this).val();
+                    }else if(this.type=="select"){
+                        data[this.name] = $(this).val();
                     }else{
                         data[this.name] = $(this).val();
                     }
@@ -100,9 +102,9 @@ function showDlg(name, data, onshowed){
     if(onshowed)onshowed($dlg);
     return p;
 }
-function alert(title, message){
-    return showDlg("alert", {dlg_title:title.translate(), message:message.translate()});
-}
+// function alert(title, message){
+//     return showDlg("alert", {dlg_title:title.translate(), message:message.translate()});
+// }
 function confirm(title, message){
     return showDlg("confirm", {dlg_title:title.translate(), message:message.translate()});
 }
@@ -118,20 +120,26 @@ menulistener.onOpenAll = function(){
         }
     }, [liXmlNode]);
 };
+
 menulistener.onSort1 = function(){
-    confirm("{Sort}", "{ConfirmSorting}").then(async function(){
-        await currTree.sortTree(true);
+    showDlg("sort", {}).then(async function(d){
+        var $target = null;
+        if(d.target == "selection"){
+            $target = currTree.getFocusedItem();
+        }
+        await currTree.sortTree(d.sort_by, $target, d.order == "asc");
         currTree.onXmlChanged();
         await currTree.renderTree($(".root.folder-content"));
+        currTree.restoreStatus();
     });
 };
-menulistener.onSort2 = function(){
-    confirm("{Sort}", "{ConfirmSorting}").then(async function(){
-        await currTree.sortTree(false);
-        currTree.onXmlChanged();
-        await currTree.renderTree($(".root.folder-content"));
-    });
-};
+// menulistener.onSort2 = function(){
+//     confirm("{Sort}", "{ConfirmSorting}").then(async function(){
+//         await currTree.sortTree(false);
+//         currTree.onXmlChanged();
+//         await currTree.renderTree($(".root.folder-content"));
+//     });
+// };
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
         currTree.removeItem($(".item.focus"));
@@ -229,8 +237,8 @@ menulistener.onProperty = function(){
 menulistener.onOpenFolder = function(){
     if($(".item.focus").length){
         var id = $(".item.focus").attr("id");
-        var path = currTree.getItemFilePath(id);
-        $.post(settings.backend_url + "filemanager/", {path:path}, function(r){});
+        var path = currTree.getItemFilePath(id);        
+        $.post(settings.getBackendAddress() + "filemanager/", {path, pwd:settings.backend_pwd}, function(r){});
     }
 };
 var drop;
@@ -246,7 +254,7 @@ function showRdfList(){
     drop = drop || new SimpleDropdown($(".drop-button")[0], []);
     drop.clear();
     drop.onchange=(function(title, value){
-        $(".drop-button .label").html(title || "");
+        $(".drop-button .label").text(title || "");
         if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
     });
     if(paths){
@@ -375,8 +383,9 @@ settings.onchange=function(key, value){
         showRdfList();
     }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
         applyAppearance();
-    }else if(key == "backend_port"){
-        browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, force: true, try_times: 5}).then((response) => {
+    }else if(key == "backend"){
+        $(".root.folder-content").empty().text("{Loading...}".translate());
+        browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
             loadAll();
         }).catch((e) => {
             log.error("failed to start backend, please check installation and settings");
@@ -391,7 +400,7 @@ function loadAll(){
     /** open file manager */
     $("#btnFileManager").click(function(){
         var rdfPath = currTree.rdfPath;
-        $.post(settings.backend_url + "filemanager/", {path:rdfPath}, function(r){
+        $.post(settings.getBackendAddress() + "filemanager/", {path:rdfPath, pwd:settings.backend_pwd}, function(r){
             // 
         });
     });
@@ -430,7 +439,7 @@ window.onload=async function(){
     /** */
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
-        if(currTree && currTree.rdf)loadXml(currTree.rdf);
+        if(drop && drop.value)loadXml(drop.value);
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
@@ -469,7 +478,7 @@ window.onload=async function(){
     });
     /**  */
     applyAppearance();
-    browser.runtime.sendMessage({type: 'START_WEB_SERVER_REQUEST', port: settings.backend_port, try_times: 5}).then((response) => {
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
         loadAll();
     }).catch((e) => {
         log.error("failed to start backend, please check installation and settings");
@@ -493,9 +502,8 @@ window.onload=async function(){
 function loadXml(rdf){
     currTree = null;
     if(!rdf) return Promise.reject(Error("invalid rdf path"));
-    
     return new Promise((resolve, reject) => {
-        $(".root.folder-content").html("{Loading...}".translate());
+        $(".root.folder-content").empty().text("{Loading...}".translate());
         var rdfPath = rdf.replace(/[^\/\\]*$/, "");
         var rdf_file = rdf.replace(/.*[\/\\]/, "");
         var xmlhttp=new XMLHttpRequest();
@@ -508,9 +516,10 @@ function loadXml(rdf){
                 log.info(`rdf loaded in ${cost}ms`);
             }catch(e){
                 log.error(e.message);
+                return;
             }
             currTree.onXmlChanged = function(){
-                if(currTree.lockRdfSaving)
+                if(currTree && currTree.lockRdfSaving)
                     return;
                 log.info(`saving changes to rdf`);
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE',
@@ -525,12 +534,12 @@ function loadXml(rdf){
                 });
             };
             currTree.onItemRemoved=function(id){
-                $.post(settings.backend_url + "deletedir/", {path: rdfPath + "data/" + id}, function(r){});
+                $.post(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd}, function(r){});
             };
             currTree.onOpenContent=function(itemId, url, newTab, isLocal){
                 var method = newTab ? "create" : "update";
                 if(/^file\:/.test(url)){
-                    url = settings.backend_url + "file-service/" + url.replace(/.{7}/,'');
+                    url = settings.getFileServiceAddress() + url.replace(/.{7}/,'');
                 }
                 browser.tabs[method]({ url: url }, function (tab) {});
             };
@@ -557,29 +566,36 @@ function loadXml(rdf){
                 settings.set('sidebar_last_opened_folders',folderIds , true);
             };
             /** restore status */
-            if(settings.last_rdf == rdf){
-                if(settings.sidebar_last_opened_folders){
-                    settings.sidebar_last_opened_folders.split(",").forEach(function(id){
-                        currTree.toggleFolder(currTree.getItemById(id), true);
-                    });
-                }
-                if(settings.sidebar_last_focused){
-                    var $item = currTree.getItemById(settings.sidebar_last_focused);
-                    if($item.length){
-                        currTree.focusItem($item);
-                        currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+            currTree.restoreStatus=function(){
+                if(settings.last_rdf == rdf){
+                    if(settings.sidebar_last_opened_folders){
+                        settings.sidebar_last_opened_folders.split(",").forEach(function(id){
+                            currTree.toggleFolder(currTree.getItemById(id), true);
+                        });
+                    }
+                    if(settings.sidebar_last_focused){
+                        var $item = currTree.getItemById(settings.sidebar_last_focused);
+                        if($item.length){
+                            currTree.focusItem($item);
+                            currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+                        }
                     }
                 }
             }
+            currTree.restoreStatus();
             /** history */
             settings.set('last_rdf', rdf, true);
             resolve(currTree);
         };
         xmlhttp.onerror = function(err) {
-            log.info(`load ${rdf} failed, ${err}`);
+            $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
+            log.error(`load ${rdf} failed, ${err}`);
             reject(err)
         };
-        xmlhttp.open("GET", settings.backend_url + "file-service/" + rdf, false);
+
+        // log.info("requesting " + settings.getFileServiceAddress() + rdf)
+        
+        xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');
@@ -591,31 +607,17 @@ function loadXml(rdf){
 function switchRdf(rdf){
     log.info(`switch to rdf "${rdf}"`);
     return new Promise((resolve, reject) => {
-        if(currTree && rdf == currTree.rdf)
-            return resolve();
         currTree = null;
         if(!$.trim(rdf)){
-            $(".root.folder-content").html("Invaid rdf path.");
+            $(".root.folder-content").empty().text("Invaid rdf path.");
             reject();
         }
         $(".root.folder-content").html("{Loading...}".translate());
         /** check rdf exists */
-        $.post(settings.backend_url + "isfile/", {path: rdf}, function(r){
-            if(r == "yes"){
-                loadXml(rdf).then(()=>{
-                    resolve();
-                });
-            }else if(rdf){
-                /** show it need to create rdf */
-                $(".root.folder-content").html(`Rdf {File} ${rdf} {NOT_EXISTS}, {CREATE_OR_NOT}? `.translate());
-                $("<a href='' class='blue-button'>{Yes}</a>".translate()).appendTo($(".root.folder-content")).click(function(){
-                    initRdf(rdf, function(){
-                        loadXml(rdf).then(() => {
-                            resolve();
-                        });
-                    });
-                });
-            }
+        touchRdf(settings.getBackendAddress(), rdf, settings.backend_pwd).then(function(r){
+            loadXml(rdf).then(()=>{
+                resolve();
+            });
         });
     })
 }
@@ -642,7 +644,7 @@ function requestUrlSaving(itemId){
        if(icon && icon.match(/^data:image/i)){
            var rdf_path = settings.getLastRdfPath();
            var filename = `${rdf_path}/data/${itemId}/favicon.ico`;
-           $.post(settings.backend_url + "download", {url: icon, itemId: itemId, filename: filename}, function(r){
+           $.post(settings.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: settings.backend_pwd}, function(r){
                icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
                Next();
            });

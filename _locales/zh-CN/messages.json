@@ -10,6 +10,9 @@
     "Firefox":{
         "message": "火狐"
     },
+    "Browser":{
+        "message": "浏览器"
+    },
     "DLG_OK": {
         "message": "确认"
     },
@@ -133,29 +136,29 @@
     "FIREFOX_DOWNLOAD_DIRECTORY":{
        "message": "火狐下载目录"
     },
+    "CUSTOM_INSTALL_TIP": {
+        "message": "注，以下流程仅用于安装以\"自动\"方式运行的后端程序。<br/> 以下\"火狐下载目录\"指浏览器默认的下载目录，可以在浏览器首选项里找到和设置 (文件与应用程序 - 下载)"
+    },
     "STEP1_TEXT_1": {
-        "message": "下载ScrapBee后端可执行文件和2个安装文件到\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\"，只需点击下方按钮。"
+        "message": "下载ScrapBee后端可执行文件到 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\"，只需点击下方按钮。"
     },
     "STEP1_TEXT_2": {
-        "message": "您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除\"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\"中的所有文件，重启{Firefox}再次下载。另外，请使用{Firefox}60及以后的标准版{Firefox}。"
+        "message": "请确保 https://raw.githubusercontent.com 可访问，如果下载遇到问题，可以尝试手工下载, 见帮助<br><br>重复下载时，您可能会遇到文件不能正确下载的问题，此时可以尝试关闭{Firefox}并删除 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\" 中的已有可执行文件，再次启动{Firefox}后重新下载。另外，请使用{Firefox}60以上的标准版{Firefox}。"
     },
     "STEP2_TEXT_1": {
-        "message": "手工运行上面下载的安装脚本："
-    },
-    "STEP2_TEXT_2": {
-        "message": "在终端中执行："
-    },
-    "STEP2_TEXT_3": {
-        "message": "你可能需要以管理员身份运行此脚本"
+        "message": "下载安装脚本到 \"<i>{FIREFOX_DOWNLOAD_DIRECTORY}</i>/scrapbee/\""
     },
     "STEP3_TEXT_1": {
-        "message": "完成RDF"
+        "message": "运行安装脚本"
     },
-    "STEP4_TEXT_1": {
-        "message": "重启{Firefox}"
+    "STEP3_TEXT_2": {
+        "message": "在终端中运行"
     },
-    "STEP5_TEXT_1": {
-        "message": "敬请使用"
+    "STEP3_TEXT_3": {
+        "message": "你可能需要以管理员身份运行此脚本"
+    },
+    "STEP4_TEXT": {
+        "message": "重启{Browser}"
     },
     "BASIC_TEXT": {
         "message": "前景"
@@ -190,8 +193,11 @@
     "Separator": {
         "message": "分隔符"
     },
+    "BACKEND_TIP": {
+        "message": "ScrapBee需要运行一个 \"专用后端程序\" 才能正常工作。<br/><br/>有两种方式安装和运行后端程序，分别为自动或者手动方式，请参考 <a href=\"#area=help&scroll=help_install\">帮助</a>。"
+    },
     "RDF_FILES_TIP": {
-        "message": "设置RDF文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到RDF文件所在目录下的data文件夹）<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个RDF文件来实现{Scrap}的分类，可以在同一文件夹下放置多个RDF文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的RDF文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加RDF，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
+        "message": "设置RDF文件的绝对路径，用于登记下载信息，以'.rdf'为扩展名（下载数据将保存到RDF文件所在目录下的data文件夹），请参考 <a href='#area=help&scroll=help_rdf'>帮助</a>。<br/><br> 例如： c:\\scrapbee\\test.rdf (Windows)&nbsp;&nbsp;&nbsp;&nbsp;/home/userID/scrapbee/test.rdf (Linux)&nbsp;&nbsp;&nbsp;&nbsp;/Users/userID/scrapbee/test.rdf (Mac)<br><br> 您可以设置多个RDF文件来实现{Scrap}的分类，可以在同一文件夹下放置多个RDF文件，不需要手工创建这些文件<br/>ScrapBee也支持读写<a href='https://en.wikipedia.org/wiki/ScrapBook' target='_blank'>ScrapBook</a>的RDF文件，这对于使用过ScrapBook的用户是一个好消息。<br><br><b>点击下面的'+'按钮添加RDF，添入'名称'为其起一个名字，'文件'处添入完整路径</b>"
     },
     "BACKEND_PORT_TIP":{
         "message": "后端服务监听的TCP端口，比如9900"
@@ -392,7 +398,7 @@
         "message": "在侧边栏打开"
     },
     "FAIL_START_BACKEND_HINT": {
-        "message": "加载后端服务失败，请检查<a href='options.html#install' target='_blank'>安装</a>和<a href='options.html' target='_blank'>设置</a>"
+        "message": "加载后端服务失败，请检查 <a href='options.html#area=install' target='_blank'>安装</a> 和 <a href='options.html' target='_blank'>设置</a>"
     },
     "NO_RDF_SETTED_HINT": {
         "message": "没有可用rdf，请检查 <a href='options.html' target='_blank'>设置</a>"
@@ -416,18 +422,61 @@
         "message": "在新标签打开链接"
     },
     "LOCK_EDITBAR": {
-        "message":"锁定编辑栏"
+        "message": "锁定编辑栏"
     },
     "AUTO_CLOSE_SAVING_DIALOG": {
-        "message":"自动关闭保存对话框"
+        "message": "自动关闭保存对话框"
     },
     "SAVING_SAVE_FRAMES" : {
-        "message":"保存框架"
+        "message": "保存框架"
     },
     "DOWNLOAD_SOURCE_1" : {
-        "message":"源1"
+        "message": "源1"
     },
     "DOWNLOAD_SOURCE_2" : {
-        "message":"源2"
+        "message": "源2"
+    },
+    "Automatically" : {
+        "message": "自动"
+    },
+    "Manually" : {
+        "message": "手动"
+    },
+    "Port": {
+        "message": "端口"
+    },
+    "Password": {
+        "message": "密码"
+    },
+    "Address": {
+        "message": "地址"
+    },
+    "BACKEND_PROGRAM": {
+        "message": "后端程序"
+    },
+    "Execute": {
+        "message": "运行"
+    },
+    "Date": {
+        "message": "日期"
+    },
+    "Order":{
+        "message": "顺序"
+    },
+    "Target":{
+        "message": "目标"
+    },
+    "SORT_BY": {
+        "message": "排序依据"
+    },
+    "WHOLE_TREE": {
+        "message": "整个树"
+    },
+    "Ascending":{
+        "message":  "升序"
+    },
+    "Descending":{
+        "message":  "降序"
     }
+    
 }

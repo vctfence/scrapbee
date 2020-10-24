@@ -15,24 +15,27 @@
   <body>
     <div id="div-page">
       <div id="div-form-left">
-        <a class="left-index" href="#install">{Install}</a>
-        <a class="left-index" href="#configure">{Configure}</a>
-        <a class="left-index" href="#log">{Log}</a>
-        <a class="left-index" href="#tools">{Tools}</a>
-        <a class="left-index" href="#announcement">{Announcement}</a>
-        <a class="left-index" href="#help">{Help}</a>
-        <a class="left-index" href="#donate">{Donate}</a>
+        <a class="left-index" href="#area=install">{Install}</a>
+        <a class="left-index" href="#area=configure">{Configure}</a>
+        <a class="left-index" href="#area=log">{Log}</a>
+        <a class="left-index" href="#area=tools">{Tools}</a>
+        <a class="left-index" href="#area=announcement">{Announcement}</a>
+        <a class="left-index" href="#area=help">{Help}</a>
+        <a class="left-index" href="#area=donate">{Donate}</a>
       </div>
       <div id="div-install" class="div-area" style="display:none">
-        <table width="" cellspacing="" cellpadding="" border="0" class="form-table" style=";max-width:700px">
+        <!-- about:preferences -->
+        <div class="tips fit-content" style="">
+          {CUSTOM_INSTALL_TIP}
+        </div>
+        <table width="" cellspacing="" cellpadding="" border="0" class="form-table" style="max-width:700px">
           <tr>
             <td>{Step}-1</td>
             <td>
               <div class="">
                 {STEP1_TEXT_1}
               </div>
-              <br />
-              <div id="">
+              <div style="display:none;">
                 <label>
                   <input style="vertical-align:bottom;" type="radio" name="download_source" value="0" checked/>
                   <span style="vertical-align:bottom;">{DOWNLOAD_SOURCE_1}</span>
@@ -42,53 +45,94 @@
                   <span style="vertical-align:bottom;">{DOWNLOAD_SOURCE_2}</span>
                 </label>
               </div>
-              <br /><input id="btnDownloadBackend" type="button" name="add" value="{Download}"/>
-              <span id="txtBackendPath"></span>
+              <br />
+              <input id="btnDownloadBackend" type="button" name="add" value="{Download}"/>
+              <span class="download-path"></span>
               <br/><br/>
               <div class="tips">
                 {STEP1_TEXT_2}
                 </div>
             </td>
           </tr>
+          <tr class="hr"><td colspan="2"><hr/></td></tr>
           <tr>
             <td>{Step}-2</td>
             <td>
+              <div class="">{STEP2_TEXT_1}</div>
+              <br />
+              <input id="btnDownloadScripts" type="button" name="add" value="{Download}"/>
+              <span class="download-path"></span>
+              <br /><br />       
+            </td>
+          </tr>
+          <tr class="hr"><td colspan="2"><hr/></td></tr>
+          <tr>
+            <td>{Step}-3</td>
+            <td>
               <div>
-                {STEP2_TEXT_1}
+                {STEP3_TEXT_1}
                 <br>
                 <br>Linux/Mac:
-                <br>{STEP2_TEXT_2}
+                <br>{STEP3_TEXT_2}
                 <br>cd <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;/scrapbee</i>
                 <br>bash install.sh
                 <br>
                 <br>Windows:
                 <br>open <i style="color:#900">&lt;{FIREFOX_DOWNLOAD_DIRECTORY}&gt;\scrapbee</i>
-                <br>Run install.bat ({STEP2_TEXT_3})
+                <br>{Execute} install.bat ({STEP3_TEXT_3})
               </div>
             </td>
           </tr>
-          <tr>
-            <td>{Step}-3</td>
-            <td>
-              <div>{STEP3_TEXT_1}<a href="#configure">{Configure}</a></div>
-            </td>
-          </tr>
+          <tr class="hr"><td colspan="2"><hr/></td></tr>
           <tr>
             <td>{Step}-4</td>
             <td>
-              <div>{STEP4_TEXT_1}</div>
+              <div>{STEP4_TEXT}</div>
             </td>
           </tr>          
-          <tr>
-            <td>{Step}-5</td>
-            <td>
-              <div>{STEP5_TEXT_1}</div>
-            </td>
-          </tr>           
         </table>
       </div>
       <div id="div-configure" class="div-area" style="display:none;">
-        <table width="" cellspacing="" cellpadding="" border="0" class="form-table">       
+        <table width="" cellspacing="" cellpadding="" border="0" class="form-table" id="configure-table">       
+          <!-- backend -->
+          <tr>
+            <td>{BACKEND_PROGRAM}</td>
+            <td id="" style="position:relative">
+              <div class="tips">
+                {BACKEND_TIP}
+              </div>
+              <div class="panel" style="vertical-align:top;padding:0">
+                <table class="form-table inner" width="" cellspacing="10" cellpadding="" border="0">
+                  <tr>
+                    <td>{type}</td>
+                    <td>
+                      <label><input type="radio" name="backend_type" value="port" checked/> {Automatically}</label>
+                      <label><input type="radio" name="backend_type" value="address" /> {Manually}</label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>{Port}</td>
+                    <td><input type="text" name="backend_port" value="" /></td>
+                  </tr>
+                  <tr>
+                    <td>{Address}</td>
+                    <td>
+                      <input type="text" name="backend_address" value="" size="70"/>    
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>{Password}</td>
+                    <td>
+                      <input type="text" name="backend_pwd" value="" />
+                      <!-- <i class="help-mark"></i> <div class="tips hide"> </div> -->
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+          <tr class="hr"><td colspan="2"><hr/></td></tr>
+          <!-- rdf -->
           <tr>
             <td style="position:relative;">
               {Rdf Files}<br>
@@ -97,18 +141,16 @@
               <div class="tips">
                 {RDF_FILES_TIP}<br>
               </div>
-              <div class="panel" id="rdf-area"></div>
-              <input type="button" name="add" value="+" style="margin-top:5px;"/>
+              <div class="panel fit-content">
+                <div id="rdf-area"></div>
+                <div style="text-align:right;margin-top:20px;">
+                  <input type="button" name="add" value="+"/>
+                </div>
+              </div>
             </td>
           </tr>
-          <tr>
-            <td>{Backend Port}</td>
-            <td id="" style="position:relative">
-              <input type="text" name="backend_port" value="" \/>
-              <i class="help-mark"></i>
-              <div class="tips hide">{BACKEND_PORT_TIP}</div>
-            </td>
-          </tr>
+          <tr class="hr"><td colspan="2"><hr/></td></tr>
+          <!-- appearance -->
           <tr>
             <td>{Appearance}</td>
             <td id="">
@@ -142,6 +184,7 @@
               </div>
             </td>
           </tr>
+          <tr class="hr"><td colspan="2"><hr/></td></tr>
           <tr>
             <td>{Behavior}</td>
             <td id="">
@@ -205,7 +248,9 @@
           </div>
         </div>
       </div>
-      <div id="div-help" class="div-area" style="display:none;"></div>
+      <div id="div-help" class="div-area" style="display:none;">
+        <div style="max-width:80em;"></div>
+      </div>
       <div id="div-tools" class="div-area" style="display:none;position:relative;padding-top:0">
         <div style="text-align:left;padding-left:15px;position:absolute;top:0;width:100%">
           <span class="tab-button">{Node Mover}</span>
@@ -231,7 +276,7 @@
                   <div class="label"></div><div class="button">▼</div>
                 </div>
                 <div class="folder-content root" id="tree0"></div>
-                <div class="path-box"></div>
+                <div class="path-box"><bdi></bdi></div>
                 <div class="toolbar">
                   <img src="icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
                   <img src="icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
@@ -244,7 +289,7 @@
                   <div class="label"></div><div class="button">▼</div>
                 </div>
                 <div id="tree1" class="folder-content root"></div>
-                <div class="path-box"></div>
+                <div class="path-box"><bdi></bdi></div>
                 <div class="toolbar">
                   <img src="icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
                   <img src="icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>

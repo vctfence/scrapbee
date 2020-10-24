@@ -1,7 +1,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Scrapbee -> {Search}</title>
+    <title>ScrapBee -> {Search}</title>
     <link rel="icon" href="icons/bee.svg" type="image/png" />
     <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
     <script type="module" src="proto.js"></script>
@@ -58,15 +58,16 @@
        text-decoration:none;
      }
      .locate-button{
-       color:blue;display:inline-block;
+       color:blue;
+       display:inline-block;
        text-decoration:none;
        margin:0 12px;
-       padding:1px;
+       padding:1px 5px;
        border:1px solid;
-       border-radius:50%;
+       border-radius:35%;
        cursor:pointer;
-       /* color:#fff;
-          background:#99f; */
+       color:#fff;
+       background:#55f;
      }
      .match-comment{
        color:#555;
@@ -112,7 +113,7 @@
         </select>
         <input type="" name="" value="" id="txtSearch"/>
         <input type="checkbox" name="source" value="title" checked="true"/> {Title}
-        <input type="checkbox" name="source" value="body" /> {Content}
+        <input type="checkbox" name="source" value="body" checked="true"/> {Content}
         <input type="checkbox" name="source" value="comment" checked="true"/> {Comment}
         <input type="submit" name="" value="{Search}" id="btnSearch"/>
         <img src="icons/loading.gif" class="loading" alt="" />

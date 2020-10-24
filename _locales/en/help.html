@@ -3,10 +3,70 @@ ScrapBee is a Firefox Quantum extension trying to inherit some properties of <a 
 at least, it can read/write data left over from ScrapBook (of course, we can create new). For ScrapBook do not support Firefox Quantum, ScrapBee is expected to be
 an extension acts "partly" like ScrapBook under Firefox Quantum.
 <p>With ScrapBee, you can save web page scraps to local storage, and manage scraps in browser sidebar。</p>
-<h2>What's RDF?</h2>
-RDF is ScrapBee/ScrapBook's data file in which properties of scraps stored in. And downloaded scraps will be saved in "data" folder beside the RDF file.
-<h2>Install/Configure</h2>
-After ScrapBee addon installed, please follow a few steps of <a href="#install">Guide of Installation</a> before using ScrapBee.
+
+<!-- install -->
+<h2 id="help_install">Install and Run Backend Program</h2>
+<p>
+ScrapBee needs a "special backend program" to work normally. There are 2 modes to install and start the backend program, automatically or manually, please choose one of them.
+</p>
+
+<li class="h3">Install</li>
+<p>
+  1. Automatically <br/>
+  Follow steps in <a href="#area=install">Install</a> guidance page to install backend program for automatically mode.
+</p>
+<p>
+  2. Manually<br>Just click <a href="" class="download_exe">Source 1</a> to download backend program to your disk.
+</p>
+<li class="h3">Configure</li>
+<p>
+  1. Automatically <br/>
+  Just input a port for backend program to listen, please make sure it's not in use by another program, default: 9900. 
+</p>
+<p>
+  2. Manually<br>
+  Input web address as backend program service. Format: http://[host]:[port], default: http://127.0.0.1:9901。
+</p>
+<li class="h3">Run</li>
+<p>
+  1. Automatically <br/>
+  The backend program will be started while starting Firefox.
+</p>
+<p>
+  2. Manually<br>
+  Run background program in console before start Firefox. 
+</p>
+Command: <span style="color:#050">scrapbee_backend web-server [port] [host]</span><br/><br/>
+For example (Windows): <br/>
+<span style="color:#050">cd D:\Download<br/>scrapbee_backend web-server 9901 127.0.0.1</span><br/><br/>
+Linux or Mac:
+<p style="color:#050;margin-top:0">cd ~/Download</p>
+Make sure executable permission added to backend program: <br>
+<span style="color:#050">chmod +x scrapbee_backend</span>
+<p style="color:#050">./scrapbee_backend web-server 9901 127.0.0.1</p>
+<li class="h3">Password</li>
+Password can be set to make backend service safer, only 0-9 and a-z are acceptable.
+<p>
+  1. Automatically <br/>
+  Just input password and save.
+</p>
+<p>
+  2. Manually <br/>
+  Input password and save, also need to add password argument when you start backend program:
+  <br> <span style="color:#050">scrapbee_backend web-server [port] [host] [password]</span><br/>
+  <br/>For example (Windows):  <br/><span style="color:#050">scrapbee_backend web-server 9901 127.0.0.1 secret</span>
+</p>
+
+<!-- rdf -->
+<h2 id="help_rdf">RDF files</h2>
+<p>RDF file is ScrapBee/ScrapBook's data file in which properties of scraps stored in. And downloaded scraps will be saved in "data" folder beside the RDF file.</p>
+
+<li class="h3">Configure</li>
+<p>RDF files must be set before using ScrapBee, you can have multiple RDF file items, give a name and absolute file path for each item.
+  Then you'll see the names showd on dropdown list on top of side bar. See picture for reference:</p>
+<img src="image/hints/rdf.png" class="" alt="" />
+
+<!-- use -->
 <h2>How to use?</h2>
 <img src="image/hints/01.png" class="" alt="" />
 <p class=""> Click on ScrapBee Icon, ScrapBee will be opened in sidebar(Mark1), create folders in sidebar if needed.(Mark2) </p>
@@ -19,14 +79,14 @@ After ScrapBee addon installed, please follow a few steps of <a href="#install">
   and it's icon will be showed in status waiting until capture finished, then you can click on the entity to show the local content(Mark6), you can also open origin URL by click on the origin URL button(Mark7). </p>
 <p class="">When reading a captured scrap, at the bottom of the windows, some buttons can be used to edit the page then save it (highlight some zones in the documents, suppress useless elements).</p>
 <h4>Be Ware</h4>
-Whatever you are capturing, please keep ScrapBee opened in sidebar, entity of scraps captured will be saved to position in sidebar currently selected(if no folder/entity selected, it will be saved to the end of top level). Also, you can move entities around by dragging them.
+Whatever you are capturing, please keep ScrapBee opened in sidebar (Except advanced saving), entity of scraps captured will be saved to position in sidebar currently selected(if no folder/entity selected, it will be saved to the end of top level). Also, you can move entities around by dragging them.
 <h2>Trouble Shooting</h2>
 <h4>Port</h4>
-If ScrapBee stop working, and if you see error message in <a href="#log">Log</a> window like:
+If ScrapBee stop working, and if you see error message in <a href="#area=log">Log</a> window like:
 <div class="embeded-log-text"> error: listen tcp :9900: bind: address already in use</div>
 Please try to kill the process (<b>Usually, it's abandoned ScrapBee backend process when FireFox terminated abnormally</b>) binds on that port manually, e.g. under Linux you can do:
 <div class="embeded-log-text">fuser -k 9900/tcp</div>
-Or try another backend port in <a href="#configure">Configure</a>
+Or try another backend port in <a href="#area=configure">Configure</a>
 <h4>File system permission</h4>
 Please do not register RDFs under a directory without read/write permission for current user,
 e.g. common users have no write permission of Windows root directory like c:\, but sub directory of that like c:\foobar works in general.
@@ -40,15 +100,15 @@ Please try to re-download the backend:
 <br /> <br />
 scrapbee_backend.json: (<b>Important:</b> replace "<b><i>FIREFOX-DOWNLOAD-DIRECTORY</i></b>" to your real <b>FireFox DOWNLOAD DIRECTORY</b>)
 <div class="embeded-log-text">
-  {<br />
+  \{<br />
   "allowed_extensions": [<br />
   "scrapbee@scrapbee.org"<br />
   ],<br />
-  "description": "Scrapbee backend",<br />
+  "description": "ScrapBee backend",<br />
   "name": "scrapbee_backend",<br />
   "path": "<i>FIREFOX-DOWNLOAD-DIRECTORY</i>/scrapbee/scrapbee_backend",<br />
   "type": "stdio"<br />
-  }<br />
+  \}<br />
 </div>
 install.bat(Windows, CODEPAGE UTF-8):
 <div class="embeded-log-text">
@@ -64,7 +124,7 @@ install.sh(Linux)
 <div class="embeded-log-text">
   #!/bin/bash<br />
   chmod +x scrapbee_backend<br />
-  dest="${HOME}/.mozilla/native-messaging-hosts"<br />
+  dest="$\{HOME\}/.mozilla/native-messaging-hosts"<br />
   if [ ! -d "$dest" ];then<br />
   &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p "$dest"<br />
   fi<br />
@@ -75,7 +135,7 @@ install.sh(Mac)
 <div class="embeded-log-text">
   #!/bin/bash<br />
   chmod +x scrapbee_backend<br />
-  dest="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
+  dest="$\{HOME\}/Library/Application Support/Mozilla/NativeMessagingHosts"<br />
   if [ ! -d $dest ];then<br />
   &nbsp;&nbsp;&nbsp;&nbsp;mkdir -p $dest<br />
   fi<br />
@@ -83,9 +143,16 @@ install.sh(Mac)
   echo done<br />
 </div>
 <h4>Still does not work?</h4>
-Check the <a href="#log">log</a>, there are maybe infomation shows what happend.
+Check the <a href="#area=log">log</a>, there are maybe infomation shows what happend.
 <br>Restart Firefox, this helps sometime.
-<br>Or, you can make questions in our github repo: <a href="https://github.com/vctfence/scrapbee">https://github.com/vctfence/scrapbee</a>
+<br>Or, you can make questions in our github repo:
+
+
+<ul id="">
+  <a href="https://github.com/vctfence/scrapbee" target="_blank">https://github.com/vctfence/scrapbee</a> (frontend) <br>
+  <a href="https://github.com/vctfence/scrapbee_backend" target="_blank">https://github.com/vctfence/scrapbee_backend</a> (backend)
+</ul>
+
 <br>Or email me to  <a href="mailto:scrapbee@163.com">scrapbee@163.com</a>
 <h2>Backup</h2>
 ScrapBee provides no page data backup function, please backup data folder manually.

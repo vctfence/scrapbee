@@ -84,11 +84,11 @@ class BookTree {
         /** scrap data */
         r = r.replace(
             /^resource\:\/\/scrapbook/,
-            settings.backend_url + "file-service/" + rdfPath
+            settings.getFileServiceAddress() + rdfPath
         );
         /** local file */
         if((/^(\/|(\[a-z]\:))/).test(r)){
-            r =  settings.backend_url + "file-service/" + r;
+            r =  settings.getFileServiceAddress() + r;
         }
         r = r.replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
             return b + "/";
@@ -187,7 +187,7 @@ class BookTree {
                     $(e.target).parents(".folder-content").prev("div").find("input").prop("checked", false);
                 }
             }
-            /** end of item draging */
+            /** end of item dragging */
             if (!dragging) return;
             dragging = false;
             $container.find(".drag-mark").remove();
@@ -230,7 +230,7 @@ class BookTree {
                 } else {
                     t = (relY > $el.height() * 0.5) ? 2 : 1;
                 }
-                /** show draging mark */
+                /** show dragging mark */
                 if((!$prev_ref || ($prev_ref[0] != $el[0])) || prev_t != t){
                     $container.find(".drag-mark").remove();
                     if (t == 1) {
@@ -284,7 +284,7 @@ class BookTree {
         return (this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/");
     }    
     getItemIndexPage(id) {
-        return (settings.backend_url + "file-service/" + this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/") + "?scrapbee_refresh=" + new Date().getTime();
+        return (settings.getFileServiceAddress() + this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime();
     }
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {
@@ -374,10 +374,44 @@ class BookTree {
         });
         return buf;
     }
-    async sortTree(asc=true) {
+
+    getDescendantItems($root){
+        var self = this, buf = [];
+        if(this.getItemType($root) == "folder"){
+            $root.nextAll(".folder-content:first").find(".item").toArray().forEach(function(item){
+                var $item = $(item);
+                var id = $item.prop("id");
+                buf.push({
+                    id,
+                    type:self.getItemType($item),
+                    title:$item.prop("title"),
+                    node: self.getLiNode("urn:scrapbook:item" + id),
+                    checkLevel: $item.parents(".folder-content").prev("div").find("input[type=checkbox]:checked").length,
+                    domElement: $item[0]
+                });
+            });
+        }
+        return buf;
+    }
+    
+    async sortTree(sortBy="title", $targetNode=null, asc=true) {
         var self = this;
         var items = [];
         var sects = {};
+        var nodes = null;
+        if($targetNode){
+            var id = $targetNode.attr("id");
+            var node = this.getLiNode("urn:scrapbook:item" + id);
+            var [nodeType, introNode] = this.getLiNodeType(node);
+            if (nodeType == "seq") { // folder
+                var seqNode = introNode;
+                nodes = seqNode.children;    
+            }else{
+                nodes = [];
+            }
+        }else{
+            nodes = this.getSeqNode("urn:scrapbook:root").children; 
+        }
         await this.iterateLiNodes(function (json, node) {
             var inc = json.nodeType == "separator" ? 1 : 0;
             var title = (json.title || "").toLowerCase();
@@ -386,20 +420,25 @@ class BookTree {
             sects[parentId] += inc;
             items.push({id: json.id, title, parentId, sect: sects[parentId], node, type: json.nodeType});
             sects[parentId] += inc;
-        });
+        }, nodes);
         items = items.sort(function(a, b){
             var v = comp(a.parentId, b.parentId);
             v = v || comp(a.sect, b.sect);
             v = v || (a.type == b.type ? 0 : (a.type == "seq" ? -1 : 1));
             if(v == 0){
-                /** hack: put Far East Character behind */
-                if(a.title.length && b.title.length){
-                    var x = a.title[0], y = b.title[0];
-                    x = x.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
-                    y = y.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
-                    v = comp(x, y);
+                if(sortBy == "title"){
+                    /*** hack: put Far East Character behind */
+                    if(a.title.length && b.title.length){
+                        var x = a.title[0], y = b.title[0];
+                        x = x.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
+                        y = y.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
+                        v = comp(x, y);
+                    }
+                    v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
+                }else if(sortBy == "date"){
+                    v = v || a.id > b.id;
                 }
-                v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
+                /** apply sort order */
                 v *= (asc ? 1 : -1);
             }
             return v;
@@ -410,10 +449,11 @@ class BookTree {
             a.node.parentNode.removeChild(a.node);
         });
     }
+    
     async renderTree($container) {
         var self = this;
         this.$top_container = $container;
-        $container.html("");
+        $container.empty();
         var buffers={};
         var bufferlist=[];
         buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        
@@ -461,7 +501,10 @@ class BookTree {
     }
     async iterateLiNodes(fn, nodes=null, fn2=null) {
         var self = this;
-        nodes = nodes || this.getSeqNode("urn:scrapbook:root").children;
+        
+        if(!(nodes instanceof Array))
+            nodes = this.getSeqNode("urn:scrapbook:root").children;
+        
         var level = 0;
         async function processer(nodes, parentId=null) {
             for (let child of nodes) {

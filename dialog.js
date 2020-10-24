@@ -1,21 +1,11 @@
 var Dialog = class{
     constructor(title='', content='') {
-        this.el =  document.createElement("div");
-        this.el.className = "scrapbee-dlg-container";
-        this.el.innerHTML = `
-  <div class="scrapbee-dlg-cover">
-    <div class="scrapbee-dlg">
-      <div class="scrapbee-dlg-frame">
-        <div class="scrapbee-dlg-title">
-          ${title}
-        </div>
-        <div class="scrapbee-dlg-content">
-            ${content}
-        </div>
-      </div>
-    </div>
-  </div>`;
-        document.body.appendChild(this.el);
+        this.el = this.newElement(document.body, "div", {className: "scrapbee-dlg-container"})
+        var dlgCover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover"})
+        var dlg = this.newElement(dlgCover, "div", {className: "scrapbee-dlg"})
+        var frame = this.newElement(dlg, "div", {className: "scrapbee-dlg-frame"})
+        this.titleNode = this.newElement(frame, "div", {className: "scrapbee-dlg-title", textContent: title})
+        this.contentNode = this.newElement(frame, "div", {className: "scrapbee-dlg-content", innerHTML: content})
         /** prevent user in host page selection lose */
         this.el.addEventListener('mousedown', function(e){
             e.preventDefault();
@@ -23,16 +13,16 @@ var Dialog = class{
         this.hide();
     }
     get content(){
-        return this.findChild(".scrapbee-dlg-content").innerHTML;
+        return this.contentNode.innerHTML;
     }    
     set content(c){
-        this.findChild(".scrapbee-dlg-content").innerHTML = c;
+        this.contentNode.innerHTML = c;
     }
     get title(){
-        return this.findChild(".scrapbee-dlg-title").innerHTML;
+        return this.titleNode.textContent;
     }    
     set title(t){
-        this.findChild(".scrapbee-dlg-title").innerHTML = t;
+        this.titleNode.textContent = t;
     }
     show(){
         this.el.style.display = "table";
@@ -42,6 +32,14 @@ var Dialog = class{
     }
     remove(){
         this.el.remove();
+    }
+    newElement(parent, tagName, props={}){
+        var el = document.createElement(tagName);
+        Object.keys(props).forEach(function(k){
+            el[k]= props[k];
+        });
+        parent.appendChild(el);
+        return el;
     }
     findChild(q){
         return this.el.querySelector(q);
@@ -53,13 +51,14 @@ var Dialog = class{
 var DialogYesNo = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
-        this.content = `<div>${content}</div><div class='scrapbee-dlg-yesno-buttons'>
-<input type="button" name="" value="No" />
-<input type="button" name="" value="Yes" /></div>`;
-        this.findChild("input[value=No]").addEventListener("click", function(){
+        this.newElement(this.contentNode, "div", {innerHTML: content})
+        var box = this.newElement(this.contentNode, "div", {className: "scrapbee-dlg-yesno-buttons"})
+        var btnNo = this.newElement(box, "input", {value: "No"})
+        var btnYes = this.newElement(box, "input", {value: "Yes"})
+        btnNo.addEventListener("click", function(){
             fn(this.value);
         });
-        this.findChild("input[value=Yes]").addEventListener("click", function(){
+        btnYes.addEventListener("click", function(){
             fn(this.value);
         });
     }
@@ -67,20 +66,16 @@ var DialogYesNo = class extends Dialog {
 var DialogWaiting = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
-        this.el.innerHTML = `
-  <div class="scrapbee-dlg-cover waiting">
-    <div class="scrapbee-dlg">
-     <img src="icons/loading.gif" class="waiting-gif"/>
-    </div>
-  </div>`;
+        this.el.innerHTML = "";
+        var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover waiting"})
+        var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
+        this.newElement(dlg, "img", {className: "waiting-gif", src: "icons/loading.gif"})
     }
 };
 var DialogIframe = class extends Dialog {
     constructor(title, src, onload) {
         super(title, '');
-        var self = this;
-        this.content = `<iframe></iframe>`; 
-        this.iframe = this.findChild("iframe");
+        this.iframe = this.newElement(this.contentNode, "iframe")
         this.iframe.style.width="100%";
         this.iframe.style.height="100%";
         this.iframe.style.minHeight="0px";
@@ -149,22 +144,18 @@ var DialogDownloadTable = class extends DialogIframe {
     }
     addHeader(){
         var self = this;
-        var cells = '';
-        Array.from(arguments).forEach((v) => {
-            cells += `<th>${v}</th>`;
-        });
         var tr = document.createElement("tr");
-        tr.innerHTML = cells;
+        Array.from(arguments).forEach((v) => {
+            self.newElement(tr, "th", {innerHTML:v})
+        });
         this.thead.appendChild(tr);
     }    
     addRow(){
         var self = this;
-        var cells = '';
-        Array.from(arguments).forEach((v) => {
-            cells += `<td>${v}</td>`;
-        });
         var tr = document.createElement("tr");
-        tr.innerHTML = cells;
+        Array.from(arguments).forEach((v) => {
+            self.newElement(tr, "td", {innerHTML:v})
+        });
         this.tbody.appendChild(tr);
     }
     updateCell(x, y, s){

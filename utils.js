@@ -442,8 +442,8 @@ function ajaxFormPost(url, json){
         request.onreadystatechange=function(){
             if(request.readyState == 4 && request.status == 200){
                 resolve(request.responseText);
-            }else if(request.status == 500){
-                log.error(request.responseText);
+            }else if(request.status >= 400){
+                // console.log("error", "pwd" + json.pwd)
                 reject(Error(request.responseText));
             }
         };
@@ -451,9 +451,7 @@ function ajaxFormPost(url, json){
             reject(Error(err));
         };
         request.open("POST", url, false);
-        setTimeout(function(){
-            request.send(formData);
-        }, 150);
+        request.send(formData);
     });
 }
 function downloadFile(url){
@@ -486,6 +484,27 @@ function downloadFile(url){
         }
     });
 }
+
+function touchRdf(backendAddress, path, pwd){
+    return new Promise((resolve, reject)=>{
+        $.post(backendAddress + "isfile/", {path, pwd}, function(r){
+            if(r != "yes"){
+                var content = `<?xml version="1.0"?>
+<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
+</RDF:RDF>`;
+                browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
+                    resolve();
+                }).catch((err) => {
+                    reject(err);
+                });
+            }else{
+                resolve();
+            }
+        });
+    });
+}
+
 export{gtv,
        gtev,
        showNotification,
@@ -499,4 +518,5 @@ export{gtv,
        refreshTree,
        httpRequest,
        ajaxFormPost,
-       downloadFile};
+       downloadFile,
+       touchRdf};
