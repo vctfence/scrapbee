@@ -125,7 +125,8 @@ menulistener.onSort1 = function(){
     showDlg("sort", {}).then(async function(d){
         var $target = null;
         if(d.target == "selection"){
-            $target = currTree.getFocusedItem();
+            var $tar = currTree.getFocusedItem();
+            if($tar.length) $target = $tar;
         }
         await currTree.sortTree(d.sort_by, $target, d.order == "asc");
         currTree.onXmlChanged();

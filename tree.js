@@ -405,12 +405,12 @@ class BookTree {
             var [nodeType, introNode] = this.getLiNodeType(node);
             if (nodeType == "seq") { // folder
                 var seqNode = introNode;
-                nodes = seqNode.children;    
+                nodes = Array.from(seqNode.children);    
             }else{
                 nodes = [];
             }
         }else{
-            nodes = this.getSeqNode("urn:scrapbook:root").children; 
+            nodes = Array.from(this.getSeqNode("urn:scrapbook:root").children); 
         }
         await this.iterateLiNodes(function (json, node) {
             var inc = json.nodeType == "separator" ? 1 : 0;
@@ -430,8 +430,8 @@ class BookTree {
                     /*** hack: put Far East Character behind */
                     if(a.title.length && b.title.length){
                         var x = a.title[0], y = b.title[0];
-                        x = x.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
-                        y = y.match(/[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
+                        x = x.match(/^[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
+                        y = y.match(/^[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
                         v = comp(x, y);
                     }
                     v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
