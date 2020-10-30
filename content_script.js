@@ -363,29 +363,27 @@ if(!window.scrapbee_injected){
             }
             await download();
             dlgDownload.hint = "Saving data...";
+
             function save(){
                 return new Promise((resolve, reject)=>{
                     var saved = 0;
+                    function inc(){
+                        if(++saved == res.length)
+                            resolve();
+                    }
                     res.forEach(function(item, i){
                         if(item.failed){
-                            saved ++;
-                            return;
-                        }
-                        if(item.blob){
-                            try{
-                                item.path = `${rdfPath}/data/${itemId}/${item.filename}`;
-                                browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item}).then((response) => {
-                                    dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
-                                    if(++saved == res.length){
-                                        resolve()
-                                    }
-                                });
-                            }catch(e){
-                                if(++saved == res.length){
-                                    resolve()
-                                }
+                            inc();
+                        }else if(item.blob){
+                            item.path = `${rdfPath}/data/${itemId}/${item.filename}`;
+                            browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item}).then((response) => {
+                                dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
+                                inc();
+                            }).catch(e => {
+                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
                                 log.error(e.message);
-                            }
+                                inc();
+                            });
                         }else{
                             var path = `${rdfPath}/data/${itemId}/${item.filename}`;
                             var content = item.content;
@@ -409,9 +407,11 @@ if(!window.scrapbee_injected){
                             }
                             browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
                                 dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
-                                if(++saved == res.length){
-                                    resolve()
-                                }
+                                inc();
+                            }).catch(e=>{
+                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                log.error(e.message);
+                                inc();
                             });
                         }
                     });

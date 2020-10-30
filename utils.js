@@ -451,7 +451,9 @@ function ajaxFormPost(url, json){
             reject(Error(err));
         };
         request.open("POST", url, false);
-        request.send(formData);
+        setTimeout(function(){ // prevent: too much recursion
+            request.send(formData);
+        }, 300);
     });
 }
 function downloadFile(url){
