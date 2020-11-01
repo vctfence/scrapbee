@@ -42,7 +42,7 @@ function initMover(){
             var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
             var proceed = false;
             function cfm(){
-                proceed = confirm("{ConfirmDeleteItem}".translate());
+                proceed = proceed || confirm("{ConfirmDeleteItem}".translate());
                 return proceed;
             }
             if($("#multi-select").is(":checked")){
