@@ -279,9 +279,9 @@ window.onload=async function(){
         if(global.platform_arch == "x86-64"){
             src_exec += "_64"; 
         }
-        src_exec += global.platform=="windows"?".exe":"";
+        src_exec += global.platform_os == "win" ? ".exe" : "";
 
-        var dest_exec = "scrapbee_backend" + (global.platform=="windows"?".exe":"");
+        var dest_exec = "scrapbee_backend" + (global.platform_os == "win" ? ".exe" : "");
         return [binDir + src_exec, dest_exec]
     }
     
@@ -316,9 +316,9 @@ window.onload=async function(){
             await downloadText(jstr, "scrapbee/scrapbee_backend.json");
             // download install script
             const extRoot = "moz-extension://" + global.extension_id;
-            if(global.platform=="windows")
+            if(global.platform_os=="win")
                 await downloadText(installBat(download_path), "scrapbee/install.bat");
-            else if(global.platform=="mac")
+            else if(global.platform_os=="mac")
                 await downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh");
             else
                 await downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh");

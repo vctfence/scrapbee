@@ -51,6 +51,9 @@ String.prototype.translate=function(){
 	}
     });
 };
+String.prototype.capitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+}
 /*
   html style escape characters
   @chars: chars be escaped

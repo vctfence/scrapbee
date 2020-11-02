@@ -46,7 +46,11 @@ function loadBrowserInfo(){
                     browser_info_status = "error";
                     reject(Error(em))
                 }else{
-                    log.info("platform = " + navigator.platform);
+                    // log.info("platform = " + navigator.platform);
+                    browser.runtime.getPlatformInfo().then((p)=>{
+                        var os = p.os.capitalize();
+                        log.info(`platform = ${os} ${p.arch}`);
+                    });
                     browser_info_status = "loaded";
                     resolve();
                 }

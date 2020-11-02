@@ -117,22 +117,15 @@ settings.set('announcement_showed', "");
 // })
 /* =================================================== */
 var global = {};
-var platform = "linux";
-if (navigator.platform == "Win64" || navigator.platform == "Win32") {
-    platform = "windows";
-}else if(/Mac.+/.test(navigator.platform)){
-    platform = "mac";
-}
 global.set=function(key, value, boardcast=false) {
     global[key] = value;
 };
 // global.set('debug', true, false);
-global.set('fs_path_separator', platform=='windows'?'\\':'/');
-global.set('platform', platform);
 global.set('id', browser.runtime.id);
 global.set('extension_id', browser.i18n.getMessage("@@extension_id"));
 try{
     browser.runtime.getPlatformInfo().then((p)=>{
+        global.set('fs_path_separator', p.os == 'win' ? '\\' : '/');
         global.set('platform_os', p.os);
         global.set('platform_arch', p.arch);
     });

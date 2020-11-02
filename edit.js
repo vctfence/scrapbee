@@ -1,7 +1,7 @@
 var platform = "linux";
 if (navigator.platform == "Win64" || navigator.platform == "Win32") {
-    platform = "windows";
-}else if(/Mac.+/.test(navigator.platform)){
+    platform = "win";
+}else if(/^Mac/.test(navigator.platform)){
     platform = "mac";
 }
 function isDescendant(parent, child) {
@@ -302,9 +302,10 @@ class EditToolBar{
         }
     }
 }
+
 if(location.href.match(/\http:\/\/\w+\:\d+\/file-service\/pwd\/\w+\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
     var path = decodeURIComponent(RegExp.$1);
-    if(platform != "windows"){
+    if(platform != "win"){
         path = `/${path}`;
     }
     var scrap_id = RegExp.$2;
@@ -315,7 +316,7 @@ if(location.href.match(/\http:\/\/\w+\:\d+\/file-service\/pwd\/\w+\/(.+\/data\/(
     });
 }else if(location.href.match(/\http:\/\/\w+\:\d+\/file-service\/(.+\/data\/(\d+)\/)\?scrapbee_refresh=\d+$/i)){
     var path = decodeURIComponent(RegExp.$1);
-    if(platform != "windows"){
+    if(platform != "win"){
         path = `/${path}`;
     }
     var scrap_id = RegExp.$2;
