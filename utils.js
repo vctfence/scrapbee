@@ -417,16 +417,16 @@ function httpRequest(url){
         };
         xmlhttp.onerror = function(err) {
             reject(err)
-	    // log.info(`load ${rdf} failed, ${err}`)
         };
-        // console.log(url)
         xmlhttp.open("GET", url, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');
         xmlhttp.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
         xmlhttp.setRequestHeader('pragma', 'no-cache');
-        xmlhttp.send();
+        setTimeout(function(){ // prevent: too much recursion
+            xmlhttp.send();
+        }, 300);
     })
 }
 /* http request */

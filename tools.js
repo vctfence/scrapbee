@@ -235,7 +235,8 @@ function initMover(){
                 resolve(currTree);
             };
             xmlhttp.onerror = function(err) {
-	        log.info(`load ${rdf} failed, ${err}`);
+                log.info(`load ${rdf} failed, ${err}`);
+                reject(err);
             };
             xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
             xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
