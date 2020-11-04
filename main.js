@@ -248,24 +248,30 @@ function showRdfList(){
     var lastRdf = settings.last_rdf;
     var saw = false;
     var paths = settings.getRdfPaths();
-
     if(paths.length == 0)
         $(".root.folder-content").html("{NO_RDF_SETTED_HINT}".translate());
-
     drop = drop || new SimpleDropdown($(".drop-button")[0], []);
     drop.clear();
     drop.onchange=(function(title, value){
         $(".drop-button .label").text(title || "");
         if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
     });
+    
+    log.debug("rdf paths:")
+    paths.forEach(function(path, i){
+        log.debug(path)
+    });
+    
     if(paths){
+        log.debug("append rdf items:")
         var names = settings.getRdfPathNames(); 
-        names.forEach(function(n, i){
+        names.forEach(function(name, i){
+            log.debug(`append list item:`, name, paths[i])
             if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
                 saw = true;
-                drop.select(n, paths[i]);
+                drop.select(name, paths[i]);
             }
-            drop.addItem(n, paths[i]);
+            drop.addItem(name, paths[i]);
         });
         if(!saw){
             drop.select(names[0], paths[0]);

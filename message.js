@@ -5,11 +5,11 @@ function stringifyArgs(args){
             if(typeof v != "string")
     	        v = JSON.stringify(v);
         }catch(e){
-            v = String(v);
+            v = String(v).replace(/[\r\n]+/g, "<br>");
         }
         ar[i] = v;
     });
-    return ar.join(', ')
+    return ar.join(' ')
 }
 
 var log = {
@@ -23,7 +23,7 @@ var log = {
         log.sendLog("warning", stringifyArgs(arguments))
     },
     debug: function(){
-        // log.sendLog("debug", stringifyArgs(arguments))
+        log.sendLog("debug", stringifyArgs(arguments))
     },
     clear: function(){
         browser.runtime.sendMessage({type:'CLEAR_LOG'});

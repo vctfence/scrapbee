@@ -456,5 +456,8 @@
     },
     "Descending":{
         "message":  "Descendant"
+    },
+    "Debug":{
+        "message":  "Debug"
     }
 }

@@ -91,6 +91,7 @@ function showConfiguration(){
             settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
             settings.set('saving_save_frames', $("input[name=saving_save_frames]").is(":checked")?"on":"off", true);
+            settings.set('debug', $("input[name=debug]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed: " + e);
@@ -131,6 +132,7 @@ function showConfiguration(){
     $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
     $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
     $("input[name=saving_save_frames]").prop("checked", settings.saving_save_frames=="on");
+    $("input[name=debug]").prop("checked", settings.debug=="on");
 }
 window.onload=async function(){
     await settings.loadFromStorage();
@@ -385,8 +387,8 @@ pause`;
                 });
             });
             
-            //     .catch(function (error) {
-            //     // $("#txtBackendPath").html("error: " + error);
+            // .catch(function (error) {
+            //   // $("#txtBackendPath").html("error: " + error);
             // });
         })
     }
@@ -412,21 +414,22 @@ pause`;
                     }
                 });
             })
-            //     .catch(function (error) {
-            //     $("#txtBackendPath").html("error: " + error);
+            // .catch(function (error) {
+            //   $("#txtBackendPath").html("error: " + error);
             // });
         });
     }
-    
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         var $div = $("#div-log .console");
         if(request.type == 'LOGGING'){
-            var b = Math.abs($div.scrollTop() - ($div[0].scrollHeight - $div.height())) < 100;
             var item = request.log;
-            var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
-            $line.addClass(item.logtype);
-            if(b)
-                $div.scrollTop($div[0].scrollHeight - $div.height());
+            if(item.logtype != "debug" || settings.debug == "on"){
+                var b = Math.abs($div.scrollTop() - ($div[0].scrollHeight - $div.height())) < 100;
+                var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+                $line.addClass(item.logtype);
+                if(b)
+                    $div.scrollTop($div[0].scrollHeight - $div.height());
+            }
         }else if(request.type == "BACKEND_SERVICE_STARTED"){
             initTools(request.version);
         }

@@ -477,6 +477,8 @@
     },
     "Descending":{
         "message":  "降序"
+    },
+    "Debug":{
+        "message":  "调试"
     }
-    
 }
