@@ -269,7 +269,11 @@ function showRdfList(){
             log.debug(`append list item:`, name, paths[i])
             if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
                 saw = true;
-                drop.select(name, paths[i]);
+                try{
+                    drop.select(name, paths[i]);
+                }catch(e){
+                    log.error(e.message)
+                }
             }
             drop.addItem(name, paths[i]);
         });
