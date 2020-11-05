@@ -82,6 +82,9 @@ function showDlg(name, data, onshowed){
                     if(this.type=="radio"){
                         if(this.checked)
                             data[this.name] = $(this).val();
+                    }else if(this.type=="checkbox"){
+                        if(this.checked)
+                            data[this.name] = $(this).val();
                     }else if(this.type=="select"){
                         data[this.name] = $(this).val();
                     }else{
@@ -128,19 +131,12 @@ menulistener.onSort1 = function(){
             var $tar = currTree.getFocusedItem();
             if($tar.length) $target = $tar;
         }
-        await currTree.sortTree(d.sort_by, $target, d.order == "asc");
+        await currTree.sortTree(d.sort_by, $target, d.order == "asc", d.case_sensitive=="on");
         currTree.onXmlChanged();
         await currTree.renderTree($(".root.folder-content"));
         currTree.restoreStatus();
     });
 };
-// menulistener.onSort2 = function(){
-//     confirm("{Sort}", "{ConfirmSorting}").then(async function(){
-//         await currTree.sortTree(false);
-//         currTree.onXmlChanged();
-//         await currTree.renderTree($(".root.folder-content"));
-//     });
-// };
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
         currTree.removeItem($(".item.focus"));

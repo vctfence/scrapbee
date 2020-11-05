@@ -394,7 +394,7 @@ class BookTree {
         return buf;
     }
     
-    async sortTree(sortBy="title", $targetNode=null, asc=true) {
+    async sortTree(sortBy="title", $targetNode=null, asc=true, case_sensitive=false) {
         var self = this;
         var items = [];
         var sects = {};
@@ -414,7 +414,7 @@ class BookTree {
         }
         await this.iterateLiNodes(function (json, node) {
             var inc = json.nodeType == "separator" ? 1 : 0;
-            var title = (json.title || "").toLowerCase();
+            var title = (json.title || "");
             var parentId = json.parentId || "urn:scrapbook:root";
             sects[parentId] = sects[parentId] || 0;
             sects[parentId] += inc;
@@ -434,7 +434,16 @@ class BookTree {
                         y = y.match(/^[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
                         v = comp(x, y);
                     }
-                    v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'base', ignorePunctuation: 'true'});
+
+                    if(!v)
+                        log.debug("sort by local", a.title, b.title, a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'case', ignorePunctuation: 'false'}))
+
+                    try{
+                    
+                        v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: case_sensitive?'case':'base', ignorePunctuation: false});
+                    }catch(e){
+                        log.debug("error", e.message)
+                    }
                 }else if(sortBy == "date"){
                     v = v || a.id > b.id;
                 }

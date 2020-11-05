@@ -181,7 +181,7 @@
       <div class="dlg">
         <div class="dlg-box">
           <div class="dlg-title">{SORT}</div>
-          <form class="dlg-table" style="overflow:hidden;">
+          <form class="dlg-table" style="overflow:hidden;padding-top:10px;">
             <div class="row">
               <div class="cell" style="width:50px;text-align:right;">{SORT_BY}</div>
               <div class="cell">
@@ -192,10 +192,16 @@
               </div>
             </div>
             <div class="row">
+              <div class="cell" style="width:50px;text-align:right;"></div>
+              <div class="cell">
+                <label><input type="checkbox" name="case_sensitive" value="on" checked="true" autocomplete="off"/>{CASE_SENSITIVE}</label>
+              </div>
+            </div>            
+            <div class="row">
               <div class="cell" style="width:50px;text-align:right;">{Order}</div>
               <div class="cell">
-                <input type="radio" name="order" value="asc" checked="true" autocomplete="off"/> {Ascending}
-                <input type="radio" name="order" value="desc" autocomplete="off"/> {Descending}
+                <label><input type="radio" name="order" value="asc" checked="true" autocomplete="off"/> {Ascending}</label>
+                <label><input type="radio" name="order" value="desc" autocomplete="off"/> {Descending}</label>
               </div>
             </div>
             <div class="row">
@@ -216,7 +222,6 @@
         </div>
       </div>
     </div>
-
     <!-- dlg prompt -->
     <div class="dlg-cover dlg-prompt" style="display:none;">
       <div class="dlg">
@@ -238,10 +243,8 @@
         </div>
       </div>
     </div>
-
     <!-- main content -->
     <div class="root folder-content">{Starting...}</div>
-
     <!-- menu -->
     <menu type="context" id="popup-menu-folder">
       <menuitem id="menuProperty" label="{Properties}" icon="icons/property.svg"></menuitem>

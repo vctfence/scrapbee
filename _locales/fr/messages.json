@@ -459,5 +459,8 @@
     },
     "Debug":{
         "message":  "Debug"
+    },
+    "CASE_SENSITIVE":{
+        "message":  "Sensible aux majuscules et minuscules"
     }
 }

@@ -480,5 +480,8 @@
     },
     "Debug":{
         "message":  "调试"
+    },
+    "CASE_SENSITIVE":{
+        "message":  "区分大小写"
     }
 }

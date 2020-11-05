@@ -480,5 +480,8 @@
     },
     "Debug":{
         "message":  "Debug"
+    },
+    "CASE_SENSITIVE":{
+        "message":  "Case Sensitive"
     }
 }
