@@ -50,9 +50,11 @@ window.onload=async function(){
     });
     $("#btnCaptureTabs").click(function(){
         browser.sidebarAction.isOpen({}).then(result => {
-            if(!result)
+            if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
-            browser.runtime.sendMessage({type: "CAPTURE_TABS"}).then((url) => {});
+            }else{
+                browser.runtime.sendMessage({type: "CAPTURE_TABS"}).then((url) => {});
+            }
             window.close();
         });
     });
