@@ -434,12 +434,13 @@ pause`;
             initTools(request.version);
         }
     });
-    
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {
         var $div = $("#div-log .console");
         response.logs.forEach(function(item){
-            var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
-            $line.addClass(item.logtype);
+            if(item.logtype != "debug" || settings.debug == "on"){
+                var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
+                $line.addClass(item.logtype);
+            }
         });
     });
 };
