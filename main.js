@@ -464,14 +464,14 @@ window.onload=async function(){
     btn.onclick = function(){
         // window.open("options.html#tool", "_scrapbee_option")
         browser.tabs.create({
-            "url": "options.html#tools"
+            "url": "options.html#area=tools"
         });
     };    
     var btn = document.getElementById("btnHelp");
     btn.onclick = function(){
         // window.open("options.html#help", "_scrapbee_option")
         browser.tabs.create({
-            "url": "options.html#help"
+            "url": "options.html#area=help"
         });
     };
     var btn = document.getElementById("btnSearch");
