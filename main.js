@@ -275,7 +275,11 @@ function showRdfList(){
                     log.error(e.message)
                 }
             }
-            drop.addItem(name, paths[i]);
+            try{
+                drop.addItem(name, paths[i]);
+            }catch(e){
+                log.error(e.message)
+            }            
         });
         if(!saw){
             drop.select(names[0], paths[0]);
