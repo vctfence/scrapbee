@@ -434,16 +434,7 @@ class BookTree {
                         y = y.match(/^[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
                         v = comp(x, y);
                     }
-
-                    if(!v)
-                        log.debug("sort by local", a.title, b.title, a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: 'case', ignorePunctuation: 'false'}))
-
-                    try{
-                    
-                        v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: case_sensitive?'case':'base', ignorePunctuation: false});
-                    }catch(e){
-                        log.debug("error", e.message)
-                    }
+                    v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: case_sensitive?'case':'base', ignorePunctuation: false});
                 }else if(sortBy == "date"){
                     v = v || a.id > b.id;
                 }
