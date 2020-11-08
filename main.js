@@ -144,17 +144,24 @@ menulistener.onDelete = function(){
 };
 menulistener.onCreateFolder = function(){
     showDlg("folder", {}).then(function(d){
-        var p;
-        if(d.pos == "root"){
-            p = $(".root.folder-content");
-        }else{
-            p = currTree.getCurrContainer(); 
+        var $foc = currTree.getFocusedItem();
+        var p = currTree.getCurrContainer();
+        var rid = null;
+        if($foc.length){
+            if($foc.hasClass("folder")){
+                if(d.pos == "same_level"){
+                    p = currTree.getParentContainer($foc);
+                    rid = $foc.attr("id");
+                }
+            }else{
+                rid = $foc.attr("id");
+            }
         }
-        currTree.createFolder(p, genItemId(), currTree.getCurrRefId(), d.title, true);
+        currTree.createFolder(p, genItemId(), rid, d.title, true, settings.saving_new_pos);
     });
 };
 menulistener.onCreateSeparator = function(){
-    currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true);
+    currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true, settings.saving_new_pos);
 };
 menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
@@ -649,7 +656,20 @@ function requestUrlSaving(itemId){
            }else{
                $container = $(".root.folder-content");
            }
-           currTree.createLink(currTree.getCurrContainer(), "bookmark", itemId, currTree.getCurrRefId(), tab.url, icon, tab.title, false, true);
+           
+           currTree.createLink(currTree.getCurrContainer(), {
+               type:"bookmark",
+               title:tab.title,
+               id:itemId,
+               ref_id:currTree.getCurrRefId(),
+               source:tab.url,
+               icon,
+           }, {
+               wait:false,
+               is_new:true,
+               pos: settings.saving_new_pos
+           });
+           
            showNotification({message: `Save bookmark "${tab.title}" done`, title: "Info"});
        }
        if(icon && icon.match(/^data:image/i)){
@@ -686,14 +706,22 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
            log.error("rdf have not been loaded");
        }
     }else if(request.type == 'CREATE_MIRROR_NODE'){
-        /** do not trigger rdf saving */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
+            /** do not trigger rdf saving */
             currTree.lockRdfSaving = true;
-            currTree.createLink(currTree.getContainerById(request.folderId), request.nodeType, request.itemId,
-                                request.refId, request.url, request.ico, request.title,
-                                true,   // waiting
-                                true,   // is new node (create xml node)
-                                request.comment);  
+            currTree.createLink(currTree.getContainerById(request.folderId), {
+                type: request.nodeType,
+                title: request.title,
+                id: request.itemId,
+                ref_id: request.refId,
+                source: request.url,
+                icon: request.ico,
+                comment: request.comment
+            },{
+                wait: true,
+                is_new: true,
+                pos: settings.saving_new_pos
+            });
             currTree.lockRdfSaving = false;
         }
     }else if(request.type == 'REMOVE_FAILED_NODE'){
@@ -719,8 +747,20 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     try{
                         var itemId = genItemId();
                         var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
+                        /** do not trigger rdf saving */
                         currTree.lockRdfSaving = true;
-                        currTree.createLink(currTree.getCurrContainer(), request.nodeType, itemId, currTree.getCurrRefId(), request.url, icon, request.title, true, true);
+                        currTree.createLink(currTree.getCurrContainer(), {
+                            type: request.nodeType,
+                            id: itemId,
+                            ref_id: currTree.getCurrRefId(),
+                            source: request.url,
+                            title: request.title,
+                            icon,
+                        },{
+                            wait: true,
+                            is_new: true,
+                            pos: settings.saving_new_pos
+                        });
                         currTree.lockRdfSaving = false;
                         resolve({rdf:currTree.rdf, rdfPath:currTree.rdfPath, itemId});
                     }catch(e){

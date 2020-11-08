@@ -2,6 +2,7 @@ import {BookTree} from "./tree.js";;
 import {settings} from "./settings.js";
 import {SimpleDropdown} from "./control.js";
 import {genItemId, refreshTree, httpRequest} from "./utils.js";
+import {log} from "./message.js";
 
 function initMover(){
     var mulitCheck;
@@ -62,9 +63,6 @@ function initMover(){
             if(proceed){
                 await tree.saveXml();
                 $tree.next(".path-box").find("bdi").text("/");
-            }
-            if(proceed && tree0.rdf == tree1.rdf){
-                refresh(other);
             }
         });
     });
@@ -132,6 +130,7 @@ function initMover(){
         /** show  waiting dialog */
         var waitingDlg = new DialogWaiting();
         waitingDlg.show();
+        var pos = settings.saving_new_pos;
         await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
                 var $dest = parents[item.level];
@@ -140,19 +139,25 @@ function initMover(){
                 if(item.nodeType == "bookmark" || item.nodeType == "page"){
                     var src = srcTree.rdfPath + 'data/' + item.id;
                     var dest = destTree.rdfPath + 'data/' + id;
-                    browser.runtime.sendMessage({type: moveType, src, dest}).then((response) => {
+                    browser.runtime.sendMessage({type: moveType, src, dest}).catch((e) => {
+                        log.error(e.message);
+                    }).finally((response) => {
                         var icon = item.icon.replace(item.id, id);
-                        destTree.createLink($dest, item.type, id, rid, item.source, icon, item.title, false, true);
+                        destTree.createLink($dest, {
+                            type: item.type, id, ref_id:rid,
+                            source: item.source, icon, title: item.title
+                        },{wait: false, is_new: true, pos});
+                        pos = "bottom";
                         resolve()
-                    }).catch((e) => {
-                        saveingLocked = false;
                     });
                 }else if(item.nodeType == "seq"){
-                    destTree.createFolder($dest, id, rid, item.title, true);
+                    destTree.createFolder($dest, id, rid, item.title, true, pos);
                     parents[item.level+1]=(destTree.getItemById(id).next(".folder-content"));
+                    pos = "bottom";
                     resolve();
                 }else if(item.nodeType == "separator"){
-                    destTree.createSeparator($dest, id, rid, true);
+                    destTree.createSeparator($dest, id, rid, true, pos);
+                    pos = "bottom";
                     resolve();
                 }
                 if(item.level == 0) ref_id = id;
@@ -167,7 +172,6 @@ function initMover(){
                 });
             }
             await destTree.saveXml();
-            refresh(srcTree); /** sync src tree */
         }else{
             if(moveType == "FS_MOVE"){
                 topInfos.forEach((info) => {
@@ -224,9 +228,12 @@ function initMover(){
                 currTree.saveXml=currTree.onDragged=function(){
                     return new Promise((resolve, reject) => {
                         if(!saveingLocked){
-                            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(), path: currTree.rdf, backup: true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {
-                                resolve();
-                            });
+                            browser.runtime.sendMessage({
+                                type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
+                                path: currTree.rdf, backup: true,
+                                boardcast:true, srcToken: currTree.unique_id}).then((response) => {
+                                    resolve();
+                                });
                         }else{
                             reject();
                         }

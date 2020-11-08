@@ -443,15 +443,14 @@ function ajaxFormPost(url, json){
             if(request.readyState == 4 && request.status == 200){
                 resolve(request.responseText);
             }else if(request.status >= 400){
-                // console.log("error", "pwd" + json.pwd)
-                reject(Error(request.responseText));
+                reject(Error(`request ${request.status}: ${request.responseText}`));
             }
         };
-        request.onerror = function(err) {
-            reject(Error(err));
+        request.onerror = function(e) {
+            reject(Error(`request error: ${e.message}`));
         };
         request.open("POST", url, false);
-        setTimeout(function(){ // prevent: too much recursion
+        setTimeout(() => {     // prevent: too much recursion
             request.send(formData);
         }, 300);
     });

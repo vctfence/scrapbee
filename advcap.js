@@ -63,7 +63,7 @@ $(document).ready(async function(){
     button.onclick=function(){
         var title = prompt("Please input name of new folder");
         if(!title) return;
-        currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true);
+        currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true, settings.saving_new_pos);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
                                      path: currTree.rdf, backup:true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
     }

@@ -412,7 +412,7 @@ class BookTree {
         }else{
             nodes = Array.from(this.getSeqNode("urn:scrapbook:root").children); 
         }
-        await this.iterateLiNodes(function (json, node) {
+        await this.iterateLiNodes((json, node) => {
             var inc = json.nodeType == "separator" ? 1 : 0;
             var title = (json.title || "");
             var parentId = json.parentId || "urn:scrapbook:root";
@@ -470,7 +470,7 @@ class BookTree {
         buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        
         try{
             var sec = 0;
-            await this.iterateLiNodes(function (json) {
+            await this.iterateLiNodes((json) => {
                 var parentId = json.parentId || "urn:scrapbook:root";
                 var bf;
                 switch (json.nodeType) {
@@ -479,7 +479,7 @@ class BookTree {
                     break;
                 case "bookmark":
                 case "page":
-                    bf = self.createLink(null, json.type, json.id, null, json.source, json.icon, json.title);
+                    bf = self.createLink(null, json);
                     break;
                 case "separator":
                     sec++;
@@ -565,7 +565,7 @@ class BookTree {
                         }, child);
                     }
                 }catch(e){
-                    log.error("node error: ", nodeType)
+                    log.error(nodeType, "node error: ", e.message)
                 }
             }
         }
@@ -638,6 +638,11 @@ class BookTree {
         var $f = $item.parent(".folder-content").prev(".item.folder");
         return $f.length ? $f : null;
     }
+    getParentContainer($item) {
+        if (!$item.length)
+            return null;
+        return $item.parent(".folder-content");
+    }
     getContainerFolderId($container) {
         if (!$container.length)
             return "";
@@ -693,13 +698,12 @@ class BookTree {
             return $c ? $c.attr("id") : null;
         }
     }    
-    createLink($container, type, id, ref_id, source, icon, title, wait, is_new_node, comment="", tag="") {
+    createLink($container, {type, id, ref_id, source, icon, title, comment="", tag=""}, {wait, is_new, pos="bottom"}={}) {
         title = $.trim(title);
         if (wait) icon = "icons/loading.gif";
         /** create item element */
-        var title_encode = title.htmlEncode();
+        var title_encode = title.htmlEncode(), style="";
         var label = title_encode || "-- UNTITLED --";
-        var style="";
         /** show icon */
         if (icon) {
             style = "background-image:url(" + this.translateResource(icon, this.rdfPath, id) + ");";
@@ -707,67 +711,85 @@ class BookTree {
         var bf = new NodeHTMLBuffer(
             `<div id='${id}' class='item ${type}' title='${title_encode}' source='${source}'><input type='checkbox'/><i style='${style}'/><label>${label}</label>`,
             (type == "page" ? "<div class='origin'></div>" : "") + "</div>");
-        if (is_new_node) {
+        if (is_new) {
             /** append to dom */
             if(!$container.length)
                 $container = this.$top_container;
-            var $item = $(bf.flatten());
+            var $item = $(bf.flatten()), $ref = null, useRef = false;
             if (ref_id) {
-                var $ref = this.getItemById(ref_id);
-                if($ref.closest($container).length > 0){
+                $ref = this.getItemById(ref_id);
+                useRef = $ref.closest($container).length > 0;
+            }
+            if(useRef){
+                if(pos == "top")
+                    $item.insertBefore($ref);
+                else
                     $item.insertAfter($ref);
-                }else{
-                    $item.appendTo($container);
-                }
             } else {
-                $item.appendTo($container);
+                if(pos == "top")
+                    $item.prependTo($container);
+                else
+                    $item.appendTo($container);
             }
             /** clicking-lock on waiting item */
             if (wait) $item.attr("disabled", "1");
             /** add new node to doc */    
             var folder_id = this.getContainerFolderId($container);
-            this.createScrapXml(folder_id, type, id, ref_id, title, source, wait ? "" : icon, comment, tag);
+            this.createScrapXml(folder_id, type, id, ref_id, title, source, wait ? "" : icon, comment, tag, pos);
             this.showCheckBoxes(this.options.checkboxes);
         }        
         return bf;
     }
-    createFolder($container, id, ref_id, title, is_new_node) {
+    createFolder($container, id, ref_id, title, is_new, pos="bottom", a=0) {
         title = $.trim(title);
         var title_encode = title.htmlEncode();
         var label = title_encode || "-- UNTITLED --";
         var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title_encode}'><input type='checkbox'/><i/><label>${label}</label></div>
 <div class='folder-content'>`,"</div>");
-        if (is_new_node) {
-            var $folder = $(bf.flatten());
+        if (is_new) {
+            var $folder = $(bf.flatten()), $ref = null, useRef = false;
+
             if (ref_id) {
-                var $ref = this.getItemById(ref_id);
+                $ref = this.getItemById(ref_id);
                 if($ref.next(".folder-content").length)
                     $ref = $ref.next(".folder-content");
-                if($ref.closest($container).length > 0){ /** ensure in container */
+                useRef = $ref.closest($container).length > 0;
+            }
+
+            if(useRef){ /** ensure in container */
+                if(pos == "top")
+                    $folder.insertBefore($ref);
+                else
                     $folder.insertAfter($ref);
-                }else{
-                    $folder.appendTo($container);
-                }
             } else {
-                $folder.appendTo($container);
+                if(pos == "top")
+                    $folder.prependTo($container);
+                else
+                    $folder.appendTo($container);
             }
             var folder_id = this.getContainerFolderId($container);
-            this.createFolderXml(folder_id, id, ref_id, title);
+            this.createFolderXml(folder_id, id, ref_id, title, pos);
             this.showCheckBoxes(this.options.checkboxes);
         }        
         return bf;
     }
-    createSeparator($container, id, ref_id, is_new_node) {
+    createSeparator($container, id, ref_id, is_new, pos="bottom") {
         var bf = new NodeHTMLBuffer(`<div id='${id}' class='item separator'/>`, "");
-        if (is_new_node) {
+        if (is_new) {
             var $hr = $(bf.flatten());
             if (ref_id) {
-                $hr.insertAfter($("#" + ref_id)).attr("id", id);
+                if(pos == "top")
+                    $hr.insertBefore($("#" + ref_id)).attr("id", id);
+                else
+                    $hr.insertAfter($("#" + ref_id)).attr("id", id);
             } else {
-                $hr.appendTo($container).attr("id", id);
+                if(pos == "top")
+                    $hr.prependTo($container).attr("id", id);
+                else
+                    $hr.appendTo($container).attr("id", id);
             }
             var folder_id = this.getContainerFolderId($container);
-            this.createSeparatorXml(folder_id, id, ref_id);
+            this.createSeparatorXml(folder_id, id, ref_id, pos);
         }
         return bf;
     }
@@ -846,16 +868,22 @@ class BookTree {
             if(this.onXmlChanged)this.onXmlChanged();
         }
     }
-    createSeparatorXml(folder_id, id, ref_id) {
+    createSeparatorXml(folder_id, id, ref_id, pos="bottom") {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
         if (seq_node) {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
             node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
             if (ref_id) {
                 var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-                seq_node.insertBefore(node, ref_node.nextSibling);
+                if(pos == "top")
+                    seq_node.insertBefore(node, ref_node);
+                else
+                    seq_node.insertBefore(node, ref_node.nextSibling);
             } else {
-                seq_node.appendChild(node);
+                if(pos == "top")
+                    seq_node.prepend(node);
+                else
+                    seq_node.appendChild(node);
             }
             var node = this.xmlDoc.createElementNS(this.NS_NC, "BookmarkSeparator");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
@@ -866,16 +894,22 @@ class BookTree {
             if(this.onXmlChanged)this.onXmlChanged();
         }
     }
-    createScrapXml(folder_id, type, id, ref_id, title, source, icon, comment, tag) {
+    createScrapXml(folder_id, type, id, ref_id, title, source, icon, comment, tag, pos="bottom") {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
         if (seq_node) {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
             node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
             if (ref_id) {
                 var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-                seq_node.insertBefore(node, ref_node.nextSibling);
+                if(pos == "top")
+                    seq_node.insertBefore(node, ref_node);
+                else
+                    seq_node.insertBefore(node, ref_node.nextSibling);
             } else {
-                seq_node.appendChild(node);
+                if(pos == "top")
+                    seq_node.prepend(node);
+                else
+                    seq_node.appendChild(node);
             }
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
@@ -892,16 +926,22 @@ class BookTree {
             if(this.onXmlChanged)this.onXmlChanged();
         }
     }
-    createFolderXml(folder_id, id, ref_id, title) {
+    createFolderXml(folder_id, id, ref_id, title, pos="bottom") {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
         if (seq_node) {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
             node.setAttributeNS(this.NS_RDF, "resource", "urn:scrapbook:item" + id);
             if (ref_id) {
                 var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
-                seq_node.insertBefore(node, ref_node.nextSibling);
+                if(pos == "top")
+                    seq_node.insertBefore(node, ref_node);
+                else
+                    seq_node.insertBefore(node, ref_node.nextSibling);
             } else {
-                seq_node.appendChild(node);
+                if(pos == "top")
+                    seq_node.prepend(node);
+                else
+                    seq_node.appendChild(node);
             }
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);

@@ -82,11 +82,8 @@
     "CapturePage": {
         "message": "Save Page"
     },
-    "As Root Node": {
-        "message": "As Root Node"
-    },
-    "At Current Position": {
-        "message": "At Current Position"
+    "SAME_LEVEL": {
+        "message": "Same Level"
     },
     "CaptureSelection": {
         "message": "Save Selection"
@@ -483,5 +480,14 @@
     },
     "CASE_SENSITIVE":{
         "message":  "Case Sensitive"
+    },
+    "NEW_POS":{
+        "message": "Put new items to"
+    },
+    "Top":{
+        "message": "Top"
+    },
+    "Bottom":{
+        "message": "Bottom"
     }
 }

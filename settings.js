@@ -111,6 +111,7 @@ settings.set('open_in_current_tab', "off");
 settings.set('lock_editbar', "off");
 settings.set('auto_close_saving_dialog', "off");
 settings.set('saving_save_frames', "on");
+settings.set('saving_new_pos', "bottom");
 settings.set('announcement_showed', "");
 // settings.loadFromStorage().then(()=>{
 //     alert(settings.backend_version)

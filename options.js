@@ -90,7 +90,10 @@ function showConfiguration(){
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
+            
             settings.set('saving_save_frames', $("input[name=saving_save_frames]").is(":checked")?"on":"off", true);
+            settings.set('saving_new_pos', $("input[name=saving_new_pos]:checked").val(), true);
+            
             settings.set('debug', $("input[name=debug]").is(":checked")?"on":"off", true);
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
@@ -132,6 +135,8 @@ function showConfiguration(){
     $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
     $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
     $("input[name=saving_save_frames]").prop("checked", settings.saving_save_frames=="on");
+    $(`input[name=saving_new_pos][value='${settings.saving_new_pos}']`).attr("checked", true);
+    
     $("input[name=debug]").prop("checked", settings.debug=="on");
 }
 window.onload=async function(){

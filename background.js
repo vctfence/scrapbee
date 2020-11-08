@@ -307,9 +307,6 @@ function saveTextFile(request){
         ajaxFormPost(settings.getBackendAddress() + "savefile", {filename, content, pwd: settings.backend_pwd}).then(response => {
             if(request.boardcast){
                 browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
-                // if(request.tab){
-                //     browser.tabs.sendMessage(request.tab.id, {type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken});
-                // }
             }
             resolve(response);
         }).catch(error => {
