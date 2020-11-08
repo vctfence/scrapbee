@@ -259,10 +259,10 @@ function showRdfList(){
     });
     
     if(paths){
-        log.debug("append rdf items:")
+        log.debug("append list items:")
         var names = settings.getRdfPathNames(); 
         names.forEach(function(name, i){
-            log.debug(`append list item:`, name, paths[i])
+            log.debug(`append item:`, name, paths[i])
             if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
                 saw = true;
                 try{

@@ -421,6 +421,8 @@ class BookTree {
             items.push({id: json.id, title, parentId, sect: sects[parentId], node, type: json.nodeType});
             sects[parentId] += inc;
         }, nodes);
+        log.debug("sorting, language = {0}, case sensitive = {1}".fillData(
+            [browser.i18n.getUILanguage(), case_sensitive ? 'on' : 'off']));
         items = items.sort(function(a, b){
             var v = comp(a.parentId, b.parentId);
             v = v || comp(a.sect, b.sect);
@@ -434,7 +436,16 @@ class BookTree {
                         y = y.match(/^[\u4E00-\u9FA5\uF900-\uFA2D]/) ? 1 : 0;
                         v = comp(x, y);
                     }
-                    v = v || a.title.localeCompare(b.title, browser.i18n.getUILanguage(), {sensitivity: case_sensitive?'case':'base', ignorePunctuation: false});
+                    try{
+                        v = v || a.title.localeCompare(
+                            b.title,
+                            browser.i18n.getUILanguage(), {
+                                sensitivity: case_sensitive ? 'case' : 'base',
+                                ignorePunctuation: false
+                            });
+                    }catch(e){
+                        log.debug(e.message);
+                    }
                 }else if(sortBy == "date"){
                     v = v || a.id > b.id;
                 }
