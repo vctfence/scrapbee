@@ -105,3 +105,15 @@ body{
     padding:8px 20px !important;
     vertical-align:middle !important;
 }
+
+
+#locater{
+    background:#444 !important;
+    width:13px !important;
+    height:20px !important;
+    line-height:20px !important;
+    mask-size:100% 100% !important;
+    vertical-align:middle !important;
+    margin:0 0 0 25px !important;
+    padding:0 !important;
+}

@@ -257,9 +257,13 @@ class EditToolBar{
         /** locate button */
         var btn = document.createElement("input");
         var btnMarkPen = btn;
-        btn.type="button";
-        btn.className="blue-button mark-pen-btn";
-        btn.value="<<";  //chrome.i18n.getMessage("MARK_PEN");
+        btn.type="image";
+        btn.className="mark-pen-btn";
+        // btn.value="<<";  //chrome.i18n.getMessage("MARK_PEN");
+        btn.id="locater";
+        btn.src="";
+        btn.value=""
+        btn.style.mask=`url('moz-extension://${extension_id}/icons/locate.svg') no-repeat`;
         btn.title="{LOCATE_NODE}".translate();
         div.appendChild(btn);
         btn.addEventListener("click", function(e){
@@ -271,7 +275,7 @@ class EditToolBar{
         var lock = document.createElement("div");
         lock.className = "scrapbee-edit-lock";
         div.appendChild(lock);
-        lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/unlock.svg)`;
+        lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/unlock.svg) no-repeat`;
         div.addEventListener("mouseenter", function(e){ // mouseover
             // console.log(e.relatedTarget)
             $(div).addClass("hover")
