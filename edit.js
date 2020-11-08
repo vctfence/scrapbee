@@ -275,7 +275,7 @@ class EditToolBar{
         var lock = document.createElement("div");
         lock.className = "scrapbee-edit-lock";
         div.appendChild(lock);
-        lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/unlock.svg) no-repeat`;
+        lock.style.backgroundImage=`url(moz-extension://${extension_id}/icons/unlock.svg)`;
         div.addEventListener("mouseenter", function(e){ // mouseover
             // console.log(e.relatedTarget)
             $(div).addClass("hover")
