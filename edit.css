@@ -69,15 +69,25 @@ body{
     vertical-align:middle;
     min-height:auto !important;
     box-shadow:none;
+    text-transform:uppercase;
 }
 .scrapbee-edit-bar input[type=button].blue-button{
-    background:#09c !important;
+    background-color:#09c !important;
+    background-image:none;
 }
 .scrapbee-edit-bar input[type=button].yellow-button{
-    background:#f70 !important;
+    background-color:#f50 !important;
+    background-image:none;
 }
 .scrapbee-edit-bar input[type=button]:disabled{
-    background:#555 !important;
+    background-color:#555 !important;
+    background-image:none;
+}
+.scrapbee-edit-bar input[type=button].locater{
+    vertical-align:middle !important;
+    background-position:center center;
+    background-size:30%;
+    background-repeat:no-repeat;
 }
 .scrapbee-menu-item{
     text-align:center !important;
@@ -104,14 +114,4 @@ body{
     border-bottom:1px solid #999 !important;
     padding:8px 20px !important;
     vertical-align:middle !important;
-}
-#locater{
-    background:#933 !important;
-    width:13px !important;
-    height:20px !important;
-    line-height:20px !important;
-    mask-size:100% 100% !important;
-    vertical-align:middle !important;
-    margin:0 0 0 25px !important;
-    padding:0 !important;
 }

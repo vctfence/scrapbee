@@ -257,19 +257,14 @@ class EditToolBar{
         /** locate button */
         var btn = document.createElement("input");
         var btnMarkPen = btn;
-        btn.type="image";
-        btn.className="mark-pen-btn";
-        // btn.value="<<";  //chrome.i18n.getMessage("MARK_PEN");
-        btn.id="locater";
-        btn.src="";
+        btn.type="button";
+        btn.className="blue-button locater";
         btn.value=""
-        btn.style.mask=`url('moz-extension://${extension_id}/icons/locate.svg') no-repeat`;
+        btn.style.backgroundImage=`url('moz-extension://${extension_id}/icons/locate.svg')`;
         btn.title="{LOCATE_NODE}".translate();
         div.appendChild(btn);
         btn.addEventListener("click", function(e){
-            browser.runtime.sendMessage({type: 'LOCATE_ITEM', id:self.scrap_id }).then((response) => {
-            }).catch((e) => {
-            });
+            browser.runtime.sendMessage({type: 'LOCATE_ITEM', id:self.scrap_id });
         });
         /** show/hide/lock*/
         var lock = document.createElement("div");

@@ -194,7 +194,6 @@ ScrapbeeElement.prototype.processResources=function(){
     return r;
 }
 ScrapbeeElement.prototype.getCommonResources=function(){
-    // do not work because the element will not be appended into the document
     try{
         var self = this;
         var style = window.getComputedStyle(this.originEl, false);
