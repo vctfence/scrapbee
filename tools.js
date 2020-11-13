@@ -357,7 +357,10 @@ function initExporter(){
     }
     $drop.change(function(e){
         var path = $(this).find("option:selected").attr("value").replace(/\.rdf\s*$/i, ".html");
-        $(this).parent().next("div").find("span.path").html(path)
+        $(this).parent().next("div").find("span.path").html(path).click(() => {
+            window.open(settings.getFileServiceAddress() + path, "_blank");
+        });
+        
     });
     $drop.change();
     $("#btnExport").click(function(){

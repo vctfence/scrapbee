@@ -498,6 +498,8 @@ li.h3{
     /* background:#eee; */
     padding:5px;
     border-radius:3px;
+    text-decoration:underline;
+    cursor:pointer;
 }
 #exporter span.header{
     width:80px;
