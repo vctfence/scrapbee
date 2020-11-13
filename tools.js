@@ -131,6 +131,7 @@ function initMover(){
         var waitingDlg = new DialogWaiting();
         waitingDlg.show();
         var pos = settings.saving_new_pos;
+        // log.debug("pos" , pos)
         await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
                 var $dest = parents[item.level];
@@ -140,7 +141,7 @@ function initMover(){
                     var src = srcTree.rdfPath + 'data/' + item.id;
                     var dest = destTree.rdfPath + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).catch((e) => {
-                        log.error(e.message);
+                        log.error("failed to move/copy files: " + e.message);
                     }).finally((response) => {
                         var icon = item.icon.replace(item.id, id);
                         destTree.createLink($dest, {

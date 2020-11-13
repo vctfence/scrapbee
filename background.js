@@ -218,7 +218,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.getBackendAddress() + "fs/move", {src, des, pwd: settings.backend_pwd});
+        return ajaxFormPost(settings.getBackendAddress() + "fs/move", {src, dest, pwd: settings.backend_pwd});
     }else if(request.type == 'FS_COPY'){
         var src = request.src, dest = request.dest;
         return ajaxFormPost(settings.getBackendAddress() + "fs/copy", {src, dest, pwd: settings.backend_pwd});
