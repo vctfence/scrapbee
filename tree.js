@@ -740,7 +740,7 @@ class BookTree {
         }        
         return bf;
     }
-    createFolder($container, id, ref_id, title, is_new, pos="bottom", a=0) {
+    createFolder($container, id, ref_id, title, is_new, pos="bottom") {
         title = $.trim(title);
         var title_encode = title.htmlEncode();
         var label = title_encode || "-- UNTITLED --";
@@ -748,14 +748,14 @@ class BookTree {
 <div class='folder-content'>`,"</div>");
         if (is_new) {
             var $folder = $(bf.flatten()), $ref = null, useRef = false;
-
             if (ref_id) {
                 $ref = this.getItemById(ref_id);
-                if($ref.next(".folder-content").length)
-                    $ref = $ref.next(".folder-content");
+                if(pos == "bottom"){
+                    if($ref.next(".folder-content").length)
+                        $ref = $ref.next(".folder-content");
+                }
                 useRef = $ref.closest($container).length > 0;
             }
-
             if(useRef){ /** ensure in container */
                 if(pos == "top")
                     $folder.insertBefore($ref);

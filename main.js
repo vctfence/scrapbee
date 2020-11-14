@@ -157,6 +157,7 @@ menulistener.onCreateFolder = function(){
                 rid = $foc.attr("id");
             }
         }
+        log.debug(settings.saving_new_pos)
         currTree.createFolder(p, genItemId(), rid, d.title, true, settings.saving_new_pos);
     });
 };
