@@ -72,6 +72,22 @@ var DialogWaiting = class extends Dialog {
         this.newElement(dlg, "img", {className: "waiting-gif", src: "icons/loading.gif"})
     }
 };
+var DialogProgress = class extends Dialog {
+    constructor(title, content, fn) {
+        super(title, '');
+        this.el.innerHTML = "";
+        var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover progress"})
+        var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
+
+        this.text = this.newElement(dlg, "div", {className: "text"})
+        var bar = this.newElement(dlg, "div", {className: "bar"})
+        this.indicator = this.newElement(bar, "div", {className: "indicator"})
+    }
+    setProgress(progress, text=""){
+        this.text.textContent = text;
+        this.indicator.style.width = Math.floor(progress * 100) + "%";
+    }
+};
 var DialogIframe = class extends Dialog {
     constructor(title, src, onload) {
         super(title, '');

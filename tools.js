@@ -127,11 +127,29 @@ function initMover(){
                 return alert(e.message);
             }
         }
-        /** show  waiting dialog */
-        var waitingDlg = new DialogWaiting();
-        waitingDlg.show();
+        /** show  progress dialog */
+        var dialog = new DialogProgress();
+        var count = 0, done = 0;
+        
+        dialog.show();
+
         var pos = settings.saving_new_pos;
-        // log.debug("pos" , pos)
+        await srcTree.iterateLiNodes(function(item){
+            return new Promise((resolve, reject) => {
+                count++;
+                resolve();
+            });
+        }, topNodes);
+
+        function progress(){
+            done++;
+            pos = "bottom";
+            dialog.setProgress(done/count, `${done} / ${count}`)
+        }
+
+        dialog.setProgress(done/count, `${done} / ${count}`)
+
+        /** start works */
         await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
                 var $dest = parents[item.level];
@@ -148,23 +166,24 @@ function initMover(){
                             type: item.type, id, ref_id:rid,
                             source: item.source, icon, title: item.title
                         },{wait: false, is_new: true, pos});
-                        pos = "bottom";
-                        resolve()
+                        progress();
+                        resolve();
                     });
                 }else if(item.nodeType == "seq"){
                     destTree.createFolder($dest, id, rid, item.title, true, pos);
                     parents[item.level+1]=(destTree.getItemById(id).next(".folder-content"));
-                    pos = "bottom";
+                    progress();
                     resolve();
                 }else if(item.nodeType == "separator"){
                     destTree.createSeparator($dest, id, rid, true, pos);
-                    pos = "bottom";
+                    progress();
                     resolve();
                 }
                 if(item.level == 0) ref_id = id;
-            });
+            })
         }, topNodes);
-        /** saving changes */
+        
+        /** saving rdf changes */
         saveingLocked = false;
         if(tree0.rdf == tree1.rdf){
             if(moveType == "FS_MOVE"){
@@ -182,7 +201,8 @@ function initMover(){
             await srcTree.saveXml();
             await destTree.saveXml();
         }
-        waitingDlg.remove();
+
+        dialog.remove();
     });
     var selected_rdfs = [];
     $(".drop-box").each(function(i){
@@ -369,11 +389,11 @@ function initExporter(){
         var name = $drop.find("option:selected").html();
         var includeSeparator = $("#exporter #include-separator").is(":checked");
         var openInNewTab = $("#exporter #open-in-new-tab").is(":checked");
-        var waitingDlg = new DialogWaiting();
-        waitingDlg.show();
+        var dialog = new DialogWaiting();
+        dialog.show();
         exportTree(rdf, name, includeSeparator, openInNewTab).then(()=>{
             setTimeout(()=>{
-                waitingDlg.remove();
+                dialog.remove();
             }, 2000)
         });
     });
