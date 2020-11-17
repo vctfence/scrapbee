@@ -42,25 +42,22 @@ function initMover(){
             var other = i == 0 ? tree1 : tree0;
             var $tree = tree == tree0 ? $("#tree0") : $("#tree1");
             var proceed = false;
-            function cfm(){
-                proceed = proceed || confirm("{ConfirmDeleteItem}".translate());
-                return proceed;
-            }
-            if($("#multi-select").is(":checked")){
-                tree.getCheckedItemsInfo(1).every(function(info){
-                    if(info.checkLevel == 0){
-                        if(!cfm())return false;
-                        tree.removeItem($(info.domElement));
-                    }
+            var que = [];
+            tree.getCheckedItemsInfo(1).forEach(function(info){
+                if(info.checkLevel == 0){
+                    que.push(info);
+                }
+            });
+            if(confirm("{ConfirmDeleteItem}".translate())){
+                var dialog = new DialogProgress();
+                dialog.show();
+                que.every(function(info, i){
+                    tree.removeItem($(info.domElement));
+                    var count = que.length, done = i + 1;
+                    dialog.setProgress(done/count, `${done} / ${count}`)
                     return true;
                 });
-            }else{
-                var $foc = tree.getFocusedItem();
-                if($foc.length){
-                    if(cfm())tree.removeItem($foc);
-                }
-            }
-            if(proceed){
+                dialog.remove();
                 await tree.saveXml();
                 $tree.next(".path-box").find("bdi").text("/");
             }
@@ -86,26 +83,16 @@ function initMover(){
         var parents = [destTree.getCurrContainer()];
         var topNodes = [];
         var topInfos = [];
-        var mode_multi = false;
-        if($("#multi-select").is(":checked")){
-            srcTree.getCheckedItemsInfo(1).forEach(function(item){
-                if(item.checkLevel == 0){
-                    topNodes.push(item.node);
-                    topInfos.push({id:item.id, type:item.type, domElement:item.domElement});
-                }
-            });
-            if(!topNodes.length)
-                return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
-        }else{
-            var id = $foc.attr("id");
-            var type = srcTree.getItemType($foc);
-            var domElement = $foc[0];
-            if(!id)
-                return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
-            var liXmlNode = srcTree.getItemXmlNode(id);
-            topNodes.push(liXmlNode);
-            topInfos.push({id, type, domElement});
-        }
+        
+        srcTree.getCheckedItemsInfo(1).forEach(function(item, i){
+            if(item.checkLevel == 0){
+                topNodes.push(item.node);
+                topInfos.push({id:item.id, type:item.type, domElement:item.domElement});
+            }
+        });
+        if(!topNodes.length)
+            return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
+        
         /** operation validate */
         if($foc_dest.length && srcTree.rdf == destTree.rdf && moveType == "FS_MOVE"){
             try{
@@ -129,10 +116,9 @@ function initMover(){
         }
         /** show  progress dialog */
         var dialog = new DialogProgress();
-        var count = 0, done = 0;
-        
         dialog.show();
-
+        
+        var count = 0, done = 0;
         var pos = settings.saving_new_pos;
         await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
@@ -142,16 +128,19 @@ function initMover(){
         }, topNodes);
 
         function progress(){
-            done++;
             pos = "bottom";
-            dialog.setProgress(done/count, `${done} / ${count}`)
+            dialog.setProgress(++done / count, `${done} / ${count}`);
         }
 
-        dialog.setProgress(done/count, `${done} / ${count}`)
+        dialog.setProgress(done/count, `${done} / ${count}`);
 
         /** start works */
         await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
+                /*** ignor unchecked nodes */
+                // if(!srcTree.isItemChecked(srcTree.getItemById(item.id)))
+                //     return resolve();
+                
                 var $dest = parents[item.level];
                 var id = genItemId();
                 var rid = item.level == 0 ? ref_id : null;
@@ -165,7 +154,7 @@ function initMover(){
                         destTree.createLink($dest, {
                             type: item.type, id, ref_id:rid,
                             source: item.source, icon, title: item.title
-                        },{wait: false, is_new: true, pos});
+                        }, {wait: false, is_new: true, pos});
                         progress();
                         resolve();
                     });
@@ -185,23 +174,16 @@ function initMover(){
         
         /** saving rdf changes */
         saveingLocked = false;
-        if(tree0.rdf == tree1.rdf){
-            if(moveType == "FS_MOVE"){
-                topInfos.forEach((info) => {
-                    destTree.removeItem(destTree.getItemById(info.id)); /** remove src nodes */
-                });
-            }
-            await destTree.saveXml();
-        }else{
-            if(moveType == "FS_MOVE"){
-                topInfos.forEach((info) => {
-                    srcTree.removeItem(srcTree.getItemById(info.id));
-                });
-            }
-            await srcTree.saveXml();
-            await destTree.saveXml();
-        }
 
+        if(moveType == "FS_MOVE"){
+            topInfos.forEach((info) => {
+                srcTree.removeItem(srcTree.getItemById(info.id));
+            });
+            if(tree0.rdf == tree1.rdf)
+                await srcTree.saveXml();
+        }
+        await destTree.saveXml();
+        
         dialog.remove();
     });
     var selected_rdfs = [];
@@ -234,9 +216,10 @@ function initMover(){
     });
     function loadXml(rdf, $box, treeId){
         return new Promise((resolve, reject) => {
+            var rdfPath = rdf.replace(/[^\/\\]*$/, "");
             var xmlhttp=new XMLHttpRequest();
             xmlhttp.onload = async function(r) {
-	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: $("#multi-select").is(":checked")});
+	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: true}); // $("#multi-select").is(":checked")
                 if(treeId == 0)
                     tree0 = currTree;
                 else if(treeId == 1)
@@ -260,6 +243,10 @@ function initMover(){
                         }
                     });
 	        };
+                currTree.onItemRemoved=function(id){
+                    $.post(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd}, function(r){});
+                };
+                // currTree.showCheckBoxes(1)
                 resolve(currTree);
             };
             xmlhttp.onerror = function(err) {

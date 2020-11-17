@@ -261,28 +261,27 @@ function showRdfList(){
         if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
     });
     
-    log.debug("rdf paths:")
-    paths.forEach(function(path, i){
-        log.debug(path)
-    });
+    // log.debug("rdf paths:")
+    // paths.forEach(function(path, i){
+    //     log.debug(path)
+    // });
     
     if(paths){
-        log.debug("append list items:")
         var names = settings.getRdfPathNames(); 
         names.forEach(function(name, i){
-            log.debug(`append item:`, name, paths[i])
+            log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
             if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
                 saw = true;
                 try{
                     drop.select(name, paths[i]);
                 }catch(e){
-                    log.error(e.message)
+                    log.error(e.message);
                 }
             }
             try{
                 drop.addItem(name, paths[i]);
             }catch(e){
-                log.error(e.message)
+                log.error(e.message);
             }            
         });
         if(!saw){
@@ -326,9 +325,9 @@ body{
   border-color:#${settings.font_color};
   background:#${bg_color};
 }
-.item.separator{
-  border-color:#${bg_color};
-  background:#${settings.separator_color};
+.item.separator.focus > .stroke{
+  background:#${settings.focused_fg_color};
+  border-color:#${settings.focused_bg_color};
 }
 .item.page,.item.bookmark,.item.folder{
   000padding-left:${icon_space}px;

@@ -3,7 +3,7 @@ import {log} from "./message.js";
 import {randRange, comp} from "./utils.js";
 
 class NodeHTMLBuffer {
-    constructor(start, end) {
+    constructor(start="", end="") {
         this.start=start;
         this.end=end;
         this.children=[];
@@ -113,13 +113,18 @@ class BookTree {
             return $el;
         }
         var token = $container.prop("scrapbee_tree_token") || randRange(0, 99999999);
-        $(document).unbind('.BookTree' + token);
+        $container.unbind('.BookTree' + token);
         $container.prop("scrapbee_tree_token", token);
-        // mouse down (focus items)
-        $(document).bind("mousedown.BookTree" + token, function (e) {
+
+
+        $container[0].onselectstart = (e) => {e.preventDefault()}
+        
+        /** mouse down (focus items) */
+        $container.bind("mousedown.BookTree" + token, function (e) {
+            // $container.css("background", "#f99")
+            if(!$(e.target).closest($container).length)
+                return;
             if(e.target.tagName != "INPUT"){
-                if(!$(e.target).closest($container).length)
-                    return;
                 var $el = getItemNode(e.target);
                 if ($el) {
                     if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("page") || $el.hasClass("bookmark")) {
@@ -139,8 +144,11 @@ class BookTree {
                 }
             }
         });
-        // hack middle clicking
-        $(document).on("mousedown", function (e1) {
+        
+        /** hack middle clicking */
+        $container.on("mousedown", function (e1) {
+            if(!$(e1.target).closest($container).length)
+                return;
             $(document).one("mouseup", function (e2) {
                 if (e1.which == 2 && e1.target == e2.target) {
                     var e3 = $.event.fix(e2);
@@ -149,8 +157,9 @@ class BookTree {
                 }
             });
         });
-        // click nodes
-        $(document).bind("click.BookTree" + token, function (e) {
+        
+        /** click nodes */
+        $container.bind("click.BookTree" + token, function (e) {
             if(!$(e.target).closest($container).length)
                 return;
             var $el = getItemNode(e.target);
@@ -178,15 +187,71 @@ class BookTree {
                 }
             }
         });
-        // mouse up
-        $(document).bind("mouseup.BookTree" + token, function (e) {
-            /** toggle checkboxs recursively */
-            if(e.target.tagName == "INPUT" && e.button == 0){
-                $(e.target).parent().next(".folder-content").find("input").prop("checked", !e.target.checked);
-                if(e.target.checked){
-                    $(e.target).parents(".folder-content").prev("div").find("input").prop("checked", false);
-                }
+        /** mouse up */
+        this.$lastFrom = null
+
+        var lastToggleAr=[]
+        $container.bind("mouseup.BookTree" + token, function (e) {
+            if($(e.target).closest($container).length < 1)
+                return
+            function toggleChildren($item, checked){
+                if($item.hasClass("folder"))
+                    $item.next(".folder-content").find("input").prop("checked", checked);
             }
+
+            /*** checkbox */
+            if(e.target.tagName == "INPUT" && e.button == 0){
+                /**** check siblings */
+                var $curr = $(e.target).parent(".item");
+
+                if(!e.shiftKey)
+                    self.focusItem($curr);
+
+                // if(!e.ctrlKey)
+                //     self.unCheckAll();
+                
+                if(e.shiftKey){
+                    var $lastFrom = self.$lastFrom;
+                    lastToggleAr.forEach(function(id){
+                        if(id != $curr.attr("id")){
+                            self.getItemById(id).children("input").prop("checked", false);
+                        }
+                    })
+                    if($lastFrom){
+                        var r = new Range()
+                        var comp = $lastFrom[0].compareDocumentPosition($curr[0]);
+                        if(comp == 2 || comp == 8){
+                            r.setStartBefore($curr[0])
+                            r.setEndAfter($lastFrom[0])
+                        }else if(comp == 4 || comp == 16){
+                            r.setStartBefore($lastFrom[0])
+                            r.setEndAfter($curr[0])
+                        }
+                        var fragment = r.cloneContents() // extractContents
+                        fragment.querySelectorAll(".item").forEach(function(d, i){
+                            var id = $(d).attr("id")
+                            lastToggleAr.push(id)
+                            if(id != $curr.attr("id")){
+                                self.getItemById(id).children("input").prop("checked", !($(e.target).prop("checked")));
+                            }
+                        })
+                    }
+                }
+
+                if(!e.shiftKey || !self.$lastFrom){
+                    lastToggleAr =[];
+                    self.$lastFrom = $curr;
+                }
+
+                // /**** toggle checkboxs recursively */
+                // $(e.target).parent().next(".folder-content").find("input").prop("checked", !e.target.checked);
+
+                // /**** toggle parent checkboxs */
+                // if(e.target.checked){
+                //     $(e.target).parents(".folder-content").prev("div").find("input").prop("checked", false);
+                // }
+            }
+            
             /** end of item dragging */
             if (!dragging) return;
             dragging = false;
@@ -202,7 +267,7 @@ class BookTree {
         });
         // mouse move
         var $prev_ref, prev_t;
-        $(document).bind("mousemove.BookTree" + token, function (e) {
+        $container.bind("mousemove.BookTree" + token, function (e) {
             if (!dragging) return;
             var $el = self.getItemY($container, e.pageY) || $ref_item;
             $ref_item = $el;
@@ -355,6 +420,9 @@ class BookTree {
         this.moveItemXml($c.attr("id"), $c.parent().prev(".folder").attr("id"), $ref_item.attr("id"), move_type);
         $item.remove();
     }
+    isItemChecked($item){
+        return $item.children("input[type=checkbox]:checked").length > 0;
+    }
     getCheckedItemsInfo(sort=-1){
         var self = this, buf = [];
         this.$top_container.find(".item input[type=checkbox]:checked").toArray().forEach(function(check){
@@ -467,7 +535,7 @@ class BookTree {
         $container.empty();
         var buffers={};
         var bufferlist=[];
-        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer("", "");        
+        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer();        
         try{
             var sec = 0;
             await this.iterateLiNodes((json) => {
@@ -718,6 +786,10 @@ class BookTree {
             var $item = $(bf.flatten()), $ref = null, useRef = false;
             if (ref_id) {
                 $ref = this.getItemById(ref_id);
+                if(pos == "bottom"){
+                    if($ref.next(".folder-content").length)
+                        $ref = $ref.next(".folder-content");
+                }                
                 useRef = $ref.closest($container).length > 0;
             }
             if(useRef){
@@ -774,22 +846,32 @@ class BookTree {
         return bf;
     }
     createSeparator($container, id, ref_id, is_new, pos="bottom") {
-        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item separator'/>`, "");
+        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item separator'><input type='checkbox'/><div class='stroke'/></div>`);
         if (is_new) {
             var $hr = $(bf.flatten());
+            var $ref = null, useRef = false;
+            if (ref_id) {
+                $ref = this.getItemById(ref_id);
+                if(pos == "bottom"){
+                    if($ref.next(".folder-content").length)
+                        $ref = $ref.next(".folder-content");
+                }                
+                useRef = $ref.closest($container).length > 0;
+            }
             if (ref_id) {
                 if(pos == "top")
-                    $hr.insertBefore($("#" + ref_id)).attr("id", id);
+                    $hr.insertBefore($ref);
                 else
-                    $hr.insertAfter($("#" + ref_id)).attr("id", id);
+                    $hr.insertAfter($ref);
             } else {
                 if(pos == "top")
-                    $hr.prependTo($container).attr("id", id);
+                    $hr.prependTo($container);
                 else
-                    $hr.appendTo($container).attr("id", id);
+                    $hr.appendTo($container);
             }
             var folder_id = this.getContainerFolderId($container);
             this.createSeparatorXml(folder_id, id, ref_id, pos);
+            this.showCheckBoxes(this.options.checkboxes);
         }
         return bf;
     }
