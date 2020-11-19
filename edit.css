@@ -60,11 +60,12 @@ body{
     cursor:pointer !important;
     border-radius:5px !important;
     padding:3px 15px !important;
+    min-width:0px !important;
     border:none !important;
     line-height:20px !important;
     margin: auto auto auto 5px !important;
     width:auto !important;
-    height:auto !important;
+    height:20px !important;
     font-weight:normal !important;
     vertical-align:middle;
     min-height:auto !important;

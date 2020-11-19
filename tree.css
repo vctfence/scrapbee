@@ -108,14 +108,7 @@
 .item.separator > input[type=checkbox]{
 }
 .item.separator > .stroke{
-    /* height:15px; */
-    /* border-width:7px 5px 7px 5px; */
-    /* box-sizing:border-box; */
-    /* border-style:solid; */
-    /* border-color:#555; */
-
-    margin:auto;
-    margin-left:5px;
+    margin:auto auto auto 3px;
     height:1px;
     background:#999;
     flex-grow:1;
