@@ -6,14 +6,18 @@ window.onload=async function(){
     await settings.loadFromStorage();
     
     document.body.innerHTML = document.body.innerHTML.translate();
+    $("#btnHelp").click(function(){
+        browser.tabs.create({"url": "../options.html#area=help"});
+        window.close();
+    });
     $("#btnSetting").click(function(){
         browser.tabs.create({"url": "../options.html"});
         window.close();
     });
     $("#btnTools").click(function(){
-        browser.tabs.create({"url": "../options.html#tools"});
+        browser.tabs.create({"url": "../options.html#area=tools"});
         window.close();
-    });    
+    });
     $("#btnOpenInSidebar").click(function(){
         browser.sidebarAction.open();
         window.close();
