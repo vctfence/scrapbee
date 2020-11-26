@@ -204,9 +204,11 @@ class BookTree {
                 /**** check siblings */
                 var $curr = $(e.target).parent(".item");
 
-                if(!e.shiftKey)
+                if(!e.shiftKey){
                     self.focusItem($curr);
-
+                    if(self.onChooseItem)self.onChooseItem($curr.attr("id"));
+                }
+                
                 // if(!e.ctrlKey)
                 //     self.unCheckAll();
                 

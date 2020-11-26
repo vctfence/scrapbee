@@ -179,7 +179,7 @@ function initMover(){
             topInfos.forEach((info) => {
                 srcTree.removeItem(srcTree.getItemById(info.id));
             });
-            if(tree0.rdf == tree1.rdf)
+            if(tree0.rdf != tree1.rdf)
                 await srcTree.saveXml();
         }
         await destTree.saveXml();
