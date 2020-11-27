@@ -229,7 +229,11 @@ function initMover(){
                     var t = currTree.getItemPath(currTree.getItemById(itemId));
                     $box.next(".path-box").find("bdi").html(t);
 	        };
-                currTree.saveXml=currTree.onDragged=function(){
+                currTree.onDragged=function($item){
+                    currTree.onChooseItem($item.attr("id"));    
+                    return currTree.saveXml();
+                }
+                currTree.saveXml=function(){
                     return new Promise((resolve, reject) => {
                         if(!saveingLocked){
                             browser.runtime.sendMessage({

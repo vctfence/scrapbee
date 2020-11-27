@@ -129,9 +129,6 @@ class BookTree {
                 if ($el) {
                     if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("page") || $el.hasClass("bookmark")) {
                         if(self.onChooseItem)self.onChooseItem($el.attr("id"));
-                        // var ref_node = self.getLiNode("urn:scrapbook:item" + $el.attr("id"));
-                        // console.log($el.attr("id"))
-                        // console.log(ref_node.nextElementSibling)
                     }            
                     if (e.button == 0) {
                         e.preventDefault();
@@ -194,10 +191,6 @@ class BookTree {
         $container.bind("mouseup.BookTree" + token, function (e) {
             if($(e.target).closest($container).length < 1)
                 return
-            function toggleChildren($item, checked){
-                if($item.hasClass("folder"))
-                    $item.next(".folder-content").find("input").prop("checked", checked);
-            }
 
             /*** checkbox */
             if(e.target.tagName == "INPUT" && e.button == 0){
@@ -255,17 +248,18 @@ class BookTree {
             }
             
             /** end of item dragging */
-            if (!dragging) return;
-            dragging = false;
-            $container.find(".drag-mark").remove();
-            if ($ref_item && [1, 2, 3].includes(t)) {
-                if ($drag_item[0] != $ref_item[0]) {
-                    self.moveNode($drag_item, $ref_item, t);
-                    if(self.onDragged)self.onDragged($drag_item);
+            if (dragging) {
+                dragging = false;
+                $container.find(".drag-mark").remove();
+                if ($ref_item && [1, 2, 3].includes(t)) {
+                    if ($drag_item[0] != $ref_item[0]) {
+                        self.moveNode($drag_item, $ref_item, t);
+                        if(self.onDragged)self.onDragged($drag_item);
+                    }
                 }
+                $ref_item = null;
+                $container.find(".drag-into").removeClass("drag-into");
             }
-            $ref_item = null;
-            $container.find(".drag-into").removeClass("drag-into");
         });
         // mouse move
         var $prev_ref, prev_t;
