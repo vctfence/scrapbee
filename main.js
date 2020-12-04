@@ -133,7 +133,7 @@ menulistener.onSort1 = function(){
         }
         await currTree.sortTree(d.sort_by, $target, d.order == "asc", d.case_sensitive=="on");
         currTree.onXmlChanged();
-        await currTree.renderTree($(".root.folder-content"));
+        await currTree.renderTree($(".folder-content.toplevel"));
         currTree.restoreStatus();
     });
 };
@@ -253,7 +253,7 @@ function showRdfList(){
     var saw = false;
     var paths = settings.getRdfPaths();
     if(paths.length == 0)
-        $(".root.folder-content").html("{NO_RDF_SETTED_HINT}".translate());
+        $(".folder-content.toplevel").html("{NO_RDF_SETTED_HINT}".translate());
     drop = drop || new SimpleDropdown($(".drop-button")[0], []);
     drop.clear();
     drop.onchange=(function(title, value){
@@ -402,12 +402,12 @@ settings.onchange=function(key, value){
     }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
         applyAppearance();
     }else if(key == "backend"){
-        $(".root.folder-content").empty().text("{Loading...}".translate());
+        $(".folder-content.toplevel").empty().text("{Loading...}".translate());
         browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
             loadAll();
         }).catch((e) => {
             log.error("failed to start backend, please check installation and settings");
-            $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
+            $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
         });
     }
 };
@@ -500,7 +500,7 @@ window.onload=async function(){
         loadAll();
     }).catch((e) => {
         log.error("failed to start backend, please check installation and settings");
-        $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
+        $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
     });
     /** announcement */
     var ann = browser.i18n.getMessage("announcement_content");
@@ -521,7 +521,7 @@ function loadXml(rdf){
     currTree = null;
     if(!rdf) return Promise.reject(Error("invalid rdf path"));
     return new Promise((resolve, reject) => {
-        $(".root.folder-content").empty().text("{Loading...}".translate());
+        $(".folder-content.toplevel").empty().text("{Loading...}".translate());
         var rdfPath = rdf.replace(/[^\/\\]*$/, "");
         var rdf_file = rdf.replace(/.*[\/\\]/, "");
         var xmlhttp=new XMLHttpRequest();
@@ -529,7 +529,7 @@ function loadXml(rdf){
             try{
                 var _begin = new Date().getTime();
                 currTree = new BookTree(r.target.response, rdf);
-                await currTree.renderTree($(".root.folder-content"));
+                await currTree.renderTree($(".folder-content.toplevel"));
                 var cost = new Date().getTime() - _begin;
                 log.info(`rdf loaded in ${cost}ms`);
             }catch(e){
@@ -606,13 +606,10 @@ function loadXml(rdf){
             resolve(currTree);
         };
         xmlhttp.onerror = function(err) {
-            $(".root.folder-content").html("{FAIL_START_BACKEND_HINT}".translate());
+            $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
             log.error(`load ${rdf} failed, ${err}`);
             reject(err)
         };
-
-        // log.info("requesting " + settings.getFileServiceAddress() + rdf)
-        
         xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
@@ -627,10 +624,10 @@ function switchRdf(rdf){
     return new Promise((resolve, reject) => {
         currTree = null;
         if(!$.trim(rdf)){
-            $(".root.folder-content").empty().text("Invaid rdf path.");
+            $(".folder-content.toplevel").empty().text("Invaid rdf path.");
             reject();
         }
-        $(".root.folder-content").html("{Loading...}".translate());
+        $(".folder-content.toplevel").html("{Loading...}".translate());
         /** check rdf exists */
         touchRdf(settings.getBackendAddress(), rdf, settings.backend_pwd).then(function(r){
             loadXml(rdf).then(()=>{
@@ -654,7 +651,7 @@ function requestUrlSaving(itemId){
                    $container = $f.parent(".folder-content");
                }
            }else{
-               $container = $(".root.folder-content");
+               $container = $(".folder-content.toplevel");
            }
            
            currTree.createLink(currTree.getCurrContainer(), {

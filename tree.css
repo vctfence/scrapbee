@@ -121,7 +121,7 @@
     border-color:#368;
     background:#fff;
 }
-.folder-content.root > .item{
+.folder-content.toplevel > .item{
     display: flex;
     margin-left:0px;
 }
@@ -137,7 +137,7 @@ hr.drag-mark{
     margin-left:0;
     background:none;
 }
-.folder-content.root{
+.folder-content.toplevel{
     display:block;
     margin:60px 20px 20px 20px;
     overflow:visible;

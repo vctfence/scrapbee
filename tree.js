@@ -525,17 +525,21 @@ class BookTree {
         });
     }
     
-    async renderTree($container) {
+    async renderTree($container, showRootNode=false) {
         var self = this;
         this.$top_container = $container;
         $container.empty();
         var buffers={};
         var bufferlist=[];
-        buffers["urn:scrapbook:root"] = new NodeHTMLBuffer();        
+        buffers["top-level"] = new NodeHTMLBuffer();
+
+        var nodes = showRootNode? [this.getLiNode("urn:scrapbook:root")] :
+            this.getSeqNode("urn:scrapbook:root").children;  
+
         try{
             var sec = 0;
             await this.iterateLiNodes((json) => {
-                var parentId = json.parentId || "urn:scrapbook:root";
+                var parentId = json.parentId || "top-level";
                 var bf;
                 switch (json.nodeType) {
                 case "seq":
@@ -558,13 +562,14 @@ class BookTree {
                 if(json.nodeType == "separator"){
                     sec++;
                 }
-            });
+            }, nodes);
+
             bufferlist.forEach(function(item){
                 buffers[item.id] = item.bf;
                 if(buffers[item.parentId])
                     buffers[item.parentId].appendChild(item.bf);
             });
-            var html = buffers["urn:scrapbook:root"].flatten();
+            var html = buffers["top-level"].flatten();
             $container.html(html);
             this.showCheckBoxes(this.options.checkboxes);
             this.rendered = true;
@@ -577,14 +582,15 @@ class BookTree {
     async iterateLiNodes(fn, nodes=null, fn2=null) {
         var self = this;
         
-        if(!(nodes instanceof Array))
-            nodes = this.getSeqNode("urn:scrapbook:root").children;
+        // if(!(nodes instanceof Array))
+        //     nodes = this.getSeqNode("urn:scrapbook:root").children;
         
         var level = 0;
         async function processer(nodes, parentId=null) {
             for (let child of nodes) {
                 try{
                     var [nodeType, introNode] = self.getLiNodeType(child);
+
                     if (nodeType == "seq") { // folder
                         var seqNode = introNode;
                         var about = introNode.getAttributeNS(self.NS_RDF, "about");
@@ -812,7 +818,8 @@ class BookTree {
         title = $.trim(title);
         var title_encode = title.htmlEncode();
         var label = title_encode || "-- UNTITLED --";
-        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title_encode}'><input type='checkbox'/><i/><label>${label}</label></div>
+        var checkbox = (id == "root") ? "" : "<input type='checkbox'/>";
+        var bf = new NodeHTMLBuffer(`<div id='${id}' class='item folder' title='${title_encode}'>${checkbox}<i/><label>${label}</label></div>
 <div class='folder-content'>`,"</div>");
         if (is_new) {
             var $folder = $(bf.flatten()), $ref = null, useRef = false;
@@ -1070,12 +1077,28 @@ class BookTree {
         }
     }
     getLiNode(about) {
-        var search = `//RDF:li[@RDF:resource='${about}']`;
-        var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-        return result.singleNodeValue;
+        if(about == "urn:scrapbook:root"){ // fake node, does not exists in the doc
+            var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");
+            node.setAttributeNS(this.NS_RDF, "resource", about);
+            return node
+        }else{
+            var search = `//RDF:li[@RDF:resource='${about}']`;
+            var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+            return result.singleNodeValue;
+        }
     }
     getDescNode(about) {
-        return this.desc_node_cache[about];
+        if(about == "urn:scrapbook:root"){ // fake node, does not exists in the doc
+            var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
+            node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:root");
+            node.setAttributeNS(this.MAIN_NS, "id", "root");
+            node.setAttributeNS(this.MAIN_NS, "type", "folder");
+            node.setAttributeNS(this.MAIN_NS, "title", "root");
+            node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
+            return node
+        }else{
+            return this.desc_node_cache[about];
+        }
     }
     getSeqNode(about) {
         return this.seq_node_cache[about];

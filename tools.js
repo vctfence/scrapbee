@@ -224,7 +224,7 @@ function initMover(){
                     tree0 = currTree;
                 else if(treeId == 1)
                     tree1 = currTree;
-	        await currTree.renderTree($box);
+	        await currTree.renderTree($box, true);
 	        currTree.onChooseItem=function(itemId){
                     var t = currTree.getItemPath(currTree.getItemById(itemId));
                     $box.next(".path-box").find("bdi").html(t);
