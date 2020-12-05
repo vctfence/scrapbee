@@ -130,6 +130,9 @@
     margin-left:18px;
     text-align:left;
 }
+.folder-content.top-level{
+    margin-left:0px;
+}
 hr.drag-mark{
     border:none;
     border-bottom:1px dashed #f00;

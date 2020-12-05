@@ -6,12 +6,12 @@ import {log} from "./message.js";
 
 function initMover(){
     var mulitCheck;
-    $("#multi-select").change(function(){
+    $("#show-root").change(function(){
         mulitCheck = this.checked;
         if(tree0)
-            tree0.showCheckBoxes(this.checked);
+            tree0.showRoot(this.checked);
         if(tree1)
-            tree1.showCheckBoxes(this.checked);
+            tree1.showRoot(this.checked);
     });
     var saveingLocked = false;
     var tree0, tree1;
@@ -48,6 +48,9 @@ function initMover(){
                     que.push(info);
                 }
             });
+            if(!que.length){
+                return;
+            }
             if(confirm("{ConfirmDeleteItem}".translate())){
                 var dialog = new DialogProgress();
                 dialog.show();
@@ -83,7 +86,6 @@ function initMover(){
         var parents = [destTree.getCurrContainer()];
         var topNodes = [];
         var topInfos = [];
-        
         srcTree.getCheckedItemsInfo(1).forEach(function(item, i){
             if(item.checkLevel == 0){
                 topNodes.push(item.node);
@@ -92,7 +94,6 @@ function initMover(){
         });
         if(!topNodes.length)
             return alert("{NO_SOURCE_NODE_SELECTED}".translate());    
-        
         /** operation validate */
         if($foc_dest.length && srcTree.rdf == destTree.rdf && moveType == "FS_MOVE"){
             try{
@@ -219,12 +220,16 @@ function initMover(){
             var rdfPath = rdf.replace(/[^\/\\]*$/, "");
             var xmlhttp=new XMLHttpRequest();
             xmlhttp.onload = async function(r) {
-	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: true}); // $("#multi-select").is(":checked")
+	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: true});                
                 if(treeId == 0)
                     tree0 = currTree;
                 else if(treeId == 1)
                     tree1 = currTree;
-	        await currTree.renderTree($box, true);
+	        await currTree.renderTree($box, false);
+
+                
+                currTree.toggleFolder(currTree.getItemById("root"), true);
+                
 	        currTree.onChooseItem=function(itemId){
                     var t = currTree.getItemPath(currTree.getItemById(itemId));
                     $box.next(".path-box").find("bdi").html(t);

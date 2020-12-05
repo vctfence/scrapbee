@@ -438,7 +438,6 @@ class BookTree {
         });
         return buf;
     }
-
     getDescendantItems($root){
         var self = this, buf = [];
         if(this.getItemType($root) == "folder"){
@@ -524,17 +523,27 @@ class BookTree {
             a.node.parentNode.removeChild(a.node);
         });
     }
-    
+    showRoot(visiable){
+        var $node = this.$top_container.find(".item.folder#root");
+        $node[visiable?"show":"hide"]();
+        $node.next(".folder-content")[(visiable && !($node.hasClass("expended"))) ? "hide" : "show"]();
+        if(visiable)
+            $node.next(".folder-content").removeClass("top-level");
+        else
+            $node.next(".folder-content").addClass("top-level");
+    }
     async renderTree($container, showRootNode=false) {
         var self = this;
         this.$top_container = $container;
         $container.empty();
-        var buffers={};
-        var bufferlist=[];
+        var buffers = {};
+        var bufferlist = [];
         buffers["top-level"] = new NodeHTMLBuffer();
 
-        var nodes = showRootNode? [this.getLiNode("urn:scrapbook:root")] :
-            this.getSeqNode("urn:scrapbook:root").children;  
+        // var nodes = showRootNode? [this.getLiNode("urn:scrapbook:root")] :
+        //     this.getSeqNode("urn:scrapbook:root").children;
+
+        var nodes = [this.getLiNode("urn:scrapbook:root")];
 
         try{
             var sec = 0;
@@ -578,6 +587,7 @@ class BookTree {
         }
         this.listenUserEvents($container);
         this.showCheckBoxes(this.options.checkboxes);
+        this.showRoot(showRootNode);
     }
     async iterateLiNodes(fn, nodes=null, fn2=null) {
         var self = this;
