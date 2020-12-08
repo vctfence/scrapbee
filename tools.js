@@ -128,9 +128,14 @@ function initMover(){
             });
         }, topNodes);
 
-        function progress(){
+        function progress(srcId){
             pos = "bottom";
             dialog.setProgress(++done / count, `${done} / ${count}`);
+            if(moveType == "FS_MOVE"){
+                srcTree.removeItem(srcTree.getItemById(srcId));
+                if(tree0.rdf == tree1.rdf)
+                    destTree.removeItem(destTree.getItemById(srcId));
+            }
         }
 
         dialog.setProgress(done/count, `${done} / ${count}`);
@@ -156,17 +161,17 @@ function initMover(){
                             type: item.type, id, ref_id:rid,
                             source: item.source, icon, title: item.title
                         }, {wait: false, is_new: true, pos});
-                        progress();
+                        progress(item.id);
                         resolve();
                     });
                 }else if(item.nodeType == "seq"){
                     destTree.createFolder($dest, id, rid, item.title, true, pos);
                     parents[item.level+1]=(destTree.getItemById(id).next(".folder-content"));
-                    progress();
+                    progress(item.id);
                     resolve();
                 }else if(item.nodeType == "separator"){
                     destTree.createSeparator($dest, id, rid, true, pos);
-                    progress();
+                    progress(item.id);
                     resolve();
                 }
                 if(item.level == 0) ref_id = id;
@@ -177,9 +182,13 @@ function initMover(){
         saveingLocked = false;
 
         if(moveType == "FS_MOVE"){
-            topInfos.forEach((info) => {
-                srcTree.removeItem(srcTree.getItemById(info.id));
-            });
+            // topInfos.forEach((info) => {
+            //     srcTree.removeItem(srcTree.getItemById(info.id));
+
+            //     if(tree0.rdf == tree1.rdf)
+            //         destTree.removeItem(destTree.getItemById(info.id));
+                    
+            // });
             if(tree0.rdf != tree1.rdf)
                 await srcTree.saveXml();
         }
