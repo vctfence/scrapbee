@@ -184,10 +184,8 @@ function initMover(){
         if(moveType == "FS_MOVE"){
             // topInfos.forEach((info) => {
             //     srcTree.removeItem(srcTree.getItemById(info.id));
-
             //     if(tree0.rdf == tree1.rdf)
             //         destTree.removeItem(destTree.getItemById(info.id));
-                    
             // });
             if(tree0.rdf != tree1.rdf)
                 await srcTree.saveXml();
@@ -234,9 +232,8 @@ function initMover(){
                     tree0 = currTree;
                 else if(treeId == 1)
                     tree1 = currTree;
-	        await currTree.renderTree($box, false);
+	        await currTree.renderTree($box,  $("#show-root").is(":checked"));
 
-                
                 currTree.toggleFolder(currTree.getItemById("root"), true);
                 
 	        currTree.onChooseItem=function(itemId){
@@ -339,7 +336,7 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
  }
 </style>
 `);
-buffer.push(`
+            buffer.push(`
 <script>
   NodeList.prototype.forEach = Array.prototype.forEach;
   var nodes = document.querySelectorAll("li");

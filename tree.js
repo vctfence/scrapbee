@@ -116,7 +116,6 @@ class BookTree {
         $container.unbind('.BookTree' + token);
         $container.prop("scrapbee_tree_token", token);
 
-
         $container[0].onselectstart = (e) => {e.preventDefault()}
         
         /** mouse down (focus items) */
@@ -137,20 +136,23 @@ class BookTree {
                         dragging = !self.options.lockDraging;
                         t = 0;
                     }
-                    self.focusItem($el);                    
+                    self.focusItem($el);
                 }
             }
         });
         
-        /** hack middle clicking */
+        /** hack middle clicking and drop outside */
         $container.on("mousedown", function (e1) {
             if(!$(e1.target).closest($container).length)
                 return;
-            $(document).one("mouseup", function (e2) {
+            $(window).one("mouseup", function (e2) {
+                 if (dragging) {
+                     $container.trigger("mouseup")
+                 }
                 if (e1.which == 2 && e1.target == e2.target) {
                     var e3 = $.event.fix(e2);
                     e3.type = "click";
-                    $(e2.target).trigger(e3)
+                    $(e2.target).trigger(e3);
                 }
             });
         });
@@ -282,7 +284,7 @@ class BookTree {
                     var single_child = ($children.length == 1 && $parent && $parent[0] == $el[0]);
                     if ((!expanded_owner || single_child) && relY > $el.height() * 0.6) { // after
                         t = 2;
-                    } else if (relY < $el.height() * 0.3) { // before
+                    } else if ((relY < $el.height() * 0.3) && !$el.attr("id") == "root") { // before
                         t = 1;
                     } else {
                         // self.toggleFolder($el, true);
@@ -399,7 +401,11 @@ class BookTree {
             return;
         var $c = $item.clone();
         if (move_type == 3){
-            $ref_item.nextAll(".folder-content:first").append($c);
+            if(settings.saving_new_pos == "bottom"){
+                $ref_item.nextAll(".folder-content:first").append($c);
+            }else{
+                $ref_item.nextAll(".folder-content:first").prepend($c);
+            }
         }else if (move_type == 2){
             if ($ref_item.hasClass("folder"))
                 $ref_item.nextAll(".folder-content:first").after($c);
@@ -544,7 +550,8 @@ class BookTree {
         //     this.getSeqNode("urn:scrapbook:root").children;
 
         var nodes = [this.getLiNode("urn:scrapbook:root")];
-
+        var $rootContainer = this.getItemById("root").next(".folder-content");
+        
         try{
             var sec = 0;
             await this.iterateLiNodes((json) => {
@@ -552,15 +559,15 @@ class BookTree {
                 var bf;
                 switch (json.nodeType) {
                 case "seq":
-                    bf = self.createFolder(null, json.id, null, json.title);
+                    bf = self.createFolder(self.$top_container, json.id, null, json.title);
                     break;
                 case "bookmark":
                 case "page":
-                    bf = self.createLink(null, json);
+                    bf = self.createLink(self.$top_container, json);
                     break;
                 case "separator":
                     sec++;
-                    bf = self.createSeparator(null, json.id, null);
+                    bf = self.createSeparator(self.$top_container, json.id, null);
                     break;
                 }
                 if(bf){
@@ -765,7 +772,7 @@ class BookTree {
     	        $container = $f.parent(".folder-content");
     	    }
         }else{
-    	    $container = this.$top_container;
+    	    $container = this.getItemById("root").next(".folder-content"); //$top_container;
         }
         return $container;
     }
@@ -779,6 +786,8 @@ class BookTree {
         }
     }    
     createLink($container, {type, id, ref_id, source, icon, title, comment="", tag=""}, {wait, is_new, pos="bottom"}={}) {
+        if(!$container || !($container.length))
+            throw Error("invalid container")
         title = $.trim(title);
         if (wait) icon = "icons/loading.gif";
         /** create item element */
@@ -793,8 +802,6 @@ class BookTree {
             (type == "page" ? "<div class='origin'></div>" : "") + "</div>");
         if (is_new) {
             /** append to dom */
-            if(!$container.length)
-                $container = this.$top_container;
             var $item = $(bf.flatten()), $ref = null, useRef = false;
             if (ref_id) {
                 $ref = this.getItemById(ref_id);
@@ -825,6 +832,8 @@ class BookTree {
         return bf;
     }
     createFolder($container, id, ref_id, title, is_new, pos="bottom") {
+        if(!$container || !($container.length))
+            throw Error("invalid container")
         title = $.trim(title);
         var title_encode = title.htmlEncode();
         var label = title_encode || "-- UNTITLED --";
@@ -859,6 +868,8 @@ class BookTree {
         return bf;
     }
     createSeparator($container, id, ref_id, is_new, pos="bottom") {
+        if(!$container || !($container.length))
+            throw Error("invalid container")
         var bf = new NodeHTMLBuffer(`<div id='${id}' class='item separator'><input type='checkbox'/><div class='stroke'/></div>`);
         if (is_new) {
             var $hr = $(bf.flatten());
