@@ -188,7 +188,7 @@ async function processTree(tree, search_title, search_body, search_comment){
                 console.log(e);
             }
 	}
-    });
+    }, tree.getSeqNode("urn:scrapbook:root").children);
     q.start();
 }
 $(document).ready(async function(){

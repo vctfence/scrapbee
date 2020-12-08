@@ -13,7 +13,8 @@ function loadXml(rdf, $box){
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
 	    currTree = new BookTree(r.target.response, rdf, {lockDraging: true});
-	    await currTree.renderTree($box);
+	    await currTree.renderTree($box, true);
+            // currTree.toggleFolder(currTree.getItemById("root"), true);
             currTree.onChooseItem = function(itemId) {
                 var t = currTree.getItemPath(currTree.getItemById(itemId));
                 $("#path-box bdi").html(t);
@@ -67,6 +68,10 @@ $(document).ready(async function(){
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
                                      path: currTree.rdf, backup:true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
     }
+    /** toggle root */
+    $("#show-root").change(function(){
+        currTree.showRoot(this.checked)
+    });
     /** cancle capture */
     var button = document.body.querySelector("#btnCancel");
     button.onclick=function(){

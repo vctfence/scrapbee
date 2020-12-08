@@ -594,6 +594,8 @@ class BookTree {
         }
         this.listenUserEvents($container);
         this.showCheckBoxes(this.options.checkboxes);
+
+        this.toggleFolder(this.getItemById("root"), true);
         this.showRoot(showRootNode);
     }
     async iterateLiNodes(fn, nodes=null, fn2=null) {

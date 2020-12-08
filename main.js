@@ -133,7 +133,7 @@ menulistener.onSort1 = function(){
         }
         await currTree.sortTree(d.sort_by, $target, d.order == "asc", d.case_sensitive=="on");
         currTree.onXmlChanged();
-        await currTree.renderTree($(".folder-content.toplevel"));
+        await currTree.renderTree($(".folder-content.toplevel"), settings.sidebar_show_root == "on");
         currTree.restoreStatus();
     });
 };
@@ -399,6 +399,8 @@ body{
 settings.onchange=function(key, value){
     if(key == "rdf_path_names" || key == "rdf_paths"){
         showRdfList();
+    }else if(key == "sidebar_show_root"){
+        currTree.showRoot(value == "on");
     }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
         applyAppearance();
     }else if(key == "backend"){
@@ -516,6 +518,10 @@ window.onload=async function(){
             $("#announcement-red-dot").hide();
         });
     }
+    /** toggle root */
+    $("#show-root").change(function(){
+        currTree.showRoot(this.checked)
+    });
 };
 function loadXml(rdf){
     currTree = null;
@@ -529,7 +535,8 @@ function loadXml(rdf){
             try{
                 var _begin = new Date().getTime();
                 currTree = new BookTree(r.target.response, rdf);
-                await currTree.renderTree($(".folder-content.toplevel"));
+                await currTree.renderTree($(".folder-content.toplevel"), settings.sidebar_show_root == "on");
+                currTree.toggleFolder(currTree.getItemById("root"), true);
                 var cost = new Date().getTime() - _begin;
                 log.info(`rdf loaded in ${cost}ms`);
             }catch(e){

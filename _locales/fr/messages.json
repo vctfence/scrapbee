@@ -462,5 +462,11 @@
     },
     "CASE_SENSITIVE":{
         "message":  "Sensible aux majuscules et minuscules"
+    },
+    "SIDEBAR_SHOW_ROOT":{
+        "message": "Afficher le nœud racine dans la barre latérale"
+    },
+    "SHOW_ROOT":{
+        "message": "montrer la racine"
     }
 }

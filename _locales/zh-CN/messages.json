@@ -489,5 +489,11 @@
     },
     "Bottom":{
         "message": "底部"
+    },
+    "SIDEBAR_SHOW_ROOT":{
+        "message": "在侧边栏显示根结点(root)"
+    },
+    "SHOW_ROOT":{
+        "message": "显示根结点(root)"
     }
 }

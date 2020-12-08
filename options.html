@@ -191,6 +191,12 @@
               <div class="panel">
                 <table width="100%" cellspacing="" cellpadding="0" border="0" class="form-table inner">
                   <tr>
+                    <td width="100">{SIDEBAR_SHOW_ROOT}</td><td style="position:relative">
+                      <input type="checkbox" name="sidebar_show_root" value="" style="vertical-align:top"/>
+                    </td>
+                  </tr>
+                  <tr><td colspan="2" style="padding:5px 0;"><hr/></td></tr>
+                  <tr>
                     <td width="100">{OPEN_IN_CURRENT_TAB}</td><td style="position:relative">
                       <input type="checkbox" name="open_in_current_tab" value="" style="vertical-align:top"/>
                       <i class="help-mark"></i>
@@ -202,12 +208,12 @@
                       <input type="checkbox" name="lock_editbar" value="" style="vertical-align:top"/>
                     </td>
                   </tr>
+                  <tr><td colspan="2" style="padding:5px 0;"><hr/></td></tr>
                   <tr>
                     <td width="100">{AUTO_CLOSE_SAVING_DIALOG}</td><td style="position:relative">
                       <input type="checkbox" name="auto_close_saving_dialog" value="" style="vertical-align:top"/>
                     </td>
                   </tr>
-                  <tr><td colspan="2" style="padding:5px 0;"><hr/></td></tr>
                   <tr>
                     <td width="100">{SAVING_SAVE_FRAMES}</td><td style="position:relative">
                       <input type="checkbox" name="saving_save_frames" value="" style="vertical-align:top"/>
@@ -279,7 +285,7 @@
             <div class="tips hide">
               {NODE_MOVER_WARN_TIP}
             </div>
-            <label style="float:right;"><input type="checkbox" id="show-root"/>Show Root</label>
+            <label style="float:right;"><input type="checkbox" id="show-root"/>{SHOW_ROOT}</label>
           </div>
           <div style="" id="node-mover">
             <div class="left-box" >

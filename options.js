@@ -87,6 +87,7 @@ function showConfiguration(){
             settings.set('font_name', $("input[name=font_name]").val(), true);
             settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
             // behavior
+            settings.set('sidebar_show_root', $("input[name=sidebar_show_root]").is(":checked")?"on":"off", true);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
@@ -131,6 +132,7 @@ function showConfiguration(){
     $("input[name=backend_port]").val(settings.backend_port);
     $("input[name=backend_pwd]").val(settings.backend_pwd);
     
+    $("input[name=sidebar_show_root]").prop("checked", settings.sidebar_show_root=="on");
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
     $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
     $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");

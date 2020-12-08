@@ -233,8 +233,7 @@ function initMover(){
                 else if(treeId == 1)
                     tree1 = currTree;
 	        await currTree.renderTree($box,  $("#show-root").is(":checked"));
-
-                currTree.toggleFolder(currTree.getItemById("root"), true);
+                // currTree.toggleFolder(currTree.getItemById("root"), true);
                 
 	        currTree.onChooseItem=function(itemId){
                     var t = currTree.getItemPath(currTree.getItemById(itemId));
