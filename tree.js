@@ -284,7 +284,7 @@ class BookTree {
                     var single_child = ($children.length == 1 && $parent && $parent[0] == $el[0]);
                     if ((!expanded_owner || single_child) && relY > $el.height() * 0.6) { // after
                         t = 2;
-                    } else if ((relY < $el.height() * 0.3) && !$el.attr("id") == "root") { // before
+                    } else if ((relY < $el.height() * 0.3) && $el.attr("id") != "root") { // before
                         t = 1;
                     } else {
                         // self.toggleFolder($el, true);
@@ -672,7 +672,6 @@ class BookTree {
         }
         var node = this.getDescNode("urn:scrapbook:item" + id);
         if (node) node.setAttributeNS(this.MAIN_NS, "icon", icon);
-        if(this.onXmlChanged)this.onXmlChanged();
     }
     renameItem($item, title) {
         var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
@@ -681,7 +680,6 @@ class BookTree {
             $item.find("label").html(title.htmlEncode() || "-- UNTITLED --");
             $item.attr("title", title);
             desc_node.setAttributeNS(this.MAIN_NS, "title", title);
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     updateSource($item, source) {
@@ -690,7 +688,6 @@ class BookTree {
         if (desc_node) {
             $item.attr("source", source);
             desc_node.setAttributeNS(this.MAIN_NS, "source", source);
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     updateComment($item, comment) {
@@ -700,7 +697,6 @@ class BookTree {
         comment = comment.replace(/[\n\r]/g, " __BR__ ");
         if(desc_node) {
             desc_node.setAttributeNS(this.MAIN_NS, "comment", comment);
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     updateTag($item, tag) {
@@ -708,7 +704,6 @@ class BookTree {
         tag = $.trim(tag);
         if(desc_node) {
             desc_node.setAttributeNS(this.MAIN_NS, "tag", tag);
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }    
     getItemPath($item, separator=' / ') {
@@ -903,18 +898,22 @@ class BookTree {
     }
     removeItem($item) {
         var self = this;
-        var id = $item.attr("id");
-        if ($item.hasClass("folder")) {
-            $item.nextAll(".folder-content:first").children(".item").each(function () {
-                self.removeItem($(this));
-            });
-            $item.nextAll(".folder-content:first").remove();
-        }
-        $item.remove();
-        if ($item.hasClass("page") || $item.hasClass("bookmark")) {
-            if(this.onItemRemoved)this.onItemRemoved(id);
-        }
-        this.removeItemXml(id);
+        return new Promise(async (resolve, reject) => {
+            var id = $item.attr("id");
+            if ($item.hasClass("folder")) {
+                $item.nextAll(".folder-content:first").children(".item").each(async function () {
+                        self.removeItem($(this));
+                });
+                $item.nextAll(".folder-content:first").remove();
+            }
+            $item.remove();
+            if ($item.hasClass("page") || $item.hasClass("bookmark")) {
+                if(self.onItemRemoving)
+                    self.onItemRemoving(id);
+            }
+            self.removeItemXml(id);
+            resolve();
+        });
     }    
     /** =============== xml part =============== */
     getLiNodeType(node){
@@ -953,7 +952,6 @@ class BookTree {
                 seq_node.appendChild(nn);
             }
             node.parentNode.removeChild(node);
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     removeItemXml(id) {
@@ -972,9 +970,6 @@ class BookTree {
                 changed = true;
             }
          });
-        if(changed){
-            if(this.onXmlChanged)this.onXmlChanged();
-        }
     }
     createSeparatorXml(folder_id, id, ref_id, pos="bottom") {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
@@ -999,7 +994,6 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "type", "separator");
             this.xmlDoc.documentElement.appendChild(node);
             this.separator_node_cache["urn:scrapbook:item" + id] = node;
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     createScrapXml(folder_id, type, id, ref_id, title, source, icon, comment, tag, pos="bottom") {
@@ -1031,7 +1025,6 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "icon", icon);
             this.xmlDoc.documentElement.appendChild(node);
             this.desc_node_cache["urn:scrapbook:item" + id] = node;
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     createFolderXml(folder_id, id, ref_id, title, pos="bottom") {
@@ -1064,7 +1057,6 @@ class BookTree {
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
             this.xmlDoc.documentElement.appendChild(node);
             this.seq_node_cache["urn:scrapbook:item" + id] = node;
-            if(this.onXmlChanged)this.onXmlChanged();
         }
     }
     xmlSerialized() {

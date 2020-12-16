@@ -1,7 +1,7 @@
 import {BookTree} from "./tree.js";;
 import {settings} from "./settings.js";
 import {SimpleDropdown} from "./control.js";
-import {genItemId, refreshTree, httpRequest} from "./utils.js";
+import {ajaxFormPost, genItemId, refreshTree, httpRequest} from "./utils.js";
 import {log} from "./message.js";
 
 function initMover(){
@@ -13,7 +13,6 @@ function initMover(){
         if(tree1)
             tree1.showRoot(this.checked);
     });
-    var saveingLocked = false;
     var tree0, tree1;
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if(request.type == 'FILE_CONTENT_CHANGED'){
@@ -54,8 +53,8 @@ function initMover(){
             if(confirm("{ConfirmDeleteItem}".translate())){
                 var dialog = new DialogProgress();
                 dialog.show();
-                que.every(function(info, i){
-                    tree.removeItem($(info.domElement));
+                que.every(async function(info, i){
+                    await tree.removeItem($(info.domElement));
                     var count = que.length, done = i + 1;
                     dialog.setProgress(done/count, `${done} / ${count}`)
                     return true;
@@ -82,7 +81,6 @@ function initMover(){
             ref_id = $foc_dest.attr("id");
         }
         /** process src nodes */
-        saveingLocked = true;
         var parents = [destTree.getCurrContainer()];
         var topNodes = [];
         var topInfos = [];
@@ -131,11 +129,6 @@ function initMover(){
         function progress(srcId){
             pos = "bottom";
             dialog.setProgress(++done / count, `${done} / ${count}`);
-            if(moveType == "FS_MOVE"){
-                srcTree.removeItem(srcTree.getItemById(srcId));
-                if(tree0.rdf == tree1.rdf)
-                    destTree.removeItem(destTree.getItemById(srcId));
-            }
         }
 
         dialog.setProgress(done/count, `${done} / ${count}`);
@@ -179,14 +172,12 @@ function initMover(){
         }, topNodes);
         
         /** saving rdf changes */
-        saveingLocked = false;
-
         if(moveType == "FS_MOVE"){
-            // topInfos.forEach((info) => {
-            //     srcTree.removeItem(srcTree.getItemById(info.id));
-            //     if(tree0.rdf == tree1.rdf)
-            //         destTree.removeItem(destTree.getItemById(info.id));
-            // });
+            topInfos.forEach((item) => {
+                srcTree.removeItem(srcTree.getItemById(item.id));
+                if(tree0.rdf == tree1.rdf)
+                    destTree.removeItem(destTree.getItemById(item.id));
+            });
             if(tree0.rdf != tree1.rdf)
                 await srcTree.saveXml();
         }
@@ -245,22 +236,22 @@ function initMover(){
                 }
                 currTree.saveXml=function(){
                     return new Promise((resolve, reject) => {
-                        if(!saveingLocked){
-                            browser.runtime.sendMessage({
-                                type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
-                                path: currTree.rdf, backup: true,
-                                boardcast:true, srcToken: currTree.unique_id}).then((response) => {
-                                    resolve();
-                                });
-                        }else{
-                            reject();
-                        }
+                        browser.runtime.sendMessage({
+                            type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
+                            path: currTree.rdf, backup: true,
+                            boardcast:true, srcToken: currTree.unique_id}).then((response) => {
+                                log.info(`rdf updated`);
+                                resolve();
+                            }).catch(e => {
+                                reject();
+                                log.error(`failed to update rdf: ${e}`);
+                            });
                     });
 	        };
-                currTree.onItemRemoved=function(id){
-                    $.post(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd}, function(r){});
+                currTree.onItemRemoving=function(id){
+                    return ajaxFormPost(settings.getBackendAddress() + "deletedir/",
+                                        {path: rdfPath + "data/" + id, pwd:settings.backend_pwd});
                 };
-                // currTree.showCheckBoxes(1)
                 resolve(currTree);
             };
             xmlhttp.onerror = function(err) {

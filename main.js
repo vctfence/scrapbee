@@ -1,6 +1,6 @@
 import {BookTree} from "./tree.js";
 import {settings, global} from "./settings.js";
-import {showNotification, getColorFilter, genItemId, gtv} from "./utils.js";
+import {showNotification, getColorFilter, genItemId, gtv, ajaxFormPost} from "./utils.js";
 import {refreshTree, touchRdf} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown} from "./control.js";
@@ -139,7 +139,9 @@ menulistener.onSort1 = function(){
 };
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
-        currTree.removeItem($(".item.focus"));
+        currTree.removeItem($(".item.focus")).finally(()=>{
+            currTree.onXmlChanged();
+        });
     });
 };
 menulistener.onCreateFolder = function(){
@@ -159,10 +161,12 @@ menulistener.onCreateFolder = function(){
         }
         log.debug(settings.saving_new_pos)
         currTree.createFolder(p, genItemId(), rid, d.title, true, settings.saving_new_pos);
+        currTree.onXmlChanged();
     });
 };
 menulistener.onCreateSeparator = function(){
     currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true, settings.saving_new_pos);
+    currTree.onXmlChanged();
 };
 menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
@@ -211,7 +215,6 @@ menulistener.onProperty = function(){
                 return false;
             });
         }).then(function(d){            
-            currTree.lockRdfSaving = true;
             var t1 = d.title;
             if(t1 != t0){
                 currTree.renameItem($foc, t1);
@@ -232,7 +235,6 @@ menulistener.onProperty = function(){
             // if(tag1 != tag0){
             //     currTree.updateTag($foc, tag1);
             // }
-            currTree.lockRdfSaving = false;
             if(t1 != t0 || s1 != s0 || c1 != c0 || icon1 != icon0){ //  || tag1 != tag0
                 currTree.onXmlChanged();
             }
@@ -543,9 +545,7 @@ function loadXml(rdf){
                 log.error(e.message);
                 return;
             }
-            currTree.onXmlChanged = function(){
-                if(currTree && currTree.lockRdfSaving)
-                    return;
+            currTree.onXmlChanged = currTree.onDragged = function(){
                 log.info(`saving changes to rdf`);
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE',
                                              text: currTree.xmlSerialized(),
@@ -558,8 +558,8 @@ function loadXml(rdf){
                     log.error(`failed to update rdf: ${e}`);
                 });
             };
-            currTree.onItemRemoved=function(id){
-                $.post(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd}, function(r){});
+            currTree.onItemRemoving=function(id){
+                return ajaxFormPost(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd});
             };
             currTree.onOpenContent=function(itemId, url, newTab, isLocal){
                 var method = newTab ? "create" : "update";
@@ -673,6 +673,7 @@ function requestUrlSaving(itemId){
                is_new:true,
                pos: settings.saving_new_pos
            });
+           currTree.onXmlChanged();
            
            showNotification({message: `Save bookmark "${tab.title}" done`, title: "Info"});
        }
@@ -712,7 +713,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == 'CREATE_MIRROR_NODE'){
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
             /** do not trigger rdf saving */
-            currTree.lockRdfSaving = true;
             currTree.createLink(currTree.getContainerById(request.folderId), {
                 type: request.nodeType,
                 title: request.title,
@@ -726,23 +726,20 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 is_new: true,
                 pos: settings.saving_new_pos
             });
-            currTree.lockRdfSaving = false;
         }
     }else if(request.type == 'REMOVE_FAILED_NODE'){
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
             currTree.updateItemIcon($("#"+request.itemId), icon);
             currTree.removeItem($("#"+request.itemId));
-            currTree.lockRdfSaving = false;
         }
     }else if(request.type == 'UPDATE_FINISHED_NODE'){
         /** update node in sidebar only in the same window, sidebar in other windows will reloaded after icon updated */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
             var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
-            if(sender.tab.windowId != thisWindowId)
-                currTree.lockRdfSaving = true;
             currTree.updateItemIcon($("#"+request.itemId), icon);
             currTree.unlockItem($("#"+request.itemId));
-            currTree.lockRdfSaving = false;
+            if(sender.tab.windowId == thisWindowId)
+                currTree.onXmlChanged();
         }
     }else if(request.type == 'CREATE_NODE_REQUEST'){
         return new Promise((resolve, reject) => {
@@ -752,7 +749,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                         var itemId = genItemId();
                         var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
                         /** do not trigger rdf saving */
-                        currTree.lockRdfSaving = true;
                         currTree.createLink(currTree.getCurrContainer(), {
                             type: request.nodeType,
                             id: itemId,
@@ -765,7 +761,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                             is_new: true,
                             pos: settings.saving_new_pos
                         });
-                        currTree.lockRdfSaving = false;
                         resolve({rdf:currTree.rdf, rdfPath:currTree.rdfPath, itemId});
                     }catch(e){
                         reject(e)
