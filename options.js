@@ -3,22 +3,26 @@ import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
 import {gtev, touchRdf} from "./utils.js";
 
-function getAsync(file) {
-    var r;
-    var z, i, elmnt, xhttp;
-    xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                r = this.response;
+function getAsync(url) {
+    return new Promise((resolve, reject) => {
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    resolve(this.response);
+                } else if (this.status >= 404) {
+                    reject(Error(this.response));
+                }
             }
-            if (this.status == 404) {}
-        }
-    };
-    xhttp.open("GET", file, false); // async
-    xhttp.send();
-    return r;
+        };
+        request.onerror = function(err) {
+            reject(Error("request failed"))
+        };
+        request.open("GET", url);
+        request.send();
+    });
 }
+
 function createRdfField(k, v){
     var NAME_I18N = browser.i18n.getMessage("Name");
     var FILE_I18N = browser.i18n.getMessage("File");
@@ -150,8 +154,18 @@ window.onload=async function(){
     }
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-    $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<h2>V$1</h2>"))
-    $("#div-help>div").html(getAsync("_locales/" + lang + "/help.html").translate());
+
+    getAsync("_locales/" + lang + "/announcement.html").then((content) => {
+        $("#div-announcement").html(content.translate());
+        // $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<h2>V$1</h2>"))
+    }).catch(e => {
+       alert(e.message)
+    });
+
+    getAsync("_locales/" + lang + "/help.html").then((content) => {
+        $("#div-help>div").html(content.translate());
+    })
+    
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{
             $(".tab-button").removeClass("focused");
@@ -335,7 +349,7 @@ window.onload=async function(){
             
             $(self).next(".download-path").show()
             $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);            
-        }).catch((e) => {
+        }).catch(e => {
             alert(e)  
         });
     });
@@ -356,7 +370,7 @@ window.onload=async function(){
                     $(self).next(".download-path").show()
                     $(self).next(".download-path").text("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
                 }
-            }).catch((e) => {
+            }).catch(e => {
                 alert(e)
             });
         }

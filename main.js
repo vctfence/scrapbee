@@ -507,16 +507,15 @@ window.onload=async function(){
         $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
     });
     /** announcement */
-    var ann = browser.i18n.getMessage("announcement_content");
-    var m = ann.match(/#(\d+\.\d+\.\d+)#/);
-    if(m){
-        if(gtv(m[1], settings.announcement_showed)){
+    var ann = browser.i18n.getMessage("announcement_version");
+    if(ann){
+        if(gtv(ann, settings.announcement_showed)){
             $("#announcement-red-dot").show();
         }else{
             $("#announcement-red-dot").hide();
         }
         $("#announcement-red-dot").parent().click(function(){
-            settings.set('announcement_showed', m[1], true);
+            settings.set('announcement_showed', ann, true);
             $("#announcement-red-dot").hide();
         });
     }

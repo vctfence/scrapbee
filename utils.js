@@ -411,25 +411,24 @@ function refreshTree(){
 }
 function httpRequest(url){
     return new Promise((resolve, reject)=>{
-        var xmlhttp=new XMLHttpRequest();
-        xmlhttp.onload = function(r) {
+        var request=new XMLHttpRequest();
+        request.onload = function(r) {
             resolve(r.target.response);
         };
-        xmlhttp.onerror = function(err) {
+        request.onerror = function(err) {
             reject(err)
         };
-        xmlhttp.open("GET", url, false);
-        xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
-        xmlhttp.setRequestHeader('cache-control', 'max-age=0');
-        xmlhttp.setRequestHeader('expires', '0');
-        xmlhttp.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
-        xmlhttp.setRequestHeader('pragma', 'no-cache');
+        request.open("GET", url, false);
+        request.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
+        request.setRequestHeader('cache-control', 'max-age=0');
+        request.setRequestHeader('expires', '0');
+        request.setRequestHeader('expires', 'Tue, 01 Jan 1980 1:00:00 GMT');
+        request.setRequestHeader('pragma', 'no-cache');
         setTimeout(function(){ // prevent: too much recursion
-            xmlhttp.send();
+            request.send();
         }, 300);
     })
 }
-/* http request */
 function ajaxFormPost(url, json){
     return new Promise((resolve, reject) => {
         var formData = new FormData();
@@ -440,9 +439,9 @@ function ajaxFormPost(url, json){
         request.onload = function(r) {
         };
         request.onreadystatechange=function(){
-            if(request.readyState == 4 && request.status == 200){
-                resolve(request.responseText);
-            }else if(request.status >= 400){
+            if(this.readyState == 4 && this.status == 200){
+                resolve(this.responseText);
+            }else if(this.status >= 400){
                 reject(Error(`request ${request.status}: ${request.responseText}`));
             }
         };
@@ -458,28 +457,28 @@ function ajaxFormPost(url, json){
 function downloadFile(url){
     return new Promise((resolve, reject)=>{
         try{
-            var oReq = new XMLHttpRequest();
-            oReq.open("GET", url, true);
-            oReq.responseType = "blob";
-            // oReq.onload = function(oEvent) {
-            //     if(oReq.response){
-            //         resolve(oReq.response);
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", url, true);
+            xmlhttp.responseType = "blob";
+            // xmlhttp.onload = function(oEvent) {
+            //     if(xmlhttp.response){
+            //         resolve(xmlhttp.response);
             //     }else{
             //         reject();
             //     }
             // };
-            oReq.onreadystatechange=function(){
+            xmlhttp.onreadystatechange=function(){
                 if(request.readyState == 4 && request.status == 200){
-                    console.log(oReq.response)
-                    resolve(oReq.response);
+                    console.log(xmlhttp.response)
+                    resolve(xmlhttp.response);
                 }else if(request.status == 500){
                     reject(Error(request.responseText));
                 }
             };
-            oReq.onerror = function(e){
+            xmlhttp.onerror = function(e){
                 reject(e);
             };
-            oReq.send();
+            xmlhttp.send();
         }catch(e){
             reject();
         }
