@@ -613,7 +613,7 @@ function loadXml(rdf){
         };
         xmlhttp.onerror = function(err) {
             $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
-            log.error(`load ${rdf} failed, ${err}`);
+            log.error(`load ${rdf} failed`);
             reject(err)
         };
         xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
