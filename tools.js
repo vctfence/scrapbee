@@ -285,6 +285,7 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
 
             var tree = new BookTree(response, rdf);
             var buffer = [`<title>${name}</title>`, "<meta charset='UTF-8'/>", "<META HTTP-EQUIV='Pragma' CONTENT='no-cache'>"];
+
             await tree.iterateLiNodes(async function(item){
                 if(item.nodeType == "seq"){
                     buffer.push("<li class='seq'><img src='data/resources/folder.gif'/>" + item.title + "</li>");
@@ -303,7 +304,7 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
                         buffer.push(`<li class='page' ><img src='${icon}'/><a href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
                     }
                 }
-            }, null, function(item){
+            }, tree.getSeqNode("urn:scrapbook:root").children, function(item){
                 buffer.push("</ul>");
             });
             buffer.push(`
