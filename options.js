@@ -164,8 +164,20 @@ window.onload=async function(){
 
     getAsync("_locales/" + lang + "/help.html").then((content) => {
         $("#div-help>div").html(content.translate());
-    })
-    
+        $(".download_exe").each(function(i, el){
+            this.onclick=function(){
+                var [src, dest] = getBackendDownload(i);
+                browser.downloads.download({
+                    url:src,
+                    filename: dest,
+                    // conflictAction: "overwrite",
+                    saveAs: true
+                })
+                return false;
+            }
+        });        
+    });
+
     $(".tab-button").each((i, el)=>{
         $(el).click((e)=>{
             $(".tab-button").removeClass("focused");
@@ -175,7 +187,6 @@ window.onload=async function(){
         });
     });
     $(".tab-button").eq(0).click();
-
 
     /** export / import */
     $("input[name='export']").click(async function(){
@@ -308,20 +319,7 @@ window.onload=async function(){
         var dest_exec = "scrapbee_backend" + (global.platform_os == "win" ? ".exe" : "");
         return [binDir + src_exec, dest_exec]
     }
-    
-    $(".download_exe").each(function(i, el){
-        this.onclick=function(){
-            var [src, dest] = getBackendDownload(i);
-            browser.downloads.download({
-                url:src,
-                filename: dest,
-                // conflictAction: "overwrite",
-                saveAs: true
-            })
-            return false;
-        }
-    });
-
+ 
     /** download install scripts */
     $("#btnDownloadScripts").click(async function(){
         var self = this;
