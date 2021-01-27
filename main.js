@@ -493,7 +493,7 @@ window.onload=async function(){
     var items = [
         {value: "menuProperty", icon:"icons/property.svg", title: "{Properties}"},
         {value: "menuOpenOriginLink", icon:"icons/open_origin.svg", title: "{OPEN_ORIGIN_LINK}"},
-        {value: "menuOpenFolder", icon:"icons/folder.svg", title: "{Open Folder}"},
+        {value: "menuOpenFolder", icon:"icons/openfolderblack.svg", title: "{Open Folder}"},
         {value: "menuOpenAll", icon:"icons/openall.svg", title: "{OPEN_ALL_ITEMS}"},
         {value: "menuCreateFolder", icon:"icons/folder.svg", title: "{New Folder}"},
         {value: "menuCreateSeparator", icon:"icons/separator.svg", title: "{New Separator}"},
