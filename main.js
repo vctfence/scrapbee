@@ -3,7 +3,7 @@ import {settings, global} from "./settings.js";
 import {showNotification, getColorFilter, genItemId, gtv, ajaxFormPost} from "./utils.js";
 import {refreshTree, touchRdf} from "./utils.js";
 import {log} from "./message.js";
-import {SimpleDropdown} from "./control.js";
+import {SimpleDropdown, ContextMenu} from "./control.js";
 
 var currTree;
 var thisWindowId;
@@ -64,8 +64,9 @@ function showDlg(name, data, onshowed){
     $(document).unbind("keyup.dialog");
     /** return promise object */
 
-    var contextmenu = $(document.body).attr("contextmenu");
-    $(document.body).attr("contextmenu", "");
+    var menu = document.body.ctxMenu;
+    document.body.ctxMenu = null;
+    // $(document.body).attr("contextmenu", "");
     
     var p = new Promise(function(resolve, reject){
         $(document).bind("keyup.dialog", function(e) {
@@ -93,13 +94,15 @@ function showDlg(name, data, onshowed){
                 }
             });
             $dlg.remove();
-            $(document.body).attr("contextmenu", contextmenu);
+            document.body.ctxMenu = menu;
+            // $(document.body).attr("contextmenu", contextmenu);
             resolve(data);
         });
         $dlg.find("input.button-cancel").bind("click.dlg", function(){
             $dlg.remove();
-            $(document.body).attr("contextmenu", contextmenu);
-            reject();
+            document.body.ctxMenu = menu;
+            // $(document.body).attr("contextmenu", contextmenu);
+            reject(Error(""));
         });
     });
     if(onshowed)onshowed($dlg);
@@ -135,14 +138,14 @@ menulistener.onSort1 = function(){
         currTree.onXmlChanged();
         await currTree.renderTree($(".folder-content.toplevel"), settings.sidebar_show_root == "on");
         currTree.restoreStatus();
-    });
+    }).catch(()=>{});
 };
 menulistener.onDelete = function(){
     confirm("{Warning}", "{ConfirmDeleteItem}").then(function(){
         currTree.removeItem($(".item.focus")).finally(()=>{
             currTree.onXmlChanged();
         });
-    });
+    }).catch(()=>{});
 };
 menulistener.onCreateFolder = function(){
     showDlg("folder", {}).then(function(d){
@@ -162,7 +165,7 @@ menulistener.onCreateFolder = function(){
         log.debug(settings.saving_new_pos)
         currTree.createFolder(p, genItemId(), rid, d.title, true, settings.saving_new_pos);
         currTree.onXmlChanged();
-    });
+    }).catch(()=>{});
 };
 menulistener.onCreateSeparator = function(){
     currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true, settings.saving_new_pos);
@@ -238,7 +241,7 @@ menulistener.onProperty = function(){
             if(t1 != t0 || s1 != s0 || c1 != c0 || icon1 != icon0){ //  || tag1 != tag0
                 currTree.onXmlChanged();
             }
-        });
+        }).catch(()=>{});;
     }
 };
 menulistener.onOpenFolder = function(){
@@ -262,12 +265,6 @@ function showRdfList(){
         $(".drop-button .label").text(title || "");
         if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
     });
-    
-    // log.debug("rdf paths:")
-    // paths.forEach(function(path, i){
-    //     log.debug(path)
-    // });
-    
     if(paths){
         var names = settings.getRdfPathNames(); 
         names.forEach(function(name, i){
@@ -365,10 +362,10 @@ body{
   margin-top:0 !important;
   margin-bottom:${line_spacing}px !important
 }
-.simple-menu-button{
+.simple-menu-item{
   border-color:#${settings.font_color}
 }
-.simple-menu{
+.simple-dropdown, .simple-menu{
   background:#${bg_color};
   border-color:#${settings.font_color}
 }
@@ -385,7 +382,7 @@ body{
 .item.bookmark.focus label,
 .item.page.focus label,
 .item.folder.focus label,
-.simple-menu div:hover,
+.simple-menu-item:hover,
 .tool-button:hover{
   background-color:#${settings.focused_bg_color};
   color:#${settings.focused_fg_color};
@@ -492,12 +489,28 @@ window.onload=async function(){
             "url": "search.html?rdf=" + currTree.rdf
         });
     };
-    $("menuitem").click(function(e){
+    /** context menu */
+    var items = [
+        {value: "menuProperty", icon:"icons/property.svg", title: "{Properties}"},
+        {value: "menuOpenOriginLink", icon:"icons/open_origin.svg", title: "{OPEN_ORIGIN_LINK}"},
+        {value: "menuOpenFolder", icon:"icons/folder.svg", title: "{Open Folder}"},
+        {value: "menuOpenAll", icon:"icons/openall.svg", title: "{OPEN_ALL_ITEMS}"},
+        {value: "menuCreateFolder", icon:"icons/folder.svg", title: "{New Folder}"},
+        {value: "menuCreateSeparator", icon:"icons/separator.svg", title: "{New Separator}"},
+        {value: "menuDelete", icon:"icons/delete.svg", title: "{Delete}"},
+        {value: "menuSort1", icon:"icons/sort_a_z.svg", title: "{Sort}"},
+    ];
+    items.forEach(function(v, i){
+        items[i]["title"]= v.title.translate()
+    })
+    document.body.ctxMenu = new ContextMenu(items);
+    // document.body.ctxMenu.show();
+    document.body.ctxMenu.onselect = function(title, value){
         if(currTree){
-            var listener = menulistener[this.id.replace(/^menu/, "on")];
+            var listener = menulistener[value.replace(/^menu/, "on")];
             if(listener)listener();
         }
-    });
+    }
     /**  */
     applyAppearance();
     browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
@@ -567,21 +580,32 @@ function loadXml(rdf){
                 }
                 browser.tabs[method]({ url: url }, function (tab) {});
             };
+            document.body.addEventListener("mousedown", function(e){
+                if(e.button == 2 && this.ctxMenu){
+                    // console.log(e.clientX, e.clientY)
+                    this.ctxMenu.show(e.clientX, e.clientY)
+                }
+            })
             currTree.onChooseItem=function(id){
                 var $f = currTree.getItemById(id);
+                var menu = document.body.ctxMenu;
+                menu.hideAllItems();
                 if ($f.hasClass("folder")) {
-                    $(document.body).attr("contextmenu", "popup-menu-folder");
+                    // $(document.body).attr("menu", "popup-menu-folder");
+                    menu.showItems(["menuProperty", "menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuSort1", "menuOpenAll"])
                 } else if ($f.hasClass("separator")) {
-                    $(document.body).attr("contextmenu", "popup-menu-separator");
+                    // $(document.body).attr("menu", "popup-menu-separator");
+                    menu.showItems(["menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuSort1"])
                 } else if ($f.hasClass("item")) {
-                    $(document.body).attr("contextmenu", "popup-menu-link");
+                    menu.showItems(["menuOpenOriginLink", "menuProperty", "menuDelete", "menuCreateFolder",
+                                    "menuCreateSeparator", "menuOpenFolder", "menuSort1", ])
+                    // $(document.body).attr("menu", "popup-menu-link");
                     if($f.hasClass("bookmark")){
-                        $("#menuOpenOriginLink")[0].disabled=true;
-                    }else{
-                        $("#menuOpenOriginLink")[0].disabled=false;
+                        menu.hideItem("menuOpenOriginLink");
                     }
                 } else {
-                    $(document.body).attr("contextmenu", "popup-menu-body");
+                    menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuSort1"])
+                    // $(document.body).attr("contextmenu", "popup-menu-body");
                 }
                 settings.set('sidebar_last_focused',id , true);
             };
@@ -789,11 +813,15 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }
 });
-document.addEventListener('contextmenu', function(event){
-    // if($(".dlg-cover:visible").length)
-    //     event.preventDefault();
-    return false;
-});
+// document.addEventListener('contextmenu', function(event){
+//     if($(".dlg-cover:visible").length)
+//         // event.preventDefault();
+//         return false;
+// });
+document.oncontextmenu = function (event){
+    if($(".dlg-cover:visible").length == 0)
+        return false
+}
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });

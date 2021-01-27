@@ -16,7 +16,8 @@
     <script type="text/javascript" src="proto.js"></script>
     <script type="module" src="main.js"></script>
   </head>
-  <body contextmenu="popup-menu-body">
+  <body oncontextmenu="return false" onselectstart="return false" 
+        ondragstart="return false" onbeforecopy="return false" oncopy="document.selection.empty()" onselect="document.selection.empty()">
     <div style="" class="toolbar table">
       <div class="table-row">
         <div class="table-cell" style="padding-left:10px;">
@@ -260,6 +261,9 @@
         <menuitem id="menuOpenAll" label="{OPEN_ALL_ITEMS}" icon="icons/openall.svg"></menuitem>
       </menu>
     </menu>
+
+
+    
     <menu type="context" id="popup-menu-separator">
       <menuitem id="menuDelete" label="{Delete}" icon="icons/delete.svg"></menuitem>
       <menu type="context">
@@ -270,7 +274,9 @@
         <menuitem id="menuSort1" label="{Sort}" icon="icons/sort_a_z.svg"></menuitem>
         <!-- <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem> -->
       </menu>
-    </menu>    
+    </menu>
+
+    
     <menu type="context" id="popup-menu-link">
       <menuitem id="menuOpenOriginLink" label="{OPEN_ORIGIN_LINK}" icon="icons/open_origin.svg"></menuitem>
       <menu type="context">
@@ -287,6 +293,8 @@
         <!-- <menuitem id="menuSort2" label="{Sort}(Z->A)" icon="icons/sort_z_a.svg"></menuitem> -->
       </menu>
     </menu>
+
+    
     <menu type="context" id="popup-menu-body">
       <menuitem id="menuCreateFolder" label="{New Folder}" icon="icons/folder.svg"></menuitem>
       <menuitem id="menuCreateSeparator" label="{New Separator}" icon="icons/separator.svg"></menuitem>

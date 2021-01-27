@@ -175,7 +175,7 @@ select{
     color: #000;
 }
 /* */
-.simple-menu{
+.simple-dropdown{
     min-with:50px;
     position:fixed;
     background:#999;
@@ -186,21 +186,39 @@ select{
     max-height:200px;
     overflow-y:auto;
 }
-.simple-menu-button{
-    border-radius:5px;
+.simple-menu{
+    min-with:50px;
+    position:fixed;
+    background:#999;
+    border:1px solid #fff;
+    box-sizing:border-box;
+    z-index:99999999;
+    display:none;
+    /* max-height:200px; */
+    overflow-y:auto;
+}
+.simple-menu-item{
     background:none;
     padding:2px 5px;
-    border:1px solid #fff;
-    font-size:16px;
-    text-align:center;
-}
-.simple-menu div{
+    font-size:12px;
     padding:5px 15px;
     position:relative;
-    font-size:16px;
+    cursor:default;
+    color:#fff;
+    white-space:nowrap;
 }
-.simple-menu div:hover{
-    background-color:#555;
+.simple-menu .simple-menu-item{
+    padding:5px 5px;
+}
+.simple-menu-item img{
+    width:20px;
+    height:20px;
+}
+.simple-menu-item *{
+    vertical-align:middle;
+}
+.simple-menu-item:hover{
+    background-color:#333;
     color:#fff;
 }
 /* */
