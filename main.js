@@ -363,7 +363,8 @@ body{
   margin-bottom:${line_spacing}px !important
 }
 .simple-menu-item{
-  border-color:#${settings.font_color}
+  border-color:#${settings.font_color};
+  color:#${settings.font_color}
 }
 .simple-dropdown, .simple-menu{
   background:#${bg_color};
