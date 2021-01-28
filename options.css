@@ -419,7 +419,7 @@ li.h3{
     width:24px;
 }
 /* */
-.simple-menu{
+.simple-dropdown{
     min-with:50px;
     position:fixed;
     background:#999;
@@ -428,28 +428,18 @@ li.h3{
     box-sizing:border-box;
     z-index:99999999;
     display:none;
-    /* max-height:200px; */
+    max-height:200px;
     overflow-y:auto;
 }
 .simple-menu-item{
     background:none;
-    padding:2px 5px;
-    font-size:10px;
     padding:5px 15px;
     position:relative;
+    font-size:16px;
     cursor:default;
-    background-color:#555;
-    color:#fff;
-}
-.simple-menu-item img{
-    width:20px;
-    height:20px;
-}
-.simple-menu-item *{
-    vertical-align:middle;
 }
 .simple-menu-item:hover{
-    background-color:#333;
+    background-color:#555;
     color:#fff;
 }
 .tab-button{
