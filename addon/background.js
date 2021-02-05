@@ -1,16 +1,24 @@
-import {isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./db.js";
-import {backend, browserBackend} from "./backend.js";
+import {
+    isSpecialShelf,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_NOTES,
+    RDF_EXTERNAL_NAME
+} from "./storage_idb.js";
+import {backend} from "./backend.js";
+import {browserBackend} from "./backend_browser.js";
+import {cloudBackend} from "./backend_cloud.js";
+import {nativeBackend} from "./backend_native.js";
 import {
     exportOrg,
     exportJSON,
     importOrg,
     importJSON,
     importHtml,
-    importRDF,
-    instantiateLinkedResources, SCRAPYARD_LOCK_SCREEN
+    importRDF
 } from "./import.js";
 import {settings} from "./settings.js";
-import {isSpecialPage, loadLocalResource, notifySpecialPage, readFile, showNotification, withIDBFile} from "./utils.js";
+import {isSpecialPage, notifySpecialPage, readFile, showNotification} from "./utils.js";
 
 export async function browseNode(node, external_tab, preserve_history) {
 
@@ -32,113 +40,61 @@ export async function browseNode(node, external_tab, preserve_history) {
 
         case NODE_TYPE_ARCHIVE:
 
-            // No local RDFs since Firefox 74
+            if (node.external === RDF_EXTERNAL_NAME) {
+                let helperApp = await nativeBackend.probe(true);
 
-            // if (node.external === RDF_EXTERNAL_NAME) {
-            //     let path = await backend.computePath(node.id);
-            //     let rdf_directory = path[0].uri;
-            //     let base = `file://${rdf_directory}/data/${node.external_id}/`;
-            //     let index = `${base}index.html`;
-            //
-            //     let html = await loadLocalResource(index);
-            //
-            //     if (!html.data) {
-            //         showNotification({message: "Cannot find: " + index});
-            //         return;
-            //     }
-            //
-            //     html = html.data.replace(/<body([^>]*)>/, `<body\$1>${SCRAPYARD_LOCK_SCREEN}`);
-            //
-            //     let urls = [];
-            //
-            //     html = await instantiateLinkedResources(html, base, urls, 0);
-            //
-            //     let blob = new Blob([new TextEncoder().encode(html)], {type: "text/html"});
-            //     let url = URL.createObjectURL(blob);
-            //
-            //     urls.push(url);
-            //
-            //     let completionListener = function(message,sender,sendResponse) {
-            //         if (message.type === "BROWSE_PAGE_HTML" && message.payload.tab_id === rdf_tab.id) {
-            //             browser.runtime.onMessage.removeListener(completionListener);
-            //
-            //             for (let url of urls) {
-            //                 URL.revokeObjectURL(url);
-            //             }
-            //         }
-            //     };
-            //
-            //     browser.runtime.onMessage.addListener(completionListener);
-            //
-            //     let listener = async (id, changed, tab) => {
-            //         if (id === rdf_tab.id && changed.status === "complete") {
-            //             let initializationListener = async function(message, sender, sendResponse) {
-            //                 if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === rdf_tab.id) {
-            //                     browser.runtime.onMessage.removeListener(initializationListener);
-            //
-            //                     node.__local_import = true;
-            //                     node.__local_browsing = true;
-            //                     node.__local_import_base = base;
-            //                     node.tab_id = rdf_tab.id;
-            //
-            //                     await browser.tabs.sendMessage(rdf_tab.id, {
-            //                         type: "performAction",
-            //                         menuaction: 2,
-            //                         payload: node
-            //                     });
-            //                 }
-            //             };
-            //             browser.runtime.onMessage.addListener(initializationListener);
-            //
-            //             browser.tabs.onUpdated.removeListener(listener);
-            //             try {
-            //                 try {
-            //                     await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
-            //                 } catch (e) {}
-            //
-            //                 await browser.tabs.executeScript(tab.id, {file: "savepage/content.js"});
-            //             }
-            //             catch (e) {
-            //                 console.log(e);
-            //                 showNotification({message: "Error loading page"});
-            //             }
-            //         }
-            //     };
-            //
-            //     browser.tabs.onUpdated.addListener(listener);
-            //
-            //     let rdf_tab = await (external_tab
-            //                             ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
-            //                             : browser.tabs.create({"url": url}));
-            //     return;
-            // }
+                if (!helperApp)
+                    return;
 
-            return backend.fetchBlob(node.id).then(blob => {
+                let url = `http://localhost:${settings.helper_port_number()}/rdf/browse/${node.uuid}/_#`
+                    + `${node.uuid}:${node.id}:${node.external_id}`
+
+                let rdf_tab = await (external_tab
+                                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
+                                        : browser.tabs.create({"url": url}));
+                return;
+            }
+
+            return backend.fetchBlob(node.id).then(async blob => {
                 if (blob) {
 
-                    if (blob.byte_length) {
-                        let byteArray = new Uint8Array(blob.byte_length);
-                        for (let i = 0; i < blob.data.length; ++i)
-                            byteArray[i] = blob.data.charCodeAt(i);
+                    let objectURL = null;
+                    let helperApp = false;
 
-                        blob.data = byteArray;
+                    if (settings.browse_with_helper()) {
+                        helperApp = await nativeBackend.probe(true);
+                        if (helperApp)
+                            objectURL = `http://localhost:${settings.helper_port_number()}/browse/${node.uuid}`
                     }
 
-                    let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
-                    let objectURL = URL.createObjectURL(object);
+                    if (!objectURL) {
+                        if (blob.byte_length) {
+                            let byteArray = new Uint8Array(blob.byte_length);
+                            for (let i = 0; i < blob.data.length; ++i)
+                                byteArray[i] = blob.data.charCodeAt(i);
+
+                            blob.data = byteArray;
+                        }
+
+                        let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
+                        objectURL = URL.createObjectURL(object);
+                    }
+
                     let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
 
                     return (external_tab
                                 ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": !preserve_history})
                                 : browser.tabs.create({"url": archiveURL}))
                             .then(tab => {
-                                let listener = (id, changed, tab) => {
+                                let listener = async (id, changed, tab) => {
                                     if (id === tab.id && changed.status === "complete") {
                                         browser.tabs.onUpdated.removeListener(listener);
-                                        browser.tabs.executeScript(tab.id, {
-                                            file: "edit-bootstrap.js",
-                                        });
-                                        URL.revokeObjectURL(objectURL);
+                                        await browser.tabs.insertCSS(tab.id, {file: "edit.css"})
+                                        await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"})
+                                        await browser.tabs.executeScript(tab.id, {file: "edit-content.js"})
+
+                                        if (!helperApp)
+                                            URL.revokeObjectURL(objectURL);
                                     }
                                 };
 
@@ -220,49 +176,77 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             let exportf = format === "json"? exportJSON: exportOrg;
             let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
 
-            // currently the entire exported file is stored in memory
+            const helperApp = await nativeBackend.probe();
 
-            let file = {
-                content: [],
-                append: function(text) {
-                    this.content.push(text);
+            if (helperApp) {
+                // write to temp file
+
+                let init_url = `http://localhost:${settings.helper_port_number()}/export/initialize`
+                let result = null;
+                try {
+                    result = fetch(init_url);
                 }
-            };
-
-            await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
-                settings.compress_export());
-
-            let blob = new Blob(file.content, { type : "text/plain" });
-            let url = URL.createObjectURL(blob);
-
-            let download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
-            let download_listener = delta => {
-                if (delta.id === download && delta.state && delta.state.current === "complete") {
-                    browser.downloads.onChanged.removeListener(download_listener);
-                    URL.revokeObjectURL(url);
+                catch (e) {
+                    console.log(e);
                 }
-            };
-            browser.downloads.onChanged.addListener(download_listener);
 
-            // when IDBMutableFile had getFile method, it was possible to efficiently export file to local storage:
+                let port = await nativeBackend.getPort();
 
-            // let idb = await withIDBFile(`export/${new Date().getTime()}/${shelf}.${format}`, "readwrite",
-            //     async (handle, file, store) => {
-            //         exportf(handle, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
-            //             settings.compress_export());
-            // });
-            //
-            // let file_name = message.shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
-            // let url = URL.createObjectURL(await idb.file.getFile());
-            // let download = await browser.downloads.download({url: url, filename: file_name, saveAs: false});
-            // let download_listener = delta => {
-            //     if (delta.id === download && delta.state && delta.state.current === "complete") {
-            //         browser.downloads.onChanged.removeListener(download_listener);
-            //         URL.revokeObjectURL(url);
-            //         idb.store.clear();
-            //     }
-            // };
-            // browser.downloads.onChanged.addListener(download_listener);
+                let file = {
+                    append: function (text) {
+                        port.postMessage({
+                            type: "EXPORT_PUSH_TEXT",
+                            text: text
+                        })
+                    }
+                };
+
+                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
+                    settings.compress_export());
+
+                port.postMessage({
+                    type: "EXPORT_FINISH"
+                });
+
+                let url = `http://localhost:${settings.helper_port_number()}/export/download`;
+
+                let download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+
+                let download_listener = delta => {
+                    if (delta.id === download && delta.state && delta.state.current === "complete") {
+                        browser.downloads.onChanged.removeListener(download_listener);
+                        fetch(`http://localhost:${settings.helper_port_number()}/export/finalize`);
+                    }
+                };
+                browser.downloads.onChanged.addListener(download_listener);
+            }
+            else {
+                // the entire exported file is stored in memory
+
+                let file = {
+                    content: [],
+                    append: function (text) {
+                        this.content.push(text);
+                    }
+                };
+
+                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
+                    settings.compress_export());
+
+                let blob = new Blob(file.content, {type: "text/plain"});
+                let url = URL.createObjectURL(blob);
+
+                let download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+
+                let download_listener = delta => {
+                    if (delta.id === download && delta.state && delta.state.current === "complete") {
+                        browser.downloads.onChanged.removeListener(download_listener);
+                        URL.revokeObjectURL(url);
+                    }
+                };
+                browser.downloads.onChanged.addListener(download_listener);
+            }
+
             break;
 
         case "UI_LOCK_GET":
@@ -278,12 +262,12 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         case "RECONCILE_BROWSER_BOOKMARK_DB":
             settings.load(s => {
-                backend.reconcileBrowserBookmarksDB();
+                browserBackend.reconcileBrowserBookmarksDB();
             });
             break;
         case "RECONCILE_CLOUD_BOOKMARK_DB":
             settings.load(s => {
-                backend.reconcileCloudBookmarksDB();
+                cloudBackend.reconcileCloudBookmarksDB();
             });
             break;
 
@@ -298,7 +282,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 function startCloudBackgroundSync(s) {
     if (s.cloud_background_sync())
         window._backgroundSyncInterval = setInterval(
-            () => backend.reconcileCloudBookmarksDB(),
+            () => cloudBackend.reconcileCloudBookmarksDB(),
             15 * 60 * 1000);
     else
         if (window._backgroundSyncInterval)
@@ -306,8 +290,9 @@ function startCloudBackgroundSync(s) {
 }
 
 settings.load(async s => {
-    await backend.reconcileBrowserBookmarksDB();
+    await browserBackend.reconcileBrowserBookmarksDB();
     startCloudBackgroundSync(s);
 });
+
 
 console.log("==> background.js loaded");

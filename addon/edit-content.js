@@ -68,16 +68,37 @@ class EditToolBar {
     }
 
     saveDoc() {
-        window.postMessage({
-            type: "UPDATE_ARCHIVE"
-        });
-
         let btn = $("#scrapyard-save-doc-button");
         btn.addClass("flash-button");
 
         setTimeout(function() {
-                btn.removeClass("flash-button");
-            },1000);
+            btn.removeClass("flash-button");
+        },1000);
+
+        let doc = document.documentElement.cloneNode(true);
+        let bar = doc.querySelector(".scrapyard-edit-bar");
+
+        if (bar)
+            bar.parentNode.removeChild(bar);
+
+        let chars = doc.querySelector("meta[http-equiv='Content-Type'], meta[http-equiv='content-type']");
+        if (chars) {
+            chars.parentNode.removeChild(chars);
+            chars.setAttribute("content", "text/html; charset=utf-8");
+            doc.getElementsByTagName("head")[0].prepend(chars);
+        }
+        else {
+            chars = document.createElement("meta");
+            chars.setAttribute("http-equiv", 'Content-Type');
+            chars.setAttribute("content", "text/html; charset=utf-8");
+            doc.getElementsByTagName("head")[0].prepend(chars);
+        }
+
+        browser.runtime.sendMessage({
+            type: 'UPDATE_ARCHIVE',
+            id: parseInt(location.hash.split(":")[1]),
+            data: "<!DOCTYPE html>" + doc.outerHTML
+        });
     }
 
     buildTools() {
@@ -132,7 +153,7 @@ class EditToolBar {
         });
 
         $(div).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
-                         Text-select unneeded content (including images and other media) and press Del key on keyboard. 
+                         Text-select unneeded content (including images and other media) and press Del key on keyboard.
                        </span></div>`);
 
         $(".help-mark", div).hover(function(e){
@@ -175,7 +196,7 @@ class EditToolBar {
                 clearMarkPen();
                 this.deselect();
             } else {
-                alert("{NO_SELECTION_ACTIVATED}".translate());
+                alert("No active selection.");
             }
         });
         $(`<div class='scrapyard-menu-item'>Clear Markers</div>`).appendTo($item).css({
@@ -202,7 +223,7 @@ class EditToolBar {
                     self._unsavedChanges = true;
                     this.deselect();
                 } else {
-                    alert("{NO_SELECTION_ACTIVATED}".translate());
+                    alert("No active selection.");
                 }
             });
             $(`<div class='scrapyard-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
@@ -259,11 +280,20 @@ class EditToolBar {
                 $(document.body).removeClass("scrapyard-no-overflow");
             }
             else {
-                let notes_page = location.origin.replace(/^blob:/, "") + "/notes.html?i"
+                if (location.origin.startsWith("http")) {
+                    browser.runtime.sendMessage({
+                        type: 'BROWSE_NOTES',
+                        uuid: location.hash.split(":")[0].substring(1),
+                        id: parseInt(location.hash.split(":")[1])
+                    });
+                }
+                else {
+                    let notes_page = location.origin.replace(/^blob:/, "") + "/notes.html?i"
 
-                $(document.body).prepend(`<iframe id="notes-ifrm" frameborder="0" src="${notes_page}${location.hash}"/>
-                                            <div id="notes-container"></div>`)
-                    .addClass("scrapyard-no-overflow");
+                    $(document.body).prepend(`<iframe id="notes-ifrm" frameborder="0" src="${notes_page}${location.hash}"/>
+                                                <div id="notes-container"></div>`)
+                        .addClass("scrapyard-no-overflow");
+                }
             }
         });
 
@@ -274,7 +304,7 @@ class EditToolBar {
                 $(document.body).removeClass("scrapyard-no-overflow");
             }
         }, false);
-        
+
         /** the original url input */
         var txt = document.createElement("input");
         txt.type = "text";

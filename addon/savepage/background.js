@@ -390,7 +390,7 @@ import {
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     FIREFOX_SHELF_NAME, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_MENU
-} from "../db.js";
+} from "../storage_idb.js";
 import {browseNode} from "../background.js";
 import {getMimetype, isSpecialPage, loadLocalResource, notifySpecialPage} from "../utils.js";
 
@@ -436,40 +436,42 @@ function(PlatformInfo)
 {
     platformOS = PlatformInfo.os;
 
-    chrome.storage.local.set({ "environment-platformos": platformOS });
+    chrome.storage.local.get("savepage-settings",
+        function(object) {
+            object = object["savepage-settings"] ? object["savepage-settings"] : {};
 
-    platformArch = PlatformInfo.arch;
+            object["environment-platformos"] = platformOS;
 
-    chrome.storage.local.set({ "environment-platformarch": platformArch });
+            platformArch = PlatformInfo.arch;
 
-    isFirefox = (navigator.userAgent.indexOf("Firefox") >= 0);
+            object["environment-platformarch"] = platformArch;
 
-    chrome.storage.local.set({ "environment-isfirefox": isFirefox });
+            isFirefox = (navigator.userAgent.indexOf("Firefox") >= 0);
 
-    if (isFirefox)
-    {
-        chrome.runtime.getBrowserInfo(
-        function(info)
-        {
-            ffVersion = info.version.substr(0,info.version.indexOf("."));
+            object["environment-isfirefox"] = isFirefox;
 
-            chrome.storage.local.set({ "environment-ffversion": ffVersion });
+            if (isFirefox) {
+                chrome.runtime.getBrowserInfo(
+                    function (info) {
+                        ffVersion = info.version.substr(0, info.version.indexOf("."));
 
-            ffPrintEditId = "printedit-we@DW-dev";
+                        object["environment-ffversion"] = ffVersion;
 
-            initialize();
+                        ffPrintEditId = "printedit-we@DW-dev";
+
+                        chrome.storage.local.set({"savepage-settings": object});
+
+                        initialize();
+                    });
+            } else {
+                chrome.management.getSelf(
+                    function (extensionInfo) {
+                        gcPrintEditId = (extensionInfo.installType == "normal") ? "olnblpmehglpcallpnbgmikjblmkopia" : "dhblkjgdjeojbefdmhibhpgnpicdijbj";  /* normal or development (unpacked) */
+
+                        initialize();
+                    });
+            }
         });
-    }
-    else
-    {
-        chrome.management.getSelf(
-        function(extensionInfo)
-        {
-            gcPrintEditId = (extensionInfo.installType == "normal") ? "olnblpmehglpcallpnbgmikjblmkopia" : "dhblkjgdjeojbefdmhibhpgnpicdijbj";  /* normal or development (unpacked) */
-
-            initialize();
-        });
-    }
 });
 
 function initialize()
@@ -566,15 +568,23 @@ function initialize()
 
         if (!("options-refererheader" in object)) object["options-refererheader"] = 0;
 
-        if (!("options-forcelazyloads" in object)) object["options-forcelazyloads"] = false;
+        if (!("options-loadlazycontent" in object)) object["options-loadlazycontent"] =
+            ("options-forcelazyloads" in object) ? object["options-forcelazyloads"] : false;  /* Version 13.0-24.2 */
 
-        if (!("options-purgeelements" in object)) object["options-purgeelements"] = true;
+
+        if (!("options-removeelements" in object)) object["options-removeelements"] =
+            ("options-purgeelements" in object) ? object["options-purgeelements"] : true;  /* Version 13.2-20.1 */
+
+        if (!("options-rehideelements" in object)) object["options-rehideelements"] = false;
+
 
         if (!("options-maxframedepth-9.0" in object))
         {
             object["options-maxframedepth"] = 5;
             object["options-maxframedepth-9.0"] = true;
         }
+
+        /*if (!("options-executescripts" in object)) */ object["options-executescripts"] = true;
 
         /* Update stored options */
 
@@ -889,44 +899,6 @@ function addListeners()
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "send" },checkError);
                     }
                 }
-                else if (message.payload.__local_import) {
-                    if (message.location) {
-                        loadLocalResource(message.location, "binary").then(result => {
-                            if (!result.data)
-                                chrome.tabs.sendMessage(sender.tab.id, {type: "loadFailure", index: message.index,
-                                    reason: "mixed"}, checkError);
-                            else {
-                                var i, binaryString, contentType, allowOrigin;
-                                var byteArray = new Uint8Array(result.data);
-
-                                contentType = "";
-                                binaryString = "";
-                                let signature = [];
-                                for (i = 0; i < byteArray.byteLength; i++) {
-                                    if (i < 4)
-                                        signature.push(byteArray[i].toString(16));
-                                    binaryString += String.fromCharCode(byteArray[i]);
-                                }
-
-                                signature = signature.join("").toUpperCase();
-                                contentType = getMimetype(signature);
-
-                                // currently only CSS is loaded as blobs during local import
-                                if (message.location.startsWith("blob:"))
-                                    contentType = "text/css";
-                                else
-                                    contentType = !contentType && result.type? result.type: contentType;
-
-                                chrome.tabs.sendMessage(sender.tab.id, {
-                                    type: "loadSuccess", index: message.index,
-                                    content: binaryString, contenttype: contentType, alloworigin: "*"
-                                }, checkError);
-                            }
-                        });
-                    }
-                    else
-                        chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
-                }
                 else chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
 
                 break;
@@ -934,6 +906,12 @@ function addListeners()
             case "saveDone":
 
                 break;
+
+            case "delay":
+
+                window.setTimeout(function() { sendResponse(); },message.milliseconds);
+
+                return true;  /* asynchronous response */
         }
     });
 
@@ -1102,7 +1080,7 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
         let response;
         let performAction = () => browser.tabs.sendMessage(tab.id, {type: "performAction", menuaction: menuaction,
                                         srcurl: srcurl, externalsave: externalsave, swapdevices: swapdevices,
-                                        selection: selection, payload: userdata.bookmark});
+                                        saveditems: 2, selection: selection, payload: userdata.bookmark});
 
         try {
             response = await performAction();
@@ -1136,47 +1114,31 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
                 // provisional capture of PDF, etc.
                 // TODO: rework with the account of savepage settings
 
-                if (tab.url && tab.url.startsWith("file:")) {
-                    loadLocalResource(tab.url).then(response => {
-                        let contentType = response.type? response.type: "application/pdf";
+                let xhr = new XMLHttpRequest();
 
-                        backend.storeBlob(userdata.bookmark.id, response.data, contentType, false);
+                xhr.open("GET", tab.url, true);
+                xhr.setRequestHeader("Cache-Control", "no-store");
+
+                xhr.responseType = "arraybuffer";
+                xhr.timeout = maxResourceTime * 1000;
+                xhr.onerror = function (e) {
+                    console.log(e)
+                };
+                xhr.onloadend = function () {
+                    if (this.status === 200) {
+                        let contentType = this.getResponseHeader("Content-Type");
+                        if (contentType == null)
+                            contentType = "application/pdf";
+
+                        backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
 
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 
                         alertNotify("Successfully archived page.");
-                    })
-                        .catch(error => {
-                            console.log(error);
-                        });
-                }
-                else {
-                    let xhr = new XMLHttpRequest();
+                    }
+                };
 
-                    xhr.open("GET", tab.url, true);
-                    xhr.setRequestHeader("Cache-Control", "no-store");
-
-                    xhr.responseType = "arraybuffer";
-                    xhr.timeout = maxResourceTime * 1000;
-                    xhr.onerror = function (e) {
-                        console.log(e)
-                    };
-                    xhr.onloadend = function () {
-                        if (this.status === 200) {
-                            let contentType = this.getResponseHeader("Content-Type");
-                            if (contentType == null)
-                                contentType = "application/pdf";
-
-                            backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
-
-                            browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
-
-                            alertNotify("Successfully archived page.");
-                        }
-                    };
-
-                    xhr.send()
-                }
+                xhr.send()
             }
         }
     }

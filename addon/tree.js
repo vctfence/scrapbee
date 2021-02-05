@@ -1,4 +1,5 @@
-import {backend, dropboxBackend} from "./backend.js"
+import {backend} from "./backend.js"
+import {dropboxBackend} from "./backend_dropbox.js"
 
 import {
     ENDPOINT_TYPES,
@@ -15,17 +16,16 @@ import {
     TODO_STATE_WAITING,
     EVERYTHING,
     TODO_NAMES,
-    TODO_NAME,
     FIREFOX_SHELF_NAME,
     FIREFOX_SHELF_ID,
-    isSpecialShelf,
-    isContainer,
-    isEndpoint,
     FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_BOOKMARK_TOOLBAR,
-    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME, CLOUD_SHELF_NAME
-} from "./db.js"
+    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME,
+    isSpecialShelf,
+    isContainer,
+    isEndpoint,
+} from "./storage_idb.js"
 
 import {showDlg, alert, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
@@ -643,7 +643,9 @@ class BookmarkTree {
                                 }));
                                 await pocket.modify(actions).catch(e => console.log(e));
 
-                                showNotification(`Successfully added bookmark${selected_nodes.length > 1? "s": ""} to Pocket.`)
+                                showNotification(`Successfully added bookmark${selected_nodes.length > 1
+                                    ? "s"
+                                    : ""} to Pocket.`)
                             }
                         }
                     },
@@ -687,7 +689,9 @@ class BookmarkTree {
 
                                 if (filename && content) {
                                     await dropboxBackend.upload("/", filename, content);
-                                    showNotification(`Successfully shared bookmark${selected_nodes.length > 1? "s": ""} to Dropbox.`)
+                                    showNotification(`Successfully shared bookmark${selected_nodes.length > 1
+                                        ? "s"
+                                        : ""} to Dropbox.`)
                                 }
                             }
                         }
@@ -830,26 +834,27 @@ class BookmarkTree {
                             return;
                         }
 
-                        confirm("{Warning}", "Do you really want to delete '" + ctx_node_data.name + "'?").then(() => {
-                            if (ctx_node_data.name) {
+                        confirm("{Warning}", "Do you really want to delete '" + ctx_node_data.name + "'?")
+                            .then(() => {
+                                if (ctx_node_data.name) {
 
-                                if (self.startProcessingIndication)
-                                    self.startProcessingIndication();
+                                    if (self.startProcessingIndication)
+                                        self.startProcessingIndication();
 
-                                browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: ctx_node_data.id})
-                                    .then(() => {
-                                        if (self.stopProcessingIndication)
-                                            self.stopProcessingIndication();
+                                    browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: ctx_node_data.id})
+                                        .then(() => {
+                                            if (self.stopProcessingIndication)
+                                                self.stopProcessingIndication();
 
-                                        tree.delete_node(ctx_node_data.id);
+                                            tree.delete_node(ctx_node_data.id);
 
-                                        if (this.onDeleteShelf)
-                                            this.onDeleteShelf(ctx_node_data);
-                                    }).catch(() => {
-                                        if (self.stopProcessingIndication)
-                                            self.stopProcessingIndication();
-                                    });
-                            }
+                                            if (this.onDeleteShelf)
+                                                this.onDeleteShelf(ctx_node_data);
+                                        }).catch(() => {
+                                            if (self.stopProcessingIndication)
+                                                self.stopProcessingIndication();
+                                        });
+                                }
                         });
                     }
                     else {
@@ -964,7 +969,6 @@ class BookmarkTree {
                     delete items.cutItem;
                     delete items.copyItem;
                     delete items.pasteItem;
-                    delete items.newFolderItem;
                 }
                 break;
             case NODE_TYPE_NOTES:

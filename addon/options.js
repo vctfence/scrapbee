@@ -1,4 +1,6 @@
-import {backend, cloudBackend, dropboxBackend} from "./backend.js"
+import {backend} from "./backend.js"
+import {cloudBackend} from "./backend_cloud.js"
+import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
 import {parseHtml, showNotification, getFavicon} from "./utils.js";
 import {
@@ -7,7 +9,7 @@ import {
     EVERYTHING_SHELF, FIREFOX_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
     isSpecialShelf
-} from "./db.js";
+} from "./storage_idb.js";
 
 window.onload = async function(){
     document.title = document.title.translate();
@@ -27,12 +29,38 @@ window.onload = async function(){
         $(this).next(".tips.hide").hide();
     });
 
+    let helperAppLinksLoaded = false;
+    function loadHelperAppLinks() {
+        if (helperAppLinksLoaded)
+            return;
+
+        // Load helper app links
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                let release = JSON.parse(this.responseText);
+                let link = document.getElementById("helper-windows-inst");
+                link.href = release.assets[0].browser_download_url;
+                link = document.getElementById("helper-manual-inst");
+                link.href = release.assets[1].browser_download_url;
+                helperAppLinksLoaded = true;
+            }
+        };
+        xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
+        xhr.send();
+    }
+
     function switchPane(){
         $(".div-area").hide();
         $("a.left-index").removeClass("focus")
 
         let m;
         if(m = location.href.match(/#(\w+)$/)) {
+
+            if (m[1] === "helperapp") {
+                loadHelperAppLinks();
+            }
+
             $("#div-" + m[1]).show();
             $("a.left-index[href='#" + m[1] + "']").addClass("focus")
         } else{
@@ -47,13 +75,13 @@ window.onload = async function(){
     $("#start-rdf-import").on("click", onStartRDFImport);
 
     $("#auth-dropbox").on("click", async () => {
-        console.log("uuu")
         await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
         $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
 
     });
 
     document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
+    document.getElementById("options-save2-button").addEventListener("click",onClickSave,false);
 
     let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -94,7 +122,7 @@ window.onload = async function(){
             document.getElementById("options-savecssimagesall").checked = _(object["options-savecssimagesall"], true);
             document.getElementById("options-savecssfontswoff").checked = _(object["options-savecssfontswoff"], true);
             document.getElementById("options-savecssfontsall").checked = _(object["options-savecssfontsall"], true);
-            // document.getElementById("options-savescripts").checked = object["options-savescripts"];
+            document.getElementById("options-savescripts").checked = object["options-savescripts"];
             //
             document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
             //
@@ -106,7 +134,7 @@ window.onload = async function(){
             document.getElementById("options-allowpassive").checked = _(object["options-allowpassive"], false);
             document.getElementById("options-refererheader").elements["header"].value = _(object["options-refererheader"], 0);
             document.getElementById("options-forcelazyloads").checked = _(object["options-forcelazyloads"], false);
-            document.getElementById("options-purgeelements").checked = _(object["options-purgeelements"], false);
+            document.getElementById("options-purgeelements").checked = _(object["options-purgeelements"], true);
         });
 
          document.getElementById("options-savecssfontsall").addEventListener("click", function () {
@@ -124,6 +152,8 @@ window.onload = async function(){
         document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
         document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
         document.getElementById("option-export-format").value = _(settings.export_format(), "json");
+        document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
+        document.getElementById("option-helper-port").value = _(settings.helper_port_number(), 20202);
 
         document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
 
@@ -167,6 +197,7 @@ window.onload = async function(){
         //document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
 
         $("#options-save-button").addClass("flash-button");
+        $("#options-save2-button").addClass("flash-button");
 
         setTimeout(function()
             {
@@ -174,8 +205,24 @@ window.onload = async function(){
                 //document.getElementById("options-save-button").style.setProperty("font-weight","normal","");
 
                 $("#options-save-button").removeClass("flash-button");
+                $("#options-save2-button").removeClass("flash-button");
             }
             ,1000);
+
+        settings.shallow_export(document.getElementById("option-shallow-export").checked);
+        //settings.compress_export(document.getElementById("option-compress-export").checked);
+        settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
+        settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
+        settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
+            () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
+        settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
+            () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
+        settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
+        settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
+        settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
+        settings.export_format(document.getElementById("option-export-format").value);
+        settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
+        settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
 
         chrome.storage.local.set({"savepage-settings":
             {
@@ -201,7 +248,7 @@ window.onload = async function(){
                 "options-savecssimagesall": document.getElementById("options-savecssimagesall").checked,
                 "options-savecssfontswoff": document.getElementById("options-savecssfontswoff").checked,
                 "options-savecssfontsall": document.getElementById("options-savecssfontsall").checked,
-                //"options-savescripts": document.getElementById("options-savescripts").checked,
+                "options-savescripts": document.getElementById("options-savescripts").checked,
 
                 /* Advanced options */
 
@@ -211,22 +258,10 @@ window.onload = async function(){
                 "options-allowpassive": document.getElementById("options-allowpassive").checked,
                 "options-refererheader": +document.getElementById("options-refererheader").elements["header"].value,
                 "options-forcelazyloads": document.getElementById("options-forcelazyloads").checked,
-                "options-purgeelements": document.getElementById("options-purgeelements").checked
+                "options-loadlazycontent": document.getElementById("options-forcelazyloads").checked,
+                "options-purgeelements": document.getElementById("options-purgeelements").checked,
+                "options-removeelements": document.getElementById("options-purgeelements").checked
             }});
-
-
-        settings.shallow_export(document.getElementById("option-shallow-export").checked);
-        //settings.compress_export(document.getElementById("option-compress-export").checked);
-        settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
-            () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
-        settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
-        settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
-        settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
-        settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
-        settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
-        settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
-            () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
-        settings.export_format(document.getElementById("option-export-format").value);
     }
 
     function onCopyStyle(e) {

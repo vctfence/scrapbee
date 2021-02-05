@@ -1,5 +1,6 @@
 .idea
 *.iml
+*.bak
 bin
 node_modules
 image/donate/
@@ -8,3 +9,10 @@ backend/flask.bat
 .idea/httpRequests/http-requests-log.http
 addon/.web-extension-id
 addon/web-ext-artifacts
+addon/debug.log
+helper/__pycache__
+helper/build/
+helper/dist/
+helper/scrapyard_helper.spec
+helper/*.exe
+helper/*.zip

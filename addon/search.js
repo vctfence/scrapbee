@@ -1,5 +1,5 @@
 import {backend} from "./backend.js"
-import {EVERYTHING, NODE_TYPE_BOOKMARK, ENDPOINT_TYPES} from "./db.js";
+import {EVERYTHING, NODE_TYPE_BOOKMARK, ENDPOINT_TYPES} from "./storage_idb.js";
 import {TREE_STATE_PREFIX} from "./tree.js";
 
 

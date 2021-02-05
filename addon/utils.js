@@ -1,5 +1,5 @@
 import {getFileStorage} from "./lib/idb-file-storage.js";
-import {DEFAULT_SHELF_NAME} from "./db.js";
+import {DEFAULT_SHELF_NAME} from "./storage_idb.js";
 
 export function partition(items, size) {
     var result = []

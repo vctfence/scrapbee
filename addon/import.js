@@ -1,9 +1,9 @@
 import * as org from "./org.js"
 import {partition, loadLocalResource, ReadLine, getFavicon, getThemeVar} from "./utils.js"
 import {backend} from "./backend.js"
+import {nativeBackend} from "./backend_native.js"
 import {settings} from "./settings.js"
 
-//import LZString from "./lib/lz-string.js"
 import {
     NODE_TYPE_SHELF,
     NODE_TYPE_GROUP,
@@ -13,8 +13,9 @@ import {
     TODO_STATES,
     TODO_NAMES,
     EVERYTHING, DEFAULT_SHELF_NAME, DEFAULT_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_ID, NODE_PROPERTIES,
-    isContainer, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME, CLOUD_SHELF_NAME, CLOUD_SHELF_ID, CLOUD_EXTERNAL_NAME
-} from "./db.js";
+    NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME, CLOUD_SHELF_NAME, CLOUD_SHELF_ID, CLOUD_EXTERNAL_NAME,
+    isContainer
+} from "./storage_idb.js";
 
 const EXPORT_VERSION = 1;
 
@@ -721,95 +722,21 @@ function traverseRDFTree(doc, visitor) {
     return traverse(null, visitor);
 }
 
-function resolveURL(url, base) {
-    let result;
-
-    try {
-        result = new URL(url, base);
-    }
-    catch (e) {
-        return null;
-    }
-
-    return result.href;
-}
-
-export async function instantiateLinkedResources(html, base, urls, depth) {
-    if (depth >= settings.frame_depth())
-        return;
-
-    let doc = new DOMParser().parseFromString(html, "text/html");
-    let iframes = doc.querySelectorAll("iframe");
-    let styles = doc.querySelectorAll("link[rel='stylesheet'");
-
-    for (let style of styles) {
-        let url = style.getAttribute("href");
-        if (url && (url = resolveURL(url, base))) {
-            let css = await loadLocalResource(url);
-            if (css.data) {
-                let blob = new Blob([new TextEncoder().encode(css.data)]);
-                url = URL.createObjectURL(blob);
-                urls.push(url);
-                style.href = url;
-            }
-        }
-    }
-
-    for (let iframe of iframes) {
-        let url = iframe.getAttribute("src");
-        if (url && (url = resolveURL(url, base))) {
-            let html = await loadLocalResource(url, "binary");
-            if (html.data) {
-                html = html.type === "text/html"
-                    ? await instantiateLinkedResources(new TextDecoder().decode(html.data), base, urls, depth + 1)
-                    : html.data;
-                let blob = new Blob([html]);
-                url = URL.createObjectURL(blob);
-                urls.push(url);
-                iframe.src = url;
-            }
-        }
-    }
-
-    return doc.documentElement.outerHTML;
-}
-
-export const SCRAPYARD_LOCK_SCREEN =
-    `<div id="scrapyard-waiting"
-          style="background-color: ${getThemeVar("--theme-background")};
-          z-index: 2147483647;
-          position: fixed;
-          inset: 0px;
-          background-image: url(${browser.runtime.getURL(getThemeVar("--themed-tape-icon"))});
-          background-size: 50mm 50mm;
-          background-repeat: no-repeat;
-          background-position: center center;"></div>`;
+// export const SCRAPYARD_LOCK_SCREEN =
+//     `<div id="scrapyard-waiting"
+//           style="background-color: ${getThemeVar("--theme-background")};
+//           z-index: 2147483647;
+//           position: fixed;
+//           inset: 0px;
+//           background-image: url(${browser.runtime.getURL(getThemeVar("--themed-tape-icon"))});
+//           background-size: 50mm 50mm;
+//           background-repeat: no-repeat;
+//           background-position: center center;"></div>`;
 
 
-function localRDFScheme(path) {
-    return (path && !path.startsWith("http")? "file://": "") + path;
-}
-
-async function importRDFArchive(node, scrapbook_id, root_path) {
-    let base = localRDFScheme(`${root_path}/data/${scrapbook_id}/`);
+async function importRDFArchive(node, scrapbook_id, _) {
+    let base = `http://localhost:${settings.helper_port_number()}/rdf/import/files/data/${scrapbook_id}/`
     let index = `${base}index.html`;
-    let html = await loadLocalResource(index);
-
-    if (!html.data)
-        return;
-
-    html = html.data.replace(/<body([^>]*)>/, `<body\$1>${SCRAPYARD_LOCK_SCREEN}`);
-
-    let urls = [];
-
-    html = await instantiateLinkedResources(html, base, urls, 0);
-
-    let blob = new Blob([new TextEncoder().encode(html)], {type: "text/html"});
-    let url = URL.createObjectURL(blob);
-
-    urls.push(url);
-
-    //browser.tabs.hide(tab.id);
 
     return new Promise(async (resolve, reject) => {
         let completionListener = function(message, sender, sendResponse) {
@@ -817,10 +744,6 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
                 browser.tabs.onUpdated.removeListener(listener);
                 browser.runtime.onMessage.removeListener(completionListener);
                 browser.tabs.remove(import_tab.id);
-
-                for (let url of urls) {
-                    URL.revokeObjectURL(url);
-                }
 
                 resolve();
             }
@@ -836,13 +759,14 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
                         browser.runtime.onMessage.removeListener(initializationListener);
 
                         node.__local_import = true;
-                        node.__local_import_base = localRDFScheme(`${root_path}/data/${scrapbook_id}/`);
+                        node.__local_import_base = base;
                         node.tab_id = import_tab.id;
 
                         try {
                             await browser.tabs.sendMessage(import_tab.id, {
                                 type: "performAction",
                                 menuaction: 2,
+                                saveditems: 2,
                                 payload: node
                             });
                         } catch (e) {
@@ -868,7 +792,7 @@ async function importRDFArchive(node, scrapbook_id, root_path) {
 
         browser.tabs.onUpdated.addListener(listener);
 
-        var import_tab = await browser.tabs.create({url: url, active: false});
+        var import_tab = await browser.tabs.create({url: index, active: false});
     });
 
 }
@@ -879,13 +803,35 @@ export async function importRDF(shelf, path, threads, quick) {
     path = path.replace(/\\/g, "/");
 
     let rdf_directory = path.substring(0, path.lastIndexOf("/"));
+    let rdf_file = path.split("/");
+    rdf_file = rdf_file[rdf_file.length - 1];
+    let xml = null;
 
-    let xml = await loadLocalResource(localRDFScheme(path));
+    let helperApp = await nativeBackend.probe(true);
 
-    if (!xml.data)
+    if (!helperApp)
+        return;
+
+    let rdf_url = `http://localhost:${settings.helper_port_number()}/rdf/import/${rdf_file}`
+
+    try {
+        let form = new FormData();
+        form.append("rdf_directory", rdf_directory);
+        form.append("rdf_file", rdf_file);
+        let response = await fetch(rdf_url, {method: "POST", body: form});
+
+        if (response.ok) {
+            xml = await response.text();
+        }
+    }
+    catch (e) {
+        console.log(e);
+    }
+
+    if (!xml)
         return Promise.reject(new Error("RDF file not found."));
 
-    let rdf = new DOMParser().parseFromString(xml.data, 'application/xml');
+    let rdf = new DOMParser().parseFromString(xml, 'application/xml');
     let id_map = new Map();
     let reverse_id_map = new Map();
 

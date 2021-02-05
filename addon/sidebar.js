@@ -3,13 +3,12 @@ import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
 import {isElementInViewport, ReadLine} from "./utils.js"
-import {CLOUD_SHELF_ID, CLOUD_SHELF_NAME, DEFAULT_SHELF_ID, isSpecialShelf} from "./db.js"
+import {CLOUD_SHELF_ID, CLOUD_SHELF_NAME, DEFAULT_SHELF_ID, isSpecialShelf} from "./storage_idb.js"
 
 import {
     EVERYTHING,
     DEFAULT_SHELF_NAME,
     FIREFOX_SHELF_NAME,
-    NODE_TYPE_GROUP,
     NODE_TYPE_SHELF,
     TODO_SHELF,
     DONE_SHELF,
@@ -17,276 +16,18 @@ import {
     FIREFOX_SHELF_ID,
     TODO_NAME,
     DONE_NAME
-} from "./db.js";
+} from "./storage_idb.js";
 
 import {
     SEARCH_MODE_TITLE,
     SEARCH_MODE_TAGS,
     SEARCH_MODE_CONTENT,
-    SEARCH_MODE_FIREFOX,
     SearchContext
-
 } from "./search.js";
+
 import {pathToNameExt, showNotification} from "./utils.js";
 
-
 const INPUT_TIMEOUT = 1000;
-
-
-function validSearchInput(input) {
-    return input && input.length > 2;
-}
-
-function canSearch() {
-    let input = $("#search-input").val();
-
-    return validSearchInput(input);
-}
-
-async function performSearch(context, tree) {
-    let input = $("#search-input").val();
-
-    if (validSearchInput(input) && !context.isInSearch) {
-        context.inSearch();
-    }
-    else if (!validSearchInput(input) && context.isInSearch) {
-        context.outOfSearch();
-        switchShelf(context, tree, $(`#shelfList option:contains("${context.shelfName}")`).val(), false);
-    }
-
-    if (validSearchInput(input))
-        return context.search(input).then(nodes => {
-            tree.list(nodes);
-        });
-}
-
-function performImport(context, tree, file, file_name, file_ext) {
-
-    $("#shelf-menu-button").attr("src", "icons/grid.svg");
-
-    return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
-        .then(() => {
-            $("#shelf-menu-button").attr("src", "icons/menu.svg");
-
-            if (file_name.toLocaleLowerCase() === EVERYTHING) {
-                settings.last_shelf(EVERYTHING_SHELF);
-
-                loadShelves(context, tree).then(() => {
-                    tree.openRoot();
-                });
-                invalidateCompletion();
-            }
-            else
-                backend.queryShelf(file_name).then(shelf => {
-
-                    settings.last_shelf(shelf.id);
-
-                    loadShelves(context, tree).then(() => {
-                        tree.openRoot();
-                    });
-                    invalidateCompletion();
-                });
-        }).catch(e => {
-            $("#shelf-menu-button").attr("src", "icons/menu.svg");
-            showNotification({message: "The import has failed: " + e.message});
-        });
-}
-
-function performExport(context, tree) {
-    let {id: shelf_id, name: shelf} = getCurrentShelf();
-
-    let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
-    let root = special_shelf
-        ? tree._jstree.get_node("#")
-        : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
-    let skip_level = root.parents.length;
-    let uuid = special_shelf? shelf.toLowerCase(): root.original.uuid;
-
-    let nodes = [];
-    tree.traverse(root, node => {
-        let data = backend._sanitizeNode(node.original);
-        delete data.tag_list;
-
-        data.level = node.parents.length - skip_level;
-        nodes.push(data);
-    });
-
-    nodes.shift();
-
-    $("#shelf-menu-button").attr("src", "icons/grid.svg");
-
-    return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
-        $("#shelf-menu-button").attr("src", "icons/menu.svg");
-    }).catch(e => {
-        console.log(e.message);
-        $("#shelf-menu-button").attr("src", "icons/menu.svg");
-        showNotification({message: "The export has failed."});
-    });
-}
-
-function styleBuiltinShelf() {
-    let {id, name} = getCurrentShelf();
-
-    if (isSpecialShelf(name))
-        $("div.selectric span.label").addClass("option-builtin");
-    else
-        $("div.selectric span.label").removeClass("option-builtin");
-}
-
-function invalidateCompletion() {
-    browser.runtime.sendMessage("ubiquitywe@firefox", {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
-}
-
-function loadShelves(context, tree, synchronize = true) {
-    let shelf_list = $("#shelfList");
-
-    return backend.listShelves().then(shelves => {
-        shelf_list.html(`
-        <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
-        <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
-            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
-        }</option>
-        `);
-
-        if (settings.cloud_enabled()) {
-            let cloud_shelf_name = settings.capitalize_builtin_shelf_names()
-                ? CLOUD_SHELF_NAME.capitalizeFirstLetter()
-                : CLOUD_SHELF_NAME;
-            shelf_list.append(`<option class=\"option-builtin\" value=\"${CLOUD_SHELF_ID}\">${cloud_shelf_name}</option>`);
-        }
-
-        let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
-        if (cloud_shelf)
-            shelves.splice(shelves.indexOf(cloud_shelf), 1);
-
-        if (settings.show_firefox_bookmarks()) {
-            let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
-                ? FIREFOX_SHELF_NAME.capitalizeFirstLetter()
-                : FIREFOX_SHELF_NAME;
-            shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
-        }
-
-        let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
-        if (firefox_shelf)
-            shelves.splice(shelves.indexOf(firefox_shelf), 1);
-
-        shelves.sort((a, b) => {
-            if (a.name < b.name)
-                return -1;
-            if (a.name > b.name)
-                return 1;
-
-            return 0;
-        });
-
-        let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
-        shelves.splice(shelves.indexOf(default_shelf), 1);
-        default_shelf.name = settings.capitalize_builtin_shelf_names()
-            ? default_shelf.name.capitalizeFirstLetter()
-            : default_shelf.name;
-        shelves = [default_shelf, ...shelves];
-
-        for (let shelf of shelves) {
-            let option = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
-
-            if (shelf.name.toLowerCase() === DEFAULT_SHELF_NAME)
-                option.addClass("option-builtin");
-        }
-
-        let last_shelf_id = settings.last_shelf() || 1;
-
-        if (last_shelf_id === "null")
-            last_shelf_id = 1;
-
-        let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
-        last_shelf = last_shelf && last_shelf.length? last_shelf: $(`#shelfList option[value="1"]`);
-        shelf_list.val(parseInt(last_shelf.val()));
-
-        styleBuiltinShelf();
-        shelf_list.selectric('refresh');
-        return switchShelf(context, tree, shelf_list.val(), synchronize);
-    }).catch(() => {
-        shelf_list.val(1);
-        shelf_list.selectric('refresh');
-        return switchShelf(context, tree, 1, synchronize);
-    });
-}
-
-function switchShelf(context, tree, shelf_id, synchronize = true) {
-    let path = $(`#shelfList option[value="${shelf_id}"]`).text();
-    path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
-    settings.last_shelf(shelf_id);
-
-    if (shelf_id == EVERYTHING_SHELF)
-        $("#shelf-menu-sort").show();
-    else
-        $("#shelf-menu-sort").hide();
-
-    context.shelfName = path;
-
-    if (canSearch())
-        return performSearch(context, tree);
-    else {
-        if (shelf_id == TODO_SHELF) {
-            return backend.listTODO().then(nodes => {
-                tree.list(nodes, TODO_NAME);
-            });
-        }
-        else if (shelf_id == DONE_SHELF) {
-            return backend.listDONE().then(nodes => {
-                tree.list(nodes, DONE_NAME);
-            });
-        }
-        else if (shelf_id == EVERYTHING_SHELF) {
-            return backend.listShelfNodes(EVERYTHING).then(nodes => {
-                tree.update(nodes, true);
-                if (synchronize && settings.cloud_enabled()) {
-                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
-                }
-            });
-        }
-        else if (shelf_id == CLOUD_SHELF_ID) {
-            return backend.listShelfNodes(path).then(nodes => {
-                tree.update(nodes);
-                if (synchronize && settings.cloud_enabled()) {
-                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
-                }
-            });
-        }
-        else if (shelf_id == FIREFOX_SHELF_ID) {
-            return backend.listShelfNodes(path).then(nodes => {
-                nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
-
-                for (let node of nodes) {
-                    if (node.parent_id == FIREFOX_SHELF_ID) {
-                        node.type = NODE_TYPE_SHELF;
-                        node.parent_id = null;
-                    }
-                }
-                tree.update(nodes);
-            });
-        }
-        else {
-            return backend.listShelfNodes(path).then(nodes => {
-                tree.update(nodes);
-            });
-        }
-    }
-}
-
-document.addEventListener('contextmenu', function (event) {
-    if ($(".dlg-cover:visible").length && event.target.localName !== "input")
-        event.preventDefault();
-});
-
-function getCurrentShelf() {
-    let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
-    return {
-        id: parseInt(selectedOption.val()),
-        name: selectedOption.text()
-    };
-}
 
 window.onload = function () {
     /* i18n */
@@ -709,5 +450,264 @@ window.onload = function () {
         loadShelves(context, tree);
     });
 };
+
+function loadShelves(context, tree, synchronize = true) {
+    let shelf_list = $("#shelfList");
+
+    return backend.listShelves().then(shelves => {
+        shelf_list.html(`
+        <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
+        <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
+            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+        }</option>
+        `);
+
+        if (settings.cloud_enabled()) {
+            let cloud_shelf_name = settings.capitalize_builtin_shelf_names()
+                ? CLOUD_SHELF_NAME.capitalizeFirstLetter()
+                : CLOUD_SHELF_NAME;
+            shelf_list.append(`<option class=\"option-builtin\" value=\"${CLOUD_SHELF_ID}\">${cloud_shelf_name}</option>`);
+        }
+
+        let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
+        if (cloud_shelf)
+            shelves.splice(shelves.indexOf(cloud_shelf), 1);
+
+        if (settings.show_firefox_bookmarks()) {
+            let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
+                ? FIREFOX_SHELF_NAME.capitalizeFirstLetter()
+                : FIREFOX_SHELF_NAME;
+            shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
+        }
+
+        let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+        if (firefox_shelf)
+            shelves.splice(shelves.indexOf(firefox_shelf), 1);
+
+        shelves.sort((a, b) => {
+            if (a.name < b.name)
+                return -1;
+            if (a.name > b.name)
+                return 1;
+
+            return 0;
+        });
+
+        let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
+        shelves.splice(shelves.indexOf(default_shelf), 1);
+        default_shelf.name = settings.capitalize_builtin_shelf_names()
+            ? default_shelf.name.capitalizeFirstLetter()
+            : default_shelf.name;
+        shelves = [default_shelf, ...shelves];
+
+        for (let shelf of shelves) {
+            let option = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
+
+            if (shelf.name.toLowerCase() === DEFAULT_SHELF_NAME)
+                option.addClass("option-builtin");
+        }
+
+        let last_shelf_id = settings.last_shelf() || 1;
+
+        if (last_shelf_id === "null")
+            last_shelf_id = 1;
+
+        let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
+        last_shelf = last_shelf && last_shelf.length? last_shelf: $(`#shelfList option[value="1"]`);
+        shelf_list.val(parseInt(last_shelf.val()));
+
+        styleBuiltinShelf();
+        shelf_list.selectric('refresh');
+        return switchShelf(context, tree, shelf_list.val(), synchronize);
+    }).catch(() => {
+        shelf_list.val(1);
+        shelf_list.selectric('refresh');
+        return switchShelf(context, tree, 1, synchronize);
+    });
+}
+
+function switchShelf(context, tree, shelf_id, synchronize = true) {
+    let path = $(`#shelfList option[value="${shelf_id}"]`).text();
+    path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
+    settings.load(() => {
+        settings.last_shelf(shelf_id);
+    });
+
+    if (shelf_id == EVERYTHING_SHELF)
+        $("#shelf-menu-sort").show();
+    else
+        $("#shelf-menu-sort").hide();
+
+    context.shelfName = path;
+
+    if (canSearch())
+        return performSearch(context, tree);
+    else {
+        if (shelf_id == TODO_SHELF) {
+            return backend.listTODO().then(nodes => {
+                tree.list(nodes, TODO_NAME);
+            });
+        }
+        else if (shelf_id == DONE_SHELF) {
+            return backend.listDONE().then(nodes => {
+                tree.list(nodes, DONE_NAME);
+            });
+        }
+        else if (shelf_id == EVERYTHING_SHELF) {
+            return backend.listShelfNodes(EVERYTHING).then(nodes => {
+                tree.update(nodes, true);
+                if (synchronize && settings.cloud_enabled()) {
+                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
+                }
+            });
+        }
+        else if (shelf_id == CLOUD_SHELF_ID) {
+            return backend.listShelfNodes(path).then(nodes => {
+                tree.update(nodes);
+                if (synchronize && settings.cloud_enabled()) {
+                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
+                }
+            });
+        }
+        else if (shelf_id == FIREFOX_SHELF_ID) {
+            return backend.listShelfNodes(path).then(nodes => {
+                nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
+
+                for (let node of nodes) {
+                    if (node.parent_id == FIREFOX_SHELF_ID) {
+                        node.type = NODE_TYPE_SHELF;
+                        node.parent_id = null;
+                    }
+                }
+                tree.update(nodes);
+            });
+        }
+        else {
+            if (path)
+                return backend.listShelfNodes(path).then(nodes => {
+                    tree.update(nodes);
+                });
+        }
+    }
+}
+
+document.addEventListener('contextmenu', function (event) {
+    if ($(".dlg-cover:visible").length && event.target.localName !== "input")
+        event.preventDefault();
+});
+
+function getCurrentShelf() {
+    let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
+    return {
+        id: parseInt(selectedOption.val()),
+        name: selectedOption.text()
+    };
+}
+
+function validSearchInput(input) {
+    return input && input.length > 2;
+}
+
+function canSearch() {
+    let input = $("#search-input").val();
+
+    return validSearchInput(input);
+}
+
+async function performSearch(context, tree) {
+    let input = $("#search-input").val();
+
+    if (validSearchInput(input) && !context.isInSearch) {
+        context.inSearch();
+    }
+    else if (!validSearchInput(input) && context.isInSearch) {
+        context.outOfSearch();
+        switchShelf(context, tree, $(`#shelfList option:contains("${context.shelfName}")`).val(), false);
+    }
+
+    if (validSearchInput(input))
+        return context.search(input).then(nodes => {
+            tree.list(nodes);
+        });
+}
+
+function performImport(context, tree, file, file_name, file_ext) {
+
+    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+
+    return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
+        .then(() => {
+            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+
+            if (file_name.toLocaleLowerCase() === EVERYTHING) {
+                settings.last_shelf(EVERYTHING_SHELF);
+
+                loadShelves(context, tree).then(() => {
+                    tree.openRoot();
+                });
+                invalidateCompletion();
+            }
+            else
+                backend.queryShelf(file_name).then(shelf => {
+
+                    settings.last_shelf(shelf.id);
+
+                    loadShelves(context, tree).then(() => {
+                        tree.openRoot();
+                    });
+                    invalidateCompletion();
+                });
+        }).catch(e => {
+            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+            showNotification({message: "The import has failed: " + e.message});
+        });
+}
+
+function performExport(context, tree) {
+    let {id: shelf_id, name: shelf} = getCurrentShelf();
+
+    let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
+    let root = special_shelf
+        ? tree._jstree.get_node("#")
+        : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
+    let skip_level = root.parents.length;
+    let uuid = special_shelf? shelf.toLowerCase(): root.original.uuid;
+
+    let nodes = [];
+    tree.traverse(root, node => {
+        let data = backend._sanitizeNode(node.original);
+        delete data.tag_list;
+
+        data.level = node.parents.length - skip_level;
+        nodes.push(data);
+    });
+
+    nodes.shift();
+
+    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+
+    return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
+        $("#shelf-menu-button").attr("src", "icons/menu.svg");
+    }).catch(e => {
+        console.log(e.message);
+        $("#shelf-menu-button").attr("src", "icons/menu.svg");
+        showNotification({message: "The export has failed."});
+    });
+}
+
+function styleBuiltinShelf() {
+    let {id, name} = getCurrentShelf();
+
+    if (isSpecialShelf(name))
+        $("div.selectric span.label").addClass("option-builtin");
+    else
+        $("div.selectric span.label").removeClass("option-builtin");
+}
+
+function invalidateCompletion() {
+    browser.runtime.sendMessage("ubiquitywe@firefox", {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
+}
+
 
 console.log("==> sidebar.js loaded");

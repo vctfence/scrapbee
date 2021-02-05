@@ -4,9 +4,9 @@
 /*                                                                      */
 /*      Javascript for Saving Content Pages (all frames)                */
 /*                                                                      */
-/*      Last Edit - 13 Aug 2019                                         */
+/*      Last Edit - 09 Nov 2020                                         */
 /*                                                                      */
-/*      Copyright (C) 2016-2019 DW-dev                                  */
+/*      Copyright (C) 2016-2020 DW-dev                                  */
 /*                                                                      */
 /*      Distributed under the GNU General Public License version 2      */
 /*      See LICENCE.txt file and http://www.gnu.org/licenses/           */
@@ -33,7 +33,7 @@
 
 /* Use wrapper function to separate namespace from main content script */
 
-//"use strict";
+"use strict";
 
 frameScript();
 
@@ -76,10 +76,11 @@ function onLoadPage()
 function addListeners()
 {
     /* Message received listener */
+
     chrome.runtime.onMessage.addListener(
     function(message,sender,sendResponse)
     {
-        var i,key,win,parentwin,doctype,htmltext;
+        var i,key,win,parentwin,dupelem,dupsheet,doctype,htmltext;
         var loadedfonts = new Array();
 
         switch (message.type)
@@ -87,7 +88,8 @@ function addListeners()
             /* Messages from background page */
 
             case "requestFrames":
-                markFrames(0,window,document.documentElement);
+
+                identifyFrames(0,window,document.documentElement);
 
                 key = "";
                 win = document.defaultView;
@@ -116,6 +118,66 @@ function addListeners()
                     }
                 });
 
+                document.querySelectorAll("style").forEach(
+                function (element)
+                {
+                    var i,csstext;
+
+                    if (!element.disabled)
+                    {
+                        try
+                        {
+                            /* Count rules in element.textContent by creating duplicate element */
+
+                            dupelem = element.ownerDocument.createElement("style");
+                            dupelem.textContent = element.textContent;
+                            element.ownerDocument.body.appendChild(dupelem);
+                            dupsheet = dupelem.sheet;
+                            dupelem.remove();
+
+                            /* There may be rules in element.sheet.cssRules that are not in element.textContent */
+                            /* For example if the page uses CSS-in-JS Libraries */
+
+                            if (dupsheet.cssRules.length != element.sheet.cssRules.length)
+                            {
+                                csstext = "";
+
+                                for (i = 0; i < element.sheet.cssRules.length; i++)
+                                    csstext += element.sheet.cssRules[i].cssText + "\n";
+
+                                element.setAttribute("data-savepage-sheetrules",csstext);
+                            }
+                        }
+                        catch (e) {}
+                    }
+                });
+
+                document.querySelectorAll("img").forEach(
+                function (element)
+                {
+                    var datauri;
+
+                    if (element.currentSrc.substr(0,5) == "blob:")
+                    {
+                        datauri = createCanvasDataURL(element);
+
+                        if (datauri != "") element.setAttribute("data-savepage-blobdatauri",datauri);
+                    }
+                });
+
+                document.querySelectorAll("video").forEach(
+                function (element)
+                {
+                    var datauri;
+
+                    if (!element.hasAttribute("poster") && element.currentSrc.substr(0,5) == "blob:")
+                    {
+                        datauri = createCanvasDataURL(element);
+
+                        if (datauri != "") element.setAttribute("data-savepage-blobdatauri",datauri);
+                    }
+                });
+
                 doctype = document.doctype;
 
                 if (doctype != null)
@@ -140,7 +202,7 @@ function addListeners()
 
 /* Identify frames */
 
-function markFrames(depth,frame,element)
+function identifyFrames(depth,frame,element)
 {
     var i,key,win,parentwin;
 
@@ -172,7 +234,7 @@ function markFrames(depth,frame,element)
         {
             if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before naming */
             {
-                markFrames(depth+1,element.contentWindow,element.contentDocument.documentElement);
+                identifyFrames(depth+1,element.contentWindow,element.contentDocument.documentElement);
             }
         }
         catch (e)  /* attempting cross-domain web page access */
@@ -183,8 +245,31 @@ function markFrames(depth,frame,element)
     {
         for (i = 0; i < element.children.length; i++)
             if (element.children[i] != null)  /* in case web page not fully loaded before finding */
-                markFrames(depth,frame,element.children[i]);
+                identifyFrames(depth,frame,element.children[i]);
     }
+}
+
+/************************************************************************/
+
+/* Create canvas image data URL */
+
+function createCanvasDataURL(element)
+{
+    var canvas,context;
+
+    canvas = document.createElement("canvas");
+    canvas.width = element.clientWidth;
+    canvas.height = element.clientHeight;
+
+    try
+    {
+        context = canvas.getContext("2d");
+        context.drawImage(element,0,0,canvas.width,canvas.height);
+        return canvas.toDataURL("image/png","");
+    }
+    catch (e) {}
+
+    return "";
 }
 
 /************************************************************************/

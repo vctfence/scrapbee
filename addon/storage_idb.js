@@ -82,18 +82,18 @@ export const NODE_PROPERTIES =
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
-//import LZString from "./lib/lz-string.js"
 
-const db = new Dexie("scrapyard");
 
-db.version(1).stores({
+const dexie = new Dexie("scrapyard");
+
+dexie.version(1).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date`,
     blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
     notes: `++id,&node_id`,
     tags: `++id,name`,
 });
-db.version(2).stores({
+dexie.version(2).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
     blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
@@ -101,8 +101,8 @@ db.version(2).stores({
     tags: `++id,name`,
 });
 
-db.on('populate', () => {
-    db.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
+dexie.on('populate', () => {
+    dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
 });
 
 export function isContainer(node) {
@@ -123,9 +123,8 @@ export function isSpecialShelf(name) {
         || name === DONE_NAME.toLocaleUpperCase();
 }
 
-class Storage {
+class IDBStorage {
     constructor() {
-        this.db = db;
     }
 
     _sanitizeNode(node) {
@@ -153,7 +152,7 @@ class Storage {
             datum.date_modified = datum.date_added;
         }
 
-        datum.id = await db.nodes.add(datum);
+        datum.id = await dexie.nodes.add(datum);
         return datum;
     }
 
@@ -161,40 +160,40 @@ class Storage {
         if (!uuid)
             return false;
 
-        return db.nodes.where("uuid").equals(uuid).count();
+        return dexie.nodes.where("uuid").equals(uuid).count();
     }
 
     getNode(id, is_uuid = false) {
         if (is_uuid)
-            return db.nodes.where("uuid").equals(id).first();
+            return dexie.nodes.where("uuid").equals(id).first();
 
-        return db.nodes.where("id").equals(id).first();
+        return dexie.nodes.where("id").equals(id).first();
     }
 
     getNodes(ids) {
         if (!ids)
-            return db.nodes.toArray();
+            return dexie.nodes.toArray();
 
-        return db.nodes.where("id").anyOf(ids).toArray();
+        return dexie.nodes.where("id").anyOf(ids).toArray();
     }
 
     getExternalNode(id, kind) {
-        return db.nodes.where("external_id").equals(id).and(n => n.external === kind).first();
+        return dexie.nodes.where("external_id").equals(id).and(n => n.external === kind).first();
     }
 
     getExternalNodes(kind) {
-        return db.nodes.where("external").equals(kind).toArray();
+        return dexie.nodes.where("external").equals(kind).toArray();
     }
 
     async isExternalNodeExists(id, kind) {
-        return !!(await db.nodes.where("external_id").equals(id).and(n => n.external === kind).count());
+        return !!(await dexie.nodes.where("external_id").equals(id).and(n => n.external === kind).count());
     }
 
     async deleteExternalNodes(ids, kind) {
         if (ids)
-            ids = await db.nodes.where("external_id").anyOf(ids).and(n => n.external === kind).toArray();
+            ids = await dexie.nodes.where("external_id").anyOf(ids).and(n => n.external === kind).toArray();
         else
-            ids = await db.nodes.where("external").equals(kind).toArray();
+            ids = await dexie.nodes.where("external").equals(kind).toArray();
 
         return this.deleteNodesLowLevel(ids.map(n => n.id));
     }
@@ -202,25 +201,25 @@ class Storage {
     async deleteMissingExternalNodes(ids, kind) {
         let existing = new Set(ids);
 
-        ids = await db.nodes.where("external").equals(kind).and(n => n.external_id && !existing.has(n.external_id))
+        ids = await dexie.nodes.where("external").equals(kind).and(n => n.external_id && !existing.has(n.external_id))
             .toArray();
 
         return this.deleteNodesLowLevel(ids.map(n => n.id));
     }
 
     getChildNodes(id) {
-        return db.nodes.where("parent_id").equals(id).toArray();
+        return dexie.nodes.where("parent_id").equals(id).toArray();
     }
 
     async updateNodes(nodes) {
-        //return db.transaction('rw', db.nodes, async () => {
+        //return dexie.transaction('rw', dexie.nodes, async () => {
             for (let n of nodes) {
                 n = this._sanitizeNode(n);
 
                 let id = n.id;
                 //delete n.id;
                 n.date_modified = new Date();
-                await db.nodes.where("id").equals(id).modify(n);
+                await dexie.nodes.where("id").equals(id).modify(n);
             }
         //     return nodes;
         // });
@@ -236,13 +235,13 @@ class Storage {
             if (reset_date)
                 node.date_modified = new Date();
 
-            await db.nodes.update(id, node);
+            await dexie.nodes.update(id, node);
         }
         return node;
     }
 
     async _selectAllChildrenOf(node, children) {
-        let group_children = await db.nodes.where("parent_id").equals(node.id).toArray();
+        let group_children = await dexie.nodes.where("parent_id").equals(node.id).toArray();
 
         if (group_children && group_children.length) {
             for (let child of group_children) {
@@ -277,8 +276,8 @@ class Storage {
         let {search, tags, types, path, limit, depth, order} = options;
 
         let where = limit
-            ? db.nodes.limit(limit)
-            : db.nodes;
+            ? dexie.nodes.limit(limit)
+            : dexie.nodes;
 
         let searchrx = search? new RegExp(search, "i"): null;
 
@@ -329,11 +328,11 @@ class Storage {
     }
 
     queryTODO() {
-        return db.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
+        return dexie.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
     }
 
     queryDONE() {
-        return db.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
+        return dexie.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
     }
 
     // returns nodes containing only all given words
@@ -344,7 +343,7 @@ class Storage {
         let word_count = {};
 
         for (let word of words) {
-            matches[word] = (await db.index.where("words").startsWith(word).and(n => node_ids.some(id => id === n.node_id))
+            matches[word] = (await dexie.index.where("words").startsWith(word).and(n => node_ids.some(id => id === n.node_id))
                 .toArray()).map(n => n.node_id);
             all_matched_nodes = all_matched_nodes.concat(matches[word]).filter((v, i, a) => a.indexOf(v) === i);
         }
@@ -365,40 +364,40 @@ class Storage {
         if (!Array.isArray(ids))
             ids = [ids];
 
-        if (db.tables.some(t => t.name === "blobs"))
-            await db.blobs.where("node_id").anyOf(ids).delete();
+        if (dexie.tables.some(t => t.name === "blobs"))
+            await dexie.blobs.where("node_id").anyOf(ids).delete();
 
-        if (db.tables.some(t => t.name === "index"))
-            await db.index.where("node_id").anyOf(ids).delete();
+        if (dexie.tables.some(t => t.name === "index"))
+            await dexie.index.where("node_id").anyOf(ids).delete();
 
-        if (db.tables.some(t => t.name === "notes"))
-            await db.notes.where("node_id").anyOf(ids).delete();
+        if (dexie.tables.some(t => t.name === "notes"))
+            await dexie.notes.where("node_id").anyOf(ids).delete();
 
-        return db.nodes.bulkDelete(ids);
+        return dexie.nodes.bulkDelete(ids);
     }
 
     async wipeEveritying() {
-        if (db.tables.some(t => t.name === "blobs"))
-            await db.blobs.clear();
+        if (dexie.tables.some(t => t.name === "blobs"))
+            await dexie.blobs.clear();
 
-        if (db.tables.some(t => t.name === "index"))
-            await db.index.clear();
+        if (dexie.tables.some(t => t.name === "index"))
+            await dexie.index.clear();
 
-        if (db.tables.some(t => t.name === "notes"))
-            await db.notes.clear();
+        if (dexie.tables.some(t => t.name === "notes"))
+            await dexie.notes.clear();
 
-        if (db.tables.some(t => t.name === "tags"))
-            await db.tags.clear();
+        if (dexie.tables.some(t => t.name === "tags"))
+            await dexie.tags.clear();
 
         let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
             ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
             ...(await this.queryFullSubtree(CLOUD_SHELF_ID, true))];
 
-        return db.nodes.where("id").noneOf(retain).delete();
+        return dexie.nodes.where("id").noneOf(retain).delete();
     }
 
     async queryShelf(name) {
-        let where = db.nodes.where("type").equals(NODE_TYPE_SHELF);
+        let where = dexie.nodes.where("type").equals(NODE_TYPE_SHELF);
 
         if (name)
             return await where.and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase())
@@ -408,13 +407,13 @@ class Storage {
     }
 
     queryGroup(parent_id, name) {
-        return db.nodes.where("parent_id").equals(parent_id)
+        return dexie.nodes.where("parent_id").equals(parent_id)
            .and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase())
            .first();
     }
 
     async queryGroups(sort = false) {
-        let nodes = await db.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
+        let nodes = await dexie.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
 
         if (sort)
             return nodes.sort((a, b) => a.pos - b.pos);
@@ -442,7 +441,7 @@ class Storage {
         // }
 
         if (node)
-            return db.blobs.add({
+            return dexie.blobs.add({
                 node_id: node.id,
                 //compressed: compress,
                 data: data,
@@ -459,19 +458,27 @@ class Storage {
         // }
 
         if (node)
-            return db.blobs.where("node_id").equals(node.id).modify({
+            return dexie.blobs.where("node_id").equals(node.id).modify({
                 //compressed: compress,
                 data: data
             });
     }
 
+    async deleteBlob(node_id) {
+        if (dexie.tables.some(t => t.name === "blobs"))
+            await dexie.blobs.where("node_id").equals(node_id).delete();
+
+        if (dexie.tables.some(t => t.name === "index"))
+            await dexie.index.where("node_id").equals(node_id).delete();
+    }
+
     async fetchBlob(node_id, is_uuid = false, compressed = false) {
         if (is_uuid) {
-            let node = await db.nodes.where("uuid").equals(node_id).first();
+            let node = await dexie.nodes.where("uuid").equals(node_id).first();
             if (node)
                 node_id = node.id;
         }
-        let blob = await db.blobs.where("node_id").equals(node_id).first();
+        let blob = await dexie.blobs.where("node_id").equals(node_id).first();
 
        // if (!compressed && blob && blob.compressed)
        //     blob.data = LZString.decompress(blob.data);
@@ -480,26 +487,26 @@ class Storage {
     }
 
     async storeIndex(node_id, words) {
-        return db.index.add({
+        return dexie.index.add({
             node_id: node_id,
             words: words
         });
     }
 
     async updateIndex(node_id, words) {
-        return db.index.where("node_id").equals(node_id).modify({
+        return dexie.index.where("node_id").equals(node_id).modify({
             words: words
         });
     }
 
     async fetchIndex(node_id, is_uuid = false) {
         if (is_uuid) {
-            let node = await db.nodes.where("uuid").equals(node_id).first();
+            let node = await dexie.nodes.where("uuid").equals(node_id).first();
             if (node)
                 node_id = node.id;
         }
 
-        return db.index.where("node_id").equals(node_id).first();
+        return dexie.index.where("node_id").equals(node_id).first();
     }
 
     addNotesNode(parent_id, name) {
@@ -513,16 +520,16 @@ class Storage {
 
     async storeNotesLowLevel(node_id, notes, format) {
         let node = await this.getNode(node_id);
-        let exists = await db.notes.where("node_id").equals(node_id).count();
+        let exists = await dexie.notes.where("node_id").equals(node_id).count();
 
         if (exists) {
-            await db.notes.where("node_id").equals(node_id).modify({
+            await dexie.notes.where("node_id").equals(node_id).modify({
                 content: notes,
                 format: format
             });
         }
         else {
-            await db.notes.add({
+            await dexie.notes.add({
                 node_id: node_id,
                 content: notes,
                 format: format
@@ -535,26 +542,26 @@ class Storage {
 
     async fetchNotes(node_id, is_uuid = false) {
         if (is_uuid) {
-            let node = await db.nodes.where("uuid").equals(node_id).first();
+            let node = await dexie.nodes.where("uuid").equals(node_id).first();
             if (node)
                 node_id = node.id;
         }
 
-        return db.notes.where("node_id").equals(node_id).first();
+        return dexie.notes.where("node_id").equals(node_id).first();
     }
 
     async addTags(tags) {
         if (tags)
             for (let tag of tags) {
-                let exists = await db.tags.where("name").equals(tag).count();
+                let exists = await dexie.tags.where("name").equals(tag).count();
 
                 if (!exists)
-                    return db.tags.add({name: tag});
+                    return dexie.tags.add({name: tag});
             }
     }
 
     async queryTags() {
-        return db.tags.toArray();
+        return dexie.tags.toArray();
     }
 
     async computePath(id, is_uuid = false) {
@@ -573,155 +580,10 @@ class Storage {
     }
 
     importTransaction(handler) {
-        //return db.transaction("rw", db.nodes, db.notes, db.blobs, db.index, db.tags, handler);
+        //return dexie.transaction("rw", dexie.nodes, dexie.notes, dexie.blobs, dexie.index, dexie.tags, handler);
         return handler();
     }
 
 }
 
-
-export class JSONStorage {
-    constructor(meta) {
-        this.meta = meta || {};
-        this.meta.next_id = 1;
-        this.meta.date = new Date().getTime();
-        this.objects = [];
-    }
-
-    static fromJSON(json) {
-        let storage = new JSONStorage();
-        storage.objects = JSON.parse(json);
-
-        storage.meta = storage.objects.length? storage.objects.shift() || {}: {};
-
-        if (!storage.meta.next_id)
-            storage.meta.next_id = 1;
-
-        if (!storage.meta.date)
-            storage.meta.date = new Date().getTime();
-
-        return storage;
-    }
-
-    serialize() {
-        this.meta.date = new Date().getTime();
-        return JSON.stringify([this.meta, ...this.objects], null, 1);
-    }
-
-    _sanitizeNode(node) {
-        node = Object.assign({}, node);
-
-        for (let key of Object.keys(node)) {
-            if (!node[key] || !NODE_PROPERTIES.some(k => k === key))
-                delete node[key];
-        }
-
-        return node;
-    }
-
-    _sanitizeDate(date) {
-        if (date) {
-            let result;
-
-            if (date instanceof Date)
-                result = date.getTime()
-            else
-                result = new Date(date).getTime();
-
-            if (!isNaN(result))
-                return result;
-        }
-
-        return new Date().getTime();
-    }
-
-    async addNode(datum, reset_order = true) {
-        datum = this._sanitizeNode(datum);
-
-        if (reset_order)
-            datum.pos = DEFAULT_POSITION;
-
-        datum.uuid = UUID.numeric();
-
-        let now = new Date().getTime();
-
-        if (!datum.date_added)
-            datum.date_added = now;
-        else
-            datum.date_added = this._sanitizeDate(datum.date_added);
-
-        if (!datum.date_modified)
-            datum.date_modified = now;
-        else
-            datum.date_modified = this._sanitizeDate(datum.date_modified);
-
-        datum.id = this.meta.next_id++;
-        this.objects.push(datum);
-
-        return datum;
-    }
-
-    async getNode(id, is_uuid = false) {
-        if (is_uuid)
-            return this.objects.find(n => n.uuid === id);
-
-        return this.objects.find(n => n.id == id);
-    }
-
-    getNodes(ids) {
-        return this.objects.filter(n => ids.some(id => id == n.id));
-    }
-
-    async updateNode(node, update_pos = false) {
-        if (node) {
-            node = this._sanitizeNode(node);
-
-            delete node.id;
-            delete node.parent_id;
-            delete node.external;
-            delete node.external_id;
-
-            if (!update_pos)
-                delete node.pos;
-
-            let existing = this.objects.find(n => n.uuid === node.uuid);
-
-            if (existing) {
-                existing = Object.assign(existing, node);
-                existing.date_added = this._sanitizeDate(existing.date_added);
-                existing.date_modified = new Date().getTime();
-                return existing;
-            }
-        }
-    }
-
-    async updateNodes(nodes) {
-        for (let node of nodes)
-            this.updateNode(node);
-    }
-
-    async deleteNodes(nodes) {
-        if (!Array.isArray(nodes))
-            nodes = [nodes];
-
-        for (let node of nodes) {
-            let existing = this.objects.find(n => n.uuid === node.uuid);
-            this.objects.splice(this.objects.indexOf(existing), 1);
-        }
-    }
-
-    async moveNode(node, dest) {
-        let existing = this.objects.find(n => n.uuid === node.uuid);
-        let cloud_dest = this.objects.find(n => n.uuid === dest.uuid);
-
-        existing.pos = node.pos;
-        existing.parent_id = cloud_dest.id;
-    }
-
-    async queryNodes() {
-        return this.objects;
-    }
-}
-
-
-export default Storage;
+export default IDBStorage;

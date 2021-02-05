@@ -19,6 +19,9 @@
     "Setting": {
         "message": "Settings"
     },
+    "Save Setting": {
+        "message": "Page Capture"
+    },
     "Cloud": {
         "message": "Cloud"
     },
@@ -42,6 +45,12 @@
     },
     "Help": {
         "message": "Help"
+    },
+    "User Manual": {
+        "message": "User Manual"
+    },
+    "Helper App": {
+        "message": "Helper App"
     },
     "Folder": {
         "message": "Folder"

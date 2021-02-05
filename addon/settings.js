@@ -47,4 +47,7 @@ export let settings = new Proxy({
 
 settings.load();
 
-chrome.storage.onChanged.addListener(function (changes,areaName) { settings.load() });
+chrome.storage.onChanged.addListener(function (changes,areaName) {
+    //console.log([changes, areaName])
+    settings.load()
+});
