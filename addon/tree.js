@@ -95,6 +95,26 @@ class BookmarkTree {
 
         this._jstree = $(element).jstree(true);
 
+        // check for broken icons, replace with generic globes
+        this._jstree.__icon_check_hook = function (a_element, node) {
+            if (node.__icon_validated || !node.icon || (node.icon && node.icon.startsWith("var(")))
+                return;
+
+            setTimeout(() => {
+                let image = new Image();
+
+                image.onerror = e => {
+                    const fallback_icon = "var(--themed-globe-icon)";
+                    node.icon = fallback_icon;
+                    const icon_element = document.getElementById(a_element.id).childNodes[0];
+                    icon_element.style.backgroundImage = fallback_icon;
+                };
+                image.src = node.icon;
+            }, 0);
+
+            node.__icon_validated = true;
+        }
+
         $(document).on("mousedown", ".jstree-node", e => this.handleMouseClick(e));
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());

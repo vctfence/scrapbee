@@ -292,7 +292,10 @@ function(object)
     loadLazyImages = object["options-loadlazyimages"];
     retainCrossFrames = object["options-retaincrossframes"];
     mergeCSSImages = object["options-mergecssimages"];
-    executeScripts = object["options-executescripts"];
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    //executeScripts = object["options-executescripts"];
+    executeScripts = true;
+    ////////////////////////////////////////////////////////////////// Scrapyard //
     removeUnsavedURLs = object["options-removeunsavedurls"];
     removeElements = object["options-removeelements"];
     rehideElements = object["options-rehideelements"];

@@ -2548,6 +2548,9 @@
 					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
 					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
+
+                    if (this.__icon_check_hook)
+                        this.__icon_check_hook(node.childNodes[1], obj);
 				}
 			}
 
