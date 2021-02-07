@@ -73,6 +73,12 @@ class ContextMenu{
         this.$menu.css({left: x + "px"});
         this.$menu.css({top: y +"px"});
     }
+    get width(){
+        return this.$menu.outerWidth();
+    }
+    get height(){
+        return this.$menu.outerHeight();
+    }
     css(prop, value){
         this.$menu(prop, value);
     }

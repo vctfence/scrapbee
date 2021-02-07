@@ -583,8 +583,17 @@ function loadXml(rdf){
             };
             document.body.addEventListener("mousedown", function(e){
                 if(e.button == 2 && this.ctxMenu){
-                    // console.log(e.clientX, e.clientY)
-                    this.ctxMenu.show(e.clientX, e.clientY)
+                    var left = e.clientX;
+                    var top = e.clientY;
+                    if(this.ctxMenu.width + left > document.body.clientWidth){
+                        left = document.body.clientWidth - this.ctxMenu.width;
+                    }
+                    if(this.ctxMenu.height + top > document.body.clientHeight){
+                        top = document.body.clientHeight - this.ctxMenu.height;
+                    }
+                    left = Math.max(0, left);
+                    top = Math.max(0, top);
+                    this.ctxMenu.show(left, top)
                 }
             })
             currTree.onChooseItem=function(id){
