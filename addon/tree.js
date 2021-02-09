@@ -456,7 +456,7 @@ class BookmarkTree {
                 this.startProcessingIndication();
 
             browser.runtime.sendMessage({type: "MOVE_NODES", node_ids: [node.original.id], dest_id: parent.original.id})
-                .then(async new_nodes => { // keep jstree nodes synchronized with database
+                .then(async new_nodes => { // keep jstree nodes synchronized with the database
                     for (let n of new_nodes) {
                         let tree_node = tree.get_node(n.id);
                         tree_node.original = BookmarkTree.toJsTreeNode(n);
