@@ -1,5 +1,3 @@
-import {readBlob} from "./utils.js";
-
 export const NODE_TYPE_SHELF = 1;
 export const NODE_TYPE_GROUP = 2;
 export const NODE_TYPE_BOOKMARK = 3;
@@ -421,10 +419,9 @@ class IDBStorage {
         return nodes;
     }
 
-    async storeBlobLowLevel(node_id, data, content_type, compress = false) {
+    async storeBlobLowLevel(node_id, data, content_type, byte_length) {
         let node = await this.getNode(node_id);
 
-        let byte_length;
         if (typeof data !== "string") {
             let binaryString = "";
             let byteArray = new Uint8Array(data);
@@ -436,18 +433,20 @@ class IDBStorage {
             data = binaryString;
         }
 
-        // if (compress) {
-        //     data = LZString.compress(data);
-        // }
-
         if (node)
             return dexie.blobs.add({
                 node_id: node.id,
-                //compressed: compress,
                 data: data,
                 byte_length: byte_length,
                 type: content_type
             });
+    }
+
+    blob2Array(blob) {
+        let byteArray = new Uint8Array(blob.byte_length);
+        for (let i = 0; i < blob.data.length; ++i)
+            byteArray[i] = blob.data.charCodeAt(i);
+        return byteArray;
     }
 
     async updateBlob(node_id, data, compress = false) {

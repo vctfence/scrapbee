@@ -681,7 +681,7 @@ function addListeners()
                 break;
 
             case "STORE_PAGE_HTML":
-                backend.storeBlob(message.payload.id, message.data, "text/html", false)
+                backend.storeBlob(message.payload.id, message.data, "text/html")
                     .then(() => {
                         // if (message.favicon) {
                         //     message.payload.icon = message.favicon;
@@ -1132,7 +1132,7 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
                         if (contentType == null)
                             contentType = "application/pdf";
 
-                        backend.storeBlob(userdata.bookmark.id, this.response, contentType, false);
+                        backend.storeBlob(userdata.bookmark.id, this.response, contentType);
 
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 

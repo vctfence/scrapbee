@@ -159,6 +159,9 @@ export class BrowserBackend {
         let browser_nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
         let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
 
+        if (dest.external !== FIREFOX_SHELF_NAME && !browser_nodes.length)
+            return;
+
         return this.muteBrowserListeners(async () => {
             if (dest.external === FIREFOX_SHELF_NAME) {
                 await Promise.all(browser_nodes.map(async n =>
@@ -211,6 +214,9 @@ export class BrowserBackend {
         let browser_nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
         //let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
 
+        if (dest.external !== FIREFOX_SHELF_NAME && !browser_nodes.length)
+            return;
+
         return this.muteBrowserListeners(async () => {
             if (dest.external === FIREFOX_SHELF_NAME) {
                 return Promise.all(nodes.map(async n => {
@@ -252,11 +258,12 @@ export class BrowserBackend {
 
         nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
 
-        return this.muteBrowserListeners(async () => {
-            for (let n of nodes) {
-                await browser.bookmarks.move(n.external_id, {index: n.pos});
-            }
-        });
+        if (nodes.length)
+            return this.muteBrowserListeners(async () => {
+                for (let n of nodes) {
+                    await browser.bookmarks.move(n.external_id, {index: n.pos});
+                }
+            });
     }
 
     onBookmarkCreated(id, bookmark) {

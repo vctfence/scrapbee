@@ -16,6 +16,7 @@ import {
     NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME, CLOUD_SHELF_NAME, CLOUD_SHELF_ID, CLOUD_EXTERNAL_NAME,
     isContainer
 } from "./storage_idb.js";
+import UUID from "./lib/uuid.js";
 
 const EXPORT_VERSION = 1;
 
@@ -71,14 +72,15 @@ export async function importOrg(shelf, text) {
             if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let data = last_object.data;
                 let binary = !!last_object.byte_length;
+                let byte_length = last_object.byte_length;
 
                 delete last_object.data;
                 delete last_object.byte_length;
 
                 node = await backend.importBookmark(last_object);
-
+A
                 if (data) {
-                    await backend.storeBlobLowLevel(node.id, data, last_object.mime_type);
+                    await backend.storeBlobLowLevel(node.id, data, last_object.mime_type, byte_length);
 
                     if (!binary)
                         await backend.storeIndex(node.id, data.indexWords());
@@ -221,11 +223,7 @@ export async function importOrg(shelf, text) {
                             : JSON.parse(last_object.data);
 
                         if (last_object.byte_length) {
-                            let byteArray = new Uint8Array(last_object.byte_length);
-                            for (let i = 0; i < last_object.data.length; ++i)
-                                byteArray[i] = last_object.data.charCodeAt(i);
-
-                            last_object.data = byteArray;
+                            last_object.data = backend.blob2Array(last_object);
                         }
                     }
                 }
@@ -473,6 +471,7 @@ async function importJSONObject(object) {
     if (object.type === NODE_TYPE_ARCHIVE) {
         let data = object.data;
         let binary = !!object.byte_length;
+        let byte_length = object.byte_length;
 
         delete object.data;
         delete object.byte_length;
@@ -480,7 +479,7 @@ async function importJSONObject(object) {
         node = await backend.importBookmark(object);
 
         if (data) {
-            await backend.storeBlobLowLevel(node.id, data, object.mime_type);
+            await backend.storeBlobLowLevel(node.id, data, object.mime_type, byte_length);
 
             if (!binary)
                 await backend.storeIndex(node.id, data.indexWords());
@@ -547,7 +546,11 @@ export async function importJSON(shelf, file) {
 
     renameSpecialShelves(first_object);
 
+    // Do not import "default" shelf, because it is always there, but import as group if aliased
     if (first_object.name.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliased_everything) {
+        if (aliased_everything && first_object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME)
+            first_object.uuid = UUID.numeric();
+
         first_object = await importJSONObject(first_object);
         if (first_object_id && isContainer(first_object))
             id_map.set(first_object_id, first_object.id);
@@ -561,9 +564,13 @@ export async function importJSON(shelf, file) {
         if (object) {
             renameSpecialShelves(object);
 
+            // Do not import "default" shelf, because it is always there (non-aliased import)
             if (object.type === NODE_TYPE_SHELF && object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME
                 && !aliased_everything)
                     continue;
+            else if (object.type === NODE_TYPE_SHELF && object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME
+                && aliased_everything)
+                object.uuid = UUID.numeric();
 
             let old_object_id = object.id;
 

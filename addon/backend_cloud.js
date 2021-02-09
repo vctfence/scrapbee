@@ -144,11 +144,7 @@ export class CloudBackend {
                     let blob = await backend.fetchBlob(node.id);
                     if (blob) {
                         if (blob.byte_length) {
-                            let byteArray = new Uint8Array(blob.byte_length);
-                            for (let i = 0; i < blob.data.length; ++i)
-                                byteArray[i] = blob.data.charCodeAt(i);
-
-                            blob.data = byteArray;
+                            blob.data = backend.blob2Array(blob);
                         }
                         await this._storeDataInternal(db, bookmark, blob.data, blob.type);
                     }
@@ -215,18 +211,14 @@ export class CloudBackend {
         return (await this._provider.getDB(true)).fetchData(node);
     }
 
-    async createCloudBookmark(node, parent_id) {
+    async createBookmark(parent, node) {
         if (!settings.cloud_enabled())
             return;
 
-        await this.withCloudDB(async db => {
-            return this._createBookmarkInternal(db, node, parent_id);
-        }, e => showNotification(CLOUD_ERROR_MESSAGE));
-    }
-
-    async createBookmark(parent, node) {
         if (parent.external === CLOUD_EXTERNAL_NAME) {
-            await this.createCloudBookmark(node, parent.external_id);
+            await this.withCloudDB(async db => {
+                return this._createBookmarkInternal(db, node, parent.external_id);
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
     }
 
@@ -249,6 +241,9 @@ export class CloudBackend {
         let dest = await backend.getNode(dest_id);
         let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
         let other_nodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_NAME);
+
+        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloud_nodes.length)
+            return;
 
         return this.withCloudDB(async db => {
             if (dest.external === CLOUD_EXTERNAL_NAME) {
@@ -298,8 +293,11 @@ export class CloudBackend {
         let dest = await backend.getNode(dest_id);
         let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-        return this.withCloudDB(async db => {
-            if (dest.external === CLOUD_EXTERNAL_NAME) {
+        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloud_nodes.length)
+            return;
+
+        if (dest.external === CLOUD_EXTERNAL_NAME) {
+            return this.withCloudDB(async db => {
                 for (let n of nodes) {
                     if (isContainer(n)) {
                         await backend.traverse(n, (parent, node) =>
@@ -307,29 +305,30 @@ export class CloudBackend {
                     } else
                         await this._createBookmarkInternal(db, n, dest.external_id)
                 }
-            } else {
-                return Promise.all(cloud_nodes.map(async n => {
-                    n.external = null;
-                    n.external_id = null;
-                    await backend.updateNode(n);
+            });
+        }
+        else {
+            return Promise.all(cloud_nodes.map(async n => {
+                n.external = null;
+                n.external_id = null;
+                await backend.updateNode(n);
 
-                    try {
-                        if (isContainer(n)) {
-                            await backend.traverse(n, async (parent, node) => {
-                                if (parent) {
-                                    node.external = null;
-                                    node.external_id = null;
-                                    await backend.updateNode(node);
-                                }
-                            });
-                        }
+                try {
+                    if (isContainer(n)) {
+                        await backend.traverse(n, async (parent, node) => {
+                            if (parent) {
+                                node.external = null;
+                                node.external_id = null;
+                                await backend.updateNode(node);
+                            }
+                        });
                     }
-                    catch (e) {
-                        console.log(e);
-                    }
-                }));
-            }
-        });
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }));
+        }
     }
 
     async reorderBookmarks(nodes) {
@@ -338,11 +337,12 @@ export class CloudBackend {
 
         nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-        return this.withCloudDB(async db => {
-            for (let n of nodes) {
-                await db.updateNode({uuid: n.uuid, pos: n.pos}, true);
-            }
-        }, e => showNotification(CLOUD_ERROR_MESSAGE));
+        if (nodes.length)
+            return this.withCloudDB(async db => {
+                for (let n of nodes) {
+                    await db.updateNode({uuid: n.uuid, pos: n.pos}, true);
+                }
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }
 
     // should only be called in the background script through message

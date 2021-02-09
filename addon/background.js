@@ -69,11 +69,7 @@ export async function browseNode(node, external_tab, preserve_history) {
 
                     if (!objectURL) {
                         if (blob.byte_length) {
-                            let byteArray = new Uint8Array(blob.byte_length);
-                            for (let i = 0; i < blob.data.length; ++i)
-                                byteArray[i] = blob.data.charCodeAt(i);
-
-                            blob.data = byteArray;
+                            blob.data = backend.blob2Array(blob);
                         }
 
                         let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});

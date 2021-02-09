@@ -106,8 +106,11 @@ class BookmarkTree {
                 image.onerror = e => {
                     const fallback_icon = "var(--themed-globe-icon)";
                     node.icon = fallback_icon;
-                    const icon_element = document.getElementById(a_element.id).childNodes[0];
-                    icon_element.style.backgroundImage = fallback_icon;
+                    const a_element2 = document.getElementById(a_element.id);
+                    if (a_element2) {
+                        const icon_element = a_element2.childNodes[0];
+                        icon_element.style.backgroundImage = fallback_icon;
+                    }
                 };
                 image.src = node.icon;
             }, 0);
@@ -680,11 +683,7 @@ class BookmarkTree {
                                     let blob = await backend.fetchBlob(node.original.id);
                                     if (blob) {
                                         if (blob.byte_length) {
-                                            let byteArray = new Uint8Array(blob.byte_length);
-                                            for (let i = 0; i < blob.data.length; ++i)
-                                                byteArray[i] = blob.data.charCodeAt(i);
-
-                                            blob.data = byteArray;
+                                            blob.data = backend.blob2Array(blob);
                                         }
 
                                         let type = blob.type? blob.type: "text/html";

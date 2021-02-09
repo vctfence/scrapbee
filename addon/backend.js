@@ -403,7 +403,7 @@ class Backend extends IDBStorage {
                 if (n.type === NODE_TYPE_ARCHIVE) {
                     let blob = await this.fetchBlob(old_id);
                     if (blob) {
-                        await this.storeBlobLowLevel(n.id, blob.data, blob.type);
+                        await this.storeBlobLowLevel(n.id, blob.data, blob.type, blob.byte_length);
                         blob = null;
                     }
 
@@ -512,8 +512,8 @@ class Backend extends IDBStorage {
         return this.updateNode(update);
     }
 
-    async storeBlob(node_id, data, content_type, compress = false) {
-        await this.storeBlobLowLevel(node_id, data, content_type, compress);
+    async storeBlob(node_id, data, content_type) {
+        await this.storeBlobLowLevel(node_id, data, content_type);
 
         await this.storeExternalData(node_id, data, content_type)
     }

@@ -224,26 +224,6 @@ export async function readFile(file) {
     });
 }
 
-
-export async function withIDBFile(filename, mode, handler) {
-    const store = await getFileStorage({name: "scrapyard"});
-
-    const file = await store.createMutableFile(filename);
-    const fh = file.open(mode);
-
-    try {
-        await handler(fh, file, store);
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    await fh.close();
-    await file.persist();
-
-    return {file, store};
-}
-
 export function readBlob(blob, mode) {
     return new Promise((resolve, reject) => {
         let reader = new FileReader();
@@ -262,7 +242,6 @@ export function readBlob(blob, mode) {
             reader.readAsText(blob, "utf-8");
     });
 }
-
 
 export class ReadLine {
     /* options:
