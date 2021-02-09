@@ -289,10 +289,18 @@ function startCloudBackgroundSync(s) {
             clearInterval(window._backgroundSyncInterval);
 }
 
-settings.load(async s => {
-    await browserBackend.reconcileBrowserBookmarksDB();
-    startCloudBackgroundSync(s);
-});
+navigator.storage.persist().then(function(persistent) {
+    if (persistent) {
+        console.log("Scrapyard was granted persistent storage permissions");
 
+        settings.load(async s => {
+            await browserBackend.reconcileBrowserBookmarksDB();
+            startCloudBackgroundSync(s);
+        });
+
+    }
+    else
+        console.log("Scrapyard was denied persistent storage permissions");
+})
 
 console.log("==> background.js loaded");

@@ -1093,7 +1093,9 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
 
                     try {
                         response = await performAction();
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error(e)
+                    }
 
                     if (typeof response == "undefined")
                         alertNotify("Cannot initialize capture script, please retry.");

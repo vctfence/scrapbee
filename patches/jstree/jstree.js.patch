@@ -1,5 +1,14 @@
 --- original/jstree.js	2020-05-11 16:23:33.796772000 +0400
-+++ jstree.js	2020-05-11 16:23:47.240737000 +0400
++++ jstree.js	2021-02-06 21:56:12.262000000 +0400
+@@ -75,7 +75,7 @@
+ 		idregex : /[\\:&!^|()\[\]<>@*'+~#";.,=\- \/${}%?`]/g,
+ 		root : '#'
+ 	};
+-	
++
+ 	/**
+ 	 * creates a jstree instance
+ 	 * @name $.jstree.create(el [, options])
 @@ -593,7 +593,7 @@
  					return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue));
  				})
@@ -44,18 +53,19 @@
  								original	: false
  							};
  							for(i in df) {
-@@ -1823,8 +1824,8 @@
+@@ -1823,8 +1824,9 @@
  						// 2) populate children (foreach)
  						for(i = 0, j = dat.length; i < j; i++) {
  							if (!m[dat[i].parent.toString()]) {
 -								this._data.core.last_error = { 'error' : 'parse', 'plugin' : 'core', 'id' : 'core_07', 'reason' : 'Node with invalid parent', 'data' : JSON.stringify({ 'id' : dat[i].id.toString(), 'parent' : dat[i].parent.toString() }) };
 -								this.settings.core.error.call(this, this._data.core.last_error);
++                                //console.log("Scrapyard node with invalid parent: " + dat[i].id);
 +								//this._data.core.last_error = { 'error' : 'parse', 'plugin' : 'core', 'id' : 'core_07', 'reason' : 'Node with invalid parent', 'data' : JSON.stringify({ 'id' : dat[i].id.toString(), 'parent' : dat[i].parent.toString() }) };
 +								//this.settings.core.error.call(this, this._data.core.last_error);
  								continue;
  							}
  
-@@ -2012,7 +2013,7 @@
+@@ -2012,7 +2014,7 @@
  					data		: null,
  					state		: { },
  					li_attr		: { id : false },
@@ -64,7 +74,7 @@
  					original	: false
  				}, i, tmp, tid;
  			for(i in this._model.default_state) {
-@@ -2127,7 +2128,7 @@
+@@ -2127,7 +2129,7 @@
  					data		: d.data,
  					state		: { },
  					li_attr		: { id : false },
@@ -73,7 +83,7 @@
  					original	: false
  				};
  			for(i in df) {
-@@ -2226,7 +2227,7 @@
+@@ -2226,7 +2228,7 @@
  				data		: null,
  				state		: { },
  				li_attr		: { id : false },
@@ -82,7 +92,7 @@
  				original	: false
  			};
  			for(i in df) {
-@@ -2538,13 +2539,13 @@
+@@ -2538,14 +2540,17 @@
  				if(obj.icon === false) {
  					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-hidden';
  				}
@@ -97,9 +107,13 @@
 -					node.childNodes[1].childNodes[0].style.backgroundSize = 'auto';
 +					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
  					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
++
++                    if (this.__icon_check_hook)
++                        this.__icon_check_hook(node.childNodes[1], obj);
  				}
  			}
-@@ -3584,7 +3585,7 @@
+ 
+@@ -3584,7 +3589,7 @@
  
  			var c = this.get_container_ul()[0].className;
  			if(!skip_loading) {
@@ -108,12 +122,12 @@
  				this.element.attr('aria-activedescendant','j'+this._id+'_loading');
  			}
  			this.load_node($.jstree.root, function (o, s) {
-@@ -4802,14 +4803,17 @@
+@@ -4802,14 +4807,17 @@
  				dom.removeClass('jstree-themeicon-custom ' + old).css("background","").removeAttr("rel");
  				if(old === false) { this.show_icon(obj); }
  			}
 -			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1) {
-+    		else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1 && !obj.icon.startsWith("var(")) {
++			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1 && !obj.icon.startsWith("var(")) {
  				dom.removeClass(old).css("background","");
  				dom.addClass(icon + ' jstree-themeicon-custom').attr("rel",icon);
  				if(old === false) { this.show_icon(obj); }
@@ -121,10 +135,56 @@
  			else {
  				dom.removeClass(old).css("background","");
 -				dom.addClass('jstree-themeicon-custom').css("background", "url('" + icon + "') center center no-repeat").attr("rel",icon);
-+				dom.addClass('jstree-themeicon-custom').css("background", 
++				dom.addClass('jstree-themeicon-custom').css("background",
 +                    (icon.startsWith("var(")? icon: 'url("' + icon + '")') + " center center no-repeat")
 +                    .css("background-size", "16px 16px")
 +                    .attr("rel",icon);
  				if(old === false) { this.show_icon(obj); }
  			}
  			return true;
+@@ -5379,9 +5387,9 @@
+ 			this.element.find('.jstree-closed').not(':has(.jstree-children)')
+ 				.each(function () {
+ 					var tmp = tt.get_node(this), tmp2;
+-					
++
+ 					if(!tmp) { return; }
+-					
++
+ 					if(!tmp.state.loaded) {
+ 						if(tmp.original && tmp.original.state && tmp.original.state.undetermined && tmp.original.state.undetermined === true) {
+ 							if(o[tmp.id] === undefined && tmp.id !== $.jstree.root) {
+@@ -5765,7 +5773,7 @@
+ 				this.trigger('uncheck_node', { 'node' : obj, 'selected' : this._data.checkbox.selected, 'event' : e });
+ 			}
+ 		};
+-		
++
+ 		/**
+ 		 * checks all nodes in the tree (only if tie_selection in checkbox settings is false, otherwise select_all will be called internally)
+ 		 * @name check_all()
+@@ -5993,7 +6001,7 @@
+ 		 * * `_disabled` - a boolean indicating if this action should be disabled
+ 		 * * `label` - a string - the name of the action (could be a function returning a string)
+ 		 * * `title` - a string - an optional tooltip for the item
+-		 * * `action` - a function to be executed if this item is chosen, the function will receive 
++		 * * `action` - a function to be executed if this item is chosen, the function will receive
+ 		 * * `icon` - a string, can be a path to an icon or a className, if using an image that is in the current directory use a `./` prefix, otherwise it will be detected as a class
+ 		 * * `shortcut` - keyCode which will trigger the action if the menu is open (for example `113` for rename, which equals F2)
+ 		 * * `shortcut_label` - shortcut label (like for example `F2` for rename)
+@@ -7279,7 +7287,7 @@
+ 	 *		"id1" : [{ "text" : "Child of ID1", "id" : "c1" }, { "text" : "Another child of ID1", "id" : "c2" }],
+ 	 *		"id2" : [{ "text" : "Child of ID2", "id" : "c3" }]
+ 	 *	}
+-	 * 
++	 *
+ 	 * @name $.jstree.defaults.massload
+ 	 * @plugin massload
+ 	 */
+@@ -8602,4 +8610,4 @@
+ 		} catch (ignore) { }
+ 	}
+ 
+-}));
+\ No newline at end of file
++}));

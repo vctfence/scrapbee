@@ -288,7 +288,10 @@ function(object)
     useNewSaveMethod = object["options-usenewsavemethod"];
 
     loadLazyContent = object["options-loadlazycontent"];
-    lazyLoadType = object["options-lazyloadtype"];
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    //lazyLoadType = object["options-lazyloadtype"];
+    lazyLoadType = 1;
+    ////////////////////////////////////////////////////////////////// Scrapyard //
     loadLazyImages = object["options-loadlazyimages"];
     retainCrossFrames = object["options-retaincrossframes"];
     mergeCSSImages = object["options-mergecssimages"];
@@ -2907,7 +2910,7 @@ function generateHTML()
     //         chrome.runtime.sendMessage({ type: "saveDone" });
     //     });
     // }
-console.log("saving")
+
     // Scrapyard //////////////////////////////////////////////////////////////////
     chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
 
@@ -5668,6 +5671,10 @@ function extractSavedPageMedia()
 
 function showMessage(messagetitle,buttonsuffix,messagetext,continuefunction,cancelfunction)
 {
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    console.log(messagetext);
+    ////////////////////////////////////////////////////////////////// Scrapyard //
+
     var xhr,parser,messagedoc,container;
 
     xhr = new XMLHttpRequest();
