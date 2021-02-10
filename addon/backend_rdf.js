@@ -1,12 +1,7 @@
-import {
-    RDF_EXTERNAL_NAME,
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_GROUP,
-    NODE_TYPE_SEPARATOR
-} from "./storage_idb.js";
 import {settings} from "./settings.js";
 import {backend} from "./backend.js";
 import {nativeBackend} from "./backend_native.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage_constants.js";
 
 class RDFDoc {
 

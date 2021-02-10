@@ -1,9 +1,10 @@
-import {
-    DEFAULT_SHELF_NAME, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, FIREFOX_SHELF_ID, FIREFOX_BOOKMARK_UNFILED, RDF_EXTERNAL_NAME
-} from "./storage_idb.js";
-import {BookmarkTree} from "./tree.js";
 import {backend} from "./backend.js";
+import {BookmarkTree} from "./tree.js";
+import {
+    DEFAULT_SHELF_NAME,
+    FIREFOX_BOOKMARK_UNFILED,
+    FIREFOX_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP
+} from "./storage_constants.js";
 
 let tree;
 

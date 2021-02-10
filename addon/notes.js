@@ -1,6 +1,6 @@
 import {backend} from "./backend.js"
 import * as org from "./org.js"
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_idb.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
 
 const INPUT_TIMEOUT = 1000;
 

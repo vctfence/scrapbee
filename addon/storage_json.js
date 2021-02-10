@@ -1,5 +1,5 @@
 import UUID from "./lib/uuid.js";
-import {DEFAULT_POSITION, NODE_PROPERTIES} from "./storage_idb.js";
+import {DEFAULT_POSITION, NODE_PROPERTIES} from "./storage_constants.js";
 
 export class JSONStorage {
     constructor(meta) {

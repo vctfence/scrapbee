@@ -383,16 +383,14 @@
 /************************************************************************/
 
 import {backend} from "../backend.js";
-import {
-    DEFAULT_SHELF_NAME,
-    NODE_TYPE_SHELF,
-    NODE_TYPE_GROUP,
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
-    FIREFOX_SHELF_NAME, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_MENU
-} from "../storage_idb.js";
 import {browseNode} from "../background.js";
 import {getMimetype, isSpecialPage, loadLocalResource, notifySpecialPage} from "../utils.js";
+import {
+    DEFAULT_SHELF_NAME,
+    FIREFOX_BOOKMARK_MENU,
+    FIREFOX_BOOKMARK_UNFILED,
+    FIREFOX_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF
+} from "../storage_constants.js";
 
 /************************************************************************/
 

@@ -1,14 +1,9 @@
-import {
-    isSpecialShelf,
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
-    NODE_TYPE_NOTES,
-    RDF_EXTERNAL_NAME
-} from "./storage_idb.js";
 import {backend} from "./backend.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
+import {settings} from "./settings.js";
+
 import {
     exportOrg,
     exportJSON,
@@ -17,8 +12,17 @@ import {
     importHtml,
     importRDF
 } from "./import.js";
-import {settings} from "./settings.js";
+
 import {isSpecialPage, notifySpecialPage, readFile, showNotification} from "./utils.js";
+
+import {
+    isSpecialShelf,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_NOTES,
+    RDF_EXTERNAL_NAME
+} from "./storage_constants.js";
+
 
 export async function browseNode(node, external_tab, preserve_history) {
 
@@ -285,18 +289,14 @@ function startCloudBackgroundSync(s) {
             clearInterval(window._backgroundSyncInterval);
 }
 
-navigator.storage.persist().then(function(persistent) {
-    if (persistent) {
-        console.log("Scrapyard was granted persistent storage permissions");
-
-        settings.load(async s => {
+settings.load(async s => {
+    navigator.storage.persist().then(async function(persistent) {
+        if (persistent) {
             await browserBackend.reconcileBrowserBookmarksDB();
             startCloudBackgroundSync(s);
-        });
-
-    }
-    else
-        console.log("Scrapyard was denied persistent storage permissions");
-})
+        } else
+            console.log("Scrapyard was denied persistent storage permissions");
+    })
+});
 
 console.log("==> background.js loaded");

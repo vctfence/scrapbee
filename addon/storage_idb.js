@@ -1,82 +1,18 @@
-export const NODE_TYPE_SHELF = 1;
-export const NODE_TYPE_GROUP = 2;
-export const NODE_TYPE_BOOKMARK = 3;
-export const NODE_TYPE_ARCHIVE = 4;
-export const NODE_TYPE_SEPARATOR = 5;
-export const NODE_TYPE_NOTES = 6;
-export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
-export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP];
-
-export const TODO_STATE_TODO = 1;
-export const TODO_STATE_DONE = 4;
-export const TODO_STATE_WAITING = 2;
-export const TODO_STATE_POSTPONED = 3;
-export const TODO_STATE_CANCELLED = 5;
-
-export const TODO_NAMES = {
-    [TODO_STATE_TODO]: "TODO",
-    [TODO_STATE_WAITING]: "WAITING",
-    [TODO_STATE_POSTPONED]: "POSTPONED",
-    [TODO_STATE_CANCELLED]: "CANCELLED",
-    [TODO_STATE_DONE]: "DONE"
-};
-
-export const TODO_STATES = {
-    "TODO": TODO_STATE_TODO,
-    "WAITING": TODO_STATE_WAITING,
-    "POSTPONED": TODO_STATE_POSTPONED,
-    "CANCELLED": TODO_STATE_CANCELLED,
-    "DONE": TODO_STATE_DONE
-};
-
-export const DEFAULT_SHELF_ID = 1;
-export const EVERYTHING_SHELF = -1;
-export const DONE_SHELF = -2;
-export const TODO_SHELF = -3;
-export const FIREFOX_SHELF_ID = -4;
-export const CLOUD_SHELF_ID = -5;
-
-export const TODO_NAME = "TODO";
-export const DONE_NAME = "DONE";
-export const EVERYTHING = "everything";
-export const DEFAULT_SHELF_NAME = "default";
-export const FIREFOX_SHELF_NAME = "firefox";
-export const FIREFOX_SHELF_UUID = "browser_bookmarks";
-export const CLOUD_SHELF_NAME = "cloud";
-
-export const FIREFOX_BOOKMARK_MENU = "menu________";
-export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
-export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
-export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
-
-export const RDF_EXTERNAL_NAME = "rdf";
-
-export const CLOUD_EXTERNAL_NAME = "cloud";
-
-export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID, CLOUD_EXTERNAL_NAME];
-
-export const DEFAULT_POSITION = 2147483647;
-
-export const NODE_PROPERTIES =
-    ["id",
-    "pos",
-    "uri",
-    "name",
-    "type",
-    "uuid",
-    "icon",
-    "tags",
-    "tag_list",
-    "details",
-    "parent_id",
-    "todo_date",
-    "todo_state",
-    "date_added",
-    "date_modified",
-    "has_notes",
-    "external",
-    "external_id"
-];
+import {
+    CLOUD_SHELF_ID,
+    DEFAULT_POSITION,
+    DEFAULT_SHELF_ID,
+    DEFAULT_SHELF_NAME,
+    DONE_NAME,
+    FIREFOX_SHELF_ID,
+    NODE_PROPERTIES,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_NOTES,
+    NODE_TYPE_SHELF,
+    TODO_NAME,
+    TODO_STATE_DONE,
+    isContainer
+} from "./storage_constants.js";
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
@@ -102,24 +38,6 @@ dexie.version(2).stores({
 dexie.on('populate', () => {
     dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
 });
-
-export function isContainer(node) {
-    return node && CONTAINER_TYPES.some(t => t == node.type);
-}
-
-export function isEndpoint(node) {
-    return node && ENDPOINT_TYPES.some(t => t == node.type);
-}
-
-export function isSpecialShelf(name) {
-    name = name.toLocaleUpperCase();
-    return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
-        || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
-        || name === CLOUD_SHELF_NAME.toLocaleUpperCase()
-        || name === EVERYTHING.toLocaleUpperCase()
-        || name === TODO_NAME.toLocaleUpperCase()
-        || name === DONE_NAME.toLocaleUpperCase();
-}
 
 class IDBStorage {
     constructor() {
@@ -442,19 +360,8 @@ class IDBStorage {
             });
     }
 
-    blob2Array(blob) {
-        let byteArray = new Uint8Array(blob.byte_length);
-        for (let i = 0; i < blob.data.length; ++i)
-            byteArray[i] = blob.data.charCodeAt(i);
-        return byteArray;
-    }
-
     async updateBlob(node_id, data, compress = false) {
         let node = await this.getNode(node_id);
-
-        // if (compress) {
-        //     data = LZString.compress(data);
-        // }
 
         if (node)
             return dexie.blobs.where("node_id").equals(node.id).modify({

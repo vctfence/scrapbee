@@ -1,6 +1,6 @@
 import {backend} from "./backend.js"
-import {EVERYTHING, NODE_TYPE_BOOKMARK, ENDPOINT_TYPES} from "./storage_idb.js";
 import {TREE_STATE_PREFIX} from "./tree.js";
+import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
 
 
 export const SEARCH_MODE_SCRAPYARD = 1;

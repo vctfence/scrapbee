@@ -1,6 +1,3 @@
-import {getFileStorage} from "./lib/idb-file-storage.js";
-import {DEFAULT_SHELF_NAME} from "./storage_idb.js";
-
 export function partition(items, size) {
     var result = []
     var n = Math.round(items.length / size);
@@ -139,6 +136,23 @@ export function getMimetype (signature) {
     }
 }
 
+export function delegateProxy (target, origin) {
+    return new Proxy(target, {
+        get (target, key, receiver) {
+            if (key in target) return Reflect.get(target, key, receiver)
+            const value = origin[key]
+            return 'function' === typeof value ? function method () {
+                return value.apply(origin, arguments)
+            } : value
+        },
+        set (target, key, value, receiver) {
+            if (key in target) return Reflect.set(target, key, value, receiver)
+            origin[key] = value
+            return true
+        }
+    })
+}
+
 export async function loadLocalResource(url, type) {
     let result = {type: "", data: null};
     try {
@@ -161,7 +175,6 @@ export async function loadLocalResource(url, type) {
         return result;
     }
 }
-
 
 export function getFavicon(host) {
     let load_url = (url, type, timeout = 30000) => {

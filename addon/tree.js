@@ -1,36 +1,37 @@
 import {backend} from "./backend.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 
-import {
-    ENDPOINT_TYPES,
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP,
-    NODE_TYPE_SHELF,
-    NODE_TYPE_SEPARATOR,
-    NODE_TYPE_NOTES,
-    TODO_STATE_CANCELLED,
-    TODO_STATE_DONE,
-    TODO_STATE_POSTPONED,
-    TODO_STATE_TODO,
-    TODO_STATE_WAITING,
-    EVERYTHING,
-    TODO_NAMES,
-    FIREFOX_SHELF_NAME,
-    FIREFOX_SHELF_ID,
-    FIREFOX_BOOKMARK_MENU,
-    FIREFOX_BOOKMARK_UNFILED,
-    FIREFOX_BOOKMARK_TOOLBAR,
-    FIREFOX_BOOKMARK_MOBILE, RDF_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME,
-    isSpecialShelf,
-    isContainer,
-    isEndpoint,
-} from "./storage_idb.js"
-
 import {showDlg, alert, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
 import {showNotification} from "./utils.js";
+import {
+    CLOUD_EXTERNAL_NAME,
+    ENDPOINT_TYPES,
+    EVERYTHING,
+    FIREFOX_BOOKMARK_MENU,
+    FIREFOX_BOOKMARK_MOBILE,
+    FIREFOX_BOOKMARK_TOOLBAR,
+    FIREFOX_BOOKMARK_UNFILED,
+    FIREFOX_SHELF_ID,
+    FIREFOX_SHELF_NAME,
+    isContainer,
+    isEndpoint,
+    isSpecialShelf,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_NOTES,
+    NODE_TYPE_SEPARATOR,
+    NODE_TYPE_SHELF,
+    RDF_EXTERNAL_NAME,
+    TODO_NAMES,
+    TODO_STATE_CANCELLED,
+    TODO_STATE_DONE,
+    TODO_STATE_POSTPONED,
+    TODO_STATE_TODO,
+    TODO_STATE_WAITING
+} from "./storage_constants.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 

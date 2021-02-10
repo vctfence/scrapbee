@@ -1,15 +1,13 @@
-import {
-    FIREFOX_SHELF_ID,
-    FIREFOX_SHELF_NAME,
-    FIREFOX_SHELF_UUID,
-    NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR,
-    NODE_TYPE_SHELF,
-    isContainer, isEndpoint,
-} from "./storage_idb.js";
 import {settings} from "./settings.js";
 import {getFavicon} from "./utils.js";
 import {backend} from "./backend.js";
+import {
+    FIREFOX_BOOKMARK_MENU,
+    FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
+    FIREFOX_SHELF_UUID,
+    isContainer,
+    isEndpoint, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF
+} from "./storage_constants.js";
 
 export class BrowserBackend {
 
@@ -517,6 +515,16 @@ export class BrowserBackend {
                     }
                     //console.log(node.icon + " (" + item[1] + ")");
                 }
+
+                backend.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
+                    if (node)
+                        backend._browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+                });
+
+                backend.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
+                    if (node)
+                        backend._unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+                });
 
                 if (get_icons.length)
                     setTimeout(() => browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"}), 500);

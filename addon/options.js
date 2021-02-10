@@ -6,10 +6,10 @@ import {parseHtml, showNotification, getFavicon} from "./utils.js";
 import {
     DEFAULT_SHELF_NAME,
     EVERYTHING,
-    EVERYTHING_SHELF, FIREFOX_SHELF_ID,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
-    isSpecialShelf
-} from "./storage_idb.js";
+    EVERYTHING_SHELF,
+    FIREFOX_SHELF_ID,
+    isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK
+} from "./storage_constants.js";
 
 window.onload = async function(){
     document.title = document.title.translate();

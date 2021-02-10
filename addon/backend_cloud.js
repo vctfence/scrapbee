@@ -1,15 +1,14 @@
-import {
-    CLOUD_EXTERNAL_NAME,
-    CLOUD_SHELF_ID,
-    CLOUD_SHELF_NAME, FIREFOX_SHELF_NAME, isContainer,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP, NODE_TYPE_NOTES,
-    NODE_TYPE_SHELF
-} from "./storage_idb.js";
 import {settings} from "./settings.js";
 import {getFavicon, showNotification} from "./utils.js";
 import {dropboxBackend} from "./backend_dropbox.js";
 import {backend} from "./backend.js";
+import {
+    CLOUD_EXTERNAL_NAME,
+    CLOUD_SHELF_ID,
+    CLOUD_SHELF_NAME,
+    FIREFOX_SHELF_NAME,
+    isContainer, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, NODE_TYPE_SHELF
+} from "./storage_constants.js";
 
 const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 

@@ -2,21 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isElementInViewport, ReadLine} from "./utils.js"
-import {CLOUD_SHELF_ID, CLOUD_SHELF_NAME, DEFAULT_SHELF_ID, isSpecialShelf} from "./storage_idb.js"
-
-import {
-    EVERYTHING,
-    DEFAULT_SHELF_NAME,
-    FIREFOX_SHELF_NAME,
-    NODE_TYPE_SHELF,
-    TODO_SHELF,
-    DONE_SHELF,
-    EVERYTHING_SHELF,
-    FIREFOX_SHELF_ID,
-    TODO_NAME,
-    DONE_NAME
-} from "./storage_idb.js";
+import {isElementInViewport} from "./utils.js"
 
 import {
     SEARCH_MODE_TITLE,
@@ -26,6 +12,14 @@ import {
 } from "./search.js";
 
 import {pathToNameExt, showNotification} from "./utils.js";
+import {
+    CLOUD_SHELF_ID,
+    CLOUD_SHELF_NAME, DEFAULT_SHELF_ID,
+    DEFAULT_SHELF_NAME, DONE_NAME, DONE_SHELF,
+    EVERYTHING, EVERYTHING_SHELF, FIREFOX_SHELF_ID,
+    FIREFOX_SHELF_NAME,
+    isSpecialShelf, NODE_TYPE_SHELF, TODO_NAME, TODO_SHELF
+} from "./storage_constants.js";
 
 const INPUT_TIMEOUT = 1000;
 

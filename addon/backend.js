@@ -1,55 +1,40 @@
-import {settings} from "./settings.js"
-
-import {
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP,
-    NODE_TYPE_SHELF,
-    NODE_TYPE_SEPARATOR,
-    DEFAULT_SHELF_NAME,
-    TODO_NAME,
-    DONE_NAME,
-    FIREFOX_SHELF_NAME,
-    SPECIAL_UUIDS,
-    EVERYTHING, FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
-    isContainer,
-    isEndpoint,
-} from "./storage_idb.js"
-
 import IDBStorage from "./storage_idb.js"
-
 import {rdfBackend} from "./backend_rdf.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {browserBackend} from "./backend_browser.js"
+import {delegateProxy} from "./utils.js";
 
-class Backend extends IDBStorage {
+import {
+    DEFAULT_SHELF_NAME,
+    DONE_NAME,
+    EVERYTHING,
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
+    SPECIAL_UUIDS, TODO_NAME,
+    isContainer,
+    isEndpoint
+} from "./storage_constants.js";
 
-    constructor() {
-        super();
+export class Backend {
 
+    constructor(storageBackend) {
         this.externalBackends = {};
 
-        settings.load(() => {
-            if (settings.show_firefox_bookmarks()) {
-                this.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
-                    if (node)
-                        this._browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
-                });
+        this.registerExternalBackend("browser", browserBackend);
+        this.registerExternalBackend("cloud", cloudBackend);
+        this.registerExternalBackend("rdf", rdfBackend);
 
-                this.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
-                    if (node)
-                        this._unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
-                });
-            }
-        });
+        return delegateProxy(this, storageBackend);
     }
 
     expandPath(path) {
         if (path && path.startsWith("~"))
             return path.replace("~", DEFAULT_SHELF_NAME);
-        else if (path && path.startsWith("@@"))
+
+        // the following values are got during reconciliation in browser backend and may vary
+        // depending on browser UI language
+        else if (path && path.startsWith("@@") && this._unfiledBookmarkPath)
             return path.replace("@@", this._unfiledBookmarkPath);
-        else if (path && path.startsWith("@"))
+        else if (path && path.startsWith("@") && this._browserBookmarkPath)
             return path.replace("@", this._browserBookmarkPath);
 
         return path;
@@ -81,6 +66,13 @@ class Backend extends IDBStorage {
                 .map(t => t.toLocaleUpperCase());
 
         return tags;
+    }
+
+    blob2Array(blob) {
+        let byteArray = new Uint8Array(blob.byte_length);
+        for (let i = 0; i < blob.data.length; ++i)
+            byteArray[i] = blob.data.charCodeAt(i);
+        return byteArray;
     }
 
     listShelves() {
@@ -603,9 +595,4 @@ class Backend extends IDBStorage {
     }
 }
 
-export let backend = new Backend();
-
-backend.registerExternalBackend("browser", browserBackend);
-backend.registerExternalBackend("cloud", cloudBackend);
-backend.registerExternalBackend("rdf", rdfBackend);
-
+export let backend = new Backend(new IDBStorage());
