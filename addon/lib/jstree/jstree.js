@@ -1629,7 +1629,6 @@
 									id			: tid,
 									text		: d.text || '',
 									icon		: d.icon !== undefined ? d.icon : true,
-                                    fallbackIcon: d.fallbackIcon,
 									parent		: p,
 									parents		: ps,
 									children	: d.children || [],
@@ -2544,7 +2543,13 @@
 					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
 				}
 				else {
-    				node.childNodes[1].childNodes[0].style.backgroundImage = (obj.icon.startsWith("var(")? obj.icon: 'url("' + obj.icon + '")') + (obj.fallbackIcon? ', ' + obj.fallbackIcon: '');
+				    let icon = 'url("'+obj.icon+'")';
+
+				    if (this.__icon_set_hook)
+				        icon = this.__icon_set_hook(obj);
+
+				    if (icon)
+    				    node.childNodes[1].childNodes[0].style.backgroundImage = icon;
 					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
 					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';

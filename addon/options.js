@@ -2,7 +2,7 @@ import {backend} from "./backend.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
-import {parseHtml, showNotification, getFavicon} from "./utils.js";
+import {parseHtml, showNotification} from "./utils.js";
 import {
     DEFAULT_SHELF_NAME,
     EVERYTHING,
@@ -275,8 +275,6 @@ window.onload = async function(){
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
     async function onStartRDFImport(e) {
         let finalize = () => {
-            browser.runtime.onMessage.removeListener(progressListener);
-
             $("#start-rdf-import").val("Import");
             $("#rdf-shelf-name").prop('disabled', false);
             $("#rdf-import-path").prop('disabled', false);
@@ -284,6 +282,7 @@ window.onload = async function(){
 
             $("#rdf-progress-row").text("ready");
             importing = false;
+            browser.runtime.onMessage.removeListener(importListener);
         };
 
         let shelf = $("#rdf-shelf-name").val();
@@ -318,7 +317,7 @@ window.onload = async function(){
         //$("#rdf-import-progress").val(0);
         //$("#rdf-progress-row").show();
 
-        let progressListener = message => {
+        let importListener = message => {
             if (message.type === "RDF_IMPORT_PROGRESS") {
                 let bar = $("#rdf-import-progress");
                 if (!bar.length) {
@@ -333,9 +332,12 @@ window.onload = async function(){
                 $("#invalid-imports-container").show();
                 $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
             }
+            else if (message.type === "OBTAINING_ICONS") {
+                progress_row.text("Obtaining page icons...");
+            }
         };
 
-        browser.runtime.onMessage.addListener(progressListener);
+        browser.runtime.onMessage.addListener(importListener);
 
         browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
                                      threads: $("#rdf-import-threads").val(),
@@ -444,7 +446,7 @@ window.onload = async function(){
                         xhr.timeout = parseInt($("#link-check-timeout").val()) * 1000;
                         xhr.ontimeout = function () {this._timedout = true};
                         xhr.onerror = function (e) {console.log(e)};
-                        xhr.onloadend = function (e) {
+                        xhr.onloadend = async function (e) {
                             if (!this.status || this.status >= 400) {
                                 $("#invalid-links-container").show();
 
@@ -455,7 +457,7 @@ window.onload = async function(){
                                 let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
                                 $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
 
-                                if (update_icons) {
+                                if (update_icons && !node.stored_icon) {
                                     node.icon = undefined;
                                     backend.updateNode(node);
                                 }
@@ -476,25 +478,36 @@ window.onload = async function(){
 
                                 if (link) {
                                     node.icon = link;
-                                    backend.updateNode(node);
+                                    await backend.updateNode(node);
+                                    await backend.storeIcon(node);
                                 }
                                 else {
                                     link = base + "/favicon.ico";
 
-                                    fetch(link, {method: "GET"}).then(response => {
+                                    fetch(link, {method: "GET"}).then(async response => {
                                         let type = response.headers.get("content-type") || "image";
                                         if (response.ok && type.startsWith("image"))
-                                            return response.arrayBuffer().then(bytes => {
-                                                node.icon = bytes.byteLength? link: undefined;
-                                                backend.updateNode(node);
-                                            });
-                                        else {
+                                            try {
+                                                const buffer = await response.arrayBuffer();
+                                                node.icon = buffer.byteLength ? link : undefined;
+
+                                                await backend.updateNode(node);
+
+                                                if (node.icon)
+                                                    await backend.storeIcon(node, buffer, type);
+                                            }
+                                            catch (e){
+                                                console.log(e)
+                                            }
+                                        else if (!node.stored_icon) {
+                                            node.icon = undefined;
+                                            await backend.updateNode(node);
+                                        }
+                                    }).catch(() => {
+                                        if (!node.stored_icon) {
                                             node.icon = undefined;
                                             backend.updateNode(node);
                                         }
-                                    }).catch(() => {
-                                        node.icon = undefined;
-                                        backend.updateNode(node);
                                     });
                                 }
                             }

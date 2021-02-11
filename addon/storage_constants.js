@@ -75,6 +75,7 @@ export const NODE_PROPERTIES =
         "todo_state",
         "date_added",
         "date_modified",
+        "stored_icon",
         "has_notes",
         "external",
         "external_id"

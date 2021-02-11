@@ -276,10 +276,22 @@ export class BrowserBackend {
                 if (parent) {
                     let node = browserBackend.convertBookmark(bookmark, parent);
 
-                    if (node.type === NODE_TYPE_BOOKMARK && node.uri)
-                        node.icon = await getFavicon(node.uri);
+                    let icon = null;
+
+                    if (node.type === NODE_TYPE_BOOKMARK && node.uri) {
+                        icon = await getFavicon(node.uri);
+                        if (icon && typeof icon === "string")
+                            node.icon = icon;
+                        else if (icon)
+                            node.icon = icon.url;
+                    }
 
                     node = await backend.addNode(node);
+
+                    if (icon && typeof icon === "string")
+                        await backend.storeIcon(node);
+                    else if (icon)
+                        await backend.storeIcon(node, icon.response, icon.type);
 
                     if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: node});
@@ -507,7 +519,15 @@ export class BrowserBackend {
                     let node = await backend.getNode(item[0]);
                     if (node) {
                         try {
-                            node.icon = await getFavicon(item[1]);
+                            const icon = await getFavicon(node.uri);
+                            if (icon && typeof icon === "string") {
+                                node.icon = icon;
+                                await backend.storeIcon(node);
+                            }
+                            else if (icon) {
+                                node.icon = icon.url;
+                                await backend.storeIcon(node, icon.response, icon.type);
+                            }
                             await backend.updateNode(node);
                         } catch (e) {
                             console.log(e);

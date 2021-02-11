@@ -96,24 +96,74 @@ class BookmarkTree {
 
         this._jstree = $(element).jstree(true);
 
-        // check for broken icons, replace with generic globes
-        this._jstree.__icon_check_hook = function (a_element, node) {
-            if (node.__icon_validated || !node.icon || (node.icon && node.icon.startsWith("var(")))
+
+        this.iconCache = new Map();
+
+        this._jstree.__icon_set_hook = (node) => {
+            if (node.icon.startsWith("var("))
+                return node.icon;
+            else if (node.icon.startsWith("/"))
+                return `url("${node.icon}")`;
+            else {
+                if (node.original.stored_icon) {
+                    let icon = this.iconCache.get(node.icon);
+                    if (icon)
+                        return `url("${icon}")`;
+                    else
+                        return null;
+                }
+                else
+                    return `url("${node.icon}")`;
+            }
+        }
+
+        this._jstree.__icon_check_hook = (a_element, node) => {
+            if (node.__icon_validated || !node.icon || (node.icon && node.icon.startsWith("var("))
+                || (node.icon && node.icon.startsWith("/")))
                 return;
 
-            setTimeout(() => {
-                let image = new Image();
-
-                image.onerror = e => {
-                    const fallback_icon = "var(--themed-globe-icon)";
-                    node.icon = fallback_icon;
+            setTimeout(async () => {
+                let getIconElement = async () => {
                     const a_element2 = document.getElementById(a_element.id);
                     if (a_element2) {
-                        const icon_element = a_element2.childNodes[0];
-                        icon_element.style.backgroundImage = fallback_icon;
+                        return a_element2.childNodes[0];
                     }
-                };
-                image.src = node.icon;
+                    else {
+                        return new Promise((resolve, reject) => {
+                            setTimeout(() => {
+                                const a_element2 = document.getElementById(a_element.id);
+                                if (a_element2) {
+                                    resolve(a_element2.childNodes[0]);
+                                }
+                                else {
+                                    console.error("can't find icon element");
+                                    resolve(null);
+                                }
+                            }, 100);
+                        })
+                    }
+                }
+
+                if (node.original.stored_icon) {
+                    const cached = this.iconCache.get(node.icon);
+                    const base64Url = cached || (await backend.fetchIcon(node.original.id));
+
+                    if (base64Url) {
+                        if (!cached)
+                            this.iconCache.set(node.icon, base64Url);
+                        (await getIconElement()).style.backgroundImage = `url("${base64Url}")`;
+                    }
+                }
+                else {
+                    let image = new Image();
+
+                    image.onerror = async e => {
+                        const fallback_icon = "var(--themed-globe-icon)";
+                        node.icon = fallback_icon;
+                        (await getIconElement()).style.backgroundImage = fallback_icon;
+                    };
+                    image.src = node.icon;
+                }
             }, 0);
 
             node.__icon_validated = true;
@@ -122,6 +172,10 @@ class BookmarkTree {
         $(document).on("mousedown", ".jstree-node", e => this.handleMouseClick(e));
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
+    }
+
+    clearIconCache() {
+        this.iconCache = new Map();
     }
 
     handleMouseClick(e) {
@@ -349,8 +403,6 @@ class BookmarkTree {
                 n.icon = "/icons/notes.svg";
                 n.li_attr.class += " scrapyard-notes";
             }
-
-             //n.fallbackIcon = "var(--themed-globe-icon)";
 
             if (!n.icon) {
                 n.icon = "var(--themed-globe-icon)";

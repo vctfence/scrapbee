@@ -522,6 +522,11 @@ function loadShelves(context, tree, synchronize = true) {
 }
 
 function switchShelf(context, tree, shelf_id, synchronize = true) {
+
+    if (settings.last_shelf() != shelf_id) {
+        tree.clearIconCache();
+    }
+
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
     settings.load(() => {
@@ -660,6 +665,11 @@ function performImport(context, tree, file, file_name, file_ext) {
 
 function performExport(context, tree) {
     let {id: shelf_id, name: shelf} = getCurrentShelf();
+
+    if (shelf == FIREFOX_SHELF_NAME) {
+        showNotification({message: "Please use Firefox builtin tools to export browser bookmarks."});
+        return;
+    }
 
     let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
     let root = special_shelf

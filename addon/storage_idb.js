@@ -34,6 +34,14 @@ dexie.version(2).stores({
     notes: `++id,&node_id`,
     tags: `++id,name`,
 });
+dexie.version(3).stores({
+    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
+    blobs: `++id,&node_id,size`,
+    index: `++id,&node_id,*words`,
+    notes: `++id,&node_id`,
+    tags: `++id,name`,
+    icons: `++id,&node_id`,
+});
 
 dexie.on('populate', () => {
     dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
@@ -289,6 +297,9 @@ class IDBStorage {
         if (dexie.tables.some(t => t.name === "notes"))
             await dexie.notes.where("node_id").anyOf(ids).delete();
 
+        if (dexie.tables.some(t => t.name === "icons"))
+            await dexie.icons.where("node_id").anyOf(ids).delete();
+
         return dexie.nodes.bulkDelete(ids);
     }
 
@@ -304,6 +315,10 @@ class IDBStorage {
 
         if (dexie.tables.some(t => t.name === "tags"))
             await dexie.tags.clear();
+
+        if (dexie.tables.some(t => t.name === "icons"))
+            await dexie.icons.clear();
+
 
         let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
             ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
@@ -468,6 +483,36 @@ class IDBStorage {
 
     async queryTags() {
         return dexie.tags.toArray();
+    }
+
+    async storeIconLowLevel(node_id, data_url) {
+        const exists = await dexie.icons.where("node_id").equals(node_id).count();
+
+        if (exists) {
+            await dexie.icons.where("node_id").equals(node_id).modify({
+                data_url: data_url
+            });
+        }
+        else {
+            await dexie.icons.add({
+                node_id: node_id,
+                data_url: data_url
+            });
+
+            await dexie.nodes.where("id").equals(node_id).modify({
+                stored_icon: true
+            });
+        }
+    }
+
+    async fetchIcon(node_id) {
+        const icon = await dexie.icons.where("node_id").equals(node_id).first();
+
+        if (icon) {
+            return icon.data_url;
+        }
+
+        return null;
     }
 
     async computePath(id, is_uuid = false) {

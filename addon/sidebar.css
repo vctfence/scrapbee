@@ -279,6 +279,10 @@ select{
     flex: 0 1 auto;
 }
 
+.prop-row-hidden {
+    display: none !important;
+}
+
 
 .archive-node {
     font-style: italic;

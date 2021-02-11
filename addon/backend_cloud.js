@@ -6,7 +6,6 @@ import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
-    FIREFOX_SHELF_NAME,
     isContainer, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, NODE_TYPE_SHELF
 } from "./storage_constants.js";
 
@@ -464,7 +463,15 @@ export class CloudBackend {
                 for (let node of download_icons) {
                     if (node.uri)
                         try {
-                            node.icon = await getFavicon(node.uri);
+                            const icon = await getFavicon(node.uri);
+                            if (icon && typeof icon === "string") {
+                                node.icon = icon;
+                                await backend.storeIcon(node);
+                            }
+                            else if (icon) {
+                                node.icon = icon.url;
+                                await backend.storeIcon(node, icon.response, icon.type);
+                            }
                             await backend.updateNode(node);
                         } catch (e) {
                             console.log(e);

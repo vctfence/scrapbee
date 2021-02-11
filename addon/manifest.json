@@ -1,5 +1,5 @@
 {
-    "version": "0.5.4.2",
+    "version": "0.6.0",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -14,7 +14,7 @@
     "icons": {
 	    "64": "icons/scrapyard.svg"
     },
-    "content_security_policy": "script-src 'self'; object-src 'self'; navigation-to 'filesystem:'",
+    "content_security_policy": "script-src 'self'; object-src 'self';",
     "permissions": [
         "<all_urls>",
         "activeTab",

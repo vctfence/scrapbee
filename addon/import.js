@@ -64,6 +64,9 @@ export async function importOrg(shelf, text) {
             let note_lines = last_object.note_lines;
             delete last_object.note_lines;
 
+            let icon_data = last_object.icon_data;
+            delete last_object.icon_data;
+
             if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let data = last_object.data;
                 let binary = !!last_object.byte_length;
@@ -73,7 +76,7 @@ export async function importOrg(shelf, text) {
                 delete last_object.byte_length;
 
                 node = await backend.importBookmark(last_object);
-A
+
                 if (data) {
                     await backend.storeBlobLowLevel(node.id, data, last_object.mime_type, byte_length);
 
@@ -90,6 +93,10 @@ A
             }
             else if (note_lines.length) {
                 await backend.storeNotesLowLevel(node.id, note_lines.join("\n"));
+            }
+
+            if (icon_data) {
+                await backend.storeIconLowLevel(node.id, icon_data);
             }
 
             last_object = null;
@@ -307,6 +314,11 @@ async function objectToProperties(object, compress) {
             lines.push(`:notes_format: ${notes.format}`);
     }
 
+    let icon = await backend.fetchIcon(node.id);
+    if (icon) {
+        lines.push(`:icon_data: ${icon}`);
+    }
+
     return lines.map(l => " ".repeat(object.level + 3) + l).join(`\n`);
 }
 
@@ -463,6 +475,9 @@ async function importJSONObject(object) {
     let notes_format = object.notes_format;
     delete object.notes_format;
 
+    let icon_data = object.icon_data;
+    delete object.icon_data;
+
     if (object.type === NODE_TYPE_ARCHIVE) {
         let data = object.data;
         let binary = !!object.byte_length;
@@ -487,6 +502,9 @@ async function importJSONObject(object) {
     if (notes) {
         await backend.storeNotesLowLevel(node.id, notes, notes_format);
     }
+
+    if (icon_data)
+        await backend.storeIconLowLevel(node.id, icon_data);
 
     return node;
 }
@@ -636,6 +654,11 @@ async function objectToJSON(object, shallow, compress) {
 
             node.notes_format = notes.format;
         }
+
+        let icon = await backend.fetchIcon(node.id);
+        if (icon) {
+            node.icon_data = icon;
+        }
     }
 
     return JSON.stringify(node);
@@ -655,11 +678,16 @@ export async function exportJSON(file, nodes, shelf, uuid, shallow = false, comp
 
     file.append("[" + JSON.stringify(meta) + ",\n");
 
-    let last = nodes[nodes.length - 1];
+    if (nodes.length) {
+        let last = nodes[nodes.length - 1];
 
-    for (let node of nodes) {
-        let json = await objectToJSON(node, shallow);
-        file.append(json + (node === last? "\n]": ",\n"));
+        for (let node of nodes) {
+            let json = await objectToJSON(node, shallow);
+            file.append(json + (node === last ? "\n]" : ",\n"));
+        }
+    }
+    else {
+        file.append("\n]");
     }
 }
 
@@ -763,6 +791,7 @@ async function importRDFArchive(node, scrapbook_id, _) {
                         node.__local_import = true;
                         node.__local_import_base = base;
                         node.tab_id = import_tab.id;
+                        node.import_url = index;
 
                         try {
                             await browser.tabs.sendMessage(import_tab.id, {
@@ -781,6 +810,14 @@ async function importRDFArchive(node, scrapbook_id, _) {
 
                 try {
                     try {
+                        // await browser.tabs.executeScript(tab.id, {
+                        //     code: `var faviconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+                        //             faviconElt? faviconElt.href: null;`
+                        //        }).then(icon => {
+                        //     if (icon && icon.length && icon[0]) {
+                        //         node.icon = icon[0];
+                        //     }
+                        // });
                         await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
                     } catch (e) {}
 
@@ -878,13 +915,11 @@ export async function importRDF(shelf, path, threads, quick) {
             id_map.set(node.__sb_id, bookmark.id);
         else if (data.type === NODE_TYPE_ARCHIVE) {
             reverse_id_map.set(bookmark.id, node.__sb_id);
+
             bookmarks.push(bookmark);
             total += 1;
         }
     });
-
-    let progress = 0;
-    let parts = bookmarks.length > threads? partition(bookmarks, threads): bookmarks.map(b => [b]);
 
     let cancelled = false;
 
@@ -896,28 +931,31 @@ export async function importRDF(shelf, path, threads, quick) {
     browser.runtime.onMessage.addListener(cancelListener);
 
 
-    let importf = async (items) => {
-        if (items.length) {
-            let bookmark = items.shift();
-            let scrapbook_id = reverse_id_map.get(bookmark.id);
-            let percent = Math.round((++progress / total) * 100);
-
-            try {
-                await importRDFArchive(bookmark, scrapbook_id, rdf_directory);
-            }
-            catch (e) {
-                browser.runtime.sendMessage({type: "RDF_IMPORT_ERROR", bookmark: bookmark, error: e.message,
-                    index: `${bookmark.__local_import_base}index.html`});
-            }
-
-            browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: percent});
-
-            if (!cancelled)
-                await importf(items);
-        }
-    };
-
     if (!quick) {
+        let progress = 0;
+        let parts = bookmarks.length > threads? partition([...bookmarks], threads): bookmarks.map(b => [b]);
+
+        let importf = async (items) => {
+            if (items.length) {
+                let bookmark = items.shift();
+                let scrapbook_id = reverse_id_map.get(bookmark.id);
+                let percent = Math.round((++progress / total) * 100);
+
+                try {
+                    await importRDFArchive(bookmark, scrapbook_id, rdf_directory);
+                }
+                catch (e) {
+                    browser.runtime.sendMessage({type: "RDF_IMPORT_ERROR", bookmark: bookmark, error: e.message,
+                        index: `${bookmark.__local_import_base}index.html`});
+                }
+
+                browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: percent});
+
+                if (!cancelled)
+                    await importf(items);
+            }
+        };
+
         //let startTime = new Date().getTime() / 1000;
         browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: 0});
         await Promise.all(parts.map(bb => importf(bb)));
@@ -931,15 +969,25 @@ export async function importRDF(shelf, path, threads, quick) {
 
     browser.runtime.sendMessage({type: "NODES_IMPORTED", shelf: shelf_node});
 
-    for (let node of bookmarks) {
-        if (node.uri) {
-            node.icon = await getFavicon(node.uri);
-            await backend.updateNode(node);
-        }
-    }
+    // browser.runtime.sendMessage({type: "OBTAINING_ICONS", shelf: shelf_node});
+    //
+    // for (let node of bookmarks) {
+    //     if (cancelled)
+    //         break;
+    //
+    //     if (!node.import_url)
+    //         node.import_url = `http://localhost:${settings.helper_port_number()}/rdf/import/files/data/${node.external_id}/index.html`;
+    //
+    //     node.icon = node.icon || (await getFavicon(node.import_url, false, true));
+    //
+    //     if (node.icon) {
+    //         await backend.storeIcon(node.icon);
+    //     }
+    //     await backend.updateNode(node);
+    // }
 
-    if (!quick && bookmarks.length)
-        setTimeout(() => browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node}), 500);
+    if (bookmarks.length)
+        browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node})
 
     browser.runtime.onMessage.removeListener(cancelListener);
 }

@@ -2,7 +2,7 @@ import IDBStorage from "./storage_idb.js"
 import {rdfBackend} from "./backend_rdf.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {browserBackend} from "./backend_browser.js"
-import {delegateProxy} from "./utils.js";
+import {delegateProxy, getMimetypeExt} from "./utils.js";
 
 import {
     DEFAULT_SHELF_NAME,
@@ -445,6 +445,51 @@ export class Backend {
         return doTraverse(null, root);
     }
 
+    async storeIcon(node, iconData, contentType) {
+        const convertAndStore = (iconData, contentType) => {
+            if (iconData.byteLength && contentType && contentType.startsWith("image")) {
+                const byteArray = new Uint8Array(iconData);
+
+                let binaryString = "";
+                for (let i = 0; i < byteArray.byteLength; i++)
+                    binaryString += String.fromCharCode(byteArray[i]);
+
+                contentType = contentType.split(";")[0];
+
+                let iconUrl = `data:${contentType};base64,${btoa(binaryString)}`;
+
+                return this.storeIconLowLevel(node.id, iconUrl);
+            }
+        }
+
+        if (iconData && contentType) {
+            try {
+                convertAndStore(iconData, contentType);
+            }
+            catch (e) {
+                console.log(e);
+            }
+        }
+        else if (node.icon) {
+            try {
+                const response = await fetch(node.icon);
+
+                if (response.ok) {
+                    const buffer = await response.arrayBuffer();
+
+                    let type = response.headers.get("content-type");
+                    if (!type)
+                        type = getMimetypeExt(node.icon);
+
+                    convertAndStore(buffer, type);
+                }
+            }
+            catch (e) {
+                console.log(e);
+            }
+        }
+    }
+
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
         let group, parent_id;
 
@@ -467,6 +512,8 @@ export class Backend {
         this.addTags(data.tag_list);
 
         let node = await this.addNode(data);
+
+        this.storeIcon(node);
 
         await this.createExternalBookmark(group, node);
 

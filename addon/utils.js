@@ -116,6 +116,20 @@ export function getThemeVar(v) {
     }
 }
 
+// Extracting signature:
+
+// contentType = "";
+// binaryString = "";
+// let signature = [];
+// for (i = 0; i < byteArray.byteLength; i++) {
+//     if (i < 4)
+//         signature.push(byteArray[i].toString(16));
+//     binaryString += String.fromCharCode(byteArray[i]);
+// }
+//
+// signature = signature.join("").toUpperCase();
+// contentType = getMimetype(signature);
+
 export function getMimetype (signature) {
     switch (signature) {
         case '89504E47':
@@ -134,6 +148,26 @@ export function getMimetype (signature) {
         default:
             return null;
     }
+}
+
+export function getMimetypeExt(url) {
+    if (!url)
+        return null;
+
+    if (url.endsWith(".png"))
+        return 'image/png';
+    else if (url.endsWith(".gif"))
+        return 'image/gif';
+    else if (url.endsWith(".jpg") || url.endsWith(".jpeg"))
+        return 'image/jpeg';
+    else if (url.endsWith(".ico"))
+        return 'image/x-icon';
+    else if (url.endsWith(".svg"))
+        return 'image/svg+xml';
+    else if (url.endsWith(".webp"))
+        return 'image/webp';
+    else
+        return null;
 }
 
 export function delegateProxy (target, origin) {
@@ -176,15 +210,16 @@ export async function loadLocalResource(url, type) {
     }
 }
 
-export function getFavicon(host) {
-    let load_url = (url, type, timeout = 30000) => {
+export function getFavicon(host, tryRootFirst = true, usePageOnly = false) {
+    let load_url = (url, type, timeout = 10000) => {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
             xhr.open("GET", url);
-            xhr.timeout = timeout;
 
             if (type)
                 xhr.responseType = type;
+
+            xhr.timeout = timeout;
 
             xhr.ontimeout = function () {
                 reject();
@@ -194,7 +229,7 @@ export function getFavicon(host) {
             };
             xhr.onload = function () {
                 if (this.status === 200)
-                    resolve({response: this.response, type: this.getResponseHeader("content-type")});
+                    resolve({url: url, response: this.response, type: this.getResponseHeader("content-type")});
                 else
                     reject();
             };
@@ -204,8 +239,7 @@ export function getFavicon(host) {
 
     let valid_favicon = r => {
         let valid_type = r.type? r.type.startsWith("image"): true;
-
-        return r && r.response.length && valid_type;
+        return r && r.response.byteLength && valid_type;
     };
 
     let extract_link = r => {
@@ -221,9 +255,15 @@ export function getFavicon(host) {
     let default_icon = origin + "/favicon.ico";
     let get_html_icon = () => load_url(host, "document").then(extract_link).catch (e => undefined);
 
-    return load_url(default_icon)
-        .then(r => valid_favicon(r)? default_icon: get_html_icon())
-        .catch(get_html_icon);
+    if (usePageOnly)
+        return get_html_icon();
+
+    if (tryRootFirst)
+        return load_url(default_icon, "arraybuffer")
+            .then(r => valid_favicon(r)? r: get_html_icon())
+            .catch(get_html_icon);
+    else
+        return get_html_icon().then(r => r? r: load_url(default_icon, "arraybuffer").catch (e => undefined));
 }
 
 export async function readFile(file) {
