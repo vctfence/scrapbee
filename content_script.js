@@ -175,6 +175,7 @@ if(!window.scrapbee_injected){
         return new Promise(async (resolve, reject) => {
             /** html */
             var content = null;
+            
             /** set unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.setAttribute("scrapbee_unique_id", "el" + new NumberRange(0,999999999).random());
@@ -184,13 +185,26 @@ if(!window.scrapbee_injected){
             }catch(e){
                 reject(e)
             }
+            
             /** css */
             var css = [];
+            function getRuleCss(r){
+                var css = [];
+                if(r instanceof CSSStyleRule){
+                    css.push(r.cssText);
+                }else if(r instanceof CSSImportRule){
+                    rule = r.styleSheet.cssRules;
+                    for (let r of rule){
+                        css.push(r.cssText + "");
+                    }
+                }
+                return css.join("\n");
+            }
             for(let sheet of doc.styleSheets){
                 try{
                     var rule = sheet.rules || sheet.cssRules;
                     for (let r of rule){
-                        css.push(r.cssText + "");
+                        css.push(getRuleCss(r));
                     }
                 }catch(e){
                     if(e.name == "SecurityError") {
@@ -207,6 +221,7 @@ if(!window.scrapbee_injected){
                     }
                 }
             }
+            
             /** gather resources and inline styles */
             var distinct = {};
             var RESULT = [];
