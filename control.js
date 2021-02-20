@@ -113,6 +113,8 @@ class ContextMenu{
                 var title = $(e.target).html();
                 var value = $(e.target).attr("value");
                 if(self.value != value){
+                    if(e.cancelable)
+                        e.preventDefault()
                     self.select(title, value);
                 }
             }
