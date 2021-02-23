@@ -481,7 +481,7 @@ export class Backend {
                     if (!type)
                         type = getMimetypeExt(node.icon);
 
-                    convertAndStore(buffer, type);
+                    return convertAndStore(buffer, type);
                 }
             }
             catch (e) {

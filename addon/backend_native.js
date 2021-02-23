@@ -82,20 +82,20 @@ class NativeBackend {
                     })
                 }
                 break;
-                case "REQUEST_RDF_ROOT": {
-                    const node = await backend.getNode(msg.uuid, true);
-                    const port = await this.getPort();
+            case "REQUEST_RDF_ROOT": {
+                const node = await backend.getNode(msg.uuid, true);
+                const port = await this.getPort();
 
-                    let path = await backend.computePath(node.id);
-                    let rdf_directory = path[0].uri;
+                let path = await backend.computePath(node.id);
+                let rdf_directory = path[0].uri;
 
-                    port.postMessage({
-                        type: "RDF_ROOT",
-                        uuid: node.uuid,
-                        rdf_file: `${rdf_directory}/scrapbook.rdf`,
-                    })
-                }
-                break;
+                port.postMessage({
+                    type: "RDF_ROOT",
+                    uuid: node.uuid,
+                    rdf_file: `${rdf_directory}/scrapbook.rdf`,
+                })
+            }
+            break;
         }
 
     }

@@ -716,6 +716,7 @@ function traverseRDFTree(doc, visitor) {
                 node.__sb_title = node.getAttributeNS(NS_SCRAPBOOK, "title");
                 node.__sb_source = node.getAttributeNS(NS_SCRAPBOOK, "source");
                 node.__sb_comment = node.getAttributeNS(NS_SCRAPBOOK, "comment");
+                node.__sb_icon = node.getAttributeNS(NS_SCRAPBOOK, "icon");
             }
             result.set(node.getAttributeNS(NS_RDF, "about"), node);
         }
@@ -765,7 +766,8 @@ function traverseRDFTree(doc, visitor) {
 
 
 async function importRDFArchive(node, scrapbook_id, _) {
-    let base = `http://localhost:${settings.helper_port_number()}/rdf/import/files/data/${scrapbook_id}/`
+    let root = `http://localhost:${settings.helper_port_number()}/rdf/import/files/`
+    let base = `${root}data/${scrapbook_id}/`
     let index = `${base}index.html`;
 
     return new Promise(async (resolve, reject) => {
@@ -900,7 +902,8 @@ export async function importRDF(shelf, path, threads, quick) {
                 : NODE_TYPE_ARCHIVE),
             details: node.__sb_comment,
             parent_id: parent? id_map.get(parent.__sb_id): shelf_node.id,
-            todo_state: node.__sb_type === "marked"? 1: undefined
+            todo_state: node.__sb_type === "marked"? 1: undefined,
+            icon: node.__sb_icon
         };
 
         if (quick) {
@@ -909,6 +912,7 @@ export async function importRDF(shelf, path, threads, quick) {
         }
 
         let bookmark = await backend.importBookmark(data);
+
         id_map.set(node.__sb_id, bookmark.id);
 
         if (data.type === NODE_TYPE_GROUP)
@@ -969,22 +973,28 @@ export async function importRDF(shelf, path, threads, quick) {
 
     browser.runtime.sendMessage({type: "NODES_IMPORTED", shelf: shelf_node});
 
-    // browser.runtime.sendMessage({type: "OBTAINING_ICONS", shelf: shelf_node});
-    //
-    // for (let node of bookmarks) {
-    //     if (cancelled)
-    //         break;
-    //
-    //     if (!node.import_url)
-    //         node.import_url = `http://localhost:${settings.helper_port_number()}/rdf/import/files/data/${node.external_id}/index.html`;
-    //
-    //     node.icon = node.icon || (await getFavicon(node.import_url, false, true));
-    //
-    //     if (node.icon) {
-    //         await backend.storeIcon(node.icon);
-    //     }
-    //     await backend.updateNode(node);
-    // }
+    browser.runtime.sendMessage({type: "OBTAINING_ICONS", shelf: shelf_node});
+
+    for (let node of bookmarks) {
+        if (cancelled)
+            break;
+
+        // if (!node.import_url)
+        //     node.import_url = `http://localhost:${settings.helper_port_number()}/rdf/import/files/data/${node.external_id}/index.html`;
+        //
+        // node.icon = node.icon || (await getFavicon(node.import_url, false, true));
+        //
+        // if (node.icon) {
+        //     await backend.storeIcon(node.icon);
+        // }
+        // await backend.updateNode(node);
+
+        if (node.icon && node.icon.startsWith("resource://scrapbook/")) {
+            node.icon = node.icon.replace("resource://scrapbook/", "");
+            node.icon = `http://localhost:${settings.helper_port_number()}/rdf/import/files/` + node.icon;
+            await backend.storeIcon(node);
+        }
+    }
 
     if (bookmarks.length)
         browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node})
