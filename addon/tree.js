@@ -15,9 +15,6 @@ import {
     FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_SHELF_ID,
     FIREFOX_SHELF_NAME,
-    isContainer,
-    isEndpoint,
-    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -30,7 +27,10 @@ import {
     TODO_STATE_DONE,
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
-    TODO_STATE_WAITING
+    TODO_STATE_WAITING,
+    isContainer,
+    isEndpoint,
+    isSpecialShelf
 } from "./storage_constants.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
