@@ -1,4 +1,5 @@
 import {backend} from "./backend.js";
+import {settings} from "./settings.js"
 import {BookmarkTree} from "./tree.js";
 import {
     DEFAULT_SHELF_NAME,
@@ -59,7 +60,9 @@ window.onload = function () {
 
         $("#bookmark-folder").selectric("refresh");
 
-        tree.update(nodes);
+        settings.load(() => {
+            tree.update(nodes);
+        });
     });
 
 
