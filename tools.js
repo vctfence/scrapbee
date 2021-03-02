@@ -141,7 +141,7 @@ function initMover(){
                 //     return resolve();
                 
                 var $dest = parents[item.level];
-                var id = genItemId();
+                var id = genItemId(item.id);
                 var rid = item.level == 0 ? ref_id : null;
                 if(item.nodeType == "bookmark" || item.nodeType == "page"){
                     var src = srcTree.rdfPath + 'data/' + item.id;

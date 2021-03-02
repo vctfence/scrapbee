@@ -213,6 +213,7 @@ select{
 .simple-menu-item img{
     width:20px;
     height:20px;
+    pointer-events:none;
 }
 .simple-menu-item *{
     vertical-align:middle;

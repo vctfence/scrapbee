@@ -281,8 +281,12 @@ function getColorFilter(hex){
 function randRange(a, b){
     return Math.floor(Math.random() * (b-a+1)) + a;
 }
-function genItemId(){
-    return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
+function genItemId(proto){
+    var r = String(randRange(1,999999)).padStart(6, "0");
+    if(proto)
+        return proto.substr(0, 14) + r;
+    else
+        return new Date().format("yyyyMMddhhmmss" + r);
 }
 function comp(a, b){
     return a < b ? -1 : (a > b ? 1 : 0);
