@@ -228,7 +228,7 @@ export class CloudBackend {
             parent_id = await backend.getNode(parent_id);
 
         if (parent_id && parent_id.external === CLOUD_EXTERNAL_NAME) {
-            return this.createCloudBookmark(node, parent_id.external_id);
+            return this.createBookmark(parent_id, node);
         }
     }
 
@@ -268,12 +268,25 @@ export class CloudBackend {
                                     node.external = null;
                                     node.external_id = null;
                                     await backend.updateNode(node);
+
+                                    if (node.has_notes)
+                                        await db.deleteNotes(node);
+
+                                    if (node.type === NODE_TYPE_ARCHIVE)
+                                        await db.deleteData(node);
                                 }
                                 return db.deleteNodes(n);
                             });
                         }
-                        else
+                        else {
+                            if (n.has_notes)
+                                await db.deleteNotes(n);
+
+                            if (n.type === NODE_TYPE_ARCHIVE)
+                                await db.deleteData(n);
+
                             return db.deleteNodes(n);
+                        }
                     }
                     catch (e) {
                         console.log(e);
@@ -391,7 +404,7 @@ export class CloudBackend {
                     cc.parent_id = d.id;
                     cc.external = CLOUD_EXTERNAL_NAME;
                     cc.external_id = cc.uuid;
-                    node = await backend.addNode(cc, false, true,false);
+                    node = await backend.addNode(cc, false, true, false);
 
                     if (cc.type === NODE_TYPE_NOTES || cc.has_notes) {
                         node.notes_format = cc.notes_format;
@@ -406,6 +419,9 @@ export class CloudBackend {
 
                     if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && !node.icon)
                         download_icons.push(node);
+                    else if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && node.icon) {
+                        await backend.storeIcon(node);
+                    }
                 }
 
                 if (cc.type === NODE_TYPE_GROUP)
@@ -472,7 +488,8 @@ export class CloudBackend {
                                 node.icon = icon.url;
                                 await backend.storeIcon(node, icon.response, icon.type);
                             }
-                            await backend.updateNode(node);
+                            if (icon)
+                                await backend.updateNode(node);
                         } catch (e) {
                             console.log(e);
                         }

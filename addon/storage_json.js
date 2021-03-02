@@ -37,6 +37,8 @@ export class JSONStorage {
                 delete node[key];
         }
 
+        node.stored_icon = undefined;
+
         return node;
     }
 

@@ -390,6 +390,13 @@ export class Backend {
                         await this.storeNotesLowLevel(n.id, notes.content, notes.format);
                         notes = null;
                     }
+
+                    if (n.stored_icon) {
+                        let icon = await this.fetchIcon(old_id);
+                        if (icon) {
+                            await this.storeIconLowLevel(n.id, icon);
+                        }
+                    }
                 }
 
                 if (n.type === NODE_TYPE_ARCHIVE) {
