@@ -433,7 +433,7 @@ export class CloudBackend {
                             if (cc.type === NODE_TYPE_NOTES || cc.has_notes)
                                 download_notes.push(node);
 
-                            if (node.icon && node.stored_icon)
+                            if (!node.icon || node.icon && node.stored_icon)
                                 download_icons.push(node);
 
                             await backend.updateNode(node);
@@ -461,8 +461,11 @@ export class CloudBackend {
                         download_data.push(node);
                     }
 
-                    if (node.icon && node.stored_icon)
+                    if (!node.icon || node.icon && node.stored_icon)
                         download_icons.push(node);
+                    else if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && node.icon) {
+                        await backend.storeIcon(node);
+                    }
                 }
 
                 if (cc.type === NODE_TYPE_GROUP)
@@ -518,8 +521,26 @@ export class CloudBackend {
                 }
 
                 for (let node of download_icons) {
-                    const icon = await this.fetchCloudIcon(node);
-                    await backend.storeIconLowLevel(node.id, icon);
+                    if (!node.icon && node.uri) {
+                        try {
+                            const icon = await getFavicon(node.uri);
+                            if (icon && typeof icon === "string") {
+                                node.icon = icon;
+                                await backend.storeIcon(node);
+                            } else if (icon) {
+                                node.icon = icon.url;
+                                await backend.storeIcon(node, icon.response, icon.type);
+                            }
+                            if (icon)
+                                await backend.updateNode(node);
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    }
+                    else if (node.icon && node.stored_icon) {
+                        const icon = await this.fetchCloudIcon(node);
+                        await backend.storeIconLowLevel(node.id, icon);
+                    }
                 }
 
                 db_root.date_modified = cloud_last_modified;
