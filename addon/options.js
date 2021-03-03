@@ -207,8 +207,6 @@ window.onload = async function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    const urlParams = new URLSearchParams(window.location.search);
-
     initHelpMarks();
 
     window.onhashchange = switchPane;
@@ -266,16 +264,7 @@ window.onload = async function(){
 
     // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    link_scope_elt = $("#link-scope");
-    window.autoStartCheckLinks = !!urlParams.get("repairIcons");
-
-    if (window.autoStartCheckLinks) {
-        $("#update-icons").prop("checked", true);
-        let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
-        link_scope_elt.replaceWith(scopePath[scopePath.length - 1].name + "&nbsp;&nbsp;");
-        window.autoLinkCheckScope = scopePath.map(g => g.name).join("/");
-        startCheckLinks();
-    }
+    doAutoStartCheckLinks();
 };
 
 function selectNode(e) {
@@ -365,14 +354,28 @@ async function onStartRDFImport(e) {
 
 // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let link_scope_elt = $("#link-scope");
 let abort_check_links = false;
+
+let autoStartCheckLinks;
+let autoLinkCheckScope;
+async function doAutoStartCheckLinks() {
+    const urlParams = new URLSearchParams(window.location.search);
+    autoStartCheckLinks = !!urlParams.get("repairIcons");
+
+    if (autoStartCheckLinks) {
+        $("#update-icons").prop("checked", true);
+        let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
+        $("#link-scope").replaceWith(scopePath[scopePath.length - 1].name + "&nbsp;&nbsp;");
+        autoLinkCheckScope = scopePath.map(g => g.name).join("/");
+        startCheckLinks();
+    }
+}
 
 function initLinkChecker() {
     $("#start-check-links").on("click", startCheckLinks);
     $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
-    link_scope_elt.html(`
+    $("#link-scope").html(`
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
         settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
     }</option>
@@ -401,7 +404,7 @@ function initLinkChecker() {
                 isSpecialShelf(shelf.name)
                     ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
                     : shelf.name;
-            $("<option></option>").appendTo(link_scope_elt).html(name).attr("value", shelf.id);
+            $("<option></option>").appendTo($("#link-scope")).html(name).attr("value", shelf.id);
         }
     });
 }
@@ -426,11 +429,11 @@ function startCheckLinks() {
         let update_icons = $("#update-icons").is(":checked");
         let path;
 
-        if (window.autoStartCheckLinks) {
-            path = window.autoLinkCheckScope;
+        if (autoStartCheckLinks) {
+            path = autoLinkCheckScope;
         }
         else {
-            let scope = $(`#link-scope option[value='${link_scope_elt.val()}']`).text();
+            let scope = $(`#link-scope option[value='${$("#link-scope").val()}']`).text();
             path = scope === EVERYTHING ? undefined : scope;
         }
 

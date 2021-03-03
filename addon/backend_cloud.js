@@ -119,6 +119,12 @@ export class CloudBackend {
     async updateBookmark(node) {
         if (settings.cloud_enabled() && node.external === CLOUD_EXTERNAL_NAME) {
             return this.withCloudDB(async db => {
+                let cloud_node = await db.getNode(node.uuid, true);
+                node = Object.assign({}, node);
+
+                if (!cloud_node.stored_icon)
+                    delete node.stored_icon;
+
                 return db.updateNode(node);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }

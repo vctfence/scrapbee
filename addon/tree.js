@@ -955,6 +955,12 @@ class BookmarkTree {
                 action: function () {
                     if (isEndpoint(ctx_node.original)) {
                         showDlg("properties", ctx_node_data).then(data => {
+
+                            if (!data.icon) {
+                                data.icon = null;
+                                data.stored_icon = false;
+                            }
+
                             let live_data = all_nodes.find(n => n.id == ctx_node_data.id);
                             Object.assign(live_data, data);
 
