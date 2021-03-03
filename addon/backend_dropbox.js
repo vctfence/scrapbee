@@ -84,79 +84,59 @@ export class DropboxBackend {
             storage = new JSONStorage({cloud: "Scrapyard"});
 
         if (storage) {
-            storage.storeNotes = async (node, notes) => {
-                try {
-                    await dropbox('files/upload', {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.notes`,
-                        "mode": "overwrite",
-                        "mute": true
-                    }, notes);
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            };
+            let storeAsset = ext => {
+                return async (node, data) => {
+                    try {
+                        await dropbox('files/upload', {
+                            "path": `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`,
+                            "mode": "overwrite",
+                            "mute": true
+                        }, data);
+                    } catch (e) {
+                        console.log(e);
+                    }
+                };
+            }
 
-            storage.fetchNotes = async (node) => {
-                try {
-                    let [_, blob] = await dropbox('files/download', {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.notes`,
-                    });
+            let fetchAsset = ext => {
+                return async (node) => {
+                    try {
+                        let [_, blob] = await dropbox('files/download', {
+                            "path": `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`,
+                        });
 
-                    return readBlob(blob);
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            };
+                        return readBlob(blob);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                };
+            }
 
-            storage.deleteNotes = async (node) => {
-                try {
-                    await dropbox('files/delete_v2', {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.notes`
-                    });
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            };
+            let deleteAsset = ext => {
+                return async (node) => {
+                    try {
+                        await dropbox('files/delete_v2', {
+                            "path": `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`
+                        });
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                };
+            }
 
-            storage.storeData = async (node, data) => {
-                try {
-                    await dropbox('files/upload', {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.data`,
-                        "mode": "overwrite",
-                        "mute": true
-                    }, data);
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            };
+            storage.storeNotes = storeAsset("notes");
+            storage.fetchNotes = fetchAsset("notes")
+            storage.deleteNotes = deleteAsset("notes");
 
-            storage.fetchData = async (node) => {
-                try {
-                    let [_, blob] = await dropbox('files/download', {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.data`,
-                    });
+            storage.storeData = storeAsset("data");
+            storage.fetchData = fetchAsset("data")
+            storage.deleteData = deleteAsset("data");
 
-                    return readBlob(blob, node.byte_length? "binary": "string");
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            };
-
-            storage.deleteData = async (node) => {
-                try {
-                    await dropbox('files/delete_v2', {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.data`
-                    });
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            };
+            storage.storeIcon = storeAsset("icon");
+            storage.fetchIcon = fetchAsset("icon")
+            storage.deleteIcon = deleteAsset("icon");
         }
 
         return storage;

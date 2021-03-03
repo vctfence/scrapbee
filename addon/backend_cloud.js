@@ -80,6 +80,17 @@ export class CloudBackend {
         return this._provider.isAuthenticated();
     }
 
+    async cleanBookmarkAssets(db, node) {
+        if (node.has_notes)
+            await db.deleteNotes(node);
+
+        if (node.type === NODE_TYPE_ARCHIVE)
+            await db.deleteData(node);
+
+        if (node.stored_icon)
+            await db.deleteIcon(node);
+    }
+
     async deleteBookmarks(nodes) {
         if (!settings.cloud_enabled())
             return;
@@ -88,13 +99,8 @@ export class CloudBackend {
 
         if (cloud_nodes.length)
             return this.withCloudDB(async db => {
-                for (let node of cloud_nodes) {
-                    if (node.has_notes)
-                        await db.deleteNotes(node);
-
-                    if (node.type === NODE_TYPE_ARCHIVE)
-                        await db.deleteData(node);
-                }
+                for (let node of cloud_nodes)
+                    await this.cleanBookmarkAssets(db, node);
 
                 return db.deleteNodes(cloud_nodes);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
@@ -147,6 +153,11 @@ export class CloudBackend {
                         await this._storeDataInternal(db, bookmark, blob.data, blob.type);
                     }
                 }
+
+                if (node.stored_icon) {
+                    const icon = await backend.fetchIcon(node.id);
+                    await db.storeIcon(bookmark, icon);
+                }
             }
             catch (e) {
                 console.log(e);
@@ -179,11 +190,49 @@ export class CloudBackend {
         return (await this._provider.getDB(true)).fetchNotes(node);
     }
 
+    _fixUTF8Encoding(html) {
+        const meta_rx = /<meta\s*charset=['"]?([^'"\/>]+)['"]?\s*\/?>/i
+        const content_type_rx =
+            /<meta\s*http-equiv=["']?content-type["']?\s*content=["']text\/html;\s*charset=([^'"/>]+)['"]\s*\/?>/i
+
+        let proceed = null;
+
+        let m = html.match(meta_rx);
+
+        if (m && m[1] && m[1].toUpperCase() === "UTF-8")
+            proceed = "utf-8";
+        else if (m && m[1])
+            proceed = "meta";
+
+        if (!proceed) {
+            m = html.match(content_type_rx);
+
+            if (m && m[1] && m[1].toUpperCase() === "UTF-8")
+                proceed = "utf-8";
+            else if (m && m[1])
+                proceed = "content-type";
+        }
+
+        if (proceed == "meta") {
+            html = html.replace(meta_rx, "");
+            html = html.replace("<head>", '<head><meta charset="utf-8"/>');
+        }
+        else if (proceed == "content-type") {
+            html = html.replace(content_type_rx, "");
+            html = html.replace("<head>", '<head><meta charset="utf-8"/>');
+        }
+        else if (proceed === null) {
+            html = html.replace("<head>", '<head><meta charset="utf-8"/>');
+        }
+
+        return html;
+    }
+
     async _storeDataInternal(db, node, data, content_type) {
         let cloud_node = await db.getNode(node.uuid, true);
 
         if (typeof data === "string")
-            data = new TextEncoder().encode(data);
+            data = new TextEncoder().encode(this._fixUTF8Encoding(data));
         else
             cloud_node.byte_length = data.byteLength;
 
@@ -207,6 +256,10 @@ export class CloudBackend {
 
     async fetchCloudData(node) {
         return (await this._provider.getDB(true)).fetchData(node);
+    }
+
+    async fetchCloudIcon(node) {
+        return (await this._provider.getDB(true)).fetchIcon(node);
     }
 
     async createBookmark(parent, node) {
@@ -269,22 +322,13 @@ export class CloudBackend {
                                     node.external_id = null;
                                     await backend.updateNode(node);
 
-                                    if (node.has_notes)
-                                        await db.deleteNotes(node);
-
-                                    if (node.type === NODE_TYPE_ARCHIVE)
-                                        await db.deleteData(node);
+                                    await this.cleanBookmarkAssets(db, node);
                                 }
                                 return db.deleteNodes(n);
                             });
                         }
                         else {
-                            if (n.has_notes)
-                                await db.deleteNotes(n);
-
-                            if (n.type === NODE_TYPE_ARCHIVE)
-                                await db.deleteData(n);
-
+                            await this.cleanBookmarkAssets(db, n);
                             return db.deleteNodes(n);
                         }
                     }
@@ -389,7 +433,7 @@ export class CloudBackend {
                             if (cc.type === NODE_TYPE_NOTES || cc.has_notes)
                                 download_notes.push(node);
 
-                            if (!node.icon)
+                            if (node.icon && node.stored_icon)
                                 download_icons.push(node);
 
                             await backend.updateNode(node);
@@ -417,11 +461,8 @@ export class CloudBackend {
                         download_data.push(node);
                     }
 
-                    if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && !node.icon)
+                    if (node.icon && node.stored_icon)
                         download_icons.push(node);
-                    else if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && node.icon) {
-                        await backend.storeIcon(node);
-                    }
                 }
 
                 if (cc.type === NODE_TYPE_GROUP)
@@ -477,22 +518,8 @@ export class CloudBackend {
                 }
 
                 for (let node of download_icons) {
-                    if (node.uri)
-                        try {
-                            const icon = await getFavicon(node.uri);
-                            if (icon && typeof icon === "string") {
-                                node.icon = icon;
-                                await backend.storeIcon(node);
-                            }
-                            else if (icon) {
-                                node.icon = icon.url;
-                                await backend.storeIcon(node, icon.response, icon.type);
-                            }
-                            if (icon)
-                                await backend.updateNode(node);
-                        } catch (e) {
-                            console.log(e);
-                        }
+                    const icon = await this.fetchCloudIcon(node);
+                    await backend.storeIconLowLevel(node.id, icon);
                 }
 
                 db_root.date_modified = cloud_last_modified;

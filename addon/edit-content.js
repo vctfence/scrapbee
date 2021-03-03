@@ -88,10 +88,19 @@ class EditToolBar {
             doc.getElementsByTagName("head")[0].prepend(chars);
         }
         else {
-            chars = document.createElement("meta");
-            chars.setAttribute("http-equiv", 'Content-Type');
-            chars.setAttribute("content", "text/html; charset=utf-8");
-            doc.getElementsByTagName("head")[0].prepend(chars);
+            chars = doc.querySelector("meta[charset]");
+
+            if (chars) {
+                chars.parentNode.removeChild(chars);
+                chars.setAttribute("charset", "utf-8");
+                doc.getElementsByTagName("head")[0].prepend(chars);
+            }
+            else {
+                chars = document.createElement("meta");
+                chars.setAttribute("http-equiv", 'Content-Type');
+                chars.setAttribute("content", "text/html; charset=utf-8");
+                doc.getElementsByTagName("head")[0].prepend(chars);
+            }
         }
 
         browser.runtime.sendMessage({

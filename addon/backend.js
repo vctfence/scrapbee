@@ -453,7 +453,7 @@ export class Backend {
     }
 
     async storeIcon(node, iconData, contentType) {
-        const convertAndStore = (iconData, contentType) => {
+        const convertAndStore = async (iconData, contentType) => {
             if (iconData.byteLength && contentType && contentType.startsWith("image")) {
                 const byteArray = new Uint8Array(iconData);
 
@@ -465,13 +465,15 @@ export class Backend {
 
                 let iconUrl = `data:${contentType};base64,${btoa(binaryString)}`;
 
-                return this.storeIconLowLevel(node.id, iconUrl);
+                await this.storeIconLowLevel(node.id, iconUrl);
+
+                node.stored_icon = true;
             }
         }
 
         if (iconData && contentType) {
             try {
-                convertAndStore(iconData, contentType);
+                return convertAndStore(iconData, contentType);
             }
             catch (e) {
                 console.log(e);
@@ -520,7 +522,7 @@ export class Backend {
 
         let node = await this.addNode(data);
 
-        this.storeIcon(node);
+        await this.storeIcon(node);
 
         await this.createExternalBookmark(group, node);
 
