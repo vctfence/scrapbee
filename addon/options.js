@@ -11,108 +11,22 @@ import {
     isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK
 } from "./storage_constants.js";
 
-window.onload = async function(){
-    document.title = document.title.translate();
-    document.body.innerHTML = document.body.innerHTML.translate();
+let _ = (v, d) => {return v !== undefined? v: d;};
 
-    const urlParams = new URLSearchParams(window.location.search);
-
-    $("#div-page").css("display", "table-row");
-    let link_scope_elt = $("#link-scope");
-
-    let darkStyle;
-
-    /** help mark */
-    $(".help-mark").hover(function(e){
-        $(this).next(".tips.hide").show().css({left: (e.pageX )+"px", top: (e.pageY) +"px"})
-    }, function(){
-        $(this).next(".tips.hide").hide();
-    });
-
-    let helperAppLinksLoaded = false;
-    function loadHelperAppLinks() {
-        if (helperAppLinksLoaded)
-            return;
-
-        // Load helper app links
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-                let release = JSON.parse(this.responseText);
-                let link = document.getElementById("helper-windows-inst");
-                link.href = release.assets[0].browser_download_url;
-                link = document.getElementById("helper-manual-inst");
-                link.href = release.assets[1].browser_download_url;
-                helperAppLinksLoaded = true;
-            }
-        };
-        xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
-        xhr.send();
-    }
-
-    function switchPane(){
-        $(".div-area").hide();
-        $("a.left-index").removeClass("focus")
-
-        let m;
-        if(m = location.href.match(/#(\w+)$/)) {
-
-            if (m[1] === "helperapp") {
-                loadHelperAppLinks();
-            }
-
-            $("#div-" + m[1]).show();
-            $("a.left-index[href='#" + m[1] + "']").addClass("focus")
-        } else{
-            $("#div-settings").show();
-            $("a.left-index[href='#settings']").addClass("focus")
-        }
-    }
-    window.onhashchange = switchPane;
-    switchPane();
-
-    $("#copy-style-link").on("click", onCopyStyle);
-    $("#start-rdf-import").on("click", onStartRDFImport);
-
-    $("#auth-dropbox").on("click", async () => {
-        await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
-        $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
-
-    });
-
-    document.getElementById("options-save-button").addEventListener("click",onClickSave,false);
-    document.getElementById("options-save2-button").addEventListener("click",onClickSave,false);
-
-    let _ = (v, d) => {return v !== undefined? v: d;};
-
+function loadSavePageSettings() {
     chrome.storage.local.get("savepage-settings",
-        function(object)
-        {
+        function(object) {
             object = object["savepage-settings"];
 
             /* General options */
 
-            // document.getElementById("options-newbuttonaction").elements["action"].value = object["options-newbuttonaction"];
-            //
-            // document.getElementById("options-showsubmenu").checked = object["options-showsubmenu"];
-            //document.getElementById("options-showwarning").checked = _(object["options-showwarning"], true);
-            ///document.getElementById("options-showurllist").checked = _(object["options-showurllist"], false);
-            // document.getElementById("options-promptcomments").checked = object["options-promptcomments"];
-            //
             // document.getElementById("options-usepageloader").checked = object["options-usepageloader"];
             document.getElementById("options-retaincrossframes").checked = _(object["options-retaincrossframes"], true);
             document.getElementById("options-removeunsavedurls").checked = _(object["options-removeunsavedurls"], true);
             document.getElementById("options-mergecssimages").checked = _(object["options-mergecssimages"], true);
-            // document.getElementById("options-includeinfobar").checked = object["options-includeinfobar"];
-            // document.getElementById("options-includesummary").checked = object["options-includesummary"];
             // document.getElementById("options-formathtml").checked = object["options-formathtml"];
-            //
             // document.getElementById("options-savedfilename").value = object["options-savedfilename"];
             // document.getElementById("options-replacespaces").checked = object["options-replacespaces"];
-            // document.getElementById("options-replacechar").value = object["options-replacechar"];
-            // document.getElementById("options-maxfilenamelength").value = object["options-maxfilenamelength"];
-            //
-            // document.getElementById("options-replacechar").disabled = !document.getElementById("options-replacespaces").checked;
             //
             // /* Saved Items options */
             //
@@ -123,7 +37,6 @@ window.onload = async function(){
             document.getElementById("options-savecssfontswoff").checked = _(object["options-savecssfontswoff"], true);
             document.getElementById("options-savecssfontsall").checked = _(object["options-savecssfontsall"], true);
             document.getElementById("options-savescripts").checked = object["options-savescripts"];
-            //
             document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
             //
             // /* Advanced options */
@@ -137,13 +50,54 @@ window.onload = async function(){
             document.getElementById("options-purgeelements").checked = _(object["options-purgeelements"], true);
         });
 
-         document.getElementById("options-savecssfontsall").addEventListener("click", function () {
-         document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
+    document.getElementById("options-savecssfontsall").addEventListener("click", function () {
+        document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
     },false);
+}
 
+function storeSavePageSettings() {
+    chrome.storage.local.set({"savepage-settings": {
+        /* General options */
+
+        //"options-showwarning": document.getElementById("options-showwarning").checked,
+        //"options-showurllist": document.getElementById("options-showurllist").checked,
+        //"options-promptcomments": document.getElementById("options-promptcomments").checked,
+
+        //"options-usepageloader": document.getElementById("options-usepageloader").checked,
+        "options-retaincrossframes": document.getElementById("options-retaincrossframes").checked,
+        "options-removeunsavedurls": document.getElementById("options-removeunsavedurls").checked,
+        "options-mergecssimages": document.getElementById("options-mergecssimages").checked,
+        //"options-includeinfobar": document.getElementById("options-includeinfobar").checked,
+        //"options-includesummary": document.getElementById("options-includesummary").checked,
+        //"options-formathtml": document.getElementById("options-formathtml").checked,
+
+        /* Saved Items options */
+
+        "options-savehtmlaudiovideo": document.getElementById("options-savehtmlaudiovideo").checked,
+        "options-savehtmlobjectembed": document.getElementById("options-savehtmlobjectembed").checked,
+        "options-savehtmlimagesall": document.getElementById("options-savehtmlimagesall").checked,
+        "options-savecssimagesall": document.getElementById("options-savecssimagesall").checked,
+        "options-savecssfontswoff": document.getElementById("options-savecssfontswoff").checked,
+        "options-savecssfontsall": document.getElementById("options-savecssfontsall").checked,
+        "options-savescripts": document.getElementById("options-savescripts").checked,
+
+        /* Advanced options */
+
+        "options-maxframedepth": +document.getElementById("options-maxframedepth").value,
+        "options-maxresourcesize": +document.getElementById("options-maxresourcesize").value,
+        "options-maxresourcetime": +document.getElementById("options-maxresourcetime").value,
+        "options-allowpassive": document.getElementById("options-allowpassive").checked,
+        "options-refererheader": +document.getElementById("options-refererheader").elements["header"].value,
+        "options-forcelazyloads": document.getElementById("options-forcelazyloads").checked,
+        "options-loadlazycontent": document.getElementById("options-forcelazyloads").checked,
+        "options-purgeelements": document.getElementById("options-purgeelements").checked,
+        "options-removeelements": document.getElementById("options-purgeelements").checked
+    }});
+}
+
+function loadScrapyardSettings() {
     settings.load(() => {
         document.getElementById("option-shallow-export").checked = settings.shallow_export();
-        //document.getElementById("option-compress-export").checked = settings.compress_export();
         document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
         document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
@@ -173,11 +127,116 @@ window.onload = async function(){
                 () => browser.runtime.sendMessage({type: "ENABLE_CLOUD_BACKGROUND_SYNC"}));
         });
 
-        initLinkChecker();
-
         if (dropboxBackend.isAuthenticated())
             $("#auth-dropbox").val("Sign out");
+
+        $("#auth-dropbox").on("click", async () => {
+            await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
+            $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
+        });
+
+        initLinkChecker();
     });
+}
+
+function storeScrapyardSettings() {
+    settings.shallow_export(document.getElementById("option-shallow-export").checked);
+    settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
+    settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
+    settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
+        () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
+    settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
+        () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
+    settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
+    settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
+    settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
+    settings.export_format(document.getElementById("option-export-format").value);
+    settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
+    settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
+}
+
+let helperAppLinksLoaded = false;
+function loadHelperAppLinks() {
+    if (helperAppLinksLoaded)
+        return;
+
+    // Load helper app links
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            let release = JSON.parse(this.responseText);
+            let link = document.getElementById("helper-windows-inst");
+            link.href = release.assets[0].browser_download_url;
+            link = document.getElementById("helper-manual-inst");
+            link.href = release.assets[1].browser_download_url;
+            helperAppLinksLoaded = true;
+        }
+    };
+    xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
+    xhr.send();
+}
+
+function switchPane() {
+    $(".div-area").hide();
+    $("a.left-index").removeClass("focus")
+
+    let m;
+    if(m = location.href.match(/#(\w+)$/)) {
+
+        if (m[1] === "helperapp") {
+            loadHelperAppLinks();
+        }
+
+        $("#div-" + m[1]).show();
+        $("a.left-index[href='#" + m[1] + "']").addClass("focus")
+    } else{
+        $("#div-settings").show();
+        $("a.left-index[href='#settings']").addClass("focus")
+    }
+}
+
+function initHelpMarks() {
+    $(".help-mark").hover(function(e){
+        $(this).next(".tips.hide").show().css({left: (e.pageX )+"px", top: (e.pageY) +"px"})
+    }, function(){
+        $(this).next(".tips.hide").hide();
+    });
+}
+
+window.onload = async function(){
+    document.title = document.title.translate();
+    document.body.innerHTML = document.body.innerHTML.translate();
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    initHelpMarks();
+
+    window.onhashchange = switchPane;
+    switchPane();
+
+    $("#div-page").css("display", "table-row");
+
+    document.getElementById("options-save-button").addEventListener("click", onClickSave,false);
+    document.getElementById("options-save2-button").addEventListener("click", onClickSave,false);
+
+    loadSavePageSettings();
+    loadScrapyardSettings();
+
+    function onClickSave(event)
+    {
+        $("#options-save-button").addClass("flash-button");
+        $("#options-save2-button").addClass("flash-button");
+
+        setTimeout(function()
+            {
+                $("#options-save-button").removeClass("flash-button");
+                $("#options-save2-button").removeClass("flash-button");
+            }
+            ,1000);
+
+        storeSavePageSettings();
+        storeScrapyardSettings();
+    }
 
     fetch("help.html").then(response => {
         return response.text();
@@ -185,358 +244,296 @@ window.onload = async function(){
         $("#div-help").html(text);
     });
 
+    // Dark style //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    let darkStyle;
     fetch("shadowfox/userContent.css").then(response => {
         return response.text();
     }).then(text => {
         darkStyle = text.replace(/%%%/g, browser.runtime.getURL("/"));
     });
 
-    function onClickSave(event)
-    {
-        //document.getElementById("options-save-button").value = "Saved";
-        //document.getElementById("options-save-button").style.setProperty("font-weight","bold","");
-
-        $("#options-save-button").addClass("flash-button");
-        $("#options-save2-button").addClass("flash-button");
-
-        setTimeout(function()
-            {
-                //document.getElementById("options-save-button").value = "Save";
-                //document.getElementById("options-save-button").style.setProperty("font-weight","normal","");
-
-                $("#options-save-button").removeClass("flash-button");
-                $("#options-save2-button").removeClass("flash-button");
-            }
-            ,1000);
-
-        settings.shallow_export(document.getElementById("option-shallow-export").checked);
-        //settings.compress_export(document.getElementById("option-compress-export").checked);
-        settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
-        settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
-        settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
-            () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
-        settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
-            () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
-        settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
-        settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
-        settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
-        settings.export_format(document.getElementById("option-export-format").value);
-        settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
-        settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
-
-        chrome.storage.local.set({"savepage-settings":
-            {
-                /* General options */
-
-                //"options-showwarning": document.getElementById("options-showwarning").checked,
-                //"options-showurllist": document.getElementById("options-showurllist").checked,
-                //"options-promptcomments": document.getElementById("options-promptcomments").checked,
-
-                //"options-usepageloader": document.getElementById("options-usepageloader").checked,
-                "options-retaincrossframes": document.getElementById("options-retaincrossframes").checked,
-                "options-removeunsavedurls": document.getElementById("options-removeunsavedurls").checked,
-                "options-mergecssimages": document.getElementById("options-mergecssimages").checked,
-                //"options-includeinfobar": document.getElementById("options-includeinfobar").checked,
-                //"options-includesummary": document.getElementById("options-includesummary").checked,
-                //"options-formathtml": document.getElementById("options-formathtml").checked,
-
-                /* Saved Items options */
-
-                "options-savehtmlaudiovideo": document.getElementById("options-savehtmlaudiovideo").checked,
-                "options-savehtmlobjectembed": document.getElementById("options-savehtmlobjectembed").checked,
-                "options-savehtmlimagesall": document.getElementById("options-savehtmlimagesall").checked,
-                "options-savecssimagesall": document.getElementById("options-savecssimagesall").checked,
-                "options-savecssfontswoff": document.getElementById("options-savecssfontswoff").checked,
-                "options-savecssfontsall": document.getElementById("options-savecssfontsall").checked,
-                "options-savescripts": document.getElementById("options-savescripts").checked,
-
-                /* Advanced options */
-
-                "options-maxframedepth": +document.getElementById("options-maxframedepth").value,
-                "options-maxresourcesize": +document.getElementById("options-maxresourcesize").value,
-                "options-maxresourcetime": +document.getElementById("options-maxresourcetime").value,
-                "options-allowpassive": document.getElementById("options-allowpassive").checked,
-                "options-refererheader": +document.getElementById("options-refererheader").elements["header"].value,
-                "options-forcelazyloads": document.getElementById("options-forcelazyloads").checked,
-                "options-loadlazycontent": document.getElementById("options-forcelazyloads").checked,
-                "options-purgeelements": document.getElementById("options-purgeelements").checked,
-                "options-removeelements": document.getElementById("options-purgeelements").checked
-            }});
-    }
-
     function onCopyStyle(e) {
         navigator.clipboard.writeText(darkStyle);
         showNotification({message: "Dark theme style is copied to Clipboard."});
     }
+    $("#copy-style-link").on("click", onCopyStyle);
 
     // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    let importing = false;
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
-    async function onStartRDFImport(e) {
-        let finalize = () => {
-            $("#start-rdf-import").val("Import");
-            $("#rdf-shelf-name").prop('disabled', false);
-            $("#rdf-import-path").prop('disabled', false);
-            $("#rdf-import-threads").prop('disabled', false);
-
-            $("#rdf-progress-row").text("ready");
-            importing = false;
-            browser.runtime.onMessage.removeListener(importListener);
-        };
-
-        let shelf = $("#rdf-shelf-name").val();
-        let path = $("#rdf-import-path").val();
-
-        if (importing) {
-            browser.runtime.sendMessage({type: "CANCEL_RDF_IMPORT"});
-            finalize();
-            return;
-        }
-
-        if (!shelf || !path) {
-            showNotification({message: "Please, specify all import parameters."});
-            return;
-        }
-
-        let shelf_node = await backend.queryShelf(shelf);
-        if (isSpecialShelf(shelf) || shelf_node) {
-            showNotification({message: "The specified shelf already exists."});
-            return;
-        }
-
-        importing = true;
-        $("#start-rdf-import").val("Cancel");
-        $("#rdf-shelf-name").prop('disabled', true);
-        $("#rdf-import-path").prop('disabled', true);
-        $("#rdf-import-threads").prop('disabled', true);
-
-        let progress_row = $("#rdf-progress-row");
-
-        progress_row.text("initializing bookmark directory structure...");
-        //$("#rdf-import-progress").val(0);
-        //$("#rdf-progress-row").show();
-
-        let importListener = message => {
-            if (message.type === "RDF_IMPORT_PROGRESS") {
-                let bar = $("#rdf-import-progress");
-                if (!bar.length) {
-                    bar = $(`<progress id="rdf-import-progress" max="100" value="0"/>`);
-                    progress_row.empty().append(bar);
-                }
-                bar.val(message.progress);
-            }
-            else if (message.type === "RDF_IMPORT_ERROR") {
-                let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}"
-                                       class="invalid-import">${message.bookmark.name}</a>`;
-                $("#invalid-imports-container").show();
-                $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
-            }
-            else if (message.type === "OBTAINING_ICONS") {
-                progress_row.text("Obtaining page icons...");
-            }
-        };
-
-        browser.runtime.onMessage.addListener(importListener);
-
-        browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
-                                     threads: $("#rdf-import-threads").val(),
-                                     quick: $("#rdf-import-quick").is(':checked')})
-            .then(finalize)
-            .catch(e => {
-                showNotification({message: e.message});
-                finalize();
-            });
-    }
+    $("#start-rdf-import").on("click", onStartRDFImport);
 
     // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    let autoStartCheckLinks = !!urlParams.get("repairIcons");
-    let autoLinkCheckScope;
+    link_scope_elt = $("#link-scope");
+    window.autoStartCheckLinks = !!urlParams.get("repairIcons");
 
-    if (autoStartCheckLinks) {
+    if (window.autoStartCheckLinks) {
         $("#update-icons").prop("checked", true);
         let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
         link_scope_elt.replaceWith(scopePath[scopePath.length - 1].name + "&nbsp;&nbsp;");
-        autoLinkCheckScope = scopePath.map(g => g.name).join("/");
+        window.autoLinkCheckScope = scopePath.map(g => g.name).join("/");
         startCheckLinks();
     }
+};
 
-    let abort_check_links = false;
+function selectNode(e) {
+    e.preventDefault();
+    browser.runtime.sendMessage({type: "SELECT_NODE", node: {id: parseInt(e.target.getAttribute("data-id"))}});
+}
 
-    function initLinkChecker() {
-        $("#start-check-links").on("click", startCheckLinks);
-        $("#invalid-links-container").on("click", ".invalid-link", selectNode);
+// Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        link_scope_elt.html(`
+let importing = false;
+async function onStartRDFImport(e) {
+    let finalize = () => {
+        $("#start-rdf-import").val("Import");
+        $("#rdf-shelf-name").prop('disabled', false);
+        $("#rdf-import-path").prop('disabled', false);
+        $("#rdf-import-threads").prop('disabled', false);
+
+        $("#rdf-progress-row").text("ready");
+        importing = false;
+        browser.runtime.onMessage.removeListener(importListener);
+    };
+
+    let shelf = $("#rdf-shelf-name").val();
+    let path = $("#rdf-import-path").val();
+
+    if (importing) {
+        browser.runtime.sendMessage({type: "CANCEL_RDF_IMPORT"});
+        finalize();
+        return;
+    }
+
+    if (!shelf || !path) {
+        showNotification({message: "Please, specify all import parameters."});
+        return;
+    }
+
+    let shelf_node = await backend.queryShelf(shelf);
+    if (isSpecialShelf(shelf) || shelf_node) {
+        showNotification({message: "The specified shelf already exists."});
+        return;
+    }
+
+    importing = true;
+    $("#start-rdf-import").val("Cancel");
+    $("#rdf-shelf-name").prop('disabled', true);
+    $("#rdf-import-path").prop('disabled', true);
+    $("#rdf-import-threads").prop('disabled', true);
+
+    let progress_row = $("#rdf-progress-row");
+
+    progress_row.text("initializing bookmark directory structure...");
+    //$("#rdf-import-progress").val(0);
+    //$("#rdf-progress-row").show();
+
+    let importListener = message => {
+        if (message.type === "RDF_IMPORT_PROGRESS") {
+            let bar = $("#rdf-import-progress");
+            if (!bar.length) {
+                bar = $(`<progress id="rdf-import-progress" max="100" value="0"/>`);
+                progress_row.empty().append(bar);
+            }
+            bar.val(message.progress);
+        }
+        else if (message.type === "RDF_IMPORT_ERROR") {
+            let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}"
+                                       class="invalid-import">${message.bookmark.name}</a>`;
+            $("#invalid-imports-container").show();
+            $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
+        }
+        else if (message.type === "OBTAINING_ICONS") {
+            progress_row.text("Obtaining page icons...");
+        }
+    };
+
+    browser.runtime.onMessage.addListener(importListener);
+
+    browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
+        threads: $("#rdf-import-threads").val(),
+        quick: $("#rdf-import-quick").is(':checked')})
+        .then(finalize)
+        .catch(e => {
+            showNotification({message: e.message});
+            finalize();
+        });
+}
+
+
+// Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let link_scope_elt = $("#link-scope");
+let abort_check_links = false;
+
+function initLinkChecker() {
+    $("#start-check-links").on("click", startCheckLinks);
+    $("#invalid-links-container").on("click", ".invalid-link", selectNode);
+
+    link_scope_elt.html(`
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
-            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
-            }</option>
+        settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+    }</option>
         `);
 
-        backend.listShelves().then(shelves => {
-            shelves.sort((a, b) => {
-                if (a.name < b.name)
-                    return -1;
-                if (a.name > b.name)
-                    return 1;
+    backend.listShelves().then(shelves => {
+        shelves.sort((a, b) => {
+            if (a.name < b.name)
+                return -1;
+            if (a.name > b.name)
+                return 1;
 
-                return 0;
-            });
-
-            let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
-            shelves.splice(shelves.indexOf(default_shelf), 1);
-
-            let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
-            shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
-
-            shelves = [default_shelf, ...shelves];
-
-            for (let shelf of shelves) {
-                let name =
-                    isSpecialShelf(shelf.name)
-                        ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
-                        : shelf.name;
-                $("<option></option>").appendTo(link_scope_elt).html(name).attr("value", shelf.id);
-            }
+            return 0;
         });
-    }
 
-    function stopCheckLinks() {
-        $("#start-check-links").val("Check");
-        $("#current-link-title").text("");
-        $("#current-link-url").text("");
-        $("#current-link").css("visibility", "hidden");
-        abort_check_links = false;
+        let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+        shelves.splice(shelves.indexOf(default_shelf), 1);
 
-        if ($("#update-icons").is(":checked")) {
-            setTimeout(() => browser.runtime.sendMessage({type: "NODES_UPDATED"}), 500);
+        let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+        shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
+
+        shelves = [default_shelf, ...shelves];
+
+        for (let shelf of shelves) {
+            let name =
+                isSpecialShelf(shelf.name)
+                    ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
+                    : shelf.name;
+            $("<option></option>").appendTo(link_scope_elt).html(name).attr("value", shelf.id);
         }
+    });
+}
+
+function stopCheckLinks() {
+    $("#start-check-links").val("Check");
+    $("#current-link-title").text("");
+    $("#current-link-url").text("");
+    $("#current-link").css("visibility", "hidden");
+    abort_check_links = false;
+
+    if ($("#update-icons").is(":checked")) {
+        setTimeout(() => browser.runtime.sendMessage({type: "NODES_UPDATED"}), 500);
     }
+}
 
-    function startCheckLinks() {
-        if ($("#start-check-links").val() === "Check") {
+function startCheckLinks() {
+    if ($("#start-check-links").val() === "Check") {
 
-            $("#start-check-links").val("Stop");
+        $("#start-check-links").val("Stop");
 
-            let update_icons = $("#update-icons").is(":checked");
-            let path;
+        let update_icons = $("#update-icons").is(":checked");
+        let path;
 
-            if (autoStartCheckLinks) {
-                path = autoLinkCheckScope;
-            }
-            else {
-                let scope = $(`#link-scope option[value='${link_scope_elt.val()}']`).text();
-                path = scope === EVERYTHING ? undefined : scope;
-            }
-
-            $("#current-link").css("visibility", "visible");
-            $("#invalid-links-container").hide();
-            $("#invalid-links").html("");
-
-            let checkNodes = function (nodes) {
-                let node = nodes.shift();
-                if (node && !abort_check_links) {
-                    if (node.uri) {
-                        $("#current-link-title").text(node.name);
-                        $("#current-link-url").text(node.uri);
-
-                        let xhr = new XMLHttpRequest();
-                        xhr.open("GET", node.uri);
-                        xhr.timeout = parseInt($("#link-check-timeout").val()) * 1000;
-                        xhr.ontimeout = function () {this._timedout = true};
-                        xhr.onerror = function (e) {console.log(e)};
-                        xhr.onloadend = async function (e) {
-                            if (!this.status || this.status >= 400) {
-                                $("#invalid-links-container").show();
-
-                                let error = this.status
-                                    ? `[HTTP Error: ${this.status}]`
-                                    : (this._timedout? "[Timeout]": "[Unavailable]");
-
-                                let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
-                                $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
-
-                                if (update_icons && !node.stored_icon) {
-                                    node.icon = undefined;
-                                    backend.updateNode(node);
-                                }
-                            }
-                            else if (update_icons) {
-                                let link;
-                                let base = new URL(node.uri).origin;
-                                let type = this.getResponseHeader("Content-Type");
-
-                                if (type && type.toLowerCase().startsWith("text/html")) {
-                                    let doc = parseHtml(this.responseText);
-                                    link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-
-                                    if (link) {
-                                       link = new URL(link.href, base).toString();
-                                    }
-                                }
-
-                                if (link) {
-                                    node.icon = link;
-                                    await backend.updateNode(node);
-                                    await backend.storeIcon(node);
-                                }
-                                else {
-                                    link = base + "/favicon.ico";
-
-                                    fetch(link, {method: "GET"}).then(async response => {
-                                        let type = response.headers.get("content-type") || "image";
-                                        if (response.ok && type.startsWith("image"))
-                                            try {
-                                                const buffer = await response.arrayBuffer();
-                                                node.icon = buffer.byteLength ? link : undefined;
-
-                                                await backend.updateNode(node);
-
-                                                if (node.icon)
-                                                    await backend.storeIcon(node, buffer, type);
-                                            }
-                                            catch (e){
-                                                console.log(e)
-                                            }
-                                        else if (!node.stored_icon) {
-                                            node.icon = undefined;
-                                            await backend.updateNode(node);
-                                        }
-                                    }).catch(() => {
-                                        if (!node.stored_icon) {
-                                            node.icon = undefined;
-                                            backend.updateNode(node);
-                                        }
-                                    });
-                                }
-                            }
-
-                            checkNodes(nodes);
-                        };
-                        xhr.send();
-                    } else
-                        checkNodes(nodes);
-                }
-                else if (abort_check_links)
-                    abort_check_links = false;
-                else
-                    stopCheckLinks();
-            };
-
-            backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]}).then(nodes => {
-                checkNodes(nodes);
-            });
+        if (window.autoStartCheckLinks) {
+            path = window.autoLinkCheckScope;
         }
         else {
-            stopCheckLinks();
-            abort_check_links = true;
+            let scope = $(`#link-scope option[value='${link_scope_elt.val()}']`).text();
+            path = scope === EVERYTHING ? undefined : scope;
         }
-    }
 
-    function selectNode(e) {
-        e.preventDefault();
-        browser.runtime.sendMessage({type: "SELECT_NODE", node: {id: parseInt(e.target.getAttribute("data-id"))}});
-    }
+        $("#current-link").css("visibility", "visible");
+        $("#invalid-links-container").hide();
+        $("#invalid-links").html("");
 
-};
+        let checkNodes = function (nodes) {
+            let node = nodes.shift();
+            if (node && !abort_check_links) {
+                if (node.uri) {
+                    $("#current-link-title").text(node.name);
+                    $("#current-link-url").text(node.uri);
+
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("GET", node.uri);
+                    xhr.timeout = parseInt($("#link-check-timeout").val()) * 1000;
+                    xhr.ontimeout = function () {this._timedout = true};
+                    xhr.onerror = function (e) {console.log(e)};
+                    xhr.onloadend = async function (e) {
+                        if (!this.status || this.status >= 400) {
+                            $("#invalid-links-container").show();
+
+                            let error = this.status
+                                ? `[HTTP Error: ${this.status}]`
+                                : (this._timedout? "[Timeout]": "[Unavailable]");
+
+                            let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
+                            $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
+
+                            if (update_icons && !node.stored_icon) {
+                                node.icon = undefined;
+                                backend.updateNode(node);
+                            }
+                        }
+                        else if (update_icons) {
+                            let link;
+                            let base = new URL(node.uri).origin;
+                            let type = this.getResponseHeader("Content-Type");
+
+                            if (type && type.toLowerCase().startsWith("text/html")) {
+                                let doc = parseHtml(this.responseText);
+                                link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+
+                                if (link) {
+                                    link = new URL(link.href, base).toString();
+                                }
+                            }
+
+                            if (link) {
+                                node.icon = link;
+                                await backend.updateNode(node);
+                                await backend.storeIcon(node);
+                            }
+                            else {
+                                link = base + "/favicon.ico";
+
+                                fetch(link, {method: "GET"}).then(async response => {
+                                    let type = response.headers.get("content-type") || "image";
+                                    if (response.ok && type.startsWith("image"))
+                                        try {
+                                            const buffer = await response.arrayBuffer();
+                                            node.icon = buffer.byteLength ? link : undefined;
+
+                                            await backend.updateNode(node);
+
+                                            if (node.icon)
+                                                await backend.storeIcon(node, buffer, type);
+                                        }
+                                        catch (e){
+                                            console.log(e)
+                                        }
+                                    else if (!node.stored_icon) {
+                                        node.icon = undefined;
+                                        await backend.updateNode(node);
+                                    }
+                                }).catch(() => {
+                                    if (!node.stored_icon) {
+                                        node.icon = undefined;
+                                        backend.updateNode(node);
+                                    }
+                                });
+                            }
+                        }
+
+                        checkNodes(nodes);
+                    };
+                    xhr.send();
+                } else
+                    checkNodes(nodes);
+            }
+            else if (abort_check_links)
+                abort_check_links = false;
+            else
+                stopCheckLinks();
+        };
+
+        backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]}).then(nodes => {
+            checkNodes(nodes);
+        });
+    }
+    else {
+        stopCheckLinks();
+        abort_check_links = true;
+    }
+}
