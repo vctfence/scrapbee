@@ -304,7 +304,7 @@ export class CloudBackend {
 
         return this.withCloudDB(async db => {
             if (dest.external === CLOUD_EXTERNAL_NAME) {
-                await Promise.all(cloud_nodes.map(n => db.moveNode(n, dest)));
+                await Promise.all(cloud_nodes.map(n => db.moveNode(n, dest, this.newCloudRootNode())));
 
                 return Promise.all(other_nodes.map(n => {
                     if (isContainer(n)) {
@@ -398,12 +398,13 @@ export class CloudBackend {
 
         nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-        if (nodes.length)
+        if (nodes.length) {
             return this.withCloudDB(async db => {
                 for (let n of nodes) {
                     await db.updateNode({uuid: n.uuid, pos: n.pos}, true);
                 }
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
+        }
     }
 
     // should only be called in the background script through message

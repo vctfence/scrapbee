@@ -430,15 +430,6 @@ class IDBStorage {
         return dexie.index.where("node_id").equals(node_id).first();
     }
 
-    addNotesNode(parent_id, name) {
-        return this.addNode({
-            parent_id: parent_id,
-            name: name,
-            has_notes: true,
-            type: NODE_TYPE_NOTES
-        });
-    }
-
     async storeNotesLowLevel(node_id, notes, format) {
         let node = await this.getNode(node_id);
         let exists = await dexie.notes.where("node_id").equals(node_id).count();

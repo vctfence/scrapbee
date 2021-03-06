@@ -663,7 +663,7 @@ class BookmarkTree {
             newNotesItem: {
                 label: "New Notes",
                 action: () => {
-                    backend.addNotesNode(ctx_node_data.id, "New Notes").then(notes => {
+                    backend.addNotes(ctx_node_data.id, "New Notes").then(notes => {
                         BookmarkTree.toJsTreeNode(notes);
                         this.data.push(notes);
                         tree.deselect_all(true);
@@ -674,10 +674,12 @@ class BookmarkTree {
                         BookmarkTree.reorderNodes(tree, ctx_node);
 
                         tree.edit(notes_node, null, (node, success, cancelled) => {
-                            if (success && !cancelled)
-                                backend.updateNode({id: notes.id, name: node.text}).then(() => {
+                            if (success && !cancelled) {
+                                notes.name = node.text;
+                                backend.updateBookmark(notes).then(() => {
                                     notes_node.original.name = node.text;
                                 });
+                            }
                         });
                     });
                 }
@@ -1034,7 +1036,7 @@ class BookmarkTree {
                 delete items.shareItem;
                 if (ctx_node_data.type === NODE_TYPE_GROUP)
                     delete items.rdfPathItem;
-                if (ctx_node.original.external)
+                if (ctx_node.original.external && ctx_node.original.external !== CLOUD_EXTERNAL_NAME)
                     delete items.newNotesItem;
                 if (ctx_node.original.special_browser_folder) {
                     delete items.cutItem;

@@ -75,8 +75,11 @@ export class DropboxBackend {
                 storage = JSONStorage.fromJSON(await readBlob(blob));
             }
             catch (e) {
-                if (e.status === 409 && e.statusText.startsWith("path/not_found"))
-                    storage = new JSONStorage({cloud: "Scrapyard"});
+                if (e.status === 409) {
+                    const response = JSON.parse(await e.response.text());
+                    if (response.error_summary.startsWith("path/not_found"))
+                        storage = new JSONStorage({cloud: "Scrapyard"});
+                    }
                 else
                     console.log(e);
             }

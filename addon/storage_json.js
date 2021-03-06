@@ -33,6 +33,9 @@ export class JSONStorage {
         node = Object.assign({}, node);
 
         for (let key of Object.keys(node)) {
+            if (node[key] === 0 && NODE_PROPERTIES.some(k => k === key))
+                continue;
+
             if (!node[key] || !NODE_PROPERTIES.some(k => k === key))
                 delete node[key];
         }
@@ -131,9 +134,12 @@ export class JSONStorage {
         }
     }
 
-    async moveNode(node, dest) {
+    async moveNode(node, dest, root) {
         let existing = this.objects.find(n => n.uuid === node.uuid);
-        let cloud_dest = this.objects.find(n => n.uuid === dest.uuid);
+        let cloud_dest = root;
+
+        if (!root || dest.id !== root.id)
+             cloud_dest = this.objects.find(n => n.uuid === dest.uuid);
 
         existing.pos = node.pos;
         existing.parent_id = cloud_dest.id;

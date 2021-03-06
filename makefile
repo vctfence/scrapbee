@@ -1,10 +1,10 @@
-SHELL=cmd
+# uses git shell
 
 test:
-	cd addon & start web-ext run -p "$(HOME)/../firefox/debug.scrapyard" --keep-profile-changes --browser-console
+	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard" --keep-profile-changes
 
 build:
-	cd addon & web-ext build -i creds web-ext-artifacts .web-extension-id screen.png logo.jpg *.md *.iml updates.json
+	cd addon; web-ext build -i creds web-ext-artifacts .web-extension-id screen.png logo.jpg *.md *.iml updates.json
 
 sign:
-	cd addon & web-ext sign -i creds web-ext-artifacts .web-extension-id screen.png logo.jpg *.md *.iml updates.json `cat $(HOME)/.amo/creds`
+	cd addon; web-ext sign -i creds web-ext-artifacts .web-extension-id screen.png logo.jpg *.md *.iml updates.json `cat $(HOME)/.amo/creds`

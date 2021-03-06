@@ -11,7 +11,7 @@ import {
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
     SPECIAL_UUIDS, TODO_NAME,
     isContainer,
-    isEndpoint
+    isEndpoint, NODE_TYPE_NOTES
 } from "./storage_constants.js";
 
 export class Backend {
@@ -564,6 +564,21 @@ export class Backend {
         await this.storeBlobLowLevel(node_id, data, content_type);
 
         await this.storeExternalData(node_id, data, content_type)
+    }
+
+    async addNotes(parent_id, name) {
+        let node = await this.addNode({
+            parent_id: parent_id,
+            name: name,
+            has_notes: true,
+            type: NODE_TYPE_NOTES
+        });
+
+        let group = await this.getNode(parent_id);
+
+        await this.createExternalBookmark(group, node);
+
+        return node;
     }
 
     async storeNotes(node_id, notes, format) {
