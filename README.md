@@ -8,7 +8,7 @@ This is a development page. Please visit the main site at: https://gchristensen.
 
 Since the departure of Scrapbook I have converted all my Scrapbook stuff into an org-mode
 based wiki, but it was very painful to add bookmarks there. Because I needed a bookmark
-manager with some org-mode goodness which I would be able to control from UbiquityWE,
+manager with some org-mode goodness which I would be able to control from [iShell](https://gchristensen.github.io/ishell/),
 I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch
 to obtain the desired features.
 
@@ -40,7 +40,7 @@ groundbreaking experiments. Please, backup your Firefox profile often.
 * ~~Rework archive page editing tools to accomodate new storage method~~ [DONE]
 * ~~Store indexed content of downloaded html documents in the database~~ [DONE]
 * ~~Add search text input on toolbar; search by tags, title, content and in Firefox bookmarks~~ [DONE]
-* ~~Control from~~ [UbiqiutyWE](https://gchristensen.github.io/ubiquitywe/) [DONE]
+* ~~Control from~~ [iShell](https://gchristensen.github.io/ishell/) [DONE]
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
 * ~~Import from Firefox/Chrome .html~~
