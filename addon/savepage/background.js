@@ -689,7 +689,7 @@ function addListeners()
                         if (!message.payload.__local_import) {
                             chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
                             browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
-                            alertNotify("Successfully archived page.");
+                            //alertNotify("Successfully archived page.");
                         }
 
                         backend.storeIndex(message.payload.id, message.data.indexWords());
@@ -1134,7 +1134,7 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
 
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
 
-                        alertNotify("Successfully archived page.");
+                        //alertNotify("Successfully archived page.");
                     }
                 };
 
