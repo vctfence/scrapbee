@@ -45,7 +45,9 @@ function loadXml(rdf){
     if(!searching)
 	return;
     var search_title, search_body, search_comment;
+    var sources = [];
     $("input[type=checkbox][name=source]:checked").each(function(){
+        sources.push(this.value);
         if(this.value == 'title'){
             search_title = true;
         }else if(this.value == 'body'){
@@ -54,6 +56,9 @@ function loadXml(rdf){
             search_comment = true;
         }
     });
+
+    settings.set("searching_source", sources.join(","), true);
+    
     if(!(search_title || search_body || search_comment))
         return;
     $("#btnSearch").prop("disabled", true);
@@ -193,6 +198,12 @@ async function processTree(tree, search_title, search_body, search_comment){
 }
 $(document).ready(async function(){
     await settings.loadFromStorage();
+    var sources = (settings.searching_source || "").split(",");
+    $("input[type=checkbox][name=source]").each(function(){
+        if(sources.indexOf(this.value) > -1){
+            this.setAttribute("checked", "true");
+        }
+    });
     document.title = document.title.fillData(function(s){
 	return browser.i18n.getMessage(s)  || s;
     });    
