@@ -943,63 +943,47 @@ function addListeners()
 
     /* External message listener */
 
-    browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+    browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":
-                sendResponse(browser.runtime.getManifest().version);
+                return browser.runtime.getManifest().version;
                 break;
 
             case "SCRAPYARD_LIST_SHELVES":
-                sendResponse(backend.listNodes({
-                    types: [NODE_TYPE_SHELF]
-                }).then(nodes => {
-                    return nodes.map(n => ({name: n.name}))
-                }));
-                break;
+                let shelves = await backend.listShelves();
+                return shelves.map(n => ({name: n.name}));
 
             case "SCRAPYARD_LIST_GROUPS":
-                sendResponse(backend.listNodes({
-                    types: [NODE_TYPE_SHELF, NODE_TYPE_GROUP]
-                }).then(nodes => {
-                    nodes.forEach(n => computePath(n, nodes));
-                    return nodes.map(n => ({name: n.name, path: n.path}))
-                }));
-                break;
+                let groups = await backend.listGroups();
+                groups.forEach(n => computePath(n, groups));
+                return groups.map(n => ({name: n.name, path: n.path}));
 
             case "SCRAPYARD_LIST_TAGS":
-                sendResponse(backend.queryTags().then(tags => {
-                    return tags.map(t => ({name: t.name.toLocaleLowerCase()}))
-                }));
-                break;
+                let tags = await backend.queryTags();
+                return tags.map(t => ({name: t.name.toLocaleLowerCase()}));
 
             case "SCRAPYARD_LIST_NODES":
                 delete message.type;
 
-                if (message.types === "firefox") {
-                    //sendResponse(new FirefoxSearchProvider().search(message.search));
-                }
-                else {
-                    let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);
+                let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);
 
-                    if (message.types) {
-                        message.types = message.types.concat([NODE_TYPE_SHELF]);
-                    }
+                if (message.types)
+                    message.types = message.types.concat([NODE_TYPE_SHELF]);
 
-                    message.path = backend.expandPath(message.path);
+                message.path = backend.expandPath(message.path);
 
-                    sendResponse(backend.listNodes(message).then(nodes => {
-                        for (let node of nodes) {
-                            if (node.type === NODE_TYPE_GROUP) {
-                                computePath(node, nodes);
-                            }
+                sendResponse(backend.listNodes(message).then(nodes => {
+                    for (let node of nodes) {
+                        if (node.type === NODE_TYPE_GROUP) {
+                            computePath(node, nodes);
                         }
-                        if (no_shelves)
-                            return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
-                        else
-                            return nodes;
-                    }));
-                }
+                    }
+                    if (no_shelves)
+                        return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
+                    else
+                        return nodes;
+                }));
                 break;
 
             case "SCRAPYARD_ADD_BOOKMARK":
