@@ -954,29 +954,38 @@ class BookmarkTree {
             propertiesItem: {
                 separator_before: true,
                 label: "Properties...",
-                action: function () {
+                action: async function () {
                     if (isEndpoint(ctx_node.original)) {
-                        showDlg("properties", ctx_node_data).then(data => {
 
-                            if (!data.icon) {
-                                data.icon = null;
-                                data.stored_icon = false;
+                        let properties = await backend.getNode(ctx_node_data.id);
+
+                        properties.comments = await backend.fetchComments(properties.id);
+
+                        showDlg("properties", properties).then(async properties => {
+
+                            if (!properties.icon) {
+                                properties.icon = null;
+                                properties.stored_icon = false;
                             }
 
+                            properties.has_comments = !!properties.comments;
+                            await backend.storeComments(ctx_node_data.id, properties.comments);
+                            delete properties.comments;
+
                             let live_data = all_nodes.find(n => n.id == ctx_node_data.id);
-                            Object.assign(live_data, data);
+                            Object.assign(live_data, properties);
 
-                            backend.updateBookmark(Object.assign(ctx_node_data, data)).then(() => {
-                                if (!ctx_node_data._extended_todo) {
-                                    tree.rename_node(ctx_node, ctx_node_data.name);
-                                }
-                                else {
-                                    tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
-                                }
-                                tree.redraw_node(ctx_node, true, false, true);
+                            await backend.updateBookmark(Object.assign(ctx_node_data, properties));
 
-                                $("#" + live_data.id).prop('title', `${live_data.name}\x0A${live_data.uri}`);
-                            });
+                            if (!ctx_node_data._extended_todo) {
+                                tree.rename_node(ctx_node, ctx_node_data.name);
+                            }
+                            else {
+                                tree.rename_node(ctx_node, BookmarkTree._formatTODO(ctx_node_data));
+                            }
+                            tree.redraw_node(ctx_node, true, false, true);
+
+                            $("#" + live_data.id).prop('title', `${live_data.name}\x0A${live_data.uri}`);
                         });
                     }
                 }

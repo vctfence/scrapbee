@@ -61,24 +61,25 @@ export const DEFAULT_POSITION = 2147483647;
 
 export const NODE_PROPERTIES =
     ["id",
-        "pos",
-        "uri",
-        "name",
-        "type",
-        "uuid",
-        "icon",
-        "tags",
-        "tag_list",
-        "details",
-        "parent_id",
-        "todo_date",
-        "todo_state",
-        "date_added",
-        "date_modified",
-        "stored_icon",
-        "has_notes",
-        "external",
-        "external_id"
+     "pos",
+     "uri",
+     "name",
+     "type",
+     "uuid",
+     "icon",
+     "tags",
+     "tag_list",
+     "details",
+     "parent_id",
+     "todo_date",
+     "todo_state",
+     "date_added",
+     "date_modified",
+     "stored_icon",
+     "has_notes",
+     "has_comments",
+     "external",
+     "external_id"
     ];
 
 export function isContainer(node) {

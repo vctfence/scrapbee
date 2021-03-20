@@ -140,6 +140,10 @@ export class DropboxBackend {
             storage.storeIcon = storeAsset("icon");
             storage.fetchIcon = fetchAsset("icon")
             storage.deleteIcon = deleteAsset("icon");
+
+            storage.storeComments = storeAsset("comments");
+            storage.fetchComments = fetchAsset("comments")
+            storage.deleteComments = deleteAsset("comments");
         }
 
         return storage;

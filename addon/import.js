@@ -64,6 +64,9 @@ export async function importOrg(shelf, text) {
             let note_lines = last_object.note_lines;
             delete last_object.note_lines;
 
+            let comments = last_object.comments;
+            delete last_object.comments;
+
             let icon_data = last_object.icon_data;
             delete last_object.icon_data;
 
@@ -89,10 +92,14 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotesLowLevel(node.id, notes, notes_format);
+                await backend.storeNotesLowLevel(node.id, JSON.parse(notes), notes_format);
             }
             else if (note_lines.length) {
                 await backend.storeNotesLowLevel(node.id, note_lines.join("\n"));
+            }
+
+            if (comments) {
+                await backend.storeCommentsLowLevel(node.id, JSON.parse(comments));
             }
 
             if (icon_data) {
@@ -302,16 +309,19 @@ async function objectToProperties(object, compress) {
         }
     }
 
-    let notes = await backend.fetchNotes(node.id);
-    if (notes && notes.content) {
-        let content = compress
-            ? null //LZString.compressToBase64(notes.content)
-            : JSON.stringify(notes.content);
+    if (node.has_notes) {
+        let notes = await backend.fetchNotes(node.id);
+        if (notes && notes.content) {
+            lines.push(`:notes: ${JSON.stringify(notes.content)}`);
 
-        lines.push(`:notes: ${content}`);
+            if (notes.format)
+                lines.push(`:notes_format: ${notes.format}`);
+        }
+    }
 
-        if (notes.format)
-            lines.push(`:notes_format: ${notes.format}`);
+    if (node.has_comments) {
+        let comments = await backend.fetchComments(node.id);
+        lines.push(`:comments: ${JSON.stringify(comments)}`);
     }
 
     let icon = await backend.fetchIcon(node.id);
@@ -475,6 +485,9 @@ async function importJSONObject(object) {
     let notes_format = object.notes_format;
     delete object.notes_format;
 
+    let comments = object.comments;
+    delete object.comments;
+
     let icon_data = object.icon_data;
     delete object.icon_data;
 
@@ -501,6 +514,10 @@ async function importJSONObject(object) {
 
     if (notes) {
         await backend.storeNotesLowLevel(node.id, notes, notes_format);
+    }
+
+    if (comments) {
+        await backend.storeCommentsLowLevel(node.id, comments);
     }
 
     if (icon_data)
@@ -646,14 +663,14 @@ async function objectToJSON(object, shallow, compress) {
             }
         }
 
-        let notes = await backend.fetchNotes(node.id);
-        if (notes && notes.content) {
-            node.notes = compress
-                ? null //LZString.compressToBase64(notes.content)
-                : notes.content;
-
+        if (node.has_notes) {
+            let notes = await backend.fetchNotes(node.id);
+            node.notes = notes.content;
             node.notes_format = notes.format;
         }
+
+        if (node.has_comments)
+            node.comments = await backend.fetchComments(node.id);
 
         let icon = await backend.fetchIcon(node.id);
         if (icon) {

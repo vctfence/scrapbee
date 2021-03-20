@@ -25,14 +25,14 @@ dexie.version(1).stores({
     blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
     notes: `++id,&node_id`,
-    tags: `++id,name`,
+    tags: `++id,name`
 });
 dexie.version(2).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
     blobs: `++id,&node_id,size`,
     index: `++id,&node_id,*words`,
     notes: `++id,&node_id`,
-    tags: `++id,name`,
+    tags: `++id,name`
 });
 dexie.version(3).stores({
     nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
@@ -40,7 +40,16 @@ dexie.version(3).stores({
     index: `++id,&node_id,*words`,
     notes: `++id,&node_id`,
     tags: `++id,name`,
+    icons: `++id,&node_id`
+});
+dexie.version(4).stores({
+    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
+    blobs: `++id,&node_id,size`,
+    index: `++id,&node_id,*words`,
+    notes: `++id,&node_id`,
+    tags: `++id,name`,
     icons: `++id,&node_id`,
+    comments: `++id,&node_id`
 });
 
 dexie.on('populate', () => {
@@ -300,6 +309,9 @@ class IDBStorage {
         if (dexie.tables.some(t => t.name === "icons"))
             await dexie.icons.where("node_id").anyOf(ids).delete();
 
+        if (dexie.tables.some(t => t.name === "comments"))
+            await dexie.comments.where("node_id").anyOf(ids).delete();
+
         return dexie.nodes.bulkDelete(ids);
     }
 
@@ -318,6 +330,9 @@ class IDBStorage {
 
         if (dexie.tables.some(t => t.name === "icons"))
             await dexie.icons.clear();
+
+        if (dexie.tables.some(t => t.name === "comments"))
+            await dexie.comments.clear();
 
 
         let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
@@ -460,6 +475,38 @@ class IDBStorage {
         }
 
         return dexie.notes.where("node_id").equals(node_id).first();
+    }
+
+    async storeCommentsLowLevel(node_id, comments) {
+        let node = await this.getNode(node_id);
+        let exists = await dexie.comments.where("node_id").equals(node_id).count();
+
+        if (exists) {
+            await dexie.comments.where("node_id").equals(node_id).modify({
+                comments: comments
+            });
+        }
+        else {
+            await dexie.comments.add({
+                node_id: node_id,
+                comments: comments
+            });
+        }
+
+        node.has_comments = !!comments;
+        return this.updateNode(node);
+    }
+
+    async fetchComments(node_id, is_uuid = false) {
+        if (is_uuid) {
+            let node = await dexie.nodes.where("uuid").equals(node_id).first();
+            if (node)
+                node_id = node.id;
+        }
+
+        let record = await dexie.comments.where("node_id").equals(node_id).first();
+
+        return record?.comments;
     }
 
     async addTags(tags) {

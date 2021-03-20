@@ -2,7 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isElementInViewport} from "./utils.js"
+import {isElementInViewport, isExtensionLocal} from "./utils.js"
 
 import {
     SEARCH_MODE_TITLE,
@@ -710,7 +710,8 @@ function styleBuiltinShelf() {
 }
 
 function invalidateCompletion() {
-    browser.runtime.sendMessage("ubiquitywe@firefox", {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
+    let id_suffix = isExtensionLocal()? "": "-we";
+    browser.runtime.sendMessage(`ishell${id_suffix}@gchristensen.github.io`, {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
 }
 
 

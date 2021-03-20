@@ -64,8 +64,14 @@
             <div class="dlg-cover dlg-properties" style="display:none;">
                 <div class="dlg">
                     <div class="dlg-box">
-                        <div class="dlg-title">{Properties}</div>
+                        <div class="dlg-title">
+                            <span id="prop-dlg-title-text">Properties</span>
+                            <img id="prop-dlg-comments-icon" src="icons/page-blank.svg" title="Comments"/>
+                        </div>
                         <div class="dlg-prop-table" style="overflow: hidden; margin-top: 4px;">
+                            <div id="dlg-comments-container">
+                                <textarea id="prop-comments" name="comments"></textarea>
+                            </div>
                             <div class="prop-row">
                                 <label for="prop-name" class="cell">{Name}: </label>
                                 <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
@@ -105,12 +111,12 @@
                                 <input id="prop-added" type="" name="date_added" value="" style="width:100%"
                                        readonly="true"/>
                             </div>
-                            <div class="prop-row">
-                                <a id="more-properties" href="#">More</a>
-                                <div class="cell" style="float:right; margin-top: 10px">
-                                    <input type="button" class="button-ok" value="{DLG_OK}"/>
-                                    <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
-                                </div>
+                        </div>
+                        <div class="button-row">
+                            <a id="more-properties" href="#">More</a>
+                            <div class="cell" style="float:right; margin-top: 10px">
+                                <input type="button" class="button-ok" value="{DLG_OK}"/>
+                                <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
                             </div>
                         </div>
                     </div>

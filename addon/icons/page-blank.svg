@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="27"
+   version="1.1"
+   viewBox="0 0 19 27"
+   width="19"
+   id="svg1594"
+   sodipodi:docname="page-blank.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
+  <metadata
+     id="metadata1598">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     id="namedview1596"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="14.75"
+     inkscape:cx="14.984758"
+     inkscape:cy="9.0563084"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1594" />
+  <desc
+     id="desc1587" />
+  <defs
+     id="defs1589" />
+  <path
+     d="M 12.5,0 H 2.0027601 C 0.8966662,0 0,0.8983383 0,2.0073299 V 24.99267 C 0,26.101288 0.8909254,27 1.9974219,27 H 17.002578 C 18.105724,27 19,26.101788 19,25.009205 V 7.5 7 L 13,0 Z M 12,1 H 1.9955775 C 1.4457352,1 1,1.4552629 1,1.995457 V 25.004543 C 1,25.554319 1.4547089,26 1.9999602,26 H 17.00004 C 17.552303,26 18,25.555054 18,25.006602 V 8 H 13.997913 C 12.894496,8 12,7.113445 12,5.994081 Z m 1,0.5 V 5.9912152 C 13,6.5483517 13.450651,7 13.996739,7 h 3.703212 z"
+     id="document-text"
+     style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="csssssscccccsssssscssccsscc" />
+</svg>

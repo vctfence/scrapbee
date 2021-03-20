@@ -265,6 +265,7 @@ select{
 .dlg-prop-table {
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .dlg-prop-table label {
@@ -277,6 +278,35 @@ select{
 .prop-row {
     padding: 5px;
     flex: 0 1 auto;
+}
+
+#prop-dlg-comments-icon {
+    display: inline;
+    height: 17px;
+    float: right;
+    cursor: pointer;
+}
+
+#dlg-comments-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 4px;
+    display: none;
+}
+
+#prop-comments {
+    height: 100%;
+    width: 100%;
+    font-family: "Arial", sans-serif;
+    font-size: 11pt;
+}
+
+.button-row {
+    padding: 5px 5px 0;
 }
 
 .prop-row-hidden {

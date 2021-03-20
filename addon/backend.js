@@ -391,6 +391,12 @@ export class Backend {
                         notes = null;
                     }
 
+                    let comments = await this.fetchComments(old_id);
+                    if (comments) {
+                        await this.storeCommentsLowLevel(n.id, comments);
+                        comments = null;
+                    }
+
                     if (n.stored_icon) {
                         let icon = await this.fetchIcon(old_id);
                         if (icon) {
@@ -587,6 +593,12 @@ export class Backend {
         await this.storeExternalNotes(node_id, notes, format);
     }
 
+    async storeComments(node_id, comments) {
+        await this.storeCommentsLowLevel(node_id, comments);
+
+        await this.storeExternalComments(node_id, comments);
+    }
+
     registerExternalBackend(name, backend) {
         this.externalBackends[name] = backend;
     }
@@ -662,6 +674,13 @@ export class Backend {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.storeBookmarkNotes)
                 await backend.storeBookmarkNotes(node_id, notes, format);
+        }
+    }
+
+    async storeExternalComments(node_id, comments) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.storeBookmarkComments)
+                await backend.storeBookmarkComments(node_id, comments);
         }
     }
 }

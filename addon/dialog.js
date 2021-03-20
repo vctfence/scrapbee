@@ -1,4 +1,5 @@
 import {showNotification} from "./utils.js";
+import {CLOUD_EXTERNAL_NAME} from "./storage_constants.js";
 
 function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
@@ -11,20 +12,58 @@ function showDlg(name, data, callback) {
     }));
     $dlg.find("input").each(function () {
         if (this.name) {
-            if (this.type == "radio") {
+            if (this.type === "radio") {
                 if (this.value == data[this.name])
                     this.checked = true;
             } else {
-                if (typeof data[this.name] != "undefined" && !(this.name === "icon" && data["icon"].startsWith("var(")))
+                if (typeof data[this.name] != "undefined" && !(this.name === "icon" && data["icon"]?.startsWith("var(")))
                     this.value = data[this.name];
             }
         }
     });
+    $dlg.find("textarea").each(function () {
+        if (typeof data[this.name] != "undefined")
+            this.value = data[this.name];
+    });
     $dlg.find("input.button-ok").unbind(".dlg");
     $dlg.find("input.button-cancel").unbind(".dlg");
-    $dlg.find("input.dialog-input").first().focus();
+    //$dlg.find("input.dialog-input").first().focus();
 
-    $(".more-properties").hide();
+    $(".more-properties", $dlg).hide();
+
+
+    let comments_icon = $dlg.find("#prop-dlg-comments-icon").first();
+    if (comments_icon.length) {
+        let comments_container = $dlg.find(" #dlg-comments-container").first();
+        let dlg_title = $dlg.find(" #prop-dlg-title-text").first();
+
+        if (!data.external || data.external === CLOUD_EXTERNAL_NAME) {
+            if (data.comments) {
+                comments_icon.attr("src", "icons/page.svg");
+            }
+            else
+                comments_icon.attr("src", "icons/page-blank.svg");
+
+            let old_icon = comments_icon.attr("src");
+
+            comments_icon.click(e => {
+                comments_container.toggle();
+                if (comments_container.is(":visible")) {
+                    comments_icon.attr("src", "icons/properties.svg");
+                    comments_icon.attr("title", "Properties");
+                    dlg_title.text("Comments");
+                }
+                else {
+                    comments_icon.attr("src", old_icon);
+                    comments_icon.attr("title", "Comments");
+                    dlg_title.text("Properties");
+                }
+            });
+        }
+        else {
+            comments_icon.hide();
+        }
+    }
 
     /** return promise object */
     let p = new Promise(function (resolve, reject) {
@@ -39,6 +78,10 @@ function showDlg(name, data, callback) {
                         data[this.name] = $(this).val();
                     }
                 }
+            })
+            $dlg.find("textarea").each(function () {
+                if (this.name)
+                    data[this.name] = $(this).val();
             })
             $dlg.remove();
             resolve(data);

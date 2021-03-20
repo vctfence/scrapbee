@@ -84,6 +84,9 @@ export class CloudBackend {
         if (node.has_notes)
             await db.deleteNotes(node);
 
+        if (node.has_comments)
+            await db.deleteComments(node);
+
         if (node.type === NODE_TYPE_ARCHIVE)
             await db.deleteData(node);
 
@@ -150,6 +153,12 @@ export class CloudBackend {
                         await this._storeNotesInternal(db, bookmark, notes.content, notes.format);
                 }
 
+                if (node.has_comments) {
+                    let comments = await backend.fetchComments(node.id);
+                    if (comments)
+                        await this._storeCommentsInternal(db, bookmark, comments);
+                }
+
                 if (node.type === NODE_TYPE_ARCHIVE) {
                     let blob = await backend.fetchBlob(node.id);
                     if (blob) {
@@ -180,6 +189,14 @@ export class CloudBackend {
         return db.storeNotes(cloud_node, notes);
     }
 
+    async _storeCommentsInternal(db, node, comments) {
+        let cloud_node = await db.getNode(node.uuid, true);
+        cloud_node.has_comments = !!comments;
+        cloud_node = await db.updateNode(cloud_node);
+
+        return db.storeComments(cloud_node, comments);
+    }
+
     async storeBookmarkNotes(node_id, notes, format) {
         if (!settings.cloud_enabled())
             return;
@@ -192,8 +209,24 @@ export class CloudBackend {
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }
 
+    async storeBookmarkComments(node_id, comments) {
+        if (!settings.cloud_enabled())
+            return;
+
+        let node = await backend.getNode(node_id);
+
+        if (node.external === CLOUD_EXTERNAL_NAME)
+            await this.withCloudDB(async db => {
+                return this._storeCommentsInternal(db, node, comments);
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+    }
+
     async fetchCloudNotes(node) {
         return (await this._provider.getDB(true)).fetchNotes(node);
+    }
+
+    async fetchCloudComments(node) {
+        return (await this._provider.getDB(true)).fetchComments(node);
     }
 
     _fixUTF8Encoding(html) {
@@ -414,6 +447,7 @@ export class CloudBackend {
         let db_pool = new Map();
         let download_icons = [];
         let download_notes = [];
+        let download_comments = [];
         let download_data = [];
 
         let reconcile = async (d, c) => { // node, cloud bookmark
@@ -440,6 +474,9 @@ export class CloudBackend {
                             if (cc.type === NODE_TYPE_NOTES || cc.has_notes)
                                 download_notes.push(node);
 
+                            if (cc.has_comments)
+                                download_comments.push(node);
+
                             if (!node.icon || node.icon && node.stored_icon)
                                 download_icons.push(node);
 
@@ -461,6 +498,9 @@ export class CloudBackend {
                         node.notes_format = cc.notes_format;
                         download_notes.push(node);
                     }
+
+                    if (cc.has_comments)
+                        download_comments.push(node);
 
                     if (cc.type === NODE_TYPE_ARCHIVE) {
                         node.content_type = cc.content_type;
@@ -514,6 +554,12 @@ export class CloudBackend {
                     let notes = await this.fetchCloudNotes(notes_node);
                     if (notes)
                         await backend.storeNotesLowLevel(notes_node.id, notes, notes_node.notes_format);
+                }
+
+                for (let comments_node of download_comments) {
+                    let comments = await this.fetchCloudComments(comments_node);
+                    if (comments)
+                        await backend.storeCommentsLowLevel(comments_node.id, comments);
                 }
 
                 for (let archive of download_data) {

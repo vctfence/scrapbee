@@ -62,7 +62,6 @@ export function escapeHtml (string) {
     });
 }
 
-
 export function parseHtml(htmlText) {
     let doc = document.implementation.createHTMLDocument("");
     let doc_elt = doc.documentElement;
@@ -85,6 +84,15 @@ export function isSpecialPage(url)
         || url.substr(0,12) === "view-source:" || url.substr(0,14) === "moz-extension:"
         || url.substr(0,26) === "https://addons.mozilla.org" || url.substr(0,17) === "chrome-extension:"
         || url.substr(0,34) === "https://chrome.google.com/webstore");
+}
+
+export function isExtensionLocal() {
+    let id = browser.runtime.getManifest().applications?.gecko?.id;
+
+    if (id)
+        return !id.includes("-we");
+
+    return false;
 }
 
 export function notifySpecialPage() {
