@@ -973,18 +973,17 @@ function addListeners()
 
                 message.path = backend.expandPath(message.path);
 
-                sendResponse(backend.listNodes(message).then(nodes => {
-                    for (let node of nodes) {
-                        if (node.type === NODE_TYPE_GROUP) {
-                            computePath(node, nodes);
-                        }
+                let nodes = await backend.listNodes(message);
+
+                for (let node of nodes) {
+                    if (node.type === NODE_TYPE_GROUP) {
+                        computePath(node, nodes);
                     }
-                    if (no_shelves)
-                        return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
-                    else
-                        return nodes;
-                }));
-                break;
+                }
+                if (no_shelves)
+                    return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
+                else
+                    return nodes;
 
             case "SCRAPYARD_ADD_BOOKMARK":
                 if (isSpecialPage(message.uri)) {

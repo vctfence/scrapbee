@@ -86,15 +86,6 @@ export function isSpecialPage(url)
         || url.substr(0,34) === "https://chrome.google.com/webstore");
 }
 
-export function isExtensionLocal() {
-    let id = browser.runtime.getManifest().applications?.gecko?.id;
-
-    if (id)
-        return !id.includes("-we");
-
-    return false;
-}
-
 export function notifySpecialPage() {
     showNotification("Scrapyard cannot be used with special pages:\n" +
         "about:, moz-extension:,\n" +

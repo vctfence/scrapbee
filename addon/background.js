@@ -23,6 +23,8 @@ import {
     RDF_EXTERNAL_NAME
 } from "./storage_constants.js";
 
+import {iShellEnableInvalidation, iShellInvalidateCompletion} from "./integration.js";
+
 
 export async function browseNode(node, external_tab, preserve_history) {
 
@@ -167,7 +169,11 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                             "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)})
                 [message.file_ext.toUpperCase()];
 
-            return backend.importTransaction(importf);
+            iShellEnableInvalidation(false);
+            return backend.importTransaction(importf).finally(() => {
+                    iShellEnableInvalidation(true);
+                    iShellInvalidateCompletion();
+                });
 
         case "EXPORT_FILE":
             shelf = isSpecialShelf(message.shelf) ? message.shelf.toLocaleLowerCase() : message.shelf;

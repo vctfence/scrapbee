@@ -2,7 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isElementInViewport, isExtensionLocal} from "./utils.js"
+import {isElementInViewport} from "./utils.js"
 
 import {
     SEARCH_MODE_TITLE,
@@ -75,16 +75,7 @@ window.onload = function () {
                     backend.createGroup(null, name, NODE_TYPE_SHELF).then(shelf => {
                         if (shelf) {
                             settings.last_shelf(shelf.id);
-                            // selectedOption.removeAttr("selected");
-                            // $("<option></option>").appendTo(shelf_list)
-                            //     .html(shelf.name)
-                            //     .attr("value", shelf.id)
-                            //     .attr("selected", true);
-                            //
-                            // shelf_list.selectric('refresh');
-                            //switchShelf(context, tree, shelf.id);
                             loadShelves(context, tree);
-                            invalidateCompletion();
                         }
                     });
                 }
@@ -110,7 +101,6 @@ window.onload = function () {
                         tree.renameRoot(newName)
 
                         shelf_list.selectric('refresh');
-                        invalidateCompletion()
                     });
                 }
             });
@@ -139,7 +129,6 @@ window.onload = function () {
                     shelf_list.val(1);
                     shelf_list.selectric('refresh');
                     switchShelf(context, tree, 1);
-                    invalidateCompletion();
                 });
             }
         });
@@ -178,7 +167,6 @@ window.onload = function () {
                     $(`#shelfList option[value="${node_id}"]`).text(node.text);
 
                     shelf_list.selectric('refresh');
-                    invalidateCompletion();
                 });
         });
     };
@@ -191,7 +179,6 @@ window.onload = function () {
             shelf_list.val(DEFAULT_SHELF_ID);
             shelf_list.selectric('refresh');
             switchShelf(context, tree, DEFAULT_SHELF_ID);
-            invalidateCompletion();
         }
     };
 
@@ -320,8 +307,6 @@ window.onload = function () {
                         }
                     });
                 });
-
-            invalidateCompletion();
         }
         if (request.type === "SELECT_NODE") {
             backend.computePath(request.node.id).then(path => {
@@ -635,6 +620,7 @@ function performImport(context, tree, file, file_name, file_ext) {
 
     $("#shelf-menu-button").attr("src", "icons/grid.svg");
 
+
     return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
         .then(() => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
@@ -645,7 +631,6 @@ function performImport(context, tree, file, file_name, file_ext) {
                 loadShelves(context, tree).then(() => {
                     tree.openRoot();
                 });
-                invalidateCompletion();
             }
             else
                 backend.queryShelf(file_name).then(shelf => {
@@ -655,7 +640,6 @@ function performImport(context, tree, file, file_name, file_ext) {
                     loadShelves(context, tree).then(() => {
                         tree.openRoot();
                     });
-                    invalidateCompletion();
                 });
         }).catch(e => {
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
@@ -708,11 +692,5 @@ function styleBuiltinShelf() {
     else
         $("div.selectric span.label").removeClass("option-builtin");
 }
-
-function invalidateCompletion() {
-    let id_suffix = isExtensionLocal()? "": "-we";
-    browser.runtime.sendMessage(`ishell${id_suffix}@gchristensen.github.io`, {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
-}
-
 
 console.log("==> sidebar.js loaded");

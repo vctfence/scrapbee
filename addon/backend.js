@@ -3,6 +3,7 @@ import {rdfBackend} from "./backend_rdf.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {browserBackend} from "./backend_browser.js"
 import {delegateProxy, getMimetypeExt} from "./utils.js";
+import {iShellInvalidateCompletion} from "./integration.js";
 
 import {
     DEFAULT_SHELF_NAME,
@@ -14,10 +15,101 @@ import {
     isEndpoint, NODE_TYPE_NOTES
 } from "./storage_constants.js";
 
-export class Backend {
+class ExternalEventProvider {
+    constructor() {
+        this.externalBackends = {};
+    }
+
+    registerExternalBackend(name, backend) {
+        this.externalBackends[name] = backend;
+    }
+
+    unregisterExternalBackend(name) {
+        delete this.externalBackends[name];
+    }
+
+    async reorderExternalBookmarks(positions) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.reorderBookmarks)
+                await backend.reorderBookmarks(positions)
+        }
+    }
+
+    async createExternalBookmarkFolder(node, parent) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.createBookmarkFolder)
+                await backend.createBookmarkFolder(node, parent)
+        }
+    }
+
+    async createExternalBookmark(parent, node) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.createBookmark)
+                await backend.createBookmark(parent, node)
+        }
+    }
+
+    async renameExternalBookmark(node) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (await backend.renameBookmark)
+                await backend.renameBookmark(node)
+        }
+    }
+
+    async moveExternalBookmarks(nodes, dest_id) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.moveBookmarks)
+                await backend.moveBookmarks(nodes, dest_id)
+        }
+    }
+
+    async copyExternalBookmarks(nodes, dest_id) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.copyBookmarks)
+                await backend.copyBookmarks(nodes, dest_id)
+        }
+    }
+
+    async deleteExternalBookmarks(nodes) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.deleteBookmarks)
+                await backend.deleteBookmarks(nodes)
+        }
+    }
+
+    async updateExternalBookmark(node) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.updateBookmark)
+                await backend.updateBookmark(node)
+        }
+    }
+
+    async storeExternalData(node_id, data, content_type) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.storeBookmarkData)
+                await backend.storeBookmarkData(node_id, data, content_type);
+        }
+    }
+
+    async storeExternalNotes(node_id, notes, format) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.storeBookmarkNotes)
+                await backend.storeBookmarkNotes(node_id, notes, format);
+        }
+    }
+
+    async storeExternalComments(node_id, comments) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.storeBookmarkComments)
+                await backend.storeBookmarkComments(node_id, comments);
+        }
+    }
+}
+
+export class Backend extends ExternalEventProvider {
 
     constructor(storageBackend) {
-        this.externalBackends = {};
+        super();
 
         this.registerExternalBackend("browser", browserBackend);
         this.registerExternalBackend("cloud", cloudBackend);
@@ -261,6 +353,7 @@ export class Backend {
                 name: shelf_name,
                 type: NODE_TYPE_SHELF
             });
+            iShellInvalidateCompletion();
         }
 
         for (let name of path_list) {
@@ -277,6 +370,7 @@ export class Backend {
                 });
 
                 await this.createExternalBookmarkFolder(node, parent);
+                iShellInvalidateCompletion();
 
                 parent = node;
             }
@@ -313,6 +407,8 @@ export class Backend {
 
         let node = await this.getNode(id);
 
+        iShellInvalidateCompletion();
+
         if (parent_id) {
             let parent = await this.getNode(parent_id);
             await this.createExternalBookmarkFolder(node, parent);
@@ -331,6 +427,8 @@ export class Backend {
                 group.name = new_name;
 
             await this.renameExternalBookmark(group);
+
+            iShellInvalidateCompletion();
 
             await this.updateNode(group);
         }
@@ -358,6 +456,10 @@ export class Backend {
         }
 
         await this.updateNodes(nodes);
+
+        if (nodes.some(n => n.type === NODE_TYPE_GROUP))
+            iShellInvalidateCompletion();
+
         return this.queryFullSubtree(ids, false, true);
     }
 
@@ -427,6 +529,9 @@ export class Backend {
 
         await this.copyExternalBookmarks(original_nodes, dest_id);
 
+        if (original_nodes.some(n => n.type === NODE_TYPE_GROUP))
+            iShellInvalidateCompletion();
+
         return new_nodes;
     }
 
@@ -435,13 +540,18 @@ export class Backend {
 
         await this.deleteExternalBookmarks(all_nodes);
 
-        return this.deleteNodesLowLevel(all_nodes.map(n => n.id));
+        await this.deleteNodesLowLevel(all_nodes.map(n => n.id));
+
+        if (all_nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
+            iShellInvalidateCompletion();
     }
 
     async deleteChildNodes(id) {
         let all_nodes = await this.queryFullSubtree(id);
 
-        return this.deleteNodesLowLevel(all_nodes.map(n => n.id).filter(i => i !== id));
+        await this.deleteNodesLowLevel(all_nodes.map(n => n.id).filter(i => i !== id));
+
+        iShellInvalidateCompletion();
     }
 
     async traverse(root, visitor) {
@@ -597,91 +707,6 @@ export class Backend {
         await this.storeCommentsLowLevel(node_id, comments);
 
         await this.storeExternalComments(node_id, comments);
-    }
-
-    registerExternalBackend(name, backend) {
-        this.externalBackends[name] = backend;
-    }
-
-    unregisterExternalBackend(name) {
-        delete this.externalBackends[name];
-    }
-
-    async reorderExternalBookmarks(positions) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.reorderBookmarks)
-                await backend.reorderBookmarks(positions)
-        }
-    }
-
-    async createExternalBookmarkFolder(node, parent) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.createBookmarkFolder)
-                await backend.createBookmarkFolder(node, parent)
-        }
-    }
-
-    async createExternalBookmark(parent, node) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.createBookmark)
-                await backend.createBookmark(parent, node)
-        }
-    }
-
-    async renameExternalBookmark(node) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (await backend.renameBookmark)
-                await backend.renameBookmark(node)
-        }
-    }
-
-    async moveExternalBookmarks(nodes, dest_id) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.moveBookmarks)
-                await backend.moveBookmarks(nodes, dest_id)
-        }
-    }
-
-    async copyExternalBookmarks(nodes, dest_id) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.copyBookmarks)
-                await backend.copyBookmarks(nodes, dest_id)
-        }
-    }
-
-    async deleteExternalBookmarks(nodes) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.deleteBookmarks)
-                await backend.deleteBookmarks(nodes)
-        }
-    }
-
-    async updateExternalBookmark(node) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.updateBookmark)
-                await backend.updateBookmark(node)
-        }
-    }
-
-    async storeExternalData(node_id, data, content_type) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.storeBookmarkData)
-                await backend.storeBookmarkData(node_id, data, content_type);
-        }
-    }
-
-    async storeExternalNotes(node_id, notes, format) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.storeBookmarkNotes)
-                await backend.storeBookmarkNotes(node_id, notes, format);
-        }
-    }
-
-    async storeExternalComments(node_id, comments) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.storeBookmarkComments)
-                await backend.storeBookmarkComments(node_id, comments);
-        }
     }
 }
 
