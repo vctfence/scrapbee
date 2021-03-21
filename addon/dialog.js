@@ -1,6 +1,3 @@
-import {showNotification} from "./utils.js";
-import {CLOUD_EXTERNAL_NAME} from "./storage_constants.js";
-
 function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
         return
@@ -37,33 +34,32 @@ function showDlg(name, data, callback) {
         let comments_container = $dlg.find(" #dlg-comments-container").first();
         let dlg_title = $dlg.find(" #prop-dlg-title-text").first();
 
-        if (!data.external || data.external === CLOUD_EXTERNAL_NAME) {
-            if (data.comments) {
-                comments_icon.attr("src", "icons/page.svg");
+        if (data.comments) {
+            comments_icon.attr("src", "icons/page.svg");
+        }
+        else
+            comments_icon.attr("src", "icons/page-blank.svg");
+
+        let old_icon = comments_icon.attr("src");
+
+        comments_icon.click(e => {
+            comments_container.toggle();
+            if (comments_container.is(":visible")) {
+                comments_icon.attr("src", "icons/properties.svg");
+                comments_icon.attr("title", "Properties");
+                dlg_title.text("Comments");
             }
-            else
-                comments_icon.attr("src", "icons/page-blank.svg");
-
-            let old_icon = comments_icon.attr("src");
-
-            comments_icon.click(e => {
-                comments_container.toggle();
-                if (comments_container.is(":visible")) {
-                    comments_icon.attr("src", "icons/properties.svg");
-                    comments_icon.attr("title", "Properties");
-                    dlg_title.text("Comments");
-                }
-                else {
-                    comments_icon.attr("src", old_icon);
-                    comments_icon.attr("title", "Comments");
-                    dlg_title.text("Properties");
-                }
-            });
-        }
-        else {
-            comments_icon.hide();
-        }
+            else {
+                comments_icon.attr("src", old_icon);
+                comments_icon.attr("title", "Comments");
+                dlg_title.text("Properties");
+            }
+        });
     }
+    else {
+        comments_icon.hide();
+    }
+
 
     /** return promise object */
     let p = new Promise(function (resolve, reject) {
