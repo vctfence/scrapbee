@@ -3,7 +3,7 @@ import {rdfBackend} from "./backend_rdf.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {browserBackend} from "./backend_browser.js"
 import {delegateProxy, getMimetypeExt} from "./utils.js";
-import {iShellInvalidateCompletion} from "./integration.js";
+import {ishellBackend} from "./backend_ishell.js";
 
 import {
     DEFAULT_SHELF_NAME,
@@ -353,7 +353,7 @@ export class Backend extends ExternalEventProvider {
                 name: shelf_name,
                 type: NODE_TYPE_SHELF
             });
-            iShellInvalidateCompletion();
+            ishellBackend.invalidateCompletion();
         }
 
         for (let name of path_list) {
@@ -370,7 +370,7 @@ export class Backend extends ExternalEventProvider {
                 });
 
                 await this.createExternalBookmarkFolder(node, parent);
-                iShellInvalidateCompletion();
+                ishellBackend.invalidateCompletion();
 
                 parent = node;
             }
@@ -407,7 +407,7 @@ export class Backend extends ExternalEventProvider {
 
         let node = await this.getNode(id);
 
-        iShellInvalidateCompletion();
+        ishellBackend.invalidateCompletion();
 
         if (parent_id) {
             let parent = await this.getNode(parent_id);
@@ -428,7 +428,7 @@ export class Backend extends ExternalEventProvider {
 
             await this.renameExternalBookmark(group);
 
-            iShellInvalidateCompletion();
+            ishellBackend.invalidateCompletion();
 
             await this.updateNode(group);
         }
@@ -458,7 +458,7 @@ export class Backend extends ExternalEventProvider {
         await this.updateNodes(nodes);
 
         if (nodes.some(n => n.type === NODE_TYPE_GROUP))
-            iShellInvalidateCompletion();
+            ishellBackend.invalidateCompletion();
 
         return this.queryFullSubtree(ids, false, true);
     }
@@ -530,7 +530,7 @@ export class Backend extends ExternalEventProvider {
         await this.copyExternalBookmarks(original_nodes, dest_id);
 
         if (original_nodes.some(n => n.type === NODE_TYPE_GROUP))
-            iShellInvalidateCompletion();
+            ishellBackend.invalidateCompletion();
 
         return new_nodes;
     }
@@ -543,7 +543,7 @@ export class Backend extends ExternalEventProvider {
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id));
 
         if (all_nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
-            iShellInvalidateCompletion();
+            ishellBackend.invalidateCompletion();
     }
 
     async deleteChildNodes(id) {
@@ -551,7 +551,7 @@ export class Backend extends ExternalEventProvider {
 
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id).filter(i => i !== id));
 
-        iShellInvalidateCompletion();
+        ishellBackend.invalidateCompletion();
     }
 
     async traverse(root, visitor) {

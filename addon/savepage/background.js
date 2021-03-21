@@ -948,7 +948,6 @@ function addListeners()
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":
                 return browser.runtime.getManifest().version;
-                break;
 
             case "SCRAPYARD_LIST_SHELVES":
                 let shelves = await backend.listShelves();

@@ -2,6 +2,7 @@ import {backend} from "./backend.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
+import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
 
 import {
@@ -22,9 +23,6 @@ import {
     NODE_TYPE_NOTES,
     RDF_EXTERNAL_NAME
 } from "./storage_constants.js";
-
-import {iShellEnableInvalidation, iShellInvalidateCompletion} from "./integration.js";
-
 
 export async function browseNode(node, external_tab, preserve_history) {
 
@@ -169,10 +167,11 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                             "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)})
                 [message.file_ext.toUpperCase()];
 
-            iShellEnableInvalidation(false);
+            let invalidation_state = ishellBackend.isInvalidationEnabled();
+            ishellBackend.enableInvalidation(false);
             return backend.importTransaction(importf).finally(() => {
-                    iShellEnableInvalidation(true);
-                    iShellInvalidateCompletion();
+                    ishellBackend.enableInvalidation(invalidation_state);
+                    ishellBackend.invalidateCompletion();
                 });
 
         case "EXPORT_FILE":
@@ -303,6 +302,8 @@ settings.load(async s => {
         } else
             console.log("Scrapyard was denied persistent storage permissions");
     })
+
+    //setTimeout(() => ishellBackend.initialize(), 3000);
 });
 
 console.log("==> background.js loaded");
