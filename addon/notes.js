@@ -1,11 +1,12 @@
 import {backend} from "./backend.js"
 import * as org from "./org.js"
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
+import {getThemeVar} from "./utils.js";
 
 const INPUT_TIMEOUT = 1000;
 
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
-#+CSS: .notes {width: 600px;} p {text-align: justify;}
+#+CSS: p {text-align: justify;}
 
 Supported [[http://orgmode.org/][org-mode]] markup features:
 
@@ -112,9 +113,9 @@ From data URL:
 [[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC][Cat silhouette]]
 `;
 
-let ORG_DEFAULT_STYLE = `#+CSS: .notes {width: 600px;} p {text-align: justify;}`;
+let ORG_DEFAULT_STYLE = `#+CSS: p {text-align: justify;}`;
 
-let MD_EXAMPLE = `[//]: # (.notes {width: 600px;} p {text-align: justify;})
+let MD_EXAMPLE = `[//]: # p {text-align: justify;})
 
 Supported [Markdown](https://daringfireball.net/projects/markdown/syntax#link) markup features:
 
@@ -199,19 +200,81 @@ From data URL:
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC)
 `;
 
-let MD_DEFAULT_STYLE = `[//]: # (.notes {width: 600px;} p {text-align: justify;})`;
+let MD_DEFAULT_STYLE = `[//]: p {text-align: justify;})`;
 
 let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
 let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
 
+let node_ids = location.hash? location.hash.split(":"): [];
+let node_id = node_ids.length? parseInt(node_ids[node_ids.length - 1]): undefined;
+//let node_uuid = node_ids.length? node_ids[0].substring(1): undefined;
+let inline = location.href.split("?");
+inline = inline.length > 1 && inline[1].startsWith("i#");
+
+let format = "html";
+
+let editorTimeout;
+
+function editorSaveOnChange(e) {
+    console.log("save on change")
+    clearTimeout(editorTimeout);
+
+    editorTimeout = setTimeout(() => {
+        if (e && node_id) {
+            backend.storeNotes(node_id, e.target.value, format);
+        }
+    }, INPUT_TIMEOUT);
+}
+
+function editorSaveOnBlur(e) {
+    console.log("save on blur")
+    if (e && node_id) {
+        backend.storeNotes(node_id, e.target.value, format);
+        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
+    }
+}
+
+function initWYSIWYG() {
+    $('#editor').trumbowyg({
+        autogrow: false,
+        btns: [
+            ['viewHTML'],
+            ['formatting'],
+            ['fontfamily'],
+            ['fontsize'],
+            //['lineheight'],
+            ['strong', 'em', 'underline'],
+            ['foreColor', 'backColor'],
+            ['superscript', 'subscript'],
+            ['link'],
+            ['insertImage', 'base64'],
+            ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
+            ['horizontalRule'],
+            ['indent', 'outdent'],
+            ['unorderedList', 'orderedList'],
+            ['table'],
+            ['removeformat']
+        ]
+    })
+    .on('tbwchange', editorSaveOnChange)
+    .on('tbwblur', editorSaveOnBlur);
+}
+
+function clearWYSIWYG() {
+    $('#editor').trumbowyg('destroy');
+}
 
 window.onload = function() {
-    let node_ids = location.hash? location.hash.split(":"): [];
-    let node_id = node_ids.length? parseInt(node_ids[node_ids.length - 1]): undefined;
-    //let node_uuid = node_ids.length? node_ids[0].substring(1): undefined;
-    let inline = location.href.split("?");
-    inline = inline.length > 1 && inline[1].startsWith("i#");
-    let format = "text";
+
+    if (getThemeVar("--theme-dark")) {
+        let head = document.getElementsByTagName('head')[0];
+        let style = document.createElement('style');
+        style.textContent =
+            `body, div, p, span, pre, code, blockquote, li, dt, dd, td, th, h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+}`
+        head.appendChild(style);
+    }
 
     if (inline)
         $("#tabbar").html(`<a id="notes-button" class="focus" href="#">Notes</a>
@@ -290,6 +353,9 @@ window.onload = function() {
             case "markdown":
                 $("#notes").attr("class", "notes format-markdown").html(markdown2html(text));
                 break;
+            case "html":
+                $("#notes").attr("class", "notes format-html").html(text);
+                break;
             default:
                 $("#notes").attr("class", "notes format-text")
                     .html(`<pre class="plaintext">${text.htmlEncode()}</pre>`);
@@ -308,7 +374,7 @@ window.onload = function() {
         $(e.target).addClass("focus");
 
         $(`.content`).hide();
-        $(`#content-${e.target.id}`).show();
+        $(`#content-${e.target.id}`).css("display", "flex");
 
         if (e.target.id === "notes-button") {
             browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()});
@@ -319,6 +385,9 @@ window.onload = function() {
         }
         else if (e.target.id === "edit-button") {
             $("#format-selector").show();
+
+            if (format === "html")
+                initWYSIWYG();
             //$("#full-width-container").hide();
         }
     });
@@ -331,7 +400,7 @@ window.onload = function() {
                 format = notes.format? notes.format: "org";
                 $("#notes-format").val(format);
 
-                if (format !== "text")
+                if (format !== "text" && format !== "html")
                     $("#inserts").show();
                 else
                     $("#inserts").hide();
@@ -342,22 +411,10 @@ window.onload = function() {
             console.log(e)
         });
 
-    let timeout;
-    $("#editor").on("input", e => {
-        clearTimeout(timeout);
-
-        timeout = setTimeout(() => {
-            if (node_id) {
-                backend.storeNotes(node_id, e.target.value, format);
-            }
-        }, INPUT_TIMEOUT);
-    });
+    $("#editor").on("input", editorSaveOnChange());
 
     $("#editor").on("blur", e => {
-        if (node_id) {
-            backend.storeNotes(node_id, e.target.value, format);
-            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
-        }
+
     });
 
     // $("#full-width").on("change", e => {
@@ -389,7 +446,13 @@ window.onload = function() {
 
     $("#notes-format").on("change", e => {
         format = $("#notes-format").val();
-        if (format !== "text")
+
+        if (format === "html")
+            initWYSIWYG();
+        else
+            clearWYSIWYG();
+
+        if (format !== "text" && format !== "html")
             $("#inserts").show();
         else
             $("#inserts").hide();

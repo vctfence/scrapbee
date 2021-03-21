@@ -13,10 +13,6 @@
     sans-serif;
 }
 
-body, div, p, span, pre, code, blockquote, li, dt, dd, td, th, h1, h2, h3, h4, h5, h6 {
-    color: black !important;
-}
-
 #root-container {
     display: flex;
     flex-direction: column;
@@ -84,6 +80,10 @@ a#notes-button.focus, a#edit-button.focus{
     overflow: auto;
 }
 
+#notes {
+    width: 800px;
+}
+
 #notes > ul#toc {
     padding-left: 0;
     margin-top: 0;
@@ -93,6 +93,7 @@ a#notes-button.focus, a#edit-button.focus{
 #content-notes-button, #content-edit-button {
     flex: 1 1 auto;
     height: 100%;
+    display: flex;
 }
 
 #content-edit-button {
@@ -170,4 +171,31 @@ pre.plaintext {
     -webkit-border-radius: 0;
     word-wrap: break-word;
     font-size: 94%;
+}
+
+.content-filler {
+    flex: 1;
+}
+
+#editor-container {
+    display: flex;
+    flex-direction: column;
+    width: 815px;
+}
+
+.trumbowyg-box {
+    height: calc(100% - 39px) !important;
+    margin: auto;
+    flex: 1;
+}
+.trumbowyg-editor {
+    height: calc(100% - 78px) !important;
+}
+
+.trumbowyg-box textarea {
+    height: calc(100% - 78px) !important;
+}
+
+.trumbowyg-editor table td {
+    border: 1px dotted black;
 }

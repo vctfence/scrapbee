@@ -1,6 +1,7 @@
 @-moz-document url-prefix("%%%") {
 
     .theme-vars {
+        --theme-dark: "true";
         --theme-version: 0.2;
         --theme-background: var(--in-content-page-background) !important;
         --themed-tape-icon: icons/tape2.svg;
