@@ -4,6 +4,7 @@ import {showNotification, getColorFilter, genItemId, gtv, ajaxFormPost} from "./
 import {refreshTree, touchRdf} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown, ContextMenu} from "./control.js";
+import {History} from "./history.js"
 
 var currTree;
 var thisWindowId;
@@ -388,10 +389,10 @@ body{
   background-color:#${settings.focused_bg_color};
   color:#${settings.focused_fg_color};
 }
-.tool-button:hover:before{
+.tool-button:hover:before,.simple-menu-item:hover .icon{
   background-color:#${settings.focused_fg_color};
 }
-.tool-button:before{
+.tool-button:before,.simple-menu-item .icon{
   background-color:#${settings.font_color};
 }`;
     document.body.appendChild(sheet);
@@ -617,28 +618,41 @@ function loadXml(rdf){
                     menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuSort1"])
                     // $(document.body).attr("contextmenu", "popup-menu-body");
                 }
-                settings.set('sidebar_last_focused',id , true);
+                new History().load().then((self)=>{
+                    var v = self.getItem("sidebar.focused") || {};
+                    v[rdf] = id;
+                    self.setItem("sidebar.focused", v); 
+                });
+                
             };
             currTree.onToggleFolder=function(){
                 var folderIds = currTree.getExpendedFolderIds().join(",");
-                settings.set('sidebar_last_opened_folders',folderIds , true);
+                new History().load().then((self)=>{
+                    var v = self.getItem("sidebar.folders.opened") || {};
+                    v[rdf] = folderIds;
+                    self.setItem("sidebar.folders.opened", v); 
+                });
             };
             /** restore status */
             currTree.restoreStatus=function(){
-                if(settings.last_rdf == rdf){
-                    if(settings.sidebar_last_opened_folders){
-                        settings.sidebar_last_opened_folders.split(",").forEach(function(id){
+                new History().load().then((self)=>{
+                    var v = self.getItem("sidebar.folders.opened") || {};
+                    var folders = v[rdf];
+                    if(folders){
+                        folders.split(",").forEach(function(id){
                             currTree.toggleFolder(currTree.getItemById(id), true);
                         });
                     }
-                    if(settings.sidebar_last_focused){
-                        var $item = currTree.getItemById(settings.sidebar_last_focused);
+                    var v = self.getItem("sidebar.focused") || {};
+                    var id = v[rdf];
+                    if(id){
+                        var $item = currTree.getItemById(id);
                         if($item.length){
                             currTree.focusItem($item);
                             currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
                         }
                     }
-                }
+                });
             }
             currTree.restoreStatus();
             /** history */

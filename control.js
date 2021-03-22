@@ -100,7 +100,8 @@ class ContextMenu{
         this.$menu.find(`.simple-menu-item[value=${value}]`).hide();
     }
     addItem(value, title, icon=""){
-        $(`<div class='simple-menu-item' value='${value}'><img src='${icon}'/> ${title}</div>`).appendTo(this.$menu);
+        var $item = $(`<div class='simple-menu-item' value='${value}'><div class='icon' style='mask-image:url(${icon})'/>${title}</div>`).appendTo(this.$menu);
+        // $item.find(".icon").css("mask-image", `url(${icon})`);
     }
     select(title, value){
         this.onselect && this.onselect(title, value)

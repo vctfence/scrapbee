@@ -210,10 +210,15 @@ select{
 .simple-menu .simple-menu-item{
     padding:5px 5px;
 }
-.simple-menu-item img{
+.simple-menu-item .icon{
     width:20px;
     height:20px;
     pointer-events:none;
+    mask-image:url(icons/tool.svg);
+    display:inline-block;
+    margin-right:3px;
+    vertical-align:middle;
+    mask-size:20px 20px;
 }
 .simple-menu-item *{
     vertical-align:middle;

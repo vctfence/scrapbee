@@ -2,9 +2,9 @@ import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
 import {gtev, touchRdf} from "./utils.js";
-
-
 import {ContextMenu} from "./control.js";
+
+import {History} from "./history.js"
 
 function getAsync(url) {
     return new Promise((resolve, reject) => {
@@ -466,30 +466,16 @@ pause`;
             }
         });
     });
-
-    // var items = [
-    //     {value: "menuProperty", icon:"icons/property.svg", title: "{Properties}"},
-    //     {value: "menuOpenOriginLink", icon:"icons/open_origin.svg", title: "{OPEN_ORIGIN_LINK}"},
-    //     {value: "menuOpenFolder", icon:"icons/folder.svg", title: "{Open Folder}"},
-    //     {value: "menuOpenAll", icon:"icons/openall.svg", title: "{OPEN_ALL_ITEMS}"},
-    //     {value: "menuCreateFolder", icon:"icons/folder.svg", title: "{New Folder}"},
-    //     {value: "menuCreateSeparator", icon:"icons/separator.svg", title: "{New Separator}"},
-    //     {value: "menuDelete", icon:"icons/delete.svg", title: "{Delete}"},
-    //     {value: "menuSort1", icon:"icons/sort_a_z.svg", title: "{Sort}"},
-    // ];
-    // items.forEach(function(v, i){
-    //     items[i]["title"]= v.title.translate()
-    // })
-    // var cc = new ContextMenu(items);
-    // cc.hideAllItems();
-    // cc.showItems(["menuOpenFolder", "menuOpenAll"])
-    // cc.show();
-    // document.oncontextmenu = function (event){
-    //     return false
-    // }
-    // document.body.ctxMenu=cc
-    // document.body.addEventListener("mousedown", function(e){
-    //     if(e.button == 2)
-    //         this.ctxMenu.show()
-    // })
 };
+
+// var hh = new History()
+// hh.load().then((self)=>{
+//     hh.rmItem("opened");
+//     hh.setItem("sidebar", "");
+//     hh.setItem("sidebar.focused", {"aaaa":'111'});
+//     hh.setItem("sidebar.folders.opened", {"aaaa":'111'});
+// });
+// hh.load().then(()=>{
+//     var ss = hh.getItem("sidebar.folders.opened");
+//     // console.log(ss)
+// });
