@@ -1,5 +1,5 @@
 {
-    "version": "0.7.2.4",
+    "version": "0.7.3",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -29,7 +29,8 @@
         "unlimitedStorage",
         "webNavigation",
         "webRequest",
-        "webRequestBlocking"
+        "webRequestBlocking",
+        "management"
     ],
     "sidebar_action": {
         "default_title": "Scrapyard",

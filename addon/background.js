@@ -302,8 +302,6 @@ settings.load(async s => {
         } else
             console.log("Scrapyard was denied persistent storage permissions");
     })
-
-    //setTimeout(() => ishellBackend.initialize(), 3000);
 });
 
 console.log("==> background.js loaded");

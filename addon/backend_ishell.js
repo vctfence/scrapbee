@@ -3,48 +3,56 @@ import {settings} from "./settings.js";
 class iShellBackend {
     constructor() {
         this.ISHELL_ID = `ishell${this._isExtensionLocal()? "": "-we"}@gchristensen.github.io`;
-        this._invalidationEnabled = true;
+        settings.load(settings => this.enableInvalidation(settings.ishell_presents()));
 
-        // settings.load(settings => this._invalidationEnabled = settings.ishell_presents());
-        //
-        // browser.runtime.onMessage.addListener((request) => {
-        //     if (request.type === "ISHELL_ENABLE_INVALIDATION") {
-        //         this.enableInvalidation(request.enable)
-        //     }
-        // });
+        if (window.location.href.endsWith("background.html")) {
+            let initListener = event => {
+                if (event.data.type === "SCRAPYARD_ID_REQUESTED") {
+                    if (event.data.sender.id === this.ISHELL_ID) {
+                        this._initialize();
+                        window.removeEventListener("message", initListener);
+                    }
+                }
+            };
+            window.addEventListener("message", initListener, false);
+        }
+
+        browser.runtime.onMessage.addListener((request) => {
+            if (request.type === "ISHELL_ENABLE_INVALIDATION") {
+                this.enableInvalidation(request.enable)
+            }
+        });
     }
 
-    async initialize(settings) {
-        // try {
-        //     let version = await browser.runtime.sendMessage(this.ISHELL_ID, {type: "SCRAPYARD_ISHELL_GET_VERSION"});
-        //     let ishell_presents = !!version;
-        //     settings.ishell_presents(ishell_presents);
-        //     this.enableInvalidation(ishell_presents);
-        // }
-        // catch (e) {
-        //     settings.ishell_presents(false);
-        //     this.enableInvalidation(false);
-        // }
-        // this.installManagementListeners();
+    _initialize() {
+        if (!this._initialized) {
+            this._initialized = true;
+            this.enableInvalidation(true);
+            this._notifyOtherInstances(true);
+            this._installManagementListeners();
+        }
     }
 
-    installManagementListeners() {
-        // browser.management.onInstalled.addListener((info) => {
-        //     if (info.id === this.ISHELL_ID) {
-        //         settings.ishell_presents(true);
-        //         this.enableInvalidation(true);
-        //         // notify instances of the class in the other pages that extension is installed
-        //         browser.runtime.sendMessage({type: "ISHELL_ENABLE_INVALIDATION", enable: true});
-        //     }
-        // });
-        //
-        // browser.management.onUninstalled.addListener((info) => {
-        //     if (info.id === this.ISHELL_ID) {
-        //         settings.ishell_presents(false);
-        //         this.enableInvalidation(false);
-        //         browser.runtime.sendMessage({type: "ISHELL_ENABLE_INVALIDATION", enable: false});
-        //     }
-        // });
+    _installManagementListeners() {
+        browser.management.onInstalled.addListener((info) => {
+            if (info.id === this.ISHELL_ID) {
+                this.enableInvalidation(true);
+                this._notifyOtherInstances(true);
+            }
+        });
+
+        browser.management.onUninstalled.addListener((info) => {
+            if (info.id === this.ISHELL_ID) {
+                this.enableInvalidation(false);
+                this._notifyOtherInstances(false);
+            }
+        });
+    }
+
+    _notifyOtherInstances(enable) {
+        settings.load(settings => settings.ishell_presents(enable));
+        // notify instances of the class in the other pages that extension is installed
+        browser.runtime.sendMessage({type: "ISHELL_ENABLE_INVALIDATION", enable: enable});
     }
 
     _isExtensionLocal() {
@@ -57,15 +65,15 @@ class iShellBackend {
     }
 
     enableInvalidation(enable) {
-        this._invalidationEnabled = enable;
+        window.__iShellInvalidationEnabled = enable;
     }
 
     isInvalidationEnabled() {
-        return this._invalidationEnabled;
+        return window.__iShellInvalidationEnabled;
     }
 
     invalidateCompletion() {
-        if (this._invalidationEnabled) {
+        if (this.isInvalidationEnabled()) {
             browser.runtime.sendMessage(this.ISHELL_ID, {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
         }
     }

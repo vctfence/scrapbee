@@ -384,7 +384,7 @@
 
 import {backend} from "../backend.js";
 import {browseNode} from "../background.js";
-import {getMimetype, isSpecialPage, loadLocalResource, notifySpecialPage} from "../utils.js";
+import {isSpecialPage, notifySpecialPage} from "../utils.js";
 import {
     DEFAULT_SHELF_NAME,
     FIREFOX_BOOKMARK_MENU,
@@ -947,6 +947,7 @@ function addListeners()
 
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":
+                window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
                 return browser.runtime.getManifest().version;
 
             case "SCRAPYARD_LIST_SHELVES":
