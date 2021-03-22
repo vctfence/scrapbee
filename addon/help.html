@@ -119,7 +119,7 @@
     <h3>Firefox Bookmarks</h3>
     <p>
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
-        manager. You may attach TODO states to Firefox bookmarks displayed in Scrapyard, although
+        manager. You may attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
         they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
         option in settings is unchecked. Firefox bookmarks are included in the export but are imported
         as a separate Scrapyard shelf, leaving the current Firefox bookmark state intact.
@@ -147,7 +147,7 @@
         to clean pages of unnecessary elements by text-selecting and deleting document content or images. Click the "Edit document"
         button to start page cleaning.
         It is also possible to type in something, press F7 to display the caret.
-        The HTML code of a page may be modified through the browser development tools accessible
+        The HTML code of a page may be modified through the browser developer's tools accessible
         by "F12" keyboard key.</p>
 
     <p style="text-align: center">
@@ -157,8 +157,8 @@
     <p>The "Auto open" check makes the marker menu to open automatically when some text is selected.</p>
 
     <h3>Bookmark Comments</h3>
-    <p>While the "Details" field of the bookmark properties is intended for display at the TODO shelf,
-    bookmark property dialog allows to enter quick comments by clicking on the "page" icon at its top-right corner.</p>
+    <p>While the "Details" field in the bookmark properties is intended for display at the TODO shelf,
+    bookmark property dialog also allows to enter quick comments by clicking on the "page" icon at its top-right corner.</p>
 
     <p style="text-align: center">
         <img src="images/help/comments-icon.png">
@@ -166,7 +166,7 @@
 
     <p>Subsequent clicks on the icon alternate between the comment input field and bookmark properties.</p>
 
-    <p>Comment icon of bookmarks with filled-in comments take the form of a "lined page".</p>
+    <p>The comment icon of bookmarks with filled-in input field takes the form of a "lined page".</p>
 
     <p style="text-align: center">
         <img src="images/help/filled-comments.png">
@@ -175,24 +175,35 @@
     <h3>Notes</h3>
 
     <p>It is possible to attach more elaborate text notes to every bookmark or even create dedicated note-only bookmarks.
-        Click the "Open notes" context menu item of a bookmark to show its note editor/viewer. Click the "New notes"
-        context menu of a folder to create a notes-only bookmark.
+        Click "Open notes" in the context menu of a bookmark to show its note editor/viewer. Click "New notes"
+        in the context menu of a folder to create a note-only bookmark.
         Items with non-empty notes are highlighted by the underlined text in the bookmark tree.</p>
-
-        <p>Notes could be entered in HTML (by using a WYSIWYG editor),
-        <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
-        <a href="https://orgmode.org/manual/Markup.html" target="_blank">org-mode markup</a> or plain text.
-            Format selector dropdown list is located at the bottom left corner of the editor.</p>
-
-            <p>A short CSS-style may be placed
-        at the first lines of Org or Markdown notes to modify their appearance, Org notes may have a table of contents.
-        Insert an example markup into the note editor to explore what options are available.</p>
 
     <p style="text-align: center">
         <img src="images/help/notes.png">
     </p>
 
-    <h4>Referencing to a bookmark or archive</h4>
+        <p>By default, notes could be entered in HTML (using a visual editor), and additionally in
+        <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
+        <a href="https://orgmode.org/manual/Markup.html" target="_blank">org-mode markup</a> or plain text.
+            The format selector dropdown list is available at the bottom left corner of the "Edit" tab.</p>
+
+            <p>A short CSS-style may be placed
+        at the first lines of the notes to modify their appearance. For example, to change the width of HTML-formatted notes
+                place the following snippet at the beginning of the document markup:
+<pre style="font-size: 10pt; padding: 0 36px; font-family: 'Lucida Console', monospace;">&lt;style&gt;
+  #notes {
+    width: 600px;
+  }
+&lt;/style&gt;</pre>
+
+                <p>The markup of HTML-formatted notes is accessible through the corresponding
+                editor button: <img src="images/help/edit-markup-button.png" style="display: inline-block">
+
+    <p>Notes in Org format may have an automatically generated table of contents.
+        Insert an example markup into the note editor to explore what options are available.</p>
+
+    <h3>Referencing to a bookmark or archive</h3>
     <p>To make a reference to a Scrapyard bookmark or archive from the note markup create a link with the following URL:
         <b><code>ext+scrapyard://&lt;BOOKMARK UUID&gt;</code></b>, for example:</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
@@ -203,7 +214,7 @@
     <p>To refer the notes of a bookmark add <b><code>notes:</code></b> before the UUID:</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://notes:A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
 
-    <p>Bookmark UUID is available from its property dialog:</p>
+    <p>UUID of a bookmark is available from its property dialog:</p>
     <p style="text-align: center">
         <img src="images/help/references.png">
     </p>
@@ -222,23 +233,23 @@
     <p>To import legacy ScrapBook RDF archives you also need to install Scrapyard <a href="#helperapp">helper application</a>.
     There are two import modes: quick import which leaves archived Scrapbook files on disk, and the full import, which transfers
     saved pages into Scrapyard database. Some features, such as page editing and transferring/copying of bookmarks are not available
-    for the shelves imported in quick mode. See "Import RDF" tab of the settings page for more details.</p>
+    for the shelves imported in quick mode. See the "Import RDF" tab of the settings page for more details.</p>
 
     <h2>Advanced features</h2>
 
-    <h3>Natural Language Interface (optional)</h3>
+    <h3>Text Command Interface (optional)</h3>
     <p>
-        It is possible to issue commands to Scrapyard through the natural language interface offered by
+        It is possible to issue commands to Scrapyard through the text command interface offered by
         <a href="https://gchristensen.github.io/ishell/" target="_blank">iShell Extension</a>.
         To control Scrapyard by text commands just install iShell. In most cases, the command interface
-        allows to significantly reduce the number of actions needed to create a bookmark or a page archive.
+        allows to significantly reduce the number of actions needed to create a bookmark or archive a page.
     </p>
 
     <h3>The "bookmark" and "archive" Commands</h3>
-    <p>Use the "bookmark" or "archive" commands with the corresponding parameters to archive a page into the specified destination.
+    <p>Use the "bookmark" or "archive" commands with the corresponding parameters to bookmark/archive a page into the specified destination.
         Folders in the path will be created automatically if they do not exist. The first folder in the bookmark path
-        is always interpreted as the name of a bookmark shelf. The name of the "default" shelf may be substituted by "~" character.
-        Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed with "@" and "@@" shortcuts respectively.</p>
+        is always interpreted as the name of a bookmark shelf. The tilde (~) character may be used in place of the "default" shelf name.
+        Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed with the "@" and "@@" shortcuts respectively.</p>
 
     <p style="text-align: center">
         <img src="images/help/capture-nl.png">
@@ -246,7 +257,7 @@
 
     <h3>The "scrapyard" Command</h3>
 
-    <p>The "scrapyard" command allows to browse and filter captured bookmarks. See Ubiquity help for more details.
+    <p>The "scrapyard" command allows to browse and filter captured bookmarks. See iShell command help for more details.
     </p>
 
     <p style="text-align: center">
@@ -256,9 +267,9 @@
     <h3>Creating Custom Capture Commands</h3>
 
     <p>If you often save bookmarks with similar properties to the same destination, it is possible to create custom
-        capture commands with predefined parameters. "CAPTURE" link at the bottom-right of iShell command editor allows
+        capture commands with predefined parameters. "CAPTURE" link at the bottom-right corner of iShell command editor allows
         to insert a template of a such command. In addition to the predefined parameters, custom capture commands allow to
-        specify (comma-separated) CSS selectors for elements that will be filtered or deleted automatically.
+        specify (comma-separated) CSS selectors for elements that will only be retained or deleted automatically.
         A custom CSS-style could be inserted into the captured document through the "style" option.</p>
 
     <p style="text-align: center">

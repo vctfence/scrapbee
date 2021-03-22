@@ -81,7 +81,7 @@ a#notes-button.focus, a#edit-button.focus{
 }
 
 #notes {
-    width: 800px;
+    width: 700px;
 }
 
 #notes > ul#toc {
