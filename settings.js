@@ -33,7 +33,8 @@ settings.loadFromStorage=function(){
     return new Promise(resolve=>{
         browser.storage.local.get().then(function(all){
             Object.keys(all).forEach(function (key) {
-                settings.set(key, all[key]);
+                if(!/^__.+/.test(key))
+                    settings.set(key, all[key]);
             });
             resolve()
         });

@@ -278,7 +278,7 @@
         "message": "Announcement"
     },
     "announcement_version":{
-        "message": "2.2.0"
+        "message": "2.2.12"
     },
     "NODE_MOVER_TIP":{
         "message": "With this tool, you can move or copy nodes and their contents between 2 RDFs (book trees), dragging and deleting nodes within one RDF are also available here."

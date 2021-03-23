@@ -278,7 +278,7 @@
         "message": "公告"
     },
     "announcement_version":{
-        "message": "2.2.0"
+        "message": "2.2.12"
     },
    "NODE_MOVER_TIP":{
         "message": "本工具可以实现两个RDF树之间的结点移动或复制，此处也允许单个RDF树内的结点拖动和删除"

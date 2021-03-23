@@ -263,7 +263,7 @@
         "message": "Annonce"
     },
     "announcement_version":{
-        "message": "2.2.0"
+        "message": "2.2.12"
     },
     "NODE_MOVER_TIP":{
         "message": "Avec cet outil, vous pouvez déplacer ou copier des nœuds et leur contenu entre 2 RDF (arborescences de livre). Le dragage et la suppression de nœuds dans un RDF sont également disponibles ici."
