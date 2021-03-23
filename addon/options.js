@@ -137,6 +137,9 @@ function loadScrapyardSettings() {
 
         initLinkChecker();
     });
+
+    document.getElementById("option-sidebar-theme").value =
+        _(localStorage.getItem("scrapyard-sidebar-theme"), "light");
 }
 
 function storeScrapyardSettings() {
@@ -153,6 +156,13 @@ function storeScrapyardSettings() {
     settings.export_format(document.getElementById("option-export-format").value);
     settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
     settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
+
+    let currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
+    let newSidebarTheme = document.getElementById("option-sidebar-theme").value;
+    localStorage.setItem("scrapyard-sidebar-theme", newSidebarTheme);
+
+    if (currentSidebarTheme !== newSidebarTheme)
+        browser.runtime.sendMessage({type: "SIDEBAR_THEME_CHANGED", theme: newSidebarTheme});
 }
 
 let helperAppLinksLoaded = false;
@@ -183,9 +193,8 @@ function switchPane() {
     let m;
     if(m = location.href.match(/#(\w+)$/)) {
 
-        if (m[1] === "helperapp") {
+        if (m[1] === "helperapp")
             loadHelperAppLinks();
-        }
 
         $("#div-" + m[1]).show();
         $("a.left-index[href='#" + m[1] + "']").addClass("focus")
@@ -222,18 +231,16 @@ window.onload = async function(){
 
     function onClickSave(event)
     {
-        $("#options-save-button").addClass("flash-button");
-        $("#options-save2-button").addClass("flash-button");
+        $(event.target).addClass("flash-button");
 
-        setTimeout(function()
-            {
-                $("#options-save-button").removeClass("flash-button");
-                $("#options-save2-button").removeClass("flash-button");
-            }
-            ,1000);
+        setTimeout(function() {
+                $(event.target).removeClass("flash-button");
+            },1000);
 
-        storeSavePageSettings();
-        storeScrapyardSettings();
+        if (event.target.id === "options-save-button")
+            storeScrapyardSettings();
+        else
+            storeSavePageSettings();
     }
 
     fetch("help.html").then(response => {

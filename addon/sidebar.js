@@ -378,6 +378,12 @@ window.onload = function () {
         else if (request.type === "SHELVES_CHANGED") {
             return loadShelves(context, tree, false);
         }
+        else if (request.type === "SIDEBAR_THEME_CHANGED") {
+            if (request.theme === "dark")
+                setDarkSidebarTheme();
+            else
+                $("#sidebar-theme").remove();
+        }
     });
 
     browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {

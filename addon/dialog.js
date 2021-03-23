@@ -35,22 +35,22 @@ function showDlg(name, data, callback) {
         let dlg_title = $dlg.find(" #prop-dlg-title-text").first();
 
         if (data.comments) {
-            comments_icon.attr("src", "icons/page.svg");
+            comments_icon.css("background-image", "var(--theme-comments-filled-icon)");
         }
         else
-            comments_icon.attr("src", "icons/page-blank.svg");
+            comments_icon.css("background-image", "var(--theme-comments-icon)");
 
-        let old_icon = comments_icon.attr("src");
+        let old_icon = comments_icon.css("background-image");
 
         comments_icon.click(e => {
             comments_container.toggle();
             if (comments_container.is(":visible")) {
-                comments_icon.attr("src", "icons/properties.svg");
+                comments_icon.css("background-image", "var(--theme-properties-icon)");
                 comments_icon.attr("title", "Properties");
                 dlg_title.text("Comments");
             }
             else {
-                comments_icon.attr("src", old_icon);
+                comments_icon.css("background-image", old_icon);
                 comments_icon.attr("title", "Comments");
                 dlg_title.text("Properties");
             }

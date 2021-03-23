@@ -2,13 +2,16 @@
 <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <!-- HTTP 1.1 -->
     <meta http-equiv="pragma" content="no-cache">
-    <!-- HTTP 1.0 -->
     <meta http-equiv="cache-control" content="no-cache">
-    <!-- Prevent caching at the proxy server -->
     <meta http-equiv="expires" content="0">
 
+    <link rel="stylesheet" href="lib/jstree/themes/default/style.css"/>
+    <link rel="stylesheet" href="lib/selectric/selectric.css"/>
+    <link rel="stylesheet" href="tree.css"/>
+    <link rel="stylesheet" type="text/css" href="sidebar.css"/>
+
+    <script type="text/javascript" src="theme_loader.js"></script>
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="text/javascript" src="lib/selectric/jquery.selectric.js"></script>
     <script type="text/javascript" src="lib/jstree/jstree.js"></script>
@@ -16,11 +19,6 @@
     <script type="module" src="sidebar.js"></script>
 
     <link rel="stylesheet" type="text/css" href="fonts/fontawesome.css" media="screen"/>
-    <link rel="stylesheet" href="lib/jstree/themes/default/style.css"/>
-    <link rel="stylesheet" href="lib/selectric/selectric.css"/>
-    <link rel="stylesheet" href="tree.css"/>
-    <link rel="stylesheet" type="text/css" href="sidebar.css"/>
-
 </head>
 <body id="scrapyard-sidebar">
 <div id="main-container">
@@ -66,7 +64,7 @@
                     <div class="dlg-box">
                         <div class="dlg-title">
                             <span id="prop-dlg-title-text">Properties</span>
-                            <img id="prop-dlg-comments-icon" src="icons/page-blank.svg" title="Comments"/>
+                            <div id="prop-dlg-comments-icon" title="Comments"></div>
                         </div>
                         <div class="dlg-prop-table" style="overflow: hidden; margin-top: 4px;">
                             <div id="dlg-comments-container">

@@ -19,6 +19,13 @@ html,body{
      min-height: 100vh;
     overflow-x: hidden;
 }
+
+#scrapyard-sidebar {
+    --theme-comments-icon: url("icons/page-blank.svg");
+    --theme-comments-filled-icon: url("icons/page.svg");
+    --theme-properties-icon: url("icons/properties.svg");
+}
+
 #main-container {
     display: flex;
     flex-direction: column;
@@ -281,10 +288,13 @@ select{
 }
 
 #prop-dlg-comments-icon {
-    display: inline;
     height: 17px;
+    width: 17px;
     float: right;
     cursor: pointer;
+    background-image: var(--theme-comments-icon);
+    background-size: contain;
+    background-repeat: no-repeat;
 }
 
 #dlg-comments-container {
