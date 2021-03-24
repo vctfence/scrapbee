@@ -249,21 +249,6 @@ window.onload = async function(){
         $("#div-help").html(text);
     });
 
-    // Dark style //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    let darkStyle;
-    fetch("shadowfox/userContent.css").then(response => {
-        return response.text();
-    }).then(text => {
-        darkStyle = text.replace(/%%%/g, browser.runtime.getURL("/"));
-    });
-
-    function onCopyStyle(e) {
-        navigator.clipboard.writeText(darkStyle);
-        showNotification({message: "Dark theme style is copied to Clipboard."});
-    }
-    $("#copy-style-link").on("click", onCopyStyle);
-
     // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);

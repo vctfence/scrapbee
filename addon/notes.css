@@ -184,18 +184,50 @@ pre.plaintext {
 }
 
 .trumbowyg-box {
-    height: calc(100% - 39px) !important;
+    height: calc(100% - 26px) !important;
     margin: auto;
     flex: 1;
 }
 .trumbowyg-editor {
-    height: calc(100% - 78px) !important;
+    height: calc(100% - 26px) !important;
 }
 
 .trumbowyg-box textarea {
-    height: calc(100% - 78px) !important;
+    height: calc(100% - 26px) !important;
 }
 
 .trumbowyg-editor table td {
     border: 1px dotted black;
+}
+
+.trumbowyg-button-pane button {
+    display: inline-block;
+    position: relative;
+    width: 24px;
+    height: 24px;
+    padding: 1px 1px !important;
+    margin-bottom: 1px;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    background: none;
+    vertical-align: middle;
+    transition: background-color 150ms, opacity 150ms;
+}
+
+.trumbowyg-button-pane button.trumbowyg-textual-button {
+    line-height: normal;
+}
+
+.trumbowyg-button-pane .trumbowyg-open-dropdown.trumbowyg-textual-button::after {
+    top: 12px;
+}
+
+.trumbowyg-button-pane, .trumbowyg-button-group, .trumbowyg-button-pane .trumbowyg-button-group::after  {
+    height: 26px;
+    min-height: 26px;
+}
+
+.trumbowyg-button-pane::after {
+    top: 25px;
 }

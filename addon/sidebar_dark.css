@@ -137,6 +137,10 @@ select,
     background-color: transparent !important;
 }
 
+.vakata-context .vakata-context-separator.vakata-context-hover {
+    background-color: transparent !important;
+}
+
 .vakata-context li > a .vakata-contextmenu-sep {
     border-left: 1px solid var(--in-content-box-border-color) !important;
     box-shadow: none !important;

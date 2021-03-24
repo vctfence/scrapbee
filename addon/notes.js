@@ -266,16 +266,6 @@ function clearWYSIWYG() {
 
 window.onload = function() {
 
-    if (getThemeVar("--theme-dark")) {
-        let head = document.getElementsByTagName('head')[0];
-        let style = document.createElement('style');
-        style.textContent =
-            `body, div, p, span, pre, code, blockquote, li, dt, dd, td, th, h1, h2, h3, h4, h5, h6 {
-    color: black !important;
-}`
-        head.appendChild(style);
-    }
-
     if (inline)
         $("#tabbar").html(`<a id="notes-button" class="focus" href="#">Notes</a>
                                  <a id="edit-button" href="#">Edit</a>`);
