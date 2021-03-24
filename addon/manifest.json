@@ -1,5 +1,5 @@
 {
-    "version": "0.7.7",
+    "version": "0.7.8",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -35,7 +35,6 @@
     "sidebar_action": {
         "default_title": "Scrapyard",
         "default_panel": "sidebar.html",
-
         "default_icon": "icons/scrapyard.svg"
     },
     "commands": {
@@ -47,7 +46,8 @@
         }
     },
     "background": {
-        "page": "background.html"
+        "page": "background.html",
+        "persistent": true
     },
     "browser_action": {
         "default_icon": {
