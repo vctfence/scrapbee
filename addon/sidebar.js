@@ -380,9 +380,9 @@ window.onload = function () {
         }
         else if (request.type === "SIDEBAR_THEME_CHANGED") {
             if (request.theme === "dark")
-                setDarkSidebarTheme();
+                setDarkUITheme();
             else
-                $("#sidebar-theme").remove();
+                removeDarkUITheme();
         }
     });
 
