@@ -138,8 +138,7 @@ function loadScrapyardSettings() {
         initLinkChecker();
     });
 
-    document.getElementById("option-sidebar-theme").value =
-        _(localStorage.getItem("scrapyard-sidebar-theme"), "light");
+    document.getElementById("option-sidebar-theme").value = localStorage.getItem("scrapyard-sidebar-theme") || "light";
 }
 
 function storeScrapyardSettings() {
@@ -157,8 +156,8 @@ function storeScrapyardSettings() {
     settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
     settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
 
-    let currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
-    let newSidebarTheme = document.getElementById("option-sidebar-theme").value;
+    const currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
+    const newSidebarTheme = document.getElementById("option-sidebar-theme").value;
     localStorage.setItem("scrapyard-sidebar-theme", newSidebarTheme);
 
     if (currentSidebarTheme !== newSidebarTheme)
