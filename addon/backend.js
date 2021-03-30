@@ -104,6 +104,13 @@ class ExternalEventProvider {
                 await backend.storeBookmarkComments(node_id, comments);
         }
     }
+
+    invalidateExternalCompletion() {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.invalidateCompletion)
+                backend.invalidateCompletion();
+        }
+    }
 }
 
 export class Backend extends ExternalEventProvider {
@@ -114,6 +121,7 @@ export class Backend extends ExternalEventProvider {
         this.registerExternalBackend("browser", browserBackend);
         this.registerExternalBackend("cloud", cloudBackend);
         this.registerExternalBackend("rdf", rdfBackend);
+        this.registerExternalBackend("ishell", ishellBackend);
 
         return delegateProxy(this, storageBackend);
     }
@@ -189,9 +197,6 @@ export class Backend extends ExternalEventProvider {
 
     listGroups() {
         return backend.queryGroups(true);
-    }
-
-    invalidateItemCache() {
     }
 
     async listNodes(options //{search, // filter by node name or URL
@@ -353,7 +358,7 @@ export class Backend extends ExternalEventProvider {
                 name: shelf_name,
                 type: NODE_TYPE_SHELF
             });
-            ishellBackend.invalidateCompletion();
+            this.invalidateExternalCompletion();
         }
 
         for (let name of path_list) {
@@ -370,7 +375,7 @@ export class Backend extends ExternalEventProvider {
                 });
 
                 await this.createExternalBookmarkFolder(node, parent);
-                ishellBackend.invalidateCompletion();
+                this.invalidateExternalCompletion();
 
                 parent = node;
             }
@@ -407,7 +412,7 @@ export class Backend extends ExternalEventProvider {
 
         let node = await this.getNode(id);
 
-        ishellBackend.invalidateCompletion();
+        this.invalidateExternalCompletion();
 
         if (parent_id) {
             let parent = await this.getNode(parent_id);
@@ -428,7 +433,7 @@ export class Backend extends ExternalEventProvider {
 
             await this.renameExternalBookmark(group);
 
-            ishellBackend.invalidateCompletion();
+            this.invalidateExternalCompletion();
 
             await this.updateNode(group);
         }
@@ -458,7 +463,7 @@ export class Backend extends ExternalEventProvider {
         await this.updateNodes(nodes);
 
         if (nodes.some(n => n.type === NODE_TYPE_GROUP))
-            ishellBackend.invalidateCompletion();
+            this.invalidateExternalCompletion();
 
         return this.queryFullSubtree(ids, false, true);
     }
@@ -530,7 +535,7 @@ export class Backend extends ExternalEventProvider {
         await this.copyExternalBookmarks(original_nodes, dest_id);
 
         if (original_nodes.some(n => n.type === NODE_TYPE_GROUP))
-            ishellBackend.invalidateCompletion();
+            this.invalidateExternalCompletion();
 
         return new_nodes;
     }
@@ -543,7 +548,7 @@ export class Backend extends ExternalEventProvider {
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id));
 
         if (all_nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
-            ishellBackend.invalidateCompletion();
+            this.invalidateExternalCompletion();
     }
 
     async deleteChildNodes(id) {
@@ -551,7 +556,7 @@ export class Backend extends ExternalEventProvider {
 
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id).filter(i => i !== id));
 
-        ishellBackend.invalidateCompletion();
+        this.invalidateExternalCompletion();
     }
 
     async traverse(root, visitor) {
