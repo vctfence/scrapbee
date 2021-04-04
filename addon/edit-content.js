@@ -82,15 +82,16 @@ class EditToolBar {
         var extension_id = browser.i18n.getMessage("@@extension_id");
 
         /** toolbar */
-        var root_container = document.createElement("div");
-        root_container.className = "scrapyard-edit-bar-container";
-        document.body.appendChild(root_container);
+        var rootContainer = document.createElement("div");
+        rootContainer.style.display = "none";
+        rootContainer.className = "scrapyard-edit-bar-container";
+        document.body.appendChild(rootContainer);
 
-        var div = document.createElement("div");
-        div.className = "scrapyard-edit-bar";
-        //div.setAttribute("part", "scrapyard-edit-bar");
-        div.style.height = `${TOOLBAR_HEIGHT}px`;
-        let shadow = root_container.attachShadow({mode: 'open'});
+        var editBar = document.createElement("div");
+        editBar.className = "scrapyard-edit-bar";
+        //editBar.setAttribute("part", "scrapyard-edit-bar");
+        editBar.style.height = `${TOOLBAR_HEIGHT}px`;
+        let shadow = rootContainer.attachShadow({mode: 'open'});
         this.shadowRoot = shadow;
         shadow.innerHTML = `
             <style>
@@ -98,8 +99,8 @@ class EditToolBar {
             </style>
         `;
 
-        shadow.appendChild(div);
-        this.div = div;
+        shadow.appendChild(editBar);
+        this.editBar = editBar;
 
         /** icon */
         var img = document.createElement("img");
@@ -107,8 +108,8 @@ class EditToolBar {
         img.src = `moz-extension://${extension_id}/icons/scrapyard.svg`;
         img.setAttribute("width", "20px");
         img.setAttribute("height", "20px");
-        div.appendChild(img);
-        div.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
+        editBar.appendChild(img);
+        editBar.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
 
         /** body */
         document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px`;
@@ -119,7 +120,7 @@ class EditToolBar {
         btn.type = "button";
         btn.className = "yellow-button"
         btn.value = chrome.i18n.getMessage("save");
-        div.appendChild(btn);
+        editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             self._unsavedChanges = false;
             self.saveDoc();
@@ -131,7 +132,7 @@ class EditToolBar {
         btn.id = "btn-edit-document";
         btn.className = "blue-button";
         btn.value = chrome.i18n.getMessage("MODIFY_DOM_ON");
-        div.appendChild(btn);
+        editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             editing = !editing;
             // self.toggleDomEdit(editing)
@@ -140,12 +141,12 @@ class EditToolBar {
             document.designMode = document.designMode === "on"? "off": "on";
         });
 
-        $(div).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
+        $(editBar).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
                          To remove content, text-select it (including images and other media) and press Del key on keyboard.
                          It is also possible to type something in. Press F7 to turn on caret browsing.
                        </span></div>`);
 
-        $(".help-mark", div).hover(function(e){
+        $(".help-mark", editBar).hover(function(e){
             $(this).next(".tips.hide").show().css({"margin-top": "-10px"});
         }, function(){
             $(this).next(".tips.hide").hide();
@@ -156,17 +157,17 @@ class EditToolBar {
         btn.type = "button";
         btn.className = "blue-button mark-pen-btn"
         btn.value = chrome.i18n.getMessage("MARK_PEN");
-        div.appendChild(btn);
+        editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             $(self.menu).toggle();
-            var rect_div = self.div.getBoundingClientRect();
+            var rect_div = self.editBar.getBoundingClientRect();
             var rect_btn = this.getBoundingClientRect();
             $(self.menu).css("bottom", (rect_div.bottom - rect_btn.top) + "px");
             $(self.menu).css("left", rect_btn.left + "px");
         });
 
         /** mark pen menu */
-        var $m = $("<div>").appendTo(this.div);
+        var $m = $("<div>").appendTo(this.editBar);
         $m.css({
             position: 'absolute',
             zIndex: 2147483646,
@@ -235,7 +236,7 @@ class EditToolBar {
         autoOpenCheck.type = "checkbox";
         autoOpenCheck.id = "scrapyard-auto-open-check";
         autoOpenCheck.name = "auto-open-check";
-        div.appendChild(autoOpenCheck);
+        editBar.appendChild(autoOpenCheck);
 
         document.addEventListener('mouseup', e => {
             if (autoOpenCheck.checked && this.isSelectionPresent()) {
@@ -249,7 +250,7 @@ class EditToolBar {
             }
         });
 
-        $(div).append("<label for='scrapyard-auto-open-check'>Auto open</label>");
+        $(editBar).append("<label for='scrapyard-auto-open-check'>Auto open</label>");
 
 
         /** notes button */
@@ -258,7 +259,7 @@ class EditToolBar {
         btn.id = "view-notes";
         btn.className = "blue-button";
         btn.value = chrome.i18n.getMessage("NOTES");
-        div.appendChild(btn);
+        editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             var ifrm = $("#notes-ifrm");
             if (ifrm.length) {
@@ -298,19 +299,19 @@ class EditToolBar {
         txt.className = "original-url-text";
         $(txt).attr("readonly", "true")
         txt.value = $("meta[name='savepage-url']").attr("content");
-        div.appendChild(txt);
+        editBar.appendChild(txt);
 
         /** go button */
         var link = document.createElement("a");
         link.href = txt.value;
         $(link).attr("target", "_blank");
-        div.appendChild(link);
+        editBar.appendChild(link);
 
         var btn = document.createElement("input");
         btn.type = "button";
         btn.className = "blue-button go-button"
         btn.value = chrome.i18n.getMessage("Go");
-        div.appendChild(btn);
+        editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             $(link)[0].click();
         });
@@ -321,13 +322,14 @@ class EditToolBar {
         btn.type = "button";
         btn.className = "blue-button hide-button"
         btn.value = chrome.i18n.getMessage("Hide");
-        div.appendChild(btn);
+        editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             $(".scrapyard-edit-bar", self.shadowRoot).remove();
             document.body.style.marginBottom = "0";
         });
 
 
+        setTimeout(() => rootContainer.style.display = "block", 300);
     }
 }
 
