@@ -115,7 +115,7 @@ From data URL:
 
 let ORG_DEFAULT_STYLE = `#+CSS: p {text-align: justify;}`;
 
-let MD_EXAMPLE = `[//]: # p {text-align: justify;})
+let MD_EXAMPLE = `[//]: # (p {text-align: justify;})
 
 Supported [Markdown](https://daringfireball.net/projects/markdown/syntax#link) markup features:
 

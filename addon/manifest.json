@@ -1,5 +1,5 @@
 {
-    "version": "0.7.10",
+    "version": "0.7.11.1",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -60,7 +60,7 @@
         "open_in_tab": true,
         "page": "options.html"
     },
-    "web_accessible_resources": ["icons/lock.svg", "icons/scrapyard.svg"],
+    "web_accessible_resources": ["icons/lock.svg", "icons/scrapyard.svg", "edit.css"],
     "protocol_handlers": [
         {
             "protocol": "ext+scrapyard",

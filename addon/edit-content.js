@@ -1,40 +1,17 @@
+const TOOLBAR_HEIGHT = 26;
+
 class EditToolBar {
-    constructor(scrap_path) {
+    constructor() {
         var self = this;
-        this.scrap_path = scrap_path;
         this.buildTools()
 
         window.addEventListener("mousedown", function (e) {
             if (e.button == 0) {
-                if (!isDescendant(self.div, e.target) /** out of toolbar */
-                    && self.last && self.editing) {
-                    e.preventDefault();
-                    self.last.parentNode.removeChild(self.last);
-                    self.last = null;
-                    toolbar._unsavedChanges = true;
-                }
                 /** hide marker-pen menu when click somewhere */
                 if (!$(e.target).hasClass("mark-pen-btn")) {
                     if ($(self.menu).is(":visible")) {
                         e.preventDefault();
                         $(self.menu).hide();
-                    }
-                }
-            }
-        });
-
-        window.addEventListener("mousemove", function (e) {
-            if (self.editing) {
-                var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
-                if (dom && !isDescendant(self.div, dom)) {
-                    if (dom != document.body && $(document.body).closest(dom).length == 0) {
-                        if (self.last)
-                            self.last.style.border = self.last_border;
-                        self.last_border = dom.style.border;
-                        self.last = dom;
-                        dom.style.border = "2px solid #f00";
-                    } else {
-                        // document.body or ancestors
                     }
                 }
             }
@@ -56,19 +33,8 @@ class EditToolBar {
         }
     }
 
-    toggleDomEdit(on) {
-        var self = this;
-        if (self.last)
-            self.last.style.border = self.last_border;
-        self.last = null;
-        self.last_border = null;
-        self.editing = on;
-        $(this.div).find("input[type=button]").prop("disabled", on);
-        document.body.style.cursor = self.editing ? "crosshair" : "";
-    }
-
     saveDoc() {
-        let btn = $("#scrapyard-save-doc-button");
+        let btn = $("#scrapyard-save-doc-button", this.shadowRoot);
         btn.addClass("flash-button");
 
         setTimeout(function() {
@@ -76,7 +42,7 @@ class EditToolBar {
         },1000);
 
         let doc = document.documentElement.cloneNode(true);
-        let bar = doc.querySelector(".scrapyard-edit-bar");
+        let bar = doc.querySelector(".scrapyard-edit-bar-container");
 
         if (bar)
             bar.parentNode.removeChild(bar);
@@ -116,23 +82,36 @@ class EditToolBar {
         var extension_id = browser.i18n.getMessage("@@extension_id");
 
         /** toolbar */
-        $(".scrapyard-edit-bar").remove();
+        var root_container = document.createElement("div");
+        root_container.className = "scrapyard-edit-bar-container";
+        document.body.appendChild(root_container);
+
         var div = document.createElement("div");
-        div.className = "scrapyard-edit-bar"
-        document.body.appendChild(div);
+        div.className = "scrapyard-edit-bar";
+        //div.setAttribute("part", "scrapyard-edit-bar");
+        div.style.height = `${TOOLBAR_HEIGHT}px`;
+        let shadow = root_container.attachShadow({mode: 'open'});
+        this.shadowRoot = shadow;
+        shadow.innerHTML = `
+            <style>
+                @import url('${browser.runtime.getURL("edit.css")}')
+            </style>
+        `;
+
+        shadow.appendChild(div);
         this.div = div;
 
         /** icon */
         var img = document.createElement("img");
         img.id = "scrapyard-icon"
         img.src = `moz-extension://${extension_id}/icons/scrapyard.svg`;
+        img.setAttribute("width", "20px");
+        img.setAttribute("height", "20px");
         div.appendChild(img);
         div.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
 
         /** body */
-        document.body.style.marginBottom = "50px";
-        document.body.style.paddingLeft = "0px";
-        document.body.style.marginLeft = "0px";
+        document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px`;
 
         /** save button */
         var btn = document.createElement("input");
@@ -162,12 +141,11 @@ class EditToolBar {
         });
 
         $(div).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
-                         Text-select unneeded content (including images and other media) and press Del key on keyboard.
+                         To remove content, text-select it (including images and other media) and press Del key on keyboard.
+                         It is also possible to type something in. Press F7 to turn on caret browsing.
                        </span></div>`);
 
         $(".help-mark", div).hover(function(e){
-            console.log($(this).next(".tips.hide"))
-            console.log(e)
             $(this).next(".tips.hide").show().css({"margin-top": "-10px"});
         }, function(){
             $(this).next(".tips.hide").hide();
@@ -189,6 +167,15 @@ class EditToolBar {
 
         /** mark pen menu */
         var $m = $("<div>").appendTo(this.div);
+        $m.css({
+            position: 'absolute',
+            zIndex: 2147483646,
+            border: "1px solid #999",
+            background: "#fff",
+            display: "none",
+            boxShadow: "5px 5px 5px #888888",
+            borderWidth: "1px 1px 0px 1px"
+        });
 
         /** marker cleaner */
         var $item = $("<div>").appendTo($m).css({
@@ -241,31 +228,22 @@ class EditToolBar {
                 minWidth: "200px"
             });
         }
-        $m.css({
-            position: 'absolute',
-            zIndex: 2147483646,
-            border: "1px solid #999",
-            background: "#fff",
-            display: "none",
-            boxShadow: "5px 5px 5px #888888",
-            borderWidth: "1px 1px 0px 1px"
-        });
         this.menu = $m[0];
 
         /** auto-open check */
-        var check = document.createElement("input");
-        check.type = "checkbox";
-        check.id = "scrapyard-auto-open-check";
-        check.name = "auto-open-check";
-        div.appendChild(check);
+        var autoOpenCheck = document.createElement("input");
+        autoOpenCheck.type = "checkbox";
+        autoOpenCheck.id = "scrapyard-auto-open-check";
+        autoOpenCheck.name = "auto-open-check";
+        div.appendChild(autoOpenCheck);
 
         document.addEventListener('mouseup', e => {
-            if (check.checked && this.isSelectionPresent()) {
-                $(".mark-pen-btn").click();
+            if (autoOpenCheck.checked && this.isSelectionPresent()) {
+                $(".mark-pen-btn", self.shadowRoot).click();
             }
         });
         document.addEventListener('mousedown', e => {
-            if (check.checked && this.isSelectionPresent() && $(self.menu).is(":visible")
+            if (autoOpenCheck.checked && this.isSelectionPresent() && $(self.menu).is(":visible")
                 && e.target !== self.menu) {
                 $(self.menu).hide();
             }
@@ -321,9 +299,6 @@ class EditToolBar {
         $(txt).attr("readonly", "true")
         txt.value = $("meta[name='savepage-url']").attr("content");
         div.appendChild(txt);
-        // btn.addEventListener("click", function () {
-        //     $(".scrapyard-edit-bar").remove();
-        // });
 
         /** go button */
         var link = document.createElement("a");
@@ -348,7 +323,8 @@ class EditToolBar {
         btn.value = chrome.i18n.getMessage("Hide");
         div.appendChild(btn);
         btn.addEventListener("click", function () {
-            $(".scrapyard-edit-bar").remove();
+            $(".scrapyard-edit-bar", self.shadowRoot).remove();
+            document.body.style.marginBottom = "0";
         });
 
 
@@ -429,22 +405,31 @@ function mark(hlclass) {
 
     var selection = getCurrSelection()
 
-    /* there are maybe text nodes between start and end (range cross more than one tag) */
-    getTextNodesBetween(selection.parent, selection.start, selection.end).forEach(function (tn) {
-        surround(tn, hltag, hlclass)
-    });
+    try {
+        /* there are maybe text nodes between start and end (range cross more than one tag) */
+        getTextNodesBetween(selection.parent, selection.start, selection.end).forEach(function (tn) {
+            surround(tn, hltag, hlclass)
+        });
 
-    /* surround edges */
-    if (selection.start == selection.end) {
-        /** range in single text node */
-        var span = surround(selection.start, hltag, hlclass, selection.range.startOffset, selection.range.endOffset);
-        selection.range.setStart(span.firstChild, 0)
-        selection.range.setEnd(span.firstChild, span.firstChild.nodeValue.length)
-    } else {
-        var span1 = surround(selection.start, hltag, hlclass, selection.range.startOffset, selection.start.nodeValue.length);
-        var span2 = surround(selection.end, hltag, hlclass, 0, selection.range.endOffset);
-        selection.range.setStart(span1.firstChild, 0)
-        selection.range.setEnd(span2.firstChild, span2.firstChild.nodeValue.length)
+        /* surround edges */
+        if (selection.start == selection.end) {
+            /** range in single text node */
+            var span = surround(selection.start, hltag, hlclass, selection.range.startOffset, selection.range.endOffset);
+            if (span && span.firstChild) {
+                selection.range.setStart(span.firstChild, 0);
+                selection.range.setEnd(span.firstChild, span.firstChild.nodeValue.length);
+            }
+        }
+        else {
+            var span1 = surround(selection.start, hltag, hlclass, selection.range.startOffset, selection.start.nodeValue.length);
+            var span2 = surround(selection.end, hltag, hlclass, 0, selection.range.endOffset);
+            if (span1 && span2 && span1.firstChild && span2.firstChild) {
+                selection.range.setStart(span1.firstChild, 0);
+                selection.range.setEnd(span2.firstChild, span2.firstChild.nodeValue.length);
+            }
+        }
+    } catch (e) {
+        console.error(e);
     }
 }
 

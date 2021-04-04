@@ -1,19 +1,23 @@
-.scrapyard-edit-bar{
+.scrapyard-edit-bar-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000000;
+}
+
+.scrapyard-edit-bar {
     background: #aaa !important;
     border-top: 1px solid #999  !important;
     width: 100%  !important;
-    white-space: nowrap !important;
     height: 26px !important;
-    position: fixed;
+    white-space: nowrap !important;
     vertical-align: middle !important;
-    /*line-height: 40px;*/
-    bottom: 0;
-    z-index: 1000000;
     text-align:left;
     display: flex;
     padding-top: 8px !important;
     padding-bottom: 8px !important;
-    line-height: 100% !important;
+    line-height: 26px !important;
     font-weight: normal !important;
     letter-spacing: normal !important;
     align-items: center !important;
