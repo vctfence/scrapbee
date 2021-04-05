@@ -26,11 +26,6 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 });
 ```
 
-### Project status
-
-Currently the project is considered permanent alpha: be prepared for breaking changes, devastating bugs and
-groundbreaking experiments. Please, backup your Firefox profile often.
-
 ### Objectives
 
 * ~~Store data at IndexedDB~~ [DONE]
@@ -54,7 +49,7 @@ groundbreaking experiments. Please, backup your Firefox profile often.
 
 ### Current status of cloud support
 
-Currently cloud bookmarking is implemented on the basis of Dropbox HTTP API, which is by definition a mock
+Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API, which is by definition a mock
 implementation - since there is no real database, the speed of operations is inversely proportional to
 the amount of bookmarks you have there. When the author will get enough donations to buy a brand-new laptop
 for comfortable development (probably never, but you may change this), there will be a dedicated cloud
