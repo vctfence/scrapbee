@@ -1,6 +1,8 @@
+import configparser
 import traceback
 import threading
 import tempfile
+import platform
 import logging
 import json
 import os
@@ -82,6 +84,44 @@ def add_header(r):
 @app.route("/")
 def root():
     return "Scrapyard helper application"
+
+
+def find_db_path(mozilla_root, profiles, addon_id):
+    profiles = [profiles[k] for k in profiles.keys() if k.startswith("Profile")]
+
+    for profile in profiles:
+        path = profile["Path"]
+
+        if profile["IsRelative"] == "1":
+            path = mozilla_root + path
+
+        path_candidate = f"{path}/storage/default/moz-extension+++{addon_id}"
+
+        if os.path.exists(path_candidate):
+            return path_candidate.replace("/", "\\")
+
+    return None
+
+
+# try to get the Scrapyard addon database path
+@app.route("/request/idb_path/<addon_id>")
+def get_db_path(addon_id):
+    if platform.system() != "Windows":
+        return abort(404)
+
+    mozilla_root = os.environ["APPDATA"] + "/Mozilla/Firefox/"
+    profiles_ini = f"{mozilla_root}profiles.ini"
+
+    if os.path.exists(profiles_ini):
+        config = configparser.ConfigParser()
+        config.read(profiles_ini)
+        path = find_db_path(mozilla_root, config, addon_id)
+        if path:
+            return path
+        else:
+            abort(404)
+    else:
+        return abort(404)
 
 # Browse regular scrapyard archives
 

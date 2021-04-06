@@ -10,6 +10,7 @@ import {
     FIREFOX_SHELF_ID,
     isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK
 } from "./storage_constants.js";
+import {nativeBackend} from "./backend_native.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -185,6 +186,28 @@ function loadHelperAppLinks() {
     xhr.send();
 }
 
+async function configureAboutPage() {
+    $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);
+
+    let helperApp = await nativeBackend.probe();
+
+    if (!helperApp)
+        return;
+
+    const addon_id = browser.runtime.getURL("/").split("/")[2];
+    const url = `http://localhost:${settings.helper_port_number()}/request/idb_path/${addon_id}`;
+
+    const response = await fetch(url);
+    if (response.ok) {
+        const idb_path = await response.text();
+        $("#about-addon-db-path-input").val(idb_path);
+        $("#about-db-path-panel").show();
+        $("#about-db-path-copy-button").on("click", e => {
+            navigator.clipboard.writeText($("#about-addon-db-path-input").val());
+        });
+    }
+}
+
 function switchPane() {
     $(".div-area").hide();
     $("a.left-index").removeClass("focus")
@@ -194,6 +217,8 @@ function switchPane() {
 
         if (m[1] === "helperapp")
             loadHelperAppLinks();
+        else if (m[1] === "about")
+            configureAboutPage();
 
         $("#div-" + m[1]).show();
         $("a.left-index[href='#" + m[1] + "']").addClass("focus")

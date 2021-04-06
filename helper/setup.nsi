@@ -2,7 +2,7 @@
 
 ; Define your application name
 !define APPNAME "Scrapyard Helper"
-!define VERSION "0.1.0"
+!define VERSION "0.2.0"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 

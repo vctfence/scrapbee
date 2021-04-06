@@ -6,7 +6,8 @@ import {backend} from "./backend.js";
 
 class NativeBackend {
     constructor() {
-        this.auth = UUID.numeric()
+        this.auth = UUID.numeric();
+        this.version = undefined;
     }
 
     async getPort() {
@@ -28,6 +29,7 @@ class NativeBackend {
                         port.onMessage.addListener(NativeBackend.incomingMessages.bind(this))
                         resolve(port);
                         this.port = port;
+                        this.version = response.version;
                     }
                 }
 

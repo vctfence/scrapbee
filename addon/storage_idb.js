@@ -390,12 +390,11 @@ class IDBStorage {
             });
     }
 
-    async updateBlob(node_id, data, compress = false) {
+    async updateBlob(node_id, data) {
         let node = await this.getNode(node_id);
 
         if (node)
             return dexie.blobs.where("node_id").equals(node.id).modify({
-                //compressed: compress,
                 data: data
             });
     }
@@ -408,16 +407,13 @@ class IDBStorage {
             await dexie.index.where("node_id").equals(node_id).delete();
     }
 
-    async fetchBlob(node_id, is_uuid = false, compressed = false) {
+    async fetchBlob(node_id, is_uuid = false) {
         if (is_uuid) {
             let node = await dexie.nodes.where("uuid").equals(node_id).first();
             if (node)
                 node_id = node.id;
         }
         let blob = await dexie.blobs.where("node_id").equals(node_id).first();
-
-       // if (!compressed && blob && blob.compressed)
-       //     blob.data = LZString.decompress(blob.data);
 
         return blob;
     }

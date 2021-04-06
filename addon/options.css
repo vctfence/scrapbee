@@ -413,3 +413,36 @@ a.left-index, a:visited.left-index {
     animation-timing-function: linear;
     animation-iteration-count: 1;
 }
+
+.about-links {
+    height: 16px;
+    font-size: 12pt;
+}
+
+.about-link {
+    font-size: 12pt;
+}
+
+#about-db-path-panel {
+    width: 700px;
+    margin: auto;
+    margin-top: 50px;
+    display: none;
+}
+
+#about-addon-db-path-title {
+    text-align: left;
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+#about-addon-db-path-input {
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+#about-db-path-copy-button {
+    margin-left: -20px;
+    margin-bottom: -4px;
+    cursor: pointer;
+}

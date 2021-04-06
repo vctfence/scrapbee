@@ -1,17 +1,18 @@
 import * as org from "./org.js"
-import {partition, loadLocalResource, ReadLine, getFavicon, getThemeVar} from "./utils.js"
 import {backend} from "./backend.js"
 import {nativeBackend} from "./backend_native.js"
 import {settings} from "./settings.js"
-
 import UUID from "./lib/uuid.js";
+
 import {
     CLOUD_EXTERNAL_NAME, CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
     DEFAULT_POSITION, DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME, EVERYTHING, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
-    isContainer,
     NODE_PROPERTIES, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
-    RDF_EXTERNAL_NAME, TODO_NAMES, TODO_STATES
+    RDF_EXTERNAL_NAME, TODO_NAMES, TODO_STATES,
+    isContainer
 } from "./storage_constants.js";
+
+import {partition, ReadLine} from "./utils.js"
 
 const EXPORT_VERSION = 1;
 
@@ -42,8 +43,6 @@ function traverseOrgNode(node, callback) {
 export async function importOrg(shelf, text) {
     await prepareNewImport(shelf);
 
-    let compressed = false; //org_lines.directiveValues["compressed:"] && org_lines.directiveValues["compressed:"] === "t";
-
     let path = shelf === EVERYTHING? []: [shelf];
     let level = 0;
 
@@ -51,8 +50,6 @@ export async function importOrg(shelf, text) {
 
     let importLastObject = async function () {
         if (last_object) {
-            // UUIDs currently aren't accounted
-
             let node;
 
             let notes = last_object.notes;
@@ -227,9 +224,7 @@ export async function importOrg(shelf, text) {
 
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
                     if (last_object.data) {
-                        last_object.data = compressed
-                            ? null //LZString.decompressFromBase64(last_object.data)
-                            : JSON.parse(last_object.data);
+                        last_object.data = JSON.parse(last_object.data);
 
                         if (last_object.byte_length) {
                             last_object.data = backend.blob2Array(last_object);
@@ -238,9 +233,7 @@ export async function importOrg(shelf, text) {
                 }
 
                 if (last_object.notes) {
-                    last_object.notes = compressed
-                        ? null // LZString.decompressFromBase64(last_object.notes)
-                        : JSON.parse(last_object.notes);
+                    last_object.notes = JSON.parse(last_object.notes);
                 }
             }
         }
@@ -263,7 +256,7 @@ export async function importOrg(shelf, text) {
 
 const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id"];
 
-async function objectToProperties(object, compress) {
+async function objectToProperties(object) {
     let lines = [];
     let node = await backend.getNode(object.id);
 
@@ -301,9 +294,7 @@ async function objectToProperties(object, compress) {
             if (blob.byte_length)
                 lines.push(`:byte_length: ${blob.byte_length}`);
 
-            let content = compress
-                ? null //LZString.compressToBase64(blob.data)
-                : JSON.stringify(blob.data);
+            let content = JSON.stringify(blob.data);
 
             lines.push(`:data: ${content}`);
         }
@@ -332,7 +323,7 @@ async function objectToProperties(object, compress) {
     return lines.map(l => " ".repeat(object.level + 3) + l).join(`\n`);
 }
 
-export async function exportOrg(file, nodes, shelf, uuid, shallow = false, compress = false) {
+export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
     let org_lines = [];
 
     if (!shallow)
@@ -344,9 +335,6 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false, compr
 #+UUID: ${uuid}
 #+DATE: ${new Date().toISOString()}
 `);
-
-    if (compress)
-        file.append("#+COMPRESSED: t\n");
 
     file.append("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
 
@@ -377,7 +365,7 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false, compr
         if (!shallow) {
             let props = `
 ${" ".repeat(node.level + 1)}:PROPERTIES:
-${await objectToProperties(node, compress)}
+${await objectToProperties(node)}
 ${" ".repeat(node.level + 1)}:END:`;
             file.append(props);
         }
@@ -620,7 +608,7 @@ export async function importJSON(shelf, file) {
 }
 
 
-async function objectToJSON(object, shallow, compress) {
+async function objectToJSON(object, shallow) {
     let node = await backend.getNode(object.id);
 
     if (node.external === FIREFOX_SHELF_NAME || node.external === CLOUD_EXTERNAL_NAME) {
@@ -657,9 +645,7 @@ async function objectToJSON(object, shallow, compress) {
                 if (blob.byte_length)
                     node.byte_length = blob.byte_length;
 
-                node.data = compress
-                    ? null //LZString.compressToBase64(blob.data)
-                    : blob.data;
+                node.data = blob.data;
             }
         }
 
@@ -681,7 +667,7 @@ async function objectToJSON(object, shallow, compress) {
     return JSON.stringify(node);
 }
 
-export async function exportJSON(file, nodes, shelf, uuid, shallow = false, compress = false) {
+export async function exportJSON(file, nodes, shelf, uuid, shallow = false) {
     let meta = {
         export: "Scrapyard",
         version: EXPORT_VERSION,
@@ -689,9 +675,6 @@ export async function exportJSON(file, nodes, shelf, uuid, shallow = false, comp
         uuid: uuid,
         date: new Date()
     };
-
-    if (compress)
-        meta.compressed = true;
 
     file.append("[" + JSON.stringify(meta) + ",\n");
 

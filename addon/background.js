@@ -206,8 +206,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     }
                 };
 
-                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
-                    settings.compress_export());
+                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export());
 
                 port.postMessage({
                     type: "EXPORT_FINISH"
@@ -235,8 +234,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     }
                 };
 
-                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export(),
-                    settings.compress_export());
+                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export());
 
                 let blob = new Blob(file.content, {type: "text/plain"});
                 let url = URL.createObjectURL(blob);
