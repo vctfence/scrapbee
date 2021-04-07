@@ -189,6 +189,9 @@ function loadHelperAppLinks() {
 async function configureAboutPage() {
     $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);
 
+    if ($("#about-db-path-panel").is(":visible"))
+        return;
+
     let helperApp = await nativeBackend.probe();
 
     if (!helperApp)
