@@ -654,6 +654,31 @@ class BookmarkTree {
                     });
                 }
             },
+            newFolderBelowItem: {
+                label: "New Folder Below",
+                action: function () {
+                    let parent = tree.get_node(ctx_node.parent);
+                    let position = $.inArray(ctx_node.id, parent.children);
+
+                    backend.createGroup(parent.original.id, "New Folder").then(async group => {
+                        BookmarkTree.toJsTreeNode(group);
+                        tree.deselect_all(true);
+
+                        let group_node = tree.get_node(tree.create_node(parent, group, position + 1));
+                        tree.select_node(group_node);
+
+                        await BookmarkTree.reorderNodes(tree, parent);
+
+                        tree.edit(group_node, null, (node, success, cancelled) => {
+                            if (success && !cancelled)
+                                backend.renameGroup(group.id, node.text).then(group => {
+                                    group_node.original.name = group_node.original.text = group.name;
+                                    tree.rename_node(group_node, group.name);
+                                });
+                        });
+                    });
+                }
+            },
             newSeparatorItem: {
                 label: "New Separator",
                 action: function () {
@@ -1036,6 +1061,7 @@ class BookmarkTree {
                 delete items.cutItem;
                 delete items.copyItem;
                 delete items.newSeparatorItem;
+                delete items.newFolderBelowItem;
                 if (ctx_node.original.id == FIREFOX_SHELF_ID) {
                     items = {};
                 }
@@ -1059,6 +1085,7 @@ class BookmarkTree {
                     delete items.renameItem;
                     delete items.deleteItem;
                     delete items.newSeparatorItem;
+                    delete items.newFolderBelowItem;
                 }
                 if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
@@ -1089,7 +1116,7 @@ class BookmarkTree {
 
         if (ctx_node.original.type === NODE_TYPE_SEPARATOR) {
             for (let k in items)
-                if (!["deleteItem"].find(s => s === k))
+                if (!["deleteItem", "newFolderBelowItem"].find(s => s === k))
                     delete items[k];
         }
 
@@ -1099,6 +1126,7 @@ class BookmarkTree {
 
         if (ctx_node.original._extended_todo) {
             delete items.newSeparatorItem;
+            delete items.newFolderBelowItem;
         }
 
         if (multiselect) {
@@ -1110,6 +1138,7 @@ class BookmarkTree {
             items["viewNotesItem"] && (items["viewNotesItem"]._disabled = true);
             items["propertiesItem"] && (items["propertiesItem"]._disabled = true);
             items["newSeparatorItem"] && (items["newSeparatorItem"]._disabled = true);
+            items["newFolderBelowItem"] && (items["newFolderBelowItem"]._disabled = true);
             items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
         }
 
