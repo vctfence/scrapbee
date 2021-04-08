@@ -427,7 +427,7 @@ function parseJSONObject(line) {
     let object;
     line = line.trim();
     try {
-        if (line.endsWith(","))
+        if (line.endsWith(",")) // support for old JSON format files
             object = JSON.parse(line.slice(0, line.length - 1));
         else
             object = JSON.parse(line);
@@ -531,19 +531,19 @@ export async function importJSON(shelf, file) {
     let lines = readline.lines();
     let meta_line = (await lines.next()).value;
 
-    if (!meta_line || !meta_line.startsWith("[{"))
-        return Promise.reject(new Error("invalid JSON formatting"));
+    if (!meta_line)
+        return Promise.reject(new Error("invalid file format"));
 
     let id_map = new Map();
     let first_object = (await lines.next()).value;
 
     if (!first_object)
-        return Promise.reject(new Error("invalid JSON formatting"));
+        return Promise.reject(new Error("invalid file format"));
 
     first_object = parseJSONObject(first_object);
 
     if (!first_object)
-        return Promise.reject(new Error("invalid JSON formatting"));
+        return Promise.reject(new Error("invalid file format"));
 
     let aliased_everything = !first_object.parent_id && shelf !== EVERYTHING;
 
@@ -575,7 +575,7 @@ export async function importJSON(shelf, file) {
     }
 
     for await (let line of lines) {
-        if (line === "]")
+        if (line === "]") // support for the last line in old JSON format files
             break;
 
         let object = parseJSONObject(line);
@@ -676,18 +676,15 @@ export async function exportJSON(file, nodes, shelf, uuid, shallow = false) {
         date: new Date()
     };
 
-    file.append("[" + JSON.stringify(meta) + ",\n");
+    file.append(JSON.stringify(meta) + (nodes.length? "\n": ""));
 
     if (nodes.length) {
         let last = nodes[nodes.length - 1];
 
         for (let node of nodes) {
             let json = await objectToJSON(node, shallow);
-            file.append(json + (node === last ? "\n]" : ",\n"));
+            file.append(json + (node === last? "" : "\n"));
         }
-    }
-    else {
-        file.append("\n]");
     }
 }
 

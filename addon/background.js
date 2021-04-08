@@ -161,7 +161,8 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         case "IMPORT_FILE":
             shelf = isSpecialShelf(message.file_name)? message.file_name.toLocaleLowerCase(): message.file_name;
 
-            let importf = ({"JSON": async () => importJSON(shelf, message.file),
+            let importf = ({"JSONL": async () => importJSON(shelf, message.file),
+                            "JSON": async () => importJSON(shelf, message.file),
                             "ORG":  async () => importOrg(shelf, await readFile(message.file)),
                             "HTML": async () => importHtml(shelf, await readFile(message.file)),
                             "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)})
@@ -179,7 +180,8 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
             let format = settings.export_format()? settings.export_format(): "json";
             let exportf = format === "json"? exportJSON: exportOrg;
-            let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_") + `.${format}`;
+            let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_")
+                          + `.${format == "json"? "jsonl": format}`;
 
             const helperApp = await nativeBackend.probe();
 
