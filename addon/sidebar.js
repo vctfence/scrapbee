@@ -13,12 +13,13 @@ import {
 
 import {pathToNameExt, showNotification} from "./utils.js";
 import {
-    CLOUD_SHELF_ID,
-    CLOUD_SHELF_NAME, DEFAULT_SHELF_ID,
-    DEFAULT_SHELF_NAME, DONE_NAME, DONE_SHELF,
-    EVERYTHING, EVERYTHING_SHELF, FIREFOX_SHELF_ID,
-    FIREFOX_SHELF_NAME,
-    isSpecialShelf, NODE_TYPE_SHELF, TODO_NAME, TODO_SHELF
+    CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
+    DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
+    DONE_NAME, DONE_SHELF,
+    EVERYTHING, EVERYTHING_SHELF,
+    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
+    NODE_TYPE_SHELF, TODO_NAME, TODO_SHELF,
+    isSpecialShelf
 } from "./storage_constants.js";
 
 const INPUT_TIMEOUT = 1000;
@@ -55,7 +56,7 @@ window.onload = function () {
 
     shelf_list.change(function () {
         styleBuiltinShelf();
-        switchShelf(context, tree, this.value);
+        switchShelf(context, tree, this.value, true, true);
     });
 
     $("#shelf-menu-button").click(() => {
@@ -432,11 +433,11 @@ window.onload = function () {
     });
 
     settings.load(() => {
-        loadShelves(context, tree);
+        loadShelves(context, tree, true, true);
     });
 };
 
-function loadShelves(context, tree, synchronize = true) {
+function loadShelves(context, tree, synchronize = true, clearSelection = false) {
     let shelf_list = $("#shelfList");
 
     return backend.listShelves().then(shelves => {
@@ -504,15 +505,15 @@ function loadShelves(context, tree, synchronize = true) {
 
         styleBuiltinShelf();
         shelf_list.selectric('refresh');
-        return switchShelf(context, tree, shelf_list.val(), synchronize);
+        return switchShelf(context, tree, shelf_list.val(), synchronize, clearSelection);
     }).catch(() => {
         shelf_list.val(1);
         shelf_list.selectric('refresh');
-        return switchShelf(context, tree, 1, synchronize);
+        return switchShelf(context, tree, 1, synchronize, clearSelection);
     });
 }
 
-function switchShelf(context, tree, shelf_id, synchronize = true) {
+function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection = false) {
 
     if (settings.last_shelf() != shelf_id) {
         tree.clearIconCache();
@@ -536,17 +537,17 @@ function switchShelf(context, tree, shelf_id, synchronize = true) {
     else {
         if (shelf_id == TODO_SHELF) {
             return backend.listTODO().then(nodes => {
-                tree.list(nodes, TODO_NAME);
+                tree.list(nodes, TODO_NAME, true);
             });
         }
         else if (shelf_id == DONE_SHELF) {
             return backend.listDONE().then(nodes => {
-                tree.list(nodes, DONE_NAME);
+                tree.list(nodes, DONE_NAME, true);
             });
         }
         else if (shelf_id == EVERYTHING_SHELF) {
             return backend.listShelfNodes(EVERYTHING).then(nodes => {
-                tree.update(nodes, true);
+                tree.update(nodes, true, clearSelection);
                 if (synchronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
                 }
@@ -554,7 +555,7 @@ function switchShelf(context, tree, shelf_id, synchronize = true) {
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
             return backend.listShelfNodes(path).then(nodes => {
-                tree.update(nodes);
+                tree.update(nodes, false, clearSelection);
                 if (synchronize && settings.cloud_enabled()) {
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
                 }
@@ -570,13 +571,13 @@ function switchShelf(context, tree, shelf_id, synchronize = true) {
                         node.parent_id = null;
                     }
                 }
-                tree.update(nodes);
+                tree.update(nodes, false, clearSelection);
             });
         }
         else {
             if (path)
                 return backend.listShelfNodes(path).then(nodes => {
-                    tree.update(nodes);
+                    tree.update(nodes, false, clearSelection);
                 });
         }
     }

@@ -169,7 +169,9 @@
     margin-right: auto;
 }
 
-
+.separator-node {
+    font-family: "Courier New", monospace;
+}
 
 .jstree-default .separator-node::before {
     content: "──";

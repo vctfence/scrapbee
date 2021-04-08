@@ -363,7 +363,7 @@ class BookmarkTree {
             BookmarkTree.styleFirefoxFolders(n);
         }
         else if (n.type == NODE_TYPE_SEPARATOR) {
-            n.text = "─".repeat(40);
+            n.text = "─".repeat(60);
             n.icon = false;
             n.a_attr = {
                 "class": "separator-node"
@@ -436,7 +436,7 @@ class BookmarkTree {
         return this._jstree.get_node(this._jstree.get_selected())
     }
 
-    update(nodes, everything = false) {
+    update(nodes, everything = false, clearSelected = false) {
         nodes.forEach(BookmarkTree.toJsTreeNode);
         this.data = nodes;
 
@@ -456,10 +456,13 @@ class BookmarkTree {
         }
 
         this._jstree.refresh(true, () => state? state.state: null);
+
+        if (clearSelected)
+            this._jstree.deselect_all(true);
     }
 
     // Used to make a flat list in the tree-view (e.g. in search)
-    list(nodes, state_key) {
+    list(nodes, state_key, clearSelected = false) {
         if (state_key)
             this.stateKey = TREE_STATE_PREFIX + state_key;
 
@@ -468,6 +471,9 @@ class BookmarkTree {
 
         this.data = nodes;
         this._jstree.refresh(true);
+
+        if (clearSelected)
+            this._jstree.deselect_all(true);
     }
 
     renameRoot(name) {
