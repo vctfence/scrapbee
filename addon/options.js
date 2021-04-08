@@ -197,13 +197,13 @@ async function configureAboutPage() {
     if (!helperApp)
         return;
 
-    const addon_id = browser.runtime.getURL("/").split("/")[2];
-    const url = `http://localhost:${settings.helper_port_number()}/request/idb_path/${addon_id}`;
+    const addonId = browser.runtime.getURL("/").split("/")[2];
+    const url = `http://localhost:${settings.helper_port_number()}/request/idb_path/${addonId}`;
 
     const response = await fetch(url);
     if (response.ok) {
-        const idb_path = await response.text();
-        $("#about-addon-db-path-input").val(idb_path);
+        const idbPath = await response.text();
+        $("#about-addon-db-path-input").val(idbPath);
         $("#about-db-path-panel").show();
         $("#about-db-path-copy-button").on("click", e => {
             navigator.clipboard.writeText($("#about-addon-db-path-input").val());
