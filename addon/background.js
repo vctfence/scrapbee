@@ -4,6 +4,7 @@ import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
+import * as search from "./search.js";
 
 import {
     exportOrg,
@@ -303,5 +304,7 @@ settings.load(async s => {
             console.log("Scrapyard was denied persistent storage permissions");
     })
 });
+
+search.initializeOmnibox();
 
 console.log("==> background.js loaded");

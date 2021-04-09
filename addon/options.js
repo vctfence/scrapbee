@@ -497,9 +497,8 @@ function startCheckLinks() {
                                 let doc = parseHtml(this.responseText);
                                 link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
 
-                                if (link) {
+                                if (link)
                                     link = new URL(link.href, base).toString();
-                                }
                             }
 
                             if (link) {

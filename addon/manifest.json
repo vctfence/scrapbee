@@ -1,5 +1,5 @@
 {
-    "version": "0.8.2",
+    "version": "0.8.3",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -12,7 +12,11 @@
     "homepage_url": "https://gchristensen.github.io/#scrapyard",
     "default_locale": "en",
     "icons": {
-	    "64": "icons/scrapyard.svg"
+        "16": "icons/scrapyard.svg",
+        "24": "icons/scrapyard.svg",
+        "32": "icons/scrapyard.svg",
+	    "64": "icons/scrapyard.svg",
+        "128": "icons/scrapyard.svg"
     },
     "content_security_policy": "script-src 'self'; object-src 'self';",
     "permissions": [
@@ -67,5 +71,8 @@
             "name": "Scrapyard",
             "uriTemplate": "reference.html#%s"
         }
-    ]
+    ],
+    "omnibox": {
+        "keyword": "scr"
+    }
 }

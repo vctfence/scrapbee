@@ -1,6 +1,6 @@
 import {backend} from "./backend.js"
 import {TREE_STATE_PREFIX} from "./tree.js";
-import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
+import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
 
 
 export const SEARCH_MODE_SCRAPYARD = 1;
@@ -21,7 +21,7 @@ export class TitleSearchProvider extends SearchProvider {
         super(shelf)
     }
 
-    search(text) {
+    search(text, limit) {
         let path;
         if (this.shelf !== EVERYTHING)
             path = this.shelf;
@@ -31,6 +31,7 @@ export class TitleSearchProvider extends SearchProvider {
                 search: text,
                 depth: "subtree",
                 path: path,
+                limit: limit,
                 types: ENDPOINT_TYPES
             });
 
@@ -177,3 +178,52 @@ export class SearchContext {
         return this.provider.search(text);
     }
 }
+
+// omnibox ////////////////////////////////////////////////////////////////////
+
+export function initializeOmnibox() {
+    browser.omnibox.setDefaultSuggestion({
+        description: `Search Scrapyard bookmarks by title or URL`
+    });
+
+    const SEARCH_LIMIT = 10;
+    const searchProvider = new TitleSearchProvider(EVERYTHING);
+
+    const makeSuggestion = function(node) {
+        let suggestion = {description: node.name};
+        if (node.type === NODE_TYPE_BOOKMARK)
+            suggestion.content = node.uri;
+        else
+            suggestion.content = "ext+scrapyard://" + node.uuid;
+
+        return suggestion;
+    }
+
+    browser.omnibox.onInputChanged.addListener(async (text, suggest) => {
+        if (text?.length < 3)
+            return;
+
+        let nodes = await searchProvider.search(text, SEARCH_LIMIT);
+
+        suggest(nodes.map(makeSuggestion));
+    });
+
+    browser.omnibox.onInputEntered.addListener((text, disposition) => {
+        let url = text;
+
+        switch (disposition) {
+            case "currentTab":
+                browser.tabs.update({url});
+                break;
+            case "newForegroundTab":
+                browser.tabs.create({url});
+                break;
+            case "newBackgroundTab":
+                browser.tabs.create({url, active: false});
+                break;
+        }
+    });
+}
+
+
+console.log("==> search.js loaded")

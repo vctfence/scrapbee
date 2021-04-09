@@ -47,9 +47,9 @@
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
     <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page fragments or complete documents
-        in unlimited quantities. By utilizing browser local storage Scrapyard does not require
+        in unlimited quantities. By utilizing browser local storage, Scrapyard does not require
         external tools to operate and allows to import/export data in
-        <a href="https://orgmode.org" target="_blank">org-mode</a> or <a href="https://www.json.org/">JSON</a> formats.</p>
+        <a href="https://orgmode.org" target="_blank">org-mode</a> or <a href="https://www.jsonlines.org/">JSON</a> formats.</p>
 
     <h3>Where to Find Scrapyard</h3>
 
@@ -67,7 +67,7 @@
         customizable</a> keyboard shortcut <code>Alt+Y</code> allows to open Scrapyard directly.
     </p>
 
-    <h2>General Features</h2>
+    <h2>Main Features</h2>
 
     <h3>Capturing Pages</h3>
     <p>
@@ -147,10 +147,10 @@
     <h3>Markers</h3>
     <p>Every archived page provides an editing toolbar which offers several types of text markers and also allows
         to clean pages of unnecessary elements by text-selecting and deleting document content or images. Click the "Edit document"
-        button to start page cleaning.
+        button to start page editing.
         It is also possible to type in something, press F7 to display the caret.
         The HTML code of a page may be modified through the browser developer tools accessible
-        by "F12" keyboard key.</p>
+        by the F12 keyboard key.</p>
 
     <p style="text-align: center">
         <img src="images/help/markers.png">
@@ -199,11 +199,11 @@
   }
 &lt;/style&gt;</pre>
 
-                <p>The markup of HTML-formatted notes is accessible through the corresponding
-                editor button: <img src="images/help/edit-markup-button.png" style="display: inline-block">
+    <p>The markup of HTML-formatted notes is accessible through the corresponding
+    editor button: <img src="images/help/edit-markup-button.png" style="display: inline-block">
 
     <p>Notes in Org format may have an automatically generated table of contents.
-        Insert an example markup into the note editor to explore what options are available.</p>
+        Insert the example markup into the note editor to explore what options are available.</p>
 
     <h3>Referencing to a bookmark or archive</h3>
     <p>To make a reference to a Scrapyard bookmark or archive from the note markup create a link with the following URL:
@@ -221,6 +221,23 @@
         <img src="images/help/references.png">
     </p>
 
+    <h3>Search</h3>
+    <p>The search input field at the Scrapyard sidebar allows to filter bookmarks on the current shelf
+        by title/URL, tags or content of the archived pages. Use the "Everything" shelf to search through all
+        bookmarks.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/search-sidebar.png">
+    </p>
+
+    <p>Additionally, it is possible to search through all bookmarks by title or URL from the Firefox
+    URL-bar after entering the special "scr" keyword:</p>
+
+    <p style="text-align: center">
+        <img src="images/help/search-urlbar.png">
+    </p>
+
+
     <h3>Import/Export</h3>
 
     <p>Scrapyard allows to import bookmarks in Netscape HTML format which you may obtain from Firefox, Chrome or other
@@ -230,16 +247,15 @@
         <img src="images/help/impexp.png">
     </p>
 
-    <p>Install Scrapyard helper application if you need to export the large amounts of content.</p>
+    <p>Install Scrapyard helper application if you need to export the large amounts of content (greater than
+        the volume of the available system RAM).</p>
 
     <p>To import legacy ScrapBook RDF archives you also need to install Scrapyard <a href="#helperapp">helper application</a>.
     There are two import modes: quick import which leaves archived Scrapbook files on disk, and the full import, which transfers
     saved pages into Scrapyard database. Some features, such as page editing and transferring/copying of bookmarks are not available
     for the shelves imported in quick mode. See the "Import RDF" tab of the settings page for more details.</p>
 
-    <h2>Advanced features</h2>
-
-    <h3>Text Command Interface (optional)</h3>
+    <h2>Text Command Interface</h2>
     <p>
         It is possible to issue commands to Scrapyard through the text command interface offered by
         <a href="https://gchristensen.github.io/ishell/" target="_blank">iShell Extension</a>.
@@ -248,8 +264,8 @@
     </p>
 
     <h3>The "bookmark" and "archive" Commands</h3>
-    <p>Use the "bookmark" or "archive" commands with the corresponding parameters to bookmark/archive a page into the specified destination.
-        Folders in the path will be created automatically if they do not exist. The first folder in the bookmark path
+    <p>Use the "bookmark" or "archive" commands with the corresponding arguments to bookmark/archive a page into the specified destination.
+        Folders in the path will be autocompleted and created automatically if they do not exist. The first folder in the bookmark path
         is always interpreted as the name of a bookmark shelf. The tilde (~) character may be used in place of the "default" shelf name.
         Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed with the "@" and "@@" shortcuts respectively.</p>
 
@@ -259,7 +275,7 @@
 
     <h3>The "scrapyard" Command</h3>
 
-    <p>The "scrapyard" command allows to browse and filter captured bookmarks. See iShell command help for more details.
+    <p>The "scrapyard" command allows to browse and filter through the collection of bookmarks. See iShell command help for more details.
     </p>
 
     <p style="text-align: center">
