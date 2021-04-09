@@ -3,6 +3,10 @@ function showDlg(name, data, callback) {
         return
     let $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
     $dlg.show();
+
+    if (name === "prompt")
+        setTimeout(() => $("input.dialog-input", $dlg).focus());
+
     data = data || {}
     $dlg.html($dlg.html().replace(/\[([^\[\]]+?)\]/g, function (a, b) {
         return data[b] || ""
@@ -28,7 +32,7 @@ function showDlg(name, data, callback) {
 
     $(".more-properties", $dlg).hide();
 
-
+    // handle bookmark comments
     let comments_icon = $dlg.find("#prop-dlg-comments-icon").first();
     if (comments_icon.length) {
         let comments_container = $dlg.find(" #dlg-comments-container").first();

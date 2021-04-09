@@ -142,6 +142,9 @@ html,body{
     border-radius: 3px !important;
     -moz-appearance: none !important;
 }
+.dlg input.dialog-input, .dlg textarea {
+    outline: none !important;
+}
 .dlg-table{
     display:table;
     overflow:hidden;
