@@ -110,6 +110,10 @@ class IDBStorage {
         return dexie.nodes.where("id").anyOf(ids).toArray();
     }
 
+    getNodeIds() {
+        return dexie.nodes.orderBy("id").keys();
+    }
+
     getExternalNode(id, kind) {
         return dexie.nodes.where("external_id").equals(id).and(n => n.external === kind).first();
     }

@@ -1,8 +1,11 @@
-#treeview {
-    overflow-x: hidden;
+:root {
     --themed-globe-icon: url("/icons/globe.svg");
     --themed-cloud-icon: url("/icons/cloud.svg");
     --themed-cloud-sync-icon: url("/icons/cloud_sync.svg");
+}
+
+#treeview {
+    overflow-x: hidden;
 }
 .jstree-default .jstree-node {
     margin-left: 16px;

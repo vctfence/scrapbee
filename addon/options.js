@@ -104,6 +104,7 @@ function loadScrapyardSettings() {
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
         document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
         document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
+        document.getElementById("option-display-random-bookmark").checked = settings.display_random_bookmark();
         document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
         document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
         document.getElementById("option-export-format").value = _(settings.export_format(), "json");
@@ -156,6 +157,10 @@ function storeScrapyardSettings() {
     settings.export_format(document.getElementById("option-export-format").value);
     settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
     settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
+
+    const displayRandomBookmark = document.getElementById("option-display-random-bookmark").checked;
+    settings.display_random_bookmark(displayRandomBookmark,
+        () => browser.runtime.sendMessage({type: "DISPLAY_RANDOM_BOOKMARK", display: displayRandomBookmark}));
 
     const currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
     const newSidebarTheme = document.getElementById("option-sidebar-theme").value;

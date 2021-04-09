@@ -121,6 +121,10 @@ export async function browseNode(node, external_tab, preserve_history) {
 browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     let shelf;
     switch (message.type) {
+        case "RESEND_MESSAGE":
+            browser.runtime.sendMessage(message.message)
+            break;
+
         case "CREATE_BOOKMARK":
             if (isSpecialPage(message.data.uri)) {
                 notifySpecialPage();

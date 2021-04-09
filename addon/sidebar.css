@@ -452,3 +452,75 @@ a#set-default-icon, a#copy-reference-url {
     text-decoration: none;
 }
 
+#footer {
+    border-top: 1px solid #999;
+    height: 50px;
+    grid-template-columns: auto auto;
+    grid-template-rows: 24px auto;
+    grid-auto-rows: min-content;
+    flex-shrink: 0;
+    display: none;
+}
+
+#footer-title {
+    grid-column: 1 / 1;
+    grid-row: 1 / 1;
+    padding-top: 4px;
+    padding-left: 4px;
+    justify-self: start;
+    font-weight: bold;
+}
+
+#footer-buttons {
+    grid-column: 2 / 2;
+    grid-row: 1 / 1;
+    justify-self: end;
+}
+
+#footer-close-btn, #footer-reload-btn, #footer-find-btn {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+#footer-close-btn {
+    padding-top: 3px;
+}
+
+#footer-reload-btn, #footer-find-btn {
+    font-size: 85%;
+    padding-right: 0;
+}
+
+#footer-content {
+    grid-column: 1 / span 2;
+    grid-row: 2 / 2;
+    align-self: start;
+    padding-top: 2px;
+    padding-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#random-bookmark-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    float: left;
+}
+
+#random-bookmark-link {
+    padding: 0;
+    margin: 0;
+    line-height: 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
