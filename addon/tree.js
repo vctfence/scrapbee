@@ -654,8 +654,8 @@ class BookmarkTree {
                     });
                 }
             },
-            newFolderBelowItem: {
-                label: "New Folder Below",
+            newFolderAfterItem: {
+                label: "New Folder After",
                 action: function () {
                     let parent = tree.get_node(ctx_node.parent);
                     let position = $.inArray(ctx_node.id, parent.children);
@@ -1061,7 +1061,7 @@ class BookmarkTree {
                 delete items.cutItem;
                 delete items.copyItem;
                 delete items.newSeparatorItem;
-                delete items.newFolderBelowItem;
+                delete items.newFolderAfterItem;
                 if (ctx_node.original.id == FIREFOX_SHELF_ID) {
                     items = {};
                 }
@@ -1085,7 +1085,7 @@ class BookmarkTree {
                     delete items.renameItem;
                     delete items.deleteItem;
                     delete items.newSeparatorItem;
-                    delete items.newFolderBelowItem;
+                    delete items.newFolderAfterItem;
                 }
                 if (ctx_node_data.external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
@@ -1116,7 +1116,7 @@ class BookmarkTree {
 
         if (ctx_node.original.type === NODE_TYPE_SEPARATOR) {
             for (let k in items)
-                if (!["deleteItem", "newFolderBelowItem"].find(s => s === k))
+                if (!["deleteItem", "newFolderAfterItem"].find(s => s === k))
                     delete items[k];
         }
 
@@ -1126,7 +1126,7 @@ class BookmarkTree {
 
         if (ctx_node.original._extended_todo) {
             delete items.newSeparatorItem;
-            delete items.newFolderBelowItem;
+            delete items.newFolderAfterItem;
         }
 
         if (multiselect) {
@@ -1138,7 +1138,7 @@ class BookmarkTree {
             items["viewNotesItem"] && (items["viewNotesItem"]._disabled = true);
             items["propertiesItem"] && (items["propertiesItem"]._disabled = true);
             items["newSeparatorItem"] && (items["newSeparatorItem"]._disabled = true);
-            items["newFolderBelowItem"] && (items["newFolderBelowItem"]._disabled = true);
+            items["newFolderAfterItem"] && (items["newFolderAfterItem"]._disabled = true);
             items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
         }
 
