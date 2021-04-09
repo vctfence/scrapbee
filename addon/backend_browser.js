@@ -128,7 +128,7 @@ export class BrowserBackend {
             });
     }
 
-    async createBookmark(parent, node) {
+    async createBookmark(node, parent) {
         if (parent.external === FIREFOX_SHELF_NAME) {
             await this.muteBrowserListeners(async () =>
                 await this.createBrowserBookmark(node, parent.external_id));

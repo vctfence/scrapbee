@@ -28,13 +28,6 @@ class ExternalEventProvider {
         delete this.externalBackends[name];
     }
 
-    async reorderExternalBookmarks(positions) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.reorderBookmarks)
-                await backend.reorderBookmarks(positions)
-        }
-    }
-
     async createExternalBookmarkFolder(node, parent) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.createBookmarkFolder)
@@ -42,10 +35,10 @@ class ExternalEventProvider {
         }
     }
 
-    async createExternalBookmark(parent, node) {
+    async createExternalBookmark(node, parent) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.createBookmark)
-                await backend.createBookmark(parent, node)
+                await backend.createBookmark(node, parent)
         }
     }
 
@@ -81,6 +74,13 @@ class ExternalEventProvider {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.updateBookmark)
                 await backend.updateBookmark(node)
+        }
+    }
+
+    async reorderExternalBookmarks(positions) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.reorderBookmarks)
+                await backend.reorderBookmarks(positions)
         }
     }
 
@@ -645,7 +645,7 @@ export class Backend extends ExternalEventProvider {
 
         await this.storeIcon(node);
 
-        await this.createExternalBookmark(group, node);
+        await this.createExternalBookmark(node, group);
 
         return node;
     }
@@ -697,7 +697,7 @@ export class Backend extends ExternalEventProvider {
 
         let group = await this.getNode(parent_id);
 
-        await this.createExternalBookmark(group, node);
+        await this.createExternalBookmark(node, group);
 
         return node;
     }

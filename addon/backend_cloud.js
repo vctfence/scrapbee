@@ -301,7 +301,7 @@ export class CloudBackend {
         return (await this._provider.getDB(true)).fetchIcon(node);
     }
 
-    async createBookmark(parent, node) {
+    async createBookmark(node, parent) {
         if (!settings.cloud_enabled())
             return;
 
@@ -312,15 +312,15 @@ export class CloudBackend {
         }
     }
 
-    async createBookmarkFolder(node, parent_id) {
+    async createBookmarkFolder(node, parent) {
         if (!settings.cloud_enabled())
             return;
 
-        if (typeof parent_id !== "object")
-            parent_id = await backend.getNode(parent_id);
+        if (typeof parent !== "object")
+            parent = await backend.getNode(parent);
 
-        if (parent_id && parent_id.external === CLOUD_EXTERNAL_NAME) {
-            return this.createBookmark(parent_id, node);
+        if (parent && parent.external === CLOUD_EXTERNAL_NAME) {
+            return this.createBookmark(node, parent);
         }
     }
 

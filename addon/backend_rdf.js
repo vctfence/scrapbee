@@ -91,7 +91,7 @@ class RDFDoc {
         return instance;
     }
 
-    addBookmarkNode(parent, node) {
+    addBookmarkNode(node, parent) {
         let xmlNode = this.doc.createElementNS(this.NS_RDF, "Description");
         xmlNode.setAttributeNS(this.NS_RDF, "about", `urn:scrapbook:item${node.external_id}`);
         xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "id", node.external_id);
@@ -153,8 +153,8 @@ class RDFDoc {
             xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "title", node.name);
     }
 
-    createBookmarkFolder(parent, node) {
-        let xmlNode = this.addBookmarkNode(parent, node);
+    createBookmarkFolder(node, parent) {
+        let xmlNode = this.addBookmarkNode(node, parent);
 
         xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "type", "folder");
         xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "source", "");
@@ -218,7 +218,7 @@ export class RDFBackend {
                 + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2);
     }
 
-    async createBookmark(parent, node) {
+    async createBookmark(node, parent) {
         if (parent.external === RDF_EXTERNAL_NAME) {
             node.external = RDF_EXTERNAL_NAME;
             node.external_id = this.generateScrapbookId();
@@ -226,7 +226,7 @@ export class RDFBackend {
 
             const rdf_doc = await RDFDoc.fromNode(node);
             if (rdf_doc) {
-                rdf_doc.addBookmarkNode(parent, node);
+                rdf_doc.addBookmarkNode(node, parent);
                 await rdf_doc.write();
             }
         }
@@ -298,18 +298,18 @@ export class RDFBackend {
         }
     }
 
-    async createBookmarkFolder(node, parent_id) {
-        if (typeof parent_id !== "object")
-            parent_id = await backend.getNode(parent_id);
+    async createBookmarkFolder(node, parent) {
+        if (typeof parent !== "object")
+            parent = await backend.getNode(parent);
 
-        if (parent_id && parent_id.external === RDF_EXTERNAL_NAME) {
+        if (parent && parent.external === RDF_EXTERNAL_NAME) {
             node.external = RDF_EXTERNAL_NAME;
             node.external_id = this.generateScrapbookId();
             await backend.updateNode(node);
 
             const rdf_doc = await RDFDoc.fromNode(node);
             if (rdf_doc) {
-                rdf_doc.createBookmarkFolder(parent_id, node);
+                rdf_doc.createBookmarkFolder(node, parent);
                 await rdf_doc.write();
             }
         }
