@@ -639,7 +639,7 @@ class BookmarkTree {
                         BookmarkTree.toJsTreeNode(group);
                         tree.deselect_all(true);
 
-                        let group_node = tree.get_node(tree.create_node(ctx_node, group));
+                        let group_node = tree.get_node(tree.create_node(ctx_node, group, 0));
                         tree.select_node(group_node);
 
                         await BookmarkTree.reorderNodes(tree, ctx_node);

@@ -435,8 +435,8 @@ window.onload = function () {
         }
     });
 
-    settings.load(settings => {
-        loadShelves(context, tree, true, true);
+    settings.load(async settings => {
+        await loadShelves(context, tree, true, true);
 
         if (settings.display_random_bookmark())
             displayRandomBookmark();
