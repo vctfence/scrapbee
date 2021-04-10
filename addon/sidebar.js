@@ -19,7 +19,7 @@ import {
     EVERYTHING, EVERYTHING_SHELF,
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
     NODE_TYPE_SHELF, TODO_NAME, TODO_SHELF,
-    isSpecialShelf, isEndpoint, NODE_TYPE_ARCHIVE
+    isSpecialShelf, isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES
 } from "./storage_constants.js";
 
 const INPUT_TIMEOUT = 1000;
@@ -748,22 +748,25 @@ async function displayRandomBookmark() {
         let html = `<i id="random-bookmark-icon"></i><p id="random-bookmark-link">${bookmark.name}</p>`;
         $("#footer-content").html(html);
 
-        $("#random-bookmark-link").prop('title', `${bookmark.name}\x0A${bookmark.uri}`);
+        let icon = bookmark.icon? `url("${bookmark.icon}")`: "var(--themed-globe-icon)";
 
         if (bookmark.type === NODE_TYPE_ARCHIVE)
             $("#random-bookmark-link").css("font-style", "italic");
 
-        let icon = bookmark.icon? `url("${bookmark.icon}")`: "var(--themed-globe-icon)";
+        if (bookmark.type === NODE_TYPE_NOTES) {
+            icon = "var(--themed-notes-icon)";
+            $("#random-bookmark-link").prop('title', `${bookmark.name}`);
+        }
+        else {
+            $("#random-bookmark-link").prop('title', `${bookmark.name}\x0A${bookmark.uri}`);
+        }
 
         if (bookmark.stored_icon) {
             icon = `url("${await backend.fetchIcon(bookmark.id)}")`;
         }
-        else {
+        else if (bookmark.icon) {
             let image = new Image();
-
-            image.onerror = e => {
-                $("#random-bookmark-icon").css("background-image", "var(--themed-globe-icon)");
-            };
+            image.onerror = e => $("#random-bookmark-icon").css("background-image", "var(--themed-globe-icon)");
             image.src = bookmark.icon;
         }
 

@@ -400,7 +400,7 @@ class BookmarkTree {
             }
 
             if (n.type == NODE_TYPE_NOTES) {
-                n.icon = "/icons/notes.svg";
+                n.icon = "var(--themed-notes-icon)";
                 n.li_attr.class += " scrapyard-notes";
             }
 

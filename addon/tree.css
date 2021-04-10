@@ -1,5 +1,6 @@
 :root {
     --themed-globe-icon: url("/icons/globe.svg");
+    --themed-notes-icon: url("/icons/notes.svg");
     --themed-cloud-icon: url("/icons/cloud.svg");
     --themed-cloud-sync-icon: url("/icons/cloud_sync.svg");
 }

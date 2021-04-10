@@ -27,6 +27,7 @@
     --in-content-page-background: var(--tone-7) !important;
 
     --themed-globe-icon: url("icons/globe2.svg") !important;
+    --themed-notes-icon: url("icons/notes2.svg");
 }
 
 .theme-vars {

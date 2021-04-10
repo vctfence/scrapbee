@@ -159,8 +159,9 @@ function storeScrapyardSettings() {
     settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
 
     const displayRandomBookmark = document.getElementById("option-display-random-bookmark").checked;
-    settings.display_random_bookmark(displayRandomBookmark,
-        () => browser.runtime.sendMessage({type: "DISPLAY_RANDOM_BOOKMARK", display: displayRandomBookmark}));
+    if (displayRandomBookmark !== settings.display_random_bookmark())
+        settings.display_random_bookmark(displayRandomBookmark,
+            () => browser.runtime.sendMessage({type: "DISPLAY_RANDOM_BOOKMARK", display: displayRandomBookmark}));
 
     const currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
     const newSidebarTheme = document.getElementById("option-sidebar-theme").value;
