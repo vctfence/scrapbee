@@ -173,7 +173,7 @@ pre.plaintext {
     font-size: 94%;
 }
 
-.content-filler {
+#space-left, #space-right, .content-filler {
     flex: 1;
 }
 

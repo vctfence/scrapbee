@@ -58,6 +58,9 @@ export async function importOrg(shelf, text) {
             let notes_format = last_object.notes_format;
             delete last_object.notes_format;
 
+            let notes_align = last_object.notes_align;
+            delete last_object.notes_align;
+
             let note_lines = last_object.note_lines;
             delete last_object.note_lines;
 
@@ -89,7 +92,7 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotesLowLevel(node.id, JSON.parse(notes), notes_format);
+                await backend.storeNotesLowLevel(node.id, JSON.parse(notes), notes_format, notes_align);
             }
             else if (note_lines.length) {
                 await backend.storeNotesLowLevel(node.id, note_lines.join("\n"));
@@ -307,6 +310,9 @@ async function objectToProperties(object) {
 
             if (notes.format)
                 lines.push(`:notes_format: ${notes.format}`);
+
+            if (notes.align)
+                lines.push(`:notes_align: ${notes.align}`);
         }
     }
 
@@ -473,6 +479,9 @@ async function importJSONObject(object) {
     let notes_format = object.notes_format;
     delete object.notes_format;
 
+    let notes_align = object.notes_align;
+    delete object.notes_align;
+
     let comments = object.comments;
     delete object.comments;
 
@@ -501,7 +510,7 @@ async function importJSONObject(object) {
     }
 
     if (notes) {
-        await backend.storeNotesLowLevel(node.id, notes, notes_format);
+        await backend.storeNotesLowLevel(node.id, notes, notes_format, notes_align);
     }
 
     if (comments) {
@@ -653,6 +662,7 @@ async function objectToJSON(object, shallow) {
             let notes = await backend.fetchNotes(node.id);
             node.notes = notes.content;
             node.notes_format = notes.format;
+            node.notes_align = notes.align;
         }
 
         if (node.has_comments)

@@ -6,7 +6,8 @@ import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
-    isContainer, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, NODE_TYPE_SHELF
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, NODE_TYPE_SHELF,
+    isContainer
 } from "./storage_constants.js";
 
 const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
@@ -150,7 +151,7 @@ export class CloudBackend {
                 if (node.has_notes) {
                     let notes = await backend.fetchNotes(node.id);
                     if (notes)
-                        await this._storeNotesInternal(db, bookmark, notes.content, notes.format);
+                        await this._storeNotesInternal(db, bookmark, notes.content, notes.format, notes.align);
                 }
 
                 if (node.has_comments) {
@@ -180,10 +181,11 @@ export class CloudBackend {
         });
     }
 
-    async _storeNotesInternal(db, node, notes, format) {
+    async _storeNotesInternal(db, node, notes, format, align) {
         let cloud_node = await db.getNode(node.uuid, true);
         cloud_node.has_notes = !!notes;
         cloud_node.notes_format = format;
+        cloud_node.notes_align = align;
         cloud_node = await db.updateNode(cloud_node);
 
         return db.storeNotes(cloud_node, notes);
@@ -197,7 +199,7 @@ export class CloudBackend {
         return db.storeComments(cloud_node, comments);
     }
 
-    async storeBookmarkNotes(node_id, notes, format) {
+    async storeBookmarkNotes(node_id, notes, format, align) {
         if (!settings.cloud_enabled())
             return;
 
@@ -205,7 +207,7 @@ export class CloudBackend {
 
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
-                return this._storeNotesInternal(db, node, notes, format);
+                return this._storeNotesInternal(db, node, notes, format, align);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }
 
@@ -496,6 +498,7 @@ export class CloudBackend {
 
                     if (cc.type === NODE_TYPE_NOTES || cc.has_notes) {
                         node.notes_format = cc.notes_format;
+                        node.notes_align = cc.notes_align;
                         download_notes.push(node);
                     }
 
@@ -553,7 +556,7 @@ export class CloudBackend {
                 for (let notes_node of download_notes) {
                     let notes = await this.fetchCloudNotes(notes_node);
                     if (notes)
-                        await backend.storeNotesLowLevel(notes_node.id, notes, notes_node.notes_format);
+                        await backend.storeNotesLowLevel(notes_node.id, notes, notes_node.notes_format, notes_node.notes_align);
                 }
 
                 for (let comments_node of download_comments) {

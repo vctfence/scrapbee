@@ -494,7 +494,7 @@ export class Backend extends ExternalEventProvider {
                 if (isEndpoint(n) && n.type !== NODE_TYPE_SEPARATOR) {
                     let notes = await this.fetchNotes(old_id);
                     if (notes) {
-                        await this.storeNotesLowLevel(n.id, notes.content, notes.format);
+                        await this.storeNotesLowLevel(n.id, notes.content, notes.format, notes.align);
                         notes = null;
                     }
 
@@ -702,10 +702,10 @@ export class Backend extends ExternalEventProvider {
         return node;
     }
 
-    async storeNotes(node_id, notes, format) {
-        await this.storeNotesLowLevel(node_id, notes, format);
+    async storeNotes(node_id, notes, format, align) {
+        await this.storeNotesLowLevel(node_id, notes, format, align);
 
-        await this.storeExternalNotes(node_id, notes, format);
+        await this.storeExternalNotes(node_id, notes, format, align);
     }
 
     async storeComments(node_id, comments) {

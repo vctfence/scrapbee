@@ -1,9 +1,8 @@
 import {backend} from "./backend.js"
 import * as org from "./org.js"
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
-import {getThemeVar} from "./utils.js";
+import {NODE_TYPE_NOTES} from "./storage_constants.js";
 
-const INPUT_TIMEOUT = 1000;
+const INPUT_TIMEOUT = 5000;
 
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
 #+CSS: p {text-align: justify;}
@@ -200,7 +199,7 @@ From data URL:
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC)
 `;
 
-let MD_DEFAULT_STYLE = `[//]: p {text-align: justify;})`;
+let MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
 
 let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
 let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
@@ -212,24 +211,23 @@ let inline = location.href.split("?");
 inline = inline.length > 1 && inline[1].startsWith("i#");
 
 let format = "html";
+let align;
 
 let editorTimeout;
 
 function editorSaveOnChange(e) {
-    console.log("save on change")
     clearTimeout(editorTimeout);
 
     editorTimeout = setTimeout(() => {
         if (e && node_id) {
-            backend.storeNotes(node_id, e.target.value, format);
+            backend.storeNotes(node_id, e.target.value, format, align);
         }
     }, INPUT_TIMEOUT);
 }
 
 function editorSaveOnBlur(e) {
-    console.log("save on blur")
     if (e && node_id) {
-        backend.storeNotes(node_id, e.target.value, format);
+        backend.storeNotes(node_id, e.target.value, format, align);
         browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
     }
 }
@@ -352,6 +350,10 @@ window.onload = function() {
         }
     }
 
+    function alignNotes() {
+        $("#space-left").css("flex", align === "left"? "0": "1");
+    }
+
     $("#notes").on("click", "a[href^='org-protocol://']", e => {
         e.preventDefault();
         browser.runtime.sendMessage({type: "BROWSE_ORG_REFERENCE", link: e.target.href});
@@ -370,11 +372,13 @@ window.onload = function() {
             browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()});
 
             $("#format-selector").hide();
+            $("#align-selector").show();
             //$("#full-width-container").show()
             formatNotes($("#editor").val(), format);
         }
         else if (e.target.id === "edit-button") {
             $("#format-selector").show();
+            $("#align-selector").hide();
 
             if (format === "html")
                 initWYSIWYG();
@@ -387,7 +391,12 @@ window.onload = function() {
             if (notes) {
                 $("#editor").val(notes.content);
 
-                format = notes.format? notes.format: "org";
+                align = notes.align;
+                if (align)
+                    $("#notes-align").val(align);
+                alignNotes();
+
+                format = notes.format || "org";
                 $("#notes-format").val(format);
 
                 if (format !== "text" && format !== "html")
@@ -401,11 +410,8 @@ window.onload = function() {
             console.log(e)
         });
 
-    $("#editor").on("input", editorSaveOnChange());
-
-    $("#editor").on("blur", e => {
-
-    });
+    $("#editor").on("input", editorSaveOnChange);
+    $("#editor").on("blur", editorSaveOnBlur);
 
     // $("#full-width").on("change", e => {
     //     if ($("#full-width").is(":checked")) {
@@ -447,8 +453,14 @@ window.onload = function() {
         else
             $("#inserts").hide();
 
-        backend.storeNotes(node_id, $("#editor").val(), format);
+        backend.storeNotes(node_id, $("#editor").val(), format, align);
         browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()})
+    });
+
+    $("#notes-align").on("change", e => {
+        align = $("#notes-align").val() === "left"? "left": undefined;
+        alignNotes();
+        backend.storeNotes(node_id, $("#editor").val(), format, align);
     });
 
     $("#close-button").on("click", e => {
