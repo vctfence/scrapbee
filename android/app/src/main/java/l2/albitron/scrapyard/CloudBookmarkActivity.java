@@ -3,7 +3,7 @@ package l2.albitron.scrapyard;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.os.Bundle;
 
 import java.util.Set;
