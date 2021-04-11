@@ -46,60 +46,70 @@
 
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
-    <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page fragments or complete documents
-        in unlimited quantities. By utilizing browser local storage, Scrapyard does not require
-        external tools to operate and allows to import/export data in
-        <a href="https://orgmode.org" target="_blank">org-mode</a> or <a href="https://www.jsonlines.org/">JSON</a> formats.</p>
+    <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page
+        fragments or complete documents in unlimited quantities. By utilizing browser local storage,
+        Scrapyard does not require external tools for basic functionality and allows to
+        import/export data in <a
+            href="https://orgmode.org" target="_blank">org-mode</a> or <a
+            href="https://www.jsonlines.org/">JSON</a> formats. With Scrapyard native helper
+        application it is also possible to import RDF archives of the legacy Firefox ScrapBook
+        extension.</p>
 
     <h3>Where to Find Scrapyard</h3>
 
-    <p>Scrapyard is accessible through the <a href="https://support.mozilla.org/en-US/kb/use-firefox-sidebar-access-bookmarks-history-synced" target="_blank">Firefox sidebar</a>
-        dropdown menu as shown in the image below. The sidebar itself could be opened with the
-        corresponding toolbar button: <img style="display: inline-block" src="images/help/sidebar-button.png">. In the more recent versions
-        of Firefox it may be necessary to add this button to the toolbar manually.</p>
+    <p>Scrapyard is accessible through the dropdown menu of <a
+        href="https://support.mozilla.org/en-US/kb/use-firefox-sidebar-access-bookmarks-history-synced"
+        target="_blank">Firefox sidebar</a> as shown in the image below. The sidebar
+        itself could be opened with the corresponding toolbar button: <img
+            style="display: inline-block" src="images/help/sidebar-button.png">. In the more recent
+        versions of Firefox it may be necessary to add this button to the toolbar manually.</p>
 
     <div style="text-align: center">
         <img src="images/help/find-sidebar.png">
     </div>
 
     <p>
-        Additionally, the <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
-        customizable</a> keyboard shortcut <code>Alt+Y</code> allows to open Scrapyard directly.
+        Additionally, the <code>Alt+Y</code> keyboard shortcut allows to open Scrapyard directly.
+        Keyboard shortcuts provided by any extension could be <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
+        customized</a> in Firefox settings.
     </p>
 
     <h2>Main Features</h2>
 
     <h3>Capturing Pages</h3>
     <p>
-        To capture a web-page or its fragment, select the page part you want to archive, open Scrapyard popup window
-        by clicking the icon on the browser toolbar, choose the destination shelf and folder, then press "Bookmark"
-        or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button stores
-        the current selection, the whole page (if there is no active selection) or the whole document, if the opened
-        link is not a web-page. <br/><br/>
+        To capture a web-page or its fragment, select the part of the page you want to archive, open Scrapyard popup window
+        by clicking its icon on the browser toolbar, choose the destination shelf and folder, then press "Bookmark"
+        or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button captures
+        the current selection, the whole page, if there is no active selection, or the whole document, if the opened
+        link is not a web-page (for example, a PDF file).</p>
 
-    <div style="text-align: center">
+    <p style="text-align: center">
         <img src="images/help/capture-popup.png">
-    </div>
     </p>
+
+    <p>In the bookmark tree, archived pages are marked with the italic font, while ordinary bookmarks have the regular one.</p>
 
     <h3>Bookmark Shelves</h3>
     <p>
         It is possible to create an unlimited amount of bookmark shelves to structure your bookmarks.
-        The shelf named "everything" allows to browse and search through all existing shelves. Scrapyard built-in
+        The shelf named "everything" allows to browse and search through all existing bookmarks. Scrapyard built-in
         shelves are listed in bold font and cannot be deleted or renamed (including the "default" one).</p>
 
     <p style="text-align: center">
         <img src="images/help/shelves.png">
     </p>
 
-    <p>In the bookmark tree archived pages are marked with the italic font, while ordinary bookmarks have the regular one.</p>
+
 
     <h3>Cloud Bookmarking</h3>
     <p>
-        Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available across different
-        Firefox instances that use the same cloud provider. Cloud providers are configurable at the addon settings.
-        <a href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for Android</a>
-        allows to share links and content to the Cloud shelf from mobile devices.
+        Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available
+        across different Firefox instances that use a cloud provider with the same credentials.
+        Cloud providers are configurable at the addon settings (currently, only Dropbox is
+        supported). <a
+        href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
+        Android</a> allows to save links and content into the Cloud shelf from mobile devices.
     </p>
 
     <p style="text-align: center">
@@ -123,15 +133,16 @@
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. You may attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
         they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
-        option in settings is unchecked. Firefox bookmarks are included in the export but are imported
-        as a separate Scrapyard shelf, leaving the current Firefox bookmark state intact.
+        option in settings is unchecked. Firefox bookmarks are included in the export a separate shelf,
+        so import will leave the current Firefox bookmark state intact.
     </p>
+
     <p style="text-align: center">
         <img src="images/help/firefox.png">
     </p>
 
     <h3>TODO</h3>
-    <p>It may be convenient to prioritize your bookmarks for processing. Each bookmark may have one of the following
+    <p>It may be convenient to prioritize your bookmarks for processing with TODO states. Each bookmark may have one of the following
         TODO priorities: TODO, WAITING or POSTPONED. You may find all your prioritized bookmarks
         at the built-in shelf named <b>TODO</b>, sorted in the corresponding order. All bookmarks marked as DONE or CANCELLED
         are displayed at the <b>DONE</b> shelf.</p>
@@ -140,23 +151,21 @@
         <img src="images/help/todo.png">
     </p>
 
-    <p>If the path of a bookmark provides not enough context, it is possible to fill the "Details" and "Date"
-        fields of the bookmark property dialog. Only ISO (YYYY-MM-DD) date format is supported.
+    <p>If the path of a bookmark parent folder above its title provides not enough context, it is possible to fill the "Details" and "Date"
+        fields at the bookmark property dialog. Only ISO (YYYY-MM-DD) date format is supported.
         Expired TODO items will be displayed first regardless of the assigned state.</p>
 
     <h3>Markers</h3>
-    <p>Every archived page provides an editing toolbar which offers several types of text markers and also allows
-        to clean pages of unnecessary elements by text-selecting and deleting document content or images. Click the "Edit document"
-        button to start page editing.
-        It is also possible to type in something, press F7 to display the caret.
-        The HTML code of a page may be modified through the browser developer tools accessible
-        by the F12 keyboard key.</p>
+    <p>Every archived page provides an toolbar which offers several types of text markers to
+        highlight sections of interest. The "Auto open" check makes the marker menu to open
+        automatically when some text is selected. The "Edit document" button allows to clean the
+        document of unnecessary elements by direct editing of its content. It is also possible to
+        type in something, press F7 to display the caret. Alternatively, HTML code of a page may be
+        modified through the browser developer tools accessible through the F12 keyboard key.</p>
 
     <p style="text-align: center">
         <img src="images/help/markers.png">
     </p>
-
-    <p>The "Auto open" check makes the marker menu to open automatically when some text is selected.</p>
 
     <h3>Bookmark Comments</h3>
     <p>While the "Details" field in the bookmark properties is intended for display at the TODO shelf,
@@ -168,7 +177,7 @@
 
     <p>Subsequent clicks on the icon alternate between the comment input field and bookmark properties.</p>
 
-    <p>The comment icon of bookmarks with filled-in input field takes the form of a "lined page".</p>
+    <p>The comment icon of bookmarks with filled-in comments takes the form of a "lined page".</p>
 
     <p style="text-align: center">
         <img src="images/help/filled-comments.png">
@@ -176,26 +185,28 @@
 
     <h3>Notes</h3>
 
-    <p>It is possible to attach more elaborate text notes to every bookmark or even create dedicated note-only bookmarks.
-        Click "Open notes" in the context menu of a bookmark to show its note editor/viewer. Click "New notes"
-        in the context menu of a folder to create a note-only bookmark.
-        Items with non-empty notes are highlighted by the underlined text in the bookmark tree.</p>
+    <p>It is possible to attach more elaborate text notes with hyperlinks and images to every
+        bookmark, or even create dedicated note-only bookmarks. Click "Open notes" in the context
+        menu of a bookmark to show its note editor/viewer. Click "New notes" in the context menu of
+        a folder to create a note-only bookmark. Items with non-empty notes are highlighted by the
+        underlined text in the bookmark tree.</p>
 
     <p style="text-align: center">
         <img src="images/help/notes.png">
     </p>
 
-        <p>By default, notes could be entered in HTML (using a visual editor), and additionally in
+        <p>Notes could be entered in HTML (using a visual editor),
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
         <a href="https://orgmode.org/manual/Markup.html" target="_blank">org-mode markup</a> or plain text.
-            The format selector dropdown list is available at the bottom left corner of the "Edit" tab.</p>
+            The format selector dropdown list is located at the bottom left corner of the "Edit" tab.</p>
 
-    <p>Note alignment selector is placed on the "View" tab. It allows to select overall text
+    <p>The alignment selector, which is placed at the bottom left of the "View" tab, allows to select the overall note
         alignment (left or centered) on per note basis.</p>
 
     <p>A short CSS-style may be placed at the first lines of the notes of any format (except the
         plain text) to modify their appearance. For example, to change the width of HTML-formatted
         notes to 600 pixels, place the following snippet at the beginning of the document markup:</p>
+
 <pre style="font-size: 10pt; padding: 0 36px; font-family: 'Lucida Console', monospace;">&lt;style&gt;
   #notes {width: 600px;}
 &lt;/style&gt;</pre>
@@ -223,8 +234,8 @@
     </p>
 
     <h3>Search</h3>
-    <p>The search input field at the Scrapyard sidebar allows to filter bookmarks on the current shelf
-        by title/URL, tags or content of the archived pages. Use the "Everything" shelf to search through all
+    <p>The search input field at the Scrapyard sidebar allows to filter bookmarks of the current shelf
+        by title/URL, tags, or the content of the archived pages. Use the "Everything" shelf to search through all
         bookmarks.</p>
 
     <p style="text-align: center">
@@ -232,7 +243,7 @@
     </p>
 
     <p>Additionally, it is possible to search through all bookmarks by title or URL from the Firefox
-    URL-bar after entering the special "scr" keyword:</p>
+    URL-bar after entering the special "scr" keyword followed by a space:</p>
 
     <p style="text-align: center">
         <img src="images/help/search-urlbar.png">
@@ -242,8 +253,8 @@
     <h3>Import/Export</h3>
 
     <p>Scrapyard allows to import bookmarks in Netscape HTML format which you may obtain from Firefox, Chrome or other
-    web-browsers. It is also allows to import and export its own collections of bookmarks or archived pages in ORG and
-    JSON formats through the corresponding item in the shelf operations menu:</p>
+    web-browsers. Its own collections of bookmarks and archived pages could be exported or imported in ORG and
+    JSON formats through the corresponding item of the shelf operations menu:</p>
 
     <p style="text-align: center">
         <img src="images/help/impexp.png">
@@ -261,16 +272,60 @@
 
     <h3>Displaying Random Bookmarks</h3>
 
-    <p>Scrapyard can display random bookmarks from your collection at the bottom of the sidebar. To
-        enable this feature check the corresponding option in the settings. New bookmarks could be
-        displayed by a user request or automatically after every 5 minutes. The magnifier button at
-        the bookmark bar shown below selects the current bookmark at the main Scrapyard bookmark
-        tree.</p>
+    <p>Random bookmarks from your collection could be displayed at the bottom of the Scrapyard sidebar.
+        To enable this feature check the corresponding option in the settings. The displayed
+        bookmark is refreshed every 5 minutes, it also could be updated by a user request through
+        the "Refresh" button. The magnifier button at the bookmark bar shown below selects the
+        current bookmark at the Scrapyard sidebar by opening the shelf and folder in which it is located.</p>
 
     <p style="text-align: center">
         <img src="images/help/random-bookmark.png">
     </p>
 
+    <h2>Saving Links and Content from Mobile Applications</h2>
+
+    <p> <a href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
+        Android</a> allows to save links and content into the Scrapyard Cloud shelf from mobile devices.
+        It uses standard Android sharing functionality to achieve this, which may be tricky to deal
+        with, as it is shown in the examples below.</p>
+
+    <p>At first, you need to enable cloud support in Scrapyard itself by
+        checking the corresponding option at the "Cloud" setting tab and sign into Dropbox.</p>
+
+    <p>Then you need to install the Scrapyard application on your device and sign into the same Dropbox
+    account from its front window.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/android-sign-in.png">
+    </p>
+
+    <p>To share a link from the application of choice, find and tap the "Share" button or menu item in it.
+    The example below highlights the "Share" button in the mobile Firefox application.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/android-share-link.png">
+    </p>
+
+    <p>After that you need to select the destination application to send URL into. The interface may
+        differ from app to app, and you may need to scroll or press additional buttons to find the
+        necessary sharing destination. The icon of the Scrapyard Android application is highlighted
+        on the image below. Tap on it and you are done.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/android-share-app.png">
+    </p>
+
+    <p>Sharing of text is usually performed from the corresponding selection toolbar:</p>
+
+    <p style="text-align: center">
+        <img src="images/help/android-share-text.png">
+    </p>
+
+    <p>
+        It is only possible to share plain text without links and images from Android platform.
+        Generally, selected text is shared to Scrapyard in the form of notes without any source URL.
+        To save source URL share text from the Pocket app.
+    </p>
 
     <h2>Text Command Interface</h2>
     <p>
@@ -281,10 +336,14 @@
     </p>
 
     <h3>The "bookmark" and "archive" Commands</h3>
-    <p>Use the "bookmark" or "archive" commands with the corresponding arguments to bookmark/archive a page into the specified destination.
-        Folders in the path will be autocompleted and created automatically if they do not exist. The first folder in the bookmark path
-        is always interpreted as the name of a bookmark shelf. The tilde (~) character may be used in place of the "default" shelf name.
-        Contents of Firefox "Bookmarks Menu" and "Other Bookmarks" may be accessed with the "@" and "@@" shortcuts respectively.</p>
+
+    <p>Use the "bookmark" or "archive" commands with the corresponding arguments to bookmark/archive
+        a page into the specified destination. The arguments allow to specify bookmark title,
+        details, path, tags, TODO state and expiration date. Folders in the bookmark path will be
+        autocompleted by iShell and created if they do not exist. The first folder in the path is
+        always interpreted as a shelf name. The tilde (~) character may be used in place of the
+        "default" shelf. Contents of the Firefox "Bookmarks Menu" and "Other Bookmarks" bookmark
+        folders may be accessed with the "@" and "@@" shortcuts respectively.</p>
 
     <p style="text-align: center">
         <img src="images/help/capture-nl.png">
@@ -292,7 +351,8 @@
 
     <h3>The "scrapyard" Command</h3>
 
-    <p>The "scrapyard" command allows to browse and filter through the collection of bookmarks. See iShell command help for more details.
+    <p>The "scrapyard" command allows to browse and search through the collection of bookmarks at
+        the specified destination. See iShell command help for more details.
     </p>
 
     <p style="text-align: center">
@@ -302,9 +362,9 @@
     <h3>Creating Custom Capture Commands</h3>
 
     <p>If you often save bookmarks with similar properties to the same destination, it is possible to create custom
-        capture commands with predefined parameters. "CAPTURE" link at the bottom-right corner of iShell command editor allows
+        capture commands with predefined parameters. The "CAPTURE" link at the bottom-right corner of iShell command editor allows
         to insert a template of a such command. In addition to the predefined parameters, custom capture commands allow to
-        specify (comma-separated) CSS selectors for elements that will only be retained or deleted automatically.
+        specify comma-separated CSS selectors for elements that will only be retained or deleted automatically.
         A custom CSS-style could be inserted into the captured document through the "style" option.</p>
 
     <p style="text-align: center">
