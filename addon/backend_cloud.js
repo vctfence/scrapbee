@@ -578,7 +578,7 @@ export class CloudBackend {
                     let data = await this.fetchCloudData(archive);
 
                     if (data) {
-                        await backend.storeBlobLowLevel(archive.id, data, archive.content_type);
+                        await backend.storeBlobLowLevel(archive.id, data, archive.content_type, archive.byte_length);
 
                         if (!archive.byte_length)
                             await backend.storeIndex(archive.id, data.indexWords());

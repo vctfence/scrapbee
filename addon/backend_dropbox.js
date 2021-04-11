@@ -108,7 +108,7 @@ export class DropboxBackend {
                         path: `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`
                     });
 
-                    return readBlob(fileBlob);
+                    return readBlob(fileBlob, node.byte_length? "binary": "string");
                 }
                 catch (e) {
                     console.log(e);
