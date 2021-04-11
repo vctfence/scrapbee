@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.json.JsonReadException;
+import com.dropbox.core.oauth.DbxCredential;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.DownloadErrorException;
 import com.dropbox.core.v2.files.FileMetadata;
@@ -33,15 +35,16 @@ public class DropboxProvider implements CloudProvider {
 
     DbxClientV2 client;
 
-    DropboxProvider(Context context) throws DropboxNotAuthorizedException {
+    DropboxProvider(Context context) throws DropboxNotAuthorizedException, JsonReadException {
         SharedPreferences prefs = context.getSharedPreferences(Scrapyard.MAIN_PREFERENCES, MODE_PRIVATE);
 
-        String dropboxToken =
+        String credentialStr =
             prefs.getString(Scrapyard.PREF_DROPBOX_AUTH_TOKEN, null);
 
-        if (dropboxToken != null && !dropboxToken.isEmpty()) {
+        if (credentialStr != null && !credentialStr.isEmpty()) {
             DbxRequestConfig config = DbxRequestConfig.newBuilder("Scrapyard").build();
-            client = new DbxClientV2(config, dropboxToken);
+            DbxCredential credential = DbxCredential.Reader.readFully(credentialStr);
+            client = new DbxClientV2(config, credential);
         }
         else
             throw new DropboxNotAuthorizedException();

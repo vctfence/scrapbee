@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
 
+import com.dropbox.core.json.JsonReadException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 
@@ -24,7 +26,7 @@ public class CloudBackend {
     Context context;
     CloudProvider provider;
 
-    public CloudBackend(Context context) throws CloudNotAuthorizedException {
+    public CloudBackend(Context context) throws CloudNotAuthorizedException, JsonReadException {
         this.context = context;
         this.provider = new DropboxProvider(context);
     }
@@ -35,7 +37,7 @@ public class CloudBackend {
         BookmarkRecord targetGroup = !StringUtils.isBlank(path)
             ? db.getOrCreateGroup(path)
             : null;
-        
+
         Long parentId = targetGroup == null? Scrapyard.CLOUD_SHELF_ID: targetGroup.id;
 
         BookmarkRecord bookmark = new BookmarkRecord();

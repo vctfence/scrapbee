@@ -18,7 +18,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.android.Auth;
+import com.dropbox.core.oauth.DbxCredential;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,7 +114,9 @@ public class MainActivity extends AppCompatActivity
         }
         else {
             authorizingDropbox = true;
-            Auth.startOAuth2Authentication(this, getString(R.string.dropboxAPIKey));
+            DbxRequestConfig reqestConfig =
+                DbxRequestConfig.newBuilder("Scrapyard").build();
+            Auth.startOAuth2PKCE(this, getString(R.string.dropboxAPIKey), reqestConfig);
         }
     }
 
@@ -124,12 +128,14 @@ public class MainActivity extends AppCompatActivity
             authorizingDropbox = false;
 
             Button signInDropBox = findViewById(R.id.btnSignInDropbox);
-            String dropboxToken = Auth.getOAuth2Token();
+
+            DbxCredential credential = Auth.getDbxCredential();
+
             SharedPreferences.Editor editor =
                 getSharedPreferences(Scrapyard.MAIN_PREFERENCES, MODE_PRIVATE).edit();
 
-            if (dropboxToken != null && !dropboxToken.isEmpty()) {
-                editor.putString(Scrapyard.PREF_DROPBOX_AUTH_TOKEN, dropboxToken);
+            if (credential != null) {
+                editor.putString(Scrapyard.PREF_DROPBOX_AUTH_TOKEN, credential.toString());
                 editor.apply();
                 signInDropBox.setText(getString(R.string.signOut));
             } else

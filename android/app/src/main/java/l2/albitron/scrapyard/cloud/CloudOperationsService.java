@@ -102,7 +102,7 @@ public class CloudOperationsService extends IntentService {
     }
 
     protected static int createSharingNotification(Context context) {
-        int id = random.nextInt(Integer.MAX_VALUE);
+        int id = 42; //random.nextInt(Integer.MAX_VALUE);
 
         NotificationCompat.Builder builder =
             new NotificationCompat.Builder(context, Scrapyard.APP_NAME)
