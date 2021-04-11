@@ -125,7 +125,7 @@ window.onload = function () {
             type: NODE_TYPE_GROUP,
             icon: "icons/group.svg",
             li_attr: {"class": "scrapyard-group"}
-        });
+        }, 0);
 
         tree._jstree.deselect_all();
         tree._jstree.select_node(node);
