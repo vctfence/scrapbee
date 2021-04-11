@@ -116,8 +116,11 @@ function loadScrapyardSettings() {
         $("#option-enable-cloud").on("change", e => {
             settings.cloud_enabled(e.target.checked,
                 async () => {
-                    if (e.target.checked)
-                        await cloudBackend.authenticate();
+                    if (e.target.checked) {
+                        const success = await cloudBackend.authenticate();
+                        if (success)
+                            $("#auth-dropbox").val("Sign out");
+                    }
                     browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"})
                 });
         });

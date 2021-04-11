@@ -2,8 +2,6 @@ import {backend} from "./backend.js"
 import * as org from "./org.js"
 import {NODE_TYPE_NOTES} from "./storage_constants.js";
 
-const INPUT_TIMEOUT = 5000;
-
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
 #+CSS: p {text-align: justify;}
 
@@ -201,6 +199,8 @@ From data URL:
 
 let MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
 
+const INPUT_TIMEOUT = 5000;
+
 let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
 let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
 
@@ -212,6 +212,8 @@ inline = inline.length > 1 && inline[1].startsWith("i#");
 
 let format = "html";
 let align;
+
+let wysiwyg;
 
 let editorTimeout;
 
@@ -233,7 +235,7 @@ function editorSaveOnBlur(e) {
 }
 
 function initWYSIWYG() {
-    $('#editor').trumbowyg({
+    let editor = $('#editor').trumbowyg({
         autogrow: false,
         btns: [
             ['viewHTML'],
@@ -253,9 +255,14 @@ function initWYSIWYG() {
             ['table'],
             ['removeformat']
         ]
-    })
-    .on('tbwchange', editorSaveOnChange)
-    .on('tbwblur', editorSaveOnBlur);
+    });
+
+    if (!wysiwyg) {
+        editor.on('tbwchange', editorSaveOnChange)
+        editor.on('tbwblur', editorSaveOnBlur);
+    }
+
+    wysiwyg = true;
 }
 
 function clearWYSIWYG() {

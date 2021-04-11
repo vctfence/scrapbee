@@ -21,7 +21,7 @@ export class CloudBackend {
         switch (provider) {
             default:
                 this._provider = dropboxBackend;
-                this.getLastModified = this._provider.getLastModified;
+                this.getLastModified = () => this._provider.getLastModified();
         }
     }
 
@@ -208,7 +208,7 @@ export class CloudBackend {
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
                 return this._storeNotesInternal(db, node, notes, format, align);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+            });
     }
 
     async storeBookmarkComments(node_id, comments) {
@@ -220,7 +220,7 @@ export class CloudBackend {
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
                 return this._storeCommentsInternal(db, node, comments);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+            });
     }
 
     async fetchCloudNotes(node) {
@@ -292,7 +292,7 @@ export class CloudBackend {
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
                 return this._storeDataInternal(db, node, data, content_type);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+            });
     }
 
     async fetchCloudData(node) {
@@ -401,7 +401,7 @@ export class CloudBackend {
                     } else
                         await this._createBookmarkInternal(db, n, dest.external_id)
                 }
-            });
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
         else {
             return Promise.all(cloud_nodes.map(async n => {
@@ -438,12 +438,12 @@ export class CloudBackend {
                 for (let n of nodes) {
                     await db.updateNode({uuid: n.uuid, pos: n.pos}, true);
                 }
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+            });
         }
     }
 
     // should only be called in the background script through message
-    async reconcileCloudBookmarksDB() {
+    async reconcileCloudBookmarksDB(verbose) {
         let cloud_ids = [];
         let begin_time = new Date().getTime();
         let db_pool = new Map();
@@ -530,7 +530,16 @@ export class CloudBackend {
                 try {await browser.runtime.sendMessage({type: "SHELVES_CHANGED"})} catch (e) {console.log(e)}
             }
 
-            let cloud_last_modified = await this.getLastModified();
+            let cloud_last_modified;
+
+            try {
+                cloud_last_modified = await this.getLastModified();
+            }
+            catch (e) {
+                if (verbose)
+                    showNotification(CLOUD_ERROR_MESSAGE);
+                return;
+            }
 
             if (db_root.date_modified && cloud_last_modified
                 && db_root.date_modified.getTime() === cloud_last_modified.getTime())

@@ -277,7 +277,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             break;
         case "RECONCILE_CLOUD_BOOKMARK_DB":
             settings.load(s => {
-                cloudBackend.reconcileCloudBookmarksDB();
+                cloudBackend.reconcileCloudBookmarksDB(message.verbose);
             });
             break;
 

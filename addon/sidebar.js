@@ -563,7 +563,7 @@ function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection
             return backend.listShelfNodes(path).then(nodes => {
                 tree.update(nodes, false, clearSelection);
                 if (synchronize && settings.cloud_enabled()) {
-                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
+                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB", verbose: true});
                 }
             });
         }
