@@ -327,10 +327,6 @@ select{
 }
 
 
-.archive-node {
-    font-style: italic;
-}
-
 #main-controls {
 	width: 100%;
 	display:flex;

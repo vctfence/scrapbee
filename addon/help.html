@@ -52,7 +52,7 @@
         import/export data in <a
             href="https://orgmode.org" target="_blank">org-mode</a> or <a
             href="https://www.jsonlines.org/">JSON</a> formats. With Scrapyard native helper
-        application it is also possible to import RDF archives of the legacy Firefox ScrapBook
+        application it is possible to import RDF archives of the legacy Firefox ScrapBook
         extension.</p>
 
     <h3>Where to Find Scrapyard</h3>
@@ -107,10 +107,15 @@
         Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available
         across different Firefox instances that use a cloud provider with the same credentials.
         Cloud providers are configurable at the addon settings (currently, only Dropbox is
-        supported). <a
+        supported).</p>
+
+    <p><a
         href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
         Android</a> allows to save links and content into the Cloud shelf from mobile devices.
+        Versions of Android 5 and above are supported. Currently the archived content and
+        notes are not accessible from Android, only bookmark or archive original links could be opened.
     </p>
+
 
     <p style="text-align: center">
         <img src="images/help/cloud.png">
@@ -274,8 +279,8 @@
         for more details about the available import options.</p>
 
         <p>Shelves imported in quick mode are marked with a tape reel icon. It is possible to add
-            new archives to them (added bookmarks are not included into the underlying RDF file),
-            and physically delete RDF entries along with its files. Although, when the entire shelf
+            new archives to them (simple bookmarks are not included into the underlying RDF file),
+            and physically delete RDF entries along with attached files. But when the entire shelf
             is deleted from Scrapyard, the corresponding RDF file and the archived pages are left intact.
             Some features, such as page editing and bookmark transferring/copying are not available for
             the shelves imported in quick mode.</p>
@@ -357,7 +362,7 @@
     <p>Use the "bookmark" or "archive" commands with the corresponding arguments to bookmark/archive
         a page into the specified destination. The arguments allow to specify bookmark title,
         details, path, tags, TODO state and expiration date. Folders in the bookmark path will be
-        autocompleted by iShell and created if they do not exist. The first folder in the path is
+        autocompleted by iShell and created in Scrapyard if they do not exist. The first folder in the path is
         always interpreted as a shelf name. The tilde (~) character may be used in place of the
         "default" shelf. Contents of the Firefox "Bookmarks Menu" and "Other Bookmarks" bookmark
         folders may be accessed with the "@" and "@@" shortcuts respectively.</p>

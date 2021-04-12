@@ -269,6 +269,10 @@
 }
 
 
+.archive-node {
+    font-style: italic;
+}
+
 a.has-notes, a.has-notes:hover {
     text-decoration: underline;
 }
