@@ -1,10 +1,13 @@
 package l2.albitron.scrapyard.cloud;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,16 +20,17 @@ import l2.albitron.scrapyard.MainActivity;
 import l2.albitron.scrapyard.R;
 import l2.albitron.scrapyard.Scrapyard;
 
-
 public class CloudOperationsService extends IntentService {
     private static Random random = new Random();
 
     private static final String ACTION_SHARE = "l2.albitron.scrapyard.cloud.action.SHARE";
 
-    private static final String NOTIFICATION_ID = "l2.albitron.scrapyard.cloud.extra.NOTIFICATION_ID";
     public static final String EXTRA_REFERRER = "l2.albitron.scrapyard.cloud.extra.REFERRER";
     public static final String EXTRA_CONTENT_TYPE = "l2.albitron.scrapyard.cloud.extra.CONTENT_TYPE";
     public static final String EXTRA_EXTRAS = "l2.albitron.scrapyard.cloud.extra.EXTRAS";
+
+    final static int NOTIFICATION_ID = 42;
+    final static String CHANNEL_ID = "notifications-scrapyard";
 
     public CloudOperationsService() {
         super("CloudOperationsService");
@@ -34,15 +38,17 @@ public class CloudOperationsService extends IntentService {
     }
 
     public static void startCloudSharing(Context context, String referrer, String content_type, Bundle extras) {
-        Integer notification_id = createSharingNotification(context);
-
         Intent intent = new Intent(context, CloudOperationsService.class);
         intent.setAction(ACTION_SHARE);
-        intent.putExtra(NOTIFICATION_ID, notification_id);
         intent.putExtra(EXTRA_REFERRER, referrer);
         intent.putExtra(EXTRA_CONTENT_TYPE, content_type);
         intent.putExtra(EXTRA_EXTRAS, extras);
-        context.startService(intent);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
     }
 
     @Override
@@ -50,16 +56,34 @@ public class CloudOperationsService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_SHARE.equals(action)) {
-                final Integer notification_id = intent.getIntExtra(NOTIFICATION_ID, 0);
-                final String referrer = intent.getStringExtra(EXTRA_REFERRER);
-                final String content_type = intent.getStringExtra(EXTRA_CONTENT_TYPE);
-                final Bundle extras = (Bundle)intent.getExtras().get(EXTRA_EXTRAS);
-                handleCloudSharing(notification_id, referrer, content_type, extras);
+                NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+                Notification notification = createSharingNotification(getApplicationContext());
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    startForeground(NOTIFICATION_ID, notification);
+                else
+                    notificationManager.notify(NOTIFICATION_ID, notification);
+
+                try {
+                    final String referrer = intent.getStringExtra(EXTRA_REFERRER);
+                    final String content_type = intent.getStringExtra(EXTRA_CONTENT_TYPE);
+                    final Bundle extras = (Bundle) intent.getExtras().get(EXTRA_EXTRAS);
+                    handleCloudSharing(referrer, content_type, extras);
+                }
+                finally {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                        stopForeground(true);
+                    else {
+                        notificationManager.cancel(NOTIFICATION_ID);
+                    }
+                }
             }
         }
     }
 
-    private void handleCloudSharing(Integer notification_id, String referrer, String content_type, Bundle extras) {
+    private void handleCloudSharing(String referrer, String content_type, Bundle extras) {
         try {
             CloudBackend backend = new CloudBackend(this);
 
@@ -94,16 +118,9 @@ public class CloudOperationsService extends IntentService {
                 getString(R.string.errorAccessingCloud),
                 Toast.LENGTH_SHORT).show());
         }
-        finally {
-            NotificationManager notificationManager =
-                (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.cancel(notification_id);
-        }
     }
 
-    protected static int createSharingNotification(Context context) {
-        int id = 42; //random.nextInt(Integer.MAX_VALUE);
-
+    protected static Notification createSharingNotification(Context context) {
         NotificationCompat.Builder builder =
             new NotificationCompat.Builder(context, Scrapyard.APP_NAME)
                 .setSmallIcon(R.drawable.ic_notification)
@@ -112,8 +129,14 @@ public class CloudOperationsService extends IntentService {
 
         NotificationManager notificationManager =
             (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(id, builder.build());
 
-        return id;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,"Scrapyard",
+                NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+            builder.setChannelId(CHANNEL_ID);
+        }
+
+        return builder.build();
     }
 }
