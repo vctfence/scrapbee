@@ -207,8 +207,9 @@ export class DropboxBackend {
         }
         catch (e) {
             console.log(e);
-            throw e;
         }
+
+        return null;
     }
 }
 

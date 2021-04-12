@@ -576,7 +576,10 @@ class BookmarkTree {
             selected_ids = marked_nodes.filter(n => isEndpoint(n.original))
                 .map(n => parseInt(n.id));
 
-            selected_ids.forEach(n => todo_states.push({id: n, todo_state: state}));
+            selected_nodes = marked_nodes.filter(n => selected_ids.some(id => id === n.original.id))
+                .map(n => n.original);
+
+            selected_nodes.forEach(n => todo_states.push({id: n.id, uuid: n.uuid, external: n.external, todo_state: state}));
 
             backend.setTODOState(todo_states).then(() => {
                 selected_ids.forEach(id => {
@@ -991,22 +994,32 @@ class BookmarkTree {
                         let properties = await backend.getNode(ctx_node_data.id);
 
                         properties.comments = await backend.fetchComments(properties.id);
+                        let commentsPresent = !!properties.comments;
 
-                        showDlg("properties", properties).then(async properties => {
+                        showDlg("properties", properties).then(async newPproperties => {
+
+                            Object.assign(properties, newPproperties);
 
                             if (!properties.icon) {
                                 properties.icon = null;
                                 properties.stored_icon = false;
                             }
 
+                            self.startProcessingIndication();
+
                             properties.has_comments = !!properties.comments;
-                            await backend.storeComments(ctx_node_data.id, properties.comments);
+
+                            if (commentsPresent || properties.has_comments) {
+                                await backend.storeComments(properties.id, properties.comments);
+                            }
                             delete properties.comments;
 
-                            let live_data = all_nodes.find(n => n.id == ctx_node_data.id);
+                            let live_data = all_nodes.find(n => n.id == properties.id);
                             Object.assign(live_data, properties);
 
-                            await backend.updateBookmark(Object.assign(ctx_node_data, properties));
+                            Object.assign(ctx_node_data, properties);
+
+                            self.stopProcessingIndication();
 
                             if (!ctx_node_data._extended_todo) {
                                 tree.rename_node(ctx_node, ctx_node_data.name);

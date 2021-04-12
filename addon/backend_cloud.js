@@ -123,13 +123,22 @@ export class CloudBackend {
     async updateBookmark(node) {
         if (settings.cloud_enabled() && node.external === CLOUD_EXTERNAL_NAME) {
             return this.withCloudDB(async db => {
-                let cloud_node = await db.getNode(node.uuid, true);
-                node = Object.assign({}, node);
-
-                if (!cloud_node.stored_icon)
-                    delete node.stored_icon;
-
                 return db.updateNode(node);
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+        }
+    }
+
+    async updateBookmarks(nodes) {
+        if (!settings.cloud_enabled())
+            return;
+
+        let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+
+        if (cloud_nodes.length) {
+            return this.withCloudDB(async db => {
+                for (let node of cloud_nodes) {
+                    await db.updateNode(node);
+                }
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
     }
@@ -157,7 +166,7 @@ export class CloudBackend {
                 if (node.has_comments) {
                     let comments = await backend.fetchComments(node.id);
                     if (comments)
-                        await this._storeCommentsInternal(db, bookmark, comments);
+                        await this._storeCommentsInternal(bookmark, comments);
                 }
 
                 if (node.type === NODE_TYPE_ARCHIVE) {
@@ -191,12 +200,9 @@ export class CloudBackend {
         return db.storeNotes(cloud_node, notes);
     }
 
-    async _storeCommentsInternal(db, node, comments) {
-        let cloud_node = await db.getNode(node.uuid, true);
-        cloud_node.has_comments = !!comments;
-        cloud_node = await db.updateNode(cloud_node);
-
-        return db.storeComments(cloud_node, comments);
+    async _storeCommentsInternal(node, comments) {
+        let db = await this._provider.getDB(true);
+        return db.storeComments(node, comments);
     }
 
     async storeBookmarkNotes(node_id, notes, format, align) {
@@ -218,9 +224,7 @@ export class CloudBackend {
         let node = await backend.getNode(node_id);
 
         if (node.external === CLOUD_EXTERNAL_NAME)
-            await this.withCloudDB(async db => {
-                return this._storeCommentsInternal(db, node, comments);
-            });
+            return this._storeCommentsInternal(node, comments);
     }
 
     async fetchCloudNotes(node) {
@@ -530,16 +534,7 @@ export class CloudBackend {
                 try {await browser.runtime.sendMessage({type: "SHELVES_CHANGED"})} catch (e) {console.log(e)}
             }
 
-            let cloud_last_modified;
-
-            try {
-                cloud_last_modified = await this.getLastModified();
-            }
-            catch (e) {
-                if (verbose)
-                    showNotification(CLOUD_ERROR_MESSAGE);
-                return;
-            }
+            let cloud_last_modified = await this.getLastModified();
 
             if (db_root.date_modified && cloud_last_modified
                 && db_root.date_modified.getTime() === cloud_last_modified.getTime())

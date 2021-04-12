@@ -42,8 +42,11 @@ export class JSONStorage {
             if (node[key] === 0 && JSON_PROPERTIES.some(k => k === key))
                 continue;
 
-            if (!node[key] || !JSON_PROPERTIES.some(k => k === key))
+            console.log(key, node[key])
+            if (!node[key] || !JSON_PROPERTIES.some(k => k === key)) {
                 delete node[key];
+                console.log("deleted %s", key);
+            }
         }
 
         return node;
@@ -104,7 +107,7 @@ export class JSONStorage {
 
     async updateNode(node, update_pos = false) {
         if (node) {
-            node = this._sanitizeNode(node);
+            node = Object.assign({}, node);
 
             delete node.id;
             delete node.parent_id;
@@ -115,11 +118,14 @@ export class JSONStorage {
                 delete node.pos;
 
             let existing = this.objects.find(n => n.uuid === node.uuid);
+            let index = this.objects.indexOf(existing);
 
             if (existing) {
                 existing = Object.assign(existing, node);
+                existing = this._sanitizeNode(existing);
                 existing.date_added = this._sanitizeDate(existing.date_added);
                 existing.date_modified = new Date().getTime();
+                this.objects[index] = existing;
                 return existing;
             }
         }

@@ -31,56 +31,63 @@ class ExternalEventProvider {
     async createExternalBookmarkFolder(node, parent) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.createBookmarkFolder)
-                await backend.createBookmarkFolder(node, parent)
+                await backend.createBookmarkFolder(node, parent);
         }
     }
 
     async createExternalBookmark(node, parent) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.createBookmark)
-                await backend.createBookmark(node, parent)
+                await backend.createBookmark(node, parent);
         }
     }
 
     async renameExternalBookmark(node) {
         for (let backend of Object.values(this.externalBackends)) {
             if (await backend.renameBookmark)
-                await backend.renameBookmark(node)
+                await backend.renameBookmark(node);
         }
     }
 
     async moveExternalBookmarks(nodes, dest_id) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.moveBookmarks)
-                await backend.moveBookmarks(nodes, dest_id)
+                await backend.moveBookmarks(nodes, dest_id);
         }
     }
 
     async copyExternalBookmarks(nodes, dest_id) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.copyBookmarks)
-                await backend.copyBookmarks(nodes, dest_id)
+                await backend.copyBookmarks(nodes, dest_id);
         }
     }
 
     async deleteExternalBookmarks(nodes) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.deleteBookmarks)
-                await backend.deleteBookmarks(nodes)
+                await backend.deleteBookmarks(nodes);
         }
     }
 
     async updateExternalBookmark(node) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.updateBookmark)
-                await backend.updateBookmark(node)
+                await backend.updateBookmark(node);
+        }
+    }
+
+    async updateExternalBookmarks(nodes) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.updateBookmarks)
+                await backend.updateBookmarks(nodes);
         }
     }
 
     async reorderExternalBookmarks(positions) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.reorderBookmarks)
-                await backend.reorderBookmarks(positions)
+                await backend.reorderBookmarks(positions);
         }
     }
 
@@ -255,8 +262,9 @@ export class Backend extends ExternalEventProvider {
         return this.updateNodes(positions);
     }
 
-    setTODOState(states) {
-        return this.updateNodes(states);
+    async setTODOState(states) {
+        await this.updateNodes(states);
+        return this.updateExternalBookmarks(states);
     }
 
     async listTODO() {
