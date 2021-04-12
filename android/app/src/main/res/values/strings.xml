@@ -17,12 +17,14 @@
     <string name="dropbox">Dropbox</string>
     <string name="signIn">Sign in</string>
     <string name="signOut">Sign out</string>
+    <string name="browseBookmarks">Browse Bookmarks</string>
+    <string name="browseCloudShelf">Browse Cloud Shelf</string>
     <string name="saveLocationHeading">Shared Content Destination</string>
     <string name="cloud">cloud</string>
     <string name="cloudPathStart">cloud/</string>
     <string name="shared">shared</string>
     <string name="scrapyardURL">https://gchristensen.github.io/scrapyard/</string>
-    <string name="appDescription">Scrapyard Android application allows to share links and content into <font fgcolor='#FF0099CC'>&#x200B;Scrapyard</font> \"Cloud\" folder.</string>
+    <string name="appDescription">Scrapyard Android application allows to share links and content into the <font fgcolor='#FF0099CC'>&#x200B;Scrapyard</font> Cloud shelf.</string>
     <string name="dropboxAPIKey">0y7co3j1k4oc7up</string>
     <string name="needToConfigureCloudProvider">A cloud provider needs to be configured</string>
     <string name="successfullyShared">Successfully shared to Scrapyard</string>
@@ -38,4 +40,6 @@
         <item>WAITING</item>
         <item>POSTPONED</item>
     </string-array>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

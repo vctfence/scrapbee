@@ -13,6 +13,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.view.Menu;
 import android.widget.Button;
 import android.widget.EditText;
@@ -118,6 +120,13 @@ public class MainActivity extends AppCompatActivity
                 DbxRequestConfig.newBuilder("Scrapyard").build();
             Auth.startOAuth2PKCE(this, getString(R.string.dropboxAPIKey), reqestConfig);
         }
+    }
+
+    public void browseBookmarks(View v) {
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(R.id.content_frame, BrowseBookmarksFragment.newInstance(null, null));
+        ft.addToBackStack("stack");
+        ft.commit();
     }
 
     @Override

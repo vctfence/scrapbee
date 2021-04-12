@@ -1,0 +1,270 @@
+#treeview {
+    overflow-x: hidden;
+}
+.jstree-default .jstree-node {
+    margin-left: 16px;
+    min-width: 16px;
+}
+.jstree-default .jstree-icon:empty {
+    width: 16px;
+    height: 16px;
+    line-height: 24px;
+    margin-top: 4px;
+}
+.jstree-default > .jstree-no-dots .jstree-open > .jstree-ocl {
+    background-position: -40px -8px;
+}
+.jstree-default > .jstree-no-dots .jstree-closed > .jstree-ocl {
+    background-position: -8px -8px;
+}
+.jstree-default .jstree-themeicon {
+    margin-right: 4px;
+}
+.jstree-default .jstree-clicked {
+    background: #ddd;
+}
+.jstree-default .jstree-hovered {
+    background: #eee;
+}
+
+
+.jstree-default .jstree-wholerow-clicked {
+    background: #ddd;
+}
+
+.jstree-default .jstree-wholerow-hovered {
+    background: #eee;
+}
+
+.vakata-context,
+.vakata-context ul {
+    margin: 0;
+    padding: 2px;
+    position: absolute;
+    background: #f5f5f5;
+    border: 1px solid #979797;
+    box-shadow: 2px 2px 2px #999999;
+}
+.vakata-context ul {
+    list-style: none;
+    left: 100%;
+    margin-top: -2.7em;
+    margin-left: -4px;
+}
+.vakata-context .vakata-context-right ul {
+    left: auto;
+    right: 100%;
+    margin-left: auto;
+    margin-right: -4px;
+}
+.vakata-context li {
+    list-style: none;
+}
+.vakata-context li > a {
+    display: block;
+    padding: 0 2em 0 2em;
+    text-decoration: none;
+    width: auto;
+    color: black;
+    white-space: nowrap;
+    line-height: 1.8em;
+    text-shadow: 1px 1px 0 white;
+    border-radius: 1px;
+}
+.vakata-context li > a:hover {
+    position: relative;
+    background-color: #e8eff7;
+    box-shadow: 0 0 2px #ccc;
+}
+.vakata-context li > a.vakata-context-parent {
+    background-image: url("data:image/gif;base64,R0lGODlhCwAHAIAAACgoKP///yH5BAEAAAEALAAAAAALAAcAAAIORI4JlrqN1oMSnmmZDQUAOw==");
+    background-position: right center;
+    background-repeat: no-repeat;
+}
+.vakata-context li > a:focus {
+    outline: 0;
+}
+.vakata-context .vakata-context-hover > a {
+    position: relative;
+    background-color: #e8eff7;
+    box-shadow: 0 0 2px #ccc;
+}
+.vakata-context .vakata-context-separator > a,
+.vakata-context .vakata-context-separator > a:hover {
+    background: white;
+    border: 0;
+    border-top: 1px solid #e2e3e3;
+    height: 1px;
+    min-height: 1px;
+    max-height: 1px;
+    padding: 0;
+    margin: 0 0 0 1.8em;
+    border-left: 1px solid #e0e0e0;
+    text-shadow: 0 0 0 transparent;
+    box-shadow: 0 0 0 transparent;
+    border-radius: 0;
+}
+.vakata-context .vakata-contextmenu-disabled a,
+.vakata-context .vakata-contextmenu-disabled a:hover {
+    color: silver;
+    background-color: transparent;
+    border: 0;
+    box-shadow: 0 0 0;
+}
+.vakata-context .vakata-contextmenu-disabled > a > i {
+    filter: grayscale(100%);
+}
+.vakata-context li > a > i {
+    text-decoration: none;
+    display: inline-block;
+    width: 1.8em;
+    height: 1.8em;
+    background: transparent;
+    margin: 0 0 0 -2em;
+    vertical-align: top;
+    text-align: center;
+    line-height: 1.8em;
+}
+.vakata-context li > a > i:empty {
+    width: 1.8em;
+    line-height: 1.8em;
+}
+.vakata-context li > a .vakata-contextmenu-sep {
+    display: inline-block;
+    width: 1px;
+    height: 1.8em;
+    background: white;
+    margin: 0 0.5em 0 0;
+    border-left: 1px solid #e2e3e3;
+}
+.vakata-context .vakata-contextmenu-shortcut {
+    font-size: 0.8em;
+    color: silver;
+    opacity: 0.5;
+    display: none;
+}
+.vakata-context-rtl ul {
+    left: auto;
+    right: 100%;
+    margin-left: auto;
+    margin-right: -4px;
+}
+.vakata-context-rtl li > a.vakata-context-parent {
+    background-image: url("data:image/gif;base64,R0lGODlhCwAHAIAAACgoKP///yH5BAEAAAEALAAAAAALAAcAAAINjI+AC7rWHIsPtmoxLAA7");
+    background-position: left center;
+    background-repeat: no-repeat;
+}
+.vakata-context-rtl .vakata-context-separator > a {
+    margin: 0 1.8em 0 0;
+    border-left: 0;
+    border-right: 1px solid #e2e3e3;
+}
+.vakata-context-rtl .vakata-context-left ul {
+    right: auto;
+    left: 100%;
+    margin-left: -4px;
+    margin-right: auto;
+}
+
+.separator-node {
+    font-family: "Courier New", monospace;
+}
+
+.jstree-default .separator-node::before {
+    content: "──";
+}
+
+.jstree-default .separator-node i {
+    display: none;
+}
+
+
+
+.jstree-default-responsive .jstree-wholerow-hovered, .vakata-context-hover {
+    background: #eee;
+}
+.jstree-default-responsive .jstree-wholerow-clicked {
+    background: #ddd;
+}
+
+.jstree-default .todo-state-todo {
+    color: #fc6dac;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-waiting {
+    color: #ff8a00;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-postponed {
+    color: #00b7ee;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-cancelled,
+.jstree-default .todo-state-overdue {
+    color: #ff4d26;
+    font-weight: bold;
+}
+
+.jstree-default .todo-state-done {
+    color: #00b60e;
+    font-weight: bold;
+}
+
+.jstree-default .extended-todo {
+    margin-top: 4px;
+}
+
+.jstree-default .extended-todo .jstree-themeicon {
+    float: left;
+}
+
+.jstree-default .jstree-anchor {
+    cursor: pointer;
+}
+
+.jstree-default .extended-todo .jstree-anchor {
+    display: inline-block;
+    line-height: normal;
+    height: auto;
+    font-size: 98%;
+}
+
+.jstree-default .extended-todo .jstree-wholerow.jstree-wholerow-hovered,
+.jstree-default .extended-todo .jstree-wholerow.jstree-wholerow-clicked {
+    /*height: 31px;*/
+}
+
+.jstree-default .extended-todo span.todo-path {
+    font-size: 80%;
+    font-weight: normal;
+    font-style: normal;
+    color: #777;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.jstree-default .extended-todo .todo-details {
+    color: #777;
+    font-style: normal;
+    font-weight: normal;
+}
+
+.jstree-rename-input {
+    border: 1px solid silver !important;
+}
+
+.jstree-rename-input:focus {
+    outline: none !important;
+    border: 1px solid silver !important;
+}
+
+.archive-node {
+    font-style: italic;
+}
+
+a.has-notes, a.has-notes:hover {
+    text-decoration: underline;
+}

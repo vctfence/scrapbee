@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "l2.albitron.scrapyard"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 29
         multiDexEnabled true
         versionCode 5
@@ -28,6 +28,13 @@ android {
         // but continue the build even when errors are found:
         abortOnError false
     }
+    sourceSets {
+        main {
+            assets {
+                srcDirs 'src\\main\\assets'
+            }
+        }
+    }
 }
 
 dependencies {
@@ -45,4 +52,5 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.8'
     implementation 'commons-validator:commons-validator:1.6'
     implementation 'com.annimon:stream:1.2.1'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 }

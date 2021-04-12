@@ -35,7 +35,7 @@ public class DropboxProvider implements CloudProvider {
 
     DbxClientV2 client;
 
-    DropboxProvider(Context context) throws DropboxNotAuthorizedException, JsonReadException {
+    public DropboxProvider(Context context) throws DropboxNotAuthorizedException, JsonReadException {
         SharedPreferences prefs = context.getSharedPreferences(Scrapyard.MAIN_PREFERENCES, MODE_PRIVATE);
 
         String credentialStr =
@@ -82,6 +82,24 @@ public class DropboxProvider implements CloudProvider {
 
                 return new DropboxDB(this, bookmarks);
             }
+        }
+
+        return null;
+    }
+
+    public String getDBRaw() {
+        try {
+            DbxDownloader<FileMetadata> downloader = client.files().download(DROPBOX_INDEX_PATH);
+
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream((int)downloader.getResult().getSize())) {
+                client.files().download(DROPBOX_INDEX_PATH).download(out);
+                return new String(out.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (DbxException e) {
+            if (BuildConfig.DEBUG)
+                e.printStackTrace();
         }
 
         return null;

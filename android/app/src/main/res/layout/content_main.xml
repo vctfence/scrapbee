@@ -9,110 +9,159 @@
     android:padding="5dp"
     tools:showIn="@layout/app_bar_main">
 
-    <LinearLayout
+    <FrameLayout
+        android:id="@+id/content_frame"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/textAppDescription"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:paddingTop="10dp"
-            android:text="@string/appDescription" />
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="20dp" />
-
-
-        <TextView
-            android:id="@+id/txtSaveLocationHeading"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
-            android:paddingLeft="2dp"
-            android:text="@string/saveLocationHeading"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+        android:layout_height="match_parent">
 
         <LinearLayout
-            android:focusable="true"
-            android:focusableInTouchMode="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingLeft="10dp">
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView3"
+                android:id="@+id/textAppDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:text="@string/cloudPathStart"
                 android:textColor="@android:color/black"
-                android:textSize="18sp" />
+                android:paddingTop="10dp"
+                android:text="@string/appDescription" />
 
-            <EditText
-                android:id="@+id/editDefaultBookmarkPath"
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+
+            <TextView
+                android:id="@+id/txtSaveLocationHeading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ems="10"/>
-        </LinearLayout>
+                android:background="@color/colorPrimary"
+                android:paddingLeft="2dp"
+                android:text="@string/saveLocationHeading"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="20dp" />
-
-        <TextView
-            android:id="@+id/txtProvidersHeading2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
-            android:paddingLeft="2dp"
-            android:text="@string/providersHeading"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:paddingLeft="10dp"
-            android:paddingTop="5dp">
-
-            <ImageView
-                android:id="@+id/imageView2"
-                android:layout_width="121dp"
-                android:layout_height="30dp"
-                android:layout_weight="0"
-                android:scaleType="fitXY"
-                app:srcCompat="@drawable/dropbox" />
-
-            <FrameLayout
+            <LinearLayout
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="0">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingLeft="10dp">
 
-                <Button
-                    android:id="@+id/btnSignInDropbox"
+                <TextView
+                    android:id="@+id/textView3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginRight="5dp"
-                    android:background="@drawable/button"
-                    android:onClick="signInDropbox"
-                    android:text="@string/signIn"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp" />
-            </FrameLayout>
+                    android:layout_weight="0"
+                    android:text="@string/cloudPathStart"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp" />
+
+                <EditText
+                    android:id="@+id/editDefaultBookmarkPath"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10"/>
+            </LinearLayout>
+
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <TextView
+                android:id="@+id/txtProvidersHeading2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                android:paddingLeft="2dp"
+                android:text="@string/providersHeading"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:paddingLeft="10dp"
+                android:paddingTop="5dp">
+
+                <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="121dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="0"
+                    android:scaleType="fitXY"
+                    app:srcCompat="@drawable/dropbox" />
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0">
+
+                    <Button
+                        android:id="@+id/btnSignInDropbox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginRight="5dp"
+                        android:background="@drawable/button"
+                        android:onClick="signInDropbox"
+                        android:text="@string/signIn"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <TextView
+                android:id="@+id/txtBrowseBookmarksHeading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                android:paddingLeft="2dp"
+                android:text="@string/browseBookmarks"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:paddingLeft="10dp"
+                android:paddingTop="5dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0"
+                    android:paddingTop="20dp">
+
+                    <Button
+                        android:id="@+id/btnBrowseBookmarks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginRight="5dp"
+                        android:onClick="browseBookmarks"
+                        android:background="@drawable/button"
+                        android:text="@string/browseCloudShelf"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
+                </FrameLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
-
-    </LinearLayout>
+    </FrameLayout>
 </FrameLayout>
