@@ -1,7 +1,7 @@
 import UUID from "./lib/uuid.js";
 import {DEFAULT_POSITION, NODE_PROPERTIES} from "./storage_constants.js";
 
-const CLOUD_PROPERTIES = ["notes_format",
+const JSON_PROPERTIES = ["notes_format",
                           "notes_align",
                           "content_type",
                           "byte_length",
@@ -39,10 +39,10 @@ export class JSONStorage {
         node = Object.assign({}, node);
 
         for (let key of Object.keys(node)) {
-            if (node[key] === 0 && CLOUD_PROPERTIES.some(k => k === key))
+            if (node[key] === 0 && JSON_PROPERTIES.some(k => k === key))
                 continue;
 
-            if (!node[key] || !CLOUD_PROPERTIES.some(k => k === key))
+            if (!node[key] || !JSON_PROPERTIES.some(k => k === key))
                 delete node[key];
         }
 

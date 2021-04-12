@@ -253,8 +253,8 @@
     <h3>Import/Export</h3>
 
     <p>Scrapyard allows to import bookmarks in Netscape HTML format which you may obtain from Firefox, Chrome or other
-    web-browsers. Its own collections of bookmarks and archived pages could be exported or imported in ORG and
-    JSON formats through the corresponding item of the shelf operations menu:</p>
+    web-browsers. Its own collections of bookmarks and archived pages could also be exported or imported in ORG and
+    JSON formats through the corresponding items of the shelf operations menu:</p>
 
     <p style="text-align: center">
         <img src="images/help/impexp.png">
@@ -263,17 +263,34 @@
     <p>Install Scrapyard helper application if you need to export the large amount of content (greater than
         the volume of the available system RAM).</p>
 
+    <h3>Importing Legacy ScrapBook RDF Archives</h3>
+
     <p>To import legacy ScrapBook RDF archives you also need to install Scrapyard <a
-        href="#helperapp">helper application</a>. There are two import modes: quick import which
-        leaves archived Scrapbook files on disk, and the full import, which transfers saved pages
-        into Scrapyard database. See the "Import RDF" tab of the settings page for more details.
-        Some features, such as page editing and bookmark transferring/copying are not available for
-        the shelves imported in quick mode.</p>
+        href="#helperapp"
+        onmouseenter="this.href='https://github.com/GChristensen/scrapyard/releases'">helper
+        application</a>. There are two import modes: the full import, which transfers saved files into
+        the Scrapyard database, and the quick import which only recreates RDF directory structure and
+        leaves the archived ScrapBook files on disk. See the "Import RDF" tab of the settings page
+        for more details about the available import options.</p>
+
+        <p>Shelves imported in quick mode are marked with a tape reel icon. It is possible to add
+            new archives to them (added bookmarks are not included into the underlying RDF file),
+            and physically delete RDF entries along with its files. Although, when the entire shelf
+            is deleted from Scrapyard, the corresponding RDF file and the archived pages are left intact.
+            Some features, such as page editing and bookmark transferring/copying are not available for
+            the shelves imported in quick mode.</p>
+
+        <p>It is possible to edit the path of the imported RDF file through the "RDF Directory..." context
+        menu item of a shelf.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/quick-imported-rdf.png">
+    </p>
 
     <h3>Displaying Random Bookmarks</h3>
 
     <p>Random bookmarks from your collection could be displayed at the bottom of the Scrapyard sidebar.
-        To enable this feature check the corresponding option in the settings. The displayed
+        Check the corresponding option in the settings to enable this feature. The displayed
         bookmark is refreshed every 5 minutes, it also could be updated by a user request through
         the "Refresh" button. The magnifier button at the bookmark bar shown below selects the
         current bookmark at the Scrapyard sidebar by opening the shelf and folder in which it is located.</p>
@@ -306,9 +323,9 @@
         <img src="images/help/android-share-link.png">
     </p>
 
-    <p>After that you need to select the destination application to send URL into. The interface may
+    <p>After that, you need to select the destination application to send URL into. The interface may
         differ from app to app, and you may need to scroll or press additional buttons to find the
-        necessary sharing destination. The icon of the Scrapyard Android application is highlighted
+        necessary sharing target. The icon of the Scrapyard Android application is highlighted
         on the image below. Tap on it and you are done.</p>
 
     <p style="text-align: center">
