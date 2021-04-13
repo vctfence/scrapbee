@@ -31,9 +31,7 @@
 
     --theme-version: 0.2;
     --theme-background: var(--in-content-page-background) !important;
-}
 
-#scrapyard-sidebar {
     --theme-comments-icon: url("icons/page-blank2.svg");
     --theme-comments-filled-icon: url("icons/page2.svg");
     --theme-properties-icon: url("icons/properties2.svg");
