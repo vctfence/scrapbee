@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -45,6 +46,7 @@ public class BrowseBookmarksFragment extends Fragment {
         String url = "file:///android_asset/browser.html";
         WebView browser = (WebView) rootView.findViewById(R.id.wvBrowseBookmarks);
         browser.getSettings().setJavaScriptEnabled(true);
+        browser.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         browser.loadUrl(url);
 
         browser.setWebViewClient(new WebViewClient() {
