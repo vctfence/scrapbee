@@ -15,15 +15,15 @@ function withCurrTab(fn) {
     });
 }
 
-function saveHistory(node, history) {
-    if (node) {
+function saveHistory(nodeId, text, history) {
+    if (nodeId) {
         let folder_history = history.slice(0);
-        let existing = folder_history.find(h => h.id == node.original.id);
+        let existing = folder_history.find(h => h.id == nodeId);
 
         if (existing)
             folder_history.splice(folder_history.indexOf(existing), 1);
 
-        folder_history = [{id: node.original.id, text: node.text}, ...folder_history].slice(0, 10);
+        folder_history = [{id: nodeId, text: text}, ...folder_history].slice(0, 10);
         localStorage.setItem("popup-folder-history", JSON.stringify(folder_history));
     }
 }
@@ -97,74 +97,41 @@ window.onload = function () {
 
     $("#bookmark-tags").focus();
 
-    $("#treeview").on("select_node.jstree", (e, {node}) => {
-        let existing = $(`#bookmark-folder option[value='${node.original.id}']`);
+    $("#treeview").on("select_node.jstree", (e, {node: jnode}) => {
+        let existing = $(`#bookmark-folder option[value='${jnode.id}']`);
 
         if (!existing.length) {
             $("#bookmark-folder option[data-tentative='true']").remove();
-            $("#bookmark-folder").prepend(`<option  class='folder-label'  data-tentative='true' selected value='${node.original.id}'>${node.text}</option>`)
+            $("#bookmark-folder").prepend(`<option  class='folder-label'  data-tentative='true' selected value='${jnode.id}'>${jnode.text}</option>`)
             $("#bookmark-folder").selectric("refresh");
         }
 
-        $("#bookmark-folder").val(node.original.id);
+        $("#bookmark-folder").val(jnode.id);
         $("#bookmark-folder").selectric("refresh");
     });
 
     $("#bookmark-folder").on("change", (e) => {
         let id = $("#bookmark-folder").val();
-        tree._jstree.deselect_all(true);
-        tree._jstree.select_node(id);
-        document.getElementById(id).scrollIntoView();
+        tree.selectNode(id, false, true);
     });
 
     $("#new-folder").on("click", () => {
-        let selected_node = tree.selected;
-        let node = tree._jstree.create_node(selected_node, {
-            id: "$new_node$",
-            text: "New Folder",
-            type: NODE_TYPE_GROUP,
-            icon: "icons/group.svg",
-            li_attr: {"class": "scrapyard-group"}
-        }, 0);
-
-        tree._jstree.deselect_all();
-        tree._jstree.select_node(node);
-
-        tree._jstree.edit(node, null, (node, success, cancelled) => {
-            if (cancelled) {
-                tree._jstree.delete_node(node);
+        tree.createNewGroupUnderSelection().then(group => {
+            if (group) {
+                let new_option = $(`#bookmark-folder option[value='$new_node$']`);
+                new_option.text(group.name);
+                new_option.val(group.id);
+                $("#bookmark-folder").val(group.id);
+                $("#bookmark-folder").selectric("refresh");
             }
-            else {
-                backend.createGroup(selected_node.original.id, node.text).then(group => {
-                    if (group) {
-                        tree._jstree.set_id(node, group.id);
-                        node.original = group;
-                        BookmarkTree.toJsTreeNode(group);
-                        BookmarkTree.reorderNodes(tree._jstree, selected_node);
-
-                        let new_option = $(`#bookmark-folder option[value='$new_node$']`);
-                        new_option.text(group.name);
-                        new_option.val(node.id);
-                        $("#bookmark-folder").val(node.id);
-                        $("#bookmark-folder").selectric("refresh");
-                    }
-                });
-            }
-        });
+        })
     });
 
     function addBookmark(node_type) {
-        let parent_node = tree._jstree.get_node($("#bookmark-folder").val());
-
-        if (parent_node.original.id === FIREFOX_SHELF_ID) {
-            let unfiled = tree.data.find(n => n.external_id === FIREFOX_BOOKMARK_UNFILED)
-            if (unfiled)
-                parent_node = tree._jstree.get_node(unfiled.id);
-            else
-                parent_node = tree._jstree.get_node(tree.data.find(n => n.name === DEFAULT_SHELF_NAME).id);
-        }
-
-        saveHistory(parent_node, folder_history);
+        console.log($("#bookmark-folder").val())
+        let parent_jnode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
+        console.log(parent_jnode)
+        saveHistory(parent_jnode.id, parent_jnode.text, folder_history);
         browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",
@@ -173,7 +140,7 @@ window.onload = function () {
                                         uri:  $("#bookmark-url").val(),
                                         tags: $("#bookmark-tags").val(),
                                         icon: $("#bookmark-icon").val(),
-                                        parent_id: parseInt(parent_node.id)
+                                        parent_id: parseInt(parent_jnode.id)
                                     }});
     }
 

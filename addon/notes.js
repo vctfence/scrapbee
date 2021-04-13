@@ -223,14 +223,16 @@ function editorSaveOnChange(e) {
     editorTimeout = setTimeout(() => {
         if (e && node_id) {
             backend.storeNotes(node_id, e.target.value, format, align);
+            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
         }
     }, INPUT_TIMEOUT);
 }
 
 function editorSaveOnBlur(e) {
     if (e && node_id) {
-        backend.storeNotes(node_id, e.target.value, format, align);
-        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
+        clearTimeout(editorTimeout);
+        backend.storeNotes(node_id, getEditorContent(), format, align);
+        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()});
     }
 }
 
@@ -267,6 +269,20 @@ function initWYSIWYG() {
 
 function clearWYSIWYG() {
     $('#editor').trumbowyg('destroy');
+}
+
+function getEditorContent() {
+    if (format === "html")
+        return $('#editor').trumbowyg("html");
+    else
+        return $('#editor').val();
+}
+
+function setEditorContent(content) {
+    if (format === "html")
+        $('#editor').trumbowyg("html", content);
+    else
+        $('#editor').val(content);
 }
 
 window.onload = function() {
@@ -376,12 +392,12 @@ window.onload = function() {
         $(`#content-${e.target.id}`).css("display", "flex");
 
         if (e.target.id === "notes-button") {
-            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()});
+            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()});
 
             $("#format-selector").hide();
             $("#align-selector").show();
             //$("#full-width-container").show()
-            formatNotes($("#editor").val(), format);
+            formatNotes(getEditorContent(), format);
         }
         else if (e.target.id === "edit-button") {
             $("#format-selector").show();
@@ -396,7 +412,7 @@ window.onload = function() {
     if (node_id)
         backend.fetchNotes(node_id).then(notes => {
             if (notes) {
-                $("#editor").val(notes.content);
+                setEditorContent(notes.content);
 
                 align = notes.align;
                 if (align)
@@ -460,14 +476,14 @@ window.onload = function() {
         else
             $("#inserts").hide();
 
-        backend.storeNotes(node_id, $("#editor").val(), format, align);
-        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !$("#editor").val()})
+        backend.storeNotes(node_id, getEditorContent(), format, align);
+        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()})
     });
 
     $("#notes-align").on("change", e => {
         align = $("#notes-align").val() === "left"? "left": undefined;
         alignNotes();
-        backend.storeNotes(node_id, $("#editor").val(), format, align);
+        backend.storeNotes(node_id, getEditorContent(), format, align);
     });
 
     $("#close-button").on("click", e => {

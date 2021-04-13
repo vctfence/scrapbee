@@ -699,7 +699,7 @@ export class Backend extends ExternalEventProvider {
         let node = await this.addNode({
             parent_id: parent_id,
             name: name,
-            has_notes: true,
+            //has_notes: true,
             type: NODE_TYPE_NOTES
         });
 

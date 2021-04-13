@@ -6,7 +6,7 @@ import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, NODE_TYPE_SHELF,
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
     isContainer
 } from "./storage_constants.js";
 
@@ -489,7 +489,7 @@ export class CloudBackend {
                             node.id = id;
                             node.parent_id = d.id;
 
-                            if (cc.type === NODE_TYPE_NOTES || cc.has_notes)
+                            if (cc.has_notes)
                                 download_notes.push(node);
 
                             if (cc.has_comments)
@@ -512,7 +512,7 @@ export class CloudBackend {
                     cc.external_id = cc.uuid;
                     node = await backend.addNode(cc, false, true, false);
 
-                    if (cc.type === NODE_TYPE_NOTES || cc.has_notes) {
+                    if (cc.has_notes) {
                         node.notes_format = cc.notes_format;
                         node.notes_align = cc.notes_align;
                         download_notes.push(node);

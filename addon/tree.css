@@ -250,7 +250,7 @@
     font-style: normal;
     color: #777;
     white-space: nowrap;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .jstree-default .extended-todo .todo-details {

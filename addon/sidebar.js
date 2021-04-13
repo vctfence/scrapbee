@@ -157,22 +157,8 @@ window.onload = function () {
     });
 
     tree.onRenameShelf = node => {
-        if (isSpecialShelf(node.name)) {
-            // TODO: i18n
-            showNotification({message: "A built-in shelf could not be renamed."});
-            return;
-        }
-
-        let node_id = node.id;
-        tree._jstree.edit(node_id, null, (node, success, cancelled) => {
-            if (success && !cancelled)
-                backend.renameGroup(node_id, node.text).then(() => {
-                    tree._jstree.rename_node(node.id, node.text);
-                    $(`#shelfList option[value="${node_id}"]`).text(node.text);
-
-                    shelf_list.selectric('refresh');
-                });
-        });
+        $(`#shelfList option[value="${node.id}"]`).text(node.name);
+        shelf_list.selectric('refresh');
     };
 
     tree.onDeleteShelf = node => {
@@ -320,17 +306,7 @@ window.onload = function () {
             selectNode(context, tree, request.node);
         }
         else if (request.type === "NOTES_CHANGED") {
-            let node = tree._jstree.get_node(request.node_id);
-
-            if (node) {
-                node.original.has_notes = !request.removed;
-                node.a_attr.class = node.a_attr.class.replace("has-notes", "");
-
-                if (!request.removed)
-                    node.a_attr.class += " has-notes";
-
-                tree._jstree.redraw_node(node, false, false, true);
-            }
+            tree.setNotesState(request.node_id, !request.removed);
         }
         else if (request.type === "NODES_UPDATED") {
             let last_shelf = settings.last_shelf();
@@ -359,18 +335,10 @@ window.onload = function () {
             switchShelf(context, tree, request.shelf.id, false);
         }
         else if (request.type === "CLOUD_SYNC_START") {
-            let cloud_node = tree._jstree.get_node(CLOUD_SHELF_ID);
-
-            if (cloud_node) {
-                tree._jstree.set_icon(cloud_node, "var(--themed-cloud-sync-icon)");
-            }
+            tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-sync-icon)")
         }
         else if (request.type === "CLOUD_SYNC_END") {
-            let cloud_node = tree._jstree.get_node(CLOUD_SHELF_ID);
-
-            if (cloud_node) {
-                tree._jstree.set_icon(cloud_node, "var(--themed-cloud-icon)");
-            }
+            tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-icon)")
         }
         else if (request.type === "SHELVES_CHANGED") {
             return loadShelves(context, tree, false);
@@ -397,26 +365,13 @@ window.onload = function () {
                     let external_path = backend.expandPath(message.name);
                     let [shelf, ...path] = external_path.split("/");
 
-                    let selectGroup = (group) => {
-                        let node = tree._jstree.get_node(group.id + "");
-                        tree._jstree.open_node(node);
-                        tree._jstree.deselect_all();
-                        tree._jstree.select_node(node);
-
-                        let element = document.getElementById(node.id.toString());
-                        if (!isElementInViewport(element)) {
-                            element.scrollIntoView();
-                            $("#treeview").scrollLeft(0);
-                        }
-                    }
-
                     backend.queryShelf(shelf).then(shelfNode => {
                         if (shelfNode) {
                             backend.getGroupByPath(external_path).then(group => {
                                 shelf_list.val(shelfNode.id);
                                 shelf_list.selectric("refresh");
                                 switchShelf(context, tree, shelfNode.id).then(() => {
-                                    selectGroup(group);
+                                    tree.selectNode(group.id, true);
                                 });
                             });
                         } else {
@@ -426,7 +381,7 @@ window.onload = function () {
                                         backend.getGroupByPath(external_path).then(group => {
                                             settings.last_shelf(shelfNode.id);
                                             loadShelves(context, tree).then(() => {
-                                                selectGroup(group);
+                                                tree.selectNode(group.id, true);
                                             });
                                         });
                                     }
@@ -669,27 +624,13 @@ function performImport(context, tree, file, file_name, file_ext) {
 function performExport(context, tree) {
     let {id: shelf_id, name: shelf} = getCurrentShelf();
 
-    if (shelf == FIREFOX_SHELF_NAME) {
+    if (shelf === FIREFOX_SHELF_NAME) {
         showNotification({message: "Please use Firefox builtin tools to export browser bookmarks."});
         return;
     }
 
-    let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
-    let root = special_shelf
-        ? tree._jstree.get_node("#")
-        : tree._jstree.get_node(tree.data.find(n => n.type == NODE_TYPE_SHELF).id);
-    let skip_level = root.parents.length;
-    let uuid = special_shelf? shelf.toLowerCase(): root.original.uuid;
-
-    let nodes = [];
-    tree.traverse(root, node => {
-        let data = backend._sanitizeNode(node.original);
-        delete data.tag_list;
-
-        data.level = node.parents.length - skip_level;
-        nodes.push(data);
-    });
-
+    let nodes = tree.getExportedNodes(shelf_id);
+    let uuid = nodes[0].uuid;
     nodes.shift();
 
     $("#shelf-menu-button").attr("src", "icons/grid.svg");
@@ -707,13 +648,7 @@ function selectNode(context, tree, node) {
     backend.computePath(node.id).then(path => {
         settings.last_shelf(path[0].id);
         loadShelves(context, tree, false).then(() => {
-            tree._jstree.deselect_all(true);
-            tree._jstree.select_node(node.id);
-            let tree_node = document.getElementById(node.id.toString());
-            if (!isElementInViewport(tree_node)) {
-                tree_node.scrollIntoView();
-                $("#treeview").scrollLeft(0);
-            }
+            tree.selectNode(node.id);
         });
     });
 }
