@@ -42,11 +42,8 @@ export class JSONStorage {
             if (node[key] === 0 && JSON_PROPERTIES.some(k => k === key))
                 continue;
 
-            console.log(key, node[key])
-            if (!node[key] || !JSON_PROPERTIES.some(k => k === key)) {
+            if (!node[key] || !JSON_PROPERTIES.some(k => k === key))
                 delete node[key];
-                console.log("deleted %s", key);
-            }
         }
 
         return node;

@@ -28,9 +28,7 @@
 
     --themed-globe-icon: url("icons/globe2.svg") !important;
     --themed-notes-icon: url("icons/notes2.svg");
-}
 
-.theme-vars {
     --theme-version: 0.2;
     --theme-background: var(--in-content-page-background) !important;
 }

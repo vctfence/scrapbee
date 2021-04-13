@@ -1,3 +1,7 @@
+:root {
+    --theme-background: "white";
+}
+
 *{
     font-family: "Helvetica",
     "Arial",

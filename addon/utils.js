@@ -107,7 +107,7 @@ export function isElementInViewport (el) {
 }
 
 export function getThemeVar(v) {
-    let vars = document.querySelector(".theme-vars");
+    let vars = document.querySelector(":root");
     if (vars) {
         let style = window.getComputedStyle(vars);
         let value = style.getPropertyValue(v);
