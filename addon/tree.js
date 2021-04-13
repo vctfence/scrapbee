@@ -725,13 +725,20 @@ class BookmarkTree {
                 submenu: {
                     cloudItem: {
                         label: "Cloud",
-                        icon: getThemeVar("--theme-background") === "white"? "icons/cloud.png": "icons/cloud2.png",
+                        icon: (getThemeVar("--theme-background").trim() == "\"white\""? "icons/cloud.png": "icons/cloud2.png"),
                         action: async function () {
+                            console.log(getThemeVar("--theme-background"))
+                            console.log(getThemeVar("--theme-background").trim() == "\"white\"")
+
                             self.startProcessingIndication();
-                            let newNodes = await backend.copyNodes([ctxNodeData.id], CLOUD_SHELF_ID);
-                            let newNode = newNodes.find(n => n.old_id == ctxNodeData.id);
-                            newNode.pos = DEFAULT_POSITION;
-                            await backend.updateNode(newNode);
+                            let selectedIds = selectedNodes.map(n => n.original.id);
+                            let newNodes = await backend.copyNodes(selectedIds, CLOUD_SHELF_ID);
+                            newNodes = newNodes.filter(n => selectedIds.some(id => id === n.old_id));
+                            for (let n of newNodes) {
+                                n.pos = DEFAULT_POSITION;
+                                await backend.updateNode(n);
+                            }
+                            await backend.updateExternalBookmarks(newNodes);
                             self.stopProcessingIndication();
                         }
                     },

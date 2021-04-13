@@ -94,12 +94,27 @@
     <p>
         It is possible to create an unlimited amount of bookmark shelves to structure your bookmarks.
         The shelf named "everything" allows to browse and search through all existing bookmarks. Scrapyard built-in
-        shelves are listed in bold font and cannot be deleted or renamed (including the "default" one).</p>
+        shelves are listed in the bold font and cannot be deleted or renamed.</p>
 
     <p style="text-align: center">
         <img src="images/help/shelves.png">
     </p>
 
+    <h3>Search</h3>
+    <p>The search input field at the Scrapyard sidebar allows to filter bookmarks of the current shelf
+        by title/URL, tags, or the content of the archived pages. Use the "Everything" shelf to search through all
+        bookmarks.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/search-sidebar.png">
+    </p>
+
+    <p>Additionally, it is possible to search through all bookmarks by title or URL from the Firefox
+        URL-bar after entering the special "scr" keyword followed by a space:</p>
+
+    <p style="text-align: center">
+        <img src="images/help/search-urlbar.png">
+    </p>
 
 
     <h3>Cloud Bookmarking</h3>
@@ -113,7 +128,8 @@
         href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
         Android</a> allows to save links and content into the Cloud shelf from mobile devices.
         Versions of Android 5 and above are supported. Currently the archived content and
-        notes are not accessible from Android, only bookmark or archive original links could be opened.
+        notes are not accessible from Android, only the original links of archives or bookmarks
+        could be opened.
     </p>
 
 
@@ -123,10 +139,12 @@
 
     <h3>Sharing Bookmarks</h3>
     <p>
-        A bookmark or archive could be shared to either <a href="https://getpocket.com/" target="_blank">Pocket</a> or
-        <a href="https://dropbox.com/" target="_blank">Dropbox</a> through the "Share" context menu of the item. Files
-        that are shared to Dropbox appear at the "Apps/Scrapyard" Dropbox folder. Only links could be shared to the Pocket
-        application.
+        A bookmark or archive could be shared to either <a href="https://getpocket.com/"
+                                                           target="_blank">Pocket</a> or <a
+        href="https://dropbox.com/" target="_blank">Dropbox</a> through the "Share" context menu.
+        The "Cloud" menu item copies selected bookmarks to the Scrapyard Cloud shelf.
+        Files that are shared to Dropbox appear at the "Apps/Scrapyard" Dropbox folder. Only links
+        could be shared to the Pocket application.
     </p>
 
     <p style="text-align: center">
@@ -138,7 +156,7 @@
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. You may attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
         they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
-        option in settings is unchecked. Firefox bookmarks are included in the export a separate shelf,
+        option in settings is unchecked. Firefox bookmarks are included in the export as a separate shelf,
         so import will leave the current Firefox bookmark state intact.
     </p>
 
@@ -161,12 +179,13 @@
         Expired TODO items will be displayed first regardless of the assigned state.</p>
 
     <h3>Markers</h3>
-    <p>Every archived page provides an toolbar which offers several types of text markers to
+    <p>Every archived page provides a toolbar which offers several types of text markers to
         highlight sections of interest. The "Auto open" check makes the marker menu to open
         automatically when some text is selected. The "Edit document" button allows to clean the
         document of unnecessary elements by direct editing of its content. It is also possible to
         type in something, press F7 to display the caret. Alternatively, HTML code of a page may be
-        modified through the browser developer tools accessible through the F12 keyboard key.</p>
+        modified through the browser developer tools accessible through the F12 keyboard key.
+        Press "Save" after you have finished document editing.</p>
 
     <p style="text-align: center">
         <img src="images/help/markers.png">
@@ -238,23 +257,6 @@
         <img src="images/help/references.png">
     </p>
 
-    <h3>Search</h3>
-    <p>The search input field at the Scrapyard sidebar allows to filter bookmarks of the current shelf
-        by title/URL, tags, or the content of the archived pages. Use the "Everything" shelf to search through all
-        bookmarks.</p>
-
-    <p style="text-align: center">
-        <img src="images/help/search-sidebar.png">
-    </p>
-
-    <p>Additionally, it is possible to search through all bookmarks by title or URL from the Firefox
-    URL-bar after entering the special "scr" keyword followed by a space:</p>
-
-    <p style="text-align: center">
-        <img src="images/help/search-urlbar.png">
-    </p>
-
-
     <h3>Import/Export</h3>
 
     <p>Scrapyard allows to import bookmarks in Netscape HTML format which you may obtain from Firefox, Chrome or other
@@ -266,7 +268,7 @@
     </p>
 
     <p>Install Scrapyard helper application if you need to export the large amount of content (greater than
-        the volume of the available system RAM).</p>
+        the volume of available system RAM).</p>
 
     <h3>Importing Legacy ScrapBook RDF Archives</h3>
 
@@ -308,7 +310,7 @@
 
     <p> <a href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
         Android</a> allows to save links and content into the Scrapyard Cloud shelf from mobile devices.
-        It uses standard Android sharing functionality, which may be tricky to deal
+        It uses the standard Android sharing functionality, which may be tricky to deal
         with, as it is shown in the examples below.</p>
 
     <p>At first, you need to enable cloud support in Scrapyard itself by
@@ -331,7 +333,7 @@
     <p>After that, you need to select the destination application to send URL into. The interface may
         differ from app to app, and you may need to scroll or press additional buttons to find the
         necessary sharing target. The icon of the Scrapyard Android application is highlighted
-        on the image below. Tap on it and you are done.</p>
+        at the image below. Tap on it and you are done.</p>
 
     <p style="text-align: center">
         <img src="images/help/android-share-app.png">
@@ -346,7 +348,7 @@
     <p>
         It is only possible to share plain text without links and images from Android platform.
         Generally, selected text is shared to Scrapyard in the form of notes without any source URL.
-        To save source URL share text from the Pocket app.
+        To save source URL, share text from the Pocket app.
     </p>
 
     <h2>Text Command Interface</h2>
@@ -357,18 +359,28 @@
         allows to significantly reduce the number of actions needed to create a bookmark or to archive a page.
     </p>
 
+    <h3>The "shelf" command</h3>
+
+    <p>With the "shelf" command you can quickly switch to a shelf or folder, or even create a new one
+    without using mouse.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/shelf-command.png">
+    </p>
+
     <h3>The "bookmark" and "archive" Commands</h3>
 
     <p>Use the "bookmark" or "archive" commands with the corresponding arguments to bookmark/archive
         a page into the specified destination. The arguments allow to specify bookmark title,
         details, path, tags, TODO state and expiration date. Folders in the bookmark path will be
-        autocompleted by iShell and created in Scrapyard if they do not exist. The first folder in the path is
+        autocompleted by iShell and created in Scrapyard if they do not exist.</p>
+    <p>The first folder in the path is
         always interpreted as a shelf name. The tilde (~) character may be used in place of the
         "default" shelf. Contents of the Firefox "Bookmarks Menu" and "Other Bookmarks" bookmark
         folders may be accessed with the "@" and "@@" shortcuts respectively.</p>
 
     <p style="text-align: center">
-        <img src="images/help/capture-nl.png">
+        <img src="images/help/archive-command.png">
     </p>
 
     <h3>The "scrapyard" Command</h3>

@@ -61,6 +61,10 @@ export class DropboxBackend {
                                                 this.dbxAuth.setRefreshToken(refreshToken);
                                                 settings.dropbox_refresh_token(refreshToken);
                                                 browser.runtime.sendMessage({type: "DROPBOX_AUTHENTICATED", refreshToken});
+
+                                                if (settings.dropbox___dbat())
+                                                    settings.dropbox___dbat(null);
+
                                                 resolve(true);
                                             })
                                             .error(e => {

@@ -448,6 +448,18 @@ export class CloudBackend {
 
     // should only be called in the background script through message
     async reconcileCloudBookmarksDB(verbose) {
+
+        if (verbose) {
+            // resolve inconsistency after the migration to the new dropbox authorization protocol
+            if (settings.dropbox___dbat() && !settings.dropbox_refresh_token()) {
+                showNotification("Authentication is required for the new Dropbox OAuth2 protocol.");
+
+                let success = await this.authenticate();
+                if (!success)
+                    return;
+            }
+        }
+
         let cloud_ids = [];
         let begin_time = new Date().getTime();
         let db_pool = new Map();

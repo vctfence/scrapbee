@@ -397,32 +397,38 @@ window.onload = function () {
                     let external_path = backend.expandPath(message.name);
                     let [shelf, ...path] = external_path.split("/");
 
-                    backend.queryShelf(shelf).then(shelf => {
-                        if (shelf) {
-                            shelf_list.val(shelf.id);
-                            shelf_list.selectric("refresh");
-                            switchShelf(context, tree, shelf.id).then(() => {
-                                backend._queryGroup(external_path).then(group => {
-                                    if (group) {
-                                        let node = tree._jstree.get_node(group.id + "");
-                                        tree._jstree.open_node(node);
-                                        tree._jstree.deselect_all();
-                                        tree._jstree.select_node(node);
+                    let selectGroup = (group) => {
+                        let node = tree._jstree.get_node(group.id + "");
+                        tree._jstree.open_node(node);
+                        tree._jstree.deselect_all();
+                        tree._jstree.select_node(node);
 
-                                        let element = document.getElementById(node.id.toString());
-                                        if (!isElementInViewport(element)) {
-                                            element.scrollIntoView();
-                                            $("#treeview").scrollLeft(0);
-                                        }
-                                    }
+                        let element = document.getElementById(node.id.toString());
+                        if (!isElementInViewport(element)) {
+                            element.scrollIntoView();
+                            $("#treeview").scrollLeft(0);
+                        }
+                    }
+
+                    backend.queryShelf(shelf).then(shelfNode => {
+                        if (shelfNode) {
+                            backend.getGroupByPath(external_path).then(group => {
+                                shelf_list.val(shelfNode.id);
+                                shelf_list.selectric("refresh");
+                                switchShelf(context, tree, shelfNode.id).then(() => {
+                                    selectGroup(group);
                                 });
                             });
                         } else {
-                            if (!isSpecialShelf(external_path)) {
-                                backend.createGroup(null, external_path, NODE_TYPE_SHELF).then(shelf => {
-                                    if (shelf) {
-                                        settings.last_shelf(shelf.id);
-                                        loadShelves(context, tree).then();
+                            if (!isSpecialShelf(shelf)) {
+                                backend.createGroup(null, shelf, NODE_TYPE_SHELF).then(shelfNode => {
+                                    if (shelfNode) {
+                                        backend.getGroupByPath(external_path).then(group => {
+                                            settings.last_shelf(shelfNode.id);
+                                            loadShelves(context, tree).then(() => {
+                                                selectGroup(group);
+                                            });
+                                        });
                                     }
                                 });
                             } else {
