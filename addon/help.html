@@ -31,10 +31,14 @@
         font-size: 22px;
     }
 
-    #help-content h3 {
+    #help-content h3, .help-anchor {
         font-size: 18px;
         padding: 0 20px;
         padding-top: 20px;
+    }
+
+    .help-anchor {
+        padding: 0;
     }
 
     #help-content h4 {
@@ -162,7 +166,8 @@
         <img src="images/help/firefox.png">
     </p>
 
-    <h3><span id="firefox-containers">Firefox Multi-Account Containers</span></h3>
+    <h3><span class="help-anchor" id="firefox-containers">Firefox Multi-Account Containers</span></h3>
+
     <p>Any Scrapyard bookmark could be opened in one of the Firefox Multi-Account containers,
         available through the "Open in Container" context menu of a bookmark, archive, or
         folder. Scrapyard will open the original URL of an archive with this menu,
