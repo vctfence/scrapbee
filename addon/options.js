@@ -2,7 +2,7 @@ import {backend} from "./backend.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
-import {parseHtml, showNotification} from "./utils.js";
+import {parseHtml, showNotification, testFavicon} from "./utils.js";
 import {
     DEFAULT_SHELF_NAME,
     EVERYTHING,
@@ -492,57 +492,54 @@ function startCheckLinks() {
                             let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
                             $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
 
-                            if (update_icons && !node.stored_icon) {
-                                node.icon = undefined;
-                                backend.updateNode(node);
+                            if (update_icons && !node.stored_icon && !this.status) {
+                                node.icon = null;
+                                await backend.updateNode(node);
                             }
                         }
-                        else if (update_icons) {
-                            let link;
+
+                        if (this.status && update_icons) {
+                            let favicon;
                             let base = new URL(node.uri).origin;
+
                             let type = this.getResponseHeader("Content-Type");
 
                             if (type && type.toLowerCase().startsWith("text/html")) {
                                 let doc = parseHtml(this.responseText);
-                                link = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+                                let faviconElt = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
 
-                                if (link)
-                                    link = new URL(link.href, base).toString();
+                                if (faviconElt)
+                                    favicon = await testFavicon(new URL(faviconElt.href, base));
                             }
 
-                            if (link) {
-                                node.icon = link;
+                            if (favicon) {
+                                node.icon = favicon;
                                 await backend.updateNode(node);
                                 await backend.storeIcon(node);
                             }
                             else {
-                                link = base + "/favicon.ico";
-
-                                fetch(link, {method: "GET"}).then(async response => {
-                                    let type = response.headers.get("content-type") || "image";
-                                    if (response.ok && type.startsWith("image"))
-                                        try {
+                                try {
+                                    let url = base + "/favicon.ico";
+                                    let response = await fetch(url, {method: "GET"});
+                                    if (response.ok) {
+                                        let type = response.headers.get("content-type") || "image";
+                                        if (type.startsWith("image")) {
                                             const buffer = await response.arrayBuffer();
-                                            node.icon = buffer.byteLength ? link : undefined;
-
-                                            await backend.updateNode(node);
-
-                                            if (node.icon)
+                                            if (buffer.byteLength) {
+                                                node.icon = favicon = url;
+                                                await backend.updateNode(node);
                                                 await backend.storeIcon(node, buffer, type);
+                                            }
                                         }
-                                        catch (e){
-                                            console.log(e)
-                                        }
-                                    else if (!node.stored_icon) {
-                                        node.icon = undefined;
-                                        await backend.updateNode(node);
                                     }
-                                }).catch(() => {
-                                    if (!node.stored_icon) {
-                                        node.icon = undefined;
-                                        backend.updateNode(node);
-                                    }
-                                });
+                                } catch (e) {
+                                    console.error(e)
+                                }
+                            }
+
+                            if (!favicon && !node.stored_icon) {
+                                node.icon = null;
+                                await backend.updateNode(node);
                             }
                         }
 

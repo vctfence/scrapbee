@@ -1,15 +1,12 @@
 import {backend} from "./backend.js";
 import {settings} from "./settings.js"
 import {BookmarkTree} from "./tree.js";
-import {
-    DEFAULT_SHELF_NAME,
-    FIREFOX_BOOKMARK_UNFILED,
-    FIREFOX_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP
-} from "./storage_constants.js";
+import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
+import {testFavicon} from "./utils.js";
 
 let tree;
 
-function withCurrTab(fn) {
+function withCurrentTab(fn) {
     return browser.tabs.query({currentWindow: true, active: true}).then(function (tabs) {
         fn.apply(null, [tabs[0]]);
     });
@@ -39,8 +36,6 @@ window.onload = function () {
     backend.listGroups().then(nodes => {
         $("#bookmark-folder").html("");
 
-        //nodes = nodes.filter(n => n.external !== RDF_EXTERNAL_NAME);
-
         folder_history = localStorage.getItem("popup-folder-history");
 
         if (folder_history != null && folder_history !== "null") {
@@ -66,33 +61,28 @@ window.onload = function () {
     });
 
 
-    withCurrTab((tab) => {
+    withCurrentTab(async tab => {
         $("#bookmark-name").val(tab.title);
         $("#bookmark-url").val(tab.url);
 
-        browser.tabs.executeScript(tab.id, {
-            code: `var iconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-                   iconElt? iconElt.href: null;
-            `}).then(icon => {
-                if (icon && icon.length && icon[0]) {
-                    let icon_url = new URL(icon[0], new URL(tab.url).origin);
-                    $("#bookmark-icon").val(icon_url.toString());
-                }
-                else {
-                    let favicon = new URL(tab.url).origin + "/favicon.ico";
-                    fetch(favicon, {method: "GET"})
-                        .then(response => {
-                            let type = response.headers.get("content-type") || "image";
-                            if (response.ok && type.startsWith("image"))
-                                return response.arrayBuffer().then(bytes => {
-                                    if (bytes.byteLength)
-                                        $("#bookmark-icon").val(favicon.toString());
-                                });
-                    })
-                }
-            }).catch(e => {
-                console.log(e)
+        let favicon;
+
+        try {
+            let icon = await browser.tabs.executeScript(tab.id, {
+                code: `document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']")?.href`
             });
+
+            if (icon && icon.length && icon[0])
+                favicon = await testFavicon(new URL(icon[0], new URL(tab.url).origin));
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (!favicon)
+            favicon = await testFavicon(new URL("/favicon.ico", new URL(tab.url).origin));
+
+        if (favicon)
+            $("#bookmark-icon").val(favicon);
     });
 
     $("#bookmark-tags").focus();
@@ -116,7 +106,7 @@ window.onload = function () {
     });
 
     $("#new-folder").on("click", () => {
-        tree.createNewGroupUnderSelection().then(group => {
+        tree.createNewGroupUnderSelection("$new_node$").then(group => {
             if (group) {
                 let new_option = $(`#bookmark-folder option[value='$new_node$']`);
                 new_option.text(group.name);
@@ -128,9 +118,7 @@ window.onload = function () {
     });
 
     function addBookmark(node_type) {
-        console.log($("#bookmark-folder").val())
         let parent_jnode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
-        console.log(parent_jnode)
         saveHistory(parent_jnode.id, parent_jnode.text, folder_history);
         browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"

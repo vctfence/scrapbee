@@ -209,7 +209,28 @@ export async function loadLocalResource(url, type) {
     }
 }
 
-export function getFavicon(host, tryRootFirst = true, usePageOnly = false) {
+export async function testFavicon(url) {
+    try {
+        // get a nice favicon for wikipedia
+        if (url.origin.endsWith("wikipedia.org"))
+            return "https://wikipedia.org/favicon.ico";
+
+        let response = await fetch(url, {method: "GET"})
+        if (response.ok) {
+            let type = response.headers.get("content-type") || "image";
+            //let length = response.headers.get("content-length") || "0";
+            if (type.startsWith("image") /*&& parseInt(length) > 0*/)
+                return url.toString();
+        }
+    }
+    catch (e) {
+        console.error(e);
+    }
+
+    return undefined;
+}
+
+export function getFavicon(host, tryRootFirst = false, usePageOnly = false) {
     let load_url = (url, type, timeout = 10000) => {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
@@ -243,11 +264,11 @@ export function getFavicon(host, tryRootFirst = true, usePageOnly = false) {
 
     let extract_link = r => {
         if (r.response && r.response.querySelector) {
-            let link = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-            if (link)
-                return new URL(link.href, origin).toString();
+            let linkElt = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+            if (linkElt) {
+                return testFavicon(new URL(linkElt.href, origin));
+            }
         }
-        return undefined;
     };
 
     let origin = new URL(host).origin;

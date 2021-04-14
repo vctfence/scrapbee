@@ -261,7 +261,7 @@ class BookmarkTree {
         let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
         let root = special_shelf
             ? this._jstree.get_node("#")
-            : this._jstree.get_node(this.data.find(n => n.n.type === NODE_TYPE_SHELF).id);
+            : this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF).id);
 
         let skip_level = root.parents.length;
 
@@ -455,7 +455,7 @@ class BookmarkTree {
     }
 
     get odata() {
-        return this._jstree.settings.core.data.map(n => n.n);
+        return this._jstree.settings.core.data.map(n => n.data);
     }
 
     get stateKey() {
@@ -561,10 +561,10 @@ class BookmarkTree {
         }
     }
 
-    async createNewGroupUnderSelection() {
+    async createNewGroupUnderSelection(id) {
         let selectedJnode = this.selected;
         let jnode = this._jstree.create_node(selectedJnode, {
-            id: "$new_node$",
+            id: id,
             text: "New Folder",
             type: NODE_TYPE_GROUP,
             icon: "icons/group.svg",

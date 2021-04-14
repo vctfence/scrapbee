@@ -12,7 +12,7 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-import {partition, ReadLine} from "./utils.js"
+import {getFavicon, partition, ReadLine} from "./utils.js"
 
 const EXPORT_VERSION = 1;
 
@@ -415,6 +415,21 @@ export async function importHtml(shelf, text) {
                         pos: DEFAULT_POSITION,
                         path: path.join("/")
                     });
+
+                    try {
+                        const icon = await getFavicon(node.uri);
+                        if (icon && typeof icon === "string") {
+                            node.icon = icon;
+                            await backend.storeIcon(node);
+                        }
+                        else if (icon) {
+                            node.icon = icon.url;
+                            await backend.storeIcon(node, icon.response, icon.type);
+                        }
+                        await backend.updateNode(node);
+                    } catch (e) {
+                        console.log(e);
+                    }
                 }
             }
             else if (child.localName === "dl") {
