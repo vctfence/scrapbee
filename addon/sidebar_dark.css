@@ -32,9 +32,9 @@
     --theme-version: 0.2;
     --theme-background: var(--in-content-page-background) !important;
 
-    --theme-comments-icon: url("icons/page-blank2.svg");
-    --theme-comments-filled-icon: url("icons/page2.svg");
-    --theme-properties-icon: url("icons/properties2.svg");
+    --themed-comments-icon: url("icons/page-blank2.svg");
+    --themed-comments-filled-icon: url("icons/page2.svg");
+    --themed-properties-icon: url("icons/properties2.svg");
     --themed-cloud-icon: url("icons/cloud2.svg") !important;
     --themed-cloud-sync-icon: url("icons/cloud_sync2.svg") !important;
     --themed-tape-icon: url("icons/tape2.svg");

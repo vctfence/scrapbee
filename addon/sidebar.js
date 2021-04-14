@@ -438,14 +438,7 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
         if (firefox_shelf)
             shelves.splice(shelves.indexOf(firefox_shelf), 1);
 
-        shelves.sort((a, b) => {
-            if (a.name < b.name)
-                return -1;
-            if (a.name > b.name)
-                return 1;
-
-            return 0;
-        });
+        shelves.sort((a, b) => a.name.localeCompare(b.name));
 
         let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(default_shelf), 1);
@@ -631,7 +624,7 @@ function performExport(context, tree) {
 
     let nodes = tree.getExportedNodes(shelf_id);
     let uuid = nodes[0].uuid;
-    nodes.shift();
+    nodes.shift(); // shelf
 
     $("#shelf-menu-button").attr("src", "icons/grid.svg");
 

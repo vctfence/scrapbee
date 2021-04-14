@@ -451,7 +451,7 @@ export class CloudBackend {
 
         if (verbose) {
             // resolve inconsistency after the migration to the new dropbox authorization protocol
-            if (settings.dropbox___dbat() && !settings.dropbox_refresh_token()) {
+            if (settings.dropbox___dbat() && !this.isAuthenticated()) {
                 showNotification("Authentication is required for the new Dropbox OAuth2 protocol.");
 
                 let success = await this.authenticate();

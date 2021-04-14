@@ -18,6 +18,8 @@ import {
 import {isSpecialPage, notifySpecialPage, readFile, showNotification} from "./utils.js";
 
 import {
+    CLOUD_SHELF_ID,
+    DEFAULT_POSITION,
     isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
@@ -138,6 +140,17 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         case "COPY_NODES":
             return backend.copyNodes(message.node_ids, message.dest_id);
+
+        case "SHARE_TO_CLOUD":
+            return backend.copyNodes(message.node_ids, CLOUD_SHELF_ID)
+                .then(async newNodes => {
+                    newNodes = newNodes.filter(n => message.node_ids.some(id => id === n.old_id));
+                    for (let n of newNodes) {
+                        n.pos = DEFAULT_POSITION;
+                        await backend.updateNode(n);
+                    }
+                    await backend.updateExternalBookmarks(newNodes);
+                });
 
         case "MOVE_NODES":
             return backend.moveNodes(message.node_ids, message.dest_id);

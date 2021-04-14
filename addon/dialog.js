@@ -39,17 +39,17 @@ function showDlg(name, data, callback) {
         let dlg_title = $dlg.find(" #prop-dlg-title-text").first();
 
         if (data.comments) {
-            comments_icon.css("background-image", "var(--theme-comments-filled-icon)");
+            comments_icon.css("background-image", "var(--themed-comments-filled-icon)");
         }
         else
-            comments_icon.css("background-image", "var(--theme-comments-icon)");
+            comments_icon.css("background-image", "var(--themed-comments-icon)");
 
         let old_icon = comments_icon.css("background-image");
 
         comments_icon.click(e => {
             comments_container.toggle();
             if (comments_container.is(":visible")) {
-                comments_icon.css("background-image", "var(--theme-properties-icon)");
+                comments_icon.css("background-image", "var(--themed-properties-icon)");
                 comments_icon.attr("title", "Properties");
                 dlg_title.text("Comments");
             }

@@ -1,7 +1,8 @@
 import {backend} from "./backend.js"
 import {dropboxBackend} from "./backend_dropbox.js"
+import {cloudBackend} from "./backend_cloud.js"
 
-import {showDlg, alert, confirm} from "./dialog.js"
+import {showDlg, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
 import {getThemeVar, isElementInViewport, showNotification} from "./utils.js";
@@ -38,8 +39,8 @@ export const TREE_STATE_PREFIX = "tree-state-";
 
 
 // return the original Scrapyard node object stored in a jsTree node
-let o = n => n.original.n;
-let os = n => n?.original?.n;
+let o = n => n.data;
+let os = n => n?.data;
 
 
 class BookmarkTree {
@@ -354,8 +355,7 @@ class BookmarkTree {
         jnode.id = node.id;
         jnode.text = node.name;
         jnode.icon = node.icon;
-        jnode.data = node.uuid;
-        jnode.n = node; // store the original Scrapyard node
+        jnode.data = node; // store the original Scrapyard node
 
         jnode.parent = node.parent_id;
         if (!jnode.parent)
@@ -843,20 +843,17 @@ class BookmarkTree {
                 submenu: {
                     cloudItem: {
                         label: "Cloud",
-                        icon: (getThemeVar("--theme-background").trim() == "\"white\""? "icons/cloud.png": "icons/cloud2.png"),
+                        icon: (getThemeVar("--theme-background").trim() === "\"white\""? "icons/cloud.png": "icons/cloud2.png"),
                         action: async function () {
+                            if (!settings.cloud_enabled() || !cloudBackend.isAuthenticated()) {
+                                showNotification("Please, enable cloud in the add-on settings.");
+                                return;
+                            }
+
                             self.startProcessingIndication();
                             let selectedIds = selectedNodes.map(n => o(n).id);
-                            browser.runtime.sendMessage({type: "COPY_NODES", node_ids: selectedIds, dest_id: CLOUD_SHELF_ID})
-                                .then(async newNodes => {
-                                    newNodes = newNodes.filter(n => selectedIds.some(id => id === n.old_id));
-                                    for (let n of newNodes) {
-                                        n.pos = DEFAULT_POSITION;
-                                        await backend.updateNode(n);
-                                    }
-                                    await backend.updateExternalBookmarks(newNodes);
-                                    self.stopProcessingIndication();
-                                });
+                            await browser.runtime.sendMessage({type: "SHARE_TO_CLOUD", node_ids: selectedIds})
+                            self.stopProcessingIndication();
                         }
                     },
                     pocketItem: {
@@ -1155,6 +1152,8 @@ class BookmarkTree {
                             let live_data = self.data.find(n => n.id == properties.id);
                             Object.assign(o(ctxNode), properties);
                             Object.assign(live_data, BookmarkTree.toJsTreeNode(o(ctxNode)));
+
+                            await backend.updateBookmark(properties);
 
                             self.stopProcessingIndication();
 
