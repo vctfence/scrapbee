@@ -277,8 +277,9 @@ window.onload = function () {
     });
 
     $(document).on("click", function(e) {
-        if (!event.target.matches("#shelf-menu-button")
-            && !event.target.matches("#search-mode-switch"))
+        if (!e.target.matches("#shelf-menu-button")
+            && !e.target.matches("#prop-dlg-containers-icon")
+            && !e.target.matches("#search-mode-switch"))
             $(".simple-menu").hide();
     });
 

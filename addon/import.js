@@ -257,7 +257,8 @@ export async function importOrg(shelf, text) {
     await importLastObject();
 }
 
-const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id"];
+const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id",
+                            "container"];
 
 async function objectToProperties(object) {
     let lines = [];

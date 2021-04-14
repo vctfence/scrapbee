@@ -8,7 +8,6 @@ import {GetPocket} from "./lib/pocket.js";
 import {getThemeVar, isElementInViewport, showNotification} from "./utils.js";
 import {
     CLOUD_EXTERNAL_NAME,
-    CLOUD_SHELF_ID,
     ENDPOINT_TYPES,
     EVERYTHING,
     FIREFOX_BOOKMARK_MENU,
@@ -42,7 +41,6 @@ export const TREE_STATE_PREFIX = "tree-state-";
 let o = n => n.data;
 let os = n => n?.data;
 
-
 class BookmarkTree {
     constructor(element, inline= false) {
         this._element = element;
@@ -69,7 +67,7 @@ class BookmarkTree {
             },
             contextmenu: {
                 show_at_node: false,
-                items: (node) => {return this.contextMenu(node)}
+                items: node => this.contextMenu(node)
             },
             types: {
                 "#": {
@@ -180,6 +178,24 @@ class BookmarkTree {
         $(document).on("mousedown", ".jstree-node", e => this.handleMouseClick(e));
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
+
+        if (!inline) {
+            browser.contextualIdentities.query({}).then(containers => {
+                this._containers = containers;
+            });
+
+            browser.contextualIdentities.onCreated.addListener(() => {
+                browser.contextualIdentities.query({}).then(containers => {
+                    this._containers = containers;
+                });
+            });
+
+            browser.contextualIdentities.onRemoved.addListener(() => {
+                browser.contextualIdentities.query({}).then(containers => {
+                    this._containers = containers;
+                });
+            });
+        }
     }
 
     clearIconCache() {
@@ -709,13 +725,47 @@ class BookmarkTree {
             });
         }
 
+        let containersSubmenu = {};
+
+        for (let container of this._containers) {
+            containersSubmenu[container.cookieStoreId] = {
+                label: container.name,
+                __container_id: container.cookieStoreId,
+                _istyle: `mask-image: url("${container.iconUrl}"); mask-size: 16px 16px; `
+                       + `mask-repeat: no-repeat; mask-position: center; background-color: ${container.colorCode};`,
+                action: async function (obj) {
+                    if (o(ctxNode).type === NODE_TYPE_SHELF || o(ctxNode).type === NODE_TYPE_GROUP) {
+                        let children = self.odata.filter(n => ctxNode.children.some(id => id == n.id) && isEndpoint(n));
+                        children = children.filter(c => c.type !== NODE_TYPE_NOTES);
+                        children.forEach(c => c.type = NODE_TYPE_BOOKMARK);
+                        children.sort((a, b) => a.pos - b.pos);
+
+                        for (let node of children)
+                            await browser.runtime.sendMessage({
+                                type: "BROWSE_NODE", node, container: obj.item.__container_id
+                            });
+                    }
+                    else {
+                        for (let n of selectedNodes) {
+                            let node = o(n);
+                            if (!isEndpoint(node) || !node.uri)
+                                continue;
+                            node.type = NODE_TYPE_BOOKMARK;
+                            await browser.runtime.sendMessage({
+                                type: "BROWSE_NODE", node, container: obj.item.__container_id
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
         let items = {
             openItem: {
                 label: "Open",
-                action: function () {
-                    for (let n of selectedNodes) {
-                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: o(n)});
-                    }
+                action: async function () {
+                    for (let n of selectedNodes)
+                        await browser.runtime.sendMessage({type: "BROWSE_NODE", node: o(n)});
                 }
             },
             openAllItem: {
@@ -727,6 +777,10 @@ class BookmarkTree {
                     for (let node of children)
                         await browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
                 }
+            },
+            openInContainerItem: {
+                label: "Open in Container",
+                submenu: containersSubmenu
             },
             sortItem: {
                 label: "Sort by Name",
@@ -743,7 +797,7 @@ class BookmarkTree {
                 label: "Open Original URL",
                 action: function () {
                     browser.tabs.create({
-                        "url": o(ctxNode).uri
+                        "url": o(ctxNode).uri, cookieStoreId: o(ctxNode).container
                     });
                 }
             },
@@ -844,12 +898,8 @@ class BookmarkTree {
                     cloudItem: {
                         label: "Cloud",
                         icon: (getThemeVar("--theme-background").trim() === "\"white\""? "icons/cloud.png": "icons/cloud2.png"),
+                        _disabled: !settings.cloud_enabled() || !cloudBackend.isAuthenticated(),
                         action: async function () {
-                            if (!settings.cloud_enabled() || !cloudBackend.isAuthenticated()) {
-                                showNotification("Please, enable cloud in the add-on settings.");
-                                return;
-                            }
-
                             self.startProcessingIndication();
                             let selectedIds = selectedNodes.map(n => o(n).id);
                             await browser.runtime.sendMessage({type: "SHARE_TO_CLOUD", node_ids: selectedIds})
@@ -1131,7 +1181,11 @@ class BookmarkTree {
                         properties.comments = await backend.fetchComments(properties.id);
                         let commentsPresent = !!properties.comments;
 
+                        properties.containers = self._containers;
+
                         showDlg("properties", properties).then(async newProperties => {
+
+                            delete properties.containers;
 
                             Object.assign(properties, newProperties);
 
@@ -1285,6 +1339,10 @@ class BookmarkTree {
             for (let k in items)
                 if (!["deleteItem", "newFolderAfterItem"].find(s => s === k))
                     delete items[k];
+        }
+
+        if (o(ctxNode).type === NODE_TYPE_NOTES) {
+            delete items.openInContainerItem;
         }
 
         if (!isEndpoint(o(ctxNode))) {

@@ -186,11 +186,13 @@ export function initializeOmnibox() {
         description: `Search Scrapyard bookmarks by title or URL`
     });
 
-    const SEARCH_LIMIT = 10;
+    const SEARCH_LIMIT = 6;
     const searchProvider = new TitleSearchProvider(EVERYTHING);
 
+    let suggestions;
+
     const makeSuggestion = function(node) {
-        let suggestion = {description: node.name};
+        let suggestion = {__node: node, description: node.name};
         if (node.type === NODE_TYPE_BOOKMARK)
             suggestion.content = node.uri;
         else
@@ -199,17 +201,50 @@ export function initializeOmnibox() {
         return suggestion;
     }
 
+    const findSuggestion = text => {
+        if (suggestions) {
+            if (text.startsWith("ext+scrapyard://")) {
+                let uuid = text.replace("ext+scrapyard://", "");
+                let match = suggestions.filter(s => s.__node.uuid === uuid);
+                if (match.length)
+                    return match[0]
+            }
+            else {
+                let match = suggestions.filter(s => s.__node.uri === text);
+                if (match.length)
+                    return match[0];
+            }
+        }
+    }
+
     browser.omnibox.onInputChanged.addListener(async (text, suggest) => {
         if (text?.length < 3)
             return;
 
         let nodes = await searchProvider.search(text, SEARCH_LIMIT);
 
-        suggest(nodes.map(makeSuggestion));
+        suggestions = nodes.map(makeSuggestion);
+
+        suggest(suggestions);
     });
 
-    browser.omnibox.onInputEntered.addListener((text, disposition) => {
+    browser.omnibox.onInputEntered.addListener(async (text, disposition) => {
         let url = text;
+
+        let suggestion = findSuggestion(text);
+        suggestions = null;
+
+        if (suggestion) {
+            let activeTab = (await browser.tabs.query({currentWindow: true, active: true}))?.[0];
+
+            let node = suggestion.__node;
+            if (node.type === NODE_TYPE_BOOKMARK && node.container) {
+                if (activeTab && activeTab.url === "about:newtab")
+                    browser.tabs.remove(activeTab.id);
+                browser.tabs.create({url, cookieStoreId: node.container});
+                return;
+            }
+        }
 
         switch (disposition) {
             case "currentTab":

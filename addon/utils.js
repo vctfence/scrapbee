@@ -212,6 +212,7 @@ export async function loadLocalResource(url, type) {
 export async function testFavicon(url) {
     try {
         // get a nice favicon for wikipedia
+        console.log(origin)
         if (url.origin.endsWith("wikipedia.org"))
             return "https://wikipedia.org/favicon.ico";
 

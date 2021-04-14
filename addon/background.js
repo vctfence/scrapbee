@@ -27,7 +27,7 @@ import {
     RDF_EXTERNAL_NAME
 } from "./storage_constants.js";
 
-export async function browseNode(node, external_tab, preserve_history) {
+export async function browseNode(node, external_tab, preserve_history, container) {
 
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
@@ -41,9 +41,11 @@ export async function browseNode(node, external_tab, preserve_history) {
                 }
             }
 
+            container = container || node.container;
+
             return (external_tab
                         ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
-                        : browser.tabs.create({"url": url}));
+                        : browser.tabs.create({"url": url, cookieStoreId: container}));
 
         case NODE_TYPE_ARCHIVE:
 
@@ -162,7 +164,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             return backend.reorderNodes(message.positions);
 
         case "BROWSE_NODE":
-            browseNode(message.node, message.tab, message.preserveHistory);
+            browseNode(message.node, message.tab, message.preserveHistory, message.container);
             break;
 
         case "BROWSE_NOTES":

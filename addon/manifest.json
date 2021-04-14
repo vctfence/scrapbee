@@ -21,20 +21,22 @@
     "content_security_policy": "script-src 'self'; object-src 'self';",
     "permissions": [
         "<all_urls>",
+        "tabs",
         "activeTab",
         "bookmarks",
+        "menus",
         "contextMenus",
         "downloads",
-        "menus",
         "nativeMessaging",
         "notifications",
         "storage",
-        "tabs",
         "unlimitedStorage",
         "webNavigation",
         "webRequest",
         "webRequestBlocking",
-        "management"
+        "management",
+        "cookies",
+        "contextualIdentities"
     ],
     "sidebar_action": {
         "default_title": "Scrapyard",

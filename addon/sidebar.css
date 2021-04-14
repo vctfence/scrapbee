@@ -4,6 +4,7 @@
     --themed-comments-icon: url("icons/page-blank.svg");
     --themed-comments-filled-icon: url("icons/page.svg");
     --themed-properties-icon: url("icons/properties.svg");
+    --themed-containers-icon: url("icons/containers.svg");
 }
 
 *{
@@ -262,7 +263,7 @@ select {
 }
 
 .simple-menu {
-    min-with:50px;
+    min-width:50px;
     position:absolute;
     background:#fff;
     right: 10px;
@@ -319,14 +320,24 @@ select {
     flex: 0 1 auto;
 }
 
-#prop-dlg-comments-icon {
-    height: 17px;
-    width: 17px;
+#prop-dlg-comments-icon, #prop-dlg-containers-icon {
+    height: 16px;
+    width: 16px;
     float: right;
     cursor: pointer;
     background-image: var(--themed-comments-icon);
     background-size: contain;
     background-repeat: no-repeat;
+}
+
+
+#prop-dlg-containers-icon {
+    background-image: var(--themed-containers-icon);
+    background-size: 15px 15px;
+    background-position: center;
+    margin-right: 4px;
+    height: 16px;
+    width: 16px;
 }
 
 #dlg-comments-container {
@@ -548,4 +559,34 @@ a#set-default-icon, a#copy-reference-url {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+#containers-menu {
+    display: none;
+    right: 30px;
+    top: 34px;
+    font-weight: normal;
+}
+
+#containers-menu div {
+    margin: 0;
+    padding: 2px 5px;
+    line-height: 16px;
+}
+
+#containers-menu div:first-child {
+    padding-top: 4px;
+}
+
+#containers-menu div:last-child {
+    padding-bottom: 4px;
+}
+
+
+.container-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    margin-bottom: -2px;
 }

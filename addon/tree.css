@@ -276,3 +276,7 @@
 a.has-notes, a.has-notes:hover {
     text-decoration: underline;
 }
+
+.container-context-menu i {
+    background-size: 16px 16px !important;
+}

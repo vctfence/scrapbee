@@ -1,3 +1,7 @@
+import {NODE_TYPE_NOTES} from "./storage_constants.js";
+
+const DEFAULT_CONTAINER = "--default-container";
+
 function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
         return
@@ -60,8 +64,56 @@ function showDlg(name, data, callback) {
             }
         });
     }
+
+    let containers_icon = $dlg.find("#prop-dlg-containers-icon").first();
+    if (containers_icon.length && data.type !== NODE_TYPE_NOTES) {
+        containers_icon.click(() => {
+            $("#containers-menu", $dlg).toggle();
+        });
+
+        let containers_menu = $dlg.find("#containers-menu").first();
+        let icon_style = `background-image: var(--themed-containers-icon); background-size: 15px 15px;`
+                       + `background-repeat: no-repeat; background-position: center; background-color: transparent !important`;
+        let container_item = `<div class="container-item" id="${DEFAULT_CONTAINER}"><i class="container-icon" style='${icon_style}'></i>`
+            + `Default</div>`;
+
+        containers_menu.append(container_item);
+
+        for (let container of data.containers) {
+            icon_style = `mask-image: url("${container.iconUrl}"); mask-size: contain; `
+                + `mask-repeat: no-repeat; mask-position: center; background-color: ${container.colorCode} !important;`
+
+            container_item = `<div class="container-item" id="${container.cookieStoreId}">`
+                           +`<i class="container-icon" style='${icon_style}'></i>${container.name}</div>`;
+
+            containers_menu.append(container_item);
+        }
+
+        let makeButtonStyle = (elt) => {
+            let style = $("i", elt).attr("style") + "background-image: none; ";
+
+            if (elt.id !== DEFAULT_CONTAINER)
+                style += " margin-top: 0;"
+
+            return style;
+        }
+
+        $(".container-item").click(e => {
+            containers_icon.attr("style", makeButtonStyle(e.target));
+            data.container = e.target.id;
+
+            if (data.container === DEFAULT_CONTAINER)
+                data.container = null;
+        });
+
+        if (data.container && data.container !== DEFAULT_CONTAINER) {
+            let elt = $(`#${data.container}`, containers_menu).get(0);
+            if (elt)
+                containers_icon.attr("style", makeButtonStyle(elt));
+        }
+    }
     else {
-        comments_icon.hide();
+        containers_icon.remove();
     }
 
 
