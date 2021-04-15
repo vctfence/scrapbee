@@ -199,10 +199,19 @@ From data URL:
 
 let MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
 
+let TEXT_EXAMPLE = `CSS: #notes {width: 100%}
+This is an example of a plain text with added CSS style. The style should be added on the first line of the text to have effect.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ligula lorem, porttitor non dictum vel, euismod et urna. Nulla feugiat, erat a semper mollis, massa felis consequat nunc, sit amet venenatis magna felis quis leo. Nunc velit risus, eleifend at lacinia id, fringilla et ipsum. Cras nulla ante, posuere eget ultricies non, ornare eget lectus. Nulla ac posuere elit, in interdum turpis. Suspendisse potenti. Pellentesque tempus nec quam vel imperdiet. In interdum libero lorem, vitae tempus libero pretium vitae. Integer accumsan, risus nec tempor aliquam, leo enim tempus felis, eget facilisis arcu lectus et arcu. Nam consequat lectus et fringilla tristique. Nulla facilisi. Aliquam vulputate, ipsum et dictum aliquam, tellus sem eleifend velit, et sodales dolor nisl et magna. Quisque eu elementum neque. Nam sodales justo tortor, at cursus enim egestas ac. In semper hendrerit augue ac suscipit. Proin ut laoreet diam.
+
+Etiam sagittis metus sed orci iaculis gravida. Nam fringilla imperdiet turpis sed pretium. Nam scelerisque mauris non arcu vulputate, sit amet iaculis orci aliquet. Donec accumsan erat lacus, vitae aliquam elit porta sed. Maecenas nec justo ultrices, ultricies tortor ullamcorper, finibus lorem. Nullam sit amet congue tortor. Vestibulum euismod magna sit amet risus rhoncus, vel placerat arcu tincidunt. Vestibulum dictum pharetra dui, sit amet malesuada mauris ullamcorper a. Vestibulum nulla massa, tempor dignissim risus sit amet, tincidunt finibus lacus.`
+
+let TEXT_DEFAULT_STYLE = `CSS: #notes {width: 100%}`;
+
 const INPUT_TIMEOUT = 5000;
 
-let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
-let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
+let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE, "text": TEXT_EXAMPLE};
+let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE, "text": TEXT_DEFAULT_STYLE};
 
 let node_ids = location.hash? location.hash.split(":"): [];
 let node_id = node_ids.length? parseInt(node_ids[node_ids.length - 1]): undefined;
@@ -222,8 +231,8 @@ function editorSaveOnChange(e) {
 
     editorTimeout = setTimeout(() => {
         if (e && node_id) {
-            backend.storeNotes(node_id, e.target.value, format, align);
-            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !e.target.value});
+            backend.storeNotes(node_id, getEditorContent(), format, align);
+            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()});
         }
     }, INPUT_TIMEOUT);
 }
@@ -279,8 +288,11 @@ function getEditorContent() {
 }
 
 function setEditorContent(content) {
-    if (format === "html")
+    if (format === "html") {
+        console.log(content);
         $('#editor').trumbowyg("html", content);
+        console.log($('#editor').trumbowyg("html"));
+    }
     else
         $('#editor').val(content);
 }
@@ -343,16 +355,55 @@ window.onload = function() {
 
     function markdown2html(md_text) {
         md_text = md_text || "";
-        let lines = md_text.split("\n");
-        let comment = lines.length? lines[0].trim(): "";
-        let matches = /\[\/\/]: # \((.*?)\)$/.exec(comment);
 
-        if (matches && matches[1])
-            $("#notes-style").text(matches[1].htmlEncode(true, true));
+        let m = /^(.*?\r?\n)$/m.exec(md_text);
+        let firstLine;
+        let css;
+
+        if (m && m[1]) {
+            firstLine = m[1];
+            m = /\[\/\/]: # \((.*?)\)$/.exec(firstLine.trim());
+
+            if (m && m[1])
+                css = m[1];
+        }
+
+        if (css)
+            $("#notes-style").text(css.htmlEncode(true, true));
         else
             $("#notes-style").text("");
 
         return marked(md_text);
+    }
+
+    function text2html(text) {
+        text = text || "";
+        let m = /^(.*?\r?\n)$/m.exec(text);
+        let firstLine;
+        let css;
+
+        if (m && m[1]) {
+            firstLine = m[1];
+            m = /CSS:(.*?)$/.exec(firstLine.trim());
+
+            if (m && m[1])
+                css = m[1];
+        }
+
+        if (css) {
+            $("#notes-style").text(css.htmlEncode(true, true));
+            text = text.replace(firstLine, "");
+        }
+        else
+            $("#notes-style").text("");
+
+        return `<pre class="plaintext">${text.htmlEncode()}</pre>`;
+    }
+
+    function prepareHTML(html) {
+        $("#notes-style").text("");
+
+        return html;
     }
 
     function formatNotes(text, format) {
@@ -365,11 +416,10 @@ window.onload = function() {
                 $("#notes").attr("class", "notes format-markdown").html(markdown2html(text));
                 break;
             case "html":
-                $("#notes").attr("class", "notes format-html").html(text);
+                $("#notes").attr("class", "notes format-html").html(prepareHTML(text));
                 break;
             default:
-                $("#notes").attr("class", "notes format-text")
-                    .html(`<pre class="plaintext">${text.htmlEncode()}</pre>`);
+                $("#notes").attr("class", "notes format-text").html(text2html(text));;
         }
     }
 
@@ -403,8 +453,6 @@ window.onload = function() {
             $("#format-selector").show();
             $("#align-selector").hide();
 
-            if (format === "html")
-                initWYSIWYG();
             //$("#full-width-container").hide();
         }
     });
@@ -412,6 +460,12 @@ window.onload = function() {
     if (node_id)
         backend.fetchNotes(node_id).then(notes => {
             if (notes) {
+                format = notes.format || "org";
+                $("#notes-format").val(format);
+
+                if (format === "html")
+                    initWYSIWYG();
+
                 setEditorContent(notes.content);
 
                 align = notes.align;
@@ -419,10 +473,7 @@ window.onload = function() {
                     $("#notes-align").val(align);
                 alignNotes();
 
-                format = notes.format || "org";
-                $("#notes-format").val(format);
-
-                if (format !== "text" && format !== "html")
+                if (format !== "html")
                     $("#inserts").show();
                 else
                     $("#inserts").hide();
@@ -471,7 +522,7 @@ window.onload = function() {
         else
             clearWYSIWYG();
 
-        if (format !== "text" && format !== "html")
+        if (format !== "html")
             $("#inserts").show();
         else
             $("#inserts").hide();
