@@ -183,12 +183,10 @@ export class SearchContext {
 
 export function initializeOmnibox() {
     browser.omnibox.setDefaultSuggestion({
-        description: `Search Scrapyard bookmarks by title or URL`
+        description: `Search Scrapyard bookmarks`
     });
 
     const SEARCH_LIMIT = 6;
-    const searchProvider = new TitleSearchProvider(EVERYTHING);
-
     let suggestions;
 
     const makeSuggestion = function(node) {
@@ -218,10 +216,19 @@ export function initializeOmnibox() {
     }
 
     browser.omnibox.onInputChanged.addListener(async (text, suggest) => {
-        if (text?.length < 3)
+        if (!text.startsWith("+") && text?.length < 3)
+            return;
+        else if (text.startsWith("+") && text?.length < 4)
             return;
 
-        let nodes = await searchProvider.search(text, SEARCH_LIMIT);
+        let provider = text.startsWith("+")
+            ? new TagSearchProvider(EVERYTHING)
+            : new TitleSearchProvider(EVERYTHING);
+
+        if (text.startsWith("+"))
+            text = text.replace(/^\+(?:\s+)?/, "");
+
+        let nodes = await provider.search(text, SEARCH_LIMIT);
 
         suggestions = nodes.map(makeSuggestion);
 

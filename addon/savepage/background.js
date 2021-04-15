@@ -384,7 +384,7 @@
 
 import {backend} from "../backend.js";
 import {browseNode} from "../background.js";
-import {isSpecialPage, notifySpecialPage} from "../utils.js";
+import {getFaviconFromTab, isSpecialPage, notifySpecialPage} from "../utils.js";
 import {
     DEFAULT_SHELF_NAME,
     FIREFOX_BOOKMARK_MENU,
@@ -945,25 +945,41 @@ function addListeners()
 
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
+        const ISHELL_ID_RX = /^ishell(:?-we)?@gchristensen.github.io$/;
+
+        let activeTab;
+
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":
                 window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
                 return browser.runtime.getManifest().version;
 
             case "SCRAPYARD_LIST_SHELVES":
+                if (!ISHELL_ID_RX.test(sender.id))
+                    return null;
+
                 let shelves = await backend.listShelves();
                 return shelves.map(n => ({name: n.name}));
 
             case "SCRAPYARD_LIST_GROUPS":
+                if (!ISHELL_ID_RX.test(sender.id))
+                    return null;
+
                 let groups = await backend.listGroups();
                 groups.forEach(n => computePath(n, groups));
                 return groups.map(n => ({name: n.name, path: n.path}));
 
             case "SCRAPYARD_LIST_TAGS":
+                if (!ISHELL_ID_RX.test(sender.id))
+                    return null;
+
                 let tags = await backend.queryTags();
                 return tags.map(t => ({name: t.name.toLocaleLowerCase()}));
 
             case "SCRAPYARD_LIST_NODES":
+                if (!ISHELL_ID_RX.test(sender.id))
+                    return null;
+
                 delete message.type;
 
                 let no_shelves = message.types && !message.types.some(t => t === NODE_TYPE_SHELF);
@@ -986,10 +1002,21 @@ function addListeners()
                     return nodes;
 
             case "SCRAPYARD_ADD_BOOKMARK":
-                if (isSpecialPage(message.uri)) {
+                activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
+
+                if (!message.uri)
+                    message.uri = activeTab.url;
+
+                if (!message.uri || isSpecialPage(message.uri)) {
                     notifySpecialPage();
                     return;
                 }
+
+                if (!message.name)
+                    message.name = message.title || activeTab.title;
+
+                if (!message.icon)
+                    message.icon = await getFaviconFromTab(activeTab);
 
                 message.path = backend.expandPath(message.path);
 
@@ -1000,6 +1027,22 @@ function addListeners()
                 break;
 
             case "SCRAPYARD_ADD_ARCHIVE":
+                activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
+
+                if (!message.uri)
+                    message.uri = activeTab.url;
+
+                if (!message.uri || isSpecialPage(message.uri)) {
+                    notifySpecialPage();
+                    return;
+                }
+
+                if (!message.name)
+                    message.name = message.title || activeTab.title;
+
+                if (!message.icon)
+                    message.icon = await getFaviconFromTab(activeTab);
+
                 message.path = backend.expandPath(message.path);
 
                 backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
@@ -1012,6 +1055,10 @@ function addListeners()
                                 {options: message, bookmark: message});
                         });
                 });
+                break;
+
+            case "SCRAPYARD_BROWSE_UUID":
+                backend.getNode(message.uuid, true).then(node => browseNode(node));
                 break;
 
             case "SCRAPYARD_BROWSE_NODE":

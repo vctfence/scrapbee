@@ -2,7 +2,7 @@ import {backend} from "./backend.js";
 import {settings} from "./settings.js"
 import {BookmarkTree} from "./tree.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
-import {testFavicon} from "./utils.js";
+import {getFaviconFromTab, testFavicon} from "./utils.js";
 
 let tree;
 
@@ -65,21 +65,7 @@ window.onload = function () {
         $("#bookmark-name").val(tab.title);
         $("#bookmark-url").val(tab.url);
 
-        let favicon;
-
-        try {
-            let icon = await browser.tabs.executeScript(tab.id, {
-                code: `document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']")?.href`
-            });
-
-            if (icon && icon.length && icon[0])
-                favicon = await testFavicon(new URL(icon[0], new URL(tab.url).origin));
-        } catch (e) {
-            console.error(e);
-        }
-
-        if (!favicon)
-            favicon = await testFavicon(new URL("/favicon.ico", new URL(tab.url).origin));
+        let favicon = getFaviconFromTab(tab);
 
         if (favicon)
             $("#bookmark-icon").val(favicon);

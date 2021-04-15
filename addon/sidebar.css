@@ -1,5 +1,5 @@
 :root {
-    --theme-background: "white";
+    --theme-background: white;
 
     --themed-comments-icon: url("icons/page-blank.svg");
     --themed-comments-filled-icon: url("icons/page.svg");

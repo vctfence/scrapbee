@@ -12,20 +12,6 @@ manager with some org-mode goodness which I would be able to control from [iShel
 I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch
 to obtain the desired features.
 
-### Automation
-
-The following call from your addon will add the page at the active tab as an archive/bookmark to Scrapyard.
-
-```javascript
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type: "SCRAPYARD_ADD_ARCHIVE", // also "SCRAPYARD_ADD_BOOKMARK"
-    name: "bookmark title",
-    path:  "shelf/my/directory",
-    tags:  "comma,separated",
-    details:  "bookmark description"
-});
-```
-
 ### Objectives
 
 * ~~Store data at IndexedDB~~ [DONE]
@@ -44,10 +30,10 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 * ~~Write help~~ [DONE]
 * ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
 * ~~Live link auto checker~~ [DONE]
-* ~~Self-hosted cloud-synchronization backend (possibly with bookmark access through the web)~~
 * ~~Added helper application [DONE]~~
+* ~~Added multi-account containers support [DONE]~~
 
-### Current status of cloud support
+### The current status of cloud support
 
 Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API, which is by definition a mock
 implementation - since there is no real database, the speed of operations is inversely proportional to

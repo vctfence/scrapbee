@@ -230,6 +230,26 @@ export async function testFavicon(url) {
     return undefined;
 }
 
+export async function getFaviconFromTab(tab) {
+    let favicon;
+
+    try {
+        let icon = await browser.tabs.executeScript(tab.id, {
+            code: `document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']")?.href`
+        });
+
+        if (icon && icon.length && icon[0])
+            favicon = await testFavicon(new URL(icon[0], new URL(tab.url).origin));
+    } catch (e) {
+        console.error(e);
+    }
+
+    if (!favicon)
+        favicon = await testFavicon(new URL("/favicon.ico", new URL(tab.url).origin));
+
+    return favicon;
+}
+
 export function getFavicon(host, tryRootFirst = false, usePageOnly = false) {
     let load_url = (url, type, timeout = 10000) => {
         return new Promise((resolve, reject) => {

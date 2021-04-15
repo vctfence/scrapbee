@@ -17,6 +17,10 @@
         padding-bottom: 8px;
     }
 
+    i, b {
+        font-size: 12pt;
+    }
+
     code {
         font-size: 10pt;
     }
@@ -46,12 +50,21 @@
         padding-left: 26px;
     }
 
+    pre.rainbow-show {
+        padding-left: 30px;
+    }
+
+    code.rainbow, code.rainbow span {
+        font-family: "Lucida Console", "Courier New", monospace !important;
+        font-size: 10pt;
+    }
+
 </style>
 
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
     <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page
-        fragments or complete documents in unlimited quantities. By utilizing browser local storage,
+        fragments, or complete documents in unlimited quantities. By utilizing browser local storage,
         Scrapyard does not require external tools for basic functionality and allows to
         import/export data in <a
             href="https://orgmode.org" target="_blank">org-mode</a> or <a
@@ -83,7 +96,7 @@
     <h3>Capturing Pages</h3>
     <p>
         To capture a web-page or its fragment, select the part of the page you want to archive, open Scrapyard popup window
-        by clicking its icon on the browser toolbar, choose the destination shelf and folder, then press "Bookmark"
+        by clicking its icon on the browser toolbar, choose the destination shelf and folder, then press the "Bookmark"
         or "Archive" button. The "Bookmark" button stores only web-page URLs, while the "Archive" button captures
         the current selection, the whole page, if there is no active selection, or the whole document, if the opened
         link is not a web-page (for example, a PDF file).</p>
@@ -92,21 +105,21 @@
         <img src="images/help/capture-popup.png">
     </p>
 
-    <p>In the bookmark tree, archived pages are marked with the italic font, while ordinary bookmarks have the regular one.</p>
+    <p>In the bookmark tree, archived pages are marked with italic font, while ordinary bookmarks have the regular one.</p>
 
     <h3>Bookmark Shelves</h3>
     <p>
         It is possible to create an unlimited amount of bookmark shelves to structure your bookmarks.
         The shelf named "everything" allows to browse and search through all existing bookmarks. Scrapyard built-in
-        shelves are listed in the bold font and cannot be deleted or renamed.</p>
+        shelves are listed in bold font and cannot be deleted or renamed.</p>
 
     <p style="text-align: center">
         <img src="images/help/shelves.png">
     </p>
 
-    <h3>Search</h3>
+    <h3 id="search">Search</h3>
     <p>The search input field at the Scrapyard sidebar allows to filter bookmarks of the current shelf
-        by title/URL, tags, or the content of the archived pages. Use the "Everything" shelf to search through all
+        by title/URL, tags, or content of the archived pages. Use the "Everything" shelf to search through all
         bookmarks.</p>
 
     <p style="text-align: center">
@@ -120,6 +133,18 @@
         <img src="images/help/search-urlbar.png">
     </p>
 
+    <p>If URL-bar search text begins with a plus sign (+), Scrapyard will interpret the rest of the
+        text as a tag name and will search by tags instead. By assigning unique tags to bookmarks
+        (with no leading plus sign) you may quickly open dedicated bookmarks without
+        using mouse, which may be relevant when multi-account containers are involved. It is
+        possible to activate Firefox URL-bar with the <code>Ctrl+L</code> keyboard shortcut.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/search-urlbar-tags.png">
+    </p>
+
+    <p>By creating dedicated iShell commands to open specific bookmarks, you may access them even
+    more quickly. See the section on automation for more details.</p>
 
     <h3>Cloud Bookmarking</h3>
     <p>
@@ -157,7 +182,7 @@
     <p>
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. You may attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
-        they will be lost if the bookmarks are deleted from Firefox UI, or after "Show Firefox bookmarks shelf"
+        they will be lost if the bookmarks are deleted from Firefox UI, or after the "Show Firefox bookmarks shelf"
         option in settings is unchecked. Firefox bookmarks are included in the export as a separate shelf,
         so import will leave the current Firefox bookmark state intact.
     </p>
@@ -166,7 +191,7 @@
         <img src="images/help/firefox.png">
     </p>
 
-    <h3><span class="help-anchor" id="firefox-containers">Firefox Multi-Account Containers</span></h3>
+    <h3 id="firefox-containers">Firefox Multi-Account Containers</h3>
 
     <p>Any Scrapyard bookmark could be opened in one of the Firefox Multi-Account containers,
         available through the "Open in Container" context menu of a bookmark, archive, or
@@ -196,9 +221,10 @@
         <img src="images/help/todo.png">
     </p>
 
-    <p>If the path of a bookmark parent folder above its title provides not enough context, it is possible to fill the "Details" and "Date"
-        fields at the bookmark property dialog. Only ISO (YYYY-MM-DD) date format is supported.
-        Expired TODO items will be displayed first regardless of the assigned state.</p>
+    <p>If the path of a bookmark parent folder above its title provides not enough context, it is
+        possible to fill the "Details" and "Date" fields at the bookmark property dialog. Only ISO
+        (YYYY-MM-DD) date format is supported. Expired TODO items will be displayed first regardless
+        of the assigned state.</p>
 
     <h3>Markers</h3>
     <p>Every archived page provides a toolbar which offers several types of text markers to
@@ -214,8 +240,9 @@
     </p>
 
     <h3>Bookmark Comments</h3>
-    <p>While the "Details" field in the bookmark properties is intended for display at the TODO shelf,
-    bookmark property dialog also allows to enter quick comments by clicking on the "page" icon at its top-right corner.</p>
+    <p>While the "Details" field in the bookmark properties is intended for display at the TODO
+        shelf, bookmark property dialog also allows to enter quick comments by clicking on the
+        "page" icon at its top-right corner.</p>
 
     <p style="text-align: center">
         <img src="images/help/comments-icon.png">
@@ -243,7 +270,7 @@
 
         <p>Notes could be entered in HTML (using a visual editor),
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
-        <a href="https://orgmode.org/manual/Markup.html" target="_blank">org-mode markup</a> or plain text.
+        <a href="https://orgmode.org/manual/Markup.html" target="_blank">Org-mode markup</a> or plain text.
             The format selector dropdown list is located at the bottom left corner of the "Edit" tab.</p>
 
     <p>The alignment selector, which is placed at the bottom left of the "View" tab, allows to select the overall note
@@ -264,7 +291,7 @@
         Insert the example markup into the note editor to explore what options are available.</p>
 
     <h3>Referencing to a bookmark or archive</h3>
-    <p>To make a reference to a Scrapyard bookmark or archive from the note markup create a link with the following URL:
+    <p>To make a reference to a Scrapyard bookmark or archive from the note markup, create a link with the following URL:
         <b><code>ext+scrapyard://&lt;BOOKMARK UUID&gt;</code></b>, for example:</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
 
@@ -302,7 +329,7 @@
         leaves the archived ScrapBook files on disk. See the "Import RDF" tab of the settings page
         for more details about the available import options.</p>
 
-        <p>Shelves imported in quick mode are marked with a tape reel icon. It is possible to add
+        <p>Shelves imported in the quick mode are marked with a tape reel icon. It is possible to add
             new archives to them (simple bookmarks are not included into the underlying RDF file),
             and physically delete RDF entries along with attached files. But when the entire shelf
             is deleted from Scrapyard, the corresponding RDF file and the archived pages are left intact.
@@ -377,7 +404,7 @@
     <p>
         It is possible to issue commands to Scrapyard through the text command interface offered by
         <a href="https://gchristensen.github.io/ishell/" target="_blank">iShell Extension</a>.
-        To control Scrapyard by text commands just install iShell. In most cases, the command interface
+        To control Scrapyard with text commands just install iShell. In most cases, the command interface
         allows to significantly reduce the number of actions needed to create a bookmark or to archive a page.
     </p>
 
@@ -420,11 +447,105 @@
     <p>If you often save bookmarks with similar properties to the same destination, it is possible to create custom
         capture commands with predefined parameters. The "CAPTURE" link at the bottom-right corner of iShell command editor allows
         to insert a template of a such command. In addition to the predefined parameters, custom capture commands allow to
-        specify comma-separated CSS selectors for elements that will only be retained or deleted automatically.
-        A custom CSS-style could be inserted into the captured document through the "style" option.</p>
+        specify comma-separated CSS selectors for elements that will automatically be retained or delete.
+        A custom CSS-style could be added into the captured document through the "style" option.</p>
 
     <p style="text-align: center">
         <img src="images/help/custom-command.png">
     </p>
+
+    <h2>Automation</h2>
+
+    <p>You can send messages to Scrapyard from your own add-ons or iShell commands to perform some operations. The following
+    four messages are currently available.</p>
+
+    <h4>SCRAPYARD_GET_VERSION</h4>
+
+    <p>Returns Scrapyard version. Useful for testing Scrapyard presence in the browser:</p>
+
+<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show"><span class="keyword">try</span> {
+    <span class="storage type">let</span> version <span class="keyword operator">=</span> <span class="keyword">await</span> browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
+        type: <span class="string">"SCRAPYARD_GET_VERSION"</span>
+    });
+
+    console.<span class="function call">log</span>(<span class="string">`Scrapyard version: ${version}`</span>);
+}
+<span class="keyword">catch</span> (e) {
+    сonsole.<span class="function call">log</span>(<span class="string">"Scrapyard is not installed"</span>);
+}</code></pre>
+
+    <h4>SCRAPYARD_ADD_BOOKMARK and SCRAPYARD_ADD_ARCHIVE</h4>
+    <p>The following call from your addon will add the page at the active tab as a bookmark or archive to Scrapyard:</p>
+
+<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show">browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
+    type:  <span class="string">"SCRAPYARD_ADD_BOOKMARK"</span>, <span class="comment">// also "SCRAPYARD_ADD_ARCHIVE"</span>
+    path:  <span class="string">"shelf/my/directory"</span>, <span class="comment">// optional</span>
+    title: <span class="string">"Bookmark Title"</span>, <span class="comment">// optional</span>
+    tags:  <span class="string">"comma,separated"</span> <span class="comment">// optional</span>
+});</code></pre>
+
+    <h4>SCRAPYARD_BROWSE_UUID</h4>
+
+    <p>This message will open a bookmark defined by the UUID which could be found at its property dialog:</p>
+
+<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show">browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
+    type:  <span class="string">"SCRAPYARD_BROWSE_UUID"</span>,
+    uuid:  <span class="string">"F0D858C6ED40416AA402EB2C3257EA17"</span>
+});</code></pre>
+
+    <h3>Creating Dedicated iShell Bookmark Commands</h3>
+
+    <p>You can quickly open dedicated bookmarks using iShell commands without using mouse. This may
+        be useful in the case of bookmarks with an assigned multi-account container. The example below
+        demonstrates a command without arguments used to open a single bookmark defined by its UUID.</p>
+
+<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show"><span class="comment">/**
+    Being placed in the iShell command editor this code
+    creates a command named "my-twitter", which opens
+    a single bookmark defined by its UUID.
+
+    @description Opens my twitter account in a personal container
+    @command
+*/</span>
+<span class="storage type class">class</span> <span class="entity name class">MyTwitter</span> {
+    <span class="entity name function">execute</span>() {
+        browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
+            type:  <span class="string">"SCRAPYARD_BROWSE_UUID"</span>,
+            uuid:  <span class="string">"F0D858C6ED40416AA402EB2C3257EA17"</span>
+        });
+    }
+}</code></pre>
+
+    <p>You can create more complex commands with arguments corresponding to the bookmarks you want to open.
+        The following example creates a command named <b>my-site</b> which can be called with either
+        <i>personal</i> or <i>work</i> argument.
+    </p>
+
+<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show"><span class="comment">/**
+    This command (my-site) has arguments that allow to open
+    a site in a work or a personal context. The corresponding
+    containers should be assigned to the bookmarks in Scrapyard.
+
+    @command
+    @description Opens my site in different contexts
+*/</span>
+<span class="storage type class">class</span> <span class="entity name class">MySite</span> {
+    <span class="entity name function">constructor</span>(args) {
+        <span class="storage type">const</span> sites <span class="keyword operator">=</span> {<span class="string">"personal"</span>: <span class="string">"589421A3D93941B4BAD4A2DEE8FF5297"</span>,
+                       <span class="string">"work"</span>:     <span class="string">"6C53355203D94BC59996E21D15C86C3E"</span>};
+        args[OBJECT] <span class="keyword operator">=</span> {nountype: sites, label: <span class="string">"site"</span>};
+    }
+
+    <span class="entity name function">preview</span>({OBJECT}, display) {
+        display.<span class="function call">text</span>(<span class="string">"Opens my site in "</span> <span class="keyword operator">+</span> OBJECT?.text <span class="keyword operator">+</span> <span class="string">" context."</span>);
+    }
+
+    <span class="entity name function">execute</span>({OBJECT}) {
+        browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
+            type:  <span class="string">"SCRAPYARD_BROWSE_UUID"</span>,
+            uuid:  OBJECT?.data
+        });
+    }
+}</code></pre>
 
 </div>

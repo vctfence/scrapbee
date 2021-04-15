@@ -897,7 +897,7 @@ class BookmarkTree {
                 submenu: {
                     cloudItem: {
                         label: "Cloud",
-                        icon: (getThemeVar("--theme-background").trim() === "\"white\""? "icons/cloud.png": "icons/cloud2.png"),
+                        icon: (getThemeVar("--theme-background").trim() === "white"? "icons/cloud.png": "icons/cloud2.png"),
                         _disabled: !settings.cloud_enabled() || !cloudBackend.isAuthenticated(),
                         action: async function () {
                             self.startProcessingIndication();
