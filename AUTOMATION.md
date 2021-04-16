@@ -92,9 +92,9 @@ Returns UUID of the newly created archive.
 
 Packs all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
 This message creates a new tab which is required for its operation and closes it on completion.
-The tab could be hidden through the `hide_tab` message option. Please be careful
-with this option, since Firefox may complain about hidden tabs and offer to remove
-the addon.
+The tab could be hidden through the `hide_tab` message option. Although this option may be useful
+in the case of mass API calls, please be careful with it, since Firefox may complain about hidden 
+tabs and offer to remove the addon.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
