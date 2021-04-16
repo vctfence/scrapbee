@@ -248,7 +248,7 @@ function initHelpMarks() {
     });
 }
 
-window.onload = async function(){
+window.onload = async function() {
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 

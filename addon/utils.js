@@ -233,6 +233,9 @@ export async function testFavicon(url) {
 export async function getFaviconFromTab(tab) {
     let favicon;
 
+    if (!tab.url)
+        return undefined;
+
     try {
         let icon = await browser.tabs.executeScript(tab.id, {
             code: `document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']")?.href`

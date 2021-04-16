@@ -391,6 +391,7 @@ import {
     FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF
 } from "../storage_constants.js";
+import {settings} from "../settings.js";
 
 /************************************************************************/
 
@@ -688,7 +689,9 @@ function addListeners()
 
                         if (!message.payload.__local_import) {
                             chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
-                            browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
+
+                            if (!message?.options.automation || message?.options.ishell || message?.options.select)
+                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
                             //alertNotify("Successfully archived page.");
                         }
 
@@ -943,42 +946,54 @@ function addListeners()
 
     /* External message listener */
 
+    const ISHELL_ID_RX = /^ishell(:?-we)?@gchristensen.github.io$/;
+
+    function isAutomationAllowed(sender) {
+        const extension_whitelist = settings.extension_whitelist();
+
+        return sender.ishell
+            || (settings.enable_automation() && (!extension_whitelist
+                || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
+    }
+
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
-        const ISHELL_ID_RX = /^ishell(:?-we)?@gchristensen.github.io$/;
-
         let activeTab;
+        sender.ishell = ISHELL_ID_RX.test(sender.id);
 
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
                 window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
                 return browser.runtime.getManifest().version;
 
             case "SCRAPYARD_LIST_SHELVES":
-                if (!ISHELL_ID_RX.test(sender.id))
-                    return null;
+                if (!sender.ishell)
+                    throw new Error();
 
                 let shelves = await backend.listShelves();
                 return shelves.map(n => ({name: n.name}));
 
             case "SCRAPYARD_LIST_GROUPS":
-                if (!ISHELL_ID_RX.test(sender.id))
-                    return null;
+                if (!sender.ishell)
+                    throw new Error();
 
                 let groups = await backend.listGroups();
                 groups.forEach(n => computePath(n, groups));
                 return groups.map(n => ({name: n.name, path: n.path}));
 
             case "SCRAPYARD_LIST_TAGS":
-                if (!ISHELL_ID_RX.test(sender.id))
-                    return null;
+                if (!sender.ishell)
+                    throw new Error();
 
                 let tags = await backend.queryTags();
                 return tags.map(t => ({name: t.name.toLocaleLowerCase()}));
 
             case "SCRAPYARD_LIST_NODES":
-                if (!ISHELL_ID_RX.test(sender.id))
-                    return null;
+                if (!sender.ishell)
+                    throw new Error();
 
                 delete message.type;
 
@@ -1002,10 +1017,13 @@ function addListeners()
                     return nodes;
 
             case "SCRAPYARD_ADD_BOOKMARK":
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
                 activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
 
                 if (!message.uri)
-                    message.uri = activeTab.url;
+                    message.uri =  message.url || activeTab.url;
 
                 if (!message.uri || isSpecialPage(message.uri)) {
                     notifySpecialPage();
@@ -1020,17 +1038,21 @@ function addListeners()
 
                 message.path = backend.expandPath(message.path);
 
-                backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
-                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
-                    sendResponse(bookmark);
+                return backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
+                    if (sender.ishell || message.select)
+                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+
+                    return bookmark.uuid;
                 });
-                break;
 
             case "SCRAPYARD_ADD_ARCHIVE":
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
                 activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
 
                 if (!message.uri)
-                    message.uri = activeTab.url;
+                    message.uri =  message.url || activeTab.url;
 
                 if (!message.uri || isSpecialPage(message.uri)) {
                     notifySpecialPage();
@@ -1043,25 +1065,50 @@ function addListeners()
                 if (!message.icon)
                     message.icon = await getFaviconFromTab(activeTab);
 
-                message.path = backend.expandPath(message.path);
+                if (!message.content_type)
+                    message.content_type = "text/html";
 
-                backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
-                    chrome.tabs.query({ lastFocusedWindow: true, active: true },
-                        function(tabs)
-                        {
-                            bookmark.tab_id = tabs[0].id;
-                            Object.assign(message, bookmark);
-                            initiateAction(tabs[0],buttonAction,null,false,false,
-                                {options: message, bookmark: message});
-                        });
+                message.path = backend.expandPath(message.path);
+                message.ishell = sender.ishell;
+                message.automation = true;
+
+                return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
+                    if (message.content) {
+                        backend.storeBlob(bookmark.id, message.content, message.content_type)
+                            .then(() => {
+                                if (sender.ishell || message.select)
+                                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+
+                                if (message.content_type === "text/html")
+                                    backend.storeIndex(bookmark.id, message.content.indexWords());
+                            })
+                    }
+                    else {
+                        chrome.tabs.query({lastFocusedWindow: true, active: true},
+                            function (tabs) {
+                                bookmark.tab_id = tabs[0].id;
+                                Object.assign(message, bookmark);
+                                initiateAction(tabs[0], buttonAction, null, false, false,
+                                    {options: message, bookmark: message});
+                            });
+                    }
+
+                    return bookmark.uuid;
                 });
-                break;
 
             case "SCRAPYARD_BROWSE_UUID":
-                backend.getNode(message.uuid, true).then(node => browseNode(node));
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
+                let node = await backend.getNode(message.uuid, true);
+                if (node)
+                    browseNode(node);
                 break;
 
             case "SCRAPYARD_BROWSE_NODE":
+                if (!sender.ishell)
+                    throw new Error();
+
                 if (message.node.uuid)
                     backend.getNode(message.node.uuid, true).then(node => browseNode(node));
                 else
@@ -1108,7 +1155,8 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
         let response;
         let performAction = () => browser.tabs.sendMessage(tab.id, {type: "performAction", menuaction: menuaction,
                                         srcurl: srcurl, externalsave: externalsave, swapdevices: swapdevices,
-                                        saveditems: 2, selection: selection, payload: userdata.bookmark});
+                                        saveditems: 2, selection: selection, payload: userdata.bookmark,
+                                        options: userdata.options});
 
         try {
             response = await performAction();

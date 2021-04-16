@@ -65,7 +65,7 @@ window.onload = function () {
         $("#bookmark-name").val(tab.title);
         $("#bookmark-url").val(tab.url);
 
-        let favicon = getFaviconFromTab(tab);
+        let favicon = await getFaviconFromTab(tab);
 
         if (favicon)
             $("#bookmark-icon").val(favicon);

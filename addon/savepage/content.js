@@ -227,6 +227,7 @@ var debugEnable = false;
 // Scrapyard //////////////////////////////////////////////////////////////////
 
 var addedBookmark;
+var externalMessage;
 
 var selectionElement;
 var skipIfSelected;
@@ -454,6 +455,7 @@ function addListeners()
 
                 // Scrapyard //////////////////////////////////////////////////////////////////
                 addedBookmark = message.payload;
+                externalMessage = message.options;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -2917,7 +2919,7 @@ function generateHTML()
     let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
-    chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: resultingHTML, payload: addedBookmark,
+    chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: resultingHTML, payload: addedBookmark, options: externalMessage,
         favicon: null });
     ////////////////////////////////////////////////////////////////// Scrapyard //
 

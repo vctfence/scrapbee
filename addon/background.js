@@ -140,6 +140,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             });
             break;
 
+        case "GET_BOOKMARK_URL":
+            let node = await backend.getNode(message.id)
+            return node.uri;
+
         case "COPY_NODES":
             return backend.copyNodes(message.node_ids, message.dest_id);
 

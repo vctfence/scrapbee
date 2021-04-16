@@ -244,6 +244,9 @@ function editorSaveOnBlur(e) {
 
 function initWYSIWYGEditor() {
 
+    if (quill)
+        return;
+
     $("#editor").hide();
     $("#quill").show();
 
@@ -294,18 +297,18 @@ function initWYSIWYGEditor() {
             toolbar: {
                 container: toolbarOptions,
                 handlers: {
-                    showHtml: () => {
-                        if ($(quill.txtArea).is(":visible")) {
-                            quill.setHTML(quill.txtArea.value);
-                            $(".ql-toolbar .ql-formats").slice(1).toggle();
-                        }
-                        else {
-                            quill.txtArea.value = quill.getHTML(true);
-                            $(".ql-toolbar .ql-formats").slice(1).toggle();
-                        }
-
-                        $(quill.txtArea).toggle();
-                    },
+                    // showHtml: () => {
+                    //     if ($(quill.txtArea).is(":visible")) {
+                    //         quill.setHTML(quill.txtArea.value);
+                    //         $(".ql-toolbar .ql-formats").slice(1).toggle();
+                    //     }
+                    //     else {
+                    //         quill.txtArea.value = quill.getHTML(true);
+                    //         $(".ql-toolbar .ql-formats").slice(1).toggle();
+                    //     }
+                    //
+                    //     $(quill.txtArea).toggle();
+                    // },
                     hr: () => {
                         let range = quill.getSelection();
                         if (range) {
@@ -339,9 +342,9 @@ function initWYSIWYGEditor() {
     //     return delta;
     // });
 
-    quill.txtArea = document.createElement("textarea");
-    quill.txtArea.className = "quill-html-editor";
-    document.getElementById("quill").appendChild(quill.txtArea);
+    // quill.txtArea = document.createElement("textarea");
+    // quill.txtArea.className = "quill-html-editor";
+    // document.getElementById("quill").appendChild(quill.txtArea);
 
     let Link = window.Quill.import('formats/link');
     class ScrapyardLink extends Link {
@@ -635,6 +638,10 @@ window.onload = function() {
                 else
                     $("#inserts").hide();
             }
+            else {
+                initWYSIWYGEditor();
+            }
+
         }).catch(e => {
             console.log(e)
         });

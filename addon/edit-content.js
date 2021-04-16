@@ -298,8 +298,13 @@ class EditToolBar {
         txt.type = "text";
         txt.className = "original-url-text";
         $(txt).attr("readonly", "true")
-        txt.value = $("meta[name='savepage-url']").attr("content");
         editBar.appendChild(txt);
+
+        browser.runtime.sendMessage({
+            type: 'GET_BOOKMARK_URL',
+            uuid: location.hash.split(":")[0].substring(1),
+            id: parseInt(location.hash.split(":")[1])
+        }).then(url => txt.value = url);
 
         /** go button */
         var link = document.createElement("a");

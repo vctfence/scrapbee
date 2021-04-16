@@ -1,9 +1,13 @@
 .scrapyard-edit-bar-container {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000000;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 1000000 !important;
+    width: 100% !important;
+    height: 42px !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .scrapyard-edit-bar {
