@@ -30,8 +30,9 @@ to obtain the desired features.
 * ~~Write help~~ [DONE]
 * ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
 * ~~Live link auto checker~~ [DONE]
-* ~~Added helper application [DONE]~~
-* ~~Added multi-account containers support [DONE]~~
+* ~~Helper application [DONE]~~
+* ~~Multi-account containers support [DONE]~~
+* ~~Automation API [DONE]~~
 
 ### The current status of cloud support
 
