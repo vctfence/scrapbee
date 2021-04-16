@@ -270,27 +270,16 @@
         <img src="images/help/notes.png">
     </p>
 
-        <p>Notes could be entered in HTML (using a visual editor),
+        <p>Notes could be entered in rich text format (using a visual editor),
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
         <a href="https://orgmode.org/manual/Markup.html" target="_blank">Org-mode markup</a> or plain text.
             The format selector dropdown list is located at the bottom left corner of the "Edit" tab.</p>
 
-    <p>The alignment selector, which is placed at the bottom left of the "View" tab, allows to select the overall note
-        alignment (left or centered) on per note basis.</p>
-
-    <p>A short CSS-style may be placed at the first lines of the notes of any format to modify their
-        appearance. For example, to change the width of HTML-formatted notes to 600 pixels, place
-        the following snippet at the beginning of the document markup:</p>
-
-    <pre style="font-size: 10pt; padding: 0 36px; font-family: 'Lucida Console', monospace;">&lt;style&gt;
-  #notes {width: 600px;}
-&lt;/style&gt;</pre>
-
-    <p>The markup of HTML-formatted notes is accessible through the corresponding
-    editor button: <img src="images/help/edit-markup-button.png" style="display: inline-block">
-
     <p>Notes in Org format may have an automatically generated table of contents.
         Insert the example markup into the note editor to explore what options are available.</p>
+
+    <p>The alignment selector, which is placed at the bottom left of the "View" tab, allows to select the overall note
+        alignment (left or centered) on per note basis.</p>
 
     <h3>Referencing to a bookmark or archive</h3>
     <p>To make a reference to a Scrapyard bookmark or archive from the note markup, create a link with the following URL:
@@ -327,14 +316,14 @@
         href="#helperapp"
         onmouseenter="this.href='https://github.com/GChristensen/scrapyard/releases'">helper
         application</a>. There are two import modes: the full import, which transfers saved files into
-        the Scrapyard database, and the quick import which only recreates RDF directory structure and
+        Scrapyard database, and the quick import which only recreates RDF directory structure and
         leaves the archived ScrapBook files on disk. See the "Import RDF" tab of the settings page
         for more details about the available import options.</p>
 
         <p>Shelves imported in the quick mode are marked with a tape reel icon. It is possible to add
             new archives to them (simple bookmarks are not included into the underlying RDF file),
             and physically delete RDF entries along with attached files. But when the entire shelf
-            is deleted from Scrapyard, the corresponding RDF file and the archived pages are left intact.
+            is deleted, the corresponding RDF file and the archived pages are left intact.
             Some features, such as page editing and bookmark transferring/copying are not available for
             the shelves imported in quick mode.</p>
 
@@ -458,8 +447,10 @@
 
     <h2>Automation</h2>
 
-    <p>You can send messages to Scrapyard from your own add-ons or iShell commands to perform some operations. The following
-    four messages are currently available.</p>
+    <p>It is possible to send <a
+        href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage"
+        target="_blank">messages</a> to Scrapyard from your own add-ons or iShell commands to
+        perform some operations. The following four messages are currently available.</p>
 
     <h4>SCRAPYARD_GET_VERSION</h4>
 

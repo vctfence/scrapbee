@@ -6,12 +6,39 @@
         :root {
             --theme-background: white;
         }
+        body {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+            align-items: center;
+            justify-content: center;
+            background-image: url("images/circuit.png");
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+        }
+
+        #text {
+            align-self: center;
+            justify-self: center;
+            font-family: "Helvetica", "Arial", sans-serif;
+            font-size: 24pt;
+            background-color: #7A7679;
+            color: white;
+            padding: 4px;
+        }
     </style>
-</head>
-<body>
+
     <script type="module" src="lib/jquery.js"></script>
     <script type="module" src="proto.js"></script>
     <script type="module" src="background.js"></script>
     <script type="module" src="savepage/background.js"></script>
+</head>
+<body>
+    <!--div id="text">You have got to this page by accident.</div-->
 </body>
 </html>

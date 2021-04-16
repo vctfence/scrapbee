@@ -199,19 +199,10 @@ From data URL:
 
 let MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
 
-let TEXT_EXAMPLE = `CSS: #notes {width: 100%}
-This is an example of a plain text with added CSS style. The style should be added on the first line of the text to have effect.
+const INPUT_TIMEOUT = 3000;
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ligula lorem, porttitor non dictum vel, euismod et urna. Nulla feugiat, erat a semper mollis, massa felis consequat nunc, sit amet venenatis magna felis quis leo. Nunc velit risus, eleifend at lacinia id, fringilla et ipsum. Cras nulla ante, posuere eget ultricies non, ornare eget lectus. Nulla ac posuere elit, in interdum turpis. Suspendisse potenti. Pellentesque tempus nec quam vel imperdiet. In interdum libero lorem, vitae tempus libero pretium vitae. Integer accumsan, risus nec tempor aliquam, leo enim tempus felis, eget facilisis arcu lectus et arcu. Nam consequat lectus et fringilla tristique. Nulla facilisi. Aliquam vulputate, ipsum et dictum aliquam, tellus sem eleifend velit, et sodales dolor nisl et magna. Quisque eu elementum neque. Nam sodales justo tortor, at cursus enim egestas ac. In semper hendrerit augue ac suscipit. Proin ut laoreet diam.
-
-Etiam sagittis metus sed orci iaculis gravida. Nam fringilla imperdiet turpis sed pretium. Nam scelerisque mauris non arcu vulputate, sit amet iaculis orci aliquet. Donec accumsan erat lacus, vitae aliquam elit porta sed. Maecenas nec justo ultrices, ultricies tortor ullamcorper, finibus lorem. Nullam sit amet congue tortor. Vestibulum euismod magna sit amet risus rhoncus, vel placerat arcu tincidunt. Vestibulum dictum pharetra dui, sit amet malesuada mauris ullamcorper a. Vestibulum nulla massa, tempor dignissim risus sit amet, tincidunt finibus lacus.`
-
-let TEXT_DEFAULT_STYLE = `CSS: #notes {width: 100%}`;
-
-const INPUT_TIMEOUT = 5000;
-
-let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE, "text": TEXT_EXAMPLE};
-let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE, "text": TEXT_DEFAULT_STYLE};
+let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
+let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
 
 let node_ids = location.hash? location.hash.split(":"): [];
 let node_id = node_ids.length? parseInt(node_ids[node_ids.length - 1]): undefined;
@@ -219,20 +210,27 @@ let node_id = node_ids.length? parseInt(node_ids[node_ids.length - 1]): undefine
 let inline = location.href.split("?");
 inline = inline.length > 1 && inline[1].startsWith("i#");
 
-let format = "html";
+let format = "delta";
 let align;
 
-let wysiwyg;
+let quill;
 
+let editorChange;
 let editorTimeout;
+
+function saveNotes() {
+    let content = getEditorContent();
+    backend.storeNotes(node_id, content, format, align);
+    browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !content});
+    editorChange = false;
+}
 
 function editorSaveOnChange(e) {
     clearTimeout(editorTimeout);
 
     editorTimeout = setTimeout(() => {
         if (e && node_id) {
-            backend.storeNotes(node_id, getEditorContent(), format, align);
-            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()});
+            saveNotes();
         }
     }, INPUT_TIMEOUT);
 }
@@ -240,59 +238,210 @@ function editorSaveOnChange(e) {
 function editorSaveOnBlur(e) {
     if (e && node_id) {
         clearTimeout(editorTimeout);
-        backend.storeNotes(node_id, getEditorContent(), format, align);
-        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()});
+        saveNotes();
     }
 }
 
-function initWYSIWYG() {
-    let editor = $('#editor').trumbowyg({
-        autogrow: false,
-        btns: [
-            ['viewHTML'],
-            ['formatting'],
-            ['fontfamily'],
-            ['fontsize'],
-            //['lineheight'],
-            ['strong', 'em', 'underline'],
-            ['foreColor', 'backColor'],
-            ['superscript', 'subscript'],
-            ['link'],
-            ['insertImage', 'base64'],
-            ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
-            ['horizontalRule'],
-            ['indent', 'outdent'],
-            ['unorderedList', 'orderedList'],
-            ['table'],
-            ['removeformat']
-        ]
+function initWYSIWYGEditor() {
+
+    $("#editor").hide();
+    $("#quill").show();
+
+    var toolbarOptions = [
+       // ['showHtml'],
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        [{ 'font': [] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'align': [] }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['blockquote'],
+        [{ 'script': 'sub'}, { 'script': 'super' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        ['hr'],
+        [ 'link', 'image'],
+        ['clean']
+    ];
+
+    Quill.prototype.getHTML = function(compatible) {
+        const contents = this.getContents().ops;
+        const converter = new QuillDeltaToHtmlConverter(contents, {
+            encodeHtml: true,
+            inlineStyles: !compatible,
+            urlSanitizer: v => v
+        });
+
+        converter.renderCustomWith(function(customOp, contextOp){
+            if (customOp.insert.type === 'hr')
+                return "<hr>";
+        })
+
+        return converter.convert();
+    };
+
+    Quill.prototype.setHTML = function(html) {
+        this.pasteHTML(html);
+    };
+
+    Quill.prototype.isEmpty = function() {
+        if (JSON.stringify(this.getContents()) === "\{\"ops\":[\{\"insert\":\"\\n\"\}]\}")
+            return true;
+    };
+
+    quill = new Quill('#quill', {
+        modules: {
+            toolbar: {
+                container: toolbarOptions,
+                handlers: {
+                    showHtml: () => {
+                        if ($(quill.txtArea).is(":visible")) {
+                            quill.setHTML(quill.txtArea.value);
+                            $(".ql-toolbar .ql-formats").slice(1).toggle();
+                        }
+                        else {
+                            quill.txtArea.value = quill.getHTML(true);
+                            $(".ql-toolbar .ql-formats").slice(1).toggle();
+                        }
+
+                        $(quill.txtArea).toggle();
+                    },
+                    hr: () => {
+                        let range = quill.getSelection();
+                        if (range) {
+                            quill.insertEmbed(range.index, "hr", "null")
+                        }
+                    }
+                }
+            },
+            // history: {
+            //     delay: 2000,
+            //     maxStack: 100,
+            //     userOnly: true
+            // },
+            keyboard: {
+                bindings: {
+                    _save: {
+                        key: 'S',
+                        shortKey: true,
+                        handler: function (range, context) {
+                            saveNotes();
+                        }
+                    }
+                }
+            }
+        },
+        theme: 'snow'
     });
 
-    if (!wysiwyg) {
-        editor.on('tbwchange', editorSaveOnChange)
-        editor.on('tbwblur', editorSaveOnBlur);
-    }
+    // quill.clipboard.addMatcher('P', function(node, delta) {
+    //     delta.ops.push({insert: "\n"})
+    //     return delta;
+    // });
 
-    wysiwyg = true;
+    quill.txtArea = document.createElement("textarea");
+    quill.txtArea.className = "quill-html-editor";
+    document.getElementById("quill").appendChild(quill.txtArea);
+
+    let Link = window.Quill.import('formats/link');
+    class ScrapyardLink extends Link {
+        static sanitize(url) {
+            if(url.startsWith("ext+scrapyard")) {
+                return url
+            }
+            else {
+                let value = super.sanitize(url);
+                return value;
+            }
+        }
+    }
+    Quill.register(ScrapyardLink);
+
+    let Embed = Quill.import('blots/block/embed');
+    class Hr extends Embed {
+        static create(value) {
+            let node = super.create(value);
+            node.setAttribute('style', "height:0px; margin-top:10px; margin-bottom:10px;");
+            return node;
+        }
+    }
+    Hr.blotName = 'hr';
+    Hr.tagName = 'hr';
+    Quill.register({'formats/hr': Hr});
+
+    quill.on('selection-change', function(range, oldRange, source) {
+        if (range === null && oldRange !== null)
+            editorSaveOnBlur(true);
+    });
+
+    quill.on('text-change', function(delta, oldDelta, source) {
+        editorChange = true;
+        editorSaveOnChange(true);
+    });
+
+    window.onbeforeunload = function() {
+        if (editorChange)
+            return true;
+    };
 }
 
-function clearWYSIWYG() {
-    $('#editor').trumbowyg('destroy');
+function closeWYSIWYGEditor() {
+    let editor = '#quill';
+
+    if($(editor)[0]) {
+        var content = $(editor).find('.ql-editor').html();
+        $(editor).html(content);
+
+        $(editor).siblings('.ql-toolbar').remove();
+        $(editor + " *[class*='ql-']").removeClass (function (index, css) {
+            return (css.match (/(^|\s)ql-\S+/g) || []).join(' ');
+        });
+
+        $(editor + "[class*='ql-']").removeClass (function (index, css) {
+            return (css.match (/(^|\s)ql-\S+/g) || []).join(' ');
+        });
+
+        $(editor).empty();
+    }
+
+    quill = null;
+
+    $("#quill").hide();
+    $("#editor").show();
+}
+
+function initMarkupEditor() {
+    $("#quill").hide();
+    $("#editor").show();
+}
+
+function closeMarkupEditor() {
+    $("#quill").show();
+    $("#editor").hide();
+}
+
+function renderEditorContent(compatible) {
+    if (format === "delta")
+        return quill.getHTML(compatible);
+    else
+        return $('#editor').val();
 }
 
 function getEditorContent() {
-    if (format === "html")
-        return $('#editor').trumbowyg("html");
+    if (format === "delta") {
+        if (quill.isEmpty())
+            return "";
+        return JSON.stringify(quill.getContents());
+    }
     else
         return $('#editor').val();
 }
 
 function setEditorContent(content) {
-    if (format === "html") {
-        console.log(content);
-        $('#editor').trumbowyg("html", content);
-        console.log($('#editor').trumbowyg("html"));
-    }
+    if (format === "html")
+        quill.setHTML(content);
+    else if (format === "delta")
+        quill.setContents(JSON.parse(content));
     else
         $('#editor').val(content);
 }
@@ -402,7 +551,6 @@ window.onload = function() {
 
     function prepareHTML(html) {
         $("#notes-style").text("");
-
         return html;
     }
 
@@ -410,12 +558,12 @@ window.onload = function() {
         switch (format) {
             case "org":
                 $("#notes").attr("class", "notes format-org").html(org2html(text));
-
                 break;
             case "markdown":
                 $("#notes").attr("class", "notes format-markdown").html(markdown2html(text));
                 break;
             case "html":
+            case "delta":
                 $("#notes").attr("class", "notes format-html").html(prepareHTML(text));
                 break;
             default:
@@ -442,18 +590,15 @@ window.onload = function() {
         $(`#content-${e.target.id}`).css("display", "flex");
 
         if (e.target.id === "notes-button") {
-            browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()});
+            let content = renderEditorContent();
+            formatNotes(content, format);
 
             $("#format-selector").hide();
             $("#align-selector").show();
-            //$("#full-width-container").show()
-            formatNotes(getEditorContent(), format);
         }
         else if (e.target.id === "edit-button") {
             $("#format-selector").show();
             $("#align-selector").hide();
-
-            //$("#full-width-container").hide();
         }
     });
 
@@ -461,24 +606,34 @@ window.onload = function() {
         backend.fetchNotes(node_id).then(notes => {
             if (notes) {
                 format = notes.format || "org";
-                $("#notes-format").val(format);
+                $("#notes-format").val(format === "html"? "delta": format);
 
-                if (format === "html")
-                    initWYSIWYG();
+                if (format === "html" || format === "delta")
+                    initWYSIWYGEditor();
+                else
+                    initMarkupEditor();
 
                 setEditorContent(notes.content);
+
+                let content;
+                if (format === "delta")
+                    content = renderEditorContent();
+                else
+                    content = notes.content;
+                formatNotes(content, format);
+
+                if (format === "html")
+                    format = "delta";
 
                 align = notes.align;
                 if (align)
                     $("#notes-align").val(align);
                 alignNotes();
 
-                if (format !== "html")
+                if (format !== "delta" && format !== "text")
                     $("#inserts").show();
                 else
                     $("#inserts").hide();
-
-                formatNotes(notes.content, format);
             }
         }).catch(e => {
             console.log(e)
@@ -486,15 +641,6 @@ window.onload = function() {
 
     $("#editor").on("input", editorSaveOnChange);
     $("#editor").on("blur", editorSaveOnBlur);
-
-    // $("#full-width").on("change", e => {
-    //     if ($("#full-width").is(":checked")) {
-    //         $("#notes").attr("style", "width: 100%");
-    //     }
-    //     else {
-    //         $("#notes").removeAttr("style");
-    //     }
-    // });
 
     $("#insert-example").on("click", e => {
         let edit = jQuery("#editor");
@@ -515,20 +661,27 @@ window.onload = function() {
     });
 
     $("#notes-format").on("change", e => {
+        // old format
+        if (format === "delta")
+            $("#editor").val(quill.getHTML(true));
+
         format = $("#notes-format").val();
 
-        if (format === "html")
-            initWYSIWYG();
-        else
-            clearWYSIWYG();
+        // new format
+        if (format === "delta") {
+            initWYSIWYGEditor();
+            quill.setHTML($("#editor").val());
+        }
+        else {
+            closeWYSIWYGEditor();
+        }
 
-        if (format !== "html")
+        if (format !== "delta" && format !== "text")
             $("#inserts").show();
         else
             $("#inserts").hide();
 
-        backend.storeNotes(node_id, getEditorContent(), format, align);
-        browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !getEditorContent()})
+        saveNotes();
     });
 
     $("#notes-align").on("change", e => {

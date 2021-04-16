@@ -1,6 +1,5 @@
 * {
-    font-family:
-    "Helvetica",
+    font-family: "Helvetica",
     "Arial",
     "Lucida Sans Unicode",
     "Lucida Sans",
@@ -43,7 +42,7 @@ a#notes-button, a#edit-button {
     padding: 0px 15px;
     font-size: 14px;
     text-align: center;
-    height:100%;
+    height: 100%;
     width: 50px;
     text-decoration: none;
     font-weight: bold;
@@ -51,7 +50,7 @@ a#notes-button, a#edit-button {
     flex: 0 1 auto;
 }
 
-a#notes-button.focus, a#edit-button.focus{
+a#notes-button.focus, a#edit-button.focus {
     border-bottom: 3px solid #079;
     background: #ddd;
 }
@@ -183,51 +182,74 @@ pre.plaintext {
     width: 815px;
 }
 
-.trumbowyg-box {
-    height: calc(100% - 26px) !important;
-    margin: auto;
-    flex: 1;
-}
-.trumbowyg-editor {
-    height: calc(100% - 26px) !important;
+#editor {
+    display: none;
 }
 
-.trumbowyg-box textarea {
-    height: calc(100% - 26px) !important;
+.ql-toolbar.ql-snow .ql-formats {
+    margin-right: 4px;
 }
 
-.trumbowyg-editor table td {
-    border: 1px dotted black;
+.ql-snow .ql-picker.ql-size {
+    width: 76px;
 }
 
-.trumbowyg-button-pane button {
-    display: inline-block;
-    position: relative;
-    width: 24px;
-    height: 24px;
-    padding: 1px 1px !important;
-    margin-bottom: 1px;
-    overflow: hidden;
+.ql-snow .ql-picker.ql-header {
+    width: 90px;
+}
+
+.ql-snow .ql-picker.ql-font {
+    width: 100px;
+}
+
+.ql-snow.ql-toolbar button, .ql-snow .ql-toolbar button {
+    height: 22px;
+    padding: 2px 3px;
+    width: 26px;
+}
+
+.ql-toolbar.ql-snow {
+    padding: 4px;
+    min-height: 34px;
+}
+
+.ql-container {
+    font-size: 12pt;
+}
+
+button.ql-showHtml {
+    background-image: url("/icons/code.svg") !important;
+    background-size: 16px 16px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+button.ql-hr {
+    background-image: url("/icons/line.svg") !important;
+    /*background-size: 16px 16px !important;*/
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+.quill-html-editor {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    box-sizing: border-box;
+    font-size: 15px;
+    outline: none;
+    padding: 20px;
+    line-height: 24px;
+    font-family: "Lucida Console", Consolas, Menlo, Monaco, "Courier New", monospace;
+    position: absolute;
+    top: 0;
+    bottom: 0;
     border: none;
-    cursor: pointer;
-    background: none;
-    vertical-align: middle;
-    transition: background-color 150ms, opacity 150ms;
+    display: none;
+    resize: none;
 }
 
-.trumbowyg-button-pane button.trumbowyg-textual-button {
-    line-height: normal;
-}
-
-.trumbowyg-button-pane .trumbowyg-open-dropdown.trumbowyg-textual-button::after {
-    top: 12px;
-}
-
-.trumbowyg-button-pane, .trumbowyg-button-group, .trumbowyg-button-pane .trumbowyg-button-group::after  {
-    height: 26px;
-    min-height: 26px;
-}
-
-.trumbowyg-button-pane::after {
-    top: 25px;
+#quill {
+    width: unset;
+    height: calc(100% - 40px);
 }

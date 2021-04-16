@@ -3,23 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Notes</title>
-    <link rel="stylesheet" type="text/css" href="lib/trumbowyg/ui/trumbowyg.css" media="all"/>
-    <link rel="stylesheet" type="text/css" href="lib/trumbowyg/plugins/colors/ui/trumbowyg.colors.css" media="all"/>
-    <link rel="stylesheet" type="text/css" href="lib/trumbowyg/plugins/table/ui/trumbowyg.table.css" media="all"/>
+
+    <link rel="stylesheet" type="text/css" href="lib/quill/quill.snow.css" media="all"/>
+
     <link rel="stylesheet" type="text/css" href="org.css" media="all"/>
     <link rel="stylesheet" type="text/css" href="notes.css" media="all"/>
 
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="text/javascript" src="lib/marked.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/trumbowyg.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/plugins/fontfamily/trumbowyg.fontfamily.js"></script>
-    <!--script type="text/javascript" src="lib/trumbowyg/plugins/lineheight/trumbowyg.lineheight.js"></script-->
-    <script type="text/javascript" src="lib/trumbowyg/plugins/cleanpaste/trumbowyg.cleanpaste.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/plugins/fontsize/trumbowyg.fontsize.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/plugins/colors/trumbowyg.colors.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/plugins/indent/trumbowyg.indent.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/plugins/base64/trumbowyg.base64.js"></script>
-    <script type="text/javascript" src="lib/trumbowyg/plugins/table/trumbowyg.table.js"></script>
+
+    <script type="text/javascript" src="lib/quill/quill.js"></script>
+    <script type="text/javascript" src="lib/quill/QuillDeltaToHtmlConverter.bundle.js"></script>
+
     <script type="text/javascript" src="proto.js"></script>
     <script type="module" src="notes.js"></script>
 </head>
@@ -31,12 +26,15 @@
             <div id="content-notes-button" class="content">
                 <div id="space-left"></div>
                 <style id="notes-style"></style>
-                <div id="notes" class="notes"></div>
+                <div id="notes" class="notes ql-editor"></div>
                 <div id="space-right"></div>
             </div>
             <div id="content-edit-button" class="content">
                 <div class="content-filler"></div>
-                <div id="editor-container"><textarea id="editor"></textarea></div>
+                <div id="editor-container">
+                    <div id="quill"></div>
+                    <textarea id="editor"></textarea>
+                </div>
                 <div class="content-filler"></div>
             </div>
         </div>
@@ -51,14 +49,14 @@
             <div id="format-selector">
                 Format:
                 <select id="notes-format">
-                    <option value="html" selected>HTML</option>
+                    <option value="delta" selected>Rich text</option>
                     <option value="markdown">Markdown</option>
                     <option value="org">Org</option>
                     <option value="text">Plain text</option>
                 </select>
                 <span id="inserts">
-                    <a href="#" id="insert-example">EXAMPLE MARKUP</a>
-                        |&nbsp;<a href="#" id="insert-style">EXAMPLE STYLE</a>
+                    <a href="#" id="insert-example">EXAMPLE MARKUP</a> <!--
+                        |&nbsp;<a href="#" id="insert-style">EXAMPLE STYLE</a> -->
                 </span>
                 <div id="full-width-container">
                     <input type="checkbox" id="full-width"/>
