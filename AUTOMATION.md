@@ -88,7 +88,26 @@ from the active tab.
 
 Returns UUID of the newly created archive.
 
-#### SCRAPYARD_BROWSE_UUID</h4>
+#### SCRAPYARD_PACK_PAGE
+
+Packs all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
+This message creates a new tab which is required for its operation and closes it on completion.
+The tab could be hidden through the `hide_tab` message option. Please be careful
+with this option, since Firefox may complain about hidden tabs and offer to remove
+the addon.
+
+```js
+browser.runtime.sendMessage("scrapyard-we@firefox", {
+    type:  "SCRAPYARD_PACK_PAGE",
+    url:  "http://example.com",   // URL of the page to be packed
+    hide_tab: false               // Hide the created tab
+});
+```
+
+Returns an HTML string with the content of the specified page and all its referenced resources,
+so the whole page may be stored in a single database record.
+
+#### SCRAPYARD_BROWSE_UUID
 
 Opens a bookmark or archive defined by the UUID which could be
 found at its property dialog:
@@ -100,7 +119,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 });
 ```
 
-### Creating Dedicated iShell Bookmark Commands</h3>
+### Creating Dedicated iShell Bookmark Commands
 
 You can quickly open dedicated bookmarks by iShell commands without using mouse. This may
 be helpful in the case of bookmarks with assigned multi-account containers. The example below
