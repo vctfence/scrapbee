@@ -6,37 +6,56 @@ bookmarks or archives in Scrapyard or browse dedicated bookmarks from
 
 Currently, automation is experimental in Scrapyard, and should be
 manually enabled from the automation settings page:
-[ext+scrapyard://automation](ext+scrapyard://automation),
+**ext+scrapyard://automation**,
 which is not displayed at the main UI.
+Since Scrapyard knows about iShell, you do not need to enable it to use the
+code below from iShell commands.
 
-It is implemented through the WebExtensions [runtime messaging API](href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage)
-
-The following messages are currently implemented:
+All automation features are implemented through the WebExtensions
+[runtime messaging API](href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage).
+The following messages are currently available:
 
 #### SCRAPYARD_GET_VERSION
 
-    <p>Returns Scrapyard version. Useful for testing Scrapyard presence in the browser:</p>
+Returns Scrapyard version. Useful for testing for Scrapyard presence in the browser:
 
-<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show"><span class="keyword">try</span> {
-    <span class="storage type">let</span> version <span class="keyword operator">=</span> <span class="keyword">await</span> browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
-        type: <span class="string">"SCRAPYARD_GET_VERSION"</span>
+```javascript
+try {
+    let version = await browser.runtime.sendMessage("scrapyard-we@firefox", {
+        type: "SCRAPYARD_GET_VERSION"
     });
 
-    console.<span class="function call">log</span>(<span class="string">`Scrapyard version: ${version}`</span>);
+    console.log(`Scrapyard version: ${version}`);
 }
-<span class="keyword">catch</span> (e) {
-    сonsole.<span class="function call">log</span>(<span class="string">"Scrapyard is not installed"</span>);
-}</code></pre>
+catch (e) {
+    сonsole.log("Scrapyard is not installed or automation is disabled");
+}
+```
 
-    <h4>SCRAPYARD_ADD_BOOKMARK and SCRAPYARD_ADD_ARCHIVE</h4>
-    <p>The following call from your addon will add the page at the active tab as a bookmark or archive to Scrapyard:</p>
+#### SCRAPYARD_ADD_BOOKMARK
 
-<pre data-trimmed="true" class="rainbow-show"><code data-language="javascript" class="rainbow rainbow-show">browser.runtime.<span class="function call">sendMessage</span>(<span class="string">"scrapyard-we@firefox"</span>, {
-    type:  <span class="string">"SCRAPYARD_ADD_BOOKMARK"</span>, <span class="comment">// also "SCRAPYARD_ADD_ARCHIVE"</span>
-    path:  <span class="string">"shelf/my/directory"</span>, <span class="comment">// optional</span>
-    title: <span class="string">"Bookmark Title"</span>, <span class="comment">// optional</span>
-    tags:  <span class="string">"comma,separated"</span> <span class="comment">// optional</span>
-});</code></pre>
+Creates a bookmark in Scrapyard.
+
+```js
+browser.runtime.sendMessage("scrapyard-we@firefox", {
+    type:       "SCRAPYARD_ADD_BOOKMARK",
+    title:      "Bookmark Title",                 // Bookmark title
+    url:        "http://example.com",             // Bookmark URL
+    icon:       "http://example.com/favicon.ico", // URL of bookmark favicon
+    path:       "shelf/my/directory",             // Bookmark sehlf and directory
+    tags:       "comma, separated",               // List of bookmark tags
+    details:    "Bookmark details",               // Bookmark details
+    todo_state: 1,                                // One of the following integers: 1, 2, 3,
+                                                  // which represent TODO, WAITING, and POSTPONED
+                                                  // states respectively
+    todo_date:  "YYYY-MM-DD",                     // TODO expiration date
+    select:     true                              // Select the bookmark in the interface
+});
+```
+All parameters are optional. The relevant missing parameters will be captured
+from the active tab.
+
+Returns UUID of the newly created bookmark.
 
     <h4>SCRAPYARD_BROWSE_UUID</h4>
 
