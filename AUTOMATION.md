@@ -8,11 +8,11 @@ Currently, automation is experimental in Scrapyard, and should be
 manually enabled from the automation settings page:
 **ext+scrapyard://automation**,
 which is not displayed at the main UI.
-Since Scrapyard knows about iShell, you do not need to enable it to use the
+Since Scrapyard knows about iShell, you do not need to enable automatin to use the
 code below from iShell commands.
 
 All automation features are implemented through the WebExtensions
-[runtime messaging API](href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage).
+[runtime messaging API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage).
 The following messages are currently available:
 
 #### SCRAPYARD_GET_VERSION
