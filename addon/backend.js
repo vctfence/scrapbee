@@ -610,16 +610,23 @@ export class Backend extends ExternalEventProvider {
         }
         else if (node.icon) {
             try {
-                const response = await fetch(node.icon);
+                if (node.icon.startsWith("data:")) {
+                    await this.storeIconLowLevel(node.id, node.icon);
+                    node.icon = new URL(node.uri).origin + "/favicon.ico";
+                    await this.updateNode(node);
+                }
+                else {
+                    const response = await fetch(node.icon);
 
-                if (response.ok) {
-                    const buffer = await response.arrayBuffer();
+                    if (response.ok) {
+                        const buffer = await response.arrayBuffer();
 
-                    let type = response.headers.get("content-type");
-                    if (!type)
-                        type = getMimetypeExt(node.icon);
+                        let type = response.headers.get("content-type");
+                        if (!type)
+                            type = getMimetypeExt(node.icon);
 
-                    return convertAndStore(buffer, type);
+                        return convertAndStore(buffer, type);
+                    }
                 }
             }
             catch (e) {

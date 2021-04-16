@@ -232,9 +232,13 @@ export async function testFavicon(url) {
 
 export async function getFaviconFromTab(tab) {
     let favicon;
+    let origin = new URL(tab.url).origin;
 
-    if (!tab.url)
+    if (!origin)
         return undefined;
+
+    if (tab.favIconUrl)
+        return tab.favIconUrl;
 
     try {
         let icon = await browser.tabs.executeScript(tab.id, {
@@ -242,13 +246,13 @@ export async function getFaviconFromTab(tab) {
         });
 
         if (icon && icon.length && icon[0])
-            favicon = await testFavicon(new URL(icon[0], new URL(tab.url).origin));
+            favicon = await testFavicon(new URL(icon[0], origin));
     } catch (e) {
         console.error(e);
     }
 
     if (!favicon)
-        favicon = await testFavicon(new URL("/favicon.ico", new URL(tab.url).origin));
+        favicon = await testFavicon(new URL("/favicon.ico", origin));
 
     return favicon;
 }
