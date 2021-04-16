@@ -16,11 +16,11 @@ to obtain the desired features.
 
 * ~~Store data at IndexedDB~~ [DONE]
 * ~~Replace "RDF" tree with jsTree~~ [DONE]
-* ~~Add fancy user-action popup with tree of directories to add bookmarks to~~ [DONE]
+* ~~Add a fancy user-action popup with tree of directories to add bookmarks~~ [DONE]
 * ~~Store archived web-pages as single file a la SavePageWE in a DB-record~~ [DONE]
-* ~~Rework archive page editing tools to accomodate new storage method~~ [DONE]
+* ~~Rework archive page editing tools to accommodate new storage method~~ [DONE]
 * ~~Store indexed content of downloaded html documents in the database~~ [DONE]
-* ~~Add search text input on toolbar; search by tags, title, content and in Firefox bookmarks~~ [DONE]
+* ~~Add search text input on the toolbar; search by tags, title, content and in Firefox bookmarks~~ [DONE]
 * ~~Control from~~ [iShell](https://gchristensen.github.io/ishell/) [DONE]
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
@@ -28,7 +28,7 @@ to obtain the desired features.
 * ~~Rework settings page~~ [DONE]
 * ~~Dark theme~~ [DONE]
 * ~~Write help~~ [DONE]
-* ~~A little bit of Wiki functionality: editable notes in org markup~~ [DONE]
+* ~~A little bit of Wiki functionality: editable notes in org markup and other formats~~ [DONE]
 * ~~Live link auto checker~~ [DONE]
 * ~~Helper application [DONE]~~
 * ~~Multi-account containers support [DONE]~~
