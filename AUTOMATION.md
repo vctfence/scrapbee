@@ -1,14 +1,17 @@
 ## Automation
 
 Automation is a powerful feature that allows to programmatically create
-bookmarks or archives in Scrapyard or browse dedicated bookmarks from
-[iShell](https://gchristensen.github.io/ishell/) or your own extensions.
+bookmarks and archives in Scrapyard or browse dedicated bookmarks from
+[iShell](https://gchristensen.github.io/ishell/) and your own extensions.
+For example, with this API you can import arbitrary content, automate TODO
+functionality, or create an
+interface to browse dedicated bookmarks you often use.
 
 Currently, automation is experimental in Scrapyard, and should be
-manually enabled from the automation settings page:
+manually enabled from its settings page:
 **ext+scrapyard://automation**,
 which is not displayed at the main UI.
-Since Scrapyard knows about iShell, you do not need to enable automatin to use the
+Because Scrapyard knows about iShell, you do not need to enable automation to use the
 code below from iShell commands.
 
 All automation features are implemented through the WebExtensions
@@ -74,7 +77,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
                                                     // which represent TODO, WAITING, and POSTPONED
                                                     // TODO states respectively
     todo_date:    "YYYY-MM-DD",                     // TODO expiration date
-    content:      "<p>Archive content</p>",         // A String or ArrayBuffer, representing text or bytes of the archived content
+    content:      "<p>Archive content</p>",         // A String or ArrayBuffer, representing the text or bytes of the archived content
                                                     // HTML-pages, images, PDF-documents, and other files could be stored
     content_type: "mime/type",                      // MIME-type of the stored content
     select:        true                             // Select the bookmark in the interface
@@ -100,12 +103,12 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 ### Creating Dedicated iShell Bookmark Commands</h3>
 
 You can quickly open dedicated bookmarks by iShell commands without using mouse. This may
-be helpful in the case of bookmarks with an assigned multi-account container. The example below
+be helpful in the case of bookmarks with assigned multi-account containers. The example below
 demonstrates a command without arguments used to open a single bookmark defined by its UUID.
 
 ```js
 /**
-    Being placed in the iShell command editor this code
+    Being placed in the iShell command editor, this code
     creates a command named "my-twitter", which opens
     a single bookmark defined by its UUID.
 
@@ -128,7 +131,7 @@ The following example creates a command named **my-site** which can be called wi
 
 ```js
 /**
-    This command (my-site) has arguments that allow to open
+    This command (my-site) has an argument that allows to open
     a site in a work or a personal context. The corresponding
     containers should be assigned to the bookmarks in Scrapyard.
 
@@ -154,3 +157,4 @@ class MySite {
     }
 }
 ```
+See the iShell [tutorial](https://gchristensen.github.io/ishell/res/tutorial.html) for more details on command authoring.
