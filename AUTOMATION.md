@@ -95,7 +95,8 @@ Returns UUID of the newly created archive.
 
 #### SCRAPYARD_PACK_PAGE
 
-Packs all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
+Packs content of all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
+When displayed in the browser, such a page will not rely on any external dependencies.
 This message creates a new tab which is required for its operation and closes it on completion.
 The tab could be hidden through the `hide_tab` message option. Although this option may be useful
 in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
@@ -103,9 +104,9 @@ tabs and offer to remove the addon.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:  "SCRAPYARD_PACK_PAGE",
-    url:  "http://example.com",   // URL of the page to be packed
-    hide_tab: false               // Hide the created tab
+    type:     "SCRAPYARD_PACK_PAGE",
+    url:      "http://example.com",  // URL of the page to be packed
+    hide_tab: false                  // Hide the created tab
 });
 ```
 
@@ -118,8 +119,8 @@ found at its property dialog:
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:  "SCRAPYARD_BROWSE_UUID",
-    uuid:  "F0D858C6ED40416AA402EB2C3257EA17"
+    type: "SCRAPYARD_BROWSE_UUID",
+    uuid: "F0D858C6ED40416AA402EB2C3257EA17"
 });
 ```
 
