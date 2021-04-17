@@ -8,11 +8,6 @@
 
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="module" src="automation.js"></script>
-
-
-    <style>
-
-    </style>
 </head>
 <body>
 <div id="div-settings" class="div-area">
@@ -26,11 +21,11 @@
                     <form>
                         <fieldset style="border: none;">
                             <input id="option-enable-automation" type="checkbox"/><label for="option-enable-automation">Enable automation</label>
-                            <div style="padding-top: 5px">
+                            <div style="padding-top: 10px">
                                 <label for="option-enable-automation">Extension whitelist:</label>
                                 <input id="option-extension-whitelist" style="width: 500px" type="text"/>
                                 <i class="help-mark"></i>
-                                <span class="tips hide">A comma-separated list of extension IDs. Everything is allowed, if empty.<br>
+                                <span class="tips hide">A comma-separated ID list of extensions that can use automation API. Everything is allowed, if empty.<br>
                                     IDs of all installed extensions could be found at the <b>about:debugging#/runtime/this-firefox</b> page.</span>
                             </div>
                         </fieldset>

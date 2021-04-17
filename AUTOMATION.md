@@ -55,8 +55,12 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     select:     true                              // Select the bookmark in the interface
 });
 ```
-All parameters are optional. The relevant missing parameters will be captured
-from the active tab.
+
+All parameters are optional. The relevant missing parameters will be captured from the active tab. In this and the
+following API the icon URL is used by Scrapyard only to store its image in the database, so it may be a URL from a
+local server, or a
+[data-URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
+If this parameter is explicitly set to an empty string, the default icon will be used.
 
 Returns UUID of the newly created bookmark.
 
@@ -79,12 +83,13 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     todo_date:    "YYYY-MM-DD",                     // TODO expiration date
     content:      "<p>Archive content</p>",         // A String or ArrayBuffer, representing the text or bytes of the archived content
                                                     // HTML-pages, images, PDF-documents, and other files could be stored
-    content_type: "mime/type",                      // MIME-type of the stored content
+    content_type: "text/html",                      // MIME-type of the stored content
     select:        true                             // Select the bookmark in the interface
 });
 ```
 All parameters are optional. The relevant missing parameters will be captured
-from the active tab.
+from the active tab. If the <code>url</code> parameter is explicitly set to an empty string,
+it will remain empty.
 
 Returns UUID of the newly created archive.
 
@@ -93,7 +98,7 @@ Returns UUID of the newly created archive.
 Packs all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
 This message creates a new tab which is required for its operation and closes it on completion.
 The tab could be hidden through the `hide_tab` message option. Although this option may be useful
-in the case of mass API calls, please be careful with it, since Firefox may complain about hidden 
+in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
 tabs and offer to remove the addon.
 
 ```js
@@ -104,8 +109,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 });
 ```
 
-Returns an HTML string with the content of the specified page and all its referenced resources,
-so the whole page may be stored in a single database record.
+Returns an HTML string with the content of the specified page and all its referenced resources.
 
 #### SCRAPYARD_BROWSE_UUID
 

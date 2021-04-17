@@ -384,7 +384,7 @@
 
 import {backend} from "../backend.js";
 import {browseNode} from "../background.js";
-import {getFaviconFromTab, isSpecialPage, notifySpecialPage} from "../utils.js";
+import {getFaviconFromTab, isIShell, isSpecialPage, notifySpecialPage} from "../utils.js";
 import {
     DEFAULT_SHELF_NAME,
     FIREFOX_BOOKMARK_MENU,
@@ -949,8 +949,6 @@ function addListeners()
 
     /* External message listener */
 
-    const ISHELL_ID_RX = /^ishell(:?-we)?@gchristensen.github.io$/;
-
     function isAutomationAllowed(sender) {
         const extension_whitelist = settings.extension_whitelist();
 
@@ -962,7 +960,7 @@ function addListeners()
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
         let activeTab;
-        sender.ishell = ISHELL_ID_RX.test(sender.id);
+        sender.ishell = isIShell(sender.id);
 
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":
@@ -1036,13 +1034,16 @@ function addListeners()
                 if (!message.name)
                     message.name = message.title || activeTab.title;
 
-                if (!message.icon)
+                if (message.icon === "")
+                    message.icon = null;
+                else if (!message.icon)
                     message.icon = await getFaviconFromTab(activeTab);
 
                 message.path = backend.expandPath(message.path);
 
                 return backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
-                    if (sender.ishell || message.select)
+                    // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
+                    if (sender.ishell && message.search || message.select)
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
 
                     return bookmark.uuid;
@@ -1054,10 +1055,12 @@ function addListeners()
 
                 activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
 
-                if (!message.uri)
+                if (message.url === "")
+                    message.uri =  message.url;
+                else if (!message.uri)
                     message.uri =  message.url || activeTab.url;
 
-                if (!message.uri || isSpecialPage(message.uri)) {
+                if (message.uri === null || message.uri === undefined || isSpecialPage(message.uri)) {
                     notifySpecialPage();
                     return;
                 }
@@ -1065,7 +1068,9 @@ function addListeners()
                 if (!message.name)
                     message.name = message.title || activeTab.title;
 
-                if (!message.icon)
+                if (message.icon === "")
+                    message.icon = null;
+                else if (!message.icon)
                     message.icon = await getFaviconFromTab(activeTab);
 
                 if (!message.content_type)
@@ -1079,7 +1084,8 @@ function addListeners()
                     if (message.content) {
                         return backend.storeBlob(bookmark.id, message.content, message.content_type)
                             .then(() => {
-                                if (sender.ishell || message.select)
+                                // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
+                                if (sender.ishell && message.search || message.select)
                                     browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
 
                                 if (message.content_type === "text/html")

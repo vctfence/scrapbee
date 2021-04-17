@@ -55,7 +55,7 @@ UUID.generate = function(template) {
     });
 };
 
-UUID.iso  = function() {
+UUID.iso = function() {
     return UUID.generate('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx');
 };
 

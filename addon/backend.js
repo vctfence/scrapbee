@@ -2,7 +2,7 @@ import IDBStorage from "./storage_idb.js"
 import {rdfBackend} from "./backend_rdf.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {browserBackend} from "./backend_browser.js"
-import {delegateProxy, getMimetypeExt} from "./utils.js";
+import {delegateProxy, getMimetypeExt, hexString} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
@@ -610,9 +610,13 @@ export class Backend extends ExternalEventProvider {
         }
         else if (node.icon) {
             try {
+                let iconHash = "http://"
+                     + hexString(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(node.icon)));
+
                 if (node.icon.startsWith("data:")) {
                     await this.storeIconLowLevel(node.id, node.icon);
-                    node.icon = new URL(node.uri).origin + "/favicon.ico";
+
+                    node.icon = iconHash;
                     await this.updateNode(node);
                 }
                 else {
@@ -625,7 +629,10 @@ export class Backend extends ExternalEventProvider {
                         if (!type)
                             type = getMimetypeExt(node.icon);
 
-                        return convertAndStore(buffer, type);
+                        await convertAndStore(buffer, type);
+
+                        node.icon = iconHash;
+                        await this.updateNode(node);
                     }
                 }
             }

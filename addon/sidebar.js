@@ -2,7 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isElementInViewport} from "./utils.js"
+import {isElementInViewport, isIShell} from "./utils.js"
 
 import {
     SEARCH_MODE_TITLE,
@@ -360,8 +360,14 @@ window.onload = function () {
     });
 
     browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+
+        sender.ishell = isIShell(sender.id);
+
         switch (message.type) {
             case "SCRAPYARD_SWITCH_SHELF":
+                if (!sender.ishell)
+                    throw new Error();
+
                 if (message.name) {
                     let external_path = backend.expandPath(message.name);
                     let [shelf, ...path] = external_path.split("/");

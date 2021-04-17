@@ -1,3 +1,10 @@
+export function isIShell(id) {
+    if (!id)
+        return false;
+
+    return /^ishell(:?-we)?@gchristensen.github.io$/.test(id);
+}
+
 export function partition(items, size) {
     var result = []
     var n = Math.round(items.length / size);
@@ -78,6 +85,18 @@ export function parseHtml(htmlText) {
     return doc;
 }
 
+export function hexString(buffer) {
+    const byteArray = new Uint8Array(buffer);
+
+    const hexCodes = [...byteArray].map(value => {
+        const hexCode = value.toString(16);
+        return hexCode.padStart(2, '0');
+    });
+
+    return hexCodes.join('');
+}
+
+
 export function isSpecialPage(url)
 {
     return (url.substr(0,6) === "about:" || url.substr(0,7) === "chrome:"
@@ -95,7 +114,7 @@ export function notifySpecialPage() {
         "view-source:");
 }
 
-export function isElementInViewport (el) {
+export function isElementInViewport(el) {
     var rect = el.getBoundingClientRect();
 
     return (

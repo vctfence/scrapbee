@@ -65,6 +65,7 @@ function showDlg(name, data, callback) {
         });
     }
 
+    // handle bookmark containers
     let containers_icon = $dlg.find("#prop-dlg-containers-icon").first();
     if (containers_icon.length && data.type !== NODE_TYPE_NOTES) {
         containers_icon.click(() => {
@@ -155,7 +156,17 @@ function showDlg(name, data, callback) {
 
         more_properties.bind("click.dlg", function () {
             if (more_properties.text() === "More") {
-                $(".more-properties").show();
+                let fields = $(".more-properties");
+
+                // hide the icon filed, if there is a stored icon or no icon
+                fields = fields.filter(function() {
+                    if (this.id !== "prop-row-icon")
+                        return true;
+
+                    return !data.stored_icon && data.icon;
+                });
+
+                fields.show();
                 more_properties.text("Less");
             }
             else {

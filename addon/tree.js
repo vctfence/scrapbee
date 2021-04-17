@@ -796,9 +796,12 @@ class BookmarkTree {
             openOriginalItem: {
                 label: "Open Original URL",
                 action: function () {
-                    browser.tabs.create({
-                        "url": o(ctxNode).uri, cookieStoreId: o(ctxNode).container
-                    });
+                    let url = o(ctxNode).uri;
+
+                    if (url)
+                        browser.tabs.create({
+                            "url": url, cookieStoreId: o(ctxNode).container
+                        });
                 }
             },
             copyLinkItem: {

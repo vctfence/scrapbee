@@ -39,13 +39,15 @@ export async function browseNode(node, external_tab, preserve_history, container
                 catch (e) {
                     url = "http://" + url;
                 }
+
+                container = container || node.container;
+
+                return (external_tab
+                    ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
+                    : browser.tabs.create({"url": url, cookieStoreId: container}));
             }
 
-            container = container || node.container;
-
-            return (external_tab
-                        ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
-                        : browser.tabs.create({"url": url, cookieStoreId: container}));
+        break;
 
         case NODE_TYPE_ARCHIVE:
 
