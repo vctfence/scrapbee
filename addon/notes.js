@@ -1,6 +1,7 @@
 import {backend} from "./backend.js"
 import * as org from "./org.js"
 import {NODE_TYPE_NOTES} from "./storage_constants.js";
+import {markdown2html, org2html, text2html} from "./utils.js";
 
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
 #+CSS: p {text-align: justify;}
@@ -485,78 +486,6 @@ window.onload = function() {
             });
     });
 
-    function org2html(org_text) {
-        let doc = new org.Parser().parse(org_text);
-        let html = new org.ConverterHTML(doc).result;
-
-        let output = "";
-
-        if (doc.directiveValues["css:"])
-            $("#notes-style").text(doc.directiveValues["css:"].htmlEncode(true, true));
-        else
-            $("#notes-style").text("");
-
-        if (doc.options.toc) {
-            output += html.tocHTML.replace("<ul", "<ul id='toc'") + html.contentHTML;
-        }
-        else
-            output += html.contentHTML;
-
-        return output;
-    }
-
-    function markdown2html(md_text) {
-        md_text = md_text || "";
-
-        let m = /^(.*?\r?\n)$/m.exec(md_text);
-        let firstLine;
-        let css;
-
-        if (m && m[1]) {
-            firstLine = m[1];
-            m = /\[\/\/]: # \((.*?)\)$/.exec(firstLine.trim());
-
-            if (m && m[1])
-                css = m[1];
-        }
-
-        if (css)
-            $("#notes-style").text(css.htmlEncode(true, true));
-        else
-            $("#notes-style").text("");
-
-        return marked(md_text);
-    }
-
-    function text2html(text) {
-        text = text || "";
-        let m = /^(.*?\r?\n)$/m.exec(text);
-        let firstLine;
-        let css;
-
-        if (m && m[1]) {
-            firstLine = m[1];
-            m = /CSS:(.*?)$/.exec(firstLine.trim());
-
-            if (m && m[1])
-                css = m[1];
-        }
-
-        if (css) {
-            $("#notes-style").text(css.htmlEncode(true, true));
-            text = text.replace(firstLine, "");
-        }
-        else
-            $("#notes-style").text("");
-
-        return `<pre class="plaintext">${text.htmlEncode()}</pre>`;
-    }
-
-    function prepareHTML(html) {
-        $("#notes-style").text("");
-        return html;
-    }
-
     function formatNotes(text, format) {
         switch (format) {
             case "org":
@@ -567,7 +496,7 @@ window.onload = function() {
                 break;
             case "html":
             case "delta":
-                $("#notes").attr("class", "notes format-html").html(prepareHTML(text));
+                $("#notes").attr("class", "notes format-html").html(text);
                 break;
             default:
                 $("#notes").attr("class", "notes format-text").html(text2html(text));;
@@ -669,8 +598,10 @@ window.onload = function() {
 
     $("#notes-format").on("change", e => {
         // old format
-        if (format === "delta")
-            $("#editor").val(quill.getHTML(true));
+        if (format === "delta") {
+            if (!quill.isEmpty())
+                $("#editor").val(quill.getHTML(true));
+        }
 
         format = $("#notes-format").val();
 

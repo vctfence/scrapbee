@@ -394,7 +394,7 @@ class IDBStorage {
             });
     }
 
-    async updateBlob(node_id, data) {
+    async updateBlobLowLevel(node_id, data) {
         let node = await this.getNode(node_id);
 
         if (node)

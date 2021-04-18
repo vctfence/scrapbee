@@ -5,7 +5,7 @@ import {cloudBackend} from "./backend_cloud.js"
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
-import {getThemeVar, isElementInViewport, showNotification} from "./utils.js";
+import {getThemeVar, isElementInViewport, notes2html, showNotification} from "./utils.js";
 import {
     CLOUD_EXTERNAL_NAME,
     ENDPOINT_TYPES,
@@ -977,8 +977,10 @@ class BookmarkTree {
                                     let notes = await backend.fetchNotes(o(node).id);
 
                                     if (notes) {
-                                        filename = o(node).name + ".org";
-                                        content = notes.content;
+                                        filename = o(node).name + ".html";
+                                        content = `<html><head></head><body>`
+                                                + `${notes2html(notes.content, notes.format)}`
+                                                + `</body></html>`;
                                     }
                                 }
 

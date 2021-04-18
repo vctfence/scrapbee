@@ -56,7 +56,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 });
 ```
 
-All parameters are optional. The relevant missing parameters will be captured from the active tab. In this and the
+All parameters are optional. The relevant missing parameters (url, title, icon) will be captured from the active tab. In this and the
 following API the icon URL is used by Scrapyard only to store its image in the database, so it may be a URL from a
 local server, or a
 [data-URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
@@ -87,7 +87,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     select:        true                             // Select the bookmark in the interface
 });
 ```
-All parameters are optional. The relevant missing parameters will be captured
+All parameters are optional. The relevant missing parameters (url, title, icon, content, content_type) will be captured
 from the active tab. If the <code>url</code> parameter is explicitly set to an empty string,
 it will remain empty.
 

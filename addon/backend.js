@@ -2,7 +2,7 @@ import IDBStorage from "./storage_idb.js"
 import {rdfBackend} from "./backend_rdf.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {browserBackend} from "./backend_browser.js"
-import {delegateProxy, getMimetypeExt, hexString} from "./utils.js";
+import {computeSHA1, delegateProxy, getMimetypeExt, hexString} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
@@ -95,6 +95,13 @@ class ExternalEventProvider {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.storeBookmarkData)
                 await backend.storeBookmarkData(node_id, data, content_type);
+        }
+    }
+
+    async updateExternalData(node_id, data) {
+        for (let backend of Object.values(this.externalBackends)) {
+            if (backend.updateBookmarkData)
+                await backend.updateBookmarkData(node_id, data);
         }
     }
 
@@ -596,7 +603,7 @@ export class Backend extends ExternalEventProvider {
 
                 await this.storeIconLowLevel(node.id, iconUrl);
 
-                node.stored_icon = true;
+                return iconUrl;
             }
         }
 
@@ -610,13 +617,11 @@ export class Backend extends ExternalEventProvider {
         }
         else if (node.icon) {
             try {
-                let iconHash = "http://"
-                     + hexString(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(node.icon)));
-
                 if (node.icon.startsWith("data:")) {
                     await this.storeIconLowLevel(node.id, node.icon);
 
-                    node.icon = iconHash;
+                    node.stored_icon = true;
+                    node.icon = "http://" + await computeSHA1(node.icon);
                     await this.updateNode(node);
                 }
                 else {
@@ -629,9 +634,8 @@ export class Backend extends ExternalEventProvider {
                         if (!type)
                             type = getMimetypeExt(node.icon);
 
-                        await convertAndStore(buffer, type);
-
-                        node.icon = iconHash;
+                        node.stored_icon = true;
+                        node.icon = "http://" + await computeSHA1(await convertAndStore(buffer, type));
                         await this.updateNode(node);
                     }
                 }
@@ -706,7 +710,13 @@ export class Backend extends ExternalEventProvider {
     async storeBlob(node_id, data, content_type) {
         await this.storeBlobLowLevel(node_id, data, content_type);
 
-        await this.storeExternalData(node_id, data, content_type)
+        await this.storeExternalData(node_id, data, content_type);
+    }
+
+    async updateBlob(node_id, data) {
+        await this.updateBlobLowLevel(node_id, data);
+
+        await this.updateExternalData(node_id, data);
     }
 
     async addNotes(parent_id, name) {

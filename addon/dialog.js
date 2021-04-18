@@ -163,7 +163,7 @@ function showDlg(name, data, callback) {
                     if (this.id !== "prop-row-icon")
                         return true;
 
-                    return !data.stored_icon && data.icon;
+                    return !data.stored_icon && data.icon && data.type !== NODE_TYPE_NOTES;
                 });
 
                 fields.show();
@@ -186,7 +186,6 @@ function showDlg(name, data, callback) {
         copy_reference.bind("click.dlg", function () {
             let url = "ext+scrapyard://" + $dlg.find("#prop-uuid").val();
             navigator.clipboard.writeText(url);
-            //showNotification({message: url});
         });
     });
     return p;

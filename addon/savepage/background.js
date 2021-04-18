@@ -675,7 +675,7 @@ function addListeners()
                 break;
 
             case "UPDATE_ARCHIVE":
-                backend.updateBlob(message.id, message.data, false);
+                backend.updateBlob(message.id, message.data);
                 backend.updateIndex(message.id, message.data.indexWords());
                 break;
 

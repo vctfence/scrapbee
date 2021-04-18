@@ -5,6 +5,7 @@ const JSON_PROPERTIES = ["notes_format",
                           "notes_align",
                           "content_type",
                           "byte_length",
+                          "icon_data",
                         ...NODE_PROPERTIES];
 
 export class JSONStorage {

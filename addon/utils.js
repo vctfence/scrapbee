@@ -1,3 +1,5 @@
+import * as org from "./org.js";
+
 export function isIShell(id) {
     if (!id)
         return false;
@@ -83,6 +85,109 @@ export function parseHtml(htmlText) {
     }
 
     return doc;
+}
+
+export function org2html(org_text) {
+    let doc = new org.Parser().parse(org_text);
+    let html = new org.ConverterHTML(doc).result;
+
+    let output = doc.directiveValues["css:"]
+        ? `<style>${doc.directiveValues["css:"].htmlEncode(true, true)}</style>`
+        : "";
+
+    if (doc.options.toc) {
+        output += html.tocHTML.replace("<ul", "<ul id='toc'") + html.contentHTML;
+    }
+    else
+        output += html.contentHTML;
+
+    return output;
+}
+
+export function markdown2html(md_text) {
+    md_text = md_text || "";
+
+    let m = /^(.*?\r?\n)/.exec(md_text);
+    let firstLine;
+    let css;
+
+    if (m && m[1]) {
+        firstLine = m[1];
+        m = /\[\/\/]: # \((.*?)\)$/.exec(firstLine.trim());
+
+        if (m && m[1])
+            css = m[1];
+    }
+
+    let output = css
+        ? `<style>${css.htmlEncode(true, true)}</style>`
+        : "";
+
+    output += marked(md_text);
+
+    return output;
+}
+
+export function text2html(text) {
+    text = text || "";
+    let m = /^(.*?\r?\n)/.exec(text);
+    let firstLine;
+    let css;
+
+    if (m && m[1]) {
+        firstLine = m[1];
+        m = /CSS:(.*?)$/.exec(firstLine.trim());
+
+        if (m && m[1])
+            css = m[1];
+    }
+
+    let output = css
+        ? `<style>${css.htmlEncode(true, true)}</style>`
+        : "";
+
+    if (css)
+        text = text.replace(firstLine, "");
+
+    output += `<pre class="plaintext">${text.htmlEncode()}</pre>`
+
+    return output;
+}
+
+export function delta2html(delta) {
+    delta = JSON.parse(delta);
+
+    const converter = new QuillDeltaToHtmlConverter(delta.ops, {
+        encodeHtml: true,
+        inlineStyles: true,
+        urlSanitizer: v => v
+    });
+
+    converter.renderCustomWith(function(customOp, contextOp){
+        if (customOp.insert.type === 'hr')
+            return "<hr>";
+    })
+
+    return converter.convert();
+}
+
+export function notes2html(notes, format) {
+    switch (format) {
+        case "text":
+            return text2html(notes);
+        case "markdown":
+            return markdown2html(notes);
+        case "org":
+            return org2html(notes);
+        case "html":
+            return notes;
+        case "delta":
+            return delta2html(notes);
+    }
+}
+
+export async function computeSHA1(text) {
+    return hexString(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(text)));
 }
 
 export function hexString(buffer) {
@@ -203,29 +308,6 @@ export function delegateProxy (target, origin) {
             return true
         }
     })
-}
-
-export async function loadLocalResource(url, type) {
-    let result = {type: "", data: null};
-    try {
-        let response = await fetch(url, {mode: 'same-origin'});
-
-        if (response.ok) {
-            let data = type === "binary"
-                ? await response.arrayBuffer()
-                : await response.text();
-            return {
-                type: response.headers.get("content-type"),
-                data: data
-            };
-        }
-
-        return result;
-    }
-    catch (e) {
-        console.log(e);
-        return result;
-    }
 }
 
 export async function testFavicon(url) {

@@ -1,7 +1,8 @@
 import {settings} from "./settings.js";
-import {getFavicon, showNotification} from "./utils.js";
+import {getFavicon, notes2html, showNotification} from "./utils.js";
 import {dropboxBackend} from "./backend_dropbox.js";
 import {backend} from "./backend.js";
+import * as org from "./org.js"
 import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
@@ -82,8 +83,10 @@ export class CloudBackend {
     }
 
     async cleanBookmarkAssets(db, node) {
-        if (node.has_notes)
+        if (node.has_notes) {
             await db.deleteNotes(node);
+            await db.deleteView(node);
+        }
 
         if (node.has_comments)
             await db.deleteComments(node);
@@ -91,8 +94,8 @@ export class CloudBackend {
         if (node.type === NODE_TYPE_ARCHIVE)
             await db.deleteData(node);
 
-        if (node.stored_icon)
-            await db.deleteIcon(node);
+        // if (node.stored_icon)
+        //     await db.deleteIcon(node);
     }
 
     async deleteBookmarks(nodes) {
@@ -150,6 +153,11 @@ export class CloudBackend {
 
         cloud_node.parent_id = parent? parent.id: CLOUD_SHELF_ID;
 
+        if (node.stored_icon) {
+            cloud_node.icon_data = await backend.fetchIcon(node.id);
+            //await db.storeIcon(bookmark, icon);
+        }
+
         await db.addNode(cloud_node).then(async bookmark => {
             node.external = CLOUD_EXTERNAL_NAME;
             node.external_id = bookmark.uuid;
@@ -178,11 +186,6 @@ export class CloudBackend {
                         await this._storeDataInternal(db, bookmark, blob.data, blob.type);
                     }
                 }
-
-                if (node.stored_icon) {
-                    const icon = await backend.fetchIcon(node.id);
-                    await db.storeIcon(bookmark, icon);
-                }
             }
             catch (e) {
                 console.log(e);
@@ -196,6 +199,10 @@ export class CloudBackend {
         cloud_node.notes_format = format;
         cloud_node.notes_align = align;
         cloud_node = await db.updateNode(cloud_node);
+
+        let view = `<html><head></head><body>${notes2html(notes, format)}</body></html>`;
+
+        await db.storeView(cloud_node, view);
 
         return db.storeNotes(cloud_node, notes);
     }
@@ -281,7 +288,8 @@ export class CloudBackend {
         else
             cloud_node.byte_length = data.byteLength;
 
-        cloud_node.content_type = content_type;
+        if (content_type)
+            cloud_node.content_type = content_type;
         cloud_node = await db.updateNode(cloud_node);
 
         return db.storeData(cloud_node, new Blob([data], {type: content_type}));
@@ -299,6 +307,19 @@ export class CloudBackend {
             });
     }
 
+    async updateBookmarkData(node_id, data, content_type) {
+        if (!settings.cloud_enabled())
+            return;
+
+        let node = await backend.getNode(node_id);
+
+        if (node.external === CLOUD_EXTERNAL_NAME)
+            await this.withCloudDB(async db => {
+                let node = await backend.getNode(node_id);
+                return this._storeDataInternal(db, node, data, null);
+            });
+    }
+
     async fetchCloudData(node) {
         return (await this._provider.getDB(true)).fetchData(node);
     }
@@ -313,7 +334,7 @@ export class CloudBackend {
 
         if (parent.external === CLOUD_EXTERNAL_NAME) {
             await this.withCloudDB(async db => {
-                return this._createBookmarkInternal(db, node, parent.external_id);
+                return this._createBookmarkInternal(db, node, parent.uuid);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
     }
@@ -348,10 +369,10 @@ export class CloudBackend {
                 return Promise.all(other_nodes.map(n => {
                     if (isContainer(n)) {
                         return backend.traverse(n, (parent, node) =>
-                            this._createBookmarkInternal(db, node, parent? parent.external_id: dest.external_id));
+                            this._createBookmarkInternal(db, node, parent? parent.uuid: dest.uuid));
                     }
                     else
-                        return this._createBookmarkInternal(db, n, dest.external_id)
+                        return this._createBookmarkInternal(db, n, dest.uuid)
                 }));
             } else {
                 return Promise.all(cloud_nodes.map(async n => {
@@ -401,9 +422,9 @@ export class CloudBackend {
                 for (let n of nodes) {
                     if (isContainer(n)) {
                         await backend.traverse(n, (parent, node) =>
-                            this._createBookmarkInternal(db, node, parent ? parent.external_id : dest.external_id));
+                            this._createBookmarkInternal(db, node, parent ? parent.uuid : dest.uuid));
                     } else
-                        await this._createBookmarkInternal(db, n, dest.external_id)
+                        await this._createBookmarkInternal(db, n, dest.uuid)
                 }
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
@@ -527,8 +548,10 @@ export class CloudBackend {
                         download_data.push(node);
                     }
 
-                    if (!node.icon || node.icon && node.stored_icon)
+                    if (!node.icon || node.icon && node.stored_icon) {
+                        node.icon_data = cc.icon_data;
                         download_icons.push(node);
+                    }
                     else if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && node.icon) {
                         await backend.storeIcon(node);
                     }
@@ -559,7 +582,7 @@ export class CloudBackend {
 
             browser.runtime.sendMessage({type: "CLOUD_SYNC_START"});
 
-            db_pool = new Map((await backend.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.external_id, n]));
+            db_pool = new Map((await backend.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
 
             await reconcile(db_root, cloud_root).then(async () => {
                 cloud_root = null;
@@ -610,8 +633,8 @@ export class CloudBackend {
                         }
                     }
                     else if (node.icon && node.stored_icon) {
-                        const icon = await this.fetchCloudIcon(node);
-                        await backend.storeIconLowLevel(node.id, icon);
+                        //const icon = await this.fetchCloudIcon(node);
+                        await backend.storeIconLowLevel(node.id, node.icon_data);
                     }
                 }
 
