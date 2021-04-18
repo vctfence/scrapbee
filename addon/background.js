@@ -15,7 +15,7 @@ import {
     importRDF
 } from "./import.js";
 
-import {isSpecialPage, notifySpecialPage, readFile, showNotification} from "./utils.js";
+import {isSpecialPage, notifySpecialPage, openContainerTab, readFile, showNotification} from "./utils.js";
 
 import {
     CLOUD_SHELF_ID,
@@ -44,7 +44,7 @@ export async function browseNode(node, external_tab, preserve_history, container
 
                 return (external_tab
                     ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
-                    : browser.tabs.create({"url": url, cookieStoreId: container}));
+                    : openContainerTab(url, container));
             }
 
         break;

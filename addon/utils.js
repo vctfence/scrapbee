@@ -40,6 +40,18 @@ export function showNotification(args) {
     });
 }
 
+export async function openContainerTab(url, container) {
+    try {
+        return await browser.tabs.create({"url": url, cookieStoreId: container});
+    }
+    catch (e) {
+        if (e.message?.includes("cookieStoreId"))
+            showNotification("Invalid bookmark container.");
+
+        return browser.tabs.create({"url": url});
+    }
+}
+
 export function pathToNameExt(fullPath) {
 
     let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));

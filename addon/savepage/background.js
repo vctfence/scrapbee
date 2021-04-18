@@ -1150,7 +1150,7 @@ function addListeners()
                 else if (message.icon)
                     await backend.storeIcon(node);
 
-                await backend.updateBookmark(message);
+                await backend.updateBookmark(node);
 
                 if (message.refresh)
                     browser.runtime.sendMessage({type: "NODES_UPDATED"});

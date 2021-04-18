@@ -1,6 +1,7 @@
 import {backend} from "./backend.js"
 import {TREE_STATE_PREFIX} from "./tree.js";
 import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
+import {openContainerTab} from "./utils.js";
 
 
 export const SEARCH_MODE_SCRAPYARD = 1;
@@ -248,7 +249,7 @@ export function initializeOmnibox() {
             if (node.type === NODE_TYPE_BOOKMARK && node.container) {
                 if (activeTab && activeTab.url === "about:newtab")
                     browser.tabs.remove(activeTab.id);
-                browser.tabs.create({url, cookieStoreId: node.container});
+                openContainerTab(url, node.container);
                 return;
             }
         }

@@ -5,7 +5,7 @@ import {cloudBackend} from "./backend_cloud.js"
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
-import {getThemeVar, isElementInViewport, notes2html, showNotification} from "./utils.js";
+import {getThemeVar, isElementInViewport, notes2html, openContainerTab, showNotification} from "./utils.js";
 import {
     CLOUD_EXTERNAL_NAME,
     ENDPOINT_TYPES,
@@ -799,9 +799,7 @@ class BookmarkTree {
                     let url = o(ctxNode).uri;
 
                     if (url)
-                        browser.tabs.create({
-                            "url": url, cookieStoreId: o(ctxNode).container
-                        });
+                        openContainerTab(url, o(ctxNode).container);
                 }
             },
             copyLinkItem: {
