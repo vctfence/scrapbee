@@ -959,6 +959,7 @@ function addListeners()
 
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
+        let node;
         let activeTab;
         sender.ishell = isIShell(sender.id);
 
@@ -1107,6 +1108,65 @@ function addListeners()
                     }
                 });
 
+            case "SCRAPYARD_GET_UUID":
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
+                node = await backend.getNode(message.uuid, true);
+
+                if (node) {
+                    return {
+                        uuid: node.uuid,
+                        title: node.name,
+                        url: node.uri,
+                        tags: node.tags,
+                        details: node.details,
+                        todo_state: node.todo_state,
+                        todo_date: node.todo_date,
+                        container: node.container
+                    }
+                }
+
+                break;
+
+            case "SCRAPYARD_UPDATE_UUID":
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
+                delete message.type;
+                if (message.url)
+                    message.uri = message.url;
+                if (message.title)
+                    message.name = message.title;
+
+                node = await backend.getNode(message.uuid, true);
+
+                Object.assign(node, message);
+
+                if (message.icon === "") {
+                    message.icon = null;
+                    message.stored_icon = false;
+                }
+                else if (message.icon)
+                    await backend.storeIcon(node);
+
+                await backend.updateBookmark(message);
+
+                if (message.refresh)
+                    browser.runtime.sendMessage({type: "NODES_UPDATED"});
+
+                break;
+
+            case "SCRAPYARD_REMOVE_UUID":
+                if (!isAutomationAllowed(sender))
+                    throw new Error();
+
+                node = await backend.getNode(message.uuid, true);
+
+                if (node)
+                    await backend.deleteNodes(node.id);
+                break;
+
             case "SCRAPYARD_PACK_PAGE":
                 if (!isAutomationAllowed(sender))
                     throw new Error();
@@ -1179,7 +1239,7 @@ function addListeners()
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                let node = await backend.getNode(message.uuid, true);
+                node = await backend.getNode(message.uuid, true);
                 if (node)
                     browseNode(node);
                 break;

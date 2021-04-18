@@ -145,9 +145,11 @@
         <img src="images/help/search-urlbar-tags.png">
     </p>
 
-    <p>By creating dedicated iShell commands to open specific bookmarks, you may access them even
-    more quickly. See the <a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md" target="_blank">documentation</a>
-        on automation for more details.</p>
+    <p>By creating dedicated <a href="https://gchristensen.github.io/ishell/"
+                                target="_blank">iShell</a> commands to open specific bookmarks, you
+        may access them even more quickly. A few examples could be found in <a
+            href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
+            target="_blank">Scrapyard automation documentation</a>.</p>
 
     <h3>Cloud Bookmarking</h3>
     <p>
@@ -185,7 +187,7 @@
     <p>
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. You may attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
-        they will be lost if the bookmarks are deleted from Firefox UI, or after the "Show Firefox bookmarks shelf"
+        they will be lost if the bookmarks are deleted from the Firefox UI, or after the "Show Firefox bookmarks shelf"
         option in settings is unchecked. Firefox bookmarks are included in the export as a separate shelf,
         so import will leave the current Firefox bookmark state intact.
     </p>
@@ -274,13 +276,12 @@
         <p>Notes could be entered in rich text format (using a visual editor),
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
         <a href="https://orgmode.org/manual/Markup.html" target="_blank">Org-mode markup</a> or plain text.
-            The format selector dropdown list is located at the bottom left corner of the "Edit" tab.</p>
+            The format selector dropdown list is located at the bottom left corner of the "Edit" tab.
+            The alignment selector, which is placed at the bottom left of the "View" tab, allows to select the overall note
+            alignment (left or centered) on per note basis.</p>
 
     <p>Notes in Org format may have an automatically generated table of contents.
         Insert the example markup into the note editor to explore what options are available.</p>
-
-    <p>The alignment selector, which is placed at the bottom left of the "View" tab, allows to select the overall note
-        alignment (left or centered) on per note basis.</p>
 
     <p>The text in the note editor is saved automatically, although you may save it at any time with the <code>Ctrl+S</code>
         keyboard shortcut.</p>
@@ -342,9 +343,9 @@
 
     <p>Random bookmarks from your collection could be displayed at the bottom of the Scrapyard sidebar.
         Check the corresponding option in the settings to enable this feature. The displayed
-        bookmark is refreshed every 5 minutes, it also could be updated by a user request through
-        the "Refresh" button. The magnifier button at the bookmark bar shown below selects the
-        current bookmark at the Scrapyard sidebar by opening the shelf and folder in which it is located.</p>
+        bookmark is changed every 5 minutes, it also could be updated by a user request through
+        the "Refresh" button. The "Find" button allows to locate the bookmark at the Scrapyard sidebar
+        by opening its shelf and folder.</p>
 
     <p style="text-align: center">
         <img src="images/help/random-bookmark.png">
@@ -451,8 +452,8 @@
 
     <h2>Automation</h2>
 
-    <p>By using the automation API provided by Scrapyard, it is possible to programmatically create bookmarks
-       or page archives and browse dedicated bookmarks. See the
-       <a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md" target="_blank">automation API documentation</a>
-        for more details.</p>
+    <p>By using the automation API provided by Scrapyard, it is possible to programmatically create,
+        modify, and delete bookmarks or page archives from iShell commands and your own extensions.
+        See the <a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
+                   target="_blank">automation API documentation</a> for more details.</p>
 </div>
