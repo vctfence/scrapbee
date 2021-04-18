@@ -10,6 +10,10 @@ import com.dropbox.core.json.JsonReadException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -103,6 +107,9 @@ public class CloudBackend {
             bookmark.todoState = todoState;
             bookmark.details = extras.getString(EXTRA_TODO_DETAILS);
             bookmark.type = text != null? Scrapyard.NODE_TYPE_ARCHIVE: Scrapyard.NODE_TYPE_BOOKMARK;
+            System.out.println(getFavicon(url));
+
+            bookmark.icon = getFavicon(url);
 
             if (bookmark.type == Scrapyard.NODE_TYPE_ARCHIVE && url == null) {
                 bookmark.type = Scrapyard.NODE_TYPE_NOTES;
@@ -213,6 +220,41 @@ public class CloudBackend {
         buffer.append("</html>");
 
         return buffer.toString();
+    }
+
+    private String getFavicon(String url) {
+        try {
+            Document doc = Jsoup.connect(url).get();
+            Elements links = doc.select("head link[rel*='icon'], head link[rel*='shortcut']");
+
+            URL baseUrl = new URL(url);
+
+            if (baseUrl.getHost().endsWith("wikipedia.org"))
+                return "https://wikipedia.org/favicon.ico";
+
+            if (links.size() > 0) {
+                URL faviconUrl = new URL(baseUrl, links.get(0).attr("href"));
+                return faviconUrl.toString();
+            }
+            else {
+                StringBuilder builder = new StringBuilder();
+                URL faviconUrl = new URL(url);
+
+                builder.append(faviconUrl.getProtocol() + "://")
+                    .append(faviconUrl.getHost());
+
+                if (faviconUrl.getPort() > 0)
+                    builder.append(":" + faviconUrl.getPort());
+
+                builder.append("/favicon.ico");
+
+                return builder.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 }

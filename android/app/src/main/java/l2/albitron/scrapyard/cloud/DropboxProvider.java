@@ -30,8 +30,8 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class DropboxProvider implements CloudProvider {
 
-    final String DROPBOX_APP_PATH = "/Cloud";
-    final String DROPBOX_INDEX_PATH = "/Cloud/index.json";
+    public static final String DROPBOX_APP_PATH = "/Cloud";
+    public static final String DROPBOX_INDEX_PATH = "/Cloud/index.json";
 
     DbxClientV2 client;
 
@@ -94,6 +94,42 @@ public class DropboxProvider implements CloudProvider {
             try (ByteArrayOutputStream out = new ByteArrayOutputStream((int)downloader.getResult().getSize())) {
                 client.files().download(DROPBOX_INDEX_PATH).download(out);
                 return new String(out.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (DbxException e) {
+            if (BuildConfig.DEBUG)
+                e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public String getAsset(String file) {
+        try {
+            DbxDownloader<FileMetadata> downloader = client.files().download(file);
+
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream((int)downloader.getResult().getSize())) {
+                client.files().download(file).download(out);
+                return new String(out.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (DbxException e) {
+            if (BuildConfig.DEBUG)
+                e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public byte [] getAssetBytes(String file) {
+        try {
+            DbxDownloader<FileMetadata> downloader = client.files().download(file);
+
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream((int)downloader.getResult().getSize())) {
+                client.files().download(file).download(out);
+                return out.toByteArray();
             } catch (IOException e) {
                 e.printStackTrace();
             }

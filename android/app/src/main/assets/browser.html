@@ -20,6 +20,7 @@
             background-image: url("icons/loader.gif");
             background-position: center;
             background-repeat: no-repeat;
+            z-index: 10000;
         }
 
         a.has-notes, a.has-notes:hover {
@@ -28,7 +29,7 @@
     </style>
 
     <link rel="stylesheet" href="lib/jstree/themes/default/style.css"/>
-    <link rel="stylesheet" href="tree.css"/>
+    <link rel="stylesheet" href="css/tree.css"/>
 
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="text/javascript" src="lib/jstree/jstree.js"></script>
@@ -107,15 +108,15 @@
                 };
             }
             else if (n.type != NODE_TYPE_SHELF) {
-                var uri = "";
+                var urin = "";
                 if (n.uri)
-                    uri = false //n.uri.length > 60
+                    urin = false //n.uri.length > 60
                         ? "\x0A" + n.uri.substring(0, 60) + "..."
                         : ("\x0A" + n.uri);
 
                 n.li_attr = {
                     "class": "show_tooltip",
-                    "title": n.text + uri,
+                    "title": n.text + urin,
                     "data-id": n.id,
                     "data-clickable": "true"
                 };
@@ -141,6 +142,9 @@
                     n.icon = "icons/notes.svg";
                     n.li_attr.class += " scrapyard-notes";
                 }
+
+                if (n.icon_data)
+                    n.icon = n.icon_data;
 
                 if (!n.icon) {
                     n.icon = "icons/globe.svg";
@@ -169,10 +173,23 @@
         })
         .on("select_node.jstree", function (e, data) {
             var node = data.node.original;
-            if (node.type === NODE_TYPE_BOOKMARK || node.type === NODE_TYPE_ARCHIVE)
+            if (node.type === NODE_TYPE_BOOKMARK) {
                 document.location.href = node.uri;
-            else if (node.type === NODE_TYPE_GROUP || node.type === NODE_TYPE_SHELF)
+            }
+            else if (node.type === NODE_TYPE_ARCHIVE) {
+                if (node.content_type && node.content_type.indexOf("text/html") >= 0)
+                    Android.openArchive(node.uuid, "data");
+                else if (node.content_type)
+                    Android.downloadArchive(node.uuid, node.name, node.content_type);
+                else
+                    document.location.href = node.uri;
+            }
+            else if (node.type === NODE_TYPE_NOTES) {
+                Android.openArchive(node.uuid, "view");
+            }
+            else if (node.type === NODE_TYPE_GROUP || node.type === NODE_TYPE_SHELF) {
                 data.instance.toggle_node(data.selected);
+            }
          }) ;
 
         window.tree = $("#treeview").jstree(true);
@@ -225,6 +242,26 @@
                     };
 
         window.nodes = [root];
+
+        function injectCloudBookmarks(bookmarks) {
+            bookmarks.shift();
+            bookmarks.sort(function(a, b) {return a.pos - b.pos});
+            window.nodes = window.nodes.concat(bookmarks);
+            window.nodes.forEach(toJsTreeNode);
+            window.tree.settings.core.data = window.nodes;
+            window.tree.refresh(true);
+            window.tree.open_node("-5");
+            hideAnimation();
+        }
+
+        function showAnimation() {
+            $("#animation").show();
+        }
+
+        function hideAnimation() {
+            $("#animation").hide();
+        }
+
     </script>
 </html>
 </html>

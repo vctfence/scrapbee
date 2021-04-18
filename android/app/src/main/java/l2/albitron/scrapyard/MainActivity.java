@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity
 
     public void browseBookmarks(View v) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.content_frame, BrowseBookmarksFragment.newInstance(null, null));
+        ft.replace(R.id.content_frame, BrowseBookmarksFragment.newInstance());
         ft.addToBackStack("stack");
         ft.commit();
     }

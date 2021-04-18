@@ -1,0 +1,25 @@
+span.task-status {
+    color: white !important;
+}
+
+span.task-status.todo {
+    color: white !important;
+}
+
+span.task-status.done {
+    color: white !important;
+}
+
+pre.plaintext {
+    padding: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    background-color: transparent;
+    display: block;
+    margin: 0;
+    /*line-height: 18px;*/
+    border: none;
+    -webkit-border-radius: 0;
+    word-wrap: break-word;
+    font-size: 94%;
+}
