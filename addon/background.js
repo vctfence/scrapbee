@@ -137,9 +137,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 return;
             }
 
-            backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
+            await backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
             });
+
             break;
 
         case "GET_BOOKMARK_URL":

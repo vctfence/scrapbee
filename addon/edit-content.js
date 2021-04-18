@@ -300,17 +300,19 @@ class EditToolBar {
         $(txt).attr("readonly", "true")
         editBar.appendChild(txt);
 
+        /** go button */
+        var link = document.createElement("a");
+        $(link).attr("target", "_blank");
+        editBar.appendChild(link);
+
         browser.runtime.sendMessage({
             type: 'GET_BOOKMARK_URL',
             uuid: location.hash.split(":")[0].substring(1),
             id: parseInt(location.hash.split(":")[1])
-        }).then(url => txt.value = url);
-
-        /** go button */
-        var link = document.createElement("a");
-        link.href = txt.value;
-        $(link).attr("target", "_blank");
-        editBar.appendChild(link);
+        }).then(url => {
+            txt.value = url;
+            link.href = url;
+        });
 
         var btn = document.createElement("input");
         btn.type = "button";

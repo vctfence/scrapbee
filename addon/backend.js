@@ -628,15 +628,17 @@ export class Backend extends ExternalEventProvider {
                     const response = await fetch(node.icon);
 
                     if (response.ok) {
-                        const buffer = await response.arrayBuffer();
-
                         let type = response.headers.get("content-type");
                         if (!type)
                             type = getMimetypeExt(node.icon);
 
-                        node.stored_icon = true;
-                        node.icon = "http://" + await computeSHA1(await convertAndStore(buffer, type));
-                        await this.updateNode(node);
+                        if (type.startsWith("image")) {
+                            const buffer = await response.arrayBuffer();
+
+                            node.stored_icon = true;
+                            node.icon = "http://" + await computeSHA1(await convertAndStore(buffer, type));
+                            await this.updateNode(node);
+                        }
                     }
                 }
             }
