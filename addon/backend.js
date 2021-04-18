@@ -105,10 +105,10 @@ class ExternalEventProvider {
         }
     }
 
-    async storeExternalNotes(node_id, notes, format) {
+    async storeExternalNotes(options) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.storeBookmarkNotes)
-                await backend.storeBookmarkNotes(node_id, notes, format);
+                await backend.storeBookmarkNotes(options);
         }
     }
 
@@ -509,7 +509,7 @@ export class Backend extends ExternalEventProvider {
                 if (isEndpoint(n) && n.type !== NODE_TYPE_SEPARATOR) {
                     let notes = await this.fetchNotes(old_id);
                     if (notes) {
-                        await this.storeNotesLowLevel(n.id, notes.content, notes.format, notes.align);
+                        await this.storeNotesLowLevel({node_id: n.id, content: notes.content, format: notes.format, align: notes.align});
                         notes = null;
                     }
 
@@ -621,7 +621,7 @@ export class Backend extends ExternalEventProvider {
                     await this.storeIconLowLevel(node.id, node.icon);
 
                     node.stored_icon = true;
-                    node.icon = "http://" + await computeSHA1(node.icon);
+                    node.icon = await computeSHA1(node.icon);
                     await this.updateNode(node);
                 }
                 else {
@@ -636,7 +636,7 @@ export class Backend extends ExternalEventProvider {
                             const buffer = await response.arrayBuffer();
 
                             node.stored_icon = true;
-                            node.icon = "http://" + await computeSHA1(await convertAndStore(buffer, type));
+                            node.icon = await computeSHA1(await convertAndStore(buffer, type));
                             await this.updateNode(node);
                         }
                     }
@@ -736,10 +736,10 @@ export class Backend extends ExternalEventProvider {
         return node;
     }
 
-    async storeNotes(node_id, notes, format, align) {
-        await this.storeNotesLowLevel(node_id, notes, format, align);
+    async storeNotes(options) {
+        await this.storeNotesLowLevel(options);
 
-        await this.storeExternalNotes(node_id, notes, format, align);
+        await this.storeExternalNotes(options);
     }
 
     async storeComments(node_id, comments) {

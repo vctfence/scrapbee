@@ -189,12 +189,13 @@ export function notes2html(notes, format) {
             return text2html(notes);
         case "markdown":
             return markdown2html(notes);
-        case "org":
-            return org2html(notes);
         case "html":
             return notes;
         case "delta":
             return delta2html(notes);
+        case "org":
+        default:
+            return org2html(notes);
     }
 }
 

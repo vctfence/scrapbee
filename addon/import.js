@@ -61,6 +61,9 @@ export async function importOrg(shelf, text) {
             let notes_align = last_object.notes_align;
             delete last_object.notes_align;
 
+            let notes_width = last_object.notes_width;
+            delete last_object.notes_width;
+
             let note_lines = last_object.note_lines;
             delete last_object.note_lines;
 
@@ -92,10 +95,11 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotesLowLevel(node.id, JSON.parse(notes), notes_format, notes_align);
+                await backend.storeNotesLowLevel({node_id: node.id, content: JSON.parse(notes),
+                    format: notes_format, align: notes_align, width: notes_width});
             }
             else if (note_lines.length) {
-                await backend.storeNotesLowLevel(node.id, note_lines.join("\n"));
+                await backend.storeNotesLowLevel({node_id: node.id, content: note_lines.join("\n"), format: "org"});
             }
 
             if (comments) {
@@ -314,6 +318,9 @@ async function objectToProperties(object) {
 
             if (notes.align)
                 lines.push(`:notes_align: ${notes.align}`);
+
+            if (notes.width)
+                lines.push(`:notes_width: ${notes.width}`);
         }
     }
 
@@ -498,6 +505,9 @@ async function importJSONObject(object) {
     let notes_align = object.notes_align;
     delete object.notes_align;
 
+    let notes_width = object.notes_width;
+    delete object.notes_width;
+
     let comments = object.comments;
     delete object.comments;
 
@@ -526,7 +536,8 @@ async function importJSONObject(object) {
     }
 
     if (notes) {
-        await backend.storeNotesLowLevel(node.id, notes, notes_format, notes_align);
+        await backend.storeNotesLowLevel({node_id: node.id, content: notes,
+            format: notes_format, align: notes_align, width: notes_width});
     }
 
     if (comments) {
@@ -679,15 +690,15 @@ async function objectToJSON(object, shallow) {
             node.notes = notes.content;
             node.notes_format = notes.format;
             node.notes_align = notes.align;
+            node.notes_width = notes.width;
         }
 
         if (node.has_comments)
             node.comments = await backend.fetchComments(node.id);
 
         let icon = await backend.fetchIcon(node.id);
-        if (icon) {
+        if (icon)
             node.icon_data = icon;
-        }
     }
 
     return JSON.stringify(node);

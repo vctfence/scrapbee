@@ -213,6 +213,7 @@ inline = inline.length > 1 && inline[1].startsWith("i#");
 
 let format = "delta";
 let align;
+let width;
 
 let quill;
 
@@ -221,7 +222,7 @@ let editorTimeout;
 
 function saveNotes() {
     let content = getEditorContent();
-    backend.storeNotes(node_id, content, format, align);
+    backend.storeNotes({node_id, content, format, align});
     browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !content});
     editorChange = false;
 }
@@ -562,6 +563,27 @@ window.onload = function() {
                     $("#notes-align").val(align);
                 alignNotes();
 
+                width = notes.width;
+                if (width) {
+                    //$("#notes").css("width", width);
+
+                    let selected;
+                    $("#notes-width option").each(function() {
+                        if (width === this.textContent)
+                            selected = this.value;
+                    });
+
+                    if (selected)
+                        $("#notes-width").val(selected);
+                    else {
+                        let actualWidthElt = $("#notes-width option[value='actual']");
+                        actualWidthElt.show();
+                        actualWidthElt.text(width);
+                        $("#notes-width").val("actual");
+                        $("#notes").css("width", width);
+                    }
+                }
+
                 if (format !== "delta" && format !== "text")
                     $("#inserts").show();
                 else
@@ -625,8 +647,61 @@ window.onload = function() {
     $("#notes-align").on("change", e => {
         align = $("#notes-align").val() === "left"? "left": undefined;
         alignNotes();
-        backend.storeNotes(node_id, getEditorContent(), format, align);
+        backend.storeNotes({node_id, content: getEditorContent(), format, align});
     });
+
+    const DEFAULT_WIDTH = "700px";
+    $("#notes-width").on("change", e => {
+        let selectedWidth = $("#notes-width option:selected").text();
+        switch ($("#notes-width").val()) {
+            case "custom":
+                let customWidth = prompt("Custom width: ", DEFAULT_WIDTH);
+                if (customWidth) {
+                    if (/^\d+$/.test(customWidth))
+                        customWidth = customWidth + "px";
+
+                    let actualWidthElt = $("#notes-width option[value='actual']");
+                    actualWidthElt.show();
+                    actualWidthElt.text(customWidth);
+                    width = customWidth;
+                    $("#notes-width").val("actual");
+                    $("#notes").css("width", width);
+                }
+                break;
+            case "default":
+                $("#notes").css("width", DEFAULT_WIDTH);
+                width = null;
+                break;
+            default:
+                $("#notes").css("width", selectedWidth);
+                width = selectedWidth;
+        }
+
+        backend.storeNotes({node_id, content: getEditorContent(), format, align, width});
+    });
+
+    $("#font-size-larger").on("click", e => {
+        let size = parseInt(localStorage.getItem("notes-font-size") || 100);
+        size += 5;
+        localStorage.setItem("notes-font-size", size);
+        $("#notes").css("font-size", size + "%");
+    });
+
+    $("#font-size-smaller").on("click", e => {
+        let size = parseInt(localStorage.getItem("notes-font-size") || 100);
+        size -= 5;
+        localStorage.setItem("notes-font-size", size);
+        $("#notes").css("font-size", size + "%");
+    });
+
+    $("#font-size-default").on("click", e => {
+        localStorage.setItem("notes-font-size", "100%");
+        $("#notes").css("font-size", "100%");
+    });
+
+    let fontSize = parseInt(localStorage.getItem("notes-font-size") || 100);
+    $("#notes").css("font-size", fontSize + "%");
+
 
     $("#close-button").on("click", e => {
        if (window.parent) {

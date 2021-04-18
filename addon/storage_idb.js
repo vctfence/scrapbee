@@ -445,27 +445,18 @@ class IDBStorage {
         return dexie.index.where("node_id").equals(node_id).first();
     }
 
-    async storeNotesLowLevel(node_id, notes, format, align) {
-        let node = await this.getNode(node_id);
-        let exists = await dexie.notes.where("node_id").equals(node_id).count();
+    async storeNotesLowLevel(options) {
+        let node = await this.getNode(options.node_id);
+        let exists = await dexie.notes.where("node_id").equals(options.node_id).count();
 
         if (exists) {
-            await dexie.notes.where("node_id").equals(node_id).modify({
-                content: notes,
-                format: format,
-                align: align
-            });
+            await dexie.notes.where("node_id").equals(options.node_id).modify(options);
         }
         else {
-            await dexie.notes.add({
-                node_id: node_id,
-                content: notes,
-                format: format,
-                align: align
-            });
+            await dexie.notes.add(options);
         }
 
-        node.has_notes = !!notes;
+        node.has_notes = !!options.content;
         return this.updateNode(node);
     }
 

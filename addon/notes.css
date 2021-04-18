@@ -154,8 +154,41 @@ span.task-status.done {
     display: none;
 }
 
-#notes-format {
-    margin-right: 5px;
+#notes-width {
+    maring-right: 5px;
+}
+
+#notes-width option[value="actual"] {
+    display: none;
+}
+
+#font-sizes {
+    user-select: none;
+    margin: 0 10px;
+    display: inline-block;
+}
+
+.font-button {
+    cursor: pointer;
+    padding: 0 4px;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+#font-size-smaller {
+    background-image: url("/icons/font-smaller.svg");
+}
+
+#font-size-default {
+    background-image: url("/icons/font-default.svg");
+}
+
+#font-size-larger {
+    background-image: url("/icons/font-larger.svg");
 }
 
 pre.plaintext {

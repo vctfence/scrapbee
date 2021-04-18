@@ -2539,9 +2539,9 @@
 				if(obj.icon === false) {
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-hidden';
 				}
-				else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1 && !obj.icon.startsWith("var(")) {
-					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
-				}
+				// else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1 && !obj.icon.startsWith("var(")) {
+				// 	node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
+				// }
 				else {
 				    let icon = 'url("'+obj.icon+'")';
 

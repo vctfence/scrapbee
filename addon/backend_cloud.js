@@ -168,7 +168,7 @@ export class CloudBackend {
                 if (node.has_notes) {
                     let notes = await backend.fetchNotes(node.id);
                     if (notes)
-                        await this._storeNotesInternal(db, bookmark, notes.content, notes.format, notes.align);
+                        await this._storeNotesInternal(db, bookmark, notes);
                 }
 
                 if (node.has_comments) {
@@ -193,18 +193,19 @@ export class CloudBackend {
         });
     }
 
-    async _storeNotesInternal(db, node, notes, format, align) {
+    async _storeNotesInternal(db, node, options) {
         let cloud_node = await db.getNode(node.uuid, true);
-        cloud_node.has_notes = !!notes;
-        cloud_node.notes_format = format;
-        cloud_node.notes_align = align;
+        cloud_node.has_notes = !!options.content;
+        cloud_node.notes_format = options.format;
+        cloud_node.notes_align = options.align;
+        cloud_node.notes_width = options.width;
         cloud_node = await db.updateNode(cloud_node);
 
-        let view = `<html><head></head><body>${notes2html(notes, format)}</body></html>`;
+        let view = `<html><head></head><body>${notes2html(options.content, options.format)}</body></html>`;
 
         await db.storeView(cloud_node, view);
 
-        return db.storeNotes(cloud_node, notes);
+        return db.storeNotes(cloud_node, options.content);
     }
 
     async _storeCommentsInternal(node, comments) {
@@ -212,15 +213,15 @@ export class CloudBackend {
         return db.storeComments(node, comments);
     }
 
-    async storeBookmarkNotes(node_id, notes, format, align) {
+    async storeBookmarkNotes(options) {
         if (!settings.cloud_enabled())
             return;
 
-        let node = await backend.getNode(node_id);
+        let node = await backend.getNode(options.node_id);
 
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
-                return this._storeNotesInternal(db, node, notes, format, align);
+                return this._storeNotesInternal(db, node, options);
             });
     }
 
@@ -595,7 +596,8 @@ export class CloudBackend {
                 for (let notes_node of download_notes) {
                     let notes = await this.fetchCloudNotes(notes_node);
                     if (notes)
-                        await backend.storeNotesLowLevel(notes_node.id, notes, notes_node.notes_format, notes_node.notes_align);
+                        await backend.storeNotesLowLevel({node_id: notes_node.id, content: notes,
+                            format: notes_node.notes_format, align: notes_node.notes_align, width: notes_node.notes_width});
                 }
 
                 for (let comments_node of download_comments) {
