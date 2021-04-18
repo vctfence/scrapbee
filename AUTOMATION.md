@@ -1,6 +1,6 @@
 ## Automation
 
-Automation is a powerful feature that allows to programmatically create, modify, and delete bookmarks
+Automation is a powerful feature that allows to programmatically create, modify, and delete Scrapyard bookmarks
 from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions.
 For example, with this API you can import arbitrarily complex hierarchical content, automate TODO
 lists, or create something similar to the former Firefox "Live Bookmarks".
