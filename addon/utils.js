@@ -1,4 +1,4 @@
-import * as org from "./org.js";
+import * as org from "./lib/org/org.js";
 
 export function isIShell(id) {
     if (!id)

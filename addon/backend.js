@@ -141,15 +141,16 @@ export class Backend extends ExternalEventProvider {
     }
 
     expandPath(path) {
+        let background = browser.extension.getBackgroundPage();
+
         if (path && path.startsWith("~"))
             return path.replace("~", DEFAULT_SHELF_NAME);
-
         // the following values are got during reconciliation in browser backend and may vary
         // depending on browser UI language
-        else if (path && path.startsWith("@@") && this._unfiledBookmarkPath)
-            return path.replace("@@", this._unfiledBookmarkPath);
-        else if (path && path.startsWith("@") && this._browserBookmarkPath)
-            return path.replace("@", this._browserBookmarkPath);
+        else if (path && path.startsWith("@@") && background._unfiledBookmarkPath)
+            return path.replace("@@", background._unfiledBookmarkPath);
+        else if (path && path.startsWith("@") && background._browserBookmarkPath)
+            return path.replace("@", background._browserBookmarkPath);
 
         return path;
     }

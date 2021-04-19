@@ -1,4 +1,4 @@
-import * as org from "./org.js"
+import * as org from "./lib/org/org.js"
 import {backend} from "./backend.js"
 import {nativeBackend} from "./backend_native.js"
 import {settings} from "./settings.js"

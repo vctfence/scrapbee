@@ -410,7 +410,7 @@ export class BrowserBackend {
     }
 
     async isListenerLocked() {
-        let ui_context = window !== await browser.runtime.getBackgroundPage();
+        let ui_context = window !== browser.extension.getBackgroundPage();
 
         if (ui_context)
             return await browser.runtime.sendMessage({type: "GET_LISTENER_LOCK_STATE"});
@@ -419,7 +419,7 @@ export class BrowserBackend {
     }
 
     async muteBrowserListeners(f) {
-        let ui_context = window !== await browser.runtime.getBackgroundPage();
+        let ui_context = window !== browser.extension.getBackgroundPage();
         //console.log(new Error().stack);
 
         if (ui_context)
@@ -538,12 +538,12 @@ export class BrowserBackend {
 
                 backend.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
                     if (node)
-                        backend._browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+                        browser.extension.getBackgroundPage()._browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
                 });
 
                 backend.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
                     if (node)
-                        backend._unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
+                        browser.extension.getBackgroundPage()._unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
                 });
 
                 if (get_icons.length)

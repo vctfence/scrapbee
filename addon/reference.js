@@ -6,9 +6,13 @@ async function openReference(tab) {
     if (url && url.startsWith("ext+scrapyard:")) {
         let id = /ext\+scrapyard:\/\/([^#/]+)/i.exec(url)[1];
 
-        if (id === "automation") {
-            browser.tabs.update(tab.id, {"url": browser.runtime.getURL("automation.html"), "loadReplace": true});
-            return;
+        switch (id) {
+            case "automation":
+                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("special/automation.html"), "loadReplace": true});
+                return;
+            case "debug":
+                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("special/debug.html"), "loadReplace": true});
+                return;
         }
 
         let [prefix, uuid] = id.includes(":")? id.split(":"): [null, id];

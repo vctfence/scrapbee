@@ -170,10 +170,13 @@ Removes a bookmark or archive defined by the given UUID.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type: "SCRAPYARD_REMOVE_UUID",
-    uuid: "F0D858C6ED40416AA402EB2C3257EA17"
+    type:    "SCRAPYARD_REMOVE_UUID",
+    uuid:    "F0D858C6ED40416AA402EB2C3257EA17",
+    refresh: true                                  // Refresh the sidebar
 });
 ```
+
+It is preferable to use the `refresh` parameter only on the last invocation in the chain of updates.
 
 #### SCRAPYARD_BROWSE_UUID
 

@@ -1,5 +1,5 @@
 import {backend} from "./backend.js"
-import * as org from "./org.js"
+import * as org from "./lib/org/org.js"
 import {NODE_TYPE_NOTES} from "./storage_constants.js";
 import {applyInlineStyles, markdown2html, org2html, text2html} from "./utils.js";
 
@@ -300,6 +300,9 @@ function initWYSIWYGEditor() {
 
     quill = new Quill('#quill', {
         modules: {
+            clipboard: {
+                matchVisual: false
+            },
             toolbar: {
                 container: toolbarOptions,
                 handlers: {
@@ -389,8 +392,7 @@ function initWYSIWYGEditor() {
                 return url
             }
             else {
-                let value = super.sanitize(url);
-                return value;
+                return super.sanitize(url);
             }
         }
     }

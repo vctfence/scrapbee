@@ -321,16 +321,24 @@ function startCloudBackgroundSync(s) {
             clearInterval(window._backgroundSyncInterval);
 }
 
-settings.load(async s => {
+settings.load(async settings => {
     navigator.storage.persist().then(async function(persistent) {
         if (persistent) {
             await browserBackend.reconcileBrowserBookmarksDB();
-            startCloudBackgroundSync(s);
+            startCloudBackgroundSync(settings);
         } else
             console.log("Scrapyard was denied persistent storage permissions");
-    })
+    });
+
+    browser.runtime.onInstalled.addListener(details => {
+        if (detaild.reason === "update") {
+            settings.pending_announcement(true);
+        }
+    });
 });
 
 search.initializeOmnibox();
+
+
 
 console.log("==> background.js loaded");

@@ -197,27 +197,6 @@ function loadHelperAppLinks() {
 
 async function configureAboutPage() {
     $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);
-
-    if ($("#about-db-path-panel").is(":visible"))
-        return;
-
-    let helperApp = await nativeBackend.probe();
-
-    if (!helperApp)
-        return;
-
-    const addonId = browser.runtime.getURL("/").split("/")[2];
-    const url = `http://localhost:${settings.helper_port_number()}/request/idb_path/${addonId}`;
-
-    const response = await fetch(url);
-    if (response.ok) {
-        const idbPath = await response.text();
-        $("#about-addon-db-path-input").val(idbPath);
-        $("#about-db-path-panel").show();
-        $("#about-db-path-copy-button").on("click", e => {
-            navigator.clipboard.writeText($("#about-addon-db-path-input").val());
-        });
-    }
 }
 
 function switchPane() {
@@ -283,6 +262,12 @@ window.onload = async function() {
         return response.text();
     }).then(text => {
         $("#div-help").html(text);
+    });
+
+    fetch("changes.html").then(response => {
+        return response.text();
+    }).then(text => {
+        $("#about-changes").html(text);
     });
 
     // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////

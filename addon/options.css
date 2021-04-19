@@ -414,6 +414,41 @@ a.left-index, a:visited.left-index {
     animation-iteration-count: 1;
 }
 
+#div-about {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+#about-version-panel {
+    width: 100%;
+    flex: 0;
+}
+
+#about-changes-header {
+    flex: 0;
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+
+#about-changes {
+    margin: auto;
+    flex: 1;
+    width: 60%;
+    overflow-y: scroll;
+    font-size: 12pt;
+}
+
+#about-changes * {
+    font-size: 12pt;
+}
+
+
 .about-links {
     height: 16px;
     font-size: 12pt;
@@ -423,26 +458,11 @@ a.left-index, a:visited.left-index {
     font-size: 12pt;
 }
 
-#about-db-path-panel {
-    width: 700px;
-    margin: auto;
-    margin-top: 50px;
-    display: none;
+.change-date {
+    display: inline-block;
+    margin-left: 10px;
 }
 
-#about-addon-db-path-title {
-    text-align: left;
-    font-weight: bold;
-    font-size: 12pt;
-}
-
-#about-addon-db-path-input {
-    margin-bottom: 10px;
-    width: 100%;
-}
-
-#about-db-path-copy-button {
-    margin-left: -20px;
-    margin-bottom: -4px;
-    cursor: pointer;
+.change-info {
+    padding-left: 20px;
 }

@@ -1,0 +1,24 @@
+#db-path-panel {
+    width: 700px;
+    margin: auto;
+    margin-top: 50px;
+    /*display: none;*/
+}
+
+#addon-db-path-title {
+    text-align: left;
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+#addon-db-path-input {
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+#db-path-copy-button {
+    margin-left: -20px;
+    margin-bottom: -4px;
+    cursor: pointer;
+    background-color: white;
+}

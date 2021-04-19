@@ -298,6 +298,12 @@ window.onload = function () {
         $("#footer").hide();
     });
 
+    $("#btnAnnouncement").click(e => {
+        browser.tabs.create({"url": browser.runtime.getURL("options.html#about")});
+        $("#btnAnnouncement").hide();
+        settings.pending_announcement(false);
+    })
+
     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.type === "BOOKMARK_CREATED") {
             if (settings.switch_to_new_bookmark())
@@ -405,6 +411,10 @@ window.onload = function () {
 
     settings.load(async settings => {
         await loadShelves(context, tree, true, true);
+
+        if (settings.pending_announcement()) {
+            $("#btnAnnouncement").show();
+        }
 
         if (settings.display_random_bookmark())
             displayRandomBookmark();

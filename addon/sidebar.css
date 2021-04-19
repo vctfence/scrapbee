@@ -83,6 +83,10 @@ html,body {
     z-index:1; /* prevent dots of "text-overflow:ellipsis" diplayed over me */
 }
 
+#btnAnnouncement {
+    display: none;
+}
+
 .folder-content {
     display:none;
     /*margin-left:18px;*/

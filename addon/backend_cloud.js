@@ -2,7 +2,7 @@ import {settings} from "./settings.js";
 import {getFavicon, notes2html, showNotification} from "./utils.js";
 import {dropboxBackend} from "./backend_dropbox.js";
 import {backend} from "./backend.js";
-import * as org from "./org.js"
+import * as org from "./lib/org/org.js"
 import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,

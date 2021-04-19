@@ -1165,6 +1165,10 @@ function addListeners()
 
                 if (node)
                     await backend.deleteNodes(node.id);
+
+                if (message.refresh)
+                    browser.runtime.sendMessage({type: "NODES_UPDATED"});
+
                 break;
 
             case "SCRAPYARD_PACK_PAGE":
