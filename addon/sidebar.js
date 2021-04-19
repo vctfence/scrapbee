@@ -413,7 +413,7 @@ window.onload = function () {
         await loadShelves(context, tree, true, true);
 
         if (settings.pending_announcement()) {
-            $("#btnAnnouncement").show();
+            $("#btnAnnouncement").css("display", "inline-block");
         }
 
         if (settings.display_random_bookmark())

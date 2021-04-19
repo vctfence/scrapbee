@@ -2,11 +2,11 @@
 
 Automation is a powerful feature that allows to programmatically create, modify, and delete Scrapyard bookmarks
 from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions.
-For example, with this API you can import arbitrarily complex hierarchical content, automate TODO
+For example, with this API you can import arbitrarily complex hierarchical content, manage TODO
 lists, or create something similar to the former Firefox "Live Bookmarks".
 
-Currently, automation is experimental in Scrapyard, and should be
-manually enabled from its settings page: **ext+scrapyard://automation**
+Currently, automation is experimental, and should be
+manually enabled from the Scrapyard advanced settings page: **ext+scrapyard://advanced**
 which is not displayed at the main UI.
 Because Scrapyard knows about iShell, you do not need to enable automation to use the
 code below from iShell commands.

@@ -8,10 +8,8 @@ async function openReference(tab) {
 
         switch (id) {
             case "automation":
-                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("special/automation.html"), "loadReplace": true});
-                return;
-            case "debug":
-                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("special/debug.html"), "loadReplace": true});
+            case "advanced":
+                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("special/advanced.html"), "loadReplace": true});
                 return;
         }
 

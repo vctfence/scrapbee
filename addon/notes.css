@@ -149,7 +149,7 @@ span.task-status.done {
     display: none;
 }
 
-#font-sizes, #width-controls {
+#font-sizes, #editor-font-sizes, #width-controls {
     user-select: none;
     margin-left: 10px;
     display: inline-block;
@@ -171,24 +171,24 @@ span.task-status.done {
     margin-bottom: -2px;
 }
 
-#font-size-smaller {
+#font-size-smaller, #editor-font-size-smaller {
     background-image: url("/icons/font-smaller.svg");
 }
 
-#font-size-default {
+#font-size-default, #editor-font-size-default {
     background-image: url("/icons/font-default.svg");
 }
 
-#decrease-width {
+#font-size-larger, #editor-font-size-larger {
+    background-image: url("/icons/font-larger.svg");
+}
+
+#decrease-width, #decrease-width {
     background-image: url("/icons/dec.svg");
 }
 
 #increase-width {
     background-image: url("/icons/inc.svg");
-}
-
-#font-size-larger {
-    background-image: url("/icons/font-larger.svg");
 }
 
 pre.plaintext {

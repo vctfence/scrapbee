@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" href="/icons/scrapyard.svg" type="image/png"/>
+
+    <link rel="stylesheet" type="text/css" href="/options.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="advanced.css" media="all"/>
+
+    <script type="text/javascript" src="/lib/jquery.js"></script>
+    <script type="module" src="advanced.js"></script>
+</head>
+<body>
+<div id="div-settings" class="div-area">
+    <div id="advanced-title">
+        <h1>Advanced Settings</h1>
+    </div>
+    <div class="panel" id="automation-panel">
+        <p id="automation-panel-title">Automation Settings</p>
+        <form>
+            <fieldset style="border: none;">
+                <input id="option-enable-automation" type="checkbox"/><label for="option-enable-automation">Enable automation</label>
+                <div style="padding-top: 10px">
+                    <i class="help-mark"></i>
+                    <span class="tips hide">A comma-separated ID list of extensions that can use automation API. Everything is allowed, if empty.<br>
+                                    IDs of all installed extensions could be found at the <b>about:debugging#/runtime/this-firefox</b> page.</span>
+                    <label for="option-enable-automation">&nbsp;Extension whitelist:</label>
+                    <input id="option-extension-whitelist" style="width: 530px" type="text"/>
+
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <div class="panel" id="db-path-panel">
+        <p id="addon-db-path-title">Addon Database Path <i class="help-mark"></i>
+            <span class="tips hide" style="font-weight: normal">Please do not modify, delete or create any additional files in this directory!</span></p>
+        <input id="addon-db-path-input" type="text" disabled/>
+        <img id="db-path-copy-button" width="16px" height="16px" src="/icons/copy.svg" title="Copy"/>
+    </div>
+
+</div>
+</body>
+</html>

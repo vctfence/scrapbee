@@ -420,6 +420,9 @@ function initWYSIWYGEditor() {
         editorSaveOnChange(true);
     });
 
+    let fontSize = parseInt(localStorage.getItem("editor-font-size") || DEFAULT_FONT_SIZE);
+    $(".ql-container").css("font-size", fontSize + "%");
+
     window.onbeforeunload = function() {
         if (editorChange)
             return true;
@@ -674,10 +677,15 @@ window.onload = function() {
             closeWYSIWYGEditor();
         }
 
-        if (format !== "delta" && format !== "text")
+        if (format !== "delta" && format !== "text") {
             $("#inserts").show();
-        else
+            $("#editor-font-sizes").hide();
+        }
+        else {
             $("#inserts").hide();
+            if (format === "delta")
+                $("#editor-font-sizes").show();
+        }
 
         backend.storeNotes({node_id, format});
     });
@@ -744,30 +752,42 @@ window.onload = function() {
     $("#decrease-width").on("click", e => changeWidth("dec"));
     $("#increase-width").on("click", e => changeWidth("inc"));
 
+    let changeFontSize = (setting, target, op) => {
+        let size = parseInt(localStorage.getItem(setting) || DEFAULT_FONT_SIZE);
+        size = op(size, 5);
+        localStorage.setItem(setting, size);
+        $(target).css("font-size", size + "%");
+    }
 
     const DEFAULT_FONT_SIZE = 120;
     $("#font-size-larger").on("click", e => {
-        let size = parseInt(localStorage.getItem("notes-font-size") || DEFAULT_FONT_SIZE);
-        size += 5;
-        localStorage.setItem("notes-font-size", size);
-        $("#notes").css("font-size", size + "%");
+        changeFontSize("notes-font-size", "#notes", (a, b) => a + b);
     });
 
     $("#font-size-smaller").on("click", e => {
-        let size = parseInt(localStorage.getItem("notes-font-size") || DEFAULT_FONT_SIZE);
-        size -= 5;
-        localStorage.setItem("notes-font-size", size);
-        $("#notes").css("font-size", size + "%");
+        changeFontSize("notes-font-size", "#notes", (a, b) => a - b);
     });
 
     $("#font-size-default").on("click", e => {
-        localStorage.setItem("notes-font-size", DEFAULT_FONT_SIZE + "%");
+        localStorage.setItem("notes-font-size", DEFAULT_FONT_SIZE);
         $("#notes").css("font-size", DEFAULT_FONT_SIZE + "%");
+    });
+
+    $("#editor-font-size-larger").on("click", e => {
+        changeFontSize("editor-font-size", ".ql-container", (a, b) => a + b);
+    });
+
+    $("#editor-font-size-smaller").on("click", e => {
+        changeFontSize("editor-font-size", ".ql-container", (a, b) => a - b);
+    });
+
+    $("#editor-font-size-default").on("click", e => {
+        localStorage.setItem("editor-font-size", DEFAULT_FONT_SIZE);
+        $(".ql-container").css("font-size", DEFAULT_FONT_SIZE + "%");
     });
 
     let fontSize = parseInt(localStorage.getItem("notes-font-size") || DEFAULT_FONT_SIZE);
     $("#notes").css("font-size", fontSize + "%");
-
 
     $("#close-button").on("click", e => {
        if (window.parent) {

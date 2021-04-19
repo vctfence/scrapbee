@@ -331,8 +331,8 @@ settings.load(async settings => {
     });
 
     browser.runtime.onInstalled.addListener(details => {
-        if (detaild.reason === "update") {
-            settings.pending_announcement(true);
+        if (details.reason === "update") {
+            //settings.pending_announcement(true);
         }
     });
 });

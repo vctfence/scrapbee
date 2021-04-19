@@ -1,0 +1,39 @@
+#advanced-title {
+    text-align: center;
+    width: 100%;
+}
+
+#advanced-title h1 {
+    font-size: 18pt;
+    margin-bottom: 10px;
+}
+
+#db-path-panel, #automation-panel {
+    width: 700px;
+    margin: auto;
+    margin-top: 20px;
+}
+
+#addon-db-path-title, #automation-panel-title {
+    text-align: left;
+    font-weight: bold;
+    font-size: 12pt;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+#addon-db-path-title {
+    margin-bottom: 10px;
+}
+
+#addon-db-path-input {
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+#db-path-copy-button {
+    margin-left: -20px;
+    margin-bottom: -4px;
+    cursor: pointer;
+    background-color: white;
+}
