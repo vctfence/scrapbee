@@ -86,14 +86,22 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     content:      "<p>Archive content</p>",         // A String or ArrayBuffer, representing the text or bytes of the archived content
                                                     // HTML-pages, images, PDF-documents, and other files could be stored
     content_type: "text/html",                      // MIME-type of the stored content
-    select:        true                             // Select the bookmark in the interface
+    pack:         true,                             // Pakck and store the page specified by the bookmark url, do not use the content parameter
+    hide_tab:     false,                            // Hide tab, necessary to pack the page
+    select:       true                              // Select the bookmark in the interface
 });
 ```
 
 All parameters are optional. Directories in the bookmark path will be created automatically, if not exist.
 The relevant missing parameters (url, title, icon, content, content_type) will be captured
-from the active tab. If the <code>url</code> parameter is explicitly set to an empty string,
+from the active tab. If the `url` parameter is explicitly set to an empty string,
 it will remain empty.
+
+When the `pack` parameter is specified, this API ignores the `content` parameter, and packs, then stores the page defined by the `url`
+parameter. "text/html" content type is assumed. A new tab is created, which is required for page packing (see the API below).
+The tab could be hidden through the `hide_tab` message option. Although this option may be useful
+in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
+tabs and offer to remove the addon.
 
 Returns UUID of the newly created archive.
 
@@ -102,7 +110,8 @@ Returns UUID of the newly created archive.
 Packs content of all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
 When displayed in the browser, such a page will not rely on any external dependencies
 and could be served from a database.
-This message creates a new tab which is required for its operation and closes it on completion.
+Use this API, for example, when you need to get icon or title from the captured page, or to somehow modify it.
+This API creates a new tab which is required for its operation and closes it on completion.
 The tab could be hidden through the `hide_tab` message option. Although this option may be useful
 in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
 tabs and offer to remove the addon.

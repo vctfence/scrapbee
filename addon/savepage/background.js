@@ -947,6 +947,71 @@ function addListeners()
         node.path = path.reverse().map(n => n.name).join("/");
     }
 
+    async function packPage(url, hide_tab) {
+        return new Promise(async (resolve, reject) => {
+            let completionListener = function (message, sender, sendResponse) {
+                if (message.type === "STORE_PAGE_HTML" && message.payload.tab_id === packingTab.id) {
+                    browser.tabs.onUpdated.removeListener(listener);
+                    browser.runtime.onMessage.removeListener(completionListener);
+                    browser.tabs.remove(packingTab.id);
+
+                    resolve(message.data);
+                }
+            };
+
+            browser.runtime.onMessage.addListener(completionListener);
+
+            let listener = async (id, changed, tab) => {
+                if (id === packingTab.id && changed.status === "complete") {
+
+                    let initializationListener = async function (message, sender, sendResponse) {
+                        if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === packingTab.id) {
+                            browser.runtime.onMessage.removeListener(initializationListener);
+
+                            let node = {};
+                            node.__page_packing = true;
+                            node.tab_id = packingTab.id;
+
+                            try {
+                                await browser.tabs.sendMessage(packingTab.id, {
+                                    type: "performAction",
+                                    menuaction: 2,
+                                    saveditems: 2,
+                                    payload: node
+                                });
+                            } catch (e) {
+                                reject(e);
+                            }
+                        }
+                    };
+
+                    browser.runtime.onMessage.addListener(initializationListener);
+
+                    try {
+                        try {
+                            await browser.tabs.executeScript(tab.id, {
+                                file: "savepage/content-frame.js",
+                                allFrames: true
+                            });
+                        } catch (e) {
+                        }
+
+                        await browser.tabs.executeScript(packingTab.id, {file: "savepage/content.js"});
+                    } catch (e) {
+                        reject(e);
+                    }
+                }
+            };
+
+            browser.tabs.onUpdated.addListener(listener);
+
+            var packingTab = await browser.tabs.create({url: url, active: false});
+
+            if (hide_tab)
+                browser.tabs.hide(packingTab.id)
+        });
+    }
+
     /* External message listener */
 
     function isAutomationAllowed(sender) {
@@ -1081,19 +1146,26 @@ function addListeners()
                 message.ishell = sender.ishell;
                 message.automation = true;
 
-                return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(bookmark => {
-                    if (message.content) {
-                        return backend.storeBlob(bookmark.id, message.content, message.content_type)
-                            .then(() => {
-                                // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
-                                if (sender.ishell && message.search || message.select)
-                                    browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                let saveContent = (bookmark, content) => {
+                    return backend.storeBlob(bookmark.id, content, message.pack? "text/html": message.content_type)
+                        .then(() => {
+                            // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
+                            if (sender.ishell && message.search || message.select)
+                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
 
-                                if (message.content_type === "text/html")
-                                    backend.storeIndex(bookmark.id, message.content.indexWords());
+                            if (message.content_type === "text/html")
+                                backend.storeIndex(bookmark.id, content.indexWords());
 
-                                return bookmark.uuid;
-                            })
+                            return bookmark.uuid;
+                        })
+                };
+
+                return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(async bookmark => {
+                    if (message.pack) {
+                        return saveContent(bookmark, await packPage(message.url, message.hide_tab));
+                    }
+                    else if (message.content) {
+                        return saveContent(bookmark, message.content)
                     }
                     else {
                         chrome.tabs.query({lastFocusedWindow: true, active: true},
@@ -1175,69 +1247,7 @@ function addListeners()
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                return new Promise(async (resolve, reject) => {
-                    let completionListener = function (message, sender, sendResponse) {
-                        if (message.type === "STORE_PAGE_HTML" && message.payload.tab_id === packingTab.id) {
-                            browser.tabs.onUpdated.removeListener(listener);
-                            browser.runtime.onMessage.removeListener(completionListener);
-                            browser.tabs.remove(packingTab.id);
-
-                            resolve(message.data);
-                        }
-                    };
-
-                    browser.runtime.onMessage.addListener(completionListener);
-
-                    let listener = async (id, changed, tab) => {
-                        if (id === packingTab.id && changed.status === "complete") {
-
-                            let initializationListener = async function (message, sender, sendResponse) {
-                                if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === packingTab.id) {
-                                    browser.runtime.onMessage.removeListener(initializationListener);
-
-                                    let node = {};
-                                    node.__page_packing = true;
-                                    node.tab_id = packingTab.id;
-
-                                    try {
-                                        await browser.tabs.sendMessage(packingTab.id, {
-                                            type: "performAction",
-                                            menuaction: 2,
-                                            saveditems: 2,
-                                            payload: node
-                                        });
-                                    } catch (e) {
-                                        reject(e);
-                                    }
-                                }
-                            };
-
-                            browser.runtime.onMessage.addListener(initializationListener);
-
-                            try {
-                                try {
-                                    await browser.tabs.executeScript(tab.id, {
-                                        file: "savepage/content-frame.js",
-                                        allFrames: true
-                                    });
-                                } catch (e) {
-                                }
-
-                                await browser.tabs.executeScript(packingTab.id, {file: "savepage/content.js"});
-                            } catch (e) {
-                                reject(e);
-                            }
-                        }
-                    };
-
-                    browser.tabs.onUpdated.addListener(listener);
-
-                    var packingTab = await browser.tabs.create({url: message.url, active: false});
-
-                    if (message.hide_tab)
-                        browser.tabs.hide(packingTab.id)
-
-                });
+                return packPage(message.url, message.hide_tab);
 
             case "SCRAPYARD_BROWSE_UUID":
                 if (!isAutomationAllowed(sender))
