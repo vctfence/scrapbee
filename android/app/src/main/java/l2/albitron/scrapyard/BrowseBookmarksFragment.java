@@ -52,6 +52,30 @@ public class BrowseBookmarksFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    private void loadBookmarks(WebView browser) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        //System.out.println(view.getSettings().getUserAgentString());
+        executor.execute(() -> {
+            final String[] json = new String[]{null};
+
+            try {
+                DropboxProvider dropbox =
+                    new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
+                json[0] = dropbox.getDBRaw();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            handler.post(() -> {
+                if (json[0] != null) {
+                    String script = "injectCloudBookmarks(" + json[0] + ")";
+                    browser.evaluateJavascript(script, null);
+                }
+            });
+        });
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -60,35 +84,19 @@ public class BrowseBookmarksFragment extends Fragment {
         final Resources r = rootView.getResources();
 
         String url = "file:///android_asset/browser.html";
+
+        //WebView.setWebContentsDebuggingEnabled(true);
+
         WebView browser = (WebView) rootView.findViewById(R.id.wvBrowseBookmarks);
         browser.getSettings().setJavaScriptEnabled(true);
         browser.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         browser.loadUrl(url);
 
+
         browser.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                ExecutorService executor = Executors.newSingleThreadExecutor();
-                Handler handler = new Handler(Looper.getMainLooper());
-                //System.out.println(view.getSettings().getUserAgentString());
-                executor.execute(() -> {
-                    final String[] json = new String[]{null};
-
-                    try {
-                        DropboxProvider dropbox =
-                            new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
-                        json[0] = dropbox.getDBRaw();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    handler.post(() -> {
-                        if (json[0] != null) {
-                            String script = "injectCloudBookmarks(" + json[0] + ")";
-                            browser.evaluateJavascript(script, null);
-                        }
-                    });
-                });
+                loadBookmarks(browser);
             }
 
             @Override
@@ -210,6 +218,12 @@ public class BrowseBookmarksFragment extends Fragment {
                         }
                     });
                 });
+            }
+
+            @JavascriptInterface
+            public void refreshTree() {
+                browser.post(() -> browser.evaluateJavascript("showAnimation()", null));
+                browser.post(() -> loadBookmarks(browser));
             }
         }
 

@@ -9,6 +9,8 @@
     <style>
         body {
             margin: 0;
+            padding: 0;
+            position: relative;
         }
 
         #animation {
@@ -30,16 +32,29 @@
 
     <link rel="stylesheet" href="lib/jstree/themes/default/style.css"/>
     <link rel="stylesheet" href="css/tree.css"/>
-
+    <link rel="stylesheet" href="css/sidebar.css"/>
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="text/javascript" src="lib/jstree/jstree.js"></script>
 
 </head>
 <html>
     <div id="animation"></div>
-    <div id="treeview"></div>
+    <div id="main-container">
+        <div id="flex-container">
+            <div id="toolbar" class="toolbar">
+                <div id="main-controls">
+                    <div id="main-buttons">
+                        <img class="tool-button midnight-filter" src="icons/reload.svg" title="{Reload}" id="btnLoad"/>
+                    </div>
+                </div>
+            </div>
+            <div id="treeview-container">
+                <div id="treeview" class="root folder-content i18n"></div>
+            </div>
+        </div>
+    </div>
 
-   <script type="text/javascript">
+    <script type="text/javascript">
         var NODE_TYPE_SHELF = 1;
         var NODE_TYPE_GROUP = 2;
         var NODE_TYPE_BOOKMARK = 3;
@@ -241,16 +256,15 @@
                     external: CLOUD_EXTERNAL_NAME
                     };
 
-        window.nodes = [root];
-
         function injectCloudBookmarks(bookmarks) {
+            var nodes = [root];
             bookmarks.shift();
             bookmarks.sort(function(a, b) {return a.pos - b.pos});
-            window.nodes = window.nodes.concat(bookmarks);
-            window.nodes.forEach(toJsTreeNode);
-            window.tree.settings.core.data = window.nodes;
-            window.tree.refresh(true);
-            window.tree.open_node("-5");
+            nodes = nodes.concat(bookmarks);
+            nodes.forEach(toJsTreeNode);
+            tree.settings.core.data = nodes;
+            tree.refresh(true);
+            tree.open_node("-5");
             hideAnimation();
         }
 
@@ -262,6 +276,9 @@
             $("#animation").hide();
         }
 
+        $("#btnLoad").on("click", function(e) {
+            Android.refreshTree();
+        });
+
     </script>
-</html>
 </html>

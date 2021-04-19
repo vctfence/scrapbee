@@ -23,3 +23,9 @@ pre.plaintext {
     word-wrap: break-word;
     font-size: 94%;
 }
+
+.format-html {
+    line-height: 1.42;
+    font-size: 120%;
+    box-sizing: border-box;
+}

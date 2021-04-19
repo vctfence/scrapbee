@@ -1,0 +1,592 @@
+:root {
+    --theme-background: white;
+
+    --themed-comments-icon: url("icons/page-blank.svg");
+    --themed-comments-filled-icon: url("icons/page.svg");
+    --themed-properties-icon: url("icons/properties.svg");
+    --themed-containers-icon: url("icons/containers.svg");
+}
+
+*{
+    font-family: "Helvetica",
+    "Arial",
+    "Lucida Sans Unicode",
+    "Lucida Sans",
+    "Trebuchet MS",
+    "Open Sans",
+    "Fira Sans",
+    "Liberation Sans",
+    sans-serif;
+}
+
+html,body {
+    margin:0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+#main-container {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0
+}
+
+#flex-container {
+    /*margin: 10px;*/
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    /* for Firefox */
+    min-height: 0;
+
+}
+
+#treeview-container {
+    flex-grow: 1;
+    overflow: auto;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    /* for Firefox */
+    min-height: 0;
+}
+
+#treeview {
+    /*height: 100%;*/
+}
+
+.box {
+    margin:70px 20px 20px 20px;
+}
+
+.main-tools {
+    width:fit-content;
+    width:-moz-fit-content;
+    display:inline-block;
+}
+
+.toolbar {
+    /*margin-bottom:5px;*/
+    /*position:fixed;*/
+    background:#fff;
+    width:100%;
+    /*height:50px;*/
+    padding:8px;
+    border-bottom:1px solid #999;
+    white-space:nowrap;
+    z-index:1; /* prevent dots of "text-overflow:ellipsis" diplayed over me */
+}
+
+.folder-content {
+    display:none;
+    /*margin-left:18px;*/
+    /* border:1px solid; */
+}
+
+.folder-content.root {
+    display:block;
+    /*margin-left:0px;
+    margin:70px 20px 20px 20px;*/
+    overflow:visible;
+}
+
+.folder-content.root > .item {
+    display:block;
+    margin-left:0px;
+}
+
+.dlg-row {
+    padding:12px 0 6px 0;
+    white-space:nowrap;
+    display:table-row;
+}
+
+.dlg-row input {
+    vertical-align:middle;
+    border:none;
+}
+
+.dlg-title {
+    font-weight:bold;
+    border-bottom:1px solid #999;
+    padding:0 10px 5px 10px;
+}
+
+.dlg-cover {
+    position:fixed;
+    z-index:999999999;
+    width:100%;
+    height:100%;
+    background:#fff5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dlg {
+    /*top:20%;*/
+    margin: 30px;
+    position:absolute;
+    background:#ccc;
+    /*left:10%;*/
+    width:80%;
+    padding:15px 20px 20px 20px;
+    border-radius:5px;
+    border:1px solid #777;
+    overflow:hidden;
+    /* -webkit-box-sizing: border-box; */
+    /* -moz-box-sizing: border-box; */
+    /* box-sizing: border-box; */
+}
+
+.dlg * {
+    color:#000;
+}
+
+.dlg input, .dlg select, .selectric {
+    border: 1px solid #777 !important;
+    border-radius: 3px !important;
+    -moz-appearance: none !important;
+}
+
+.dlg input.dialog-input, .dlg textarea {
+    outline: none !important;
+}
+
+.dlg-table {
+    display:table;
+    overflow:hidden;
+    width:100%;
+    position:relative;
+}
+
+.dlg-table .row {
+    display:table-row;
+    padding:12px 5px 6px 5px;
+    white-space:nowrap;
+    overflow:hidden;
+}
+
+.dlg-table .row .cell {
+    display:table-cell;
+    line-height:20px;
+    vertical-align:middle;
+    padding:15px 5px 0 5px;
+    vertical-align:middle;
+    /* border:1px solid; */
+    /* -webkit-box-sizing: border-box; */
+    /* -moz-box-sizing: border-box; */
+    /* box-sizing: border-box; */
+    overflow:hidden;
+}
+
+.dlg .dlg-box {
+    width:100%;
+    overflow:hidden;
+}
+
+.drag-mark {
+    /* background:#f00; */
+    border:none;
+    /* height:2px; */
+    border-bottom:1px dashed #f00;
+    /* margin:0 0 2px 0; */
+}
+
+.item.folder.drag-into {
+    border-bottom:1px dashed #f00;
+}
+
+.table {
+    display:table;
+}
+
+.table-row {
+    display:table-row;
+}
+
+.table-cell {
+    display:table-cell;
+}
+
+.tool-button {
+    cursor:pointer;
+    vertical-align:middle;
+    border-radius:11px;
+    width:22px;
+    height:22px;
+}
+.:hover {
+    background:#0003;
+    color:#fff;
+}
+
+.blue-button, .black-button {
+    background:#09c;
+    color:#fff;
+    cursor:pointer;
+    border-radius:5px;
+    padding:2px 5px;
+    border:0;
+}
+
+.black-button {
+    background:transparent;
+    color:#000;
+}
+.item.separator {
+    width:100%;
+    height:15px;
+    border-width:7px 0 7px 0;
+    border-style:solid;
+    background:#999;
+}
+
+.item.separator.focus {
+   background:#900;
+}
+
+select {
+    color: #000;
+}
+
+/* hex to filter
+ https://codepen.io/sosuke/pen/Pjoqqp */
+.filter-green-0 {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%);
+}
+
+.simple-menu {
+    min-width:50px;
+    position:absolute;
+    background:#fff;
+    right: 10px;
+    margin-top: 5px;
+    border: solid 1px black;
+	z-index: 10000;
+}
+
+.simple-menu div {
+    color:#000;
+    padding:5px 15px;
+    cursor:pointer;
+}
+
+.simple-menu div:hover {
+    background: #ddd;
+}
+
+#shelves-icon {
+    width: 16px;
+    height: 16px;
+}
+
+#shelf-menu-button {
+    width: 14px;
+    height: 14px;
+    margin-top: 3px;
+    margin-left: 5px;
+    margin-right: 4px;
+    cursor: pointer;
+    background: transparent !important;
+}
+
+#shelf-menu-create-folder {
+    margin-top: 5px;
+    border-top: 1px solid black;
+}
+
+.dlg-prop-table {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.dlg-prop-table label {
+    text-align: right;
+    clear: both;
+    float:left;
+    margin-right:15px;
+}
+
+.prop-row {
+    padding: 5px;
+    flex: 0 1 auto;
+}
+
+#prop-dlg-comments-icon, #prop-dlg-containers-icon {
+    height: 16px;
+    width: 16px;
+    float: right;
+    cursor: pointer;
+    background-image: var(--themed-comments-icon);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+
+#prop-dlg-containers-icon {
+    background-image: var(--themed-containers-icon);
+    background-size: 15px 15px;
+    background-position: center;
+    margin-right: 4px;
+    height: 16px;
+    width: 16px;
+}
+
+#dlg-comments-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 4px;
+    display: none;
+}
+
+#prop-comments {
+    height: 100%;
+    width: 100%;
+    font-family: "Arial", sans-serif;
+    font-size: 11pt;
+}
+
+.button-row {
+    padding: 5px 5px 0;
+}
+
+.prop-row-hidden {
+    display: none !important;
+}
+
+
+#main-controls {
+	width: 100%;
+	display:flex;
+}
+
+#main-buttons {
+	flex: 1 1 auto;
+}
+
+#shelf-selector-container {
+	flex: 0 1 auto;
+}
+
+#shelf-selector-container > div:first-child, #shelf-selector-container > div:last-child {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#shelf-selector-container > div:first-child {
+    padding-top: 2px;
+}
+
+#search-controls {
+	width: 100%;
+	display: flex;
+	margin-top: 6px;
+}
+
+#search-mode-menu {
+    margin-top: 20px;
+    right: 12px;
+}
+
+.search-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    margin-left: 4px;
+    margin-top: 4px;
+    float: left;
+}
+
+#search-mode-switch {
+	flex: 0 1 auto;
+	width: 16px;
+	height: 16px;
+	margin-right: 4px;
+    cursor: pointer;
+}
+
+#search-input-container {
+	flex: 1 1 auto;
+	padding-right: 6px;
+	padding-left: 2px;
+    position: relative;
+}
+
+#search-input-container::before {
+	position: absolute;
+    transform: translate(0,-50%);
+    left: 6px;
+    top: 50%;
+    font-family: "FontAwesome";
+    content: "\f002";
+}
+#search-input-clear {
+    position: absolute;
+    transform: translate(0,-50%);
+    right: 10px;
+    top: 50%;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    cursor: pointer;
+    display: none;
+}
+#search-input {
+	border-radius: 4px;
+	height: 18px;
+	width: 100%;
+	font-size: 12px;
+	border: 1px solid black;
+	padding-left: 16px;
+}
+
+.selectric-scroll li.highlighted, .selectric-scroll li.selected {
+    background: transparent;
+}
+
+.selectric-scroll li.highlighted:hover, .selectric-scroll li.selected:hover {
+    background: #ddd;
+}
+
+.option-builtin {
+    font-weight: bold;
+}
+
+.divide {
+    border-bottom: 1px solid black;
+}
+
+#busy-indicator {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    margin-right: 4px;
+}
+
+.more-properties {
+    display: none;
+}
+
+a#more-properties {
+    margin-top: 10px;
+    display: inline-block;
+}
+
+a#set-default-icon, a#copy-reference-url {
+    text-decoration: none;
+}
+
+#footer {
+    border-top: 1px solid #999;
+    height: 50px;
+    grid-template-columns: auto auto;
+    grid-template-rows: 24px auto;
+    grid-auto-rows: min-content;
+    flex-shrink: 0;
+    display: none;
+}
+
+#footer-title {
+    grid-column: 1 / 1;
+    grid-row: 1 / 1;
+    padding-top: 4px;
+    padding-left: 4px;
+    justify-self: start;
+    font-weight: bold;
+}
+
+#footer-buttons {
+    grid-column: 2 / 2;
+    grid-row: 1 / 1;
+    justify-self: end;
+}
+
+#footer-close-btn, #footer-reload-btn, #footer-find-btn {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+#footer-close-btn {
+    padding-top: 3px;
+}
+
+#footer-reload-btn, #footer-find-btn {
+    font-size: 85%;
+    padding-right: 0;
+}
+
+#footer-content {
+    grid-column: 1 / span 2;
+    grid-row: 2 / 2;
+    align-self: start;
+    padding-top: 2px;
+    padding-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#random-bookmark-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    float: left;
+}
+
+#random-bookmark-link {
+    padding: 0;
+    margin: 0;
+    line-height: 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#containers-menu {
+    display: none;
+    right: 30px;
+    top: 34px;
+    font-weight: normal;
+}
+
+#containers-menu div {
+    margin: 0;
+    padding: 2px 5px;
+    line-height: 16px;
+}
+
+#containers-menu div:first-child {
+    padding-top: 4px;
+}
+
+#containers-menu div:last-child {
+    padding-bottom: 4px;
+}
+
+
+.container-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    margin-bottom: -2px;
+}
