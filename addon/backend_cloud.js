@@ -201,7 +201,7 @@ export class CloudBackend {
         cloud_node.notes_width = options.width;
         cloud_node = await db.updateNode(cloud_node);
 
-        let view = `<html><head></head><body>${notes2html(options.content, options.format)}</body></html>`;
+        let view = `<html><head></head><body class"format-html">${notes2html(options)}</body></html>`;
 
         await db.storeView(cloud_node, view);
 

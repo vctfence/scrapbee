@@ -1,15 +1,5 @@
 * {
-    font-family: "Helvetica",
-    "Arial",
-    "Lucida Sans Unicode",
-    "Lucida Sans",
-    "Trebuchet MS",
-    "Open Sans",
-    "Fira Sans",
-    "Liberation Sans",
-    "Nimbus Sans L",
-    "WenQuanYi Micro Hei",
-    sans-serif;
+    font-family: "Helvetica", "Arial", sans-serif;
 }
 
 #root-container {
@@ -80,7 +70,8 @@ a#notes-button.focus, a#edit-button.focus {
 }
 
 #notes {
-    width: 700px;
+    width: 766px;
+    font-size: 100%;
 }
 
 #notes > ul#toc {
@@ -154,21 +145,17 @@ span.task-status.done {
     display: none;
 }
 
-#notes-width {
-    maring-right: 5px;
-}
-
 #notes-width option[value="actual"] {
     display: none;
 }
 
-#font-sizes {
+#font-sizes, #width-controls {
     user-select: none;
-    margin: 0 10px;
+    margin-left: 10px;
     display: inline-block;
 }
 
-.font-button {
+.font-button, .width-button {
     cursor: pointer;
     padding: 0 4px;
     width: 14px;
@@ -179,12 +166,25 @@ span.task-status.done {
     background-repeat: no-repeat;
 }
 
+.width-button {
+    background-size: 12px 12px;
+    margin-bottom: -2px;
+}
+
 #font-size-smaller {
     background-image: url("/icons/font-smaller.svg");
 }
 
 #font-size-default {
     background-image: url("/icons/font-default.svg");
+}
+
+#decrease-width {
+    background-image: url("/icons/dec.svg");
+}
+
+#increase-width {
+    background-image: url("/icons/inc.svg");
 }
 
 #font-size-larger {
@@ -247,7 +247,20 @@ pre.plaintext {
 }
 
 .ql-container {
-    font-size: 12pt;
+    font-size: 120%;
+}
+
+.ql-editor .ql-align-justify {
+    white-space: normal;
+}
+
+.ql-editor p {
+    margin-top: 10px;
+}
+
+p.linebreak-true {
+    text-indent: 0px;
+    margin-top: 0px;
 }
 
 button.ql-showHtml {
@@ -285,4 +298,10 @@ button.ql-hr {
 #quill {
     width: unset;
     height: calc(100% - 40px);
+}
+
+.format-html {
+    line-height: 1.42;
+    font-size: 120%;
+    box-sizing: border-box;
 }

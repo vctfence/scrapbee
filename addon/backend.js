@@ -509,7 +509,9 @@ export class Backend extends ExternalEventProvider {
                 if (isEndpoint(n) && n.type !== NODE_TYPE_SEPARATOR) {
                     let notes = await this.fetchNotes(old_id);
                     if (notes) {
-                        await this.storeNotesLowLevel({node_id: n.id, content: notes.content, format: notes.format, align: notes.align});
+                        delete notes.id;
+                        notes.node_id = n.id;
+                        await this.storeNotesLowLevel(notes);
                         notes = null;
                     }
 

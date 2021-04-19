@@ -13,7 +13,6 @@
     <script type="text/javascript" src="lib/marked.js"></script>
 
     <script type="text/javascript" src="lib/quill/quill.js"></script>
-    <script type="text/javascript" src="lib/quill/QuillDeltaToHtmlConverter.bundle.js"></script>
 
     <script type="text/javascript" src="proto.js"></script>
     <script type="module" src="notes.js"></script>
@@ -45,14 +44,17 @@
                     <option value="left">Left</option>
                     <option value="center" selected>Center</option>
                 </select>
-                &nbsp;&nbsp;Width:
-                <select id="notes-width">
-                    <option value="default" selected>Default</option>
-                    <option value="custom">Custom</option>
-                    <option value="100%">100%</option>
-                    <option value="50%">50%</option>
-                    <option value="actual"></option>
-                </select>
+                <div id="width-controls">
+                    Width: <b id="decrease-width" class="width-button"></b>
+                    <select id="notes-width">
+                        <option value="default" selected>Default</option>
+                        <option value="custom">Custom</option>
+                        <option value="100%">100%</option>
+                        <option value="50%">50%</option>
+                        <option value="actual"></option>
+                    </select>
+                    <b id="increase-width" class="width-button"></b>
+                </div>
                 <div id="font-sizes">
                     <b id="font-size-smaller" class="font-button"></b>
                     <b id="font-size-default" class="font-button"></b>

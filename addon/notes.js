@@ -1,7 +1,7 @@
 import {backend} from "./backend.js"
 import * as org from "./org.js"
 import {NODE_TYPE_NOTES} from "./storage_constants.js";
-import {markdown2html, org2html, text2html} from "./utils.js";
+import {applyInlineStyles, markdown2html, org2html, text2html} from "./utils.js";
 
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
 #+CSS: p {text-align: justify;}
@@ -221,9 +221,12 @@ let editorChange;
 let editorTimeout;
 
 function saveNotes() {
-    let content = getEditorContent();
-    backend.storeNotes({node_id, content, format, align});
-    browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !content});
+    let options = {node_id, content: getEditorContent(), format, align, width};
+    if (format === "delta")
+        options.html = renderEditorContent();
+
+    backend.storeNotes(options);
+    browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !options.content});
     editorChange = false;
 }
 
@@ -269,20 +272,11 @@ function initWYSIWYGEditor() {
         ['clean']
     ];
 
-    Quill.prototype.getHTML = function(compatible) {
-        const contents = this.getContents().ops;
-        const converter = new QuillDeltaToHtmlConverter(contents, {
-            encodeHtml: true,
-            inlineStyles: !compatible,
-            urlSanitizer: v => v
-        });
+    Quill.prototype.getHTML = function() {
+        let root = $("#quill")[0].cloneNode(true);
+        applyInlineStyles(root);
 
-        converter.renderCustomWith(function(customOp, contextOp){
-            if (customOp.insert.type === 'hr')
-                return "<hr>";
-        })
-
-        return converter.convert();
+        return root.firstChild.innerHTML;
     };
 
     Quill.prototype.setHTML = function(html) {
@@ -293,6 +287,16 @@ function initWYSIWYGEditor() {
         if (JSON.stringify(this.getContents()) === "\{\"ops\":[\{\"insert\":\"\\n\"\}]\}")
             return true;
     };
+
+
+    var Parchment = Quill.import('parchment');
+
+    var LineBreakClass = new Parchment.Attributor.Class('linebreak', 'linebreak', {
+        scope: Parchment.Scope.BLOCK
+    });
+
+    Quill.register('formats/linebreak', LineBreakClass);
+
 
     quill = new Quill('#quill', {
         modules: {
@@ -332,17 +336,47 @@ function initWYSIWYGEditor() {
                         handler: function (range, context) {
                             saveNotes();
                         }
+                    },
+                    smartbreak: {
+                        key: 13,
+                        shiftKey: true,
+                        handler: function (range, context) {
+                            this.quill.setSelection(range.index,'silent');
+                            this.quill.insertText(range.index, '\n', 'user')
+                            this.quill.setSelection(range.index + 1,'silent');
+                            this.quill.format('linebreak', true, 'user');
+                        }
+                    },
+                    paragraph: {
+                        key: 13,
+                        handler: function (range, context) {
+                            this.quill.setSelection(range.index, 'silent');
+                            this.quill.insertText(range.index, '\n', 'user')
+                            this.quill.setSelection(range.index + 1, 'silent');
+                            let f = this.quill.getFormat(range.index + 1);
+                            if (f.hasOwnProperty('linebreak')) {
+                                delete (f.linebreak)
+                                this.quill.removeFormat(range.index + 1)
+                                for (let key in f) {
+                                    this.quill.formatText(range.index + 1, key, f[key])
+                                }
+                            }
+                        }
+                    },
+                    justifiedTextSpacebarFixForFirefox: {
+                        key: ' ',
+                        format: {'align': 'justify'},
+                        suffix: /^$/,
+                        handler: function (range, context) {
+                            this.quill.insertText(range.index, ' ', 'user');
+                            return true;
+                        }
                     }
                 }
             }
         },
         theme: 'snow'
     });
-
-    // quill.clipboard.addMatcher('P', function(node, delta) {
-    //     delta.ops.push({insert: "\n"})
-    //     return delta;
-    // });
 
     // quill.txtArea = document.createElement("textarea");
     // quill.txtArea.className = "quill-html-editor";
@@ -425,9 +459,9 @@ function closeMarkupEditor() {
     $("#editor").hide();
 }
 
-function renderEditorContent(compatible) {
+function renderEditorContent() {
     if (format === "delta")
-        return quill.getHTML(compatible);
+        return quill.getHTML();
     else
         return $('#editor').val();
 }
@@ -443,12 +477,14 @@ function getEditorContent() {
 }
 
 function setEditorContent(content) {
-    if (format === "html")
-        quill.setHTML(content);
-    else if (format === "delta")
-        quill.setContents(JSON.parse(content));
-    else
-        $('#editor').val(content);
+    if (content) {
+        if (format === "html")
+            quill.setHTML(content);
+        else if (format === "delta")
+            quill.setContents(JSON.parse(content));
+        else
+            $('#editor').val(content);
+    }
 }
 
 window.onload = function() {
@@ -622,7 +658,7 @@ window.onload = function() {
         // old format
         if (format === "delta") {
             if (!quill.isEmpty())
-                $("#editor").val(quill.getHTML(true));
+                $("#editor").val(JSON.stringify(quill.getContents()));
         }
 
         format = $("#notes-format").val();
@@ -630,7 +666,7 @@ window.onload = function() {
         // new format
         if (format === "delta") {
             initWYSIWYGEditor();
-            quill.setHTML($("#editor").val());
+            quill.setContents(JSON.parse($("#editor").val()));
         }
         else {
             closeWYSIWYGEditor();
@@ -641,21 +677,21 @@ window.onload = function() {
         else
             $("#inserts").hide();
 
-        saveNotes();
+        backend.storeNotes({node_id, format});
     });
 
     $("#notes-align").on("change", e => {
         align = $("#notes-align").val() === "left"? "left": undefined;
         alignNotes();
-        backend.storeNotes({node_id, content: getEditorContent(), format, align});
+        backend.storeNotes({node_id, align});
     });
 
-    const DEFAULT_WIDTH = "700px";
+    const DEFAULT_WIDTH = "766px";
     $("#notes-width").on("change", e => {
         let selectedWidth = $("#notes-width option:selected").text();
         switch ($("#notes-width").val()) {
             case "custom":
-                let customWidth = prompt("Custom width: ", DEFAULT_WIDTH);
+                let customWidth = prompt("Custom width: ", "650px");
                 if (customWidth) {
                     if (/^\d+$/.test(customWidth))
                         customWidth = customWidth + "px";
@@ -677,29 +713,57 @@ window.onload = function() {
                 width = selectedWidth;
         }
 
-        backend.storeNotes({node_id, content: getEditorContent(), format, align, width});
+        backend.storeNotes({node_id, width});
     });
 
+    function changeWidth(op) {
+        let newWidth;
+        let selectedWidth = $("#notes-width option:selected").text();
+        let actualWidthElt = $("#notes-width option[value='actual']");
+        let match = /(\d+)(.*)/.exec(selectedWidth);
+
+        let [_, value, units] = (match || [null, "inc"? "800": "700", "px"]);
+
+        let step = units === "%"? 10: 50;
+        width = parseInt(value);
+        newWidth = op === "inc"? width + step: width - step;
+        let pass = units === "%"? newWidth >= 10 && newWidth <= 100: newWidth >= 100 && newWidth <= 4000;
+        if (pass) {
+            newWidth = newWidth + units;
+            actualWidthElt.text(newWidth);
+            actualWidthElt.show();
+            $("#notes-width").val("actual");
+            $("#notes").css("width", newWidth);
+        }
+
+        backend.storeNotes({node_id, width: newWidth});
+    }
+
+    $("#decrease-width").on("click", e => changeWidth("dec"));
+    $("#increase-width").on("click", e => changeWidth("inc"));
+
+
+    const DEFAULT_FONT_SIZE = 120;
     $("#font-size-larger").on("click", e => {
-        let size = parseInt(localStorage.getItem("notes-font-size") || 100);
+        let size = parseInt(localStorage.getItem("notes-font-size") || DEFAULT_FONT_SIZE);
         size += 5;
         localStorage.setItem("notes-font-size", size);
         $("#notes").css("font-size", size + "%");
     });
 
     $("#font-size-smaller").on("click", e => {
-        let size = parseInt(localStorage.getItem("notes-font-size") || 100);
+        let size = parseInt(localStorage.getItem("notes-font-size") || DEFAULT_FONT_SIZE);
         size -= 5;
         localStorage.setItem("notes-font-size", size);
         $("#notes").css("font-size", size + "%");
     });
 
     $("#font-size-default").on("click", e => {
-        localStorage.setItem("notes-font-size", "100%");
-        $("#notes").css("font-size", "100%");
+        localStorage.setItem("notes-font-size", DEFAULT_FONT_SIZE + "%");
+        $("#notes").css("font-size", DEFAULT_FONT_SIZE + "%");
     });
 
-    let fontSize = parseInt(localStorage.getItem("notes-font-size") || 100);
+    let fontSize = parseInt(localStorage.getItem("notes-font-size") || DEFAULT_FONT_SIZE);
     $("#notes").css("font-size", fontSize + "%");
 
 
