@@ -3,15 +3,55 @@ const TOOLBAR_HEIGHT = 26;
 class EditToolBar {
     constructor() {
         var self = this;
+        this.$cap = $("<div>").appendTo(document.body);
         this.buildTools()
 
         window.addEventListener("mousedown", function (e) {
             if (e.button == 0) {
+                /** remove dom node by cleaner */
+                if(!isDescendant(self.div, e.target) /** out of toolbar */
+                    && self.last && self.editing){
+                    e.preventDefault();
+                    self.last.parentNode.removeChild(self.last);
+                    self.last=null;
+                    /** check next hover target after current target removed */
+                    var em = new Event('mousemove');
+                    em.pageX = e.pageX;
+                    em.pageY = e.pageY;
+                    window.dispatchEvent(em);
+                }
                 /** hide marker-pen menu when click somewhere */
                 if (!$(e.target).hasClass("mark-pen-btn")) {
                     if ($(self.menu).is(":visible")) {
                         e.preventDefault();
                         $(self.menu).hide();
+                    }
+                }
+            }
+        });
+
+        window.addEventListener("mousemove", function(e){
+            /** hover dom node by cleaner */
+            if(self.editing){
+
+                var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
+                if(dom && !isDescendant(self.rootContainer, dom)){
+                    if(dom != document.body && $(document.body).closest(dom).length == 0){
+                        self.last = dom;
+                        var r = dom.getBoundingClientRect();
+                        self.$cap.css("pointer-events", "none");
+                        self.$cap.css("box-sizing", "border-box");
+                        self.$cap.css({border: "2px solid #f00",
+                            position: "absolute",
+                            left: parseInt(r.left)+"px",
+                            top: parseInt(r.top + window.scrollY)+"px",
+                            width:r.width+"px",
+                            height:r.height+"px",
+                            zIndex: 2147483647});
+                        self.$cap.show();
+                    }else{
+                        self.$cap.hide();
+                        // document.body or ancestors
                     }
                 }
             }
@@ -31,6 +71,14 @@ class EditToolBar {
         if (selection && selection.rangeCount > 0) {
             selection.collapseToStart();
         }
+    }
+
+    toggleDomEdit(on) {
+        this.last = null;
+        this.editing = on;
+        this.$cap.hide();
+        $(this.editBar).find("input[type=button]").prop("disabled", on);
+        document.body.style.cursor = this.editing? "crosshair": "";
     }
 
     saveDoc() {
@@ -86,6 +134,7 @@ class EditToolBar {
         rootContainer.style.display = "none";
         rootContainer.className = "scrapyard-edit-bar-container";
         document.body.appendChild(rootContainer);
+        this.rootContainer = rootContainer;
 
         var editBar = document.createElement("div");
         editBar.className = "scrapyard-edit-bar";
@@ -126,7 +175,7 @@ class EditToolBar {
             self.saveDoc();
         });
 
-        /** modify dom button */
+        /** edit document button */
         var btn = document.createElement("input");
         btn.type = "button";
         btn.id = "btn-edit-document";
@@ -139,6 +188,20 @@ class EditToolBar {
             this.value = chrome.i18n.getMessage(editing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
             // $(this).prop("disabled", false)
             document.designMode = document.designMode === "on"? "off": "on";
+        });
+
+        /** modify dom button */
+        var btn = document.createElement("input");
+        btn.type = "button";
+        btn.id = "btn-dom-eraser";
+        btn.className = "blue-button";
+        btn.value = "DOM Eraser";
+        editBar.appendChild(btn);
+        btn.addEventListener("click", function () {
+            editing = !editing;
+            self.toggleDomEdit(editing)
+            this.className = editing? "yellow-button": "blue-button";
+            $(this).prop("disabled", false);
         });
 
         $(editBar).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">

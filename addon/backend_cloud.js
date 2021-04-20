@@ -201,7 +201,9 @@ export class CloudBackend {
         cloud_node.notes_width = options.width;
         cloud_node = await db.updateNode(cloud_node);
 
-        let view = `<html><head></head><body class"format-html">${notes2html(options)}</body></html>`;
+        let is_html = options.format === "html" || options.format === "delta";
+
+        let view = `<html><head></head><body class="${is_html? "format-html": ""}">${notes2html(options)}</body></html>`;
 
         await db.storeView(cloud_node, view);
 

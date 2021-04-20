@@ -22,6 +22,16 @@
     margin-bottom: 5px;
 }
 
+#automation-panel-title {
+    width: 100%;
+}
+
+#automation-api-docs {
+    font-weight: normal;
+    display: inline-block;
+    float: right;
+}
+
 #addon-db-path-title {
     margin-bottom: 10px;
 }

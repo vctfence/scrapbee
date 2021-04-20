@@ -35,13 +35,13 @@
                             <div class="double-first">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <input id="option-show-firefox-bookmarks" type="checkbox"/><label for="option-show-firefox-bookmarks"
-                                    >Show Firefox bookmarks shelf</label>
+                                        <input id="option-show-firefox-bookmarks" type="checkbox"/>
+                                        <label for="option-show-firefox-bookmarks">Show Firefox bookmarks shelf</label>
                                         <div style="margin: 0; margin-left: 20px; width: max-content;">
-                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/><label for="option-show-firefox-bookmarks-toolbar"
-                                        >Show bookmarks toolbar folder</label><br>
-                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/><label for="option-show-firefox-bookmarks-mobile"
-                                        >Show mobile bookmarks folder</label>
+                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
+                                            <label for="option-show-firefox-bookmarks-toolbar">Show bookmarks toolbar folder</label><br>
+                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/>
+                                            <label for="option-show-firefox-bookmarks-mobile">Show mobile bookmarks folder</label>
                                         </div>
                                     </fieldset>
                                 </form>
@@ -49,13 +49,18 @@
                             <div class="double-last">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <input id="option-capitalize-builtin-shelf-names" type="checkbox"/><label for="option-capitalize-builtin-shelf-names"
-                                    >Capitalize builtin shelf names</label><br><br>
-                                        <label for="option-sidebar-theme">&nbsp;&nbsp;Sidebar theme:</label>
-                                        <select id="option-sidebar-theme" type="select" style="color: black">
-                                            <option value="light" selected="selected">Light</option>
-                                            <option value="dark">Dark</option>
-                                        </select>
+                                        <div style="margin-bottom: 5px; margin-left: 0;">
+                                            <label for="option-sidebar-theme">Sidebar theme:</label>
+                                            <select id="option-sidebar-theme" type="select" style="color: black">
+                                                <option value="light" selected="selected">Light</option>
+                                                <option value="dark">Dark</option>
+                                            </select>
+                                        </div>
+
+                                        <input id="option-capitalize-builtin-shelf-names" type="checkbox"/>
+                                        <label for="option-capitalize-builtin-shelf-names">Capitalize builtin shelf names</label><br>
+                                        <input id="option-do-not-show-archive-toolbar" type="checkbox"/>
+                                        <label for="option-do-not-show-archive-toolbar">Do not show toolbar in archived pages</label><br>
                                     </fieldset>
                                 </form>
                             </div>
@@ -143,7 +148,7 @@
                                     <label for="option-browse-with-helper">Use helper application to browse archives</label>
                                     <i class="help-mark"></i>
                                     <div class="tips hide">Check this only if you need to execute saved scripts and embedded content.<br>
-                                    Note that scripts are not saved by default (see page capture settings).</div>
+                                    Note that scripts are not saved by default (see the page capture settings).</div>
                                 </fieldset>
                             </form>
                         </div>
@@ -307,7 +312,7 @@
     </div>
     <div id="div-cloud" class="div-area" style="display:none;">
 
-        <table width="800px" cellspacing="" cellpadding="" border="0" class="form-table">
+        <table width="814px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td style="width: 98px">Status</td>
                 <td>
@@ -332,7 +337,7 @@
                 </td>
             </tr>
             <tr>
-                <td>Providers</td>
+                <td style="margin-left: 14px;">Providers</td>
                 <td>
                     <div class="panel" style="">
                         <form>
