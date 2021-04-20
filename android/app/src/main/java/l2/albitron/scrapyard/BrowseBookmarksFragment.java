@@ -35,6 +35,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import l2.albitron.scrapyard.cloud.CloudNotAuthorizedException;
+import l2.albitron.scrapyard.cloud.CloudOperationsService;
 import l2.albitron.scrapyard.cloud.DropboxProvider;
 
 public class BrowseBookmarksFragment extends Fragment {
@@ -63,6 +66,17 @@ public class BrowseBookmarksFragment extends Fragment {
                 DropboxProvider dropbox =
                     new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
                 json[0] = dropbox.getDBRaw();
+            } catch (CloudNotAuthorizedException e) {
+                handler.post(() -> {
+                    Context context = getActivity().getApplicationContext();
+                    Toast.makeText(context,
+                        getString(R.string.needToConfigureCloudProvider),
+                        Toast.LENGTH_LONG).show();
+
+                    Intent activityIntent = new Intent(context, MainActivity.class);
+                    activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(activityIntent);
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
