@@ -97,6 +97,10 @@ export async function browseNode(node, external_tab, preserve_history, container
                                     if (id === tab.id && changed.status === "complete") {
                                         browser.tabs.onUpdated.removeListener(listener);
                                         await browser.tabs.insertCSS(tab.id, {file: "edit.css"})
+
+                                        let code = `var __scrapyardHideToolbar = ${settings.do_not_show_archive_toolbar()}`;
+                                        await browser.tabs.executeScript(tab.id, {code: code})
+
                                         await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"})
                                         await browser.tabs.executeScript(tab.id, {file: "edit-content.js"})
 

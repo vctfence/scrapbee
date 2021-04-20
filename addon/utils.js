@@ -445,6 +445,11 @@ export function getFavicon(host, tryRootFirst = false, usePageOnly = false) {
     };
 
     let origin = new URL(host).origin;
+
+    // get a nice favicon for wikipedia
+    if (url.origin && url.origin.endsWith("wikipedia.org"))
+        return "https://wikipedia.org/favicon.ico";
+
     let default_icon = origin + "/favicon.ico";
     let get_html_icon = () => load_url(host, "document").then(extract_link).catch (e => undefined);
 

@@ -1000,6 +1000,9 @@ function addListeners()
                     if (node.type === NODE_TYPE_GROUP) {
                         computePath(node, nodes);
                     }
+
+                    if (node.stored_icon)
+                        node.icon = await backend.fetchIcon(node.id);
                 }
                 if (no_shelves)
                     return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
