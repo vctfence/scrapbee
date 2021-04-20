@@ -293,7 +293,7 @@ function createBookmarkCommand(name, uuid) {
     cmdAPI.createCommand(new BrowseBookmarkCommand(name, uuid))
 }
 
-// Now the commands above and any other could be created with a single function call:
+// Now the commands above, as any other, could be created with a single function call:
 
 createBookmarkCommand("my-twitter", "F0D858C6ED40416AA402EB2C3257EA17");
 createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
