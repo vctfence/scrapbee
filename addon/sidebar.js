@@ -304,31 +304,39 @@ window.onload = function () {
         settings.pending_announcement(false);
     })
 
-    browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.type === "BOOKMARK_CREATED") {
+    browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === "BOOKMARK_CREATED") {
             if (settings.switch_to_new_bookmark())
-                selectNode(context, tree, request.node);
+                selectNode(context, tree, message.node);
         }
-        if (request.type === "SELECT_NODE") {
-            selectNode(context, tree, request.node);
+        if (message.type === "SELECT_NODE") {
+            selectNode(context, tree, message.node);
         }
-        else if (request.type === "NOTES_CHANGED") {
-            tree.setNotesState(request.node_id, !request.removed);
+        else if (message.type === "NOTES_CHANGED") {
+            tree.setNotesState(message.node_id, !message.removed);
         }
-        else if (request.type === "NODES_UPDATED") {
+        else if (message.type === "NODES_UPDATED") {
             let last_shelf = settings.last_shelf();
             switchShelf(context, tree, last_shelf, false);
         }
-        else if (request.type === "NODES_READY") {
+        else if (message.type === "NODES_READY") {
             let last_shelf = settings.last_shelf();
 
             if (last_shelf == EVERYTHING_SHELF || last_shelf == message.shelf.id) {
                 loadShelves(context, tree, false);
             }
         }
-        else if (request.type === "EXTERNAL_NODES_READY"
-            || request.type === "EXTERNAL_NODE_UPDATED"
-            || request.type === "EXTERNAL_NODE_REMOVED") {
+        else if (message.type === "NODES_IMPORTED") {
+            settings.last_shelf(message.shelf.id, () => {
+                loadShelves(context, tree, false)
+                    //.then(() => switchShelf(context, tree, message.shelf.id, false))
+                    .then(() => setTimeout(() => tree.openRoot(), 50))
+                    .catch(e => console.error(e));
+            });
+        }
+        else if (message.type === "EXTERNAL_NODES_READY"
+            || message.type === "EXTERNAL_NODE_UPDATED"
+            || message.type === "EXTERNAL_NODE_REMOVED") {
             let last_shelf = settings.last_shelf();
 
             if (last_shelf == EVERYTHING_SHELF || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID) {
@@ -337,28 +345,24 @@ window.onload = function () {
                 });
             }
         }
-        else if (request.type === "NODES_IMPORTED") {
-            loadShelves(context, tree, false);
-            switchShelf(context, tree, request.shelf.id, false);
-        }
-        else if (request.type === "CLOUD_SYNC_START") {
+        else if (message.type === "CLOUD_SYNC_START") {
             tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-sync-icon)")
         }
-        else if (request.type === "CLOUD_SYNC_END") {
+        else if (message.type === "CLOUD_SYNC_END") {
             tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-icon)")
         }
-        else if (request.type === "SHELVES_CHANGED") {
+        else if (message.type === "SHELVES_CHANGED") {
             return loadShelves(context, tree, false);
         }
-        else if (request.type === "SIDEBAR_THEME_CHANGED") {
-            if (request.theme === "dark")
+        else if (message.type === "SIDEBAR_THEME_CHANGED") {
+            if (message.theme === "dark")
                 setDarkUITheme();
             else
                 removeDarkUITheme();
         }
-        else if (request.type === "DISPLAY_RANDOM_BOOKMARK") {
+        else if (message.type === "DISPLAY_RANDOM_BOOKMARK") {
             clearTimeout(randomBookmarkTimeout);
-            if (request.display)
+            if (message.display)
                 displayRandomBookmark();
             else
                 $("#footer").css("display", "none");
@@ -603,7 +607,6 @@ async function performSearch(context, tree) {
 function performImport(context, tree, file, file_name, file_ext) {
 
     $("#shelf-menu-button").attr("src", "icons/grid.svg");
-
 
     return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
         .then(() => {

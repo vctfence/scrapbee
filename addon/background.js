@@ -93,21 +93,19 @@ export async function browseNode(node, external_tab, preserve_history, container
                                 ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": !preserve_history})
                                 : browser.tabs.create({"url": archiveURL}))
                             .then(tab => {
-                                if (!settings.do_not_show_archive_toolbar()) {
-                                    let listener = async (id, changed, tab) => {
-                                        if (id === tab.id && changed.status === "complete") {
-                                            browser.tabs.onUpdated.removeListener(listener);
-                                            await browser.tabs.insertCSS(tab.id, {file: "edit.css"})
-                                            await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"})
-                                            await browser.tabs.executeScript(tab.id, {file: "edit-content.js"})
+                                let listener = async (id, changed, tab) => {
+                                    if (id === tab.id && changed.status === "complete") {
+                                        browser.tabs.onUpdated.removeListener(listener);
+                                        await browser.tabs.insertCSS(tab.id, {file: "edit.css"})
+                                        await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"})
+                                        await browser.tabs.executeScript(tab.id, {file: "edit-content.js"})
 
-                                            if (!helperApp)
-                                                URL.revokeObjectURL(objectURL);
-                                        }
-                                    };
+                                        if (!helperApp)
+                                            URL.revokeObjectURL(objectURL);
+                                    }
+                                };
 
-                                    browser.tabs.onUpdated.addListener(listener);
-                                }
+                                browser.tabs.onUpdated.addListener(listener);
                             });
                 }
                 else {

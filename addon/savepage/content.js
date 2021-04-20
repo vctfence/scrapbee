@@ -227,7 +227,6 @@ var debugEnable = false;
 // Scrapyard //////////////////////////////////////////////////////////////////
 
 var addedBookmark;
-var externalMessage;
 
 var selectionElement;
 var skipIfSelected;
@@ -454,8 +453,7 @@ function addListeners()
                 cancelSave = false;
 
                 // Scrapyard //////////////////////////////////////////////////////////////////
-                addedBookmark = message.payload;
-                externalMessage = message.options;
+                addedBookmark = message.bookmark;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -584,7 +582,7 @@ function addListeners()
 function performAction()
 {
     // Scrapyard //////////////////////////////////////////////////////////////////
-    if (menuAction <= 2)  /* save page, value changed to 2 to support both the current and legacy engines */
+    if (menuAction <= 1)  /* save page, value changed to 2 to support both the current and legacy engines */
     {
         if (pageType < 2)  /* not saved page with resource loader */
         {
@@ -1988,7 +1986,7 @@ function loadResources()
             // Scrapyard //////////////////////////////////////////////////////////////////
             chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
                                          passive: resourcePassive[i], pagescheme: documentURL.protocol, usecors: useCORS,
-                payload: addedBookmark });
+                bookmark: addedBookmark });
             ////////////////////////////////////////////////////////////////// Scrapyard //
 
         }
@@ -2171,7 +2169,7 @@ function loadSuccess(index,content,contenttype,alloworigin)
                         // Scrapyard //////////////////////////////////////////////////////////////////
                         chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
                                                      passive: resourcePassive[i], pagescheme: documentURL.protocol, useCORS: false,
-                            payload: addedBookmark });
+                            bookmark: addedBookmark });
                         ////////////////////////////////////////////////////////////////// Scrapyard //
                     }
                 }
@@ -2919,8 +2917,7 @@ function generateHTML()
     let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
-    chrome.runtime.sendMessage({ type: "STORE_PAGE_HTML", data: resultingHTML, payload: addedBookmark, options: externalMessage,
-        favicon: null });
+    chrome.runtime.sendMessage({type: "STORE_PAGE_HTML", data: resultingHTML, bookmark: addedBookmark});
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
 }

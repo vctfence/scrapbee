@@ -384,7 +384,7 @@
 
 import {backend} from "../backend.js";
 import {browseNode} from "../background.js";
-import {getFaviconFromTab, isIShell, isSpecialPage, notifySpecialPage} from "../utils.js";
+import {getActiveTab, getFaviconFromTab, isIShell, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";
 import {
     DEFAULT_SHELF_NAME,
     FIREFOX_BOOKMARK_MENU,
@@ -437,7 +437,7 @@ function(PlatformInfo)
 
     chrome.storage.local.get("savepage-settings",
         function(object) {
-            object = object["savepage-settings"] ? object["savepage-settings"] : {};
+            object = object["savepage-settings"] || {};
 
             object["environment-platformos"] = platformOS;
 
@@ -449,27 +449,18 @@ function(PlatformInfo)
 
             object["environment-isfirefox"] = isFirefox;
 
-            if (isFirefox) {
-                chrome.runtime.getBrowserInfo(
-                    function (info) {
-                        ffVersion = info.version.substr(0, info.version.indexOf("."));
+            chrome.runtime.getBrowserInfo(
+                function (info) {
+                    ffVersion = info.version.substr(0, info.version.indexOf("."));
 
-                        object["environment-ffversion"] = ffVersion;
+                    object["environment-ffversion"] = ffVersion;
 
-                        ffPrintEditId = "printedit-we@DW-dev";
+                    ffPrintEditId = "printedit-we@DW-dev";
 
-                        chrome.storage.local.set({"savepage-settings": object});
+                    chrome.storage.local.set({"savepage-settings": object});
 
-                        initialize();
-                    });
-            } else {
-                chrome.management.getSelf(
-                    function (extensionInfo) {
-                        gcPrintEditId = (extensionInfo.installType == "normal") ? "olnblpmehglpcallpnbgmikjblmkopia" : "dhblkjgdjeojbefdmhibhpgnpicdijbj";  /* normal or development (unpacked) */
-
-                        initialize();
-                    });
-            }
+                    initialize();
+                });
         });
 });
 
@@ -478,7 +469,7 @@ function initialize()
     chrome.storage.local.get("savepage-settings",
     function(object)
     {
-        object = object["savepage-settings"]? object["savepage-settings"]: {};
+        object = object["savepage-settings"] || {};
 
         var contexts = new Array();
 
@@ -487,7 +478,7 @@ function initialize()
         /* General options */
 
         if (!("options-buttonaction" in object)) object["options-buttonaction"] =
-            ("options-savebuttonaction" in object) ? object["options-savebuttonaction"] : 2;  /* Version 2.0-2.1 */
+            ("options-savebuttonaction" in object) ? object["options-savebuttonaction"] : 1;  /* Version 2.0-2.1 */
 
         if (!("options-newbuttonaction" in object)) object["options-newbuttonaction"] =
             ("options-buttonaction" in object) ? mapActions[object["options-buttonaction"]] : 1;  /* Version 3.0-12.8 */
@@ -591,7 +582,7 @@ function initialize()
 
         /* Initialize local options */
 
-        buttonAction = 2; //object["options-newbuttonaction"];
+        buttonAction = 1; //object["options-newbuttonaction"];
 
         showSubmenu = object["options-showsubmenu"];
 
@@ -649,7 +640,7 @@ function addListeners()
 
     /* Message received listener */
 
-    chrome.runtime.onMessage.addListener(
+    browser.runtime.onMessage.addListener(
     function(message,sender,sendResponse)
     {
         var safeContent,mixedContent,refererURL,refererKey,originKey,receiverId;
@@ -657,56 +648,49 @@ function addListeners()
 
         switch (message.type)
         {
-            case "CREATE_ARCHIVE":
+            case "CREATE_ARCHIVE": {
                 if (isSpecialPage(message.data.uri)) {
                     notifySpecialPage();
                     return;
                 }
 
                 backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
-                    chrome.tabs.query({ lastFocusedWindow: true, active: true },
-                        function(tabs)
-                        {
-                            bookmark.tab_id = tabs[0].id;
-                            initiateAction(tabs[0],buttonAction,null,false,false,
-                                {options: {}, bookmark: bookmark});
+                    getActiveTab().then(tab => {
+                            bookmark.__tab_id = tab.id;
+                            initiateAction(tab, buttonAction,bookmark);
                         });
-                });
+                    });
+            }
                 break;
 
             case "UPDATE_ARCHIVE":
-                backend.updateBlob(message.id, message.data);
-                backend.updateIndex(message.id, message.data.indexWords());
+                backend.updateBlob(message.id, message.data).then(() =>
+                    backend.updateIndex(message.id, message.data.indexWords()));
                 break;
 
-            case "STORE_PAGE_HTML":
-                if (message.payload.__page_packing)
+            case "STORE_PAGE_HTML": {
+                if (message.bookmark.__page_packing)
                     return;
 
-                backend.storeBlob(message.payload.id, message.data, "text/html")
+                backend.storeBlob(message.bookmark.id, message.data, "text/html")
                     .then(() => {
-                        // if (message.favicon) {
-                        //     message.payload.icon = message.favicon;
-                        //     backend.updateNode(message.payload);
-                        // }
+                        if (!message.bookmark.__mute_ui) {
+                            browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
 
-                        if (!message.payload.__local_import) {
-                            chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
-
-                            if (!message?.options.automation || message?.options.ishell || message?.options.select)
-                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.payload});
-                            //alertNotify("Successfully archived page.");
+                            if (!message?.bookmark.automation || message?.bookmark.ishell || message?.bookmark.select)
+                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.bookmark});
                         }
 
-                        backend.storeIndex(message.payload.id, message.data.indexWords());
+                        backend.storeIndex(message.bookmark.id, message.data.indexWords());
                     })
                     .catch(e => {
-                        if (!message.payload.__local_import) {
-                            chrome.tabs.sendMessage(message.payload.tab_id, {type: "UNLOCK_DOCUMENT"});
+                        console.log(e);
+                        if (!message.bookmark.__mute_ui) {
+                            chrome.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
                             alertNotify("Error archiving page.");
                         }
-                        console.log(e);
                     });
+            }
                 break;
 
             /* Messages from content script */
@@ -885,7 +869,7 @@ function addListeners()
                         xhr.setRequestHeader("Cache-Control","no-store");
 
                         xhr.responseType = "arraybuffer";
-                        xhr.timeout = maxResourceTime*1000;
+                        xhr.timeout = maxResourceTime * 1000;
                         xhr.onload = onloadResource;
                         xhr.onerror = onerrorResource;
                         xhr.ontimeout = ontimeoutResource;
@@ -947,72 +931,9 @@ function addListeners()
         node.path = path.reverse().map(n => n.name).join("/");
     }
 
-    async function packPage(url, hide_tab) {
-        return new Promise(async (resolve, reject) => {
-            let completionListener = function (message, sender, sendResponse) {
-                if (message.type === "STORE_PAGE_HTML" && message.payload.tab_id === packingTab.id) {
-                    browser.tabs.onUpdated.removeListener(listener);
-                    browser.runtime.onMessage.removeListener(completionListener);
-                    browser.tabs.remove(packingTab.id);
-
-                    resolve(message.data);
-                }
-            };
-
-            browser.runtime.onMessage.addListener(completionListener);
-
-            let listener = async (id, changed, tab) => {
-                if (id === packingTab.id && changed.status === "complete") {
-
-                    let initializationListener = async function (message, sender, sendResponse) {
-                        if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === packingTab.id) {
-                            browser.runtime.onMessage.removeListener(initializationListener);
-
-                            let node = {};
-                            node.__page_packing = true;
-                            node.tab_id = packingTab.id;
-
-                            try {
-                                await browser.tabs.sendMessage(packingTab.id, {
-                                    type: "performAction",
-                                    menuaction: 2,
-                                    saveditems: 2,
-                                    payload: node
-                                });
-                            } catch (e) {
-                                reject(e);
-                            }
-                        }
-                    };
-
-                    browser.runtime.onMessage.addListener(initializationListener);
-
-                    try {
-                        try {
-                            await browser.tabs.executeScript(tab.id, {
-                                file: "savepage/content-frame.js",
-                                allFrames: true
-                            });
-                        } catch (e) {
-                        }
-
-                        await browser.tabs.executeScript(packingTab.id, {file: "savepage/content.js"});
-                    } catch (e) {
-                        reject(e);
-                    }
-                }
-            };
-
-            browser.tabs.onUpdated.addListener(listener);
-
-            var packingTab = await browser.tabs.create({url: url, active: false});
-
-            if (hide_tab)
-                browser.tabs.hide(packingTab.id)
-        });
+    async function packUrl(url, hide_tab) {
+        return packPage(url, {}, b => b.__page_packing = true, m => m.data, hide_tab);
     }
-
-    /* External message listener */
 
     function isAutomationAllowed(sender) {
         const extension_whitelist = settings.extension_whitelist();
@@ -1022,6 +943,8 @@ function addListeners()
                 || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
     }
 
+
+    /* External message listener */
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
         let node;
@@ -1087,7 +1010,7 @@ function addListeners()
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
+                activeTab = await getActiveTab();
 
                 if (!message.uri)
                     message.uri =  message.url || activeTab.url;
@@ -1119,7 +1042,7 @@ function addListeners()
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                activeTab = (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
+                activeTab = await getActiveTab();
 
                 if (message.url === "")
                     message.uri =  message.url;
@@ -1162,19 +1085,17 @@ function addListeners()
 
                 return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(async bookmark => {
                     if (message.pack) {
-                        return saveContent(bookmark, await packPage(message.url, message.hide_tab));
+                        return saveContent(bookmark, await packUrl(message.url, message.hide_tab));
                     }
                     else if (message.content) {
                         return saveContent(bookmark, message.content)
                     }
                     else {
-                        chrome.tabs.query({lastFocusedWindow: true, active: true},
-                            function (tabs) {
-                                bookmark.tab_id = tabs[0].id;
-                                Object.assign(message, bookmark);
-                                initiateAction(tabs[0], buttonAction, null, false, false,
-                                    {options: message, bookmark: message});
-                            });
+                        Object.assign(bookmark, message);
+
+                        let activeTab = await getActiveTab();
+                        bookmark.__tab_id = activeTab.id;
+                        initiateAction(activeTab, buttonAction, bookmark);
 
                         return bookmark.uuid;
                     }
@@ -1247,7 +1168,7 @@ function addListeners()
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                return packPage(message.url, message.hide_tab);
+                return packUrl(message.url, message.hide_tab);
 
             case "SCRAPYARD_BROWSE_UUID":
                 if (!isAutomationAllowed(sender))
@@ -1276,7 +1197,7 @@ function addListeners()
 
 /* Initiate action function */
 
-async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,userdata)
+async function initiateAction(tab, menuaction, bookmark)
 {
     if (isSpecialPage(tab.url))  /* special page - no operations allowed */
     {
@@ -1295,7 +1216,7 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
                     await browser.tabs.executeScript(tab.id, {file: "savepage/selection.js", frameId: frame.frameId});
 
                     selection =
-                        await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: userdata.options});
+                        await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: bookmark});
 
                     if (selection)
                         break;
@@ -1307,9 +1228,7 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
 
         let response;
         let performAction = () => browser.tabs.sendMessage(tab.id, {type: "performAction", menuaction: menuaction,
-                                        srcurl: srcurl, externalsave: externalsave, swapdevices: swapdevices,
-                                        saveditems: 2, selection: selection, payload: userdata.bookmark,
-                                        options: userdata.options});
+                                        saveditems: 2, selection: selection, bookmark: bookmark});
 
         try {
             response = await performAction();
@@ -1361,11 +1280,9 @@ async function initiateAction(tab,menuaction,srcurl,externalsave,swapdevices,use
                         if (contentType == null)
                             contentType = "application/pdf";
 
-                        backend.storeBlob(userdata.bookmark.id, this.response, contentType);
+                        backend.storeBlob(bookmark.id, this.response, contentType);
 
-                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: userdata.bookmark});
-
-                        //alertNotify("Successfully archived page.");
+                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
                     }
                 };
 

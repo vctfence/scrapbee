@@ -12,7 +12,7 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-import {getFavicon, partition, ReadLine} from "./utils.js"
+import {getFavicon, getFaviconFromTab, packPage, partition, ReadLine} from "./utils.js"
 
 const EXPORT_VERSION = 1;
 
@@ -804,72 +804,17 @@ async function importRDFArchive(node, scrapbook_id, _) {
     let base = `${root}data/${scrapbook_id}/`
     let index = `${base}index.html`;
 
-    return new Promise(async (resolve, reject) => {
-        let completionListener = function(message, sender, sendResponse) {
-            if (message.type === "STORE_PAGE_HTML" && message.payload.tab_id === import_tab.id) {
-                browser.tabs.onUpdated.removeListener(listener);
-                browser.runtime.onMessage.removeListener(completionListener);
-                browser.tabs.remove(import_tab.id);
+    let initializer = async (bookmark, tab) => {
+        let icon = await getFaviconFromTab(tab, true);
+        if (icon) {
+            bookmark.icon = icon;
+            await backend.updateNode(bookmark);
+        }
 
-                resolve();
-            }
-        };
+        node.__mute_ui = true;
+    }
 
-        browser.runtime.onMessage.addListener(completionListener);
-
-        let listener = async (id, changed, tab) => {
-            if (id === import_tab.id && changed.status === "complete") {
-
-                let initializationListener = async function(message, sender, sendResponse) {
-                    if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === import_tab.id) {
-                        browser.runtime.onMessage.removeListener(initializationListener);
-
-                        node.__local_import = true;
-                        node.__local_import_base = base;
-                        node.tab_id = import_tab.id;
-                        node.import_url = index;
-
-                        try {
-                            await browser.tabs.sendMessage(import_tab.id, {
-                                type: "performAction",
-                                menuaction: 2,
-                                saveditems: 2,
-                                payload: node
-                            });
-                        } catch (e) {
-                            reject(e);
-                        }
-                    }
-                };
-
-                browser.runtime.onMessage.addListener(initializationListener);
-
-                try {
-                    try {
-                        // await browser.tabs.executeScript(tab.id, {
-                        //     code: `var faviconElt = document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-                        //             faviconElt? faviconElt.href: null;`
-                        //        }).then(icon => {
-                        //     if (icon && icon.length && icon[0]) {
-                        //         node.icon = icon[0];
-                        //     }
-                        // });
-                        await browser.tabs.executeScript(tab.id, {file: "savepage/content-frame.js", allFrames: true});
-                    } catch (e) {}
-
-                    await browser.tabs.executeScript(import_tab.id, {file: "savepage/content.js"});
-                }
-                catch (e) {
-                    reject(e);
-                }
-            }
-        };
-
-        browser.tabs.onUpdated.addListener(listener);
-
-        var import_tab = await browser.tabs.create({url: index, active: false});
-    });
-
+    return packPage(index, node, initializer, _ => null, false);
 }
 
 export async function importRDF(shelf, path, threads, quick) {
@@ -983,8 +928,7 @@ export async function importRDF(shelf, path, threads, quick) {
                     await importRDFArchive(bookmark, scrapbook_id, rdf_directory);
                 }
                 catch (e) {
-                    browser.runtime.sendMessage({type: "RDF_IMPORT_ERROR", bookmark: bookmark, error: e.message,
-                        index: `${bookmark.__local_import_base}index.html`});
+                    browser.runtime.sendMessage({type: "RDF_IMPORT_ERROR", bookmark: bookmark, error: e.message});
                 }
 
                 browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: percent});
@@ -1012,16 +956,6 @@ export async function importRDF(shelf, path, threads, quick) {
     for (let node of bookmarks) {
         if (cancelled)
             break;
-
-        // if (!node.import_url)
-        //     node.import_url = `http://localhost:${settings.helper_port_number()}/rdf/import/files/data/${node.external_id}/index.html`;
-        //
-        // node.icon = node.icon || (await getFavicon(node.import_url, false, true));
-        //
-        // if (node.icon) {
-        //     await backend.storeIcon(node.icon);
-        // }
-        // await backend.updateNode(node);
 
         if (node.icon && node.icon.startsWith("resource://scrapbook/")) {
             node.icon = node.icon.replace("resource://scrapbook/", "");

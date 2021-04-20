@@ -166,7 +166,9 @@ class BookmarkTree {
                     image.onerror = async e => {
                         const fallback_icon = "var(--themed-globe-icon)";
                         jnode.icon = fallback_icon;
-                        (await getIconElement()).style.backgroundImage = fallback_icon;
+                        let element = await getIconElement();
+                        if (element)
+                            element.style.backgroundImage = fallback_icon;
                     };
                     image.src = jnode.icon;
                 }

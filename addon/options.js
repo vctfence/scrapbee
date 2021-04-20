@@ -345,7 +345,7 @@ async function onStartRDFImport(e) {
             bar.val(message.progress);
         }
         else if (message.type === "RDF_IMPORT_ERROR") {
-            let invalid_link = `<a href="${message.index}" tarket="_blank" data-id="${message.bookmark.id}"
+            let invalid_link = `<a href="#" target="_blank" data-id="${message.bookmark.id}"
                                        class="invalid-import">${message.bookmark.name}</a>`;
             $("#invalid-imports-container").show();
             $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);

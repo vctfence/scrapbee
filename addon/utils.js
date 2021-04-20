@@ -40,6 +40,10 @@ export function showNotification(args) {
     });
 }
 
+export async function getActiveTab() {
+    return (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
+}
+
 export async function openContainerTab(url, container) {
     try {
         return await browser.tabs.create({"url": url, cookieStoreId: container});
@@ -209,12 +213,6 @@ export function text2html(text) {
     return output;
 }
 
-export function delta2html(delta) {
-    delta = JSON.parse(delta);
-
-    return "";
-}
-
 export function notes2html(notes) {
     switch (notes.format) {
         case "text":
@@ -358,10 +356,10 @@ export function delegateProxy (target, origin) {
 export async function testFavicon(url) {
     try {
         // get a nice favicon for wikipedia
-        if (url.origin.endsWith("wikipedia.org"))
+        if (url.origin && url.origin.endsWith("wikipedia.org"))
             return "https://wikipedia.org/favicon.ico";
 
-        let response = await fetch(url, {method: "GET"})
+        let response = await fetch(url)
         if (response.ok) {
             let type = response.headers.get("content-type") || "image";
             //let length = response.headers.get("content-length") || "0";
@@ -376,7 +374,7 @@ export async function testFavicon(url) {
     return undefined;
 }
 
-export async function getFaviconFromTab(tab) {
+export async function getFaviconFromTab(tab, tabOnly = false) {
     let favicon;
     let origin = new URL(tab.url).origin;
 
@@ -385,6 +383,8 @@ export async function getFaviconFromTab(tab) {
 
     if (tab.favIconUrl)
         return tab.favIconUrl;
+    else if (tabOnly)
+        return null;
 
     try {
         let icon = await browser.tabs.executeScript(tab.id, {
@@ -458,6 +458,73 @@ export function getFavicon(host, tryRootFirst = false, usePageOnly = false) {
     else
         return get_html_icon().then(r => r? r: load_url(default_icon, "arraybuffer").catch (e => undefined));
 }
+
+export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
+    return new Promise(async (resolve, reject) => {
+        let completionListener = function (message, sender, sendResponse) {
+            if (message.type === "STORE_PAGE_HTML" && message.bookmark.__tab_id === packingTab.id) {
+                browser.tabs.onUpdated.removeListener(listener);
+                browser.runtime.onMessage.removeListener(completionListener);
+                browser.tabs.remove(packingTab.id);
+
+                resolve(resolver(message));
+            }
+        };
+
+        browser.runtime.onMessage.addListener(completionListener);
+
+        let listener = async (id, changed, tab) => {
+            if (id === packingTab.id && changed.status === "complete") {
+
+                let initializationListener = async function (message, sender, sendResponse) {
+                    if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === packingTab.id) {
+                        browser.runtime.onMessage.removeListener(initializationListener);
+
+                        await initializer(bookmark, tab);
+                        bookmark.__tab_id = packingTab.id;
+
+                        try {
+                            await browser.tabs.sendMessage(packingTab.id, {
+                                type: "performAction",
+                                menuaction: 1,
+                                saveditems: 2,
+                                bookmark: bookmark
+                            });
+                        } catch (e) {
+                            console.error(e);
+                            reject(e);
+                        }
+                    }
+                };
+
+                browser.runtime.onMessage.addListener(initializationListener);
+
+                try {
+                    try {
+                        await browser.tabs.executeScript(tab.id, {
+                            file: "savepage/content-frame.js",
+                            allFrames: true
+                        });
+                    } catch (e) {
+                        console.error(e);
+                    }
+
+                    await browser.tabs.executeScript(packingTab.id, {file: "savepage/content.js"});
+                } catch (e) {
+                    reject(e);
+                }
+            }
+        };
+
+        browser.tabs.onUpdated.addListener(listener);
+
+        var packingTab = await browser.tabs.create({url: url, active: false});
+
+        if (hide_tab)
+            browser.tabs.hide(packingTab.id)
+    });
+}
+
 
 export async function readFile(file) {
     let reader = new FileReader();
