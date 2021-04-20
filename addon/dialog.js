@@ -1,4 +1,5 @@
 import {NODE_TYPE_NOTES} from "./storage_constants.js";
+import {formatBytes} from "./utils.js";
 
 const DEFAULT_CONTAINER = "--default-container";
 
@@ -30,6 +31,13 @@ function showDlg(name, data, callback) {
         if (typeof data[this.name] != "undefined")
             this.value = data[this.name];
     });
+
+    // fill in object size
+    if (data.size) {
+        let size = $dlg.find("#prop-size");
+        size.text(formatBytes(data.size));
+    }
+
     $dlg.find("input.button-ok").unbind(".dlg");
     $dlg.find("input.button-cancel").unbind(".dlg");
     //$dlg.find("input.dialog-input").first().focus();
@@ -159,11 +167,18 @@ function showDlg(name, data, callback) {
                 let fields = $(".more-properties");
 
                 // hide the icon filed, if there is a stored icon or no icon
+                // hide size, if it is empty
                 fields = fields.filter(function() {
-                    if (this.id !== "prop-row-icon")
+                    if (!["prop-row-icon", "prop-row-size"].some(id => this.id === id))
                         return true;
 
-                    return !data.stored_icon && data.icon && data.type !== NODE_TYPE_NOTES;
+                    if (this.id === "prop-row-icon" && !data.stored_icon && data.icon && data.type !== NODE_TYPE_NOTES)
+                        return true;
+
+                    if (this.id === "prop-row-size" && data.size)
+                        return true;
+
+                    return false;
                 });
 
                 fields.show();

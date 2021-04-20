@@ -16,6 +16,7 @@ import {
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
+import {stringByteLengthUTF8} from "./utils.js";
 
 
 const dexie = new Dexie("scrapyard");
@@ -374,33 +375,42 @@ class IDBStorage {
     async storeBlobLowLevel(node_id, data, content_type, byte_length) {
         let node = await this.getNode(node_id);
 
-        if (typeof data !== "string") {
-            let binaryString = "";
-            let byteArray = new Uint8Array(data);
+        if (node) {
+            if (typeof data !== "string") {
+                let binaryString = "";
+                let byteArray = new Uint8Array(data);
 
-            for (let i = 0; i < byteArray.byteLength; i++)
-                binaryString += String.fromCharCode(byteArray[i]);
+                for (let i = 0; i < byteArray.byteLength; i++)
+                    binaryString += String.fromCharCode(byteArray[i]);
 
-            byte_length = byteArray.byteLength;
-            data = binaryString;
-        }
+                node.size = byte_length = byteArray.byteLength;
+                data = binaryString;
+            }
+            else
+                node.size = stringByteLengthUTF8(data);
 
-        if (node)
+            await this.updateNode(node);
+
             return dexie.blobs.add({
                 node_id: node.id,
                 data: data,
                 byte_length: byte_length,
                 type: content_type
             });
+        }
     }
 
     async updateBlobLowLevel(node_id, data) {
         let node = await this.getNode(node_id);
 
-        if (node)
+        if (node) {
+            node.size = stringByteLengthUTF8(data);
+            await this.updateNode(node);
+
             return dexie.blobs.where("node_id").equals(node.id).modify({
                 data: data
             });
+        }
     }
 
     async deleteBlob(node_id) {
@@ -457,6 +467,15 @@ class IDBStorage {
         }
 
         node.has_notes = !!options.content;
+
+        if (node.has_notes) {
+            node.size = stringByteLengthUTF8(options.content);
+            if (options.format === "delta")
+                node.size += stringByteLengthUTF8(options.html);
+        }
+        else
+            node.size = null;
+
         return this.updateNode(node);
     }
 

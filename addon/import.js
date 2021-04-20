@@ -95,7 +95,7 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotesLowLevel({node_id: node.id, content: JSON.parse(notes),
+                await backend.storeNotesLowLevel({node_id: node.id, content: notes,
                     format: notes_format, align: notes_align, width: notes_width});
             }
             else if (note_lines.length) {
@@ -199,6 +199,7 @@ export async function importOrg(shelf, text) {
                         case "pos":
                             break;
                         case "type":
+                        case "size":
                         case "todo_state":
                         case "byte_length":
                             if (property.value)
@@ -261,8 +262,8 @@ export async function importOrg(shelf, text) {
     await importLastObject();
 }
 
-const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "details", "date_added", "date_modified", "external", "external_id",
-                            "container"];
+const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "size", "details", "date_added", "date_modified",
+                           "external", "external_id", "container"];
 
 async function objectToProperties(object) {
     let lines = [];

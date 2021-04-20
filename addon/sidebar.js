@@ -629,6 +629,7 @@ function performImport(context, tree, file, file_name, file_ext) {
                     });
                 });
         }).catch(e => {
+            console.error(e);
             $("#shelf-menu-button").attr("src", "icons/menu.svg");
             showNotification({message: "The import has failed: " + e.message});
         });

@@ -65,6 +65,7 @@ export const NODE_PROPERTIES =
      "uri",
      "name",
      "type",
+     "size",
      "uuid",
      "icon",
      "tags",

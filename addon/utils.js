@@ -530,6 +530,76 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
     });
 }
 
+// https://stackoverflow.com/a/34920444/1689848
+export function stringByteLengthUTF8(s) {
+    if (!s)
+        return 0;
+
+    //assuming the String is UCS-2(aka UTF-16) encoded
+    var n = 0;
+    for (var i = 0, l = s.length; i < l; i++) {
+        var hi = s.charCodeAt(i);
+        if (hi < 0x0080) { //[0x0000, 0x007F]
+            n += 1;
+        }
+        else if (hi < 0x0800) { //[0x0080, 0x07FF]
+            n += 2;
+        }
+        else if (hi < 0xD800) { //[0x0800, 0xD7FF]
+            n += 3;
+        }
+        else if (hi < 0xDC00) { //[0xD800, 0xDBFF]
+            var lo = s.charCodeAt(++i);
+            if (i < l && lo >= 0xDC00 && lo <= 0xDFFF) { //followed by [0xDC00, 0xDFFF]
+                n += 4;
+            }
+        }
+        else { //[0xE000, 0xFFFF]
+            n += 3;
+        }
+    }
+    return n;
+}
+
+// // https://stackoverflow.com/a/18650828/1689848
+// export function formatBytes(bytes, decimals = 2) {
+//     if (bytes === 0) return '0 Bytes';
+//
+//     const k = 1024;
+//     const dm = decimals < 0 ? 0 : decimals;
+//     const sizes = ['Bytes', 'KB', 'MB', 'GB']; // :)
+//
+//     const i = Math.floor(Math.log(bytes) / Math.log(k));
+//
+//     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+// }
+
+export function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    let size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm)).toString();
+
+    let [int, dec] = size.split(".");
+    let idec = parseInt(dec);
+
+    if (int.length > 2)
+        size = int;
+    else if (idec && int.length === 2) {
+        if (idec > 10)
+            dec = Math.round(dec / 10);
+
+        if (dec && idec)
+            size = int + "." + dec;
+    }
+
+    return size + ' ' + sizes[i];
+}
 
 export async function readFile(file) {
     let reader = new FileReader();
