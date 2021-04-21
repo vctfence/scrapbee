@@ -201,6 +201,8 @@ From data URL:
 let MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
 
 const INPUT_TIMEOUT = 3000;
+const DEFAULT_WIDTH = "790px";
+const DEFAULT_FONT_SIZE = 120;
 
 let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
 let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
@@ -700,7 +702,6 @@ window.onload = function() {
         backend.storeNotes({node_id, align});
     });
 
-    const DEFAULT_WIDTH = "790px";
     $("#notes-width").on("change", e => {
         let selectedWidth = $("#notes-width option:selected").text();
         switch ($("#notes-width").val()) {
@@ -763,7 +764,6 @@ window.onload = function() {
         $(target).css("font-size", size + "%");
     }
 
-    const DEFAULT_FONT_SIZE = 120;
     $("#font-size-larger").on("click", e => {
         changeFontSize("notes-font-size", "#notes", (a, b) => a + b);
     });
