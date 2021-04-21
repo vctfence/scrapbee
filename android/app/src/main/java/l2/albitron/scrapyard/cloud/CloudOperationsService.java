@@ -131,8 +131,9 @@ public class CloudOperationsService extends IntentService {
             (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,"Scrapyard",
-                NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,"scrapyard-sharing",
+                NotificationManager.IMPORTANCE_LOW);
+            channel.setSound(null, null);
             notificationManager.createNotificationChannel(channel);
             builder.setChannelId(CHANNEL_ID);
         }
