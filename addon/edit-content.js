@@ -409,8 +409,6 @@ class EditToolBar {
                 document.body.style.marginBottom = __scrapyardHideToolbar
                     ? "0 !important"
                     : `${TOOLBAR_HEIGHT * 2}px !important`;
-
-                console.log(document.body.style.marginBottom);
             }
         });
     }
