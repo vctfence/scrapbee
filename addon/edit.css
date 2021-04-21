@@ -3,7 +3,7 @@
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    z-index: 1000000 !important;
+    z-index: 2147483647 !important;
     width: 100% !important;
     height: 42px !important;
     margin: 0 !important;

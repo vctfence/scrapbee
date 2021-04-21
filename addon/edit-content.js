@@ -47,7 +47,7 @@ class EditToolBar {
                             top: parseInt(r.top + window.scrollY)+"px",
                             width:r.width+"px",
                             height:r.height+"px",
-                            zIndex: 2147483647});
+                            zIndex: 2147483646});
                         self.$cap.show();
                     }else{
                         self.$cap.hide();
@@ -162,7 +162,7 @@ class EditToolBar {
 
         /** body */
         if (!__scrapyardHideToolbar)
-            document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px`;
+            document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px !important`;
 
         /** save button */
         var btn = document.createElement("input");
@@ -396,7 +396,7 @@ class EditToolBar {
         editBar.appendChild(btn);
         btn.addEventListener("click", function () {
             $(rootContainer).hide();
-            document.body.style.marginBottom = "0";
+            document.body.style.marginBottom = "0 !important";
         });
 
         if (!__scrapyardHideToolbar)
@@ -404,8 +404,13 @@ class EditToolBar {
 
         document.addEventListener("keydown", e => {
             if (e.code === "KeyT" && e.ctrlKey && e.altKey) {
-                $(rootContainer).show();
-                document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px`;
+                $(rootContainer).toggle();
+                __scrapyardHideToolbar = !__scrapyardHideToolbar;
+                document.body.style.marginBottom = __scrapyardHideToolbar
+                    ? "0 !important"
+                    : `${TOOLBAR_HEIGHT * 2}px !important`;
+
+                console.log(document.body.style.marginBottom);
             }
         });
     }
