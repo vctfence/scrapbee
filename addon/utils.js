@@ -357,7 +357,7 @@ export async function testFavicon(url) {
     try {
         // get a nice favicon for wikipedia
         if (url.origin && url.origin.endsWith("wikipedia.org"))
-            return "https://wikipedia.org/favicon.ico";
+            return "https://en.wikipedia.org/favicon.ico";
 
         let response = await fetch(url)
         if (response.ok) {
@@ -448,7 +448,7 @@ export function getFavicon(url, tryRootFirst = false, usePageOnly = false) {
 
     // get a nice favicon for wikipedia
     if (parsedUrl.origin && parsedUrl.origin.endsWith("wikipedia.org"))
-        return "https://wikipedia.org/favicon.ico";
+        return "https://en.wikipedia.org/favicon.ico";
 
     let default_icon = parsedUrl.origin + "/favicon.ico";
     let get_html_icon = () => load_url(url, "document").then(extract_link).catch (e => undefined);

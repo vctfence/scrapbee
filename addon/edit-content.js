@@ -191,6 +191,17 @@ class EditToolBar {
             document.designMode = document.designMode === "on"? "off": "on";
         });
 
+        $(editBar).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
+                         To remove content, text-select it (including images and other media) and press Del key on keyboard.
+                         It is also possible to type something in. Press F7 to turn on caret browsing.
+                       </span></div>`);
+
+        $(".help-mark", editBar).hover(function(e){
+            $(this).next(".tips.hide").show().css({"margin-top": "-10px"});
+        }, function(){
+            $(this).next(".tips.hide").hide();
+        });
+
         /** modify dom button */
         var btn = document.createElement("input");
         btn.type = "button";
@@ -203,17 +214,6 @@ class EditToolBar {
             self.toggleDomEdit(editing)
             this.className = editing? "yellow-button": "blue-button";
             $(this).prop("disabled", false);
-        });
-
-        $(editBar).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
-                         To remove content, text-select it (including images and other media) and press Del key on keyboard.
-                         It is also possible to type something in. Press F7 to turn on caret browsing.
-                       </span></div>`);
-
-        $(".help-mark", editBar).hover(function(e){
-            $(this).next(".tips.hide").show().css({"margin-top": "-10px"});
-        }, function(){
-            $(this).next(".tips.hide").hide();
         });
 
         /** mark pen button */
