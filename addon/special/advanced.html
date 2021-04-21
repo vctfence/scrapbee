@@ -16,7 +16,7 @@
         <h1>Advanced Settings</h1>
     </div>
     <div class="panel" id="automation-panel">
-        <p id="automation-panel-title">Automation Settings
+        <p class="panel-title" id="automation-panel-title">Automation Settings
             <a id="automation-api-docs" href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md" target="_blank">API documentation</a></p>
         <form>
             <fieldset style="border: none;">
@@ -33,11 +33,23 @@
         </form>
     </div>
     <div class="panel" id="db-path-panel">
-        <p id="addon-db-path-title">Addon Database Path <i class="help-mark"></i>
+        <p class="panel-title">Addon Database Path <i class="help-mark"></i>
             <span class="tips hide" style="font-weight: normal">The helper application is required for this feature (Windows only).<br>
                 Please do not modify, delete or create any additional files in this directory!</span></p>
         <input id="addon-db-path-input" type="text" disabled/>
         <img id="db-path-copy-button" width="16px" height="16px" src="/icons/copy.svg" title="Copy"/>
+    </div>
+    <div class="panel" id="repair-panel">
+        <p class="panel-title">Repair</p>
+        <form>
+        <fieldset style="border: none;">
+            <input id="option-repair-images" type="checkbox"/> <label for="option-repair-images">Repair icons when checking links with context menu</label>
+            <div id="calculate-size">
+                <a id="calculate-size-link" href="#">Calculate size for each archived item</a> (<a
+                    href="/options.html#about">details</a>)
+            </div>
+        </fieldset>
+        </form>
     </div>
 
 </div>

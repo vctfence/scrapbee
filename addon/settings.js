@@ -23,10 +23,8 @@ let BinHandler = {
     },
 };
 
-export const SETTING_KEY = "scrapyard-settings";
+export const SETTINGS_KEY = "scrapyard-settings";
 export const DEFAULT_SETTINGS = {
-    frame_depth: 5,
-    archive_url_lifetime: 5,
     shallow_export: false,
     show_firefox_bookmarks: true,
     switch_to_new_bookmark: true
@@ -34,11 +32,11 @@ export const DEFAULT_SETTINGS = {
 
 export let settings = new Proxy({
     __proto__ : null,
-    __key__   : SETTING_KEY,
+    __key__   : SETTINGS_KEY,
     __bin__   : DEFAULT_SETTINGS,
     __load__  : function(f) {
-        chrome.storage.local.get(SETTING_KEY, object =>{
-            settings.__bin__ = object[SETTING_KEY]? object[SETTING_KEY]: DEFAULT_SETTINGS;
+        chrome.storage.local.get(SETTINGS_KEY, object => {
+            settings.__bin__ = object[SETTINGS_KEY]? object[SETTINGS_KEY]: DEFAULT_SETTINGS;
             if (f) f(this);
         });
     }

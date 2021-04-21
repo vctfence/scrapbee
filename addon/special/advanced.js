@@ -9,6 +9,30 @@ function initHelpMarks() {
     });
 }
 
+function configureAutomationPanel() {
+    settings.load(settings => {
+
+        $("#option-enable-automation").prop("checked", settings.enable_automation());
+        $("#option-extension-whitelist").val(settings.extension_whitelist()?.join(", "));
+
+        $("#option-enable-automation").on("change", e => {
+            settings.enable_automation(e.target.checked);
+        });
+
+        $("#option-extension-whitelist").on("input", e => {
+            if (e.target.value) {
+                let ids = e.target.value.split(",").map(s => s.trim()).filter(s => !!s);
+                if (ids.length)
+                    settings.extension_whitelist(ids);
+                else
+                    settings.extension_whitelist(null);
+            }
+            else
+                settings.extension_whitelist(null);
+        });
+    });
+}
+
 async function configureDBPath() {
     let helperApp = await nativeBackend.probe();
 
@@ -31,28 +55,18 @@ async function configureDBPath() {
     });
 }
 
-function configureAutomationPanel() {
+function configureRepairPanel() {
+    $("#option-repair-images").on("change", e => {
+        settings.repair_icons(e.target.checked);
+    });
+
     settings.load(settings => {
+        if (!settings.archve_size_repaired() && !settings.install_date())
+            $("#calculate-size").show();
 
-        $("#option-enable-automation").prop("checked", settings.enable_automation());
-        $("#option-extension-whitelist").val(settings.extension_whitelist()?.join(", "));
-
-        $("#option-enable-automation").on("change", e => {
-            console.log(e.target.checked)
-            console.log(settings)
-            settings.enable_automation(e.target.checked);
-        });
-
-        $("#option-extension-whitelist").on("input", e => {
-            if (e.target.value) {
-                let ids = e.target.value.split(",").map(s => s.trim()).filter(s => !!s);
-                if (ids.length)
-                    settings.extension_whitelist(ids);
-                else
-                    settings.extension_whitelist(null);
-            }
-            else
-                settings.extension_whitelist(null);
+        $("#calculate-size-link").on("click", e => {
+            browser.runtime.sendMessage({type: "RECALCULATE_ARCHIVE_SIZE"});
+            $("#calculate-size-link").off("click");
         });
     });
 }
@@ -60,5 +74,6 @@ function configureAutomationPanel() {
 window.onload = async function() {
     initHelpMarks();
     configureAutomationPanel();
+    configureRepairPanel();
     configureDBPath();
 }

@@ -8,13 +8,13 @@
     margin-bottom: 10px;
 }
 
-#db-path-panel, #automation-panel {
+.panel {
     width: 700px;
     margin: auto;
     margin-top: 20px;
 }
 
-#addon-db-path-title, #automation-panel-title {
+.panel-title {
     text-align: left;
     font-weight: bold;
     font-size: 12pt;
@@ -37,6 +37,7 @@
 }
 
 #addon-db-path-input {
+    margin-top: 10px;
     margin-bottom: 10px;
     width: 100%;
 }
@@ -46,4 +47,9 @@
     margin-bottom: -4px;
     cursor: pointer;
     background-color: white;
+}
+
+#calculate-size {
+    padding-top: 10px;
+    display: none;
 }

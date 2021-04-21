@@ -966,13 +966,19 @@ function addListeners()
                 let shelves = await backend.listShelves();
                 return shelves.map(n => ({name: n.name}));
 
-            case "SCRAPYARD_LIST_GROUPS":
+            case "SCRAPYARD_LIST_GROUPS": {
                 if (!sender.ishell)
                     throw new Error();
 
+                let shelves = await backend.listShelves();
+                shelves = shelves.map(n => ({name: n.name}));
+
                 let groups = await backend.listGroups();
                 groups.forEach(n => computePath(n, groups));
-                return groups.map(n => ({name: n.name, path: n.path}));
+                groups = groups.map(n => ({name: n.name, path: n.path}));
+
+                return [...shelves, ...groups];
+            }
 
             case "SCRAPYARD_LIST_TAGS":
                 if (!sender.ishell)

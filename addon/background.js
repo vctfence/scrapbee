@@ -15,7 +15,14 @@ import {
     importRDF
 } from "./import.js";
 
-import {isSpecialPage, notifySpecialPage, openContainerTab, readFile, showNotification} from "./utils.js";
+import {
+    isSpecialPage,
+    notifySpecialPage,
+    openContainerTab,
+    readFile,
+    showNotification,
+    stringByteLengthUTF8
+} from "./utils.js";
 
 import {
     CLOUD_SHELF_ID,
@@ -312,6 +319,43 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 startCloudBackgroundSync(s);
             });
             break;
+
+        case "RECALCULATE_ARCHIVE_SIZE": {
+            const nodeIDs = await backend.getNodeIds();
+
+            browser.runtime.sendMessage({type: "START_PROCESSING_INDICATION"});
+
+            for (let id of nodeIDs) {
+                const node = await backend.getNode(id);
+
+                if (node.type === NODE_TYPE_ARCHIVE) {
+                    const blob = await backend.fetchBlob(node.id);
+
+                    if (blob?.data && blob?.byte_length)
+                        node.size = blob.byte_length;
+                    else if (blob?.data)
+                        node.size = stringByteLengthUTF8(blob.data);
+
+                    await backend.updateNode(node);
+                }
+                else if (node.type === NODE_TYPE_NOTES && node.has_notes) {
+                    const notes = await backend.fetchNotes(node.id);
+
+                    if (notes) {
+                        node.size = stringByteLengthUTF8(notes.content);
+                        if (notes.format === "delta")
+                            node.size += stringByteLengthUTF8(notes.html);
+                    }
+
+                    await backend.updateNode(node);
+                }
+            }
+
+            settings.archve_size_repaired(true);
+
+            browser.runtime.sendMessage({type: "STOP_PROCESSING_INDICATION"});
+        }
+            break;
     }
 });
 
@@ -332,12 +376,6 @@ settings.load(async settings => {
             startCloudBackgroundSync(settings);
         } else
             console.log("Scrapyard was denied persistent storage permissions");
-    });
-
-    browser.runtime.onInstalled.addListener(details => {
-        if (details.reason === "update") {
-            //settings.pending_announcement(true);
-        }
     });
 });
 

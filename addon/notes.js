@@ -264,7 +264,7 @@ function initWYSIWYGEditor() {
         [{ 'color': [] }, { 'background': [] }],
         [{ 'align': [] }],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['blockquote'],
+        ['blockquote', 'code'],
         [{ 'script': 'sub'}, { 'script': 'super' }],
         [{ 'indent': '-1'}, { 'indent': '+1' }],
         ['hr'],
@@ -273,10 +273,14 @@ function initWYSIWYGEditor() {
     ];
 
     Quill.prototype.getHTML = function() {
-        let root = $("#quill")[0].cloneNode(true);
-        applyInlineStyles(root);
+        if (!this.isEmpty()) {
+            let root = $("#quill")[0].cloneNode(true);
+            applyInlineStyles(root);
 
-        return root.firstChild.innerHTML;
+            return root.firstChild.innerHTML;
+        }
+
+        return "";
     };
 
     Quill.prototype.setHTML = function(html) {
@@ -696,7 +700,7 @@ window.onload = function() {
         backend.storeNotes({node_id, align});
     });
 
-    const DEFAULT_WIDTH = "766px";
+    const DEFAULT_WIDTH = "790px";
     $("#notes-width").on("change", e => {
         let selectedWidth = $("#notes-width option:selected").text();
         switch ($("#notes-width").val()) {

@@ -1,13 +1,17 @@
 <div>
 
-    <h3>v0.9.9 <span class="change-date">April 20, 2021</span></h3>
+    <h3>v0.10 <span class="change-date">April 21, 2021</span></h3>
     <ul class="change-info">
         <li>Restored the DOM Eraser tool at the archived page edit toolbar.</li>
         <li>Added an option to not display the edit toolbar by default. The toolbar can always be shown
         with the <code>Ctrl+Alt+T</code> key combination.</li>
-        <li>The size in bytes is shown for the newly archived pages at the property dialog. The exact disk size of the stored content
-            is usually 1.5 times greater and could not be known exactly due to specific IndexedDB storage format.
-            An approximate UTF-8 representation is used for size calculation which adequately represent the item saved as is. </li>
+        <li>The size in bytes is shown for the newly archived pages at the "More" section of the
+            property dialog. The number should be considered as a rough approximation of the item
+            size saved in UTF-8 format. Due to the specifics of IndexedDB, the real disk size of the
+            stored content is usually 1.5 times greater and could not be known exactly. Size of the
+            formerly saved items could be calculated in the <a href="special/advanced.html">advanced
+                settings</a> (the option is not enabled for new installations). Please, do not forget to backup.
+        </li>
     </ul>
 
     <h3>v0.9.4 <span class="change-date">April 17, 2021</span></h3>

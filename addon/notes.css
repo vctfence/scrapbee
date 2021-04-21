@@ -70,7 +70,7 @@ a#notes-button.focus, a#edit-button.focus {
 }
 
 #notes {
-    width: 766px;
+    width: 798px;
     font-size: 100%;
 }
 
@@ -212,7 +212,7 @@ pre.plaintext {
 #editor-container {
     display: flex;
     flex-direction: column;
-    width: 815px;
+    width: 830px;
 }
 
 #editor {
@@ -275,6 +275,10 @@ button.ql-hr {
     /*background-size: 16px 16px !important;*/
     background-position: center !important;
     background-repeat: no-repeat !important;
+}
+
+.ql-snow .ql-editor code, .ql-snow .ql-editor pre {
+    background-color: unset;
 }
 
 .quill-html-editor {

@@ -305,11 +305,17 @@ window.onload = function () {
     })
 
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === "BOOKMARK_CREATED") {
+        if (message.type === "START_PROCESSING_INDICATION") {
+            $("#shelf-menu-button").attr("src", "icons/grid.svg")
+        }
+        else if (message.type === "STOP_PROCESSING_INDICATION") {
+            $("#shelf-menu-button").attr("src", "icons/menu.svg")
+        }
+        else if (message.type === "BOOKMARK_CREATED") {
             if (settings.switch_to_new_bookmark())
                 selectNode(context, tree, message.node);
         }
-        if (message.type === "SELECT_NODE") {
+        else if (message.type === "SELECT_NODE") {
             selectNode(context, tree, message.node);
         }
         else if (message.type === "NOTES_CHANGED") {
@@ -615,9 +621,7 @@ function performImport(context, tree, file, file_name, file_ext) {
             if (file_name.toLocaleLowerCase() === EVERYTHING) {
                 settings.last_shelf(EVERYTHING_SHELF);
 
-                loadShelves(context, tree).then(() => {
-                    tree.openRoot();
-                });
+                loadShelves(context, tree);
             }
             else
                 backend.queryShelf(file_name).then(shelf => {

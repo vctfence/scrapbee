@@ -403,7 +403,7 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     return favicon;
 }
 
-export function getFavicon(host, tryRootFirst = false, usePageOnly = false) {
+export function getFavicon(url, tryRootFirst = false, usePageOnly = false) {
     let load_url = (url, type, timeout = 10000) => {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
@@ -437,21 +437,21 @@ export function getFavicon(host, tryRootFirst = false, usePageOnly = false) {
 
     let extract_link = r => {
         if (r.response && r.response.querySelector) {
-            let linkElt = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-            if (linkElt) {
-                return testFavicon(new URL(linkElt.href, origin));
-            }
+            let link = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+            if (link)
+                return new URL(link.href, origin).toString();
         }
+        return undefined;
     };
 
-    let origin = new URL(host).origin;
+    let parsedUrl = new URL(url);
 
     // get a nice favicon for wikipedia
-    if (url.origin && url.origin.endsWith("wikipedia.org"))
+    if (parsedUrl.origin && parsedUrl.origin.endsWith("wikipedia.org"))
         return "https://wikipedia.org/favicon.ico";
 
-    let default_icon = origin + "/favicon.ico";
-    let get_html_icon = () => load_url(host, "document").then(extract_link).catch (e => undefined);
+    let default_icon = parsedUrl.origin + "/favicon.ico";
+    let get_html_icon = () => load_url(url, "document").then(extract_link).catch (e => undefined);
 
     if (usePageOnly)
         return get_html_icon();
@@ -586,17 +586,11 @@ export function formatBytes(bytes, decimals = 2) {
     let size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm)).toString();
 
     let [int, dec] = size.split(".");
-    let idec = parseInt(dec);
 
     if (int.length > 2)
-        size = int;
-    else if (idec && int.length === 2) {
-        if (idec > 10)
-            dec = Math.round(dec / 10);
-
-        if (dec && idec)
-            size = int + "." + dec;
-    }
+        size = Math.round(parseFloat(size));
+    else if (dec && int.length === 2)
+        size = Math.round((parseFloat(size) * 10)) / 10;
 
     return size + ' ' + sizes[i];
 }

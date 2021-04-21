@@ -39,7 +39,6 @@ export const TREE_STATE_PREFIX = "tree-state-";
 
 // return the original Scrapyard node object stored in a jsTree node
 let o = n => n.data;
-let os = n => n?.data;
 
 class BookmarkTree {
     constructor(element, inline= false) {
@@ -111,7 +110,7 @@ class BookmarkTree {
             else if (jnode.icon.startsWith("/"))
                 return `url("${jnode.icon}")`;
             else {
-                if (os(jnode)?.stored_icon) {
+                if (o(jnode)?.stored_icon) {
                     let icon = this.iconCache.get(jnode.icon);
                     if (icon)
                         return `url("${icon}")`;
@@ -150,7 +149,7 @@ class BookmarkTree {
                     }
                 }
 
-                if (os(jnode)?.stored_icon) {
+                if (o(jnode)?.stored_icon) {
                     const cached = this.iconCache.get(jnode.icon);
                     const base64Url = cached || (await backend.fetchIcon(o(jnode).id));
 
@@ -259,12 +258,13 @@ class BookmarkTree {
     traverse(root, visitor) {
         let _tree = this._jstree;
         function doTraverse(root) {
-            if (!settings.show_firefox_toolbar() && os(root).external_id === FIREFOX_BOOKMARK_TOOLBAR
-                || !settings.show_firefox_mobile() && os(root).external_id === FIREFOX_BOOKMARK_MOBILE
-                || os(root).uuid === CLOUD_EXTERNAL_NAME)
+            if (!settings.show_firefox_toolbar() && o(root)?.external_id === FIREFOX_BOOKMARK_TOOLBAR
+                || !settings.show_firefox_mobile() && o(root)?.external_id === FIREFOX_BOOKMARK_MOBILE
+                || o(root)?.uuid === CLOUD_EXTERNAL_NAME)
                 return;
 
             visitor(root);
+
             if (root.children)
                 for (let id of root.children) {
                     let node = _tree.get_node(id);
@@ -616,7 +616,7 @@ class BookmarkTree {
         let jnode = this._jstree.get_node(nodeId);
         let odata = this.odata;
 
-        if (os(jnode)?.id === FIREFOX_SHELF_ID) {
+        if (o(jnode)?.id === FIREFOX_SHELF_ID) {
             let unfiled = odata.find(n => n.external_id === FIREFOX_BOOKMARK_UNFILED)
             if (unfiled)
                 jnode = this._jstree.get_node(unfiled.id);
@@ -1113,12 +1113,14 @@ class BookmarkTree {
                     }
                 }
             },
-            repairIconsItem: {
+            checkLinksItem: {
                 separator_before: true,
-                label: "Repair icons...",
+                label: "Check Links",
                 action: async () => {
-                    let query = `?repairIcons=true&scope=${o(ctxNode).id}`
-                    browser.tabs.create({url: `/options.html${query}#links`, active: true});
+                    settings.load(settings => {
+                        let query = `?menu=true&repairIcons=${!!settings.repair_icons()}&scope=${o(ctxNode).id}`
+                        browser.tabs.create({url: `/options.html${query}#links`, active: true});
+                    });
                 }
             },
             deleteItem: {
@@ -1330,7 +1332,7 @@ class BookmarkTree {
                 delete items.newFolderItem;
                 delete items.renameItem;
                 delete items.rdfPathItem;
-                delete items.repairIconsItem;
+                delete items.checkLinksItem;
                 if (o(ctxNode).external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
                     delete items.copyItem;

@@ -376,10 +376,10 @@ let autoStartCheckLinks;
 let autoLinkCheckScope;
 async function doAutoStartCheckLinks() {
     const urlParams = new URLSearchParams(window.location.search);
-    autoStartCheckLinks = !!urlParams.get("repairIcons");
+    autoStartCheckLinks = !!urlParams.get("menu");
 
     if (autoStartCheckLinks) {
-        $("#update-icons").prop("checked", true);
+        $("#update-icons").prop("checked", urlParams.get("repairIcons") === "true");
         let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
         $("#link-scope").replaceWith(scopePath[scopePath.length - 1].name + "&nbsp;&nbsp;");
         autoLinkCheckScope = scopePath.map(g => g.name).join("/");

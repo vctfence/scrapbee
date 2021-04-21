@@ -195,19 +195,27 @@ export class CloudBackend {
 
     async _storeNotesInternal(db, node, options) {
         let cloud_node = await db.getNode(node.uuid, true);
-        cloud_node.has_notes = !!options.content;
-        cloud_node.notes_format = options.format;
-        cloud_node.notes_align = options.align;
-        cloud_node.notes_width = options.width;
+
+        if (options.hasOwnProperty("content"))
+            cloud_node.has_notes = !!options.content;
+        if (options.hasOwnProperty("format"))
+            cloud_node.notes_format = options.format;
+        if (options.hasOwnProperty("align"))
+            options.notes_align = options.align;
+        if (options.hasOwnProperty("width"))
+            options.notes_width = options.width;
+
         cloud_node = await db.updateNode(cloud_node);
 
-        let is_html = options.format === "html" || options.format === "delta";
+        if (options.hasOwnProperty("content")) {
+            let is_html = options.format === "html" || options.format === "delta";
 
-        let view = `<html><head></head><body class="${is_html? "format-html": ""}">${notes2html(options)}</body></html>`;
+            let view = `<html><head></head><body class="${is_html ? "format-html" : ""}">${notes2html(options)}</body></html>`;
 
-        await db.storeView(cloud_node, view);
+            await db.storeView(cloud_node, view);
 
-        return db.storeNotes(cloud_node, options.content);
+            return db.storeNotes(cloud_node, options.content);
+        }
     }
 
     async _storeCommentsInternal(node, comments) {

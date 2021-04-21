@@ -11,9 +11,9 @@ code, pre {
     font-family: "Lucida Console", "Courier New", monospace;
 }
 code {
-    background-color: #eee;
+    /*background-color: #eee;
     color: rgba(0, 0, 0, 0.75);
-    padding: 1px 3px;
+    padding: 1px 3px;*/
 }
 
 pre {
