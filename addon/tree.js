@@ -5,7 +5,14 @@ import {cloudBackend} from "./backend_cloud.js"
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
-import {getThemeVar, isElementInViewport, notes2html, openContainerTab, showNotification} from "./utils.js";
+import {
+    getActiveTab,
+    getThemeVar,
+    isElementInViewport,
+    notes2html,
+    openContainerTab,
+    showNotification
+} from "./utils.js";
 import {
     CLOUD_EXTERNAL_NAME,
     ENDPOINT_TYPES,
@@ -38,7 +45,12 @@ export const TREE_STATE_PREFIX = "tree-state-";
 
 
 // return the original Scrapyard node object stored in a jsTree node
-let o = n => n.data;
+let o = n => {
+    // by somewhat reason objects with arrays from jsTree are not structurally cloneable
+    if (n.data?.tag_list)
+        delete n.data.tag_list;
+    return n.data;
+};
 
 class BookmarkTree {
     constructor(element, inline= false) {
@@ -232,24 +244,24 @@ class BookmarkTree {
             }
 
             let clickable = element.getAttribute("data-clickable");
-            let id = element.getAttribute("data-id");
-            let external = element.getAttribute("data-external");
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                backend.getNode(parseInt(id)).then(async node => {
-                    if (node) {
-                        //console.log(node);
-
-                        let active_tab;
-
-                        if (settings.open_bookmark_in_active_tab()) {
-                            let active_tabs = await browser.tabs.query({active: true, currentWindow: true});
-                            active_tab = e.button === 0 && active_tabs && active_tabs.length? active_tabs[0] : undefined;
-                        }
-
-                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node, tab: active_tab, preserveHistory: true});
+                let node = o(this._jstree.get_node(element.id));
+                if (node) {
+                    if (settings.open_bookmark_in_active_tab()) {
+                        getActiveTab().then(active_tab => {
+                            active_tab = e.button === 0 && active_tab ? active_tab : undefined;
+                            browser.runtime.sendMessage({
+                                type: "BROWSE_NODE",
+                                node: node,
+                                tab: active_tab,
+                                preserveHistory: true
+                            });
+                        });
                     }
-                });
+                    else
+                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                }
             }
             return false;
         }
@@ -286,7 +298,6 @@ class BookmarkTree {
         let nodes = [];
         this.traverse(root, jnode => {
             let data = backend._sanitizeNode(o(jnode));
-            delete data.tag_list;
 
             data.level = jnode.parents.length - skip_level;
             nodes.push(data);
@@ -427,8 +438,8 @@ class BookmarkTree {
 
             jnode.li_attr = {
                 "class": "show_tooltip",
-                "title": `${node.text}${nuri}`,
-                "data-id": node.id,
+                "title": `${node.name}${nuri}`,
+                //"data-id": node.id,
                 "data-clickable": "true"
             };
 
@@ -558,8 +569,33 @@ class BookmarkTree {
             this._jstree.set_icon(cloud_node, icon);
     }
 
+    createTentativeNode(node) {
+        node.__tentative = true;
+        node.id = node.__tentative_id;
+        let jnode = BookmarkTree.toJsTreeNode(node);
+        return this._jstree.create_node(node.parent_id, jnode, "last");
+    }
+
+    updateTentativeNode(node) {
+        const jnode = this._jstree.get_node(node.__tentative_id);
+        if (jnode) {
+            this._jstree.set_id(node.__tentative_id, node.id);
+            const jnode = this._jstree.get_node(node.id);
+
+            node.__tentative = false;
+            if (node.icon && node.stored_icon) {
+                this.iconCache.set(node.icon, jnode.icon);
+                jnode.icon = node.icon;
+            }
+            Object.assign(o(jnode), node);
+            jnode.original = BookmarkTree.toJsTreeNode(node);
+            this.data.push(jnode.original);
+        }
+    }
+
     selectNode(nodeId, open, forceScroll) {
         let jnode = this._jstree.get_node(nodeId);
+
         this._jstree.deselect_all(true);
         this._jstree.select_node(nodeId);
 
@@ -766,8 +802,10 @@ class BookmarkTree {
             openItem: {
                 label: "Open",
                 action: async function () {
-                    for (let n of selectedNodes)
-                        await browser.runtime.sendMessage({type: "BROWSE_NODE", node: o(n)});
+                    for (let jnode of selectedNodes) {
+                        const node = o(jnode);
+                        await browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                    }
                 }
             },
             openAllItem: {
@@ -1210,13 +1248,13 @@ class BookmarkTree {
 
                             delete properties.comments;
 
-                            let live_data = self.data.find(n => n.id == properties.id);
-                            Object.assign(o(ctxNode), properties);
-                            Object.assign(live_data, BookmarkTree.toJsTreeNode(o(ctxNode)));
-
                             await backend.updateBookmark(properties);
 
                             self.stopProcessingIndication();
+
+                            let live_data = self.data.find(n => n.id == properties.id);
+                            Object.assign(o(ctxNode), properties);
+                            Object.assign(live_data, BookmarkTree.toJsTreeNode(o(ctxNode)));
 
                             if (!o(ctxNode)._extended_todo)
                                 tree.rename_node(ctxNode, properties.name);

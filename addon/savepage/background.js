@@ -654,10 +654,14 @@ function addListeners()
                     return;
                 }
 
-                backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
-                    getActiveTab().then(tab => {
-                            bookmark.__tab_id = tab.id;
-                            initiateAction(tab, buttonAction,bookmark);
+                backend.setTentativeId(message.data);
+                browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message.data})
+                    .then(() => {
+                        backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
+                            getActiveTab().then(tab => {
+                                bookmark.__tab_id = tab.id;
+                                initiateAction(tab, buttonAction, bookmark);
+                            });
                         });
                     });
             }
@@ -677,8 +681,10 @@ function addListeners()
                         if (!message.bookmark.__mute_ui) {
                             browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
 
-                            if (!message?.bookmark.automation || message?.bookmark.ishell || message?.bookmark.select)
+                            if (message.bookmark?.__automation && message.bookmark?.select)
                                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.bookmark});
+                            else if (message.bookmark && !message.bookmark.__automation)
+                                browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: message.bookmark});
                         }
 
                         backend.storeIndex(message.bookmark.id, message.data.indexWords());
@@ -948,7 +954,6 @@ function addListeners()
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
         let node;
-        let activeTab;
         sender.ishell = isIShell(sender.id);
 
         switch (message.type) {
@@ -1015,14 +1020,14 @@ function addListeners()
                 else
                     return nodes;
 
-            case "SCRAPYARD_ADD_BOOKMARK":
+            case "SCRAPYARD_ADD_BOOKMARK": {
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                activeTab = await getActiveTab();
+                let activeTab = await getActiveTab();
 
                 if (!message.uri)
-                    message.uri =  message.url || activeTab.url;
+                    message.uri = message.url || activeTab.url;
 
                 if (!message.uri || isSpecialPage(message.uri)) {
                     notifySpecialPage();
@@ -1032,31 +1037,45 @@ function addListeners()
                 if (!message.name)
                     message.name = message.title || activeTab.title;
 
+                message.type = NODE_TYPE_BOOKMARK;
+
                 if (message.icon === "")
                     message.icon = null;
                 else if (!message.icon)
                     message.icon = await getFaviconFromTab(activeTab);
 
-                message.path = backend.expandPath(message.path);
+                const path = backend.expandPath(message.path);
+                const group = await backend.getGroupByPath(path);
+                message.parent_id = group.id;
+                delete message.path;
+
+                // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
+                message.__automation = !(sender.ishell && message.search);
+
+                if (!message.__automation) {
+                    backend.setTentativeId(message);
+                    await browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message});
+                }
 
                 return backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
-                    // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
-                    if (sender.ishell && message.search || message.select)
+                    if (message.__automation && message.select)
                         browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                    else if (!message.__automation)
+                        browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
 
                     return bookmark.uuid;
                 });
-
-            case "SCRAPYARD_ADD_ARCHIVE":
+            }
+            case "SCRAPYARD_ADD_ARCHIVE": {
                 if (!isAutomationAllowed(sender))
                     throw new Error();
 
-                activeTab = await getActiveTab();
+                let activeTab = await getActiveTab();
 
                 if (message.url === "")
-                    message.uri =  message.url;
+                    message.uri = message.url;
                 else if (!message.uri)
-                    message.uri =  message.url || activeTab.url;
+                    message.uri = message.url || activeTab.url;
 
                 if (message.uri === null || message.uri === undefined || isSpecialPage(message.uri)) {
                     notifySpecialPage();
@@ -1066,6 +1085,8 @@ function addListeners()
                 if (!message.name)
                     message.name = message.title || activeTab.title;
 
+                message.type = NODE_TYPE_ARCHIVE;
+
                 if (message.icon === "")
                     message.icon = null;
                 else if (!message.icon)
@@ -1074,16 +1095,21 @@ function addListeners()
                 if (!message.content_type)
                     message.content_type = "text/html";
 
-                message.path = backend.expandPath(message.path);
-                message.ishell = sender.ishell;
-                message.automation = true;
+                const path = backend.expandPath(message.path);
+                const group = await backend.getGroupByPath(path);
+                message.parent_id = group.id;
+                delete message.path;
+
+                // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
+                message.__automation = !(sender.ishell && message.search);
 
                 let saveContent = (bookmark, content) => {
-                    return backend.storeBlob(bookmark.id, content, message.pack? "text/html": message.content_type)
+                    return backend.storeBlob(bookmark.id, content, message.pack ? "text/html" : message.content_type)
                         .then(() => {
-                            // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
-                            if (sender.ishell && message.search || message.select)
+                            if (message.__automation && message.select)
                                 browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                            else if (!message.__automation)
+                                browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
 
                             if (message.content_type === "text/html")
                                 backend.storeIndex(bookmark.id, content.indexWords());
@@ -1091,6 +1117,11 @@ function addListeners()
                             return bookmark.uuid;
                         })
                 };
+
+                if (!message.__automation) {
+                    backend.setTentativeId(message);
+                    await browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message});
+                }
 
                 return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(async bookmark => {
                     if (message.pack) {
@@ -1109,7 +1140,7 @@ function addListeners()
                         return bookmark.uuid;
                     }
                 });
-
+            }
             case "SCRAPYARD_GET_UUID":
                 if (!isAutomationAllowed(sender))
                     throw new Error();
@@ -1291,7 +1322,7 @@ async function initiateAction(tab, menuaction, bookmark)
 
                         backend.storeBlob(bookmark.id, this.response, contentType);
 
-                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                        browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
                     }
                 };
 

@@ -110,6 +110,7 @@ window.onload = function () {
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",
                                      data: {
+                                        type: node_type,
                                         name: $("#bookmark-name").val(),
                                         uri:  $("#bookmark-url").val(),
                                         tags: $("#bookmark-tags").val(),

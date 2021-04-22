@@ -27,11 +27,11 @@ import {
 import {
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
-    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES,
-    RDF_EXTERNAL_NAME
+    RDF_EXTERNAL_NAME,
+    isSpecialShelf
 } from "./storage_constants.js";
 
 export async function browseNode(node, external_tab, preserve_history, container) {
@@ -57,6 +57,11 @@ export async function browseNode(node, external_tab, preserve_history, container
         break;
 
         case NODE_TYPE_ARCHIVE:
+
+            if (node.__tentative) {
+                showNotification({message: "Please wait."});
+                return;
+            }
 
             if (node.external === RDF_EXTERNAL_NAME) {
                 let helperApp = await nativeBackend.probe(true);
@@ -148,8 +153,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 return;
             }
 
+            backend.setTentativeId(message.data);
+            await browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message.data});
             await backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
-                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
             });
 
             break;

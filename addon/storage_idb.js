@@ -73,7 +73,7 @@ class IDBStorage {
     }
 
     async addNode(datum, reset_order = true, reset_dates = true, new_uuid = true) {
-        datum = this._sanitizeNode(datum);
+        delete datum.id;
 
         if (reset_order)
             datum.pos = DEFAULT_POSITION;
@@ -86,7 +86,7 @@ class IDBStorage {
             datum.date_modified = datum.date_added;
         }
 
-        datum.id = await dexie.nodes.add(datum);
+        datum.id = await dexie.nodes.add(this._sanitizeNode(datum));
         return datum;
     }
 
@@ -165,15 +165,13 @@ class IDBStorage {
 
     async updateNode(node, reset_date = true) {
         if (node && node.id) {
-            node = this._sanitizeNode(node);
-
             let id = node.id;
             //delete node.id;
 
             if (reset_date)
                 node.date_modified = new Date();
 
-            await dexie.nodes.update(id, node);
+            await dexie.nodes.update(id, this._sanitizeNode(node));
         }
         return node;
     }

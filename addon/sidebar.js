@@ -2,7 +2,7 @@ import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isElementInViewport, isIShell} from "./utils.js"
+import {isIShell} from "./utils.js"
 
 import {
     SEARCH_MODE_TITLE,
@@ -11,7 +11,7 @@ import {
     SearchContext
 } from "./search.js";
 
-import {pathToNameExt, showNotification} from "./utils.js";
+import {openPage, pathToNameExt, showNotification} from "./utils.js";
 import {
     CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
@@ -27,6 +27,14 @@ const INPUT_TIMEOUT = 1000;
 let randomBookmark;
 let randomBookmarkTimeout;
 
+function startProcessingIndication() {
+    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+}
+
+function stopProcessingIndication() {
+    $("#shelf-menu-button").attr("src", "icons/menu.svg");
+}
+
 window.onload = function () {
     /* i18n */
     document.title = document.title.translate();
@@ -38,24 +46,9 @@ window.onload = function () {
 
     shelf_list.selectric({maxHeight: 600, inheritOriginalWidth: true});
 
-    var btn = document.getElementById("btnLoad");
-    btn.onclick = function () {
-        loadShelves(context, tree);
-    };
-
-    var btn = document.getElementById("btnSet");
-    btn.onclick = function () {
-        browser.tabs.create({
-            "url": "options.html"
-        });
-    };
-
-    var btn = document.getElementById("btnHelp");
-    btn.onclick = function () {
-        browser.tabs.create({
-            "url": "options.html#help"
-        });
-    };
+    $("#btnLoad").on("click", () => loadShelves(context, tree));
+    $("#btnSettings").on("click", () => openPage("options.html"));
+    $("#btnHelp").on("click", () => openPage("options.html#help"));
 
     shelf_list.change(function () {
         styleBuiltinShelf();
@@ -174,11 +167,10 @@ window.onload = function () {
 
     let processing_timeout;
     tree.startProcessingIndication = () => {
-        processing_timeout = setTimeout(() =>
-            $("#shelf-menu-button").attr("src", "icons/grid.svg"), 1000)
+        processing_timeout = setTimeout(startProcessingIndication, 1000)
     };
     tree.stopProcessingIndication = () => {
-        $("#shelf-menu-button").attr("src", "icons/menu.svg");
+        stopProcessingIndication();
         clearTimeout(processing_timeout);
     };
 
@@ -306,10 +298,38 @@ window.onload = function () {
 
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === "START_PROCESSING_INDICATION") {
-            $("#shelf-menu-button").attr("src", "icons/grid.svg")
+            startProcessingIndication();
         }
         else if (message.type === "STOP_PROCESSING_INDICATION") {
-            $("#shelf-menu-button").attr("src", "icons/menu.svg")
+            stopProcessingIndication();
+        }
+        else if (message.type === "BEFORE_BOOKMARK_ADDED") {
+            const node = message.node;
+            const select = settings.switch_to_new_bookmark();
+
+            return backend._ensureUnique(node.parent_id, node.name).then(name => {
+                node.name = name;
+                tree.createTentativeNode(node);
+
+                if (select) {
+                    return backend.computePath(node.parent_id).then(path => {
+                        if (settings.last_shelf() == path[0].id) {
+                            tree.selectNode(node.id);
+                        }
+                        else {
+                            settings.last_shelf(path[0].id);
+                            return loadShelves(context, tree, false).then(() => {
+                                tree.createTentativeNode(node, select);
+                                tree.selectNode(node.id);
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        else if (message.type === "BOOKMARK_ADDED") {
+            if (settings.switch_to_new_bookmark())
+                tree.updateTentativeNode(message.node);
         }
         else if (message.type === "BOOKMARK_CREATED") {
             if (settings.switch_to_new_bookmark())
@@ -612,11 +632,11 @@ async function performSearch(context, tree) {
 
 function performImport(context, tree, file, file_name, file_ext) {
 
-    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+    startProcessingIndication();
 
     return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
         .then(() => {
-            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+            stopProcessingIndication();
 
             if (file_name.toLocaleLowerCase() === EVERYTHING) {
                 settings.last_shelf(EVERYTHING_SHELF);
@@ -634,7 +654,7 @@ function performImport(context, tree, file, file_name, file_ext) {
                 });
         }).catch(e => {
             console.error(e);
-            $("#shelf-menu-button").attr("src", "icons/menu.svg");
+            stopProcessingIndication();
             showNotification({message: "The import has failed: " + e.message});
         });
 }
@@ -651,14 +671,14 @@ function performExport(context, tree) {
     let uuid = nodes[0].uuid;
     nodes.shift(); // shelf
 
-    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+    startProcessingIndication();
 
     return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
     }).catch(e => {
         console.log(e.message);
-        $("#shelf-menu-button").attr("src", "icons/menu.svg");
-        showNotification({message: "The export has failed."});
+        startProcessingIndication();
+        showNotification({message: "The export has failed: " + e.message});
     });
 }
 

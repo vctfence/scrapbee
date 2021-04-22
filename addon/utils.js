@@ -41,7 +41,12 @@ export function showNotification(args) {
 }
 
 export async function getActiveTab() {
-    return (await browser.tabs.query({ lastFocusedWindow: true, active: true }))[0];
+    const tabs = await browser.tabs.query({ lastFocusedWindow: true, active: true });
+    return tabs && tabs.length? tabs[0]: null;
+}
+
+export async function openPage(url) {
+    return browser.tabs.create({"url": url});
 }
 
 export async function openContainerTab(url, container) {

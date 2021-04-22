@@ -412,6 +412,11 @@ export class Backend extends ExternalEventProvider {
         let n = 1;
 
         while (children.filter(c => !!c).some(c => c.toLocaleUpperCase() === name.toLocaleUpperCase())) {
+            let m = original.match(/.*( \(\d+\))$/);
+
+            if (m)
+                original = original.replace(m[1], "");
+
             name = original + " (" + n + ")";
             n += 1
         }
@@ -651,17 +656,18 @@ export class Backend extends ExternalEventProvider {
         }
     }
 
+    setTentativeId(node) {
+        const id = "tentative_" + Math.floor(Math.random() * 1000);
+        node.__tentative_id = id;
+    }
+
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
         let group, parent_id;
 
-        if (data.parent_id) {
+        if (data.parent_id)
             parent_id = data.parent_id = parseInt(data.parent_id);
-        }
-        else {
-            group = await this.getGroupByPath(data.path);
-            parent_id = data.parent_id = group.id;
-            delete data.path;
-        }
+        else
+            throw new Error("No bookmark parent id");
 
         if (!group)
             group = await this.getNode(parent_id);
