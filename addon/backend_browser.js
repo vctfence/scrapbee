@@ -4,10 +4,9 @@ import {getFavicon} from "./utils.js";
 import {backend} from "./backend.js";
 import {
     FIREFOX_BOOKMARK_MENU,
-    FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
-    FIREFOX_SHELF_UUID,
-    isContainer,
-    isEndpoint, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF
+    FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
+    isContainer, isEndpoint,
 } from "./storage_constants.js";
 
 export class BrowserBackend {

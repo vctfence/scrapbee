@@ -280,3 +280,7 @@ a.has-notes, a.has-notes:hover {
 .container-context-menu i {
     background-size: 16px 16px !important;
 }
+
+.node-pending {
+    color: dimgray;
+}

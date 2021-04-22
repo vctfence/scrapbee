@@ -66,7 +66,7 @@ select,
 .jstree-default .jstree-anchor.jstree-clicked,
 .jstree-default .jstree-anchor.jstree-clicked .todo-path,
 .jstree-default .jstree-anchor.jstree-clicked .todo-details {
-    color: var(--tone-3) !important;
+    color: var(--tone-3)/* !important*/;
     transition: none !important;
     background-color: transparent !important;
 }
@@ -299,4 +299,8 @@ span.task-status.done {
 
 select#link-scope, select#option-export-format, select#notes-format {
     color: black !important;
+}
+
+.node-pending {
+    color: #909090 !important;
 }

@@ -455,7 +455,7 @@ window.onload = function () {
 function loadShelves(context, tree, synchronize = true, clearSelection = false) {
     let shelf_list = $("#shelfList");
 
-    return backend.listShelves().then(shelves => {
+    return settings.load().then(() => backend.listShelves().then(shelves => {
         shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
@@ -518,7 +518,7 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
         shelf_list.val(1);
         shelf_list.selectric('refresh');
         return switchShelf(context, tree, 1, synchronize, clearSelection);
-    });
+    }));
 }
 
 function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection = false) {
@@ -678,7 +678,7 @@ function performExport(context, tree) {
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
     }).catch(e => {
         console.log(e.message);
-        startProcessingIndication();
+        stopProcessingIndication();
         showNotification({message: "The export has failed: " + e.message});
     });
 }

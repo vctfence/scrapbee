@@ -35,10 +35,17 @@ export let settings = new Proxy({
     __key__   : SETTINGS_KEY,
     __bin__   : DEFAULT_SETTINGS,
     __load__  : function(f) {
-        chrome.storage.local.get(SETTINGS_KEY, object => {
-            settings.__bin__ = object[SETTINGS_KEY]? object[SETTINGS_KEY]: DEFAULT_SETTINGS;
-            if (f) f(this);
-        });
+        if (f) {
+            chrome.storage.local.get(SETTINGS_KEY, object => {
+                settings.__bin__ = object[SETTINGS_KEY] ? object[SETTINGS_KEY] : DEFAULT_SETTINGS;
+                if (f) f(this);
+            });
+        }
+        else {
+            return browser.storage.local.get(SETTINGS_KEY).then(object => {
+                settings.__bin__ = object[SETTINGS_KEY] ? object[SETTINGS_KEY] : DEFAULT_SETTINGS;
+            });
+        }
     }
 }, BinHandler);
 

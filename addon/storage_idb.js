@@ -73,8 +73,6 @@ class IDBStorage {
     }
 
     async addNode(datum, reset_order = true, reset_dates = true, new_uuid = true) {
-        delete datum.id;
-
         if (reset_order)
             datum.pos = DEFAULT_POSITION;
 

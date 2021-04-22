@@ -569,6 +569,8 @@ class BookmarkTree {
         node.__tentative = true;
         node.id = node.__tentative_id;
         let jnode = BookmarkTree.toJsTreeNode(node);
+
+        jnode.a_attr.class += " node-pending";
         return this._jstree.create_node(node.parent_id, jnode, "last");
     }
 
@@ -578,14 +580,20 @@ class BookmarkTree {
             this._jstree.set_id(node.__tentative_id, node.id);
             const jnode = this._jstree.get_node(node.id);
 
+            jnode.a_attr.class = jnode.a_attr.class.replace("node-pending", " ");
+
             node.__tentative = false;
+
             if (node.icon && node.stored_icon) {
                 this.iconCache.set(node.icon, jnode.icon);
                 jnode.icon = node.icon;
             }
+
             Object.assign(o(jnode), node);
             jnode.original = BookmarkTree.toJsTreeNode(node);
             this.data.push(jnode.original);
+
+            this._jstree.redraw_node(jnode)
         }
     }
 
@@ -810,6 +818,15 @@ class BookmarkTree {
                         await send.browseNode({node: node});
                 }
             },
+            openOriginalItem: {
+                label: "Open Original URL",
+                action: function () {
+                    let url = o(ctxNode).uri;
+
+                    if (url)
+                        openContainerTab(url, o(ctxNode).container);
+                }
+            },
             openInContainerItem: {
                 label: "Open in Container",
                 submenu: containersSubmenu
@@ -823,15 +840,6 @@ class BookmarkTree {
 
                     tree.redraw_node(ctxNode, true, false, true);
                     BookmarkTree.reorderNodes(tree, ctxNode);
-                }
-            },
-            openOriginalItem: {
-                label: "Open Original URL",
-                action: function () {
-                    let url = o(ctxNode).uri;
-
-                    if (url)
-                        openContainerTab(url, o(ctxNode).container);
                 }
             },
             copyLinkItem: {

@@ -1,6 +1,6 @@
-import {send} from "./proxy.js";
-import {settings} from "/settings.js";
-import {nativeBackend} from "/backend_native.js";
+import {send} from "../proxy.js";
+import {settings} from "../settings.js";
+import {nativeBackend} from "../backend_native.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){

@@ -59,10 +59,8 @@ export async function browseNode(node, external_tab, preserve_history, container
 
         case NODE_TYPE_ARCHIVE:
 
-            if (node.__tentative) {
-                showNotification({message: "Please wait."});
+            if (node.__tentative)
                 return;
-            }
 
             if (node.external === RDF_EXTERNAL_NAME) {
                 let helperApp = await nativeBackend.probe(true);

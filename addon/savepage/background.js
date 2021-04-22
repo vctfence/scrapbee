@@ -382,7 +382,7 @@
 /*                                                                      */
 /************************************************************************/
 
-import {send} from "./proxy.js";
+import {send} from "../proxy.js";
 import {backend} from "../backend.js";
 import {browseNode} from "../background.js";
 import {getActiveTab, getFaviconFromTab, isIShell, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";

@@ -106,6 +106,7 @@ window.onload = function () {
     function addBookmark(node_type) {
         let parent_jnode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
         saveHistory(parent_jnode.id, parent_jnode.text, folder_history);
+
         browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",
