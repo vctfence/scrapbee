@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {getFavicon} from "./utils.js";
 import {backend} from "./backend.js";
@@ -294,7 +295,7 @@ export class BrowserBackend {
                         await backend.storeIcon(node, icon.response, icon.type);
 
                     if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
-                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: node});
+                        send.bookmarkCreated({node: node});
                 }
             }
             catch (e) {console.log(e)}
@@ -315,7 +316,7 @@ export class BrowserBackend {
                 let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
                 if (node) {
                     await backend.deleteNodes([node.id], FIREFOX_SHELF_NAME);
-                    browser.runtime.sendMessage({type: "EXTERNAL_NODE_REMOVED", node: node});
+                    send.externalNodeRemoved({node: node});
                 }
             }
             catch (e) {console.log(e)}
@@ -337,7 +338,7 @@ export class BrowserBackend {
                     node.uri = bookmark.url;
                     node.name = bookmark.title;
                     node = await backend.updateNode(node);
-                    browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: node});
+                    send.externalNodeUpdated({node: node});
                 }
             }
             catch (e) {console.log(e)}
@@ -378,8 +379,8 @@ export class BrowserBackend {
                     await backend.reorderNodes(db_children);
 
                     if (updated_node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
-                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: updated_node});
-                    //browser.runtime.sendMessage({type: "EXTERNAL_NODE_UPDATED", node: updated_node});
+                        send.bookmarkCreated({node: updated_node});
+                    //send.externalNodeUpdated({node: updated_node});
                 }
             }
             catch (e) {console.log(e)}
@@ -413,7 +414,7 @@ export class BrowserBackend {
         let ui_context = window !== browser.extension.getBackgroundPage();
 
         if (ui_context)
-            return await browser.runtime.sendMessage({type: "GET_LISTENER_LOCK_STATE"});
+            return await send.getListenerLockState();
 
         return !!this._listenerSemaphore;
     }
@@ -423,14 +424,14 @@ export class BrowserBackend {
         //console.log(new Error().stack);
 
         if (ui_context)
-            await browser.runtime.sendMessage({type: "UI_LOCK_GET"});
+            await send.uiLockGet();
         else
             this.getUILock();
 
         try {await f()} catch (e) {console.log(e);}
 
         if (ui_context)
-            await browser.runtime.sendMessage({type: "UI_LOCK_RELEASE"});
+            await send.uiLockRelease();
         else
             this.releaseUILock();
     }
@@ -499,7 +500,7 @@ export class BrowserBackend {
             if (!db_root) {
                 db_root = await backend.addNode(this.newBrowserRootNode(),
                     false, true, false);
-                browser.runtime.sendMessage({type: "SHELVES_CHANGED"});
+                send.shelvesChanged();
             }
 
             let [browser_root] = await browser.bookmarks.getTree();
@@ -513,7 +514,7 @@ export class BrowserBackend {
                 await backend.deleteMissingExternalNodes(browser_ids, FIREFOX_SHELF_NAME);
 
                 //console.log("reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
-                browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
+                send.externalNodesReady();
 
                 for (let item of get_icons) {
                     let node = await backend.getNode(item[0]);
@@ -547,7 +548,7 @@ export class BrowserBackend {
                 });
 
                 if (get_icons.length)
-                    setTimeout(() => browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"}), 500);
+                    setTimeout(() => send.externalNodesReady(), 500);
 
                 this.installBrowserListeners();
             });
@@ -555,7 +556,7 @@ export class BrowserBackend {
         else {
             this.removeBrowserListeners();
             await backend.deleteExternalNodes(null, FIREFOX_SHELF_NAME);
-            browser.runtime.sendMessage({type: "SHELVES_CHANGED"});
+            send.shelvesChanged();
         }
     }
 

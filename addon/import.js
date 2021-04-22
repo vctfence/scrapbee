@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import * as org from "./lib/org/org.js"
 import {backend} from "./backend.js"
 import {nativeBackend} from "./backend_native.js"
@@ -929,10 +930,10 @@ export async function importRDF(shelf, path, threads, quick) {
                     await importRDFArchive(bookmark, scrapbook_id, rdf_directory);
                 }
                 catch (e) {
-                    browser.runtime.sendMessage({type: "RDF_IMPORT_ERROR", bookmark: bookmark, error: e.message});
+                    send.rdfImportError({bookmark: bookmark, error: e.message});
                 }
 
-                browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: percent});
+                send.rdfImportProgress({progress: percent});
 
                 if (!cancelled)
                     await importf(items);
@@ -940,7 +941,7 @@ export async function importRDF(shelf, path, threads, quick) {
         };
 
         //let startTime = new Date().getTime() / 1000;
-        browser.runtime.sendMessage({type: "RDF_IMPORT_PROGRESS", progress: 0});
+        send.rdfImportProgress({progress: 0});
         await Promise.all(parts.map(bb => importf(bb)));
 
         // let loadTime = Math.round(new Date().getTime() / 1000 - startTime);
@@ -950,9 +951,9 @@ export async function importRDF(shelf, path, threads, quick) {
         // result.processingTime = m + "m " + s + "s";
     }
 
-    browser.runtime.sendMessage({type: "NODES_IMPORTED", shelf: shelf_node});
+    send.nodesImported({shelf: shelf_node});
 
-    browser.runtime.sendMessage({type: "OBTAINING_ICONS", shelf: shelf_node});
+    send.obtainingIcons({shelf: shelf_node});
 
     for (let node of bookmarks) {
         if (cancelled)
@@ -966,7 +967,7 @@ export async function importRDF(shelf, path, threads, quick) {
     }
 
     if (bookmarks.length)
-        browser.runtime.sendMessage({type: "NODES_READY", shelf: shelf_node})
+        send.nodesReady({shelf: shelf_node})
 
     browser.runtime.onMessage.removeListener(cancelListener);
 }

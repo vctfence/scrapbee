@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {backend} from "./backend.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {dropboxBackend} from "./backend_dropbox.js"
@@ -123,7 +124,7 @@ function loadScrapyardSettings() {
                         if (success)
                             $("#auth-dropbox").val("Sign out");
                     }
-                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"})
+                    send.reconcileCloudBookmarkDb()
                 });
         });
 
@@ -131,7 +132,7 @@ function loadScrapyardSettings() {
 
         $("#option-cloud-background-sync").on("change", e => {
             settings.cloud_background_sync(e.target.checked,
-                () => browser.runtime.sendMessage({type: "ENABLE_CLOUD_BACKGROUND_SYNC"}));
+                () => send.enableCloudBackgroundSync());
         });
 
         if (dropboxBackend.isAuthenticated())
@@ -152,9 +153,9 @@ function storeScrapyardSettings() {
     settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
     settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
     settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
-        () => browser.runtime.sendMessage({type: "SHELVES_CHANGED"}));
+        () => send.shelvesChanged());
     settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
-        () => browser.runtime.sendMessage({type: "RECONCILE_BROWSER_BOOKMARK_DB"}));
+        () => send.reconcileBrowserBookmarkDb());
     settings.do_not_show_archive_toolbar(document.getElementById("option-do-not-show-archive-toolbar").checked);
     settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
     settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
@@ -167,14 +168,14 @@ function storeScrapyardSettings() {
     const displayRandomBookmark = document.getElementById("option-display-random-bookmark").checked;
     if (displayRandomBookmark !== settings.display_random_bookmark())
         settings.display_random_bookmark(displayRandomBookmark,
-            () => browser.runtime.sendMessage({type: "DISPLAY_RANDOM_BOOKMARK", display: displayRandomBookmark}));
+            () => send.displayRandomBookmark({display: displayRandomBookmark}));
 
     const currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
     const newSidebarTheme = document.getElementById("option-sidebar-theme").value;
     localStorage.setItem("scrapyard-sidebar-theme", newSidebarTheme);
 
     if (currentSidebarTheme !== newSidebarTheme)
-        browser.runtime.sendMessage({type: "SIDEBAR_THEME_CHANGED", theme: newSidebarTheme});
+        send.sidebarThemeChanged({theme: newSidebarTheme});
 }
 
 let helperAppLinksLoaded = false;
@@ -285,7 +286,7 @@ window.onload = async function() {
 
 function selectNode(e) {
     e.preventDefault();
-    browser.runtime.sendMessage({type: "SELECT_NODE", node: {id: parseInt(e.target.getAttribute("data-id"))}});
+    send.selectNode({node: {id: parseInt(e.target.getAttribute("data-id"))}});
 }
 
 // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -307,7 +308,7 @@ async function onStartRDFImport(e) {
     let path = $("#rdf-import-path").val();
 
     if (importing) {
-        browser.runtime.sendMessage({type: "CANCEL_RDF_IMPORT"});
+        send.cancelRdfImport();
         finalize();
         return;
     }
@@ -357,7 +358,7 @@ async function onStartRDFImport(e) {
 
     browser.runtime.onMessage.addListener(importListener);
 
-    browser.runtime.sendMessage({type: "IMPORT_FILE", file: path, file_name: shelf, file_ext: "RDF",
+    send.importFile({file: path, file_name: shelf, file_ext: "RDF",
         threads: $("#rdf-import-threads").val(),
         quick: $("#rdf-import-quick").is(':checked')})
         .then(finalize)
@@ -433,7 +434,7 @@ function stopCheckLinks() {
     abort_check_links = false;
 
     if ($("#update-icons").is(":checked")) {
-        setTimeout(() => browser.runtime.sendMessage({type: "NODES_UPDATED"}), 500);
+        setTimeout(() => send.nodesUpdated(), 500);
     }
 }
 

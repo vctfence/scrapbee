@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {backend} from "./backend.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {cloudBackend} from "./backend_cloud.js"
@@ -251,16 +252,11 @@ class BookmarkTree {
                     if (settings.open_bookmark_in_active_tab()) {
                         getActiveTab().then(active_tab => {
                             active_tab = e.button === 0 && active_tab ? active_tab : undefined;
-                            browser.runtime.sendMessage({
-                                type: "BROWSE_NODE",
-                                node: node,
-                                tab: active_tab,
-                                preserveHistory: true
-                            });
+                            send.browseNode({node: node, tab: active_tab, preserveHistory: true});
                         });
                     }
                     else
-                        browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                        send.browseNode({node: node});
                 }
             }
             return false;
@@ -690,7 +686,7 @@ class BookmarkTree {
             if (this.startProcessingIndication)
                 this.startProcessingIndication();
 
-            browser.runtime.sendMessage({type: "MOVE_NODES", node_ids: [o(jnode).id], dest_id: o(jparent).id})
+            send.moveNodes({node_ids: [o(jnode).id], dest_id: o(jparent).id})
                 .then(async new_nodes => { // keep jstree nodes synchronized with the database
                     for (let node of new_nodes) {
                         jnode.original = BookmarkTree.toJsTreeNode(node);
@@ -728,7 +724,7 @@ class BookmarkTree {
             positions.push(node);
         }
 
-        return browser.runtime.sendMessage({type: "REORDER_NODES", positions: positions});
+        return send.reorderNodes({positions: positions});
     }
 
     /* context menu listener */
@@ -779,9 +775,7 @@ class BookmarkTree {
                         children.sort((a, b) => a.pos - b.pos);
 
                         for (let node of children)
-                            await browser.runtime.sendMessage({
-                                type: "BROWSE_NODE", node, container: obj.item.__container_id
-                            });
+                            await send.browseNode({node, container: obj.item.__container_id});
                     }
                     else {
                         for (let n of selectedNodes) {
@@ -789,9 +783,7 @@ class BookmarkTree {
                             if (!isEndpoint(node) || !node.uri)
                                 continue;
                             node.type = NODE_TYPE_BOOKMARK;
-                            await browser.runtime.sendMessage({
-                                type: "BROWSE_NODE", node, container: obj.item.__container_id
-                            });
+                            await send.browseNode({node, container: obj.item.__container_id});
                         }
                     }
                 }
@@ -804,7 +796,7 @@ class BookmarkTree {
                 action: async function () {
                     for (let jnode of selectedNodes) {
                         const node = o(jnode);
-                        await browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                        await send.browseNode({node: node});
                     }
                 }
             },
@@ -815,7 +807,7 @@ class BookmarkTree {
                     children.sort((a, b) => a.pos - b.pos);
 
                     for (let node of children)
-                        await browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                        await send.browseNode({node: node});
                 }
             },
             openInContainerItem: {
@@ -943,7 +935,7 @@ class BookmarkTree {
                         action: async function () {
                             self.startProcessingIndication();
                             let selectedIds = selectedNodes.map(n => o(n).id);
-                            await browser.runtime.sendMessage({type: "SHARE_TO_CLOUD", node_ids: selectedIds})
+                            await send.shareToCloud({node_ids: selectedIds})
                             self.stopProcessingIndication();
                         }
                     },
@@ -1060,8 +1052,8 @@ class BookmarkTree {
                         self.startProcessingIndication();
 
                     (buffer.mode === "copy_node"
-                        ? browser.runtime.sendMessage({type: "COPY_NODES", node_ids: selection, dest_id: o(ctxNode).id})
-                        : browser.runtime.sendMessage({type: "MOVE_NODES", node_ids: selection, dest_id: o(ctxNode).id}))
+                        ? send.copyNodes({node_ids: selection, dest_id: o(ctxNode).id})
+                        : send.moveNodes({node_ids: selection, dest_id: o(ctxNode).id}))
                         .then(new_nodes => {
                             switch (buffer.mode) {
                                 case "copy_node":
@@ -1100,7 +1092,7 @@ class BookmarkTree {
                 separator_before: true,
                 label: "Open Notes",
                 action: () => {
-                    browser.runtime.sendMessage({type: "BROWSE_NOTES", id: o(ctxNode).id, uuid: o(ctxNode).uuid});
+                    send.browseNotes({id: o(ctxNode).id, uuid: o(ctxNode).uuid});
                 }
             },
             todoItem: {
@@ -1179,7 +1171,7 @@ class BookmarkTree {
                                     if (self.startProcessingIndication)
                                         self.startProcessingIndication();
 
-                                    browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: o(ctxNode).id})
+                                    send.deleteNodes({node_ids: o(ctxNode).id})
                                         .then(() => {
                                             if (self.stopProcessingIndication)
                                                 self.stopProcessingIndication();
@@ -1202,7 +1194,7 @@ class BookmarkTree {
                             if (self.startProcessingIndication)
                                 self.startProcessingIndication();
 
-                            browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: selected_ids}).then(() => {
+                            send.deleteNodes({node_ids: selected_ids}).then(() => {
                                 if (self.stopProcessingIndication)
                                     self.stopProcessingIndication();
 
@@ -1220,6 +1212,11 @@ class BookmarkTree {
                 label: "Properties...",
                 action: async function () {
                     if (isEndpoint(o(ctxNode))) {
+
+                        if (o(ctxNode).__tentative) {
+                            showNotification({message: "Please wait."});
+                            return;
+                        }
 
                         let properties = await backend.getNode(o(ctxNode).id);
 

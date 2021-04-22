@@ -5,6 +5,7 @@ import {nativeBackend} from "./backend_native.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
+import {send} from "./proxy.js";
 
 import {
     exportOrg,
@@ -143,9 +144,6 @@ export async function browseNode(node, external_tab, preserve_history, container
 browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     let shelf;
     switch (message.type) {
-        case "RESEND_MESSAGE":
-            browser.runtime.sendMessage(message.message)
-            break;
 
         case "CREATE_BOOKMARK":
             if (isSpecialPage(message.data.uri)) {
@@ -154,9 +152,9 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             }
 
             backend.setTentativeId(message.data);
-            await browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message.data});
+            await send.beforeBookmarkAdded({ node: message.data});
             await backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
-                browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
+                send.bookmarkAdded({node: bookmark});
             });
 
             break;
@@ -330,7 +328,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         case "RECALCULATE_ARCHIVE_SIZE": {
             const nodeIDs = await backend.getNodeIds();
 
-            browser.runtime.sendMessage({type: "START_PROCESSING_INDICATION"});
+            send.startProcessingIndication();
 
             for (let id of nodeIDs) {
                 const node = await backend.getNode(id);
@@ -360,7 +358,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
             settings.archve_size_repaired(true);
 
-            browser.runtime.sendMessage({type: "STOP_PROCESSING_INDICATION"});
+            send.stopProcessingIndication();
         }
             break;
     }

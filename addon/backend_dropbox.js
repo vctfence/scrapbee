@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {JSONStorage} from "./storage_json.js";
 import {readBlob} from "./utils.js";
@@ -60,7 +61,7 @@ export class DropboxBackend {
                                                 const refreshToken = response.result.refresh_token;
                                                 this.dbxAuth.setRefreshToken(refreshToken);
                                                 settings.dropbox_refresh_token(refreshToken);
-                                                browser.runtime.sendMessage({type: "DROPBOX_AUTHENTICATED", refreshToken});
+                                                send.dropboxAuthenticated({refreshToken});
 
                                                 if (settings.dropbox___dbat())
                                                     settings.dropbox___dbat(null);

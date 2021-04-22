@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {settings} from "./settings.js"
 import {backend} from "./backend.js"
 import {BookmarkTree} from "./tree.js"
@@ -120,7 +121,7 @@ window.onload = function () {
         // TODO: 118n
         confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
             if (name) {
-                browser.runtime.sendMessage({type: "DELETE_NODES", node_ids: id}).then(() => {
+                send.deleteNodes({node_ids: id}).then(() => {
                     $(`#shelfList option[value="${id}"]`).remove();
 
                     shelf_list.val(1);
@@ -144,7 +145,7 @@ window.onload = function () {
             for (let i = 0; i < sorted.length; ++i)
                 positions.push({id: sorted[i].id, pos: i});
 
-            await browser.runtime.sendMessage({type: "REORDER_NODES", positions: positions});
+            await send.reorderNodes({positions: positions});
             loadShelves(context, tree, false);
         });
     });
@@ -556,7 +557,7 @@ function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection
             return backend.listShelfNodes(EVERYTHING).then(nodes => {
                 tree.update(nodes, true, clearSelection);
                 if (synchronize && settings.cloud_enabled()) {
-                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB"});
+                    send.reconcileCloudBookmarkDb();
                 }
             });
         }
@@ -564,7 +565,7 @@ function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection
             return backend.listShelfNodes(path).then(nodes => {
                 tree.update(nodes, false, clearSelection);
                 if (synchronize && settings.cloud_enabled()) {
-                    browser.runtime.sendMessage({type: "RECONCILE_CLOUD_BOOKMARK_DB", verbose: true});
+                    send.reconcileCloudBookmarkDb({verbose: true});
                 }
             });
         }
@@ -634,7 +635,7 @@ function performImport(context, tree, file, file_name, file_ext) {
 
     startProcessingIndication();
 
-    return browser.runtime.sendMessage({type: "IMPORT_FILE", file: file, file_name: file_name, file_ext: file_ext})
+    return send.importFile({file: file, file_name: file_name, file_ext: file_ext})
         .then(() => {
             stopProcessingIndication();
 
@@ -673,7 +674,7 @@ function performExport(context, tree) {
 
     startProcessingIndication();
 
-    return browser.runtime.sendMessage({type: "EXPORT_FILE", nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
+    return send.exportFile({nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
         $("#shelf-menu-button").attr("src", "icons/menu.svg");
     }).catch(e => {
         console.log(e.message);
@@ -754,7 +755,7 @@ async function displayRandomBookmark() {
         $("#footer").css("display", "grid");
 
         $("#random-bookmark-link").click(e => {
-            browser.runtime.sendMessage({type: "BROWSE_NODE", node: bookmark});
+            send.browseNode({node: bookmark});
         });
 
         randomBookmarkTimeout = setTimeout(displayRandomBookmark, 60000 * 5);

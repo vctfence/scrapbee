@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {backend} from "./backend.js"
 import * as org from "./lib/org/org.js"
 import {NODE_TYPE_NOTES} from "./storage_constants.js";
@@ -228,7 +229,7 @@ function saveNotes() {
         options.html = renderEditorContent();
 
     backend.storeNotes(options);
-    browser.runtime.sendMessage({type: "NOTES_CHANGED", node_id: node_id, removed: !options.content});
+    send.notesChanged({node_id: node_id, removed: !options.content});
     editorChange = false;
 }
 
@@ -530,7 +531,7 @@ window.onload = function() {
 
         if (node.type !== NODE_TYPE_NOTES)
             source_url.on("click", e => {
-                browser.runtime.sendMessage({type: "BROWSE_NODE", node: node});
+                send.browseNode({node: node});
             });
     });
 
@@ -557,7 +558,7 @@ window.onload = function() {
 
     $("#notes").on("click", "a[href^='org-protocol://']", e => {
         e.preventDefault();
-        browser.runtime.sendMessage({type: "BROWSE_ORG_REFERENCE", link: e.target.href});
+        send.browseOrgReference({link: e.target.href});
     });
 
     $("#tabbar a").on("click", e => {
@@ -620,8 +621,10 @@ window.onload = function() {
                             selected = this.value;
                     });
 
-                    if (selected)
+                    if (selected) {
                         $("#notes-width").val(selected);
+                        $("#notes").css("width", width);
+                    }
                     else {
                         let actualWidthElt = $("#notes-width option[value='actual']");
                         actualWidthElt.show();
@@ -739,19 +742,19 @@ window.onload = function() {
 
         let [_, value, units] = (match || [null, "inc"? "800": "700", "px"]);
 
-        let step = units === "%"? 10: 50;
-        width = parseInt(value);
-        newWidth = op === "inc"? width + step: width - step;
+        const step = units === "%"? 10: 50;
+        newWidth = parseInt(value);
+        newWidth = op === "inc"? newWidth + step: newWidth - step;
         let pass = units === "%"? newWidth >= 10 && newWidth <= 100: newWidth >= 100 && newWidth <= 4000;
+
         if (pass) {
-            newWidth = newWidth + units;
+            width = newWidth = newWidth + units;
             actualWidthElt.text(newWidth);
             actualWidthElt.show();
             $("#notes-width").val("actual");
             $("#notes").css("width", newWidth);
+            backend.storeNotes({node_id, width: newWidth});
         }
-
-        backend.storeNotes({node_id, width: newWidth});
     }
 
     $("#decrease-width").on("click", e => changeWidth("dec"));

@@ -1,8 +1,9 @@
-import IDBStorage from "./storage_idb.js"
-import {rdfBackend} from "./backend_rdf.js"
-import {cloudBackend} from "./backend_cloud.js"
-import {browserBackend} from "./backend_browser.js"
-import {computeSHA1, delegateProxy, getMimetypeExt, hexString} from "./utils.js";
+import {delegateProxy, send} from "./proxy.js";
+import IDBStorage from "./storage_idb.js";
+import {rdfBackend} from "./backend_rdf.js";
+import {cloudBackend} from "./backend_cloud.js";
+import {browserBackend} from "./backend_browser.js";
+import {computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {

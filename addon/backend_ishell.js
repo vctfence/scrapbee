@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 
 class iShellBackend {
@@ -52,7 +53,7 @@ class iShellBackend {
     _notifyOtherInstances(enable) {
         settings.load(settings => settings.ishell_presents(enable));
         // notify instances of the class in the other pages that extension is installed
-        browser.runtime.sendMessage({type: "ISHELL_ENABLE_INVALIDATION", enable: enable});
+        send.ishellEnableInvalidation({enable: enable});
     }
 
     _isExtensionLocal() {

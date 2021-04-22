@@ -230,7 +230,7 @@ public class CloudBackend {
             URL baseUrl = new URL(url);
 
             if (baseUrl.getHost().endsWith("wikipedia.org"))
-                return "https://wikipedia.org/favicon.ico";
+                return "https://en.wikipedia.org/favicon.ico";
 
             if (links.size() > 0) {
                 URL faviconUrl = new URL(baseUrl, links.get(0).attr("href"));

@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {backend} from "./backend.js";
 
 async function openReference(tab) {
@@ -17,11 +18,11 @@ async function openReference(tab) {
         let node = await backend.getNode(uuid, true);
 
         if (!prefix)
-            browser.runtime.sendMessage({type: "BROWSE_NODE", node: node, tab: tab});
+            send.browseNode({node: node, tab: tab});
         else
             switch (prefix) {
                 case "notes":
-                    browser.runtime.sendMessage({type: "BROWSE_NOTES", uuid: node.uuid, id: node.id, tab: tab});
+                    send.browseNotes({uuid: node.uuid, id: node.id, tab: tab});
                     break;
             }
     }

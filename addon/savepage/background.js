@@ -382,6 +382,7 @@
 /*                                                                      */
 /************************************************************************/
 
+import {send} from "./proxy.js";
 import {backend} from "../backend.js";
 import {browseNode} from "../background.js";
 import {getActiveTab, getFaviconFromTab, isIShell, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";
@@ -655,7 +656,7 @@ function addListeners()
                 }
 
                 backend.setTentativeId(message.data);
-                browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message.data})
+                send.beforeBookmarkAdded({node: message.data})
                     .then(() => {
                         backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
                             getActiveTab().then(tab => {
@@ -682,9 +683,9 @@ function addListeners()
                             browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
 
                             if (message.bookmark?.__automation && message.bookmark?.select)
-                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: message.bookmark});
+                                send.bookmarkCreated({node: message.bookmark});
                             else if (message.bookmark && !message.bookmark.__automation)
-                                browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: message.bookmark});
+                                send.bookmarkAdded({node: message.bookmark});
                         }
 
                         backend.storeIndex(message.bookmark.id, message.data.indexWords());
@@ -1054,14 +1055,14 @@ function addListeners()
 
                 if (!message.__automation) {
                     backend.setTentativeId(message);
-                    await browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message});
+                    await send.beforeBookmarkAdded({node: message});
                 }
 
                 return backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
                     if (message.__automation && message.select)
-                        browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                        send.bookmarkCreated({node: bookmark});
                     else if (!message.__automation)
-                        browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
+                        send.bookmarkAdded({node: bookmark});
 
                     return bookmark.uuid;
                 });
@@ -1107,9 +1108,9 @@ function addListeners()
                     return backend.storeBlob(bookmark.id, content, message.pack ? "text/html" : message.content_type)
                         .then(() => {
                             if (message.__automation && message.select)
-                                browser.runtime.sendMessage({type: "BOOKMARK_CREATED", node: bookmark});
+                                send.bookmarkCreated({node: bookmark});
                             else if (!message.__automation)
-                                browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
+                                send.bookmarkAdded({node: bookmark});
 
                             if (message.content_type === "text/html")
                                 backend.storeIndex(bookmark.id, content.indexWords());
@@ -1120,7 +1121,7 @@ function addListeners()
 
                 if (!message.__automation) {
                     backend.setTentativeId(message);
-                    await browser.runtime.sendMessage({type: "BEFORE_BOOKMARK_ADDED", node: message});
+                    await send.beforeBookmarkAdded({node: message});
                 }
 
                 return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(async bookmark => {
@@ -1186,7 +1187,7 @@ function addListeners()
                 await backend.updateBookmark(node);
 
                 if (message.refresh)
-                    browser.runtime.sendMessage({type: "NODES_UPDATED"});
+                    send.nodesUpdated();
 
                 break;
 
@@ -1200,7 +1201,7 @@ function addListeners()
                     await backend.deleteNodes(node.id);
 
                 if (message.refresh)
-                    browser.runtime.sendMessage({type: "NODES_UPDATED"});
+                    send.nodesUpdated();
 
                 break;
 
@@ -1322,7 +1323,7 @@ async function initiateAction(tab, menuaction, bookmark)
 
                         backend.storeBlob(bookmark.id, this.response, contentType);
 
-                        browser.runtime.sendMessage({type: "BOOKMARK_ADDED", node: bookmark});
+                        send.bookmarkAdded({node: bookmark});
                     }
                 };
 

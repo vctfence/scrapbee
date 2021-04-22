@@ -3,7 +3,7 @@ let BinHandler = {
         if (key === "load")
             return target.__load__;
 
-        return (val, handler) => {
+        return (val, callback) => {
             let bin = target.__bin__;
             if (val === void 0) return bin[key];
             if (val === null) {
@@ -11,7 +11,7 @@ let BinHandler = {
                 delete bin[key]
             }
             else bin[key] = val;
-            chrome.storage.local.set({[target.__key__]: bin}, () => handler? handler(): null);
+            chrome.storage.local.set({[target.__key__]: bin}, () => callback? callback(): null);
             return key in bin ? bin[key] : old
         }
     },

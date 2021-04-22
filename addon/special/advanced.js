@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {settings} from "/settings.js";
 import {nativeBackend} from "/backend_native.js";
 
@@ -65,7 +66,7 @@ function configureRepairPanel() {
             $("#calculate-size").show();
 
         $("#calculate-size-link").on("click", e => {
-            browser.runtime.sendMessage({type: "RECALCULATE_ARCHIVE_SIZE"});
+            send.recalculateArchiveSize();
             $("#calculate-size-link").off("click");
         });
     });

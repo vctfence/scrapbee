@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {getFavicon, notes2html, showNotification} from "./utils.js";
 import {dropboxBackend} from "./backend_dropbox.js";
@@ -577,7 +578,7 @@ export class CloudBackend {
             let db_root = await backend.getNode(CLOUD_SHELF_ID);
             if (!db_root) {
                 db_root = await backend.addNode(this.newCloudRootNode(), false, true, false);
-                try {await browser.runtime.sendMessage({type: "SHELVES_CHANGED"})} catch (e) {console.log(e)}
+                try {await send.shelvesChanged()} catch (e) {console.log(e)}
             }
 
             let cloud_last_modified = await this.getLastModified();
@@ -591,7 +592,7 @@ export class CloudBackend {
             if (!cloud_root)
                 return;
 
-            browser.runtime.sendMessage({type: "CLOUD_SYNC_START"});
+            send.cloudSyncStart();
 
             db_pool = new Map((await backend.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
 
@@ -653,13 +654,13 @@ export class CloudBackend {
                 db_root.date_modified = cloud_last_modified;
                 await backend.updateNode(db_root, false);
 
-                browser.runtime.sendMessage({type: "CLOUD_SYNC_END"});
-                browser.runtime.sendMessage({type: "EXTERNAL_NODES_READY"});
+                send.cloudSyncEnd();
+                send.externalNodesReady();
             }).catch(e => console.error(e));
         }
         else {
             await backend.deleteExternalNodes(null, CLOUD_EXTERNAL_NAME);
-            browser.runtime.sendMessage({type: "SHELVES_CHANGED"});
+            send.shelvesChanged();
         }
     }
 }
