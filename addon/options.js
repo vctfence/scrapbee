@@ -9,7 +9,8 @@ import {
     EVERYTHING,
     EVERYTHING_SHELF,
     FIREFOX_SHELF_ID,
-    isSpecialShelf, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
+    isSpecialShelf
 } from "./storage_constants.js";
 import {nativeBackend} from "./backend_native.js";
 

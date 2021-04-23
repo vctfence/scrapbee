@@ -127,6 +127,7 @@ class EditToolBar {
     buildTools() {
         var self = this;
         var editing = false;
+        var contentEditing = false;
         var extension_id = browser.i18n.getMessage("@@extension_id");
 
         /** toolbar */
@@ -181,13 +182,14 @@ class EditToolBar {
         btn.type = "button";
         btn.id = "btn-edit-document";
         btn.className = "blue-button";
+        btn.style.width = "81px";
         btn.value = chrome.i18n.getMessage("MODIFY_DOM_ON");
         editBar.appendChild(btn);
         btn.addEventListener("click", function () {
-            editing = !editing;
-            // self.toggleDomEdit(editing)
-            this.value = chrome.i18n.getMessage(editing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
-            // $(this).prop("disabled", false)
+            contentEditing = !contentEditing;
+            this.className = contentEditing? "yellow-button": "blue-button";
+            this.value = chrome.i18n.getMessage(contentEditing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
+
             document.designMode = document.designMode === "on"? "off": "on";
         });
 

@@ -553,7 +553,18 @@ window.onload = function() {
     }
 
     function alignNotes() {
-        $("#space-left").css("flex", align === "left"? "0": "1");
+        switch (align) {
+            case "left":
+                $("#space-left").css("flex", "0");
+                break;
+            case "right":
+                $("#space-right").css("flex", "0");
+                break;
+            default:
+                $("#space-left").css("flex", "1");
+                $("#space-right").css("flex", "1");
+        }
+
     }
 
     $("#notes").on("click", "a[href^='org-protocol://']", e => {
@@ -700,7 +711,7 @@ window.onload = function() {
     });
 
     $("#notes-align").on("change", e => {
-        align = $("#notes-align").val() === "left"? "left": undefined;
+        align = $("#notes-align").val();
         alignNotes();
         backend.storeNotes({node_id, align});
     });
