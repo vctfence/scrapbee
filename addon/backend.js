@@ -610,15 +610,16 @@ export class Backend extends ExternalEventProvider {
 
                 let iconUrl = `data:${contentType};base64,${btoa(binaryString)}`;
 
-                await this.storeIconLowLevel(node.id, iconUrl);
+                const id = await this.storeIconLowLevel(node.id, iconUrl);
 
-                return iconUrl;
+                return [id, iconUrl];
             }
         }
 
         if (iconData && contentType) {
             try {
-                return convertAndStore(iconData, contentType);
+                const [id] = await convertAndStore(iconData, contentType);
+                return id;
             }
             catch (e) {
                 console.log(e);
@@ -627,11 +628,11 @@ export class Backend extends ExternalEventProvider {
         else if (node.icon) {
             try {
                 if (node.icon.startsWith("data:")) {
-                    await this.storeIconLowLevel(node.id, node.icon);
+                    const id = await this.storeIconLowLevel(node.id, node.icon);
 
                     node.stored_icon = true;
                     node.icon = await computeSHA1(node.icon);
-                    await this.updateNode(node);
+                    return id;
                 }
                 else {
                     const response = await fetch(node.icon);
@@ -642,11 +643,12 @@ export class Backend extends ExternalEventProvider {
                             type = getMimetypeExt(node.icon);
 
                         if (type.startsWith("image")) {
-                            const buffer = await response.arrayBuffer();
-
                             node.stored_icon = true;
-                            node.icon = await computeSHA1(await convertAndStore(buffer, type));
-                            await this.updateNode(node);
+
+                            const buffer = await response.arrayBuffer();
+                            const [id, iconUrl] = await convertAndStore(buffer, type);
+                            node.icon = await computeSHA1(iconUrl);
+                            return id;
                         }
                     }
                 }
@@ -677,11 +679,13 @@ export class Backend extends ExternalEventProvider {
 
         data.type = node_type;
         data.tag_list = this._splitTags(data.tags);
-        this.addTags(data.tag_list);
+        await this.addTags(data.tag_list);
 
+        const icon_id = await this.storeIcon(data);
         let node = await this.addNode(data);
 
-        await this.storeIcon(node);
+        if (icon_id)
+            await this.updateIcon(icon_id, {node_id: node.id});
 
         await this.createExternalBookmark(node, group);
 

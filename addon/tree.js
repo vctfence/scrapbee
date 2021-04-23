@@ -739,6 +739,9 @@ class BookmarkTree {
 
     /* context menu listener */
     contextMenu(ctxNode) { // TODO: i18n
+        if (o(ctxNode).__tentative)
+            return null;
+
         let self = this;
         let tree = this._jstree;
         let selectedNodes = tree.get_selected(true) || [];
@@ -1222,12 +1225,6 @@ class BookmarkTree {
                 label: "Properties...",
                 action: async function () {
                     if (isEndpoint(o(ctxNode))) {
-
-                        if (o(ctxNode).__tentative) {
-                            showNotification({message: "Please wait."});
-                            return;
-                        }
-
                         let properties = await backend.getNode(o(ctxNode).id);
 
                         properties.comments = await backend.fetchComments(properties.id);

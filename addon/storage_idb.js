@@ -59,6 +59,7 @@ dexie.on('populate', () => {
 
 class IDBStorage {
     constructor() {
+        this._dexie = dexie;
     }
 
     _sanitizeNode(node) {
@@ -532,7 +533,7 @@ class IDBStorage {
     }
 
     async storeIconLowLevel(node_id, data_url) {
-        const exists = await dexie.icons.where("node_id").equals(node_id).count();
+        const exists = node_id? await dexie.icons.where("node_id").equals(node_id).count(): false;
 
         if (exists) {
             await dexie.icons.where("node_id").equals(node_id).modify({
@@ -540,23 +541,22 @@ class IDBStorage {
             });
         }
         else {
-            await dexie.icons.add({
+            return await dexie.icons.add({
                 node_id: node_id,
                 data_url: data_url
             });
-
-            await dexie.nodes.where("id").equals(node_id).modify({
-                stored_icon: true
-            });
         }
+    }
+
+    async updateIcon(icon_id, options) {
+        await dexie.icons.update(icon_id, options);
     }
 
     async fetchIcon(node_id) {
         const icon = await dexie.icons.where("node_id").equals(node_id).first();
 
-        if (icon) {
+        if (icon)
             return icon.data_url;
-        }
 
         return null;
     }
