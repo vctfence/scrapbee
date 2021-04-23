@@ -614,41 +614,42 @@ export class Backend extends ExternalEventProvider {
 
                 return [id, iconUrl];
             }
-        }
+        };
 
-        if (iconData && contentType) {
-            try {
-                const [id] = await convertAndStore(iconData, contentType);
-                return id;
-            }
-            catch (e) {
-                console.log(e);
-            }
-        }
-        else if (node.icon) {
+        const updateNode = async (node, iconUrl) => {
+            node.stored_icon = true;
+            node.icon = await computeSHA1(iconUrl);
+            if (node.id)
+                await this.updateNode(node);
+        };
+
+        if (node.icon) {
             try {
                 if (node.icon.startsWith("data:")) {
                     const id = await this.storeIconLowLevel(node.id, node.icon);
-
-                    node.stored_icon = true;
-                    node.icon = await computeSHA1(node.icon);
+                    await updateNode(node, node.icon);
                     return id;
                 }
                 else {
-                    const response = await fetch(node.icon);
+                    if (iconData && contentType) {
+                        const [id, iconUrl] = await convertAndStore(iconData, contentType);
+                        await updateNode(node, iconUrl);
+                        return id;
+                    }
+                    else {
+                        const response = await fetch(node.icon);
 
-                    if (response.ok) {
-                        let type = response.headers.get("content-type");
-                        if (!type)
-                            type = getMimetypeExt(node.icon);
+                        if (response.ok) {
+                            let type = response.headers.get("content-type");
+                            if (!type)
+                                type = getMimetypeExt(node.icon);
 
-                        if (type.startsWith("image")) {
-                            node.stored_icon = true;
-
-                            const buffer = await response.arrayBuffer();
-                            const [id, iconUrl] = await convertAndStore(buffer, type);
-                            node.icon = await computeSHA1(iconUrl);
-                            return id;
+                            if (type.startsWith("image")) {
+                                const buffer = await response.arrayBuffer();
+                                const [id, iconUrl] = await convertAndStore(buffer, type);
+                                await updateNode(node, iconUrl);
+                                return id;
+                            }
                         }
                     }
                 }
@@ -682,7 +683,7 @@ export class Backend extends ExternalEventProvider {
         await this.addTags(data.tag_list);
 
         const icon_id = await this.storeIcon(data);
-        let node = await this.addNode(data);
+        const node = await this.addNode(data);
 
         if (icon_id)
             await this.updateIcon(icon_id, {node_id: node.id});
