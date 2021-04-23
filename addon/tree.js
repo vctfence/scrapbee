@@ -382,6 +382,8 @@ class BookmarkTree {
         jnode.icon = node.icon;
         jnode.data = node; // store the original Scrapyard node
 
+        delete node.tag_list;
+
         jnode.parent = node.parent_id;
         if (!jnode.parent)
             jnode.parent = "#";
@@ -392,13 +394,13 @@ class BookmarkTree {
                 jnode.state = {hidden: true};
             }
             if (settings.capitalize_builtin_shelf_names())
-                jnode.text = node.name.capitalizeFirstLetter();
+                jnode.text = node.name.capitalize();
 
             BookmarkTree.styleFirefoxFolders(node, jnode);
         }
         else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME) {
             if (settings.capitalize_builtin_shelf_names())
-                jnode.text = node.name.capitalizeFirstLetter();
+                jnode.text = node.name.capitalize();
             jnode.li_attr = {"class": "cloud-shelf"};
             jnode.icon = "var(--themed-cloud-icon)";
         }
@@ -408,7 +410,7 @@ class BookmarkTree {
         }
         else if (node.type === NODE_TYPE_SHELF) {
             if (node.name && isSpecialShelf(node.name) && settings.capitalize_builtin_shelf_names())
-                jnode.text = node.name.capitalizeFirstLetter();
+                jnode.text = node.name.capitalize();
             jnode.icon = "/icons/shelf.svg";
             jnode.li_attr = {"class": "scrapyard-shelf"};
         }

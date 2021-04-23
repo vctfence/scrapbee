@@ -172,7 +172,7 @@ export async function importOrg(shelf, text) {
                     && (name.toLocaleLowerCase() === FIREFOX_SHELF_NAME
                             || name.toLocaleLowerCase() === CLOUD_SHELF_NAME)) {
                 name = settings.capitalize_builtin_shelf_names()
-                    ? name.capitalizeFirstLetter()
+                    ? name.capitalize()
                     : name;
 
                 name += " (imported)";
@@ -555,7 +555,7 @@ async function importJSONObject(object) {
 function renameSpecialShelves(node) {
     if (node && (node.id === FIREFOX_SHELF_ID || node.id === CLOUD_SHELF_ID)) {
         node.name = settings.capitalize_builtin_shelf_names()
-            ? node.name.capitalizeFirstLetter()
+            ? node.name.capitalize()
             : node.name;
 
         node.name += " (imported)";

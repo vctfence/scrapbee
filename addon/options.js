@@ -394,7 +394,7 @@ function initLinkChecker() {
 
     $("#link-scope").html(`
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
-        settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+        settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
     }</option>
         `);
 
@@ -419,7 +419,7 @@ function initLinkChecker() {
         for (let shelf of shelves) {
             let name =
                 isSpecialShelf(shelf.name)
-                    ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalizeFirstLetter(): shelf.name)
+                    ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalize(): shelf.name)
                     : shelf.name;
             $("<option></option>").appendTo($("#link-scope")).html(name).attr("value", shelf.id);
         }

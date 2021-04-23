@@ -162,7 +162,7 @@ Array.prototype.removeDups = function(field) {
     });
 };
 
-String.prototype.capitalizeFirstLetter = function(string) {
+String.prototype.capitalize = function(string) {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
 

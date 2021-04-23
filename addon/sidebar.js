@@ -20,21 +20,14 @@ import {
     EVERYTHING, EVERYTHING_SHELF,
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
     NODE_TYPE_SHELF, TODO_NAME, TODO_SHELF,
-    isSpecialShelf, isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES
+    NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
+    isSpecialShelf, isEndpoint
 } from "./storage_constants.js";
 
 const INPUT_TIMEOUT = 1000;
 
 let randomBookmark;
 let randomBookmarkTimeout;
-
-function startProcessingIndication() {
-    $("#shelf-menu-button").attr("src", "icons/grid.svg");
-}
-
-function stopProcessingIndication() {
-    $("#shelf-menu-button").attr("src", "icons/menu.svg");
-}
 
 window.onload = function () {
     /* i18n */
@@ -63,45 +56,44 @@ window.onload = function () {
 
     $("#shelf-menu-create").click(() => {
         // TODO: i18n
-        showDlg("prompt", {caption: "Create Shelf", label: "Name"}).then(data => {
-            let name;
-            if (name = data.title) {
-                // let existingOption = $(`#shelfList option:contains("${name}")`);
-                let selectedOption = $(`#shelfList option[value='${shelf_list.val()}']`);
-
-                if (!isSpecialShelf(name)) {
-                    backend.createGroup(null, name, NODE_TYPE_SHELF).then(shelf => {
-                        if (shelf) {
-                            settings.last_shelf(shelf.id);
-                            loadShelves(context, tree);
-                        }
-                    });
+        showDlg("prompt", {caption: "Create Shelf", label: "Name"})
+            .then(data => {
+                let name;
+                if (name = data.title) {
+                    if (!isSpecialShelf(name)) {
+                        backend.createGroup(null, name, NODE_TYPE_SHELF)
+                            .then(shelf => {
+                                if (shelf) {
+                                    settings.last_shelf(shelf.id);
+                                    loadShelves(context, tree);
+                                }
+                            });
+                    }
+                    else {
+                        showNotification({message: "Can not create shelf with this name."})
+                    }
                 }
-                else {
-                    showNotification({message: "Can not create shelf with this name."})
-                }
-            }
-        });
+            });
     });
 
     $("#shelf-menu-rename").click(() => {
-        let selectedOption = $(`#shelfList option[value='${shelf_list.val()}']`);
-        let id = parseInt(selectedOption.val());
-        let name = selectedOption.text();
+        let {id, name, option} = getCurrentShelf();
 
         if (name && !isSpecialShelf(name)) {
             // TODO: 118n
-            showDlg("prompt", {caption: "Rename", label: "Name", title: name}).then(data => {
-                let newName;
-                if (newName = data.title) {
-                    backend.renameGroup(id, newName).then(() => {
-                        selectedOption.text(newName);
-                        tree.renameRoot(newName)
+            showDlg("prompt", {caption: "Rename", label: "Name", title: name})
+                .then(data => {
+                    let newName = data.title;
+                    if (newName && !isSpecialShelf(newName)) {
+                        backend.renameGroup(id, newName)
+                            .then(() => {
+                                option.text(newName);
+                                tree.renameRoot(newName);
 
-                        shelf_list.selectric('refresh');
-                    });
-                }
-            });
+                                shelf_list.selectric('refresh');
+                            });
+                    }
+                });
         } else {
             // TODO: i18n
             showNotification({message: "A built-in shelf could not be renamed."});
@@ -119,65 +111,35 @@ window.onload = function () {
         }
 
         // TODO: 118n
-        confirm("{Warning}", "Do you really want to delete '" + name + "'?").then(() => {
-            if (name) {
-                send.deleteNodes({node_ids: id}).then(() => {
-                    $(`#shelfList option[value="${id}"]`).remove();
+        confirm("{Warning}", "Do you really want to delete '" + name + "'?")
+            .then(() => {
+                if (name) {
+                    send.deleteNodes({node_ids: id}).then(() => {
+                        $(`#shelfList option[value="${id}"]`).remove();
 
-                    shelf_list.val(1);
-                    shelf_list.selectric('refresh');
-                    switchShelf(context, tree, 1);
-                });
-            }
-        });
+                        shelf_list.val(DEFAULT_SHELF_ID);
+                        shelf_list.selectric('refresh');
+                        switchShelf(context, tree, 1);
+                    });
+                }
+            });
     });
 
-    $("#shelf-menu-sort").click(() => {
-        backend.listNodes({
-            types: [NODE_TYPE_SHELF],
-            order: "custom"
-        }).then(async nodes => {
-            let special = nodes.filter(n => isSpecialShelf(n.name)).sort((a, b) => a.id - b.id);
-            let regular = nodes.filter(n => !isSpecialShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
-            let sorted = [...special, ...regular];
+    $("#shelf-menu-sort").click(async () => {
+        let nodes = await backend.listNodes({types: [NODE_TYPE_SHELF], order: "custom"});
+        let special = nodes.filter(n => isSpecialShelf(n.name)).sort((a, b) => a.id - b.id);
+        let regular = nodes.filter(n => !isSpecialShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
+        let sorted = [...special, ...regular];
 
-            let positions = [];
-            for (let i = 0; i < sorted.length; ++i)
-                positions.push({id: sorted[i].id, pos: i});
+        let positions = [];
+        for (let i = 0; i < sorted.length; ++i)
+            positions.push({id: sorted[i].id, pos: i});
 
-            await send.reorderNodes({positions: positions});
-            loadShelves(context, tree, false);
-        });
+        await send.reorderNodes({positions: positions});
+        loadShelves(context, tree, false);
     });
 
-    tree.onRenameShelf = node => {
-        $(`#shelfList option[value="${node.id}"]`).text(node.name);
-        shelf_list.selectric('refresh');
-    };
-
-    tree.onDeleteShelf = node => {
-        $(`#shelfList option[value="${node.id}"]`).remove();
-        shelf_list.selectric('refresh');
-
-        if (!tree._everything) {
-            shelf_list.val(DEFAULT_SHELF_ID);
-            shelf_list.selectric('refresh');
-            switchShelf(context, tree, DEFAULT_SHELF_ID);
-        }
-    };
-
-    let processing_timeout;
-    tree.startProcessingIndication = () => {
-        processing_timeout = setTimeout(startProcessingIndication, 1000)
-    };
-    tree.stopProcessingIndication = () => {
-        stopProcessingIndication();
-        clearTimeout(processing_timeout);
-    };
-
-    $("#shelf-menu-import").click(() => {
-        $("#file-picker").click();
-    });
+    $("#shelf-menu-import").click(() => $("#file-picker").click());
 
     $("#file-picker").change(async (e) => {
         if (e.target.files.length > 0) {
@@ -205,22 +167,12 @@ window.onload = function () {
         }
     });
 
-    $("#shelf-menu-export").click(() => {
-        performExport(context, tree);
-    });
-
+    $("#shelf-menu-export").click(() => performExport(context, tree));
 
     $("#search-mode-switch").click(() => {
         $("#shelf-menu").hide();
         $("#search-mode-menu").toggle();
     });
-
-
-    // $("#shelf-menu-search-everything").click(() => {
-    //     $("#search-mode-switch").prop("src", "icons/catalogue.svg");
-    //     context.setMode(SEARCH_MODE_SCRAPYARD, getCurrentShelf().name);
-    //     performSearch(context, tree);
-    // });
 
     $("#shelf-menu-search-title").click(() => {
         $("#search-mode-switch").prop("src", "icons/bookmark.svg");
@@ -239,12 +191,6 @@ window.onload = function () {
         context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
         performSearch(context, tree);
     });
-
-    // $("#shelf-menu-search-firefox").click(() => {
-    //     $("#search-mode-switch").prop("src", "icons/firefox.svg");
-    //     context.setMode(SEARCH_MODE_FIREFOX, getCurrentShelf().name);
-    //     performSearch(context, tree);
-    // });
 
     let timeout;
     $("#search-input").on("input", e => {
@@ -276,7 +222,6 @@ window.onload = function () {
             $(".simple-menu").hide();
     });
 
-
     $("#footer-find-btn").click(e => {
         selectNode(context, tree, randomBookmark);
     });
@@ -296,6 +241,31 @@ window.onload = function () {
         $("#btnAnnouncement").hide();
         settings.pending_announcement(false);
     })
+
+    tree.onRenameShelf = node => {
+        $(`#shelfList option[value="${node.id}"]`).text(node.name);
+        shelf_list.selectric('refresh');
+    };
+
+    tree.onDeleteShelf = node => {
+        $(`#shelfList option[value="${node.id}"]`).remove();
+        shelf_list.selectric('refresh');
+
+        if (!tree._everything) {
+            shelf_list.val(DEFAULT_SHELF_ID);
+            shelf_list.selectric('refresh');
+            switchShelf(context, tree, DEFAULT_SHELF_ID);
+        }
+    };
+
+    let processing_timeout;
+    tree.startProcessingIndication = () => {
+        processing_timeout = setTimeout(startProcessingIndication, 1000)
+    };
+    tree.stopProcessingIndication = () => {
+        stopProcessingIndication();
+        clearTimeout(processing_timeout);
+    };
 
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === "START_PROCESSING_INDICATION") {
@@ -379,7 +349,7 @@ window.onload = function () {
             tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-icon)")
         }
         else if (message.type === "SHELVES_CHANGED") {
-            return loadShelves(context, tree, false);
+            return settings.load().then(() => loadShelves(context, tree, false));
         }
         else if (message.type === "SIDEBAR_THEME_CHANGED") {
             if (message.theme === "dark")
@@ -452,21 +422,30 @@ window.onload = function () {
     });
 };
 
+function startProcessingIndication() {
+    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+}
+
+function stopProcessingIndication() {
+    $("#shelf-menu-button").attr("src", "icons/menu.svg");
+}
+
+
 function loadShelves(context, tree, synchronize = true, clearSelection = false) {
     let shelf_list = $("#shelfList");
 
-    return settings.load().then(() => backend.listShelves().then(shelves => {
+    return backend.listShelves().then(shelves => {
         shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
         <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
-            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalizeFirstLetter(): EVERYTHING
+            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
         }</option>
         `);
 
         if (settings.cloud_enabled()) {
             let cloud_shelf_name = settings.capitalize_builtin_shelf_names()
-                ? CLOUD_SHELF_NAME.capitalizeFirstLetter()
+                ? CLOUD_SHELF_NAME.capitalize()
                 : CLOUD_SHELF_NAME;
             shelf_list.append(`<option class=\"option-builtin\" value=\"${CLOUD_SHELF_ID}\">${cloud_shelf_name}</option>`);
         }
@@ -477,7 +456,7 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
 
         if (settings.show_firefox_bookmarks()) {
             let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
-                ? FIREFOX_SHELF_NAME.capitalizeFirstLetter()
+                ? FIREFOX_SHELF_NAME.capitalize()
                 : FIREFOX_SHELF_NAME;
             shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
         }
@@ -491,7 +470,7 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
         let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(default_shelf), 1);
         default_shelf.name = settings.capitalize_builtin_shelf_names()
-            ? default_shelf.name.capitalizeFirstLetter()
+            ? default_shelf.name.capitalize()
             : default_shelf.name;
         shelves = [default_shelf, ...shelves];
 
@@ -502,7 +481,7 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
                 option.addClass("option-builtin");
         }
 
-        let last_shelf_id = settings.last_shelf() || 1;
+        let last_shelf_id = settings.last_shelf() || DEFAULT_SHELF_ID;
 
         if (last_shelf_id === "null")
             last_shelf_id = 1;
@@ -515,23 +494,20 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
         shelf_list.selectric('refresh');
         return switchShelf(context, tree, shelf_list.val(), synchronize, clearSelection);
     }).catch(() => {
-        shelf_list.val(1);
+        shelf_list.val(DEFAULT_SHELF_ID);
         shelf_list.selectric('refresh');
-        return switchShelf(context, tree, 1, synchronize, clearSelection);
-    }));
+        return switchShelf(context, tree, DEFAULT_SHELF_ID, synchronize, clearSelection);
+    });
 }
 
 function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection = false) {
 
-    if (settings.last_shelf() != shelf_id) {
+    if (settings.last_shelf() != shelf_id)
         tree.clearIconCache();
-    }
 
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
-    settings.load(() => {
-        settings.last_shelf(shelf_id);
-    });
+    settings.load(() => settings.last_shelf(shelf_id));
 
     if (shelf_id == EVERYTHING_SHELF)
         $("#shelf-menu-sort").show();
@@ -600,7 +576,8 @@ function getCurrentShelf() {
     let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
     return {
         id: parseInt(selectedOption.val()),
-        name: selectedOption.text()
+        name: selectedOption.text(),
+        option: selectedOption
     };
 }
 
