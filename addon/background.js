@@ -138,7 +138,6 @@ export async function browseNode(node, external_tab, preserve_history, container
 
 
 /* Internal message listener */
-
 browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     let shelf;
     switch (message.type) {
@@ -149,11 +148,15 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 return;
             }
 
+            const addBookmark = () =>
+                backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
+                    send.bookmarkAdded({node: bookmark});
+                });
+
             backend.setTentativeId(message.data);
-            await send.beforeBookmarkAdded({ node: message.data});
-            await backend.addBookmark(message.data, NODE_TYPE_BOOKMARK).then(bookmark => {
-                send.bookmarkAdded({node: bookmark});
-            });
+            send.beforeBookmarkAdded({node: message.data})
+                .then(addBookmark)
+                .catch(addBookmark);
 
             break;
 
@@ -355,6 +358,48 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             }
 
             settings.archve_size_repaired(true);
+
+            send.stopProcessingIndication();
+        }
+            break;
+        case "REINDEX_ARCHIVE_CONTENT": {
+            const nodeIDs = await backend.getNodeIds();
+
+            send.startProcessingIndication();
+
+            for (let id of nodeIDs) {
+                const node = await backend.getNode(id);
+
+                //console.log("Processing: %s", node.name)
+
+                try {
+                    if (node.type === NODE_TYPE_ARCHIVE) {
+                        const blob = await backend.fetchBlob(node.id);
+
+                        if (blob && !blob.byte_length && blob.data)
+                            await backend.updateIndex(node.id, blob.data.indexWords());
+                    }
+
+                    if (node.has_notes) {
+                        const notes = await backend.fetchNotes(node.id);
+                        if (notes) {
+                            delete notes.id;
+                            await backend.storeNotesLowLevel(notes);
+                        }
+                    }
+
+                    if (node.has_comments) {
+                        const comments = await backend.fetchComments(node.id);
+                        if (comments) {
+                            const words = comments.indexWords(false);
+                            await backend.updateCommentIndex(node.id, words);
+                        }
+                    }
+                }
+                catch (e) {
+                    console.error(e);
+                }
+            }
 
             send.stopProcessingIndication();
         }

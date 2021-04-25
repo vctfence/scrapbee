@@ -1,6 +1,6 @@
-import {send} from "../proxy.js";
-import {settings} from "../settings.js";
-import {nativeBackend} from "../backend_native.js";
+import {send} from "./proxy.js";
+import {settings} from "./settings.js";
+import {nativeBackend} from "./backend_native.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){
@@ -68,6 +68,11 @@ function configureRepairPanel() {
         $("#calculate-size-link").on("click", e => {
             send.recalculateArchiveSize();
             $("#calculate-size-link").off("click");
+        });
+
+        $("#reindex-content-link").on("click", e => {
+            send.reindexArchiveContent();
+            $("#reindex-content-link").off("click");
         });
     });
 }

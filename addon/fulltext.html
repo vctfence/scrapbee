@@ -1,0 +1,36 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Full Text Search</title>
+
+    <link rel="icon" href="icons/scrapyard.svg" type="image/png"/>
+
+    <link rel="stylesheet" type="text/css" href="fulltext.css" media="all"/>
+
+    <script type="text/javascript" src="lib/jquery.js"></script>
+    <script type="text/javascript" src="lib/mark.js"></script>
+    <script type="text/javascript" src="proto.js"></script>
+    <script type="module" src="fulltext.js"></script>
+</head>
+<body>
+
+<div id="search-container">
+    <div id="search-bar">
+        <img id="shelves-icon" title="Shelf" src="icons/books.svg">
+        <select id="search-scope">
+            <option value="everything">everything</option>
+        </select>
+        <input id="search-query" type="text" placeholder="Full Text Search" autofocus/>
+        <input id="search-button" type="button" class="blue-button" value="Search"/>
+        &nbsp;<span id="search-result-count"></span>
+        <h3 id="search-title">Full Text Search</h3>
+    </div>
+    <div id="search-result">
+        <table id="found-items" cellspacing="4px"></table>
+    </div>
+    <div id="search-preview">
+    </div>
+</div>
+
+</body>
+</html>

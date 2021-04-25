@@ -9,17 +9,17 @@ import {
     SEARCH_MODE_TITLE,
     SEARCH_MODE_TAGS,
     SEARCH_MODE_CONTENT,
-    SearchContext
+    SearchContext, SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS
 } from "./search.js";
 
 import {openPage, pathToNameExt, showNotification} from "./utils.js";
 import {
     CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
-    DONE_NAME, DONE_SHELF,
-    EVERYTHING, EVERYTHING_SHELF,
+    DONE_SHELF_NAME, DONE_SHELF_ID,
+    EVERYTHING, EVERYTHING_SHELF_ID,
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
-    NODE_TYPE_SHELF, TODO_NAME, TODO_SHELF,
+    NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
     isSpecialShelf, isEndpoint
 } from "./storage_constants.js";
@@ -41,6 +41,7 @@ window.onload = function () {
     shelf_list.selectric({maxHeight: 600, inheritOriginalWidth: true});
 
     $("#btnLoad").on("click", () => loadShelves(context, tree));
+    $("#btnSearch").on("click", () => openPage("fulltext.html"));
     $("#btnSettings").on("click", () => openPage("options.html"));
     $("#btnHelp").on("click", () => openPage("options.html#help"));
 
@@ -180,15 +181,27 @@ window.onload = function () {
         performSearch(context, tree);
     });
 
+    $("#shelf-menu-search-tags").click(() => {
+        $("#search-mode-switch").prop("src", "icons/tags.svg");
+        context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
     $("#shelf-menu-search-content").click(() => {
-        $("#search-mode-switch").prop("src", "icons/text.svg");
+        $("#search-mode-switch").prop("src", "icons/content-web.svg");
         context.setMode(SEARCH_MODE_CONTENT, getCurrentShelf().name);
         performSearch(context, tree);
     });
 
-    $("#shelf-menu-search-tags").click(() => {
-        $("#search-mode-switch").prop("src", "icons/tags.svg");
-        context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
+    $("#shelf-menu-search-notes").click(() => {
+        $("#search-mode-switch").prop("src", "icons/content-notes.svg");
+        context.setMode(SEARCH_MODE_NOTES, getCurrentShelf().name);
+        performSearch(context, tree);
+    });
+
+    $("#shelf-menu-search-comments").click(() => {
+        $("#search-mode-switch").prop("src", "icons/content-comments.svg");
+        context.setMode(SEARCH_MODE_COMMENTS, getCurrentShelf().name);
         performSearch(context, tree);
     });
 
@@ -319,7 +332,7 @@ window.onload = function () {
         else if (message.type === "NODES_READY") {
             let last_shelf = settings.last_shelf();
 
-            if (last_shelf == EVERYTHING_SHELF || last_shelf == message.shelf.id) {
+            if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == message.shelf.id) {
                 loadShelves(context, tree, false);
             }
         }
@@ -336,7 +349,7 @@ window.onload = function () {
             || message.type === "EXTERNAL_NODE_REMOVED") {
             let last_shelf = settings.last_shelf();
 
-            if (last_shelf == EVERYTHING_SHELF || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID) {
+            if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID) {
                 settings.load(() => {
                     loadShelves(context, tree, false);
                 });
@@ -436,9 +449,9 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
 
     return backend.listShelves().then(shelves => {
         shelf_list.html(`
-        <option class="option-builtin" value="${TODO_SHELF}">${TODO_NAME}</option>
-        <option class="option-builtin" value="${DONE_SHELF}">${DONE_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
+        <option class="option-builtin" value="${TODO_SHELF_ID}">${TODO_SHELF_NAME}</option>
+        <option class="option-builtin" value="${DONE_SHELF_ID}">${DONE_SHELF_NAME}</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}">${
             settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
         }</option>
         `);
@@ -509,7 +522,7 @@ function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
     settings.load(() => settings.last_shelf(shelf_id));
 
-    if (shelf_id == EVERYTHING_SHELF)
+    if (shelf_id == EVERYTHING_SHELF_ID)
         $("#shelf-menu-sort").show();
     else
         $("#shelf-menu-sort").hide();
@@ -519,17 +532,17 @@ function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection
     if (canSearch())
         return performSearch(context, tree);
     else {
-        if (shelf_id == TODO_SHELF) {
+        if (shelf_id == TODO_SHELF_ID) {
             return backend.listTODO().then(nodes => {
-                tree.list(nodes, TODO_NAME, true);
+                tree.list(nodes, TODO_SHELF_NAME, true);
             });
         }
-        else if (shelf_id == DONE_SHELF) {
+        else if (shelf_id == DONE_SHELF_ID) {
             return backend.listDONE().then(nodes => {
-                tree.list(nodes, DONE_NAME, true);
+                tree.list(nodes, DONE_SHELF_NAME, true);
             });
         }
-        else if (shelf_id == EVERYTHING_SHELF) {
+        else if (shelf_id == EVERYTHING_SHELF_ID) {
             return backend.listShelfNodes(EVERYTHING).then(nodes => {
                 tree.update(nodes, true, clearSelection);
                 if (synchronize && settings.cloud_enabled()) {
@@ -617,7 +630,7 @@ function performImport(context, tree, file, file_name, file_ext) {
             stopProcessingIndication();
 
             if (file_name.toLocaleLowerCase() === EVERYTHING) {
-                settings.last_shelf(EVERYTHING_SHELF);
+                settings.last_shelf(EVERYTHING_SHELF_ID);
 
                 loadShelves(context, tree);
             }

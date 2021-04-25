@@ -1,4 +1,13 @@
 import * as org from "./lib/org/org.js";
+import {
+    DEFAULT_SHELF_NAME,
+    EVERYTHING,
+    EVERYTHING_SHELF_ID,
+    FIREFOX_SHELF_ID,
+    isSpecialShelf
+} from "./storage_constants.js";
+import {settings} from "./settings.js";
+import {backend} from "./backend.js";
 
 export function isIShell(id) {
     if (!id)
@@ -95,17 +104,44 @@ export function escapeHtml (string) {
 export function parseHtml(htmlText) {
     let doc = document.implementation.createHTMLDocument("");
     let doc_elt = doc.documentElement;
-    let first_elt;
+    //let first_elt;
+
+    htmlText = htmlText.replace(/^.*?<html[^>]*>/is, "");
+    htmlText = htmlText.replace(/<\/html>/is, "");
 
     doc_elt.innerHTML = htmlText;
-    first_elt = doc_elt.firstElementChild;
+    //first_elt = doc_elt.firstElementChild;
 
-    if (doc_elt.childElementCount === 1
-        && first_elt.localName.toLowerCase() === "html") {
-        doc.replaceChild(first_elt, doc_elt);
-    }
+    // if (doc_elt.childElementCount === 1
+    //     && first_elt.localName.toLowerCase() === "html") {
+    //     doc.replaceChild(first_elt, doc_elt);
+    // }
 
     return doc;
+}
+
+export function fixDocumentEncoding(doc) {
+    let chars = doc.querySelector("meta[http-equiv='Content-Type'], meta[http-equiv='content-type']");
+    if (chars) {
+        chars.parentNode.removeChild(chars);
+        chars.setAttribute("content", "text/html; charset=utf-8");
+        doc.getElementsByTagName("head")[0].prepend(chars);
+    }
+    else {
+        chars = doc.querySelector("meta[charset]");
+
+        if (chars) {
+            chars.parentNode.removeChild(chars);
+            chars.setAttribute("charset", "utf-8");
+            doc.getElementsByTagName("head")[0].prepend(chars);
+        }
+        else {
+            chars = document.createElement("meta");
+            chars.setAttribute("http-equiv", 'Content-Type');
+            chars.setAttribute("content", "text/html; charset=utf-8");
+            doc.getElementsByTagName("head")[0].prepend(chars);
+        }
+    }
 }
 
 export function applyInlineStyles(element, recursive = true) {
@@ -230,7 +266,42 @@ export function notes2html(notes) {
             return notes.html;
         case "org":
         default:
-            return org2html(notes.content);
+            if (notes?.content)
+                return org2html(notes.content);
+            return "";
+    }
+}
+
+export async function loadShelveOptions(element) {
+    $(element).html(`<option value="${EVERYTHING_SHELF_ID}">${
+        settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
+    }</option>
+    `);
+
+    let shelves = await backend.listShelves();
+    shelves.sort((a, b) => {
+        if (a.name < b.name)
+            return -1;
+        if (a.name > b.name)
+            return 1;
+
+        return 0;
+    });
+
+    let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
+    shelves.splice(shelves.indexOf(default_shelf), 1);
+
+    let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+    shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
+
+    shelves = [default_shelf, ...shelves];
+
+    for (let shelf of shelves) {
+        let name =
+            isSpecialShelf(shelf.name)
+                ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalize(): shelf.name)
+                : shelf.name;
+        $("<option></option>").appendTo($(element)).html(name).attr("value", shelf.id);
     }
 }
 

@@ -56,7 +56,6 @@ input[type='text'] {
 input[type=button]{
     padding:5px 20px;
     appearance: none;
-    -moz-appearance: none;
     border-radius:5px;
     border:none;
     background:#079;

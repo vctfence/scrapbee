@@ -1,10 +1,14 @@
-String.prototype.indexWords = function () {
+String.prototype.indexWords = function (html = true) {
     try {
-        return Array.from(new Set(this
-            .substring(this.indexOf("<body>"))
-            .replace(/<style.*?<\/style>/gs, '')
-            .replace(/<script.*?<\/script>/gs, '')
-            .replace(/<.*?>/gs, ' ')
+        let filterTags = text =>
+            html
+               ? text.substring(this.indexOf("<body>"))
+                    .replace(/<style.*?<\/style>/gs, '')
+                    .replace(/<script.*?<\/script>/gs, '')
+                    .replace(/<.*?>/gs, ' ')
+               : text;
+
+        return Array.from(new Set(filterTags(this)
             .replace(/\n/g, ' ')
             .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ')
             .split(" ")

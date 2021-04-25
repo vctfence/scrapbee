@@ -125,8 +125,10 @@
 
     <h3 id="search">Search</h3>
     <p>The search input field at the Scrapyard sidebar allows to filter bookmarks of the current shelf
-        by title/URL, tags, or content of the archived pages. Use the "Everything" shelf to search through all
-        bookmarks.</p>
+        by title/URL, tags, content of archived web-pages, content of attached notes or comments.
+        Use the "Everything" shelf to search through all bookmarks. Although this filter is
+        reasonably fast, it matches all items that contain all the entered words longer than 2 characters
+        in any order and distance.</p>
 
     <p style="text-align: center">
         <img src="images/help/search-sidebar.png">
@@ -142,8 +144,7 @@
     <p>If URL-bar search text begins with a plus sign (+), Scrapyard will interpret the rest of the
         text as a tag name and will search by tags instead. By assigning unique tags to bookmarks
         (with no leading plus sign) you may quickly open dedicated bookmarks without
-        using mouse, which may be relevant when multi-account containers are involved. It is
-        possible to activate Firefox URL-bar with the <code>Ctrl+L</code> keyboard shortcut.</p>
+        using mouse. It is possible to activate Firefox URL-bar with the <code>Ctrl+L</code> keyboard shortcut.</p>
 
     <p style="text-align: center">
         <img src="images/help/search-urlbar-tags.png">
@@ -154,6 +155,15 @@
         may access them even more quickly. A few examples could be found in <a
             href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
             target="_blank">Scrapyard automation documentation</a>.</p>
+
+    <p>Full text search is accessible with the corresponding sidebar button:
+        <img src="icons/search.svg" style="margin-bottom: -4px"/>
+    and allows to find and highlight the exact occurrences of a phrase in the content of
+        archived HTML pages.</p>
+
+    <p style="text-align: center">
+        <img src="images/help/full-text-search.png">
+    </p>
 
     <h3>Cloud Bookmarking</h3>
     <p>
@@ -190,7 +200,7 @@
     <h3>Firefox Bookmarks</h3>
     <p>
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
-        manager. You may attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
+        manager. It is possible to attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
         they will be lost if the bookmarks are deleted from the Firefox UI, or after the "Show Firefox bookmarks shelf"
         option in settings is unchecked. Firefox bookmarks are included in the export as a separate shelf,
         so import will leave the current Firefox bookmark state intact.
@@ -255,7 +265,7 @@
     <h3>Bookmark Comments</h3>
     <p>While the "Details" field in the bookmark properties is intended for display at the TODO
         shelf, bookmark property dialog also allows to enter quick comments by clicking on the
-        "page" icon at its top-right corner.</p>
+        "callout" icon at its top-right corner.</p>
 
     <p style="text-align: center">
         <img src="images/help/comments-icon.png">
@@ -263,7 +273,7 @@
 
     <p>Subsequent clicks on the icon alternate between the comment input field and bookmark properties.</p>
 
-    <p>The comment icon of bookmarks with filled-in comments takes the form of a "lined page".</p>
+    <p>The comment icon of bookmarks with filled-in comments takes the form of a "filled callout".</p>
 
     <p style="text-align: center">
         <img src="images/help/filled-comments.png">

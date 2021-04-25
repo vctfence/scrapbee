@@ -236,8 +236,12 @@ function lockDocument() {
         let lock = document.createElement("div");
         lock.id = "scrapyard-waiting";
 
-        lock.style.backgroundColor = "#9995";
         lock.style.zIndex = 2147483647;
+        lock.style.margin = "0";
+        lock.style.padding = "0";
+        lock.style.width = "100%";
+        lock.style.height = "100%";
+        lock.style.backgroundColor = "#9995";
         lock.style.position = "fixed";
         lock.style.left = lock.style.right = "0";
         lock.style.bottom = lock.style.top = "0";

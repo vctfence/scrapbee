@@ -3,11 +3,11 @@ import {backend} from "./backend.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
-import {parseHtml, showNotification, testFavicon} from "./utils.js";
+import {loadShelveOptions, parseHtml, showNotification, testFavicon} from "./utils.js";
 import {
     DEFAULT_SHELF_NAME,
     EVERYTHING,
-    EVERYTHING_SHELF,
+    EVERYTHING_SHELF_ID,
     FIREFOX_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
     isSpecialShelf
@@ -393,38 +393,7 @@ function initLinkChecker() {
     $("#start-check-links").on("click", startCheckLinks);
     $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
-    $("#link-scope").html(`
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF}">${
-        settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
-    }</option>
-        `);
-
-    backend.listShelves().then(shelves => {
-        shelves.sort((a, b) => {
-            if (a.name < b.name)
-                return -1;
-            if (a.name > b.name)
-                return 1;
-
-            return 0;
-        });
-
-        let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
-        shelves.splice(shelves.indexOf(default_shelf), 1);
-
-        let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
-        shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
-
-        shelves = [default_shelf, ...shelves];
-
-        for (let shelf of shelves) {
-            let name =
-                isSpecialShelf(shelf.name)
-                    ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalize(): shelf.name)
-                    : shelf.name;
-            $("<option></option>").appendTo($("#link-scope")).html(name).attr("value", shelf.id);
-        }
-    });
+    loadShelveOptions("#link-scope");
 }
 
 function stopCheckLinks() {
@@ -496,7 +465,7 @@ function startCheckLinks() {
 
                             if (type && type.toLowerCase().startsWith("text/html")) {
                                 let doc = parseHtml(this.responseText);
-                                let faviconElt = doc.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+                                let faviconElt = doc.querySelector("link[rel*='icon'], head link[rel*='shortcut']");
 
                                 if (faviconElt)
                                     favicon = await testFavicon(new URL(faviconElt.href, base));

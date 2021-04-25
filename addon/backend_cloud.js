@@ -622,9 +622,6 @@ export class CloudBackend {
 
                     if (data) {
                         await backend.storeBlobLowLevel(archive.id, data, archive.content_type, archive.byte_length);
-
-                        if (!archive.byte_length)
-                            await backend.storeIndex(archive.id, data.indexWords());
                     }
                 }
 
@@ -639,8 +636,8 @@ export class CloudBackend {
                                 node.icon = icon.url;
                                 await backend.storeIcon(node, icon.response, icon.type);
                             }
-                            if (icon)
-                                await backend.updateNode(node);
+                            // if (icon)
+                            //     await backend.updateNode(node);
                         } catch (e) {
                             console.log(e);
                         }

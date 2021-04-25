@@ -39,7 +39,7 @@ import {
     TODO_STATE_WAITING,
     isContainer,
     isEndpoint,
-    isSpecialShelf, DEFAULT_POSITION, EVERYTHING_SHELF, TODO_SHELF, DONE_SHELF, DEFAULT_SHELF_NAME
+    isSpecialShelf, DEFAULT_POSITION, EVERYTHING_SHELF_ID, TODO_SHELF_ID, DONE_SHELF_ID, DEFAULT_SHELF_NAME
 } from "./storage_constants.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
@@ -284,7 +284,7 @@ class BookmarkTree {
     }
 
     getExportedNodes(shelf_id) {
-        let special_shelf = shelf_id === EVERYTHING_SHELF || shelf_id === TODO_SHELF || shelf_id === DONE_SHELF;
+        let special_shelf = shelf_id === EVERYTHING_SHELF_ID || shelf_id === TODO_SHELF_ID || shelf_id === DONE_SHELF_ID;
         let root = special_shelf
             ? this._jstree.get_node("#")
             : this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF).id);

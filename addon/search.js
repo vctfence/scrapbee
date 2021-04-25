@@ -8,7 +8,8 @@ export const SEARCH_MODE_SCRAPYARD = 1;
 export const SEARCH_MODE_TITLE = 2;
 export const SEARCH_MODE_TAGS = 3;
 export const SEARCH_MODE_CONTENT = 4;
-export const SEARCH_MODE_FIREFOX = 5;
+export const SEARCH_MODE_NOTES = 5;
+export const SEARCH_MODE_COMMENTS = 6;
 
 
 class SearchProvider {
@@ -63,8 +64,9 @@ export class TagSearchProvider extends SearchProvider {
 }
 
 export class ContentSearchProvider extends SearchProvider {
-    constructor(shelf) {
-        super(shelf)
+    constructor(shelf, index) {
+        super(shelf);
+        this.index = index;
     }
 
     search(text) {
@@ -76,6 +78,7 @@ export class ContentSearchProvider extends SearchProvider {
             return backend.listNodes({
                 search: text,
                 content: true,
+                index: this.index,
                 depth: "subtree",
                 path: path,
                 types: ENDPOINT_TYPES
@@ -170,7 +173,13 @@ export class SearchContext {
                 this.provider = new TagSearchProvider(shelf);
                 break;
             case SEARCH_MODE_CONTENT:
-                this.provider = new ContentSearchProvider(shelf);
+                this.provider = new ContentSearchProvider(shelf, "content");
+                break;
+            case SEARCH_MODE_NOTES:
+                this.provider = new ContentSearchProvider(shelf, "notes");
+                break;
+            case SEARCH_MODE_COMMENTS:
+                this.provider = new ContentSearchProvider(shelf, "comments");
                 break;
         }
     }

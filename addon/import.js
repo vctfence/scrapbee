@@ -86,9 +86,6 @@ export async function importOrg(shelf, text) {
 
                 if (data) {
                     await backend.storeBlobLowLevel(node.id, data, last_object.mime_type, byte_length);
-
-                    if (!binary)
-                        await backend.storeIndex(node.id, data.indexWords());
                 }
             }
             else {
@@ -528,9 +525,6 @@ async function importJSONObject(object) {
 
         if (data) {
             await backend.storeBlobLowLevel(node.id, data, object.mime_type, byte_length);
-
-            if (!binary)
-                await backend.storeIndex(node.id, data.indexWords());
         }
     }
     else {

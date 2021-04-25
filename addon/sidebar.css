@@ -1,8 +1,8 @@
 :root {
     --theme-background: white;
 
-    --themed-comments-icon: url("icons/page-blank.svg");
-    --themed-comments-filled-icon: url("icons/page.svg");
+    --themed-comments-icon: url("icons/comments.svg");
+    --themed-comments-filled-icon: url("icons/comments-filled.svg");
     --themed-properties-icon: url("icons/properties.svg");
     --themed-containers-icon: url("icons/containers.svg");
 }
@@ -21,7 +21,7 @@
 
 html,body {
     margin:0;
-     min-height: 100vh;
+    min-height: 100vh;
     overflow-x: hidden;
 }
 
@@ -340,6 +340,7 @@ select {
     background-size: 15px 15px;
     background-position: center;
     margin-right: 4px;
+    margin-left: 2px;
     height: 16px;
     width: 16px;
 }

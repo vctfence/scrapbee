@@ -107,7 +107,7 @@ window.onload = function () {
         let parent_jnode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
         saveHistory(parent_jnode.id, parent_jnode.text, folder_history);
 
-        browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
+        return browser.runtime.sendMessage({type: node_type === NODE_TYPE_BOOKMARK
                                             ? "CREATE_BOOKMARK"
                                             : "CREATE_ARCHIVE",
                                      data: {
@@ -120,13 +120,13 @@ window.onload = function () {
                                     }});
     }
 
-    $("#create-bookmark").on("click", (e) => {
-        addBookmark(NODE_TYPE_BOOKMARK);
+    $("#create-bookmark").on("click", async e => {
+        await addBookmark(NODE_TYPE_BOOKMARK);
         window.close();
     });
 
-    $("#create-archive").on("click", (e) => {
-        addBookmark(NODE_TYPE_ARCHIVE);
+    $("#create-archive").on("click", async e => {
+        await addBookmark(NODE_TYPE_ARCHIVE);
         window.close();
     });
 };

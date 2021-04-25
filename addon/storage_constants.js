@@ -31,14 +31,14 @@ export const TODO_STATES = {
 };
 
 export const DEFAULT_SHELF_ID = 1;
-export const EVERYTHING_SHELF = -1;
-export const DONE_SHELF = -2;
-export const TODO_SHELF = -3;
+export const EVERYTHING_SHELF_ID = -1;
+export const DONE_SHELF_ID = -2;
+export const TODO_SHELF_ID = -3;
 export const FIREFOX_SHELF_ID = -4;
 export const CLOUD_SHELF_ID = -5;
 
-export const TODO_NAME = "TODO";
-export const DONE_NAME = "DONE";
+export const TODO_SHELF_NAME = "TODO";
+export const DONE_SHELF_NAME = "DONE";
 
 export const EVERYTHING = "everything";
 export const DEFAULT_SHELF_NAME = "default";
@@ -98,6 +98,6 @@ export function isSpecialShelf(name) {
         || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
         || name === CLOUD_SHELF_NAME.toLocaleUpperCase()
         || name === EVERYTHING.toLocaleUpperCase()
-        || name === TODO_NAME.toLocaleUpperCase()
-        || name === DONE_NAME.toLocaleUpperCase();
+        || name === TODO_SHELF_NAME.toLocaleUpperCase()
+        || name === DONE_SHELF_NAME.toLocaleUpperCase();
 }

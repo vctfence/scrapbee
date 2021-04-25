@@ -655,22 +655,24 @@ function addListeners()
                     return;
                 }
 
-                backend.setTentativeId(message.data);
-                send.beforeBookmarkAdded({node: message.data})
-                    .then(() => {
-                        backend.addBookmark(message.data, NODE_TYPE_ARCHIVE).then(bookmark => {
+                let addBookmark = () =>
+                    backend.addBookmark(message.data, NODE_TYPE_ARCHIVE)
+                        .then(bookmark => {
                             getActiveTab().then(tab => {
                                 bookmark.__tab_id = tab.id;
                                 initiateAction(tab, buttonAction, bookmark);
                             });
                         });
-                    });
+
+                backend.setTentativeId(message.data);
+                send.beforeBookmarkAdded({node: message.data})
+                    .then(addBookmark)
+                    .catch(addBookmark);
             }
                 break;
 
             case "UPDATE_ARCHIVE":
-                backend.updateBlob(message.id, message.data).then(() =>
-                    backend.updateIndex(message.id, message.data.indexWords()));
+                backend.updateBlob(message.id, message.data);
                 break;
 
             case "STORE_PAGE_HTML": {
@@ -687,8 +689,6 @@ function addListeners()
                             else if (message.bookmark && !message.bookmark.__automation)
                                 send.bookmarkAdded({node: message.bookmark});
                         }
-
-                        backend.storeIndex(message.bookmark.id, message.data.indexWords());
                     })
                     .catch(e => {
                         console.log(e);
@@ -1054,18 +1054,24 @@ function addListeners()
                 message.__automation = !(sender.ishell && message.search);
 
                 if (!message.__automation) {
-                    backend.setTentativeId(message);
-                    await send.beforeBookmarkAdded({node: message});
+                    try {
+                        backend.setTentativeId(message);
+                        await send.beforeBookmarkAdded({node: message});
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
                 }
 
-                return backend.addBookmark(message, NODE_TYPE_BOOKMARK).then(bookmark => {
-                    if (message.__automation && message.select)
-                        send.bookmarkCreated({node: bookmark});
-                    else if (!message.__automation)
-                        send.bookmarkAdded({node: bookmark});
+                return backend.addBookmark(message, NODE_TYPE_BOOKMARK)
+                    .then(bookmark => {
+                        if (message.__automation && message.select)
+                            send.bookmarkCreated({node: bookmark});
+                        else if (!message.__automation)
+                            send.bookmarkAdded({node: bookmark});
 
-                    return bookmark.uuid;
-                });
+                        return bookmark.uuid;
+                    });
             }
             case "SCRAPYARD_ADD_ARCHIVE": {
                 if (!isAutomationAllowed(sender))
@@ -1112,16 +1118,18 @@ function addListeners()
                             else if (!message.__automation)
                                 send.bookmarkAdded({node: bookmark});
 
-                            if (message.content_type === "text/html")
-                                backend.storeIndex(bookmark.id, content.indexWords());
-
                             return bookmark.uuid;
                         })
                 };
 
                 if (!message.__automation) {
-                    backend.setTentativeId(message);
-                    await send.beforeBookmarkAdded({node: message});
+                    try {
+                        backend.setTentativeId(message);
+                        await send.beforeBookmarkAdded({node: message});
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
                 }
 
                 return backend.addBookmark(message, NODE_TYPE_ARCHIVE).then(async bookmark => {

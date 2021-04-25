@@ -8,10 +8,10 @@ import {ishellBackend} from "./backend_ishell.js";
 
 import {
     DEFAULT_SHELF_NAME,
-    DONE_NAME,
+    DONE_SHELF_NAME,
     EVERYTHING,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
-    SPECIAL_UUIDS, TODO_NAME,
+    SPECIAL_UUIDS, TODO_SHELF_NAME,
     isContainer,
     isEndpoint, NODE_TYPE_NOTES
 } from "./storage_constants.js";
@@ -223,9 +223,10 @@ export class Backend extends ExternalEventProvider {
                       // depth,  // specify depth of search: "group", "subtree" or "root+subtree"
                       // order   // order mode to sort the output if specified: "custom", "todo"
                       // content // search in content instead of node name (boolean)
+                      // index   // index to use: "content", "comments", "notes"
                       //}
               ) {
-        let group = options.path && options.path !== TODO_NAME && options.path !== DONE_NAME
+        let group = options.path && options.path !== TODO_SHELF_NAME && options.path !== DONE_SHELF_NAME
             ? await this._queryGroup(options.path)
             : null;
 
@@ -238,15 +239,16 @@ export class Backend extends ExternalEventProvider {
         let result;
 
         if (options.content && options.search) {
-            let search = this._splitTags(options.search, /\s+/);
+            const search = options.search.indexWords();
             delete options.search;
-            result = await this.queryNodes(group, options);
-            result = await this.filterByContent(result, search);
+
+            result = options.path? await this.queryNodes(group, options): null /* everything */;
+            result = await this.filterByContent(result, search, options.index);
         }
         else
             result = await this.queryNodes(group, options);
 
-        if (options.path && (options.path === TODO_NAME || options.path === DONE_NAME)) {
+        if (options.path && (options.path === TODO_SHELF_NAME || options.path === DONE_SHELF_NAME)) {
             for (let node of result) {
                 node._extended_todo = true;
                 let path = await this.computePath(node.id);
@@ -539,14 +541,9 @@ export class Backend extends ExternalEventProvider {
                 if (n.type === NODE_TYPE_ARCHIVE) {
                     let blob = await this.fetchBlob(old_id);
                     if (blob) {
-                        await this.storeBlobLowLevel(n.id, blob.data, blob.type, blob.byte_length);
+                        let index = await this.fetchIndex(old_id);
+                        await this.storeBlobLowLevel(n.id, blob.data, blob.type, blob.byte_length, index);
                         blob = null;
-                    }
-
-                    let index = await this.fetchIndex(old_id);
-                    if (index) {
-                        await this.storeIndex(n.id, index.words);
-                        index = null;
                     }
                 }
             } catch (e) {
@@ -618,7 +615,7 @@ export class Backend extends ExternalEventProvider {
 
         const updateNode = async (node, iconUrl) => {
             node.stored_icon = true;
-            node.icon = await computeSHA1(iconUrl);
+            node.icon = "hash:" + (await computeSHA1(iconUrl));
             if (node.id)
                 await this.updateNode(node);
         };
@@ -709,7 +706,7 @@ export class Backend extends ExternalEventProvider {
         let force_new_uuid = data.uuid
             && ((await this.isNodeExists(data.uuid)) || SPECIAL_UUIDS.some(uuid => uuid === data.uuid));
 
-        return this.addNode(data, false,false,!data.uuid || force_new_uuid);
+        return this.addNode(data, false, false, !data.uuid || force_new_uuid);
     }
 
     async updateBookmark(data) {

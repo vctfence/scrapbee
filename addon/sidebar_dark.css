@@ -36,8 +36,8 @@
     --themed-cloud-sync-icon: url("icons/cloud_sync2.svg") !important;
     --themed-tape-icon: url("icons/tape2.svg");
 
-    --themed-comments-icon: url("icons/page-blank2.svg");
-    --themed-comments-filled-icon: url("icons/page2.svg");
+    --themed-comments-icon: url("icons/comments2.svg");
+    --themed-comments-filled-icon: url("icons/comments-filled2.svg");
     --themed-properties-icon: url("icons/properties2.svg");
     --themed-containers-icon: url("icons/containers2.svg");
 }

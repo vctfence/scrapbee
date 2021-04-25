@@ -257,7 +257,7 @@ class MySite {
 }
 ```
 
-Let's write a function, that will allow to create such commands with one line of code.
+Let's write a function that will allow to create such commands with one line of code.
 
 ```js
 /**
@@ -293,7 +293,7 @@ function createBookmarkCommand(name, uuid) {
     cmdAPI.createCommand(new BrowseBookmarkCommand(name, uuid))
 }
 
-// Now the bookmarking commands could be created with a single function call:
+// Now bookmarking commands could be created with a single function call:
 
 createBookmarkCommand("my-twitter", "F0D858C6ED40416AA402EB2C3257EA17");
 createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
