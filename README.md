@@ -33,6 +33,7 @@ to obtain the desired features.
 * ~~Helper application [DONE]~~
 * ~~Multi-account containers support [DONE]~~
 * ~~Automation API [DONE]~~
+* ~~Full text search through archived content, notes and comments [DONE]~~
 
 ### The current status of cloud support
 
@@ -41,7 +42,3 @@ implementation - since there is no real database, the speed of operations is inv
 the amount of bookmarks you have there. When the author will get enough donations to buy a brand-new laptop
 for comfortable development (probably never, but you may change this), there will be a dedicated cloud
 backend with a real DB, ability to backup all bookmark there, bookmark browsing on mobile platforms, et cetera, et cetera.
-
-### Changes
-
-See [version history at AMO](https://addons.mozilla.org/en-US/firefox/addon/scrapyard/versions/).
