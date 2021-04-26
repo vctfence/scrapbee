@@ -46,7 +46,7 @@ async function previewResult(query, node) {
             previewURL = URL.createObjectURL(object);
 
             $(`#found-items td`).css("background-color", "transparent");
-            $(`#item_${node.id}`).css("background-color", "#DDDDDD");
+            $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
             $("#search-preview").html(`<iframe class="search-preview-content" src="${previewURL}"></iframe>`);
         }
     });
@@ -64,13 +64,22 @@ async function appendSearchResult(query, node, occurrences) {
         icon = fallbackIcon;
 
     let html = `<tr  id="row_${node.id}">
-                    <td><img id="select_${node.id}" class="result-action-icon" src="icons/tree-select.svg" title="Select"/>
-                    <img id="open_${node.id}" class="result-action-icon" src="icons/open-link.svg" title="Open"/>`;
-
-    html += `&nbsp;
-             </td><td id="item_${node.id}" class="found-result"><img id="icon_${node.id}" class="result-icon" src="${icon}"/>
-             <span id="title_${node.id}" class="result-title">${node.name}</span></td>
-             <td class="occurrences">${occurrences} ${occurrences === 1? " occurrence": " occurrences"}</td></tr>`
+                  <td class="result-actions">
+                    <div class="cell-content">
+                      <img id="select_${node.id}" class="result-action-icon" src="icons/tree-select.svg" title="Select"/>
+                      <img id="open_${node.id}" class="result-action-icon" src="icons/open-link.svg" title="Open"/>&nbsp;
+                    </div>
+                  </td>
+                  <td id="item_${node.id}" class="search-result result-row">
+                   <div class="cell-content">
+                      <img id="icon_${node.id}" class="result-icon" src="${icon}"/>
+                     <span id="title_${node.id}" class="result-title">${node.name}</span>
+                   </div>
+                 </td>
+                 <td id="occurrences_${node.id}" class="occurrences result-row">
+                   <div class="cell-content">${occurrences} ${occurrences === 1? " occurrence": " occurrences"}</div>
+                 </td>
+               </tr>`;
 
     foundItems.append(html);
 
@@ -83,13 +92,14 @@ async function appendSearchResult(query, node, occurrences) {
     }
 
     $(`#item_${node.id}`).click(e => previewResult(query, node));
+    $(`#occurrences_${node.id}`).click(e => previewResult(query, node));
     $(`#select_${node.id}`).click(e => send.selectNode({node}));
     $(`#open_${node.id}`).click(e => send.browseNode({node}));
 
     $("#search-result-count").text(`${++resultsFound} ${resultsFound === 1? "result": "results"} found`);
 }
 
-function markSearch(query, nodes, callback) {
+function markSearch(query, nodes, across, callback) {
     if (!nodes.length || !searching) {
         callback()
         return;
@@ -105,7 +115,7 @@ function markSearch(query, nodes, callback) {
 
             mark.mark(query, {
                 iframes: true,
-                acrossElements: true,
+                acrossElements: across,
                 //firstMatchOnly: true,
                 separateWordSearch: false,
                 ignorePunctuation: ",-–—‒'\"+=".split(""),
@@ -115,7 +125,7 @@ function markSearch(query, nodes, callback) {
                     if (found && searching) {
                         appendSearchResult(query, node, c);
                     }
-                    markSearch(query, nodes, callback);
+                    markSearch(query, nodes, across, callback);
                 }
             });
         });
@@ -123,7 +133,7 @@ function markSearch(query, nodes, callback) {
 
 async function performSearch() {
     if (!searching) {
-        searchQuery = $("#search-query").val();
+        searchQuery = $("#search-query").val().trim();
 
         if (!searchQuery)
             return;
@@ -145,7 +155,7 @@ async function performSearch() {
 
         $("#found-items").empty();
 
-        markSearch(searchQuery, nodes, () => {
+        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0, () => {
             searching = false;
             $("#search-button").val("Search");
 

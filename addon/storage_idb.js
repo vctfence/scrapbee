@@ -11,7 +11,7 @@ import {
     NODE_TYPE_SHELF,
     TODO_SHELF_NAME,
     TODO_STATE_DONE,
-    isContainer
+    isContainer, DONE_SHELF_ID, TODO_SHELF_ID
 } from "./storage_constants.js";
 
 import UUID from "./lib/uuid.js"
@@ -193,9 +193,11 @@ class IDBStorage {
             return dexie.nodes.each(iterator);
     }
 
-    async _selectAllChildrenIdsOf(node_id, children) {
-        const _container = a => !!a[1];
+    async _selectDirectChildrenIdsOf(node_id, children) {
+        await dexie.nodes.where("parent_id").equals(node_id).each(n => children.push(n.id));
+    }
 
+    async _selectAllChildrenIdsOf(node_id, children) {
         let group_children = [];
         await dexie.nodes.where("parent_id").equals(node_id)
             .each(n => group_children.push([n.id, isContainer(n)]));
@@ -203,7 +205,7 @@ class IDBStorage {
         if (group_children.length) {
             for (let child of group_children) {
                 children.push(child[0]);
-                if (_container(child))
+                if (child[1])
                     await this._selectAllChildrenIdsOf(child[0], children);
             }
         }
@@ -243,17 +245,22 @@ class IDBStorage {
 
     async queryNodes(group, options) {
         let {search, tags, types, path, limit, depth, order} = options;
-
-        let where = limit
-            ? dexie.nodes.limit(limit)
-            : dexie.nodes;
-
         let searchrx = search? new RegExp(search, "i"): null;
+        let query = dexie.nodes;
 
-        let subtree = [];
-        if (group && (depth === "subtree" || depth === "root+subtree")) {
-            await this._selectAllChildrenIdsOf(group.id, subtree);
-            subtree = new Set(subtree);
+        if (group) {
+            let subtree = [];
+
+            if (depth === "group")
+                await this._selectDirectChildrenIdsOf(group.id, subtree);
+            else if (depth === "subtree")
+                await this._selectAllChildrenIdsOf(group.id, subtree);
+            else if (depth === "root+subtree") {
+                await this._selectAllChildrenIdsOf(group.id, subtree);
+                subtree.push(group.id);
+            }
+
+            query = query.where("id").anyOf(subtree);
         }
 
         let filterf = node => {
@@ -265,15 +272,9 @@ class IDBStorage {
             if (search)
                 result = result && (searchrx.test(node.name) || searchrx.test(node.uri));
 
-            if (group && depth === "group")
-                result = result && node.parent_id === group.id;
-            else if (group && depth === "subtree")
-                result = result && subtree.has(node.id);
-            else if (group && depth === "root+subtree")
-                result = result && (subtree.has(node.id) || node.id === group.id);
-            else if (path === TODO_SHELF_NAME)
+            if (group?.id === TODO_SHELF_ID)
                 result = result && node.todo_state && node.todo_state < TODO_STATE_DONE;
-            else if (path === DONE_SHELF_NAME)
+            else if (group?.id === DONE_SHELF_ID)
                 result = result && node.todo_state && node.todo_state >= TODO_STATE_DONE;
 
             if (tags) {
@@ -288,7 +289,12 @@ class IDBStorage {
             return result;
         };
 
-        let nodes = await where.filter(filterf).toArray();
+        query = query.filter(filterf);
+
+        if (limit)
+            query = query.limit(limit);
+
+        let nodes = await query.toArray();
 
         if (order === "custom")
             nodes.sort((a, b) => a.pos - b.pos);
@@ -305,7 +311,7 @@ class IDBStorage {
     }
 
     // returns nodes containing only the all given words
-    async filterByContent(nodes, words, index) {
+    async filterByContent(ids, words, index) {
         let matches = {};
         let all_matched_nodes = [];
         let word_count = {};
@@ -321,8 +327,8 @@ class IDBStorage {
             }
         };
 
-        const query = nodes
-            ? word => selectIndex(index).where("words").startsWith(word).and(i => nodes.some(n => n.id === i.node_id))
+        const query = ids
+            ? word => selectIndex(index).where("words").startsWith(word).and(i => ids.some(id => id === i.node_id))
             : word => selectIndex(index).where("words").startsWith(word);
 
         for (let word of words) {
@@ -341,8 +347,8 @@ class IDBStorage {
             }
         }
 
-        if (nodes)
-            return nodes.filter(n => word_count[n.id] === words.length);
+        if (ids)
+            return this.getNodes(ids.filter(id => word_count[id] === words.length));
         else {
             let nodes_with_all_words = [];
 

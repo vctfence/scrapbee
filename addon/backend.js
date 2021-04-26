@@ -240,13 +240,18 @@ export class Backend extends ExternalEventProvider {
 
         if (options.content && options.search) {
             const search = options.search.indexWords();
-            delete options.search;
 
-            result = options.path? await this.queryNodes(group, options): null /* everything */;
-            result = await this.filterByContent(result, search, options.index);
+            let subtree;
+            if (options.path) {
+                subtree = [];
+                await this._selectAllChildrenIdsOf(group.id, subtree);
+            }
+
+            result = await this.filterByContent(subtree, search, options.index);
         }
-        else
+        else {
             result = await this.queryNodes(group, options);
+        }
 
         if (options.path && (options.path === TODO_SHELF_NAME || options.path === DONE_SHELF_NAME)) {
             for (let node of result) {
@@ -259,6 +264,8 @@ export class Backend extends ExternalEventProvider {
                 }
             }
         }
+
+        result.forEach(n => n.__filtering = true);
 
         return result;
     }

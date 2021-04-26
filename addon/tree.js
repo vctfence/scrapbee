@@ -804,8 +804,15 @@ class BookmarkTree {
         }
 
         let items = {
+            locateItem: {
+                label: "Locate",
+                action: async function () {
+                    self.sidebarSelectNode(o(ctxNode));
+                }
+            },
             openItem: {
                 label: "Open",
+                separator_before: o(ctxNode).__filtering,
                 action: async function () {
                     for (let jnode of selectedNodes) {
                         const node = o(jnode);
@@ -1401,6 +1408,10 @@ class BookmarkTree {
         if (o(ctxNode)._extended_todo) {
             delete items.newSeparatorItem;
             delete items.newFolderAfterItem;
+        }
+
+        if (!o(ctxNode).__filtering) {
+            delete items.locateItem;
         }
 
         if (multiselect) {

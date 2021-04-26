@@ -280,6 +280,12 @@ window.onload = function () {
         clearTimeout(processing_timeout);
     };
 
+    tree.sidebarSelectNode = node => {
+        $("#search-input").val("");
+        $("#search-input-clear").hide();
+        selectNode(context, tree, node);
+    };
+
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === "START_PROCESSING_INDICATION") {
             startProcessingIndication();

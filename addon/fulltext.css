@@ -67,7 +67,7 @@ input[type=button] {
     font-size: 10pt;
 }
 
-#search-result {
+#search-results {
     flex-basis: 20%;
     flex-grow: 0;
     flex-shrink: 0;
@@ -80,22 +80,35 @@ input[type=button] {
     flex-shrink: 0;
 }
 
+.cell-content {
+    display: flex;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+#found-items {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
 .result-icon {
     width: 16px;
     height: 16px;
     margin-right: 4px;
 }
 
+.result-actions {
+    padding-left: 2px;
+}
+
 .result-action-icon {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    margin-top: 2px;
+    margin-right: 2px;
 }
 
-.found-result {
-    display: flex;
-    padding: 3px;
+.search-result {
     cursor: pointer;
 }
 
@@ -107,6 +120,8 @@ input[type=button] {
 .occurrences {
     font-size: 10pt;
     padding-left: 15px;
+    padding-right: 2px;
+    cursor: pointer;
 }
 
 .search-preview-content {

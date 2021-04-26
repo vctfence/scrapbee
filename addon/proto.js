@@ -2,9 +2,9 @@ String.prototype.indexWords = function (html = true) {
     try {
         let filterTags = text =>
             html
-               ? text.substring(this.indexOf("<body>"))
-                    .replace(/<style.*?<\/style>/gs, '')
-                    .replace(/<script.*?<\/script>/gs, '')
+               ? text.replace(/<head.*?<\/head>/igs, '')
+                    .replace(/<style.*?<\/style>/igs, '')
+                    .replace(/<script.*?<\/script>/igs, '')
                     .replace(/<.*?>/gs, ' ')
                : text;
 

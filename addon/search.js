@@ -80,30 +80,10 @@ export class ContentSearchProvider extends SearchProvider {
                 content: true,
                 index: this.index,
                 depth: "subtree",
-                path: path,
-                types: ENDPOINT_TYPES
+                path: path
             });
         }
         return [];
-    }
-}
-
-export class FirefoxSearchProvider extends SearchProvider {
-    constructor(shelf) {
-        super(shelf)
-    }
-
-    search(text) {
-        return browser.bookmarks.search(text).then(bookmarks => {
-           return bookmarks.filter(b => b.type === "bookmark").map(b => {
-                return {
-                    id: "firefox_" + b.id,
-                    name: b.title,
-                    uri: b.url,
-                    type: NODE_TYPE_BOOKMARK
-                }
-            })
-        });
     }
 }
 
