@@ -244,7 +244,15 @@ export class Backend extends ExternalEventProvider {
             let subtree;
             if (options.path) {
                 subtree = [];
-                await this._selectAllChildrenIdsOf(group.id, subtree);
+
+                if (options.path.toLowerCase() === EVERYTHING)
+                    subtree = null;
+                else if (options.path.toUpperCase() === TODO_SHELF_NAME)
+                    subtree = (await this.queryTODO()).map(n => n.id);
+                else if (options.path.toUpperCase() === DONE_SHELF_NAME)
+                    subtree = (await this.queryDONE()).map(n => n.id);
+                else
+                    await this._selectAllChildrenIdsOf(group.id, subtree);
             }
 
             result = await this.filterByContent(subtree, search, options.index);
@@ -253,7 +261,8 @@ export class Backend extends ExternalEventProvider {
             result = await this.queryNodes(group, options);
         }
 
-        if (options.path && (options.path === TODO_SHELF_NAME || options.path === DONE_SHELF_NAME)) {
+        if (options.path && (options.path.toUpperCase() === TODO_SHELF_NAME
+            || options.path.toUpperCase() === DONE_SHELF_NAME)) {
             for (let node of result) {
                 node._extended_todo = true;
                 let path = await this.computePath(node.id);
@@ -346,7 +355,7 @@ export class Backend extends ExternalEventProvider {
         let shelf = await this.queryShelf(shelf_name);
 
         if (shelf)
-            groups[shelf.name.toLowerCase()] = shelf;
+            groups[shelf.name.toLocaleLowerCase()] = shelf;
         else
             return {};
 
@@ -354,7 +363,7 @@ export class Backend extends ExternalEventProvider {
         for (let name of path_list) {
             if (parent) {
                 let group = await this.queryGroup(parent.id, name);
-                groups[name.toLowerCase()] = group;
+                groups[name.toLocaleLowerCase()] = group;
                 parent = group;
             }
             else
@@ -369,7 +378,7 @@ export class Backend extends ExternalEventProvider {
         let path_list = this._splitPath(path);
         let groups = await this._queryGroups(path_list);
 
-        return groups[path_list[path_list.length - 1].toLowerCase()];
+        return groups[path_list[path_list.length - 1].toLocaleLowerCase()];
     }
 
     // creates all non-existent groups

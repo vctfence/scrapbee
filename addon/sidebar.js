@@ -29,7 +29,9 @@ const INPUT_TIMEOUT = 1000;
 let randomBookmark;
 let randomBookmarkTimeout;
 
-window.onload = function () {
+window.onload = async function () {
+    await settings.load();
+
     /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
@@ -38,7 +40,7 @@ window.onload = function () {
     let context = new SearchContext(tree);
     let shelf_list = $("#shelfList");
 
-    shelf_list.selectric({maxHeight: 600, inheritOriginalWidth: true});
+    shelf_list.selectric({maxHeight: settings.shelf_list_height() || 600, inheritOriginalWidth: true});
 
     $("#btnLoad").on("click", () => loadShelves(context, tree));
     $("#btnSearch").on("click", () => openPage("fulltext.html"));
@@ -127,7 +129,7 @@ window.onload = function () {
     });
 
     $("#shelf-menu-sort").click(async () => {
-        let nodes = await backend.listNodes({types: [NODE_TYPE_SHELF], order: "custom"});
+        let nodes = await backend.queryShelf();
         let special = nodes.filter(n => isSpecialShelf(n.name)).sort((a, b) => a.id - b.id);
         let regular = nodes.filter(n => !isSpecialShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
         let sorted = [...special, ...regular];
@@ -281,8 +283,6 @@ window.onload = function () {
     };
 
     tree.sidebarSelectNode = node => {
-        $("#search-input").val("");
-        $("#search-input-clear").hide();
         selectNode(context, tree, node);
     };
 
@@ -429,16 +429,15 @@ window.onload = function () {
         }
     });
 
-    settings.load(async settings => {
-        await loadShelves(context, tree, true, true);
 
-        if (settings.pending_announcement()) {
-            $("#btnAnnouncement").css("display", "inline-block");
-        }
+    await loadShelves(context, tree, true, true);
 
-        if (settings.display_random_bookmark())
-            displayRandomBookmark();
-    });
+    if (settings.pending_announcement()) {
+        $("#btnAnnouncement").css("display", "inline-block");
+    }
+
+    if (settings.display_random_bookmark())
+        displayRandomBookmark();
 };
 
 function startProcessingIndication() {
@@ -617,8 +616,9 @@ async function performSearch(context, tree) {
         context.inSearch();
     }
     else if (!validSearchInput(input) && context.isInSearch) {
+        const {id} = getCurrentShelf();
         context.outOfSearch();
-        switchShelf(context, tree, $(`#shelfList option:contains("${context.shelfName}")`).val(), false);
+        switchShelf(context, tree, id, false);
     }
 
     if (validSearchInput(input))
@@ -670,16 +670,21 @@ function performExport(context, tree) {
 
     startProcessingIndication();
 
-    return send.exportFile({nodes: nodes, shelf: shelf, uuid: uuid}).then(() => {
-        $("#shelf-menu-button").attr("src", "icons/menu.svg");
-    }).catch(e => {
-        console.log(e.message);
-        stopProcessingIndication();
-        showNotification({message: "The export has failed: " + e.message});
-    });
+    return send.exportFile({nodes: nodes.map(n => ({id: n.id, level: n.level})), shelf: shelf, uuid: uuid})
+        .then(() => {
+            stopProcessingIndication();
+        }).catch(e => {
+            console.log(e.message);
+            stopProcessingIndication();
+            if (!e.message?.includes("Download canceled"))
+                showNotification({message: "The export has failed: " + e.message});
+        });
 }
 
 function selectNode(context, tree, node) {
+    $("#search-input").val("");
+    $("#search-input-clear").hide();
+
     backend.computePath(node.id).then(path => {
         settings.last_shelf(path[0].id);
         loadShelves(context, tree, false).then(() => {
@@ -689,7 +694,7 @@ function selectNode(context, tree, node) {
 }
 
 function styleBuiltinShelf() {
-    let {id, name} = getCurrentShelf();
+    let {name} = getCurrentShelf();
 
     if (isSpecialShelf(name))
         $("div.selectric span.label").addClass("option-builtin");

@@ -56,6 +56,9 @@ export async function importOrg(shelf, text) {
             let notes = last_object.notes;
             delete last_object.notes;
 
+            let notes_html = last_object.notes_html;
+            delete last_object.notes_html;
+
             let notes_format = last_object.notes_format;
             delete last_object.notes_format;
 
@@ -93,7 +96,7 @@ export async function importOrg(shelf, text) {
             }
 
             if (notes) {
-                await backend.storeNotesLowLevel({node_id: node.id, content: notes,
+                await backend.storeNotesLowLevel({node_id: node.id, content: notes, html: notes_html,
                     format: notes_format, align: notes_align, width: notes_width});
             }
             else if (note_lines.length) {
@@ -203,6 +206,10 @@ export async function importOrg(shelf, text) {
                             if (property.value)
                                 last_object[property.name] = parseInt(property.value);
                             break;
+                        case "stored_icon":
+                            if (property.value)
+                                last_object[property.name] = property.value === "true";
+                            break;
                         case "date_added":
                         case "date_modified":
                             let unix_time = new Date().getTime();
@@ -241,6 +248,10 @@ export async function importOrg(shelf, text) {
                 if (last_object.notes) {
                     last_object.notes = JSON.parse(last_object.notes);
                 }
+
+                if (last_object.notes_html) {
+                    last_object.notes_html = JSON.parse(last_object.notes_html);
+                }
             }
         }
         else if (subnodes.length > 1 && subnodes[0].type === "paragraph" && subnodes[1].type === "text"
@@ -260,7 +271,7 @@ export async function importOrg(shelf, text) {
     await importLastObject();
 }
 
-const ORG_EXPORTED_KEYS = ["uuid", "icon", "type", "size", "details", "date_added", "date_modified",
+const ORG_EXPORTED_KEYS = ["uuid", "icon", "stored_icon", "type", "size", "details", "date_added", "date_modified",
                            "external", "external_id", "container"];
 
 async function objectToProperties(object) {
@@ -312,6 +323,9 @@ async function objectToProperties(object) {
         if (notes && notes.content) {
             lines.push(`:notes: ${JSON.stringify(notes.content)}`);
 
+            if (notes.html)
+                lines.push(`:notes_html: ${JSON.stringify(notes.html)}`);
+
             if (notes.format)
                 lines.push(`:notes_format: ${notes.format}`);
 
@@ -362,7 +376,13 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
             if (node.todo_state)
                 line += " " + TODO_NAMES[node.todo_state];
 
-            line += " [[" + (node.uri? node.uri: "") + "][" + node.name + "]]";
+            let title = node.name || "";
+            if (title) {
+                title = title.replace("[", "(");
+                title = title.replace("]", ")");
+            }
+
+            line += " [[" + (node.uri? node.uri: "") + "][" + title + "]]";
 
             if (node.tags) {
                 let tag_list = node.tags.split(",").map(t => t.trim());
@@ -498,6 +518,9 @@ async function importJSONObject(object) {
     let notes = object.notes;
     delete object.notes;
 
+    let notes_html = object.notes_html;
+    delete object.notes_html;
+
     let notes_format = object.notes_format;
     delete object.notes_format;
 
@@ -532,7 +555,7 @@ async function importJSONObject(object) {
     }
 
     if (notes) {
-        await backend.storeNotesLowLevel({node_id: node.id, content: notes,
+        await backend.storeNotesLowLevel({node_id: node.id, content: notes, html: notes_html,
             format: notes_format, align: notes_align, width: notes_width});
     }
 
@@ -557,8 +580,6 @@ function renameSpecialShelves(node) {
 }
 
 export async function importJSON(shelf, file) {
-    await prepareNewImport(shelf);
-
     let readline = new ReadLine(file);
     let lines = readline.lines();
     let meta_line = (await lines.next()).value;
@@ -576,6 +597,8 @@ export async function importJSON(shelf, file) {
 
     if (!first_object)
         return Promise.reject(new Error("invalid file format"));
+
+    await prepareNewImport(shelf);
 
     let aliased_everything = !first_object.parent_id && shelf !== EVERYTHING;
 
@@ -641,7 +664,10 @@ export async function importJSON(shelf, file) {
 
 
 async function objectToJSON(object, shallow) {
-    let node = await backend.getNode(object.id);
+    let node = object; //await backend.getNode(object.id);
+
+    delete node.level;
+    delete node.tag_list;
 
     if (node.external === FIREFOX_SHELF_NAME || node.external === CLOUD_EXTERNAL_NAME) {
         delete node.external;
@@ -684,9 +710,14 @@ async function objectToJSON(object, shallow) {
         if (node.has_notes) {
             let notes = await backend.fetchNotes(node.id);
             node.notes = notes.content;
-            node.notes_format = notes.format;
-            node.notes_align = notes.align;
-            node.notes_width = notes.width;
+            if (notes.html)
+                node.notes_html = notes.html;
+            if (notes.format)
+                node.notes_format = notes.format;
+            if (notes.align)
+                node.notes_align = notes.align;
+            if (notes.width)
+                node.notes_width = notes.width;
         }
 
         if (node.has_comments)

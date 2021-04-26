@@ -1,4 +1,5 @@
 import {
+    EVERYTHING,
     EVERYTHING_SHELF_ID,
 } from "./storage_constants.js";
 import {settings} from "./settings.js";
@@ -19,10 +20,6 @@ let searching;
 let searchQuery;
 let previewURL;
 let resultsFound;
-
-async function selectResult(node) {
-
-}
 
 async function previewResult(query, node) {
     const blob = await backend.fetchBlob(node.id);
@@ -146,14 +143,15 @@ async function performSearch() {
 
         $("title").text("Full Text Search: " + searchQuery);
 
-        let nodes;
-
-        if ($("#search-scope").val() !== EVERYTHING_SHELF_ID.toString())
-            nodes = await backend.listShelfNodes($("#search-scope option:selected").text())
-
-        nodes = await backend.filterByContent(nodes, searchQuery.indexWords());
+        const nodes = await backend.listNodes({
+            search: searchQuery,
+            content: true,
+            index: "content",
+            path: $("#search-scope option:selected").text()
+        });
 
         $("#found-items").empty();
+        $("#search-preview").empty();
 
         markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0, () => {
             searching = false;

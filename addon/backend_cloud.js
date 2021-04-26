@@ -202,9 +202,9 @@ export class CloudBackend {
         if (options.hasOwnProperty("format"))
             cloud_node.notes_format = options.format;
         if (options.hasOwnProperty("align"))
-            options.notes_align = options.align;
+            cloud_node.notes_align = options.align;
         if (options.hasOwnProperty("width"))
-            options.notes_width = options.width;
+            cloud_node.notes_width = options.width;
 
         cloud_node = await db.updateNode(cloud_node);
 

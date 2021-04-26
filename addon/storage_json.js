@@ -2,12 +2,12 @@ import UUID from "./lib/uuid.js";
 import {DEFAULT_POSITION, NODE_PROPERTIES} from "./storage_constants.js";
 
 const JSON_PROPERTIES = ["notes_format",
-                          "notes_align",
-                          "notes_width",
-                          "content_type",
-                          "byte_length",
-                          "icon_data",
-                        ...NODE_PROPERTIES];
+                         "notes_align",
+                         "notes_width",
+                         "content_type",
+                         "byte_length",
+                         "icon_data",
+                         ...NODE_PROPERTIES];
 
 export class JSONStorage {
     constructor(meta) {

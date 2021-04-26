@@ -46,10 +46,16 @@ export const TREE_STATE_PREFIX = "tree-state-";
 
 
 // return the original Scrapyard node object stored in a jsTree node
-let o = n => {
+let o = n => n.data;
+
+let c = n => {
     // by somewhat reason objects with arrays from jsTree are not structurally cloneable
     if (n.data?.tag_list)
         delete n.data.tag_list;
+
+    if (n.data?._path)
+        delete n.data._path;
+
     return n.data;
 };
 
@@ -70,7 +76,7 @@ class BookmarkTree {
                 worker: false,
                 animation: 0,
                 multiple: !inline,
-                check_callback: BookmarkTree.checkOperation,
+                check_callback: BookmarkTree.checkOperation.bind(this),
                 themes: {
                     name: "default",
                     dots: false,
@@ -113,7 +119,6 @@ class BookmarkTree {
         }).on("move_node.jstree", BookmarkTree.moveNode.bind(this));
 
         this._jstree = $(element).jstree(true);
-
 
         this.iconCache = new Map();
 
@@ -247,7 +252,7 @@ class BookmarkTree {
             let clickable = element.getAttribute("data-clickable");
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                let node = o(this._jstree.get_node(element.id));
+                let node = c(this._jstree.get_node(element.id));
                 if (node) {
                     if (settings.open_bookmark_in_active_tab()) {
                         getActiveTab().then(active_tab => {
@@ -284,7 +289,7 @@ class BookmarkTree {
     }
 
     getExportedNodes(shelf_id) {
-        let special_shelf = shelf_id === EVERYTHING_SHELF_ID || shelf_id === TODO_SHELF_ID || shelf_id === DONE_SHELF_ID;
+        let special_shelf = shelf_id == EVERYTHING_SHELF_ID || shelf_id == TODO_SHELF_ID || shelf_id == DONE_SHELF_ID;
         let root = special_shelf
             ? this._jstree.get_node("#")
             : this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF).id);
@@ -293,7 +298,7 @@ class BookmarkTree {
 
         let nodes = [];
         this.traverse(root, jnode => {
-            let data = backend._sanitizeNode(o(jnode));
+            let data = o(jnode) || {};
 
             data.level = jnode.parents.length - skip_level;
             nodes.push(data);
@@ -379,12 +384,11 @@ class BookmarkTree {
 
         jnode.id = node.id;
         jnode.text = node.name;
+        jnode.type = node.type;
         jnode.icon = node.icon;
         jnode.data = node; // store the original Scrapyard node
-
-        delete node.tag_list;
-
         jnode.parent = node.parent_id;
+
         if (!jnode.parent)
             jnode.parent = "#";
 
@@ -678,11 +682,12 @@ class BookmarkTree {
                 || parent.id == FIREFOX_SHELF_ID || node.parent == FIREFOX_SHELF_ID)
                 return false;
 
-            if (o(node).external !== RDF_EXTERNAL_NAME && o(parent).external === RDF_EXTERNAL_NAME
-                    || o(node).external === RDF_EXTERNAL_NAME
-                    && more.ref && o(more.ref).external !== RDF_EXTERNAL_NAME)
+            if (o(node)?.external !== RDF_EXTERNAL_NAME && o(parent)?.external === RDF_EXTERNAL_NAME
+                    || o(node)?.external === RDF_EXTERNAL_NAME
+                    && more.ref && o(more.ref)?.external !== RDF_EXTERNAL_NAME)
                 return false;
         }
+
         return true;
     }
 
@@ -814,10 +819,8 @@ class BookmarkTree {
                 label: "Open",
                 separator_before: o(ctxNode).__filtering,
                 action: async function () {
-                    for (let jnode of selectedNodes) {
-                        const node = o(jnode);
-                        await send.browseNode({node: node});
-                    }
+                    for (let jnode of selectedNodes)
+                        await send.browseNode({node: c(jnode)});
                 }
             },
             openAllItem: {
@@ -826,8 +829,10 @@ class BookmarkTree {
                     let children = self.odata.filter(n => ctxNode.children.some(id => id == n.id) && isEndpoint(n));
                     children.sort((a, b) => a.pos - b.pos);
 
-                    for (let node of children)
+                    for (let node of children) {
+                        delete node.tag_list;
                         await send.browseNode({node: node});
+                    }
                 }
             },
             openOriginalItem: {

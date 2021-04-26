@@ -248,23 +248,26 @@ class IDBStorage {
         let searchrx = search? new RegExp(search, "i"): null;
         let query = dexie.nodes;
 
+        const todo_shelf = path?.toUpperCase() === TODO_SHELF_NAME;
+        const done_shelf = path?.toUpperCase() === DONE_SHELF_NAME;
+
         if (group) {
             let subtree = [];
 
             if (depth === "group")
                 await this._selectDirectChildrenIdsOf(group.id, subtree);
-            else if (depth === "subtree")
-                await this._selectAllChildrenIdsOf(group.id, subtree);
             else if (depth === "root+subtree") {
                 await this._selectAllChildrenIdsOf(group.id, subtree);
                 subtree.push(group.id);
             }
+            else // "subtree"
+                await this._selectAllChildrenIdsOf(group.id, subtree);
 
             query = query.where("id").anyOf(subtree);
         }
 
         let filterf = node => {
-            let result = path && path !== TODO_SHELF_NAME && path !== DONE_SHELF_NAME? !!group: true;
+            let result = path && !todo_shelf && !done_shelf? !!group: true;
 
             if (types)
                 result = result && types.some(t => t == node.type);
@@ -272,9 +275,9 @@ class IDBStorage {
             if (search)
                 result = result && (searchrx.test(node.name) || searchrx.test(node.uri));
 
-            if (group?.id === TODO_SHELF_ID)
+            if (todo_shelf)
                 result = result && node.todo_state && node.todo_state < TODO_STATE_DONE;
-            else if (group?.id === DONE_SHELF_ID)
+            else if (done_shelf)
                 result = result && node.todo_state && node.todo_state >= TODO_STATE_DONE;
 
             if (tags) {
@@ -390,34 +393,33 @@ class IDBStorage {
     }
 
     async wipeEveritying() {
+        const retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
+            ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
+            ...(await this.queryFullSubtree(CLOUD_SHELF_ID, true))];
+
         if (dexie.tables.some(t => t.name === "blobs"))
-            await dexie.blobs.clear();
+            await dexie.blobs.where("node_id").noneOf(retain).delete();
 
         if (dexie.tables.some(t => t.name === "index"))
-            await dexie.index.clear();
+            await dexie.index.where("node_id").noneOf(retain).delete();
 
         if (dexie.tables.some(t => t.name === "notes"))
-            await dexie.notes.clear();
+            await dexie.notes.where("node_id").noneOf(retain).delete();
+
+        if (dexie.tables.some(t => t.name === "icons"))
+            await dexie.icons.where("node_id").noneOf(retain).delete();
+
+        if (dexie.tables.some(t => t.name === "comments"))
+            await dexie.comments.where("node_id").noneOf(retain).delete();
+
+        if (dexie.tables.some(t => t.name === "index_notes"))
+            await dexie.index_notes.where("node_id").noneOf(retain).delete();
+
+        if (dexie.tables.some(t => t.name === "index_comments"))
+            await dexie.index_comments.where("node_id").noneOf(retain).delete();
 
         if (dexie.tables.some(t => t.name === "tags"))
             await dexie.tags.clear();
-
-        if (dexie.tables.some(t => t.name === "icons"))
-            await dexie.icons.clear();
-
-        if (dexie.tables.some(t => t.name === "comments"))
-            await dexie.comments.clear();
-
-        if (dexie.tables.some(t => t.name === "index_notes"))
-            await dexie.index_notes.clear();
-
-        if (dexie.tables.some(t => t.name === "index_comments"))
-            await dexie.index_comments.clear();
-
-
-        let retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
-            ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
-            ...(await this.queryFullSubtree(CLOUD_SHELF_ID, true))];
 
         return dexie.nodes.where("id").noneOf(retain).delete();
     }

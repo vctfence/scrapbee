@@ -232,7 +232,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             if (helperApp) {
                 // write to temp file
 
-                let init_url = `http://localhost:${settings.helper_port_number()}/export/initialize`
+                const init_url = `http://localhost:${settings.helper_port_number()}/export/initialize`
                 let result = null;
                 try {
                     result = fetch(init_url);
@@ -241,9 +241,9 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     console.log(e);
                 }
 
-                let port = await nativeBackend.getPort();
+                const port = await nativeBackend.getPort();
 
-                let file = {
+                const file = {
                     append: function (text) {
                         port.postMessage({
                             type: "EXPORT_PUSH_TEXT",
@@ -252,7 +252,18 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     }
                 };
 
-                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export());
+                let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));
+                const nodes = [];
+
+                for (const n of message.nodes) {
+                    const node = nodesRandom.find(nr => nr.id === n.id);
+                    Object.assign(node, n);
+                    nodes.push(node);
+                }
+
+                nodesRandom = null;
+
+                await exportf(file, nodes, message.shelf, message.uuid, settings.shallow_export());
 
                 port.postMessage({
                     type: "EXPORT_FINISH"
