@@ -450,10 +450,12 @@ function stopProcessingIndication() {
 }
 
 
-function loadShelves(context, tree, synchronize = true, clearSelection = false) {
+async function loadShelves(context, tree, synchronize = true, clearSelection = false) {
     let shelf_list = $("#shelfList");
 
-    return backend.listShelves().then(shelves => {
+    try {
+        let shelves = await backend.listShelves();
+
         shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF_ID}">${TODO_SHELF_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF_ID}">${DONE_SHELF_NAME}</option>
@@ -512,21 +514,25 @@ function loadShelves(context, tree, synchronize = true, clearSelection = false) 
         styleBuiltinShelf();
         shelf_list.selectric('refresh');
         return switchShelf(context, tree, shelf_list.val(), synchronize, clearSelection);
-    }).catch(() => {
+    }
+    catch (e) {
+        console.error(e);
         shelf_list.val(DEFAULT_SHELF_ID);
         shelf_list.selectric('refresh');
         return switchShelf(context, tree, DEFAULT_SHELF_ID, synchronize, clearSelection);
-    });
+    }
 }
 
-function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection = false) {
+async function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection = false) {
 
     if (settings.last_shelf() != shelf_id)
         tree.clearIconCache();
 
     let path = $(`#shelfList option[value="${shelf_id}"]`).text();
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
-    settings.load(() => settings.last_shelf(shelf_id));
+
+    await settings.load();
+    settings.last_shelf(shelf_id);
 
     if (shelf_id == EVERYTHING_SHELF_ID)
         $("#shelf-menu-sort").show();
@@ -539,49 +545,43 @@ function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection
         return performSearch(context, tree);
     else {
         if (shelf_id == TODO_SHELF_ID) {
-            return backend.listTODO().then(nodes => {
-                tree.list(nodes, TODO_SHELF_NAME, true);
-            });
+            const nodes = await backend.listTODO();
+            tree.list(nodes, TODO_SHELF_NAME, true);
         }
         else if (shelf_id == DONE_SHELF_ID) {
-            return backend.listDONE().then(nodes => {
-                tree.list(nodes, DONE_SHELF_NAME, true);
-            });
+            const nodes = await backend.listDONE();
+            tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            return backend.listShelfNodes(EVERYTHING).then(nodes => {
-                tree.update(nodes, true, clearSelection);
-                if (synchronize && settings.cloud_enabled()) {
-                    send.reconcileCloudBookmarkDb();
-                }
-            });
+            const nodes = await backend.listShelfNodes(EVERYTHING);
+            tree.update(nodes, true, clearSelection);
+            if (synchronize && settings.cloud_enabled()) {
+                send.reconcileCloudBookmarkDb({verbose: true});
+            }
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
-            return backend.listShelfNodes(path).then(nodes => {
-                tree.update(nodes, false, clearSelection);
-                if (synchronize && settings.cloud_enabled()) {
-                    send.reconcileCloudBookmarkDb({verbose: true});
-                }
-            });
+            const nodes = await backend.listShelfNodes(path);
+            tree.update(nodes, false, clearSelection);
+            if (synchronize && settings.cloud_enabled()) {
+                send.reconcileCloudBookmarkDb({verbose: true});
+            }
         }
         else if (shelf_id == FIREFOX_SHELF_ID) {
-            return backend.listShelfNodes(path).then(nodes => {
-                nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
+            const nodes = await backend.listShelfNodes(path);
+            nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
 
-                for (let node of nodes) {
-                    if (node.parent_id == FIREFOX_SHELF_ID) {
-                        node.type = NODE_TYPE_SHELF;
-                        node.parent_id = null;
-                    }
+            for (let node of nodes) {
+                if (node.parent_id == FIREFOX_SHELF_ID) {
+                    node.type = NODE_TYPE_SHELF;
+                    node.parent_id = null;
                 }
-                tree.update(nodes, false, clearSelection);
-            });
+            }
+            tree.update(nodes, false, clearSelection);
+
         }
-        else {
-            if (path)
-                return backend.listShelfNodes(path).then(nodes => {
-                    tree.update(nodes, false, clearSelection);
-                });
+        else if (path) {
+            const nodes = await backend.listShelfNodes(path);
+            tree.update(nodes, false, clearSelection);
         }
     }
 }
