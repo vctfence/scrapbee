@@ -415,6 +415,19 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             send.stopProcessingIndication();
         }
             break;
+        case "RESET_CLOUD": {
+            if (!cloudBackend.isAuthenticated())
+                return false;
+
+            send.startProcessingIndication();
+
+            await cloudBackend.reset();
+
+            send.stopProcessingIndication();
+
+            return true;
+        }
+            break;
     }
 });
 

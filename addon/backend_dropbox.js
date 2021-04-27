@@ -171,6 +171,20 @@ export class DropboxBackend {
         });
     };
 
+    async reset() {
+        try {
+            const {result: {entries}} = await this.dbx.filesListFolder({path: DROPBOX_APP_PATH});
+
+            if (entries && entries.length) {
+                const files = {entries: entries.map(f => ({path: f.path_display}))};
+                await this.dbx.filesDeleteBatch(files);
+            }
+        }
+        catch (e) {
+            console.error(e);
+        }
+    }
+
     async getDB(blank = false) {
         let storage = null;
 

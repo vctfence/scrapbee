@@ -31,6 +31,10 @@ export class CloudBackend {
         cloudBackend = new CloudBackend("dropbox");
     }
 
+    async reset() {
+        await this._provider.reset();
+    }
+
     newCloudRootNode() {
         return {id: CLOUD_SHELF_ID,
             pos: -2,

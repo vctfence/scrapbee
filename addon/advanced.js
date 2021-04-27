@@ -1,6 +1,7 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
+import {showNotification} from "./utils.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){
@@ -73,6 +74,16 @@ function configureRepairPanel() {
         $("#reindex-content-link").on("click", e => {
             send.reindexArchiveContent();
             $("#reindex-content-link").off("click");
+        });
+
+        $("#reset-cloud-link").on("click", async e => {
+            if (confirm("This will remove all cloud content. Are you sure?")) {
+                let success = await send.resetCloud();
+
+                if (!success)
+                    showNotification("Cloud access error")
+            }
+
         });
     });
 }
