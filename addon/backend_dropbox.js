@@ -153,6 +153,7 @@ export class DropboxBackend {
         manager.deleteComments = deleteAsset("comments");
 
         manager.storeView = storeAsset("view");
+        manager.fetchView = fetchAsset("view");
         manager.deleteView = deleteAsset("view");
 
         return manager;

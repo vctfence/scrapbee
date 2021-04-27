@@ -4,7 +4,7 @@ import {
 } from "./storage_constants.js";
 import {settings} from "./settings.js";
 import {backend} from "./backend.js";
-import {fixDocumentEncoding, loadShelveOptions, parseHtml} from "./utils.js"
+import {fixDocumentEncoding, getActiveTab, loadShelveOptions, parseHtml} from "./utils.js"
 import {send} from "./proxy.js"
 
 window.onload = async function() {
@@ -64,7 +64,8 @@ async function appendSearchResult(query, node, occurrences) {
                   <td class="result-actions">
                     <div class="cell-content">
                       <img id="select_${node.id}" class="result-action-icon" src="icons/tree-select.svg" title="Select"/>
-                      <img id="open_${node.id}" class="result-action-icon" src="icons/open-link.svg" title="Open"/>&nbsp;
+                      <img id="open_this_tab_${node.id}" class="result-action-icon" src="icons/open-link-this-tab.svg" title="Open in this tab"/>
+                      <img id="open_${node.id}" class="result-action-icon" src="icons/open-link.svg" title="Open in new tab"/>&nbsp;
                     </div>
                   </td>
                   <td id="item_${node.id}" class="search-result result-row">
@@ -91,6 +92,7 @@ async function appendSearchResult(query, node, occurrences) {
     $(`#item_${node.id}`).click(e => previewResult(query, node));
     $(`#occurrences_${node.id}`).click(e => previewResult(query, node));
     $(`#select_${node.id}`).click(e => send.selectNode({node}));
+    $(`#open_this_tab_${node.id}`).click(async e => send.browseNode({node, tab: await getActiveTab(), preserveHistory: true}));
     $(`#open_${node.id}`).click(e => send.browseNode({node}));
 
     $("#search-result-count").text(`${++resultsFound} ${resultsFound === 1? "result": "results"} found`);

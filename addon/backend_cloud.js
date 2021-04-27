@@ -250,6 +250,10 @@ export class CloudBackend {
         return (await this._provider.getDB(true)).fetchNotes(node);
     }
 
+    async fetchCloudView(node) {
+        return (await this._provider.getDB(true)).fetchView(node);
+    }
+
     async fetchCloudComments(node) {
         return (await this._provider.getDB(true)).fetchComments(node);
     }
@@ -602,13 +606,22 @@ export class CloudBackend {
 
                 await backend.deleteMissingExternalNodes(cloud_ids, CLOUD_EXTERNAL_NAME);
 
-                console.log("cloud reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
-
                 for (let notes_node of download_notes) {
                     let notes = await this.fetchCloudNotes(notes_node);
-                    if (notes)
-                        await backend.storeNotesLowLevel({node_id: notes_node.id, content: notes,
-                            format: notes_node.notes_format, align: notes_node.notes_align, width: notes_node.notes_width});
+                    if (notes) {
+                        let options = {
+                            node_id: notes_node.id,
+                            content: notes,
+                            format: notes_node.notes_format,
+                            align: notes_node.notes_align,
+                            width: notes_node.notes_width
+                        };
+
+                        if (notes_node.notes_format === "delta")
+                            options.html = await this.fetchCloudView(notes_node);
+
+                        await backend.storeNotesLowLevel(options);
+                    }
                 }
 
                 for (let comments_node of download_comments) {
@@ -650,6 +663,8 @@ export class CloudBackend {
 
                 db_root.date_modified = cloud_last_modified;
                 await backend.updateNode(db_root, false);
+
+                console.log("cloud reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
 
                 send.cloudSyncEnd();
                 send.externalNodesReady();
