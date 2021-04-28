@@ -141,19 +141,22 @@ export class JSONStorage {
 
         for (let node of nodes) {
             let existing = this.objects.find(n => n.uuid === node.uuid);
-            this.objects.splice(this.objects.indexOf(existing), 1);
+            if (existing)
+                this.objects.splice(this.objects.indexOf(existing), 1);
         }
     }
 
     async moveNode(node, dest, root) {
         let existing = this.objects.find(n => n.uuid === node.uuid);
-        let cloud_dest = root;
+        if (existing) {
+            let cloud_dest = root;
 
-        if (!root || dest.id !== root.id)
-             cloud_dest = this.objects.find(n => n.uuid === dest.uuid);
+            if (!root || dest.id !== root.id)
+                cloud_dest = this.objects.find(n => n.uuid === dest.uuid);
 
-        existing.pos = node.pos;
-        existing.parent_id = cloud_dest.id;
+            existing.pos = node.pos;
+            existing.parent_id = cloud_dest.id;
+        }
     }
 
     async queryNodes() {

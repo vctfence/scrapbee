@@ -1,13 +1,12 @@
 String.prototype.indexWords = function (html = true) {
     try {
-        //console.log((/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs.exec(this)))
         let filterTags = text =>
             html
                ? text.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
-                    .replace(/<title.*?<\/title>/igs, '')
-                    .replace(/<style.*?<\/style>/igs, '')
-                    .replace(/<script.*?<\/script>/igs, '')
-                    .replace(/&[0-9#a-zA-Z]+;/igs, '')
+                    .replace(/<title.*?<\/title>/igs, "")
+                    .replace(/<style.*?<\/style>/igs, "")
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/igs, "")
+                    .replace(/&[0-9#a-zA-Z]+;/igs, ' ')
                     .replace(/<[^>]+>/gs, ' ')
                : text;
 

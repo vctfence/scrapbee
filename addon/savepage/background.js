@@ -562,6 +562,7 @@ function initialize()
         if (!("options-loadlazycontent" in object)) object["options-loadlazycontent"] =
             ("options-forcelazyloads" in object) ? object["options-forcelazyloads"] : false;  /* Version 13.0-24.2 */
 
+        if (!("options-lazyloadscrolltime" in object)) object["options-lazyloadscrolltime"] = 1;
 
         if (!("options-removeelements" in object)) object["options-removeelements"] =
             ("options-purgeelements" in object) ? object["options-purgeelements"] : true;  /* Version 13.2-20.1 */
@@ -904,9 +905,9 @@ function addListeners()
 
             case "delay":
 
-                window.setTimeout(function() { sendResponse(); },message.milliseconds);
-
-                return true;  /* asynchronous response */
+                return new Promise(resolve => {
+                    setTimeout(() => resolve(), message.milliseconds);
+                });
         }
     });
 

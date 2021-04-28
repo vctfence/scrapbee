@@ -81,7 +81,7 @@ function configureRepairPanel() {
                 let success = await send.resetCloud();
 
                 if (!success)
-                    showNotification("Cloud access error")
+                    showNotification("Error accessing cloud.")
             }
 
         });

@@ -12,7 +12,7 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
+export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 
 
 export let cloudBackend;

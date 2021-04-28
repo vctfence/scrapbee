@@ -668,7 +668,9 @@ function forceLazyContent()
 
         if (debugEnable) console.log("INITIAL  -  Inner Height: " + window.innerHeight + "  Scroll Height: " + document.body.scrollHeight + "  Scroll Y: " + scrolly);
 
-        chrome.runtime.sendMessage({ type: "delay", milliseconds: lazyLoadScrollTime*1000 },  /* allow time for first lazy loads to complete */
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        new Promise(resolve => setTimeout(() => resolve(), lazyLoadScrollTime*1000)).then(   /* allow time for first lazy loads to complete */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
         function timer(object)
         {
             if (scrolly < document.documentElement.scrollHeight && !skipLazyLoad && !cancelSave)
@@ -679,7 +681,9 @@ function forceLazyContent()
 
                 window.scrollTo(0,scrolly);
 
-                chrome.runtime.sendMessage({ type: "delay", milliseconds: lazyLoadScrollTime*1000 },  /* allow time for some more lazy loads to complete */
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                new Promise(resolve => setTimeout(() => resolve(), lazyLoadScrollTime*1000)).then(   /* allow time for some more lazy loads to complete */
+                ////////////////////////////////////////////////////////////////// Scrapyard //
                 function(object)
                 {
                     timer();
@@ -692,7 +696,9 @@ function forceLazyContent()
                 window.scrollTo(0,document.documentElement.scrollHeight-window.innerHeight-10);
                 window.scrollTo(0,document.documentElement.scrollHeight);
 
-                chrome.runtime.sendMessage({ type: "delay", milliseconds: 500+lazyLoadScrollTime*1000 },  /* allow time for final lazy loads to complete */
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                new Promise(resolve => setTimeout(() => resolve(), 500+lazyLoadScrollTime*1000)).then(   /* allow time for final lazy loads to complete */
+                ////////////////////////////////////////////////////////////////// Scrapyard //
                 function(object)
                 {
                     if (debugEnable) console.log("FINISHED -  Inner Height: " + window.innerHeight + "  Scroll Height: " + document.body.scrollHeight + "  Scroll Y: " + scrolly);
@@ -744,7 +750,9 @@ function forceLazyContent()
         document.body.style.setProperty("transform","scaleX(" + scalex + ") scaleY(" + scaley + ")","important");
         document.body.style.setProperty("visibility","hidden","important");
 
-        chrome.runtime.sendMessage({ type: "delay", milliseconds: 500+lazyLoadShrinkTime*1000 },  /* allow time for page to settle after scroll - e.g. page with floating top bar that resizes when page scrolls */
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        new Promise(resolve => setTimeout(() => resolve(), 500+lazyLoadShrinkTime*1000)).then(   /* allow time for page to settle after scroll - e.g. page with floating top bar that resizes when page scrolls */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
         function(object)
         {
             document.body.style.removeProperty("visibility");
@@ -757,7 +765,9 @@ function forceLazyContent()
 
             if (debugEnable) console.log("INITIAL  -  Inner Height: " + window.innerHeight + "  Scroll Height: " + document.body.scrollHeight + "  Scale: " + scaley);
 
-            chrome.runtime.sendMessage({ type: "delay", milliseconds: 500+lazyLoadShrinkTime*1000 },  /* allow time for first lazy loads to complete */
+            // Scrapyard //////////////////////////////////////////////////////////////////
+            new Promise(resolve => setTimeout(() => resolve(), 500+lazyLoadShrinkTime*1000)).then(   /* allow time for first lazy loads to complete */
+            ////////////////////////////////////////////////////////////////// Scrapyard //
             function timer(object)
             {
                 if (document.body.scrollHeight > lastscrollheight && document.body.scrollHeight*scaley < window.innerHeight && !skipLazyLoad && !cancelSave)
@@ -769,7 +779,9 @@ function forceLazyContent()
                     window.scrollTo(0,document.body.scrollHeight);
                     window.scrollTo(0,0);
 
-                    chrome.runtime.sendMessage({ type: "delay", milliseconds: lazyLoadShrinkTime*1000 },  /* allow time for some more lazy loads to complete */
+                    // Scrapyard //////////////////////////////////////////////////////////////////
+                    new Promise(resolve => setTimeout(() => resolve(), lazyLoadShrinkTime*1000)).then(   /* allow time for some more lazy loads to complete */
+                    ////////////////////////////////////////////////////////////////// Scrapyard //
                     function(object)
                     {
                         timer();
@@ -782,7 +794,9 @@ function forceLazyContent()
                     window.scrollTo(0,document.body.scrollHeight);
                     window.scrollTo(0,0);
 
-                    chrome.runtime.sendMessage({ type: "delay", milliseconds: 500+lazyLoadShrinkTime*1000 },  /* allow time for final lazy loads to complete */
+                    // Scrapyard //////////////////////////////////////////////////////////////////
+                    new Promise(resolve => setTimeout(() => resolve(), 500+lazyLoadShrinkTime*1000)).then(   /* allow time for final lazy loads to complete */
+                    ////////////////////////////////////////////////////////////////// Scrapyard //
                     function(object)
                     {
                         if (debugEnable) console.log("FINISHED -  Inner Height: " + window.innerHeight + "  Scroll Height: " + document.body.scrollHeight + "  Scale: " + scaley);
@@ -934,7 +948,9 @@ function initializeBeforeSave()
     chrome.runtime.sendMessage({ type: "requestFramesRelay" });
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
-    chrome.runtime.sendMessage({ type: "delay", milliseconds: 200 },  /* allow time for all frames to reply */
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    new Promise(resolve => setTimeout(() => resolve(), 200)).then( /* allow time for all frames to reply */
+    ////////////////////////////////////////////////////////////////// Scrapyard //
     function(object)
     {
         var i;
@@ -2617,7 +2633,9 @@ function enterComments()
     }
     else
     {
-        chrome.runtime.sendMessage({ type: "delay", milliseconds: 10 },  /* allow time for any open panel to close */
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        new Promise(resolve => setTimeout(() => resolve(), 10)).then(   /* allow time for any open panel to close */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
         function(object)
         {
             generateHTML();
@@ -2682,7 +2700,9 @@ function enterComments()
 
         document.documentElement.removeChild(document.getElementById("savepage-comments-panel-container"));
 
-        chrome.runtime.sendMessage({ type: "delay", milliseconds: 10 },  /* allow time for enter comments panel to close */
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        new Promise(resolve => setTimeout(() => resolve(), 10)).then(   /* allow time for enter comments panel to close */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
         function(object)
         {
             generateHTML();
@@ -2904,7 +2924,9 @@ function generateHTML()
     //         event.stopPropagation();
     //     }
     //
-    //     chrome.runtime.sendMessage({ type: "delay", milliseconds: 100 },  /* allow time before revoking object URL */
+    //     // Scrapyard //////////////////////////////////////////////////////////////////
+    //        new Promise(resolve => setTimeout(() => resolve(), 100)).then(   /* allow time before revoking object URL */
+    //     ////////////////////////////////////////////////////////////////// Scrapyard //
     //     function(object)
     //     {
     //         window.URL.revokeObjectURL(objectURL);

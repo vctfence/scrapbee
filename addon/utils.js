@@ -107,7 +107,7 @@ export function parseHtml(htmlText) {
     //let first_elt;
 
     htmlText = htmlText.replace(/^.*?<html[^>]*>/is, "");
-    htmlText = htmlText.replace(/<\/html>/is, "");
+    htmlText = htmlText.replace(/<\/html>.*?$/is, "");
 
     doc_elt.innerHTML = htmlText;
     //first_elt = doc_elt.firstElementChild;
