@@ -35,6 +35,13 @@ to obtain the desired features.
 * ~~Automation API [DONE]~~
 * ~~Full text search through archived content, notes and comments [DONE]~~
 
+### Project status
+
+Currently, the project is considered as a permanent alpha: be prepared for breaking changes, devastating bugs and
+groundbreaking experiments. Please, backup your Firefox profile often. Scrapyard also could be incredibly buggy at times,
+when major internal refactoring are performed, since I have not enough resources for proper QA, so users are the last
+frontier of it. Nevertheless, do not forget to donate if you have a good use of the software.
+
 ### The current status of cloud support
 
 Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API, which is by definition a mock

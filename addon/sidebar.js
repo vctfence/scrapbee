@@ -6,10 +6,9 @@ import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
 
 import {
-    SEARCH_MODE_TITLE,
-    SEARCH_MODE_TAGS,
-    SEARCH_MODE_CONTENT,
-    SearchContext, SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS
+    SearchContext,
+    SEARCH_MODE_TITLE, SEARCH_MODE_TAGS, SEARCH_MODE_CONTENT,
+    SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE
 } from "./search.js";
 
 import {formatShelfName, openPage, pathToNameExt, showNotification} from "./utils.js";
@@ -183,31 +182,43 @@ window.onload = async function () {
 
     $("#shelf-menu-search-title").click(() => {
         $("#search-mode-switch").prop("src", "icons/bookmark.svg");
+        $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TITLE, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-tags").click(() => {
         $("#search-mode-switch").prop("src", "icons/tags.svg");
+        $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-content").click(() => {
         $("#search-mode-switch").prop("src", "icons/content-web.svg");
+        $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_CONTENT, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-notes").click(() => {
         $("#search-mode-switch").prop("src", "icons/content-notes.svg");
+        $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_NOTES, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-comments").click(() => {
         $("#search-mode-switch").prop("src", "icons/content-comments.svg");
+        $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_COMMENTS, getCurrentShelf().name);
+        performSearch();
+    });
+
+    $("#shelf-menu-search-date").click(() => {
+        $("#search-mode-switch").prop("src", "icons/calendar.svg");
+        $("#search-input").attr("placeholder", "examples: 2021-02-24, before 2021-02-24, after 2021-02-24")
+        context.setMode(SEARCH_MODE_DATE, getCurrentShelf().name);
         performSearch();
     });
 
@@ -462,32 +473,27 @@ function getCurrentShelf() {
     };
 }
 
-function validSearchInput(input) {
-    return input && input.length > 2;
-}
-
 function canSearch() {
-    let input = $("#search-input").val();
-
-    return validSearchInput(input);
+    return context.isInputValid($("#search-input").val());
 }
 
 async function performSearch() {
     let input = $("#search-input").val();
 
-    if (validSearchInput(input) && !context.isInSearch) {
+    if (context.isInputValid(input) && !context.isInSearch) {
         context.inSearch();
     }
-    else if (!validSearchInput(input) && context.isInSearch) {
+    else if (!context.isInputValid(input) && context.isInSearch) {
         const {id} = getCurrentShelf();
         context.outOfSearch();
         switchShelf(id, false);
     }
 
-    if (validSearchInput(input))
-        return context.search(input).then(nodes => {
-            tree.list(nodes);
-        });
+    if (context.isInputValid(input))
+        return context.search(input)
+            .then(nodes => {
+                tree.list(nodes);
+            });
 }
 
 function performImport(file, file_name, file_ext) {

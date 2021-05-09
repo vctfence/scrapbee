@@ -244,7 +244,7 @@ class IDBStorage {
     }
 
     async queryNodes(group, options) {
-        let {search, tags, types, path, limit, depth, order} = options;
+        let {search, tags, date, period, types, path, limit, depth, order} = options;
         let searchrx = search? new RegExp(search, "i"): null;
         let query = dexie.nodes;
 
@@ -266,24 +266,50 @@ class IDBStorage {
             query = query.where("id").anyOf(subtree);
         }
 
+        if (date) {
+            date = (new Date(date)).getTime();
+            if (isNaN(date))
+                date = null;
+            if (date && period)
+                period = period === "after"? 1: -1;
+            else
+                period = 0;
+        }
+
         let filterf = node => {
             let result = path && !todo_shelf && !done_shelf? !!group: true;
 
             if (types)
                 result = result && types.some(t => t == node.type);
 
-            if (search)
-                result = result && (searchrx.test(node.name) || searchrx.test(node.uri));
-
             if (todo_shelf)
                 result = result && node.todo_state && node.todo_state < TODO_STATE_DONE;
             else if (done_shelf)
                 result = result && node.todo_state && node.todo_state >= TODO_STATE_DONE;
 
-            if (tags) {
+            if (search)
+                result = result && (searchrx.test(node.name) || searchrx.test(node.uri));
+            else if (tags) {
                 if (node.tag_list) {
                     let intersection = tags.filter(value => node.tag_list.some(t => t.startsWith(value)));
                     result = result && intersection.length > 0;
+                }
+                else
+                    result = false;
+            }
+            else if (date) {
+                const nodeMillis = node.date_added?.getTime? node.date_added.getTime(): null;
+
+                if (nodeMillis) {
+                    const nodeDate = new Date(nodeMillis);
+                    nodeDate.setUTCHours(0, 0, 0, 0);
+
+                    if (period === 0)
+                        result = result && date === nodeDate.getTime();
+                    else if (period > 0)
+                        result = result && date < nodeDate.getTime();
+                    else if (period < 0)
+                        result = result && date > nodeDate.getTime();
                 }
                 else
                     result = false;

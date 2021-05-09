@@ -218,6 +218,8 @@ export class Backend extends ExternalEventProvider {
     async listNodes(options //{search, // filter by node name or URL
                       // path,   // filter by hierarchical node group path (string), the first item in the path is a name of a shelf
                       // tags,   // filter for node tags (string, containing comma separated list)
+                      // date,   // filter nodes by date
+                      // period, // chronological period: "" (exact date), "before", "after"
                       // types,  // filter for node types (array of integers)
                       // limit,  // limit for the returned record number
                       // depth,  // specify depth of search: "group", "subtree" or "root+subtree"

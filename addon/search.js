@@ -4,17 +4,21 @@ import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from 
 import {openContainerTab} from "./utils.js";
 
 
-export const SEARCH_MODE_SCRAPYARD = 1;
-export const SEARCH_MODE_TITLE = 2;
-export const SEARCH_MODE_TAGS = 3;
-export const SEARCH_MODE_CONTENT = 4;
-export const SEARCH_MODE_NOTES = 5;
-export const SEARCH_MODE_COMMENTS = 6;
+export const SEARCH_MODE_TITLE = 1;
+export const SEARCH_MODE_TAGS = 2;
+export const SEARCH_MODE_CONTENT = 3;
+export const SEARCH_MODE_NOTES = 4;
+export const SEARCH_MODE_COMMENTS = 5;
+export const SEARCH_MODE_DATE = 6;
 
 
 class SearchProvider {
     constructor(shelf) {
         this.shelf = shelf;
+    }
+
+    isInputValid(text) {
+        return text && text.length > 2;
     }
 }
 
@@ -87,30 +91,45 @@ export class ContentSearchProvider extends SearchProvider {
     }
 }
 
-export class ScrapyardSearchProvider extends SearchProvider {
+export class DateSearchProvider extends SearchProvider {
     constructor(shelf) {
-        super(shelf);
-
-        this.providers = [
-            new TitleSearchProvider(shelf),
-            new TagSearchProvider(shelf),
-            new ContentSearchProvider(shelf)
-        ];
+        super(shelf)
     }
-    async search(text) {
-        let result = [];
 
-        if (text)
-            for (let provider of this.providers) {
-                let output = await provider.search(text);
-                if (output)
-                    result = result.concat(output);
+    search(text) {
+        let path;
+        if (this.shelf !== EVERYTHING)
+            path = this.shelf;
+
+        if (text) {
+            const m = /(.*)(\d{4}-\d{2}-\d{2})/.exec(text.trim().toLowerCase());
+            return backend.listNodes({
+                depth: "subtree",
+                path: path,
+                date: m[2],
+                period: m[1].trim(),
+                types: ENDPOINT_TYPES
+            });
+        }
+        return [];
+    }
+
+    isInputValid(text) {
+        const daterx = /^(?:\d{4}-\d{2}-\d{2})|(?:before\s+\d{4}-\d{2}-\d{2})|(?:after\s+\d{4}-\d{2}-\d{2})$/i;
+
+        if (super.isInputValid(text)) {
+            text = text.trim()
+            if (daterx.test(text)) {
+                const m = /(.*)(\d{4}-\d{2}-\d{2})/.exec(text);
+
+                if (!isNaN(new Date(m[2])))
+                    return true;
             }
+        }
 
-        return result.removeDups("id");
+        return false;
     }
 }
-
 
 export class SearchContext {
     constructor(tree) {
@@ -143,9 +162,6 @@ export class SearchContext {
         this.shelf = shelf;
 
         switch (search_mode) {
-            case SEARCH_MODE_SCRAPYARD:
-                this.provider = new ScrapyardSearchProvider(shelf);
-                break;
             case SEARCH_MODE_TITLE:
                 this.provider = new TitleSearchProvider(shelf);
                 break;
@@ -161,11 +177,18 @@ export class SearchContext {
             case SEARCH_MODE_COMMENTS:
                 this.provider = new ContentSearchProvider(shelf, "comments");
                 break;
+            case SEARCH_MODE_DATE:
+                this.provider = new DateSearchProvider(shelf);
+                break;
         }
     }
 
     search(text) {
         return this.provider.search(text);
+    }
+
+    isInputValid(text) {
+        return this.provider.isInputValid(text);
     }
 }
 
