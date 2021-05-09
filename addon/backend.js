@@ -515,9 +515,8 @@ export class Backend extends ExternalEventProvider {
         for (let n of nodes) {
             n.parent_id = dest_id;
             n.name = await this._ensureUnique(dest_id, n.name);
+            await this.updateNode(n);
         }
-
-        await this.updateNodes(nodes);
 
         if (nodes.some(n => n.type === NODE_TYPE_GROUP))
             this.invalidateExternalCompletion();

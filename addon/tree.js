@@ -1065,9 +1065,9 @@ class BookmarkTree {
                 _disabled: !(tree.can_paste() && isContainer(o(ctxNode))),
                 action: function () {
                     let buffer = tree.get_buffer();
-                    let selection = Array.isArray(buffer.node)
-                        ? buffer.node.map(n => o(n).id)
-                        : [o(buffer.node).id];
+                    let selection = Array.isArray(buffer.node)? buffer.node.map(n => o(n)): [o(buffer.node)];
+                    selection.sort((a, b) => a.pos - b.pos);
+                    selection = selection.map(n => n.id);
 
                     if (self.startProcessingIndication)
                         self.startProcessingIndication();
