@@ -254,7 +254,7 @@ export class BrowserBackend {
         if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
             return;
 
-        nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
+        nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME && n.external_id);
 
         if (nodes.length)
             return this.muteBrowserListeners(async () => {

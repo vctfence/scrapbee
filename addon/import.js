@@ -13,7 +13,7 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-import {getFavicon, getFaviconFromTab, packPage, partition, ReadLine} from "./utils.js"
+import {formatShelfName, getFavicon, getFaviconFromTab, packPage, partition, ReadLine} from "./utils.js"
 
 const EXPORT_VERSION = 1;
 
@@ -170,13 +170,8 @@ export async function importOrg(shelf, text) {
 
             if (shelf === EVERYTHING && level === 0 && name
                     && (name.toLocaleLowerCase() === FIREFOX_SHELF_NAME
-                            || name.toLocaleLowerCase() === CLOUD_SHELF_NAME)) {
-                name = settings.capitalize_builtin_shelf_names()
-                    ? name.capitalize()
-                    : name;
-
-                name += " (imported)";
-            }
+                            || name.toLocaleLowerCase() === CLOUD_SHELF_NAME))
+                name = `${formatShelfName(name)} (imported)`;
 
             if (level < subnodes[0].level) {
                 level += 1;
@@ -570,13 +565,8 @@ async function importJSONObject(object) {
 }
 
 function renameSpecialShelves(node) {
-    if (node && (node.id === FIREFOX_SHELF_ID || node.id === CLOUD_SHELF_ID)) {
-        node.name = settings.capitalize_builtin_shelf_names()
-            ? node.name.capitalize()
-            : node.name;
-
-        node.name += " (imported)";
-    }
+    if (node && (node.id === FIREFOX_SHELF_ID || node.id === CLOUD_SHELF_ID))
+        node.name = `${formatShelfName(node.name)} (imported)`;
 }
 
 export async function importJSON(shelf, file) {

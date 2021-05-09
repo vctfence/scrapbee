@@ -7,6 +7,7 @@ import {showDlg, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
 import {
+    formatShelfName,
     getActiveTab,
     getThemeVar,
     isElementInViewport,
@@ -393,18 +394,15 @@ class BookmarkTree {
             jnode.parent = "#";
 
         if (node.type === NODE_TYPE_SHELF && node.external === FIREFOX_SHELF_NAME) {
+            jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
             if (!settings.show_firefox_bookmarks()) {
                 jnode.state = {hidden: true};
             }
-            if (settings.capitalize_builtin_shelf_names())
-                jnode.text = node.name.capitalize();
-
             BookmarkTree.styleFirefoxFolders(node, jnode);
         }
         else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME) {
-            if (settings.capitalize_builtin_shelf_names())
-                jnode.text = node.name.capitalize();
+            jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "cloud-shelf"};
             jnode.icon = "var(--themed-cloud-icon)";
         }
@@ -413,15 +411,15 @@ class BookmarkTree {
             jnode.icon = "/icons/tape.svg";
         }
         else if (node.type === NODE_TYPE_SHELF) {
-            if (node.name && isSpecialShelf(node.name) && settings.capitalize_builtin_shelf_names())
-                jnode.text = node.name.capitalize();
+            if (node.name && isSpecialShelf(node.name))
+                jnode.text = formatShelfName(node.name);
             jnode.icon = "/icons/shelf.svg";
             jnode.li_attr = {"class": "scrapyard-shelf"};
         }
         else if (node.type === NODE_TYPE_GROUP) {
             jnode.icon = "/icons/group.svg";
             jnode.li_attr = {
-                "class": "scrapyard-group",
+                class: "scrapyard-group",
             };
 
             BookmarkTree.styleFirefoxFolders(node, jnode);
@@ -430,17 +428,13 @@ class BookmarkTree {
             jnode.text = "─".repeat(60);
             jnode.icon = false;
             jnode.a_attr = {
-                "class": "separator-node"
+                class: "separator-node"
             };
         }
         else if (node.type !== NODE_TYPE_SHELF) {
-            let nuri = "";
-            if (node.uri)
-                nuri = "\x0A" + node.uri;
-
             jnode.li_attr = {
-                "class": "show_tooltip",
-                "title": `${node.name}${nuri}`,
+                class: "show_tooltip",
+                title: `${node.name}${node.uri? "\x0A" + node.uri: ""}`,
                 //"data-id": node.id,
                 "data-clickable": "true"
             };
@@ -449,7 +443,7 @@ class BookmarkTree {
                 jnode.li_attr.class += " archive-node";
 
             jnode.a_attr = {
-                "class": node.has_notes? "has-notes": ""
+                class: node.has_notes? "has-notes": ""
             };
 
             if (node.todo_state) {
@@ -473,7 +467,7 @@ class BookmarkTree {
                 }
             }
         }
-
+//throw new Error("uuu")
         return jnode;
     }
 
@@ -917,7 +911,8 @@ class BookmarkTree {
                 action: function () {
                     let jparent = tree.get_node(ctxNode.parent);
 
-                    backend.addSeparator(o(jparent).id).then(separator => {
+                    backend.addSeparator(o(jparent).id)
+                        .then(separator => {
                             let position = $.inArray(ctxNode.id, jparent.children);
                             tree.create_node(jparent, BookmarkTree.toJsTreeNode(separator), position + 1);
                             BookmarkTree.reorderNodes(tree, jparent);
@@ -927,26 +922,27 @@ class BookmarkTree {
             newNotesItem: {
                 label: "New Notes",
                 action: () => {
-                    backend.addNotes(o(ctxNode).id, "New Notes").then(notes => {
-                        let jnotes = BookmarkTree.toJsTreeNode(notes);
+                    backend.addNotes(o(ctxNode).id, "New Notes")
+                        .then(notes => {
+                            let jnotes = BookmarkTree.toJsTreeNode(notes);
 
-                        self.data.push(jnotes);
-                        tree.deselect_all(true);
+                            self.data.push(jnotes);
+                            tree.deselect_all(true);
 
-                        let notesNode = tree.get_node(tree.create_node(ctxNode, jnotes));
-                        tree.select_node(notesNode);
+                            let notesNode = tree.get_node(tree.create_node(ctxNode, jnotes));
+                            tree.select_node(notesNode);
 
-                        BookmarkTree.reorderNodes(tree, ctxNode);
+                            BookmarkTree.reorderNodes(tree, ctxNode);
 
-                        tree.edit(notesNode, null, (jnode, success, cancelled) => {
-                            if (success && !cancelled) {
-                                notes.name = jnode.text;
-                                backend.updateBookmark(notes).then(() => {
-                                    o(jnode).name = jnode.original.text = jnode.text;
-                                });
-                            }
+                            tree.edit(notesNode, null, (jnode, success, cancelled) => {
+                                if (success && !cancelled) {
+                                    notes.name = jnode.text;
+                                    backend.updateBookmark(notes).then(() => {
+                                        o(jnode).name = jnode.original.text = jnode.text;
+                                    });
+                                }
+                            });
                         });
-                    });
                 }
             },
             shareItem: {

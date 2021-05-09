@@ -1,7 +1,7 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 
-class iShellBackend {
+class IShellBackend {
     constructor() {
         this.ISHELL_ID = `ishell${this._isExtensionLocal()? "": "-we"}@gchristensen.github.io`;
         settings.load(settings => this.enableInvalidation(settings.ishell_presents()));
@@ -78,6 +78,13 @@ class iShellBackend {
             browser.runtime.sendMessage(this.ISHELL_ID, {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
         }
     }
+
+    isIShell(id) {
+        if (!id)
+            return false;
+
+        return /^ishell(:?-we)?@gchristensen.github.io$/.test(id);
+    }
 }
 
-export let ishellBackend = new iShellBackend();
+export let ishellBackend = new IShellBackend();

@@ -9,13 +9,6 @@ import {
 import {settings} from "./settings.js";
 import {backend} from "./backend.js";
 
-export function isIShell(id) {
-    if (!id)
-        return false;
-
-    return /^ishell(:?-we)?@gchristensen.github.io$/.test(id);
-}
-
 export function partition(items, size) {
     var result = []
     var n = Math.round(items.length / size);
@@ -272,11 +265,12 @@ export function notes2html(notes) {
     }
 }
 
+export function formatShelfName(name) {
+    return settings.capitalize_builtin_shelf_names()? name.capitalize(): name;
+}
+
 export async function loadShelveOptions(element) {
-    $(element).html(`<option value="${EVERYTHING_SHELF_ID}">${
-        settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
-    }</option>
-    `);
+    $(element).html(`<option value="${EVERYTHING_SHELF_ID}">${formatShelfName(EVERYTHING)}</option>`);
 
     let shelves = await backend.listShelves();
     shelves.sort((a, b) => {
@@ -299,7 +293,7 @@ export async function loadShelveOptions(element) {
     for (let shelf of shelves) {
         let name =
             isSpecialShelf(shelf.name)
-                ? (settings.capitalize_builtin_shelf_names()? shelf.name.capitalize(): shelf.name)
+                ? formatShelfName(shelf.name)
                 : shelf.name;
         $("<option></option>").appendTo($(element)).html(name).attr("value", shelf.id);
     }

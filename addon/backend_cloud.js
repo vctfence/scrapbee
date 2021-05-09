@@ -476,7 +476,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME && n.external_id);
 
         if (nodes.length) {
             return this.withCloudDB(async db => {

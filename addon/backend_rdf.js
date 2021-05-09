@@ -331,7 +331,7 @@ export class RDFBackend {
     }
 
     async reorderBookmarks(nodes) {
-        let rdf_nodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
+        let rdf_nodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
         if (rdf_nodes.length) {
             const rdf_doc = await RDFDoc.fromNode(nodes[0]);
             if (rdf_doc) {

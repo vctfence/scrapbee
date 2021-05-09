@@ -384,8 +384,9 @@
 
 import {send} from "../proxy.js";
 import {backend} from "../backend.js";
+import {ishellBackend} from "../backend_ishell.js"
 import {browseNode} from "../background.js";
-import {getActiveTab, getFaviconFromTab, isIShell, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";
+import {getActiveTab, getFaviconFromTab, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";
 import {
     DEFAULT_SHELF_NAME,
     FIREFOX_BOOKMARK_MENU,
@@ -956,7 +957,7 @@ function addListeners()
     browser.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
 
         let node;
-        sender.ishell = isIShell(sender.id);
+        sender.ishell = ishellBackend.isIShell(sender.id);
 
         switch (message.type) {
             case "SCRAPYARD_GET_VERSION":

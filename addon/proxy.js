@@ -27,6 +27,7 @@ export let send = new Proxy({}, {
         return (val) => {
             const payload = val || {};
             payload.type = type;
+            //console.log(payload)
             return browser.runtime.sendMessage(payload);
         };
     }

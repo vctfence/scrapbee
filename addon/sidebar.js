@@ -1,9 +1,9 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js"
 import {backend} from "./backend.js"
+import {ishellBackend} from "./backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
-import {isIShell} from "./utils.js"
 
 import {
     SEARCH_MODE_TITLE,
@@ -12,7 +12,7 @@ import {
     SearchContext, SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS
 } from "./search.js";
 
-import {openPage, pathToNameExt, showNotification} from "./utils.js";
+import {formatShelfName, openPage, pathToNameExt, showNotification} from "./utils.js";
 import {
     CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
@@ -26,30 +26,34 @@ import {
 
 const INPUT_TIMEOUT = 1000;
 
+let tree;
+let context;
+let shelfList;
+
 let randomBookmark;
 let randomBookmarkTimeout;
 
 window.onload = async function () {
-    await settings.load();
-
     /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    let tree = new BookmarkTree("#treeview");
-    let context = new SearchContext(tree);
-    let shelf_list = $("#shelfList");
+    await settings.load();
 
-    shelf_list.selectric({maxHeight: settings.shelf_list_height() || 600, inheritOriginalWidth: true});
+    tree = new BookmarkTree("#treeview");
+    context = new SearchContext(tree);
 
-    $("#btnLoad").on("click", () => loadShelves(context, tree));
+    shelfList = $("#shelfList");
+    shelfList.selectric({maxHeight: settings.shelf_list_height() || 600, inheritOriginalWidth: true});
+
+    $("#btnLoad").on("click", () => loadShelves());
     $("#btnSearch").on("click", () => openPage("fulltext.html"));
     $("#btnSettings").on("click", () => openPage("options.html"));
     $("#btnHelp").on("click", () => openPage("options.html#help"));
 
-    shelf_list.change(function () {
+    shelfList.change(function () {
         styleBuiltinShelf();
-        switchShelf(context, tree, this.value, true, true);
+        switchShelf(this.value, true, true);
     });
 
     $("#shelf-menu-button").click(() => {
@@ -68,7 +72,7 @@ window.onload = async function () {
                             .then(shelf => {
                                 if (shelf) {
                                     settings.last_shelf(shelf.id);
-                                    loadShelves(context, tree);
+                                    loadShelves();
                                 }
                             });
                     }
@@ -93,7 +97,7 @@ window.onload = async function () {
                                 option.text(newName);
                                 tree.renameRoot(newName);
 
-                                shelf_list.selectric('refresh');
+                                shelfList.selectric('refresh');
                             });
                     }
                 });
@@ -120,9 +124,9 @@ window.onload = async function () {
                     send.deleteNodes({node_ids: id}).then(() => {
                         $(`#shelfList option[value="${id}"]`).remove();
 
-                        shelf_list.val(DEFAULT_SHELF_ID);
-                        shelf_list.selectric('refresh');
-                        switchShelf(context, tree, 1);
+                        shelfList.val(DEFAULT_SHELF_ID);
+                        shelfList.selectric('refresh');
+                        switchShelf(1);
                     });
                 }
             });
@@ -139,7 +143,7 @@ window.onload = async function () {
             positions.push({id: sorted[i].id, pos: i});
 
         await send.reorderNodes({positions: positions});
-        loadShelves(context, tree, false);
+        loadShelves(false);
     });
 
     $("#shelf-menu-import").click(() => $("#file-picker").click());
@@ -156,12 +160,12 @@ window.onload = async function () {
 
                 if (existingOption.length)
                     confirm("{Warning}", "This will replace '" + name + "'.").then(() => {
-                        performImport(context, tree, e.target.files[0], name, ext).then(() => {
+                        performImport(e.target.files[0], name, ext).then(() => {
                             $("#file-picker").val("");
                         });
                     });
                 else
-                    performImport(context, tree, e.target.files[0], name, ext).then(() => {
+                    performImport(e.target.files[0], name, ext).then(() => {
                         $("#file-picker").val("");
                     });
             }
@@ -170,7 +174,7 @@ window.onload = async function () {
         }
     });
 
-    $("#shelf-menu-export").click(() => performExport(context, tree));
+    $("#shelf-menu-export").click(() => performExport());
 
     $("#search-mode-switch").click(() => {
         $("#shelf-menu").hide();
@@ -180,31 +184,31 @@ window.onload = async function () {
     $("#shelf-menu-search-title").click(() => {
         $("#search-mode-switch").prop("src", "icons/bookmark.svg");
         context.setMode(SEARCH_MODE_TITLE, getCurrentShelf().name);
-        performSearch(context, tree);
+        performSearch();
     });
 
     $("#shelf-menu-search-tags").click(() => {
         $("#search-mode-switch").prop("src", "icons/tags.svg");
         context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
-        performSearch(context, tree);
+        performSearch();
     });
 
     $("#shelf-menu-search-content").click(() => {
         $("#search-mode-switch").prop("src", "icons/content-web.svg");
         context.setMode(SEARCH_MODE_CONTENT, getCurrentShelf().name);
-        performSearch(context, tree);
+        performSearch();
     });
 
     $("#shelf-menu-search-notes").click(() => {
         $("#search-mode-switch").prop("src", "icons/content-notes.svg");
         context.setMode(SEARCH_MODE_NOTES, getCurrentShelf().name);
-        performSearch(context, tree);
+        performSearch();
     });
 
     $("#shelf-menu-search-comments").click(() => {
         $("#search-mode-switch").prop("src", "icons/content-comments.svg");
         context.setMode(SEARCH_MODE_COMMENTS, getCurrentShelf().name);
-        performSearch(context, tree);
+        performSearch();
     });
 
     let timeout;
@@ -214,12 +218,12 @@ window.onload = async function () {
         if (e.target.value) {
             $("#search-input-clear").show();
             timeout = setTimeout(() => {
-                performSearch(context, tree);
+                performSearch();
             }, INPUT_TIMEOUT);
         }
         else {
             timeout = null;
-            performSearch(context, tree);
+            performSearch();
             $("#search-input-clear").hide();
         }
     });
@@ -238,7 +242,7 @@ window.onload = async function () {
     });
 
     $("#footer-find-btn").click(e => {
-        selectNode(context, tree, randomBookmark);
+        selectNode(randomBookmark);
     });
 
     $("#footer-reload-btn").click(e => {
@@ -259,17 +263,17 @@ window.onload = async function () {
 
     tree.onRenameShelf = node => {
         $(`#shelfList option[value="${node.id}"]`).text(node.name);
-        shelf_list.selectric('refresh');
+        shelfList.selectric('refresh');
     };
 
     tree.onDeleteShelf = node => {
         $(`#shelfList option[value="${node.id}"]`).remove();
-        shelf_list.selectric('refresh');
+        shelfList.selectric('refresh');
 
         if (!tree._everything) {
-            shelf_list.val(DEFAULT_SHELF_ID);
-            shelf_list.selectric('refresh');
-            switchShelf(context, tree, DEFAULT_SHELF_ID);
+            shelfList.val(DEFAULT_SHELF_ID);
+            shelfList.selectric('refresh');
+            switchShelf(DEFAULT_SHELF_ID);
         }
     };
 
@@ -283,154 +287,14 @@ window.onload = async function () {
     };
 
     tree.sidebarSelectNode = node => {
-        selectNode(context, tree, node);
+        selectNode(node);
     };
 
-    browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === "START_PROCESSING_INDICATION") {
-            startProcessingIndication();
-        }
-        else if (message.type === "STOP_PROCESSING_INDICATION") {
-            stopProcessingIndication();
-        }
-        else if (message.type === "BEFORE_BOOKMARK_ADDED") {
-            const node = message.node;
-            const select = settings.switch_to_new_bookmark();
-
-            return backend._ensureUnique(node.parent_id, node.name).then(name => {
-                node.name = name;
-                tree.createTentativeNode(node);
-
-                if (select) {
-                    return backend.computePath(node.parent_id).then(path => {
-                        if (settings.last_shelf() == path[0].id) {
-                            tree.selectNode(node.id);
-                        }
-                        else {
-                            settings.last_shelf(path[0].id);
-                            return loadShelves(context, tree, false).then(() => {
-                                tree.createTentativeNode(node, select);
-                                tree.selectNode(node.id);
-                            });
-                        }
-                    });
-                }
-            });
-        }
-        else if (message.type === "BOOKMARK_ADDED") {
-            if (settings.switch_to_new_bookmark())
-                tree.updateTentativeNode(message.node);
-        }
-        else if (message.type === "BOOKMARK_CREATED") {
-            if (settings.switch_to_new_bookmark())
-                selectNode(context, tree, message.node);
-        }
-        else if (message.type === "SELECT_NODE") {
-            selectNode(context, tree, message.node);
-        }
-        else if (message.type === "NOTES_CHANGED") {
-            tree.setNotesState(message.node_id, !message.removed);
-        }
-        else if (message.type === "NODES_UPDATED") {
-            let last_shelf = settings.last_shelf();
-            switchShelf(context, tree, last_shelf, false);
-        }
-        else if (message.type === "NODES_READY") {
-            let last_shelf = settings.last_shelf();
-
-            if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == message.shelf.id) {
-                loadShelves(context, tree, false);
-            }
-        }
-        else if (message.type === "NODES_IMPORTED") {
-            settings.last_shelf(message.shelf.id, () => {
-                loadShelves(context, tree, false)
-                    //.then(() => switchShelf(context, tree, message.shelf.id, false))
-                    .then(() => setTimeout(() => tree.openRoot(), 50))
-                    .catch(e => console.error(e));
-            });
-        }
-        else if (message.type === "EXTERNAL_NODES_READY"
-            || message.type === "EXTERNAL_NODE_UPDATED"
-            || message.type === "EXTERNAL_NODE_REMOVED") {
-            let last_shelf = settings.last_shelf();
-
-            if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID) {
-                settings.load(() => {
-                    loadShelves(context, tree, false);
-                });
-            }
-        }
-        else if (message.type === "CLOUD_SYNC_START") {
-            tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-sync-icon)")
-        }
-        else if (message.type === "CLOUD_SYNC_END") {
-            tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-icon)")
-        }
-        else if (message.type === "SHELVES_CHANGED") {
-            return settings.load().then(() => loadShelves(context, tree, false));
-        }
-        else if (message.type === "SIDEBAR_THEME_CHANGED") {
-            if (message.theme === "dark")
-                setDarkUITheme();
-            else
-                removeDarkUITheme();
-        }
-        else if (message.type === "DISPLAY_RANDOM_BOOKMARK") {
-            clearTimeout(randomBookmarkTimeout);
-            if (message.display)
-                displayRandomBookmark();
-            else
-                $("#footer").css("display", "none");
-        }
-    });
-
-    browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-
-        sender.ishell = isIShell(sender.id);
-
-        switch (message.type) {
-            case "SCRAPYARD_SWITCH_SHELF":
-                if (!sender.ishell)
-                    throw new Error();
-
-                if (message.name) {
-                    let external_path = backend.expandPath(message.name);
-                    let [shelf, ...path] = external_path.split("/");
-
-                    backend.queryShelf(shelf).then(shelfNode => {
-                        if (shelfNode) {
-                            backend.getGroupByPath(external_path).then(group => {
-                                shelf_list.val(shelfNode.id);
-                                shelf_list.selectric("refresh");
-                                switchShelf(context, tree, shelfNode.id).then(() => {
-                                    tree.selectNode(group.id, true);
-                                });
-                            });
-                        } else {
-                            if (!isSpecialShelf(shelf)) {
-                                backend.createGroup(null, shelf, NODE_TYPE_SHELF).then(shelfNode => {
-                                    if (shelfNode) {
-                                        backend.getGroupByPath(external_path).then(group => {
-                                            settings.last_shelf(shelfNode.id);
-                                            loadShelves(context, tree).then(() => {
-                                                tree.selectNode(group.id, true);
-                                            });
-                                        });
-                                    }
-                                });
-                            } else {
-                                showNotification({message: "Can not create shelf with this name."});
-                            }
-                        }
-                    });
-                }
-                break;
-        }
-    });
+    browser.runtime.onMessage.addListener(internalMessages);
+    browser.runtime.onMessageExternal.addListener(externalMessages);
 
 
-    await loadShelves(context, tree, true, true);
+    await loadShelves(true, true);
 
     if (settings.pending_announcement()) {
         $("#btnAnnouncement").css("display", "inline-block");
@@ -448,8 +312,7 @@ function stopProcessingIndication() {
     $("#shelf-menu-button").attr("src", "icons/menu.svg");
 }
 
-
-async function loadShelves(context, tree, synchronize = true, clearSelection = false) {
+async function loadShelves(synchronize = true, clearSelection = false) {
     let shelf_list = $("#shelfList");
 
     try {
@@ -458,28 +321,19 @@ async function loadShelves(context, tree, synchronize = true, clearSelection = f
         shelf_list.html(`
         <option class="option-builtin" value="${TODO_SHELF_ID}">${TODO_SHELF_NAME}</option>
         <option class="option-builtin" value="${DONE_SHELF_ID}">${DONE_SHELF_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}">${
-            settings.capitalize_builtin_shelf_names()? EVERYTHING.capitalize(): EVERYTHING
-        }</option>
-        `);
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}">${formatShelfName(EVERYTHING)}</option>`);
 
-        if (settings.cloud_enabled()) {
-            let cloud_shelf_name = settings.capitalize_builtin_shelf_names()
-                ? CLOUD_SHELF_NAME.capitalize()
-                : CLOUD_SHELF_NAME;
-            shelf_list.append(`<option class=\"option-builtin\" value=\"${CLOUD_SHELF_ID}\">${cloud_shelf_name}</option>`);
-        }
+        if (settings.cloud_enabled())
+            shelf_list.append(`<option class=\"option-builtin\"
+                                       value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`);
 
         let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
         if (cloud_shelf)
             shelves.splice(shelves.indexOf(cloud_shelf), 1);
 
-        if (settings.show_firefox_bookmarks()) {
-            let firefox_shelf_name = settings.capitalize_builtin_shelf_names()
-                ? FIREFOX_SHELF_NAME.capitalize()
-                : FIREFOX_SHELF_NAME;
-            shelf_list.append(`<option class=\"option-builtin\" value=\"${FIREFOX_SHELF_ID}\">${firefox_shelf_name}</option>`);
-        }
+        if (settings.show_firefox_bookmarks())
+            shelf_list.append(`<option class=\"option-builtin\"
+                                       value=\"${FIREFOX_SHELF_ID}\">${formatShelfName(FIREFOX_SHELF_NAME)}</option>`);
 
         let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
         if (firefox_shelf)
@@ -489,9 +343,7 @@ async function loadShelves(context, tree, synchronize = true, clearSelection = f
 
         let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(default_shelf), 1);
-        default_shelf.name = settings.capitalize_builtin_shelf_names()
-            ? default_shelf.name.capitalize()
-            : default_shelf.name;
+        default_shelf.name = formatShelfName(default_shelf.name);
         shelves = [default_shelf, ...shelves];
 
         for (let shelf of shelves) {
@@ -512,17 +364,17 @@ async function loadShelves(context, tree, synchronize = true, clearSelection = f
 
         styleBuiltinShelf();
         shelf_list.selectric('refresh');
-        return switchShelf(context, tree, shelf_list.val(), synchronize, clearSelection);
+        return switchShelf(shelf_list.val(), synchronize, clearSelection);
     }
     catch (e) {
         console.error(e);
         shelf_list.val(DEFAULT_SHELF_ID);
         shelf_list.selectric('refresh');
-        return switchShelf(context, tree, DEFAULT_SHELF_ID, synchronize, clearSelection);
+        return switchShelf(DEFAULT_SHELF_ID, synchronize, clearSelection);
     }
 }
 
-async function switchShelf(context, tree, shelf_id, synchronize = true, clearSelection = false) {
+async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
 
     if (settings.last_shelf() != shelf_id)
         tree.clearIconCache();
@@ -541,7 +393,7 @@ async function switchShelf(context, tree, shelf_id, synchronize = true, clearSel
     context.shelfName = path;
 
     if (canSearch())
-        return performSearch(context, tree);
+        return performSearch();
     else {
         if (shelf_id == TODO_SHELF_ID) {
             const nodes = await backend.listTODO();
@@ -609,7 +461,7 @@ function canSearch() {
     return validSearchInput(input);
 }
 
-async function performSearch(context, tree) {
+async function performSearch() {
     let input = $("#search-input").val();
 
     if (validSearchInput(input) && !context.isInSearch) {
@@ -618,7 +470,7 @@ async function performSearch(context, tree) {
     else if (!validSearchInput(input) && context.isInSearch) {
         const {id} = getCurrentShelf();
         context.outOfSearch();
-        switchShelf(context, tree, id, false);
+        switchShelf(id, false);
     }
 
     if (validSearchInput(input))
@@ -627,7 +479,7 @@ async function performSearch(context, tree) {
         });
 }
 
-function performImport(context, tree, file, file_name, file_ext) {
+function performImport(file, file_name, file_ext) {
 
     startProcessingIndication();
 
@@ -638,14 +490,14 @@ function performImport(context, tree, file, file_name, file_ext) {
             if (file_name.toLocaleLowerCase() === EVERYTHING) {
                 settings.last_shelf(EVERYTHING_SHELF_ID);
 
-                loadShelves(context, tree);
+                loadShelves();
             }
             else
                 backend.queryShelf(file_name).then(shelf => {
 
                     settings.last_shelf(shelf.id);
 
-                    loadShelves(context, tree).then(() => {
+                    loadShelves().then(() => {
                         tree.openRoot();
                     });
                 });
@@ -656,7 +508,7 @@ function performImport(context, tree, file, file_name, file_ext) {
         });
 }
 
-function performExport(context, tree) {
+function performExport() {
     let {id: shelf_id, name: shelf} = getCurrentShelf();
 
     if (shelf === FIREFOX_SHELF_NAME) {
@@ -681,15 +533,16 @@ function performExport(context, tree) {
         });
 }
 
-function selectNode(context, tree, node) {
+function selectNode(node) {
     $("#search-input").val("");
     $("#search-input-clear").hide();
 
     backend.computePath(node.id).then(path => {
         settings.last_shelf(path[0].id);
-        loadShelves(context, tree, false).then(() => {
-            tree.selectNode(node.id);
-        });
+        loadShelves(false)
+            .then(() => {
+                tree.selectNode(node.id);
+            });
     });
 }
 
@@ -760,6 +613,149 @@ async function displayRandomBookmark() {
         });
 
         randomBookmarkTimeout = setTimeout(displayRandomBookmark, 60000 * 5);
+    }
+}
+
+function internalMessages(message, sender, sendResponse) {
+    if (message.type === "START_PROCESSING_INDICATION") {
+        startProcessingIndication();
+    }
+    else if (message.type === "STOP_PROCESSING_INDICATION") {
+        stopProcessingIndication();
+    }
+    else if (message.type === "BEFORE_BOOKMARK_ADDED") {
+        const node = message.node;
+        const select = settings.switch_to_new_bookmark();
+
+        return backend._ensureUnique(node.parent_id, node.name).then(name => {
+            node.name = name;
+            tree.createTentativeNode(node);
+
+            if (select) {
+                return backend.computePath(node.parent_id).then(path => {
+                    if (settings.last_shelf() == path[0].id) {
+                        tree.selectNode(node.id);
+                    }
+                    else {
+                        settings.last_shelf(path[0].id);
+                        return loadShelves(false).then(() => {
+                            tree.createTentativeNode(node, select);
+                            tree.selectNode(node.id);
+                        });
+                    }
+                });
+            }
+        });
+    }
+    else if (message.type === "BOOKMARK_ADDED") {
+        if (settings.switch_to_new_bookmark())
+            tree.updateTentativeNode(message.node);
+    }
+    else if (message.type === "BOOKMARK_CREATED") {
+        if (settings.switch_to_new_bookmark())
+            selectNode(message.node);
+    }
+    else if (message.type === "SELECT_NODE") {
+        selectNode(message.node);
+    }
+    else if (message.type === "NOTES_CHANGED") {
+        tree.setNotesState(message.node_id, !message.removed);
+    }
+    else if (message.type === "NODES_UPDATED") {
+        let last_shelf = settings.last_shelf();
+        switchShelf(last_shelf, false);
+    }
+    else if (message.type === "NODES_READY") {
+        let last_shelf = settings.last_shelf();
+
+        if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == message.shelf.id) {
+            loadShelves(false);
+        }
+    }
+    else if (message.type === "NODES_IMPORTED") {
+        settings.last_shelf(message.shelf.id, () => {
+            loadShelves(false)
+                //.then(() => switchShelf(message.shelf.id, false))
+                .then(() => setTimeout(() => tree.openRoot(), 50))
+                .catch(e => console.error(e));
+        });
+    }
+    else if (message.type === "EXTERNAL_NODES_READY"
+        || message.type === "EXTERNAL_NODE_UPDATED"
+        || message.type === "EXTERNAL_NODE_REMOVED") {
+        let last_shelf = settings.last_shelf();
+
+        if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID) {
+            settings.load(() => {
+                loadShelves(false);
+            });
+        }
+    }
+    else if (message.type === "CLOUD_SYNC_START") {
+        tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-sync-icon)")
+    }
+    else if (message.type === "CLOUD_SYNC_END") {
+        tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-icon)")
+    }
+    else if (message.type === "SHELVES_CHANGED") {
+        return settings.load().then(() => loadShelves(false));
+    }
+    else if (message.type === "SIDEBAR_THEME_CHANGED") {
+        if (message.theme === "dark")
+            setDarkUITheme();
+        else
+            removeDarkUITheme();
+    }
+    else if (message.type === "DISPLAY_RANDOM_BOOKMARK") {
+        clearTimeout(randomBookmarkTimeout);
+        if (message.display)
+            displayRandomBookmark();
+        else
+            $("#footer").css("display", "none");
+    }
+}
+
+function externalMessages(message, sender, sendResponse) {
+
+    sender.ishell = ishellBackend.isIShell(sender.id);
+
+    switch (message.type) {
+        case "SCRAPYARD_SWITCH_SHELF":
+            if (!sender.ishell)
+                throw new Error();
+
+            if (message.name) {
+                let external_path = backend.expandPath(message.name);
+                let [shelf, ...path] = external_path.split("/");
+
+                backend.queryShelf(shelf).then(shelfNode => {
+                    if (shelfNode) {
+                        backend.getGroupByPath(external_path).then(group => {
+                            shelfList.val(shelfNode.id);
+                            shelfList.selectric("refresh");
+                            switchShelf(shelfNode.id).then(() => {
+                                tree.selectNode(group.id, true);
+                            });
+                        });
+                    } else {
+                        if (!isSpecialShelf(shelf)) {
+                            backend.createGroup(null, shelf, NODE_TYPE_SHELF).then(shelfNode => {
+                                if (shelfNode) {
+                                    backend.getGroupByPath(external_path).then(group => {
+                                        settings.last_shelf(shelfNode.id);
+                                        loadShelves().then(() => {
+                                            tree.selectNode(group.id, true);
+                                        });
+                                    });
+                                }
+                            });
+                        } else {
+                            showNotification({message: "Can not create shelf with this name."});
+                        }
+                    }
+                });
+            }
+            break;
     }
 }
 
