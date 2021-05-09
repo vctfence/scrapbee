@@ -349,7 +349,7 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
     let org_lines = [];
 
     if (!shallow)
-        file.append(
+        await file.append(
 `#-*- coding: utf-8 -*-
 #+EXPORT: Scrapyard
 #+VERSION: ${EXPORT_VERSION}
@@ -358,12 +358,12 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
 #+DATE: ${new Date().toISOString()}
 `);
 
-    file.append("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
+    await file.append("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
 
     for (let node of nodes) {
         if (node.type === NODE_TYPE_SHELF || node.type === NODE_TYPE_GROUP) {
             let line = "\n" + "*".repeat(node.level) + " " + node.name;
-            file.append(line);
+            await file.append(line);
         }
         else {
             let line = "\n" + "*".repeat(node.level);
@@ -387,7 +387,7 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
             if (node.todo_date)
                 line += "\n    DEADLINE: <" + node.todo_date + ">";
 
-            file.append(line);
+            await file.append(line);
         }
 
         if (!shallow) {
@@ -395,7 +395,7 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
 ${" ".repeat(node.level + 1)}:PROPERTIES:
 ${await objectToProperties(node)}
 ${" ".repeat(node.level + 1)}:END:`;
-            file.append(props);
+            await file.append(props);
         }
     }
 }
@@ -730,14 +730,14 @@ export async function exportJSON(file, nodes, shelf, uuid, shallow = false) {
         date: new Date()
     };
 
-    file.append(JSON.stringify(meta) + (nodes.length? "\n": ""));
+    await file.append(JSON.stringify(meta) + (nodes.length? "\n": ""));
 
     if (nodes.length) {
         let last = nodes[nodes.length - 1];
 
         for (let node of nodes) {
             let json = await objectToJSON(node, shallow);
-            file.append(json + (node === last? "" : "\n"));
+            await file.append(json + (node === last? "" : "\n"));
         }
     }
 }

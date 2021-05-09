@@ -174,6 +174,21 @@ export class Backend extends ExternalEventProvider {
         return this._normalizePath(path).split("/").filter(n => !!n);
     }
 
+    async computePath(id, is_uuid = false) {
+        let path = [];
+        let node = await this.getNode(id, is_uuid);
+
+        while (node) {
+            path.push(node);
+            if (node.parent_id)
+                node = await this.getNode(node.parent_id);
+            else
+                node = null;
+        }
+
+        return path.reverse();
+    }
+
     _splitTags(tags, separator = ",") {
         if (tags && typeof tags === "string")
             return tags.split(separator)

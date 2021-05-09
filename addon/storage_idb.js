@@ -63,6 +63,19 @@ dexie.version(5).stores({
     index_notes: `++id,&node_id,*words`,
     index_comments: `++id,&node_id,*words`
 });
+dexie.version(6).stores({
+    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
+    blobs: `++id,&node_id,size`,
+    index: `++id,&node_id,*words`,
+    notes: `++id,&node_id`,
+    tags: `++id,name`,
+    icons: `++id,&node_id`,
+    comments: `++id,&node_id`,
+    index_notes: `++id,&node_id,*words`,
+    index_comments: `++id,&node_id,*words`,
+    export_storage: `++id,process_id`,
+});
+
 
 dexie.on('populate', () => {
     dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
@@ -747,24 +760,25 @@ class IDBStorage {
         return null;
     }
 
-    async computePath(id, is_uuid = false) {
-        let path = [];
-        let node = await this.getNode(id, is_uuid);
-
-        while (node) {
-            path.push(node);
-            if (node.parent_id)
-                node = await this.getNode(node.parent_id);
-            else
-                node = null;
-        }
-
-        return path.reverse();
-    }
-
     importTransaction(handler) {
         //return dexie.transaction("rw", dexie.nodes, dexie.notes, dexie.blobs, dexie.index, dexie.tags, handler);
         return handler();
+    }
+
+    exportPutBlob(process_id, blob) {
+        return dexie.export_storage.add({
+            process_id,
+            blob
+        });
+    }
+
+    async exportGetBlobs(process_id) {
+        const blobs = await dexie.export_storage.where("process_id").equals(process_id).sortBy("id")
+        return blobs.map(b => b.blob);
+    }
+
+    exportCleanBlobs(process_id) {
+        return dexie.export_storage.where("process_id").equals(process_id).delete();
     }
 
 }

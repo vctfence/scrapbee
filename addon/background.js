@@ -34,6 +34,7 @@ import {
     RDF_EXTERNAL_NAME,
     isSpecialShelf
 } from "./storage_constants.js";
+import UUID from "./lib/uuid.js";
 
 export async function browseNode(node, external_tab, preserve_history, container) {
 
@@ -227,10 +228,21 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_")
                           + `.${format == "json"? "jsonl": format}`;
 
+            let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));
+            const nodes = [];
+
+            for (const n of message.nodes) {
+                const node = nodesRandom.find(nr => nr.id === n.id);
+                Object.assign(node, n);
+                nodes.push(node);
+            }
+
+            nodesRandom = null;
+
             const helperApp = await nativeBackend.probe();
 
             if (helperApp) {
-                // write to temp file
+                // write to a temp file (much faster than IDB)
 
                 const init_url = `http://localhost:${settings.helper_port_number()}/export/initialize`
                 let result = null;
@@ -244,24 +256,13 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 const port = await nativeBackend.getPort();
 
                 const file = {
-                    append: function (text) {
-                        port.postMessage({
+                    append: async function (text) {
+                        await port.postMessage({
                             type: "EXPORT_PUSH_TEXT",
                             text: text
                         })
                     }
                 };
-
-                let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));
-                const nodes = [];
-
-                for (const n of message.nodes) {
-                    const node = nodesRandom.find(nr => nr.id === n.id);
-                    Object.assign(node, n);
-                    nodes.push(node);
-                }
-
-                nodesRandom = null;
 
                 await exportf(file, nodes, message.shelf, message.uuid, settings.shallow_export());
 
@@ -270,43 +271,81 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 });
 
                 let url = `http://localhost:${settings.helper_port_number()}/export/download`;
+                let download;
 
-                let download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+                try {
+                    download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+                }
+                catch (e) {
+                    console.error(e);
+                    fetch(`http://localhost:${settings.helper_port_number()}/export/finalize`);
+                }
 
-                let download_listener = delta => {
-                    if (delta.id === download && delta.state && delta.state.current === "complete") {
-                        browser.downloads.onChanged.removeListener(download_listener);
-                        fetch(`http://localhost:${settings.helper_port_number()}/export/finalize`);
-                    }
-                };
-                browser.downloads.onChanged.addListener(download_listener);
+                if (download) {
+                    let download_listener = delta => {
+                        if (delta.id === download) {
+                            if (delta.state && delta.state.current === "complete" || delta.error) {
+                                browser.downloads.onChanged.removeListener(download_listener);
+                                fetch(`http://localhost:${settings.helper_port_number()}/export/finalize`);
+                            }
+                        }
+                    };
+                    browser.downloads.onChanged.addListener(download_listener);
+                }
             }
             else {
-                // the entire exported file is stored in memory
+                // store intermediate export results to IDB
+
+                const MAX_BLOB_SIZE = 1024 * 1024 * 20; // ~40 mb of UTF-16
+                const processId = UUID.numeric();
 
                 let file = {
                     content: [],
-                    append: function (text) {
+                    size: 0,
+                    append: async function (text) {
                         this.content.push(text);
+                        this.size += text.length;
+
+                        if (this.size >= MAX_BLOB_SIZE) {
+                            await backend.exportPutBlob(processId, new Blob(this.content, {type: "text/plain"}));
+                            this.content = [];
+                            this.size = 0;
+                        }
+                    },
+                    flush: async function() {
+                        if (this.size && this.content.length)
+                            await backend.exportPutBlob(processId, new Blob(this.content, {type: "text/plain"}));
                     }
                 };
 
-                await exportf(file, message.nodes, message.shelf, message.uuid, settings.shallow_export());
+                await exportf(file, nodes, message.shelf, message.uuid, settings.shallow_export());
+                await file.flush();
 
-                let blob = new Blob(file.content, {type: "text/plain"});
+                let blob = new Blob(await backend.exportGetBlobs(processId), {type: "text/plain"});
                 let url = URL.createObjectURL(blob);
+                let download;
 
-                let download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+                try {
+                    download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+                }
+                catch (e) {
+                    console.error(e);
+                    backend.exportCleanBlobs(processId);
+                }
 
-                let download_listener = delta => {
-                    if (delta.id === download && delta.state && delta.state.current === "complete") {
-                        browser.downloads.onChanged.removeListener(download_listener);
-                        URL.revokeObjectURL(url);
-                    }
-                };
-                browser.downloads.onChanged.addListener(download_listener);
+                if (download) {
+                    let download_listener = delta => {
+                        if (delta.id === download) {
+                            if (delta.state && delta.state.current === "complete" || delta.error) {
+                                browser.downloads.onChanged.removeListener(download_listener);
+                                URL.revokeObjectURL(url);
+                                backend.exportCleanBlobs(processId);
+                            }
+                        }
+                    };
+                    browser.downloads.onChanged.addListener(download_listener);
+                }
             }
-
             break;
 
         case "UI_LOCK_GET":
