@@ -286,15 +286,26 @@ window.onload = async function () {
         clearTimeout(processing_timeout);
     };
 
-    tree.sidebarSelectNode = node => {
-        selectNode(node);
-    };
+    tree.sidebarSelectNode = selectNode;
 
     browser.runtime.onMessage.addListener(internalMessages);
     browser.runtime.onMessageExternal.addListener(externalMessages);
 
+    try {
+        await loadShelves(true, true);
+    }
+    catch (e) {
+        console.error(e);
 
-    await loadShelves(true, true);
+        confirm("{Error}", "Scrapyard has encountered a critical error.<br>Show diagnostic page?")
+            .then(() => {
+                localStorage.setItem("scrapyard-diagnostics-error",
+                    JSON.stringify({origin: "Sidebar initialization", name: e.name, message: e.message, stack: e.stack}));
+                openPage("options.html#diagnostics");
+            });
+
+        return;
+    }
 
     if (settings.pending_announcement()) {
         $("#btnAnnouncement").css("display", "inline-block");

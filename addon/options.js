@@ -204,6 +204,27 @@ async function configureAboutPage() {
     $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);
 }
 
+function configureDiagnosticsPage() {
+    $("a.left-index[href='#diagnostics']").show();
+    let error = localStorage.getItem("scrapyard-diagnostics-error");
+    if (error) {
+        error = JSON.parse(error);
+        $("#diagnostics-error-info").text(
+`Error name: ${error.name}
+Error message: ${error.message}
+Origin: ${error.origin}
+
+Stacktrace
+
+${error.stack}`);
+
+        localStorage.removeItem("scrapyard-diagnostics-error");
+    }
+    else {
+        $("#diagnostics-error-info").text("No errors detected.");
+    }
+}
+
 function switchPane() {
     $(".div-area").hide();
     $("a.left-index").removeClass("focus")
@@ -213,6 +234,8 @@ function switchPane() {
 
         if (m[1] === "helperapp")
             loadHelperAppLinks();
+        else if (m[1] === "diagnostics")
+            configureDiagnosticsPage();
         else if (m[1] === "about")
             configureAboutPage();
 

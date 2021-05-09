@@ -413,6 +413,11 @@ a.left-index, a:visited.left-index {
     animation-iteration-count: 1;
 }
 
+#diagnostics-error-info {
+    font-family: "Lucida Console", "Courier New", monospace;
+    padding: 5px;
+}
+
 #div-about {
     display: flex;
     flex-direction: column;

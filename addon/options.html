@@ -19,6 +19,7 @@
         <a class="left-index" href="#cloud">{Cloud}</a>
         <a class="left-index" href="#links">{Check Links}</a>
         <a class="left-index" href="#importrdf">{Import RDF}</a>
+        <a class="left-index" href="#diagnostics" style="display: none">{Diagnostics}</a>
         <a class="left-index" href="#helperapp">{Helper App}</a>
         <a class="left-index" href="#help">{User Manual}</a>
         <a class="left-index" href="#about">{About}</a>
@@ -369,7 +370,6 @@
             </tr>
         </table>
     </div>
-    <div id="div-help" class="div-area" style="display:none;"></div>
     <div id="div-links" class="div-area" style="display:none;">
         <div id="check-links">
             <h2>Automatic Link Validation</h2>
@@ -463,6 +463,17 @@
             </ul>
 
             <p>It is necessary to restart Firefox after the application has been installed.</p>
+        </div>
+    </div>
+    <div id="div-help" class="div-area" style="display:none;"></div>
+    <div id="div-diagnostics" class="div-area" style="display:none;">
+        <div id="diagnostics-container">
+            <h2>Scrapyard Diagnostics</h2>
+            <p>Please do not try to reinstall the add-on. Create an issue at the Scrapyard
+                <a href="https://github.com/GChristensen/scrapyard/issues" target="_blank">support page</a>
+                with the info below.</p>
+
+            <pre id="diagnostics-error-info"></pre>
         </div>
     </div>
     <div id="div-about" class="div-area" style="display:none;">
