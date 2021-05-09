@@ -730,6 +730,10 @@ function internalMessages(message, sender, sendResponse) {
         else
             $("#footer").css("display", "none");
     }
+    else if (message.type === "RELOAD_SIDEBAR") {
+        const sidebarUrl =  browser.runtime.getURL(`/sidebar.html#shelf-list-height-${message.height}`);
+        browser.sidebarAction.setPanel({panel: sidebarUrl});
+    }
 }
 
 function externalMessages(message, sender, sendResponse) {

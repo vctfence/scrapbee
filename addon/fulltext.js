@@ -1,19 +1,14 @@
-import {
-    EVERYTHING,
-    EVERYTHING_SHELF_ID,
-} from "./storage_constants.js";
-import {settings} from "./settings.js";
-import {backend} from "./backend.js";
-import {fixDocumentEncoding, getActiveTab, loadShelveOptions, parseHtml} from "./utils.js"
 import {send} from "./proxy.js"
+import {backend} from "./backend.js";
+import {settings} from "./settings.js";
+import {fixDocumentEncoding, getActiveTab, loadShelveOptions, parseHtml} from "./utils.js"
 
 window.onload = async function() {
-
+    await settings.load();
     await loadShelveOptions("#search-scope");
 
     $("#search-button").on("click", e => performSearch());
     $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});
-
 };
 
 let searching;

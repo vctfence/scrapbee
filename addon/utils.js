@@ -4,6 +4,7 @@ import {
     EVERYTHING,
     EVERYTHING_SHELF_ID,
     FIREFOX_SHELF_ID,
+    CLOUD_SHELF_ID,
     isSpecialShelf
 } from "./storage_constants.js";
 import {settings} from "./settings.js";
@@ -282,19 +283,19 @@ export async function loadShelveOptions(element) {
         return 0;
     });
 
-    let default_shelf = shelves.find(s => s.name === DEFAULT_SHELF_NAME);
-    shelves.splice(shelves.indexOf(default_shelf), 1);
+    let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
+    shelves.splice(shelves.indexOf(cloud_shelf), 1);
 
     let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
     shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
 
-    shelves = [default_shelf, ...shelves];
+    let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
+    shelves.splice(shelves.indexOf(default_shelf), 1);
+
+    shelves = [cloud_shelf, browser_bookmarks_shelf, default_shelf, ...shelves];
 
     for (let shelf of shelves) {
-        let name =
-            isSpecialShelf(shelf.name)
-                ? formatShelfName(shelf.name)
-                : shelf.name;
+        let name = isSpecialShelf(shelf.name)? formatShelfName(shelf.name): shelf.name;
         $("<option></option>").appendTo($(element)).html(name).attr("value", shelf.id);
     }
 }

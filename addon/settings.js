@@ -27,7 +27,8 @@ export const SETTINGS_KEY = "scrapyard-settings";
 export const DEFAULT_SETTINGS = {
     shallow_export: false,
     show_firefox_bookmarks: true,
-    switch_to_new_bookmark: true
+    switch_to_new_bookmark: true,
+    shelf_list_height: 600
 };
 
 export let settings = new Proxy({

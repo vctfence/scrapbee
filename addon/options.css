@@ -292,6 +292,13 @@ a.left-index, a:visited.left-index {
     width: 50px;
 }
 
+.shelves-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-bottom: -3px;
+}
+
 #check-links {
     display: flex;
     flex-direction: column;
@@ -411,6 +418,11 @@ a.left-index, a:visited.left-index {
     animation-duration: 1s;
     animation-timing-function: linear;
     animation-iteration-count: 1;
+}
+
+#option-shelf-list-max-height {
+    -moz-appearance: textfield;
+    width: 52px;
 }
 
 #diagnostics-error-info {

@@ -36,13 +36,17 @@
                             <div class="double-first">
                                 <form>
                                     <fieldset style="border: none;">
+                                        <div style="margin-bottom: 5px; margin-left: 0;">
+                                            <label for="option-shelf-list-max-height">Maximum sidebar shelf list height (px): </label>
+                                            <input id="option-shelf-list-max-height" type="number"/>
+                                        </div>
                                         <input id="option-show-firefox-bookmarks" type="checkbox"/>
                                         <label for="option-show-firefox-bookmarks">Show Firefox bookmarks shelf</label>
                                         <div style="margin: 0; margin-left: 20px; width: max-content;">
                                             <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
                                             <label for="option-show-firefox-bookmarks-toolbar">Show bookmarks toolbar folder</label><br>
-                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox"/>
-                                            <label for="option-show-firefox-bookmarks-mobile">Show mobile bookmarks folder</label>
+                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"/>
+                                            <label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
                                         </div>
                                     </fieldset>
                                 </form>
@@ -374,7 +378,7 @@
         <div id="check-links">
             <h2>Automatic Link Validation</h2>
             <div id="link-check-options" class="link-info">
-                Scope:
+                <img class="shelves-icon" title="Shelf" src="icons/books.svg">
                 <select id="link-scope">
                     <option>everything</option>
                 </select>

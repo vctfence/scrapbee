@@ -101,6 +101,7 @@ function storeSavePageSettings() {
 function loadScrapyardSettings() {
     settings.load(() => {
 
+        document.getElementById("option-shelf-list-max-height").value = _(settings.shelf_list_height(), 600);
         document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
         document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
         document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
@@ -151,6 +152,11 @@ function loadScrapyardSettings() {
 }
 
 function storeScrapyardSettings() {
+    const currentSidebarHeight = settings.shelf_list_height();
+    const newSidebarHeight = parseInt(document.getElementById("option-shelf-list-max-height").value);
+    if (currentSidebarHeight !== newSidebarHeight)
+        settings.shelf_list_height(newSidebarHeight, () => send.reloadSidebar({height: newSidebarHeight}));
+
     settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
     settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
     settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
