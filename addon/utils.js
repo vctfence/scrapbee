@@ -98,18 +98,11 @@ export function escapeHtml (string) {
 export function parseHtml(htmlText) {
     let doc = document.implementation.createHTMLDocument("");
     let doc_elt = doc.documentElement;
-    //let first_elt;
 
     htmlText = htmlText.replace(/^.*?<html[^>]*>/is, "");
     htmlText = htmlText.replace(/<\/html>.*?$/is, "");
 
     doc_elt.innerHTML = htmlText;
-    //first_elt = doc_elt.firstElementChild;
-
-    // if (doc_elt.childElementCount === 1
-    //     && first_elt.localName.toLowerCase() === "html") {
-    //     doc.replaceChild(first_elt, doc_elt);
-    // }
 
     return doc;
 }
@@ -392,17 +385,19 @@ export function getMimetypeExt(url) {
         return null;
 
     if (url.endsWith(".png"))
-        return 'image/png';
+        return "image/png";
     else if (url.endsWith(".gif"))
-        return 'image/gif';
+        return "image/gif";
     else if (url.endsWith(".jpg") || url.endsWith(".jpeg"))
-        return 'image/jpeg';
+        return "image/jpeg";
     else if (url.endsWith(".ico"))
-        return 'image/x-icon';
+        return "image/x-icon";
     else if (url.endsWith(".svg"))
-        return 'image/svg+xml';
+        return "image/svg+xml";
     else if (url.endsWith(".webp"))
-        return 'image/webp';
+        return "image/webp";
+    else if (url.endsWith(".pdf"))
+        return "application/pdf";
     else
         return null;
 }

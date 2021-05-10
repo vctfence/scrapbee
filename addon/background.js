@@ -91,12 +91,13 @@ export async function browseNode(node, external_tab, preserve_history, container
                     }
 
                     if (!objectURL) {
-                        if (blob.byte_length) {
-                            blob.data = backend.blob2Array(blob);
+                        if (blob.data) { // legacy string content
+                            let object = new Blob([await backend.reifyBlob(blob)],
+                                        {type: blob.type ? blob.type : "text/html"});
+                            objectURL = URL.createObjectURL(object);
                         }
-
-                        let object = new Blob([blob.data], {type: blob.type? blob.type: "text/html"});
-                        objectURL = URL.createObjectURL(object);
+                        else
+                            objectURL = URL.createObjectURL(blob.object);
                     }
 
                     let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
@@ -387,12 +388,18 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 if (node.type === NODE_TYPE_ARCHIVE) {
                     const blob = await backend.fetchBlob(node.id);
 
-                    if (blob?.data && blob?.byte_length)
-                        node.size = blob.byte_length;
-                    else if (blob?.data)
-                        node.size = stringByteLengthUTF8(blob.data);
+                    if (blob && blob.data) {
+                        if (blob.byte_length)
+                            node.size = blob.byte_length;
+                        else
+                            node.size = stringByteLengthUTF8(blob.data);
 
-                    await backend.updateNode(node);
+                        await backend.updateNode(node);
+                    }
+                    else if (blob && blob.object) {
+                        node.size = blob.object.size;
+                        await backend.updateNode(node);
+                    }
                 }
                 else if (node.type === NODE_TYPE_NOTES && node.has_notes) {
                     const notes = await backend.fetchNotes(node.id);
@@ -426,8 +433,12 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     if (node.type === NODE_TYPE_ARCHIVE) {
                         const blob = await backend.fetchBlob(node.id);
 
-                        if (blob && !blob.byte_length && blob.data)
+                        if (blob && !blob.byte_length && blob.data && blob.data.indexWords)
                             await backend.updateIndex(node.id, blob.data.indexWords());
+                        else if (blob && !blob.byte_length && blob.object) {
+                            let text = await backend.reifyBlob(blob);
+                            await backend.updateIndex(node.id, text?.indexWords());
+                        }
                     }
 
                     if (node.has_notes) {

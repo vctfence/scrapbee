@@ -1009,15 +1009,15 @@ class BookmarkTree {
                                 if (o(node).type === NODE_TYPE_ARCHIVE) {
                                     let blob = await backend.fetchBlob(o(node).id);
                                     if (blob) {
-                                        if (blob.byte_length) {
-                                            blob.data = backend.blob2Array(blob);
-                                        }
-
                                         let type = blob.type? blob.type: "text/html";
                                         filename = o(node).name
                                         if (!(filename.endsWith("pdf") || filename.endsWith("html")))
                                             filename = o(node).name + (type.endsWith("pdf")? ".pdf": ".html");
-                                        content = new Blob([blob.data],{type: type});
+
+                                        if (blob.object)
+                                            content = blob.object
+                                        else
+                                            content = new Blob([await backend.reifyBlob(blob)],{type: type});
                                     }
                                 }
                                 else if (o(node).type === NODE_TYPE_BOOKMARK) {

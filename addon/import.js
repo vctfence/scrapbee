@@ -79,7 +79,6 @@ export async function importOrg(shelf, text) {
 
             if (last_object.type === NODE_TYPE_ARCHIVE) {
                 let data = last_object.data;
-                let binary = !!last_object.byte_length;
                 let byte_length = last_object.byte_length;
 
                 delete last_object.data;
@@ -87,9 +86,8 @@ export async function importOrg(shelf, text) {
 
                 node = await backend.importBookmark(last_object);
 
-                if (data) {
+                if (data)
                     await backend.storeBlobLowLevel(node.id, data, last_object.mime_type, byte_length);
-                }
             }
             else {
                 node = await backend.importBookmark(last_object);
@@ -231,13 +229,8 @@ export async function importOrg(shelf, text) {
                 }
 
                 if (last_object.type === NODE_TYPE_ARCHIVE) {
-                    if (last_object.data) {
+                    if (last_object.data)
                         last_object.data = JSON.parse(last_object.data);
-
-                        if (last_object.byte_length) {
-                            last_object.data = backend.blob2Array(last_object);
-                        }
-                    }
                 }
 
                 if (last_object.notes) {
@@ -307,7 +300,7 @@ async function objectToProperties(object) {
             if (blob.byte_length)
                 lines.push(`:byte_length: ${blob.byte_length}`);
 
-            let content = JSON.stringify(blob.data);
+            let content = JSON.stringify(await backend.reifyBlob(blob, true));
 
             lines.push(`:data: ${content}`);
         }
@@ -533,7 +526,6 @@ async function importJSONObject(object) {
 
     if (object.type === NODE_TYPE_ARCHIVE) {
         let data = object.data;
-        let binary = !!object.byte_length;
         let byte_length = object.byte_length;
 
         delete object.data;
@@ -541,9 +533,8 @@ async function importJSONObject(object) {
 
         node = await backend.importBookmark(object);
 
-        if (data) {
+        if (data)
             await backend.storeBlobLowLevel(node.id, data, object.mime_type, byte_length);
-        }
     }
     else {
         node = await backend.importBookmark(object);
@@ -693,7 +684,7 @@ async function objectToJSON(object, shallow) {
                 if (blob.byte_length)
                     node.byte_length = blob.byte_length;
 
-                node.data = blob.data;
+                node.data = await backend.reifyBlob(blob, true);
             }
         }
 

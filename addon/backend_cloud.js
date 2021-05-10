@@ -185,10 +185,8 @@ export class CloudBackend {
                 if (node.type === NODE_TYPE_ARCHIVE) {
                     let blob = await backend.fetchBlob(node.id);
                     if (blob) {
-                        if (blob.byte_length) {
-                            blob.data = backend.blob2Array(blob);
-                        }
-                        await this._storeDataInternal(db, bookmark, blob.data, blob.type);
+                        const data = await backend.reifyBlob(blob);
+                        await this._storeDataInternal(db, bookmark, data, blob.type);
                     }
                 }
             }

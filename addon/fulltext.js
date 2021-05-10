@@ -18,8 +18,9 @@ let resultsFound;
 
 async function previewResult(query, node) {
     const blob = await backend.fetchBlob(node.id);
-    let doc = parseHtml(blob.data);
-    let mark = new Mark(doc.body);
+    const text = await backend.reifyBlob(blob);
+    const doc = parseHtml(text);
+    const mark = new Mark(doc.body);
 
     mark.mark(query, {
         iframes: true,
@@ -103,25 +104,28 @@ function markSearch(query, nodes, across, callback) {
 
     backend.fetchBlob(node.id)
         .then(blob => {
-            let doc = parseHtml(blob.data);
-            let mark = new Mark(doc);
-            let found = true;
+            backend.reifyBlob(blob)
+                .then(text => {
+                    let doc = parseHtml(text);
+                    let mark = new Mark(doc);
+                    let found = true;
 
-            mark.mark(query, {
-                iframes: true,
-                acrossElements: across,
-                //firstMatchOnly: true,
-                separateWordSearch: false,
-                ignorePunctuation: ",-–—‒'\"+=".split(""),
-                //filter: (n, t, c) => {return c === 0},
-                noMatch: () => {found = false;},
-                done: c => {
-                    if (found && searching) {
-                        appendSearchResult(query, node, c);
-                    }
-                    markSearch(query, nodes, across, callback);
-                }
-            });
+                    mark.mark(query, {
+                        iframes: true,
+                        acrossElements: across,
+                        //firstMatchOnly: true,
+                        separateWordSearch: false,
+                        ignorePunctuation: ",-–—‒'\"+=".split(""),
+                        //filter: (n, t, c) => {return c === 0},
+                        noMatch: () => {found = false;},
+                        done: c => {
+                            if (found && searching) {
+                                appendSearchResult(query, node, c);
+                            }
+                            markSearch(query, nodes, across, callback);
+                        }
+                    });
+                });
         });
 }
 

@@ -61,12 +61,14 @@ class NativeBackend {
             case "REQUEST_PUSH_BLOB": {
                     const node = await backend.getNode(msg.uuid, true);
                     const blob = await backend.fetchBlob(node.id);
+                    const data = await backend.reifyBlob(blob, true);
                     const port = await this.getPort();
+
                     port.postMessage({
                         type: "PUSH_BLOB",
                         uuid: node.uuid,
                         content_type: blob.type || "text/html",
-                        blob: blob.data,
+                        blob: data,
                         byte_length: blob.byte_length || null
                     })
                 }

@@ -386,7 +386,7 @@ import {send} from "../proxy.js";
 import {backend} from "../backend.js";
 import {ishellBackend} from "../backend_ishell.js"
 import {browseNode} from "../background.js";
-import {getActiveTab, getFaviconFromTab, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";
+import {getActiveTab, getFaviconFromTab, getMimetypeExt, isSpecialPage, notifySpecialPage, packPage} from "../utils.js";
 import {
     DEFAULT_SHELF_NAME,
     FIREFOX_BOOKMARK_MENU,
@@ -1329,7 +1329,7 @@ async function initiateAction(tab, menuaction, bookmark)
                     if (this.status === 200) {
                         let contentType = this.getResponseHeader("Content-Type");
                         if (contentType == null)
-                            contentType = "application/pdf";
+                            contentType = getMimetypeExt(tab.url) || "application/pdf";
 
                         backend.storeBlob(bookmark.id, this.response, contentType);
 

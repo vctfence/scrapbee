@@ -3,7 +3,7 @@ import IDBStorage from "./storage_idb.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {browserBackend} from "./backend_browser.js";
-import {computeSHA1, getMimetypeExt} from "./utils.js";
+import {computeSHA1, getMimetypeExt, readBlob} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
@@ -199,11 +199,38 @@ export class Backend extends ExternalEventProvider {
         return tags;
     }
 
-    blob2Array(blob) {
+    _blob2Array(blob) {
         let byteArray = new Uint8Array(blob.byte_length);
         for (let i = 0; i < blob.data.length; ++i)
             byteArray[i] = blob.data.charCodeAt(i);
         return byteArray;
+    }
+
+    async reifyBlob(blob, binarystring = false) {
+        let result;
+
+        if (blob.byte_length) {
+            if (blob.data) {
+                if (binarystring)
+                    result = blob.data;
+                else
+                    result = this._blob2Array(blob);
+            }
+            else if (blob.object) {
+                if (binarystring)
+                    result = await readBlob(blob.object, "binarystring")
+                else
+                    result = await readBlob(blob.object, "binary")
+            }
+        }
+        else {
+            if (blob.data)
+                result = blob.data;
+            else if (blob.object)
+                result = await readBlob(blob.object, "text");
+        }
+
+        return result;
     }
 
     listShelves() {
@@ -574,7 +601,7 @@ export class Backend extends ExternalEventProvider {
                     let blob = await this.fetchBlob(old_id);
                     if (blob) {
                         let index = await this.fetchIndex(old_id);
-                        await this.storeBlobLowLevel(n.id, blob.data, blob.type, blob.byte_length, index);
+                        await this.storeBlobLowLevel(n.id, blob.data || blob.object, blob.type, blob.byte_length, index);
                         blob = null;
                     }
                 }

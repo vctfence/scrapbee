@@ -488,43 +488,84 @@ class IDBStorage {
         return nodes;
     }
 
+    // legacy implementation for reference
+    // async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
+    //     let node = await this.getNode(node_id);
+    //
+    //     if (node) {
+    //         if (typeof data !== "string") {
+    //             let binaryString = "";
+    //             let byteArray = new Uint8Array(data);
+    //
+    //             for (let i = 0; i < byteArray.byteLength; i++)
+    //                 binaryString += String.fromCharCode(byteArray[i]);
+    //
+    //             node.size = byte_length = byteArray.byteLength;
+    //             data = binaryString;
+    //         }
+    //         else
+    //             node.size = stringByteLengthUTF8(data);
+    //
+    //         await this.updateNode(node);
+    //
+    //         await dexie.blobs.add({
+    //             node_id: node.id,
+    //             data: data,
+    //             byte_length: byte_length,
+    //             type: content_type
+    //         });
+    //
+    //         if (!byte_length && typeof data === "string") {
+    //             if (index?.words)
+    //                 await this.storeIndex(node.id, index.words);
+    //             else {
+    //                 let words = data.indexWords();
+    //                 await this.storeIndex(node.id, words);
+    //             }
+    //         }
+    //     }
+    // }
+
     async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
         let node = await this.getNode(node_id);
 
         if (node) {
-            if (typeof data !== "string") {
-                let binaryString = "";
-                let byteArray = new Uint8Array(data);
+            let alreadyBlob = data instanceof Blob;
 
-                for (let i = 0; i < byteArray.byteLength; i++)
-                    binaryString += String.fromCharCode(byteArray[i]);
-
-                node.size = byte_length = byteArray.byteLength;
-                data = binaryString;
+            if (typeof data !== "string" && data.byteLength)
+                node.size = byte_length = data.byteLength;
+            else if (typeof data === "string" && byte_length) {
+                let byteArray = new Uint8Array(byte_length);
+                for (let i = 0; i < data.length; ++i)
+                    byteArray[i] = data.charCodeAt(i);
+                node.size = data.byteLength;
+                data = byteArray;
             }
-            else
+            else if (!alreadyBlob)
                 node.size = stringByteLengthUTF8(data);
 
             await this.updateNode(node);
 
-            await dexie.blobs.add({
+            let options = {
                 node_id: node.id,
-                data: data,
+                // data: data, // legacy string content
+                object: alreadyBlob? data: new Blob([data], {type: content_type}), // new blob content
                 byte_length: byte_length,
                 type: content_type
-            });
+            };
 
-            if (!byte_length && typeof data === "string") {
-                if (index?.words)
-                    await this.storeIndex(node.id, index.words);
-                else {
-                    let words = data.indexWords();
-                    await this.storeIndex(node.id, words);
-                }
+            await dexie.blobs.add(options);
+
+            if (index?.words)
+                await this.storeIndex(node.id, index.words);
+            else if (!byte_length && typeof data === "string") {
+                let words = data.indexWords();
+                await this.storeIndex(node.id, words);
             }
         }
     }
 
+    // used only for text/html edited content
     async updateBlobLowLevel(node_id, data) {
         let node = await this.getNode(node_id);
 
@@ -533,7 +574,8 @@ class IDBStorage {
             await this.updateNode(node);
 
             await dexie.blobs.where("node_id").equals(node.id).modify({
-                data: data
+                object: new Blob([data], {type: "text/html"}),
+                data: null
             });
 
             let words = data.indexWords();
@@ -555,9 +597,8 @@ class IDBStorage {
             if (node)
                 node_id = node.id;
         }
-        let blob = await dexie.blobs.where("node_id").equals(node_id).first();
 
-        return blob;
+        return dexie.blobs.where("node_id").equals(node_id).first();
     }
 
     async storeIndex(node_id, words) {
