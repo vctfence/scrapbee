@@ -163,6 +163,12 @@ function configureImpExpPanel() {
 
                 delete imported["localstorage-settings"];
 
+                let scrapyardSettings = await browser.storage.local.get("scrapyard-settings");
+                scrapyardSettings = scrapyardSettings["scrapyard-settings"];
+
+                if (scrapyardSettings["dropbox_refresh_token"])
+                    imported["scrapyard-settings"]["dropbox_refresh_token"] = scrapyardSettings["dropbox_refresh_token"];
+
                 await browser.storage.local.set(imported);
 
                 chrome.runtime.reload();
