@@ -674,8 +674,7 @@ function addListeners()
                 break;
 
             case "UPDATE_ARCHIVE":
-                backend.updateBlob(message.id, message.data);
-                break;
+                return backend.updateBlob(message.id, message.data);
 
             case "STORE_PAGE_HTML": {
                 if (message.bookmark.__page_packing)

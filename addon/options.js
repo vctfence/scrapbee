@@ -560,6 +560,9 @@ function startCheckLinks() {
 // Backup //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let backupTree;
+let backupIsInProcess;
+let restoreIsInProcess;
+
 function initializeBackup() {
     $("#backup-directory-path").val(settings.backup_directory_path());
 
@@ -600,6 +603,9 @@ function initializeBackup() {
 }
 
 function backupTreeContextMenu(jnode) {
+    if (backupIsInProcess || restoreIsInProcess)
+        return null;
+
     let notRestorable = () => {
         const name = jnode.data.name.toLowerCase();
         return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME;
@@ -662,15 +668,30 @@ async function backupShelf() {
     backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-basis: 85%;"/>`);
 
     send.startProcessingIndication();
-    await send.backupShelf({directory: settings.backup_directory_path(),
-                            shelf: $("#backup-shelf option:selected").text(),
-                            comment: $("#backup-comment").val(),
-                            compress: !!$("#compress-backup:checked").length});
 
-    browser.runtime.onMessage.removeListener(exportListener);
+    try {
+        backupIsInProcess = true;
+        $("#backup-button").prop("disabled", true);
 
-    await backupListFiles();
-    send.stopProcessingIndication();
+        await send.backupShelf({
+            directory: settings.backup_directory_path(),
+            shelf: $("#backup-shelf option:selected").text(),
+            comment: $("#backup-comment").val(),
+            compress: !!$("#compress-backup:checked").length
+        });
+
+        browser.runtime.onMessage.removeListener(exportListener);
+
+        await backupListFiles();
+    }
+    catch (e) {
+        console.error(e);
+    }
+    finally {
+        $("#backup-button").prop("disabled", false);
+        send.stopProcessingIndication();
+        backupIsInProcess = false;
+    }
 }
 
 async function restoreShelf(jnode, newShelf) {
@@ -695,12 +716,25 @@ async function restoreShelf(jnode, newShelf) {
 
     backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-basis: 85%;"/>`)
 
-    await send.restoreShelf({directory: settings.backup_directory_path(),
-                             meta: jnode.data,
-                             new_shelf: newShelf});
+    try {
+        restoreIsInProcess = true;
+        $("#backup-button").prop("disabled", true);
 
-    browser.runtime.onMessage.removeListener(importListener);
-    backupSetStatus("Ready");
+        await send.restoreShelf({
+            directory: settings.backup_directory_path(),
+            meta: jnode.data,
+            new_shelf: newShelf
+        });
+    }
+    catch (e) {
+        console.error(e);
+    }
+    finally {
+        browser.runtime.onMessage.removeListener(importListener);
+        $("#backup-button").prop("disabled", false);
+        backupSetStatus("Ready");
+        restoreIsInProcess = false;
+    }
 }
 
 async function deleteBackup(jnode) {

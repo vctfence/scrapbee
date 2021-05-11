@@ -17,6 +17,7 @@ import {
 } from "./import.js";
 
 import {
+    formatBytes,
     isSpecialPage,
     notifySpecialPage,
     openContainerTab,
@@ -161,9 +162,11 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
             break;
 
-        case "GET_BOOKMARK_URL":
-            let node = await backend.getNode(message.id)
-            return node.uri;
+        case "GET_BOOKMARK_INFO":
+            let node = await backend.getNode(message.id);
+            node.__formatted_size = formatBytes(node.size);
+            node.__formatted_date = node.date_added.toString().replace(/:[^:]*$/, "");
+            return node;
 
         case "COPY_NODES":
             return backend.copyNodes(message.node_ids, message.dest_id);

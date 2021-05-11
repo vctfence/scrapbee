@@ -16,7 +16,6 @@
     width: 100%  !important;
     height: 26px !important;
     white-space: nowrap !important;
-    vertical-align: middle !important;
     text-align:left;
     display: flex;
     padding-top: 8px !important;
@@ -32,7 +31,7 @@
 .original-url-text {
     flex: 1 1 auto;
     margin: 0 !important;
-    margin-left: 16px !important;
+    margin-left: 4px !important;
     margin-right: 16px !important;
     height: 16px !important;
     /*margin-top: 2px !important;*/
@@ -179,14 +178,25 @@
     animation-iteration-count: 1;
 }
 
-.help-mark {
+.help-mark, .i-mark {
     width:16px;
     height:16px;
     margin-left: 4px;
     background-image: url(icons/help-mark.svg);
     background-size: 16px 16px;
+    background-repeat: no-repeat;
     vertical-align:middle;
     display:inline-block;
+}
+
+.i-mark {
+    background-image: url(icons/page-info.svg);
+    width:18px;
+    height:18px;
+    background-size: 18px 18px;
+    margin-left: 16px;
+    margin-right: 10px;
+    margin-top: -2px;
 }
 
 .tips {
@@ -196,6 +206,7 @@
     padding:5px;
     margin-bottom:5px;
     text-align:left;
+    z-index: 2147483647;
 }
 
 .tips.hide {

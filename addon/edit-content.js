@@ -81,6 +81,10 @@ class EditToolBar {
         document.body.style.cursor = this.editing? "crosshair": "";
     }
 
+    formatPageInfo(node) {
+        return `<b>Added on:</b> ${node.__formatted_date}, <b>Size:</b> ${node.__formatted_size}`;
+    }
+
     saveDoc() {
         let btn = $("#scrapyard-save-doc-button", this.shadowRoot);
         btn.addClass("flash-button");
@@ -121,6 +125,14 @@ class EditToolBar {
             type: 'UPDATE_ARCHIVE',
             id: parseInt(location.hash.split(":")[1]),
             data: "<!DOCTYPE html>" + doc.outerHTML
+        }).then(() => {
+            browser.runtime.sendMessage({
+                type: 'GET_BOOKMARK_INFO',
+                uuid: location.hash.split(":")[0].substring(1),
+                id: parseInt(location.hash.split(":")[1])
+            }).then(node => {
+                $("#page-info", this.editBar).html(this.formatPageInfo(node))
+            });
         });
     }
 
@@ -206,12 +218,6 @@ class EditToolBar {
                          To remove content, text-select it (including images and other media) and press Del key on keyboard.
                          It is also possible to type something in. Press F7 to turn on caret browsing.
                        </span></div>`);
-
-        $(".help-mark", editBar).hover(function(e){
-            $(this).next(".tips.hide").show().css({"margin-top": "-10px"});
-        }, function(){
-            $(this).next(".tips.hide").hide();
-        });
 
         /** modify dom button */
         var btn = document.createElement("input");
@@ -368,6 +374,8 @@ class EditToolBar {
             }
         }, false);
 
+        $(editBar).append(`<span style="margin-left: 8px; display: inline-block;">Original URL: </span>`);
+
         /** the original url input */
         var txt = document.createElement("input");
         txt.type = "text";
@@ -381,12 +389,13 @@ class EditToolBar {
         editBar.appendChild(link);
 
         browser.runtime.sendMessage({
-            type: 'GET_BOOKMARK_URL',
+            type: 'GET_BOOKMARK_INFO',
             uuid: location.hash.split(":")[0].substring(1),
             id: parseInt(location.hash.split(":")[1])
-        }).then(url => {
-            txt.value = url;
-            link.href = url;
+        }).then(node => {
+            txt.value = node.uri;
+            link.href = node.uri;
+            $("#page-info", editBar).html(self.formatPageInfo(node))
         });
 
         var btn = document.createElement("input");
@@ -397,6 +406,10 @@ class EditToolBar {
         btn.addEventListener("click", function () {
             $(link)[0].click();
         });
+
+        /** page info */
+
+        $(editBar).append(`<div style="position: relative;"><span class="tips hide" id="page-info"></span><i class="i-mark"></i></div>`);
 
 
         /** hide button */
@@ -412,6 +425,19 @@ class EditToolBar {
 
         if (!__scrapyardHideToolbar)
             setTimeout(() => rootContainer.style.display = "block", 300);
+
+        $(".help-mark", editBar).hover(function(e){
+            $(this).next(".tips.hide").show().css({"margin-top": "-7px"});
+        }, function(){
+            $(this).next(".tips.hide").hide();
+        });
+
+        $(".i-mark", editBar).hover(function(e){
+            $(this).prev(".tips.hide").show().css({"margin-top": "-7px", "position": "absolute", "right": "100%",
+                                                   "margin-right": "-10px"});
+        }, function(){
+            $(this).prev(".tips.hide").hide();
+        });
 
         document.addEventListener("keydown", e => {
             if (e.code === "KeyT" && e.ctrlKey && e.altKey) {
