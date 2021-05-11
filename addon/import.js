@@ -338,7 +338,7 @@ async function objectToProperties(object) {
     return lines.map(l => " ".repeat(object.level + 3) + l).join(`\n`);
 }
 
-export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
+export async function exportOrg(file, nodes, shelf, uuid, shallow) {
     const creationDate = new Date();
     let org_lines = [];
 
@@ -349,6 +349,7 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
 #+VERSION: ${EXPORT_VERSION}
 #+NAME: ${shelf}
 #+UUID: ${uuid}
+#+ENTITIES: ${nodes.length}
 #+TIMESTAMP: ${creationDate.getTime()}
 #+DATE: ${creationDate.toISOString()}
 `);
@@ -662,7 +663,7 @@ export async function importJSON(shelf, reader, progress) {
 }
 
 
-async function objectToJSON(object, shallow) {
+async function objectToJSON(object) {
     let node = object; //await backend.getNode(object.id);
 
     delete node.level;
@@ -692,45 +693,43 @@ async function objectToJSON(object, shallow) {
             }
     }
 
-    if (!shallow) {
-        if (node.type === NODE_TYPE_ARCHIVE) {
-            let blob = await backend.fetchBlob(node.id);
-            if (blob) {
-                if (blob.type)
-                    node.mime_type = blob.type;
+    if (node.type === NODE_TYPE_ARCHIVE) {
+        let blob = await backend.fetchBlob(node.id);
+        if (blob) {
+            if (blob.type)
+                node.mime_type = blob.type;
 
-                if (blob.byte_length)
-                    node.byte_length = blob.byte_length;
+            if (blob.byte_length)
+                node.byte_length = blob.byte_length;
 
-                node.data = await backend.reifyBlob(blob, true);
-            }
+            node.data = await backend.reifyBlob(blob, true);
         }
-
-        if (node.has_notes) {
-            let notes = await backend.fetchNotes(node.id);
-            node.notes = notes.content;
-            if (notes.html)
-                node.notes_html = notes.html;
-            if (notes.format)
-                node.notes_format = notes.format;
-            if (notes.align)
-                node.notes_align = notes.align;
-            if (notes.width)
-                node.notes_width = notes.width;
-        }
-
-        if (node.has_comments)
-            node.comments = await backend.fetchComments(node.id);
-
-        let icon = await backend.fetchIcon(node.id);
-        if (icon)
-            node.icon_data = icon;
     }
+
+    if (node.has_notes) {
+        let notes = await backend.fetchNotes(node.id);
+        node.notes = notes.content;
+        if (notes.html)
+            node.notes_html = notes.html;
+        if (notes.format)
+            node.notes_format = notes.format;
+        if (notes.align)
+            node.notes_align = notes.align;
+        if (notes.width)
+            node.notes_width = notes.width;
+    }
+
+    if (node.has_comments)
+        node.comments = await backend.fetchComments(node.id);
+
+    let icon = await backend.fetchIcon(node.id);
+    if (icon)
+        node.icon_data = icon;
 
     return JSON.stringify(node);
 }
 
-export async function exportJSON(file, nodes, shelf, uuid, shallow, comment, progress) {
+export async function exportJSON(file, nodes, shelf, uuid, _, comment, progress) {
     const creationDate = new Date();
 
     const meta = {
@@ -754,7 +753,7 @@ export async function exportJSON(file, nodes, shelf, uuid, shallow, comment, pro
         let ctr = 0;
 
         for (let node of nodes) {
-            let json = await objectToJSON(node, shallow);
+            let json = await objectToJSON(node);
             ctr += 1;
             await file.append(json + (ctr === last? "" : "\n"));
 

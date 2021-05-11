@@ -49,7 +49,7 @@
                                         <label for="option-show-firefox-bookmarks">Show Firefox bookmarks shelf</label>
                                         <div style="margin: 0; margin-left: 20px; width: max-content;">
                                             <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
-                                            <label for="option-show-firefox-bookmarks-toolbar">Show bookmarks toolbar folder</label><br>
+                                            <label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
                                             <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"/>
                                             <label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
                                         </div>
@@ -123,6 +123,7 @@
                                     <select id="option-export-format" type="select" style="color: black">
                                         <option value="json">JSON</option>
                                         <option value="org">ORG</option>
+                                        <option value="org_shallow">ORG (links only)</option>
                                     </select>
                                 </fieldset>
                             </form>
@@ -130,11 +131,8 @@
                         <div class="double-last">
                             <form>
                                 <fieldset style="border: none;">
-                                    <input id="option-shallow-export" type="checkbox"/><label for="option-shallow-export">Shallow
-                                    export</label>
-                                    <i class="help-mark"></i>
-                                    <div class="tips hide">Do not export archived content.</div>
-                                    <!--input id="option-compress-export" type="checkbox"/><label for="option-compress-export">Compress archived content</label-->
+                                    <input id="option-use-helper-app-for-export" type="checkbox"/><label for="option-use-helper-app-for-export"
+                                        >Use helper application to accelerate export</label>
                                 </fieldset>
                             </form>
                         </div>

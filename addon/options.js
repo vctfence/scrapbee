@@ -110,7 +110,7 @@ function loadScrapyardSettings() {
     document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
     document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
     document.getElementById("option-export-format").value = _(settings.export_format(), "json");
-    document.getElementById("option-shallow-export").checked = settings.shallow_export();
+    document.getElementById("option-use-helper-app-for-export").checked = settings.use_helper_app_for_export();
     document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
     document.getElementById("option-helper-port").value = _(settings.helper_port_number(), 20202);
 
@@ -163,7 +163,7 @@ function storeScrapyardSettings() {
     settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
     settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
     settings.export_format(document.getElementById("option-export-format").value);
-    settings.shallow_export(document.getElementById("option-shallow-export").checked);
+    settings.use_helper_app_for_export(document.getElementById("option-use-helper-app-for-export").checked);
     settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
     settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
 

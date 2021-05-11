@@ -228,9 +228,16 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             shelf = isSpecialShelf(message.shelf) ? message.shelf.toLocaleLowerCase() : message.shelf;
 
             let format = settings.export_format() ? settings.export_format() : "json";
+
+            let shallowExport = false;
+            if (format === "org_shallow") {
+                shallowExport = true;
+                format = "org";
+            }
+
             let exportf = format === "json" ? exportJSON : exportOrg;
             let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_")
-                + `.${format == "json" ? "jsonl" : format}`;
+                          + `.${format == "json" ? "jsonl" : format}`;
 
             let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));
             const nodes = [];
@@ -243,9 +250,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
             nodesRandom = null;
 
-            const helperApp = await nativeBackend.probe();
-
-            if (helperApp) {
+            if (settings.use_helper_app_for_export() && await nativeBackend.probe()) {
                 // write to a temp file (much faster than IDB)
 
                 try {
@@ -265,7 +270,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     }
                 };
 
-                await exportf(file, nodes, message.shelf, message.uuid, settings.shallow_export());
+                await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
 
                 port.postMessage({
                     type: "EXPORT_FINISH"
@@ -318,7 +323,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     }
                 };
 
-                await exportf(file, nodes, message.shelf, message.uuid, settings.shallow_export());
+                await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
                 await file.flush();
 
                 let blob = new Blob(await backend.exportGetBlobs(processId), {type: "text/plain"});
