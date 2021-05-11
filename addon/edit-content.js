@@ -133,6 +133,15 @@ class EditToolBar {
         /** toolbar */
         var rootContainer = document.createElement("div");
         rootContainer.style.display = "none";
+        rootContainer.style.position = "fixed";
+        rootContainer.style.left = "0";
+        rootContainer.style.right = "0";
+        rootContainer.style.bottom = "0";
+        rootContainer.style.zIndex = "2147483647";
+        rootContainer.style.width = "100%";
+        rootContainer.style.height = "42px";
+        rootContainer.style.margin = "0";
+        rootContainer.style.padding = "0";
         rootContainer.className = "scrapyard-edit-bar-container";
         document.body.appendChild(rootContainer);
         this.rootContainer = rootContainer;

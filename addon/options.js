@@ -5,14 +5,14 @@ import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
 import {loadShelveOptions, parseHtml, showNotification, testFavicon} from "./utils.js";
 import {
-    DEFAULT_SHELF_NAME,
+    isSpecialShelf,
     EVERYTHING,
-    EVERYTHING_SHELF_ID,
-    FIREFOX_SHELF_ID,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
-    isSpecialShelf
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    FIREFOX_SHELF_NAME,
+    CLOUD_SHELF_NAME
 } from "./storage_constants.js";
-import {nativeBackend} from "./backend_native.js";
+import {TREE_STATE_PREFIX} from "./tree.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -99,53 +99,48 @@ function storeSavePageSettings() {
 }
 
 function loadScrapyardSettings() {
-    settings.load(() => {
+    document.getElementById("option-shelf-list-max-height").value = _(settings.shelf_list_height(), 600);
+    document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
+    document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
+    document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
+    document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
+    document.getElementById("option-do-not-show-archive-toolbar").checked = settings.do_not_show_archive_toolbar();
+    document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
+    document.getElementById("option-display-random-bookmark").checked = settings.display_random_bookmark();
+    document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
+    document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
+    document.getElementById("option-export-format").value = _(settings.export_format(), "json");
+    document.getElementById("option-shallow-export").checked = settings.shallow_export();
+    document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
+    document.getElementById("option-helper-port").value = _(settings.helper_port_number(), 20202);
 
-        document.getElementById("option-shelf-list-max-height").value = _(settings.shelf_list_height(), 600);
-        document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
-        document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
-        document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
-        document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
-        document.getElementById("option-do-not-show-archive-toolbar").checked = settings.do_not_show_archive_toolbar();
-        document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
-        document.getElementById("option-display-random-bookmark").checked = settings.display_random_bookmark();
-        document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
-        document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
-        document.getElementById("option-export-format").value = _(settings.export_format(), "json");
-        document.getElementById("option-shallow-export").checked = settings.shallow_export();
-        document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
-        document.getElementById("option-helper-port").value = _(settings.helper_port_number(), 20202);
+    document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
 
-        document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
+    $("#option-enable-cloud").on("change", e => {
+        settings.cloud_enabled(e.target.checked,
+            async () => {
+                if (e.target.checked) {
+                    const success = await cloudBackend.authenticate();
+                    if (success)
+                        $("#auth-dropbox").val("Sign out");
+                }
+                send.reconcileCloudBookmarkDb()
+            });
+    });
 
-        $("#option-enable-cloud").on("change", e => {
-            settings.cloud_enabled(e.target.checked,
-                async () => {
-                    if (e.target.checked) {
-                        const success = await cloudBackend.authenticate();
-                        if (success)
-                            $("#auth-dropbox").val("Sign out");
-                    }
-                    send.reconcileCloudBookmarkDb()
-                });
-        });
+    document.getElementById("option-cloud-background-sync").checked = settings.cloud_background_sync();
 
-        document.getElementById("option-cloud-background-sync").checked = settings.cloud_background_sync();
+    $("#option-cloud-background-sync").on("change", e => {
+        settings.cloud_background_sync(e.target.checked,
+            () => send.enableCloudBackgroundSync());
+    });
 
-        $("#option-cloud-background-sync").on("change", e => {
-            settings.cloud_background_sync(e.target.checked,
-                () => send.enableCloudBackgroundSync());
-        });
+    if (dropboxBackend.isAuthenticated())
+        $("#auth-dropbox").val("Sign out");
 
-        if (dropboxBackend.isAuthenticated())
-            $("#auth-dropbox").val("Sign out");
-
-        $("#auth-dropbox").on("click", async () => {
-            await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
-            $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
-        });
-
-        initLinkChecker();
+    $("#auth-dropbox").on("click", async () => {
+        await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
+        $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
     });
 
     document.getElementById("option-sidebar-theme").value = localStorage.getItem("scrapyard-sidebar-theme") || "light";
@@ -238,7 +233,9 @@ function switchPane() {
     let m;
     if(m = location.href.match(/#(\w+)$/)) {
 
-        if (m[1] === "helperapp")
+        if (m[1] === "backup")
+            populateBackup();
+        else if (m[1] === "helperapp")
             loadHelperAppLinks();
         else if (m[1] === "diagnostics")
             configureDiagnosticsPage();
@@ -264,6 +261,8 @@ function initHelpMarks() {
 window.onload = async function() {
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
+
+    await settings.load();
 
     initHelpMarks();
 
@@ -311,7 +310,12 @@ window.onload = async function() {
 
     // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    initializeLinkChecker();
     doAutoStartCheckLinks();
+
+    // Backup //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    initializeBackup();
 };
 
 function selectNode(e) {
@@ -329,7 +333,7 @@ async function onStartRDFImport(e) {
         $("#rdf-import-path").prop('disabled', false);
         $("#rdf-import-threads").prop('disabled', false);
 
-        $("#rdf-progress-row").text("ready");
+        $("#rdf-progress-row").text("Ready");
         importing = false;
         browser.runtime.onMessage.removeListener(importListener);
     };
@@ -418,7 +422,7 @@ async function doAutoStartCheckLinks() {
     }
 }
 
-function initLinkChecker() {
+function initializeLinkChecker() {
     $("#start-check-links").on("click", startCheckLinks);
     $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
@@ -550,5 +554,208 @@ function startCheckLinks() {
     else {
         stopCheckLinks();
         abort_check_links = true;
+    }
+}
+
+// Backup //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let backupTree;
+function initializeBackup() {
+    $("#backup-directory-path").val(settings.backup_directory_path());
+
+    let timeout;
+    $("#backup-directory-path").on("input", e => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            settings.backup_directory_path(e.target.value);
+            backupListFiles();
+        }, 1000)
+
+    });
+
+    $("#backup-button").on("click", async e => backupShelf());
+
+    loadShelveOptions("#backup-shelf");
+
+    $("#backup-tree").jstree({
+        plugins: ["wholerow", "contextmenu"],
+        core: {
+            worker: false,
+            animation: 0,
+            multiple: false,
+            themes: {
+                name: "default",
+                dots: false,
+                icons: true,
+            },
+            check_callback: true
+        },
+        contextmenu: {
+            show_at_node: false,
+            items: backupTreeContextMenu
+        }
+    });
+
+    backupTree = $("#backup-tree").jstree(true);
+}
+
+function backupTreeContextMenu(jnode) {
+    let notRestorable = () => {
+        const name = jnode.data.name.toLowerCase();
+        return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME;
+    };
+
+    return {
+        restore: {
+            label: "Restore",
+            _disabled: notRestorable(),
+            action: () => restoreShelf(jnode)
+        },
+        restoreAsSeparateShelf: {
+            label: "Restore as a Separate Shelf",
+            action: () => restoreShelf(jnode, true)
+        },
+        delete: {
+            separator_before: true,
+            label: "Delete",
+            action: () => setTimeout(() => deleteBackup(jnode))
+        },
+    };
+}
+
+function backupToJsTreeNode(node) {
+    const jnode = {};
+    let date = new Date(node.timestamp);
+    date = date.toISOString().split("T")[0];
+    let comment = node.comment? `<span class="backup-comment">${node.comment}</span>`: "";
+
+    node.alt_name = `${node.name} [${date}]`;
+
+    jnode.id = `${node.uuid}-${node.timestamp}`;
+    jnode.text = `<b>${node.name}</b> [${date}] ${comment}`;
+    jnode.icon = "/icons/shelf.svg";
+    jnode.data = node;
+    jnode.parent = "#"
+
+    jnode.li_attr = {
+        class: "show_tooltip",
+        title: node.comment
+    };
+
+    return jnode;
+}
+
+function backupSetStatus(html) {
+    $("#backup-status").html(html);
+}
+
+async function backupShelf() {
+    let exportListener = message => {
+        if (message.type === "EXPORT_PROGRESS") {
+            let bar = $("#backup-progress-bar");
+            bar.val(message.progress);
+        }
+    };
+
+    browser.runtime.onMessage.addListener(exportListener);
+
+    backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-basis: 85%;"/>`);
+
+    send.startProcessingIndication();
+    await send.backupShelf({directory: settings.backup_directory_path(),
+                            shelf: $("#backup-shelf option:selected").text(),
+                            comment: $("#backup-comment").val(),
+                            compress: !!$("#compress-backup:checked").length});
+
+    browser.runtime.onMessage.removeListener(exportListener);
+
+    await backupListFiles();
+    send.stopProcessingIndication();
+}
+
+async function restoreShelf(jnode, newShelf) {
+    const shelves = await backend.queryShelf();
+    const backupName = newShelf? jnode.data.alt_name: jnode.data.name;
+
+    shelves.push({name: EVERYTHING});
+
+    if (shelves.find(s => s.name.toLowerCase() === backupName.toLowerCase())) {
+        if (!confirm(`This will replace "${backupName}". Continue?`))
+            return;
+    }
+
+    let importListener = message => {
+        if (message.type === "IMPORT_PROGRESS") {
+            let bar = $("#backup-progress-bar");
+            bar.val(message.progress);
+        }
+    };
+
+    browser.runtime.onMessage.addListener(importListener);
+
+    backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-basis: 85%;"/>`)
+
+    await send.restoreShelf({directory: settings.backup_directory_path(),
+                             meta: jnode.data,
+                             new_shelf: newShelf});
+
+    browser.runtime.onMessage.removeListener(importListener);
+    backupSetStatus("Ready");
+}
+
+async function deleteBackup(jnode) {
+    if (!confirm(`Delete the selected backup?`))
+        return;
+
+    const success = await send.deleteBackup({directory: settings.backup_directory_path(),
+                                             meta: jnode.data});
+
+    if (success)
+        backupTree.delete_node(jnode);
+}
+
+let listingBackups = false;
+async function backupListFiles() {
+    if (!listingBackups) {
+        const directory = settings.backup_directory_path();
+
+        try {
+            listingBackups = true;
+            backupSetStatus("Loading backups...");
+
+            const backups = await send.listBackups({directory});
+            if (backups) {
+                const nodes = [];
+                for (let [k, v] of Object.entries(backups)) {
+                    v.file = k;
+                    nodes.push(v);
+                }
+
+                nodes.sort((a, b) => b.timestamp - a.timestamp);
+
+                backupTree.settings.core.data = nodes.map(n => backupToJsTreeNode(n));
+                backupTree.refresh(true);
+            }
+            else {
+                backupTree.settings.core.data = [];
+                backupTree.refresh(true);
+            }
+        }
+        finally {
+            listingBackups = false;
+            backupSetStatus("Ready");
+        }
+    }
+}
+
+async function populateBackup() {
+    const helperApp = await send.helperAppHasVersion({version: "0.3"});
+
+    if (helperApp) {
+        await backupListFiles();
+    }
+    else {
+        backupSetStatus(`Scrapyard <a href="#helperapp">helper application</a> v0.3+ is required`);
+        $("#backup-button").attr("disabled", true);
     }
 }

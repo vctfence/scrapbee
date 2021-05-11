@@ -5,18 +5,23 @@
 
     <link rel="icon" href="icons/scrapyard.svg" type="image/png"/>
 
+    <link rel="stylesheet" href="lib/jstree/themes/default/style.css"/>
+    <link rel="stylesheet" href="tree.css"/>
+
     <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
 
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="text/javascript" src="proto.js"></script>
+    <script type="text/javascript" src="lib/jstree/jstree.js"></script>
     <script type="module" src="options.js"></script>
 </head>
 <body>
 <div id="div-page">
     <div id="div-form-left">
         <a class="left-index" href="#settings">{Setting}</a>
-        <a class="left-index" href="#savesettings">{Save Setting}</a>
+        <a class="left-index" href="#savesettings">{Page Capture}</a>
         <a class="left-index" href="#cloud">{Cloud}</a>
+        <a class="left-index" href="#backup">{Backup}</a>
         <a class="left-index" href="#links">{Check Links}</a>
         <a class="left-index" href="#importrdf">{Import RDF}</a>
         <a class="left-index" href="#diagnostics" style="display: none">{Diagnostics}</a>
@@ -374,6 +379,51 @@
             </tr>
         </table>
     </div>
+    <div id="div-backup" class="div-area" style="display:none;">
+        <div id="backup">
+            <h2>Backup</h2>
+            <div id="backup-container">
+                <div id="backup-list-container">
+                    <h3 id="backup-list-title">Available Backups</h3>
+                    <div id="backup-tree-container">
+                        <div id="backup-tree"></div>
+                    </div>
+                </div>
+                <div id="backup-controls-container">
+                    <div id="backup-dir-container">
+                        <h3 id="backup-dir-title">Backup Directory</h3>
+                        <div id="backup-directory-path-container">
+                            <i class="help-mark"></i>
+                            <span class="tips hide">For example: <b>d:/backups/scrapyard</b><br>
+                            Choose a directory on the partition that is likely to survive system failure or reinstallation.</span>
+                            <input id="backup-directory-path" type="text"/>
+                        </div>
+                    </div>
+                    <h3 id="create-backup-title">Create Backup</h3>
+                    <div id="create-backup-container">
+                        <div>
+                            <img class="shelves-icon" title="Shelf" src="icons/books.svg"/>
+                            <select id="backup-shelf">
+                                <option value="everything">everything</option>
+                            </select>
+                        </div>
+                        <div id="backup-comment-container">
+                            Comment:&nbsp;<input id="backup-comment" type="text"/>
+                        </div>
+                        <input id="backup-button" type="button" class="blue-button" value="Backup"/>
+                        <div style="display: flex; flex-direction: row; align-content: center">
+                            <input id="compress-backup" type="checkbox" />
+                            <label for="compress-backup"><img class="zip-icon" title="Compress" src="icons/zip.svg"/></label>
+                        </div>
+                    </div>
+                    <div id="backup-status-container">
+                        <h3 id="backup-status-title">Status</h3>
+                        <div id="backup-status">Checking for the helper application...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="div-links" class="div-area" style="display:none;">
         <div id="check-links">
             <h2>Automatic Link Validation</h2>
@@ -392,7 +442,7 @@
                 <div><span id="current-link-title"></span><br><span id="current-link-url"></span></div>
             </div>
             <div id="invalid-links-container" class="link-info">
-                Broken links:
+                <b>Broken links:</b>
                 <table id="invalid-links">
                 </table>
             </div>
@@ -413,7 +463,7 @@
                             <td>
                                 <input id="rdf-import-path" type="text" size="60" value=""/>
                                 <i class="help-mark"></i>
-                                <span class="tips hide">For example: <b>C:/notes/scrapbook.rdf</b></span>
+                                <span class="tips hide">For example: <b>d:/notes/scrapbook.rdf</b></span>
                             </td>
                         </tr>
                         <tr>
@@ -423,12 +473,12 @@
                                                             >Quick import</label>
                                     <i class="help-mark"></i>
                                     <span class="tips hide">Leave archived files on disk.</span>
-                                </div-->
+                                </div>
                             </td>
                         </tr>
                         <tr>
                             <td>Status:&nbsp;&nbsp;</td>
-                            <td id="rdf-progress-row">ready</td>
+                            <td id="rdf-progress-row">Ready</td>
                         </tr>
                     </table>
                     <input type="button" class="blue-button" id="start-rdf-import" value="Import">
@@ -466,7 +516,7 @@
                 <li><a id="helper-manual-inst" href="#helperapp">Archive for manual installation</a></li>
             </ul>
 
-            <p>It is necessary to restart Firefox after the application has been installed.</p>
+            <p>It is necessary to restart Firefox after the application has been installed, or to completely close it when updating to a new version.</p>
         </div>
     </div>
     <div id="div-help" class="div-area" style="display:none;"></div>

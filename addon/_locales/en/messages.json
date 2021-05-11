@@ -19,11 +19,14 @@
     "Setting": {
         "message": "Settings"
     },
-    "Save Setting": {
+    "Page Capture": {
         "message": "Page Capture"
     },
     "Cloud": {
         "message": "Cloud"
+    },
+    "Backup": {
+        "message": "Backup"
     },
     "Check Links": {
         "message": "Check Links"

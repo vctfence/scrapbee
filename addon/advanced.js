@@ -1,6 +1,5 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {nativeBackend} from "./backend_native.js";
 import {showNotification} from "./utils.js";
 
 function initHelpMarks() {
@@ -36,21 +35,9 @@ function configureAutomationPanel() {
 }
 
 async function configureDBPath() {
-    let helperApp = await nativeBackend.probe();
-
-    if (!helperApp)
-        return;
-
-    const addonId = browser.runtime.getURL("/").split("/")[2];
-    const url = `http://localhost:${settings.helper_port_number()}/request/idb_path/${addonId}`;
-
-    const response = await fetch(url);
-
-    if (response.ok) {
-        const idbPath = await response.text();
+    const idbPath = await send.getAddonIdbPath();
+    if (idbPath)
         $("#addon-db-path-input").val(idbPath);
-        $("#db-path-panel").show();
-    }
 
     $("#db-path-copy-button").on("click", e => {
         navigator.clipboard.writeText($("#addon-db-path-input").val());
@@ -163,13 +150,11 @@ function configureImpExpPanel() {
 
                 delete imported["localstorage-settings"];
 
-                let scrapyardSettings = await browser.storage.local.get("scrapyard-settings");
-                scrapyardSettings = scrapyardSettings["scrapyard-settings"];
+                let settings = await browser.storage.local.get();
+                Object.assign(settings["savepage-settings"], imported["savepage-settings"]);
+                Object.assign(settings["scrapyard-settings"], imported["scrapyard-settings"]);
 
-                if (scrapyardSettings["dropbox_refresh_token"])
-                    imported["scrapyard-settings"]["dropbox_refresh_token"] = scrapyardSettings["dropbox_refresh_token"];
-
-                await browser.storage.local.set(imported);
+                await browser.storage.local.set(settings);
 
                 chrome.runtime.reload();
             };

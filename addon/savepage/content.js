@@ -260,6 +260,18 @@ function unlockDocument() {
     if (lock)
         document.body.removeChild(lock);
 }
+
+function clearDocumentEncoding(doc) {
+    let chars = doc.querySelector("meta[http-equiv='Content-Type'], meta[http-equiv='content-type']");
+    if (chars)
+        chars.parentNode.removeChild(chars);
+    else {
+        chars = doc.querySelector("meta[charset]");
+
+        if (chars)
+            chars.parentNode.removeChild(chars);
+    }
+}
 ////////////////////////////////////////////////////////////////// Scrapyard //
 
 /************************************************************************/
@@ -522,8 +534,10 @@ function addListeners()
                 /* Perform action */
 
                 // Scrapyard //////////////////////////////////////////////////////////////////
-                if (menuAction <= 2)
+                if (menuAction <= 2) {
+                    clearDocumentEncoding(document);
                     lockDocument();
+                }
 
                 if (document.readyState === "complete")
                 {
@@ -4203,6 +4217,11 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
             htmlStrings[htmlStrings.length] = startTag;
 
             prefix = (formatHTML && depth == 0) ? "\n    " : "\n";
+
+            // Scrapyard //////////////////////////////////////////////////////////////////
+            htmltext = prefix + `<meta charset="utf-8">`;
+            htmlStrings[htmlStrings.length] = htmltext;
+            ////////////////////////////////////////////////////////////////// Scrapyard //
 
             /* Add first icon or if none add favicon */
 

@@ -20,7 +20,7 @@ import {
     isSpecialPage,
     notifySpecialPage,
     openContainerTab,
-    readFile,
+    readFile, ReadLine,
     showNotification,
     stringByteLengthUTF8
 } from "./utils.js";
@@ -32,7 +32,7 @@ import {
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES,
     RDF_EXTERNAL_NAME,
-    isSpecialShelf
+    isSpecialShelf, EVERYTHING, DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME
 } from "./storage_constants.js";
 import UUID from "./lib/uuid.js";
 
@@ -69,8 +69,7 @@ export async function browseNode(node, external_tab, preserve_history, container
                 if (!helperApp)
                     return;
 
-                let url = `http://localhost:${settings.helper_port_number()}/rdf/browse/${node.uuid}/_#`
-                    + `${node.uuid}:${node.id}:${node.external_id}`
+                let url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
 
                 let rdf_tab = await (external_tab
                                         ? browser.tabs.update(external_tab.id, {"url": url, "loadReplace": !preserve_history})
@@ -80,14 +79,13 @@ export async function browseNode(node, external_tab, preserve_history, container
 
             return backend.fetchBlob(node.id).then(async blob => {
                 if (blob) {
-
                     let objectURL = null;
                     let helperApp = false;
 
                     if (settings.browse_with_helper()) {
                         helperApp = await nativeBackend.probe(true);
                         if (helperApp)
-                            objectURL = `http://localhost:${settings.helper_port_number()}/browse/${node.uuid}`
+                            objectURL = nativeBackend.url(`/browse/${node.uuid}`);
                     }
 
                     if (!objectURL) {
@@ -105,10 +103,11 @@ export async function browseNode(node, external_tab, preserve_history, container
                     return (external_tab
                                 ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": !preserve_history})
                                 : browser.tabs.create({"url": archiveURL}))
-                            .then(tab => {
+                            .then(archive_tab => {
                                 let listener = async (id, changed, tab) => {
-                                    if (id === tab.id && changed.status === "complete") {
+                                    if (tab.id === archive_tab.id && changed.status === "complete") {
                                         browser.tabs.onUpdated.removeListener(listener);
+
                                         await browser.tabs.insertCSS(tab.id, {file: "edit.css"})
 
                                         let code = `var __scrapyardHideToolbar = ${settings.do_not_show_archive_toolbar()}`;
@@ -195,8 +194,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         case "BROWSE_NOTES":
             (message.tab
-                ? browser.tabs.update(message.tab.id, {"url": "notes.html#" + message.uuid + ":" + message.id,
-                                                       "loadReplace": true})
+                ? browser.tabs.update(message.tab.id, {
+                    "url": "notes.html#" + message.uuid + ":" + message.id,
+                    "loadReplace": true
+                })
                 : browser.tabs.create({"url": "notes.html#" + message.uuid + ":" + message.id}));
             break;
 
@@ -205,29 +206,31 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             break;
 
         case "IMPORT_FILE":
-            shelf = isSpecialShelf(message.file_name)? message.file_name.toLocaleLowerCase(): message.file_name;
+            shelf = isSpecialShelf(message.file_name) ? message.file_name.toLocaleLowerCase() : message.file_name;
 
-            let importf = ({"JSONL": async () => importJSON(shelf, message.file),
-                            "JSON": async () => importJSON(shelf, message.file),
-                            "ORG":  async () => importOrg(shelf, await readFile(message.file)),
-                            "HTML": async () => importHtml(shelf, await readFile(message.file)),
-                            "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)})
+            let importf = ({
+                "JSONL": async () => importJSON(shelf, new ReadLine(message.file)),
+                "JSON": async () => importJSON(shelf, new ReadLine(message.file)),
+                "ORG": async () => importOrg(shelf, await readFile(message.file)),
+                "HTML": async () => importHtml(shelf, await readFile(message.file)),
+                "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)
+            })
                 [message.file_ext.toUpperCase()];
 
             let invalidation_state = ishellBackend.isInvalidationEnabled();
             ishellBackend.enableInvalidation(false);
             return backend.importTransaction(importf).finally(() => {
-                    ishellBackend.enableInvalidation(invalidation_state);
-                    ishellBackend.invalidateCompletion();
-                });
+                ishellBackend.enableInvalidation(invalidation_state);
+                ishellBackend.invalidateCompletion();
+            });
 
         case "EXPORT_FILE":
             shelf = isSpecialShelf(message.shelf) ? message.shelf.toLocaleLowerCase() : message.shelf;
 
-            let format = settings.export_format()? settings.export_format(): "json";
-            let exportf = format === "json"? exportJSON: exportOrg;
+            let format = settings.export_format() ? settings.export_format() : "json";
+            let exportf = format === "json" ? exportJSON : exportOrg;
             let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_")
-                          + `.${format == "json"? "jsonl": format}`;
+                + `.${format == "json" ? "jsonl" : format}`;
 
             let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));
             const nodes = [];
@@ -245,12 +248,9 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             if (helperApp) {
                 // write to a temp file (much faster than IDB)
 
-                const init_url = `http://localhost:${settings.helper_port_number()}/export/initialize`
-                let result = null;
                 try {
-                    result = fetch(init_url);
-                }
-                catch (e) {
+                    nativeBackend.fetch("/export/initialize");
+                } catch (e) {
                     console.log(e);
                 }
 
@@ -271,15 +271,14 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                     type: "EXPORT_FINISH"
                 });
 
-                let url = `http://localhost:${settings.helper_port_number()}/export/download`;
+                let url = nativeBackend.url("/export/download");
                 let download;
 
                 try {
                     download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
-                }
-                catch (e) {
+                } catch (e) {
                     console.error(e);
-                    fetch(`http://localhost:${settings.helper_port_number()}/export/finalize`);
+                    nativeBackend.fetch("/export/finalize");
                 }
 
                 if (download) {
@@ -287,7 +286,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                         if (delta.id === download) {
                             if (delta.state && delta.state.current === "complete" || delta.error) {
                                 browser.downloads.onChanged.removeListener(download_listener);
-                                fetch(`http://localhost:${settings.helper_port_number()}/export/finalize`);
+                                nativeBackend.fetch("/export/finalize");
                             }
                         }
                     };
@@ -313,7 +312,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                             this.size = 0;
                         }
                     },
-                    flush: async function() {
+                    flush: async function () {
                         if (this.size && this.content.length)
                             await backend.exportPutBlob(processId, new Blob(this.content, {type: "text/plain"}));
                     }
@@ -328,8 +327,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
                 try {
                     download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
-                }
-                catch (e) {
+                } catch (e) {
                     console.error(e);
                     backend.exportCleanBlobs(processId);
                 }
@@ -348,6 +346,124 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 }
             }
             break;
+
+        case "LIST_BACKUPS": {
+            let form = new FormData();
+            form.append("directory", message.directory);
+
+            return nativeBackend.fetchJSON(`/backup/list`, {method: "POST", body: form});
+        }
+
+        case "BACKUP_SHELF": {
+            const everything = message.shelf.toLowerCase() === EVERYTHING;
+            let shelf, shelfName, shelfUUID;
+
+            if (everything) {
+                shelfUUID = shelfName = EVERYTHING;
+            }
+            else {
+                shelf = await backend.queryShelf(message.shelf);
+                shelfUUID = shelf.uuid;
+                shelfName = shelf.name;
+            }
+
+            let nodes;
+
+            if (everything) {
+                const shelves = await backend.queryShelf();
+                const cloud = shelves.find(s => s.id === CLOUD_SHELF_ID);
+                if (cloud)
+                    shelves.splice(shelves.indexOf(cloud), 1);
+                nodes = await backend.queryFullSubtree(shelves.map(s => s.id), false, true);
+            }
+            else {
+                nodes = await backend.queryFullSubtree(shelf.id, false, true);
+                nodes.shift();
+            }
+
+            let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
+
+            try {
+                let form = new FormData();
+                form.append("directory", message.directory);
+                form.append("file", backupFile);
+                form.append("compress", message.compress);
+
+                nativeBackend.fetch("/backup/initialize", {method: "POST", body: form});
+
+                const port = await nativeBackend.getPort();
+
+                const file = {
+                    append: async function (text) {
+                        await port.postMessage({
+                            type: "BACKUP_PUSH_TEXT",
+                            text: text
+                        })
+                    }
+                };
+
+                await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
+
+                port.postMessage({
+                    type: "BACKUP_FINISH"
+                });
+            } catch (e) {
+                console.log(e);
+            }
+        }
+        break;
+
+        case "RESTORE_SHELF": {
+            send.startProcessingIndication();
+
+            try {
+                let form = new FormData();
+                form.append("directory", message.directory);
+                form.append("file", message.meta.file);
+
+                await nativeBackend.fetch("/restore/initialize", {method: "POST", body: form});
+
+                const Reader = class {
+                    async* lines() {
+                        let line;
+                        while (line = await nativeBackend.fetchText("/restore/get_line"))
+                            yield line;
+                    }
+                };
+
+                const shelfName = message.new_shelf? message.meta.alt_name: message.meta.name;
+                const shelf = await importJSON(shelfName, new Reader(), true);
+
+                await nativeBackend.fetch("/restore/finalize");
+
+                send.nodesImported({shelf});
+
+            } catch (e) {
+                console.log(e);
+            }
+
+            send.stopProcessingIndication();
+
+        }
+        break;
+
+        case "DELETE_BACKUP": {
+            send.startProcessingIndication();
+
+            try {
+                let form = new FormData();
+                form.append("directory", message.directory);
+                form.append("file", message.meta.file);
+
+                await nativeBackend.fetch("/backup/delete", {method: "POST", body: form});
+            } catch (e) {
+                console.log(e);
+                return false;
+            }
+
+            send.stopProcessingIndication();
+            return true;
+        }
 
         case "UI_LOCK_GET":
             browserBackend.getUILock();
@@ -376,6 +492,25 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 startCloudBackgroundSync(s);
             });
             break;
+
+        case "HELPER_APP_HAS_VERSION": {
+            const helperApp = await nativeBackend.probe();
+
+            if (helperApp && nativeBackend.hasVersion(message.version))
+                return true;
+        }
+        break;
+
+        case "GET_ADDON_IDB_PATH": {
+            let helperApp = await nativeBackend.probe();
+
+            if (!helperApp)
+                return;
+
+            const addonId = browser.runtime.getURL("/").split("/")[2];
+
+            return nativeBackend.fetchText(`/request/idb_path/${addonId}`)
+        }
 
         case "RECALCULATE_ARCHIVE_SIZE": {
             const nodeIDs = await backend.getNodeIds();

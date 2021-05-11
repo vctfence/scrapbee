@@ -27,9 +27,9 @@ class NativeBackend {
                     if (response.type === "INITIALIZED") {
                         port.onMessage.removeListener(initListener);
                         port.onMessage.addListener(NativeBackend.incomingMessages.bind(this))
-                        resolve(port);
                         this.port = port;
                         this.version = response.version;
+                        resolve(port);
                     }
                 }
 
@@ -53,6 +53,34 @@ class NativeBackend {
         if (!port && verbose)
             showNotification({message: "Can not connect to the helper application."})
         return !!port;
+    }
+
+    getVersion() {
+        if (this.port) {
+            if (!this.version)
+                return "0.1";
+            return this.version;
+        }
+    }
+
+    hasVersion(version) {
+        let installed = this.getVersion();
+
+        if (installed) {
+            if (installed.startsWith(version))
+                return true;
+
+            version = version.split(".").map(d => parseInt(d));
+            installed = installed.split(".").map(d => parseInt(d));
+            installed.length = version.length;
+
+            for (let i = 0; i < version.length; ++i) {
+                if (installed[i] > version[i])
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     static async incomingMessages(msg) {
@@ -101,7 +129,26 @@ class NativeBackend {
             }
             break;
         }
+    }
 
+    url(path) {
+        return `http://localhost:${settings.helper_port_number()}${path}`;
+    }
+
+    fetch(path, init) {
+        return window.fetch(this.url(path), init);
+    }
+
+    async fetchText(path, init) {
+        let response = await window.fetch(this.url(path), init);
+        if (response.ok)
+            return response.text();
+    }
+
+    async fetchJSON(path, init) {
+        let response = await window.fetch(this.url(path), init);
+        if (response.ok)
+            return response.json();
     }
 
 }

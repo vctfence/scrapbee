@@ -13,7 +13,7 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-import {formatShelfName, getFavicon, getFaviconFromTab, packPage, partition, ReadLine} from "./utils.js"
+import {formatShelfName, getFavicon, getFaviconFromTab, packPage, partition} from "./utils.js"
 
 const EXPORT_VERSION = 1;
 
@@ -339,6 +339,7 @@ async function objectToProperties(object) {
 }
 
 export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
+    const creationDate = new Date();
     let org_lines = [];
 
     if (!shallow)
@@ -348,7 +349,8 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow = false) {
 #+VERSION: ${EXPORT_VERSION}
 #+NAME: ${shelf}
 #+UUID: ${uuid}
-#+DATE: ${new Date().toISOString()}
+#+TIMESTAMP: ${creationDate.getTime()}
+#+DATE: ${creationDate.toISOString()}
 `);
 
     await file.append("#+TODO: TODO WAITING POSTPONED | DONE CANCELLED\n");
@@ -560,13 +562,15 @@ function renameSpecialShelves(node) {
         node.name = `${formatShelfName(node.name)} (imported)`;
 }
 
-export async function importJSON(shelf, file) {
-    let readline = new ReadLine(file);
-    let lines = readline.lines();
+export async function importJSON(shelf, reader, progress) {
+    let lines = reader.lines();
     let meta_line = (await lines.next()).value;
 
     if (!meta_line)
         return Promise.reject(new Error("invalid file format"));
+
+    meta_line = meta_line.replace(/^\[/, "");
+    const meta = parseJSONObject(meta_line);
 
     let id_map = new Map();
     let first_object = (await lines.next()).value;
@@ -610,6 +614,9 @@ export async function importJSON(shelf, file) {
             id_map.set(first_object_id, first_object.id);
     }
 
+    let currentProgress = 0;
+    let ctr = 1;
+
     for await (let line of lines) {
         if (line === "]") // support for the last line in old JSON format files
             break;
@@ -639,8 +646,19 @@ export async function importJSON(shelf, file) {
 
             if (old_object_id && isContainer(object))
                 id_map.set(old_object_id, object.id);
+
+            if (progress) {
+                ctr += 1;
+                const newProgress = Math.round((ctr / meta.entities) * 100);
+                if (newProgress !== currentProgress) {
+                    currentProgress = newProgress;
+                    send.importProgress({progress: currentProgress});
+                }
+            }
         }
     }
+
+    return shelf_node;
 }
 
 
@@ -712,23 +730,41 @@ async function objectToJSON(object, shallow) {
     return JSON.stringify(node);
 }
 
-export async function exportJSON(file, nodes, shelf, uuid, shallow = false) {
-    let meta = {
+export async function exportJSON(file, nodes, shelf, uuid, shallow, comment, progress) {
+    const creationDate = new Date();
+
+    const meta = {
         export: "Scrapyard",
         version: EXPORT_VERSION,
         name: shelf,
         uuid: uuid,
-        date: new Date()
+        entities: nodes.length,
+        timestamp: creationDate.getTime(),
+        date: creationDate.toISOString()
     };
+
+    if (comment)
+        meta.comment = comment;
 
     await file.append(JSON.stringify(meta) + (nodes.length? "\n": ""));
 
     if (nodes.length) {
-        let last = nodes[nodes.length - 1];
+        const last = nodes.length;
+        let currentProgress = 0;
+        let ctr = 0;
 
         for (let node of nodes) {
             let json = await objectToJSON(node, shallow);
-            await file.append(json + (node === last? "" : "\n"));
+            ctr += 1;
+            await file.append(json + (ctr === last? "" : "\n"));
+
+            if (progress) {
+                const newProgress = Math.round((ctr / nodes.length) * 100);
+                if (newProgress !== currentProgress) {
+                    currentProgress = newProgress;
+                    send.exportProgress({progress: currentProgress});
+                }
+            }
         }
     }
 }
@@ -808,7 +844,7 @@ function traverseRDFTree(doc, visitor) {
 
 
 async function importRDFArchive(node, scrapbook_id, _) {
-    let root = `http://localhost:${settings.helper_port_number()}/rdf/import/files/`
+    let root = nativeBackend.url(`/rdf/import/files/`)
     let base = `${root}data/${scrapbook_id}/`
     let index = `${base}index.html`;
 
@@ -840,17 +876,12 @@ export async function importRDF(shelf, path, threads, quick) {
     if (!helperApp)
         return;
 
-    let rdf_url = `http://localhost:${settings.helper_port_number()}/rdf/import/${rdf_file}`
-
     try {
         let form = new FormData();
         form.append("rdf_directory", rdf_directory);
         form.append("rdf_file", rdf_file);
-        let response = await fetch(rdf_url, {method: "POST", body: form});
 
-        if (response.ok) {
-            xml = await response.text();
-        }
+        xml = await nativeBackend.fetchText(`/rdf/import/${rdf_file}`, {method: "POST", body: form});
     }
     catch (e) {
         console.log(e);
@@ -967,7 +998,7 @@ export async function importRDF(shelf, path, threads, quick) {
 
         if (node.icon && node.icon.startsWith("resource://scrapbook/")) {
             node.icon = node.icon.replace("resource://scrapbook/", "");
-            node.icon = `http://localhost:${settings.helper_port_number()}/rdf/import/files/` + node.icon;
+            node.icon = nativeBackend.url(`/rdf/import/files/${node.icon}`);
             await backend.storeIcon(node);
         }
     }

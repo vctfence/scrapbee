@@ -3,9 +3,12 @@ import traceback
 import threading
 import tempfile
 import platform
+import zipfile
 import logging
+import time
 import json
 import os
+import re
 from functools import wraps
 from pathlib import Path
 
@@ -15,12 +18,18 @@ from werkzeug.serving import make_server
 
 from . import browser
 
+DEBUG = True
+
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 log = logging.getLogger('werkzeug')
 log.disabled = True
 app.logger.disabled = True
-#logging.basicConfig(filename='debug.log', encoding='utf-8', level=logging.DEBUG)
+
+###
+if DEBUG:
+    logging.basicConfig(filename='debug.log', encoding='utf-8', level=logging.DEBUG)
+###
 
 auth = None
 host = "localhost"
@@ -68,9 +77,13 @@ def requires_auth(f):
     return decorated
 
 
-# @app.errorhandler(Exception)
-# def handle_500(e=None):
-#     return traceback.format_exc(), 500
+###
+if DEBUG:
+    @app.errorhandler(Exception)
+    def handle_500(e=None):
+        return traceback.format_exc(), 500
+###
+
 
 @app.after_request
 def add_header(r):
@@ -255,5 +268,155 @@ def export_download():
 
 @app.route("/export/finalize", methods=['GET'])
 def export_finalize():
+    global export_file
     os.remove(export_file)
+    export_file = None
+    return "OK"
+
+
+# Backup routines
+
+BACKUP_JSON_EXT = ".jsonl"
+BACKUP_COMPRESSED_EXT = ".zip"
+
+
+def backup_peek_meta_compressed(path):
+    compressed = os.path.splitext(os.path.basename(path))[0] + BACKUP_JSON_EXT
+    with zipfile.ZipFile(path, "r") as zin:
+        with zin.open(compressed) as backup:
+            meta = backup.readline()
+            if meta:
+                meta = meta.decode("utf-8")
+                return meta
+            else:
+                return None
+
+
+def backup_peek_meta_plain(path):
+    with open(path, "r", encoding="utf-8") as backup:
+        return backup.readline()
+
+
+def backup_peek_meta(path):
+    if path.endswith(BACKUP_COMPRESSED_EXT):
+        return backup_peek_meta_compressed(path)
+    else:
+        return backup_peek_meta_plain(path)
+
+
+@app.route("/backup/list", methods=['POST'])
+def backup_list():
+    directory = request.form["directory"]
+
+    if os.path.exists(directory):
+        result = "{"
+
+        files = [f for f in os.listdir(directory) if f.endswith(BACKUP_JSON_EXT) or f.endswith(BACKUP_COMPRESSED_EXT)]
+        nfiles = len(files)
+        ctr = 0
+
+        for file in files:
+            path = os.path.join(directory, file)
+            meta = backup_peek_meta(path)
+            if meta:
+                meta = meta.strip()
+                result += f"\"{file}\": {meta}"
+                ctr += 1
+                if ctr < nfiles:
+                    result += ","
+            else:
+                nfiles -= 1
+
+        result += "}"
+
+        return result
+    else:
+        return abort(404)
+
+
+@app.route("/backup/initialize", methods=['POST'])
+def backup_initialize():
+    directory = request.form["directory"]
+    backup_file_path = os.path.join(directory, request.form["file"])
+
+    Path(directory).mkdir(parents=True, exist_ok=True)
+
+    compress = request.form["compress"] == "true"
+
+    def do_backup(backup, encode=False):
+        while True:
+            msg = browser.get_message()
+            if msg["type"] == "BACKUP_PUSH_TEXT":
+                if encode:
+                    backup.write(msg["text"].encode("utf-8"))
+                else:
+                    backup.write(msg["text"])
+            elif msg["type"] == "BACKUP_FINISH":
+                return "OK"
+
+    if compress:
+        compressed = re.sub(f"{BACKUP_JSON_EXT}$", BACKUP_COMPRESSED_EXT, backup_file_path)
+        logging.debug(compressed)
+        with zipfile.ZipFile(compressed, "w", zipfile.ZIP_DEFLATED, compresslevel=5) as zout:
+            with zout.open(request.form["file"], "w") as backup:
+                return do_backup(backup, True)
+    else:
+        with open(backup_file_path, "w", encoding="utf-8") as backup:
+            return do_backup(backup)
+
+
+backup_compressed = False
+backup_file = None
+json_file = None
+
+
+@app.route("/restore/initialize", methods=['POST'])
+def restore_initialize():
+    directory = request.form["directory"]
+    backup_file_path = os.path.join(directory, request.form["file"])
+
+    global backup_compressed, backup_file, json_file
+
+    backup_compressed = backup_file_path.endswith(BACKUP_COMPRESSED_EXT)
+
+    if backup_compressed:
+        compressed = os.path.splitext(os.path.basename(backup_file_path))[0] + BACKUP_JSON_EXT
+        backup_file = zipfile.ZipFile(backup_file_path, 'r')
+        json_file = backup_file.open(compressed)
+    else:
+        json_file = open(backup_file_path, "r", encoding="utf-8")
+
+    return "OK"
+
+
+@app.route("/restore/get_line", methods=['GET'])
+def restore_get_line():
+    line = json_file.readline()
+    if line:
+        if backup_compressed:
+            line = line.decode("utf-8")
+        line = line.strip()
+        return line
+    else:
+        return "", 204
+
+
+@app.route("/restore/finalize", methods=['GET'])
+def restore_finalize():
+    global backup_compressed, backup_file, json_file
+    json_file.close()
+    if backup_compressed:
+        backup_file.close()
+    backup_compressed = False
+    backup_file = None
+    json_file = None
+    return "OK"
+
+
+@app.route("/backup/delete", methods=['POST'])
+def backup_delete():
+    directory = request.form["directory"]
+    backup_file_path = os.path.join(directory, request.form["file"])
+
+    os.remove(backup_file_path)
     return "OK"

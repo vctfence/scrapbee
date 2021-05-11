@@ -224,14 +224,17 @@ class IDBStorage {
         }
     }
 
-    async _selectAllChildrenOf(node, children) {
+    async _selectAllChildrenOf(node, children, preorder = false) {
         let group_children = await dexie.nodes.where("parent_id").equals(node.id).toArray();
 
         if (group_children && group_children.length) {
+            if (preorder)
+                group_children.sort((a, b) => a.pos - b.pos);
+
             for (let child of group_children) {
                 children.push(child);
                 if (isContainer(child))
-                    await this._selectAllChildrenOf(child, children);
+                    await this._selectAllChildrenOf(child, children, preorder);
             }
         }
     }
@@ -246,7 +249,7 @@ class IDBStorage {
             if (node) {
                 children.push(node);
                 if (isContainer(node))
-                    await this._selectAllChildrenOf(node, children);
+                    await this._selectAllChildrenOf(node, children, preorder);
             }
         }
 
@@ -532,13 +535,15 @@ class IDBStorage {
         if (node) {
             let alreadyBlob = data instanceof Blob;
 
-            if (typeof data !== "string" && data.byteLength)
+            if (alreadyBlob)
+                node.size = data.size;
+            else if (typeof data !== "string" && data.byteLength)
                 node.size = byte_length = data.byteLength;
             else if (typeof data === "string" && byte_length) {
                 let byteArray = new Uint8Array(byte_length);
                 for (let i = 0; i < data.length; ++i)
                     byteArray[i] = data.charCodeAt(i);
-                node.size = data.byteLength;
+                node.size = byte_length;
                 data = byteArray;
             }
             else if (!alreadyBlob)

@@ -690,10 +690,15 @@ function internalMessages(message, sender, sendResponse) {
         }
     }
     else if (message.type === "NODES_IMPORTED") {
-        settings.last_shelf(message.shelf.id, () => {
+        const shelfId = message.shelf? message.shelf.id: EVERYTHING_SHELF_ID;
+
+        settings.last_shelf(shelfId, () => {
             loadShelves(false)
                 //.then(() => switchShelf(message.shelf.id, false))
-                .then(() => setTimeout(() => tree.openRoot(), 50))
+                .then(() => {
+                    if (shelfId !== EVERYTHING_SHELF_ID)
+                        setTimeout(() => tree.openRoot(), 50);
+                })
                 .catch(e => console.error(e));
         });
     }

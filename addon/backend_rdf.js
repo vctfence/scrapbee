@@ -1,4 +1,4 @@
-import {settings} from "./settings.js";
+import UUID from "./lib/uuid.js";
 import {backend} from "./backend.js";
 import {nativeBackend} from "./backend_native.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage_constants.js";
@@ -39,14 +39,13 @@ class RDFDoc {
     }
 
     async write () {
-        let rdf_url = `http://localhost:${settings.helper_port_number()}/rdf/root/save/${this.uuid}`
-
         try {
             let content = this._formatXML(this.doc)
             if (content) {
                 let form = new FormData();
                 form.append("rdf_content", content);
-                await fetch(rdf_url, {method: "POST", body: form});
+
+                await nativeBackend.fetch(`/rdf/root/save/${this.uuid}`, {method: "POST", body: form});
             }
         }
         catch (e) {
@@ -62,12 +61,7 @@ class RDFDoc {
         let xml = null;
 
         try {
-            let response = await fetch(`http://localhost:${settings.helper_port_number()}/rdf/root/${node.uuid}`,
-                {method: "GET"});
-
-            if (response.ok) {
-                xml = await response.text();
-            }
+            xml = await nativeBackend.fetchText(`/rdf/root/${node.uuid}`);
         }
         catch (e) {
             console.log(e);
@@ -211,17 +205,10 @@ export class RDFBackend {
     constructor() {
     }
 
-    generateScrapbookId() {
-        let d = new Date();
-
-        return d.getFullYear() + ("0"+(d.getMonth()+1)).slice(-2) + ("0" + d.getDate()).slice(-2)
-                + ("0" + d.getHours()).slice(-2) + ("0" + d.getMinutes()).slice(-2) + ("0" + d.getSeconds()).slice(-2);
-    }
-
     async createBookmark(node, parent) {
         if (parent.external === RDF_EXTERNAL_NAME) {
             node.external = RDF_EXTERNAL_NAME;
-            node.external_id = this.generateScrapbookId();
+            node.external_id = UUID.date();
             await backend.updateNode(node);
 
             const rdf_doc = await RDFDoc.fromNode(node);
@@ -238,12 +225,11 @@ export class RDFBackend {
         if (node.external === RDF_EXTERNAL_NAME) {
             await backend.deleteBlob(node_id);
 
-            let item_url = `http://localhost:${settings.helper_port_number()}/rdf/save_item/${node.uuid}`
-
             try {
                 let form = new FormData();
                 form.append("item_content", data);
-                await fetch(item_url, {method: "POST", body: form});
+
+                await nativeBackend.fetch(`/rdf/save_item/${node.uuid}`, {method: "POST", body: form});
             }
             catch (e) {
                 console.log(e);
@@ -264,10 +250,8 @@ export class RDFBackend {
                     rdf_doc.deleteBookmarkNode(node);
 
                     if (node.type === NODE_TYPE_ARCHIVE) {
-                        let item_url = `http://localhost:${settings.helper_port_number()}/rdf/delete_item/${node.uuid}`
-
                         try {
-                            await fetch(item_url);
+                            await nativeBackend.fetch(`/rdf/delete_item/${node.uuid}`);
                         } catch (e) {
                             console.log(e);
                         }
@@ -304,7 +288,7 @@ export class RDFBackend {
 
         if (parent && parent.external === RDF_EXTERNAL_NAME) {
             node.external = RDF_EXTERNAL_NAME;
-            node.external_id = this.generateScrapbookId();
+            node.external_id = UUID.date();
             await backend.updateNode(node);
 
             const rdf_doc = await RDFDoc.fromNode(node);
