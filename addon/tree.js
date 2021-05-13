@@ -789,7 +789,7 @@ class BookmarkTree {
                     }
                     else {
                         for (let n of selectedNodes) {
-                            let node = o(n);
+                            let node = c(n);
                             if (!isEndpoint(node) || !node.uri)
                                 continue;
                             node.type = NODE_TYPE_BOOKMARK;
