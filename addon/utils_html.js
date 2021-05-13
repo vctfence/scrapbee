@@ -15,14 +15,30 @@ export function escapeHtml(string) {
     });
 }
 
-export function parseHtml(htmlText) {
-    let doc = document.implementation.createHTMLDocument("");
-    let doc_elt = doc.documentElement;
+// export function parseHtml(htmlText) {
+//     let doc = document.implementation.createHTMLDocument("");
+//     let doc_elt = doc.documentElement;
+//
+//     htmlText = htmlText.replace(/^.*?<html[^>]*>/is, "");
+//     htmlText = htmlText.replace(/<\/html>.*?$/is, "");
+//
+//     doc_elt.innerHTML = htmlText;
+//
+//     return doc;
+// }
 
-    htmlText = htmlText.replace(/^.*?<html[^>]*>/is, "");
-    htmlText = htmlText.replace(/<\/html>.*?$/is, "");
+export function parseHtml(htmlText) {
+    var doc = document.implementation.createHTMLDocument("")
+        , doc_elt = doc.documentElement
+        , first_elt;
 
     doc_elt.innerHTML = htmlText;
+    first_elt = doc_elt.firstElementChild;
+
+    if (doc_elt.childElementCount === 1
+        && first_elt.localName.toLowerCase() === "html") {
+        doc.replaceChild(first_elt, doc_elt);
+    }
 
     return doc;
 }
