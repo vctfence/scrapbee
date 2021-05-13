@@ -2,7 +2,6 @@ import {send} from "./proxy.js";
 import * as org from "./lib/org/org.js"
 import {backend} from "./backend.js"
 import {nativeBackend} from "./backend_native.js"
-import {settings} from "./settings.js"
 import UUID from "./lib/uuid.js";
 
 import {
@@ -13,7 +12,9 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-import {formatShelfName, getFavicon, getFaviconFromTab, packPage, partition} from "./utils.js"
+import {packPage} from "./background.js"
+
+import {formatShelfName, getFavicon, getFaviconFromTab, partition} from "./utils.js"
 
 const EXPORT_VERSION = 1;
 
