@@ -5,10 +5,10 @@ import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
 import {formatBytes, toHHMMSS} from "./utils.js";
 import {
+    isSpecialShelf,
     CLOUD_SHELF_NAME,
     EVERYTHING,
     FIREFOX_SHELF_NAME,
-    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK
 } from "./storage_constants.js";
