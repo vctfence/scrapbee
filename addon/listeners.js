@@ -9,6 +9,10 @@ browser.runtime.onInstalled.addListener(details => {
         });
     }
     else if (details.reason === "update") {
-        //settings.pending_announcement(true);
+        chrome.storage.local.get(SETTINGS_KEY, settings => {
+            settings = settings[SETTINGS_KEY];
+            settings.pending_announcement = true;
+            chrome.storage.local.set({[SETTINGS_KEY]: settings});
+        });
     }
 });

@@ -261,9 +261,9 @@ export class CloudBackend {
     }
 
     _fixUTF8Encoding(html) {
-        const meta_rx = /<meta\s*charset=['"]?([^'"\/>]+)['"]?\s*\/?>/i
+        const meta_rx = /<meta\s*charset=['"]?([^'"\/>]+)['"]?\s*\/?>/ig
         const content_type_rx =
-            /<meta\s*http-equiv=["']?content-type["']?\s*content=["']text\/html;\s*charset=([^'"/>]+)['"]\s*\/?>/i
+            /<meta\s*http-equiv=["']?content-type["']?\s*content=["']text\/html;\s*charset=([^'"/>]+)['"]\s*\/?>/ig
 
         let proceed = null;
 
@@ -285,14 +285,14 @@ export class CloudBackend {
 
         if (proceed == "meta") {
             html = html.replace(meta_rx, "");
-            html = html.replace("<head>", '<head><meta charset="utf-8"/>');
+            html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
         }
         else if (proceed == "content-type") {
             html = html.replace(content_type_rx, "");
-            html = html.replace("<head>", '<head><meta charset="utf-8"/>');
+            html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
         }
         else if (proceed === null) {
-            html = html.replace("<head>", '<head><meta charset="utf-8"/>');
+            html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
         }
 
         return html;

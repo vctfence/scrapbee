@@ -644,6 +644,18 @@ export function formatBytes(bytes, decimals = 2) {
     return size + ' ' + sizes[i];
 }
 
+export function toHHMMSS (msecs) {
+    let sec_num = Math.floor(msecs / 1000);
+    let hours   = Math.floor(sec_num / 3600);
+    let minutes = Math.floor(sec_num / 60) % 60;
+    let seconds = sec_num % 60;
+
+    return [hours,minutes,seconds]
+        .map(v => v < 10 ? "0" + v : v)
+        .filter((v,i) => v !== "00" || i > 0)
+        .join(":");
+}
+
 export async function readFile(file) {
     let reader = new FileReader();
 

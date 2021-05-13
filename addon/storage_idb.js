@@ -491,6 +491,7 @@ class IDBStorage {
         return nodes;
     }
 
+    // at first all objects were stored as plain strings
     // legacy implementation for reference
     // async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
     //     let node = await this.getNode(node_id);
@@ -529,37 +530,34 @@ class IDBStorage {
     //     }
     // }
 
+    // modern implementation stores objects in blobs
     async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
         let node = await this.getNode(node_id);
 
         if (node) {
-            let alreadyBlob = data instanceof Blob;
-
-            if (alreadyBlob)
-                node.size = data.size;
-            else if (typeof data !== "string" && data.byteLength)
-                node.size = byte_length = data.byteLength;
+            if (typeof data !== "string" && data.byteLength)
+                byte_length = data.byteLength;
             else if (typeof data === "string" && byte_length) {
                 let byteArray = new Uint8Array(byte_length);
                 for (let i = 0; i < data.length; ++i)
                     byteArray[i] = data.charCodeAt(i);
-                node.size = byte_length;
                 data = byteArray;
             }
-            else if (!alreadyBlob)
-                node.size = stringByteLengthUTF8(data);
 
-            await this.updateNode(node);
+            let object = data instanceof Blob? data: new Blob([data], {type: content_type});
 
             let options = {
                 node_id: node.id,
-                // data: data, // legacy string content
-                object: alreadyBlob? data: new Blob([data], {type: content_type}), // new blob content
+                // data, // legacy string content, may present in existing records
+                object, // new blob content
                 byte_length: byte_length,
                 type: content_type
             };
 
             await dexie.blobs.add(options);
+
+            node.size = object.size;
+            await this.updateNode(node);
 
             if (index?.words)
                 await this.storeIndex(node.id, index.words);
@@ -575,13 +573,15 @@ class IDBStorage {
         let node = await this.getNode(node_id);
 
         if (node) {
-            node.size = stringByteLengthUTF8(data);
-            await this.updateNode(node);
+            let object = new Blob([data], {type: "text/html"});
 
             await dexie.blobs.where("node_id").equals(node.id).modify({
-                object: new Blob([data], {type: "text/html"}),
+                object,
                 data: null
             });
+
+            node.size = object.size;
+            await this.updateNode(node);
 
             let words = data.indexWords();
             await this.updateIndex(node_id, words);

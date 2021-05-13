@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <title>Scrapyard Advanced Settings</title>
     <link rel="icon" href="/icons/scrapyard.svg" type="image/png"/>
 
     <link rel="stylesheet" type="text/css" href="/options.css" media="all"/>
@@ -38,6 +39,47 @@
                 Please do not modify, delete or create any additional files in this directory!</span></p>
         <input id="addon-db-path-input" type="text" disabled/>
         <img id="db-path-copy-button" width="16px" height="16px" src="/icons/copy.svg" title="Copy"/>
+    </div>
+    <div class="panel" id="experimental-panel">
+        <p class="panel-title">Backup Compression</p>
+        <div class="double-container">
+            <div class="double-first">
+                <form>
+                    <fieldset style="border: none;">
+                        <div style="">
+                            <label for="option-compression-method">Compression method:&nbsp;&nbsp;&nbsp;</label>
+                            <select id="option-compression-method" type="select" style="color: black">
+                                <option value="EMPTY"></option>
+                                <option value="DEFLATE">DEFLATE</option>
+                                <option value="LZMA">LZMA</option>
+                                <option value="BZIP2">BZIP2</option>
+                            </select>
+                        </div>
+                    </fieldset>
+                    <fieldset style="border: none;">
+                        <label for="option-compression-level">Compression level:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                        <select id="option-compression-level" type="select" style="color: black; margin-left: 2px;">
+                            <option value="EMPTY"></option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                        </select>
+                    </fieldset>
+                </form>
+            </div>
+            <div class="double-last">
+                <form>
+
+                </form>
+            </div>
+        </div>
     </div>
     <div class="panel" id="repair-panel">
         <p class="panel-title">Repair</p>

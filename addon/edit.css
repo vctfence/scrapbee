@@ -207,6 +207,7 @@
     margin-bottom:5px;
     text-align:left;
     z-index: 2147483647;
+    color: black;
 }
 
 .tips.hide {

@@ -151,6 +151,15 @@ class NativeBackend {
             return response.json();
     }
 
+    async post(path, fields) {
+        let form = new FormData();
+
+        for (const [k, v] of Object.entries(fields))
+            form.append(k, v);
+
+        return this.fetch(path, {method: "POST", body: form});
+    }
+
 }
 
 export let nativeBackend = new NativeBackend();

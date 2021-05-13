@@ -765,6 +765,16 @@ export class Backend extends ExternalEventProvider {
         let force_new_uuid = data.uuid
             && ((await this.isNodeExists(data.uuid)) || SPECIAL_UUIDS.some(uuid => uuid === data.uuid));
 
+        if (!data.date_added || !data.date_modified) {
+            const now = new Date();
+
+            if (!data.date_added)
+                data.date_added = now;
+
+            if (!data.date_modified)
+                data.date_modified = now;
+        }
+
         return this.addNode(data, false, false, !data.uuid || force_new_uuid);
     }
 

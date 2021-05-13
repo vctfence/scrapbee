@@ -11,26 +11,26 @@ function initHelpMarks() {
 }
 
 function configureAutomationPanel() {
-    settings.load(settings => {
+    $("#option-enable-automation").prop("checked", settings.enable_automation());
+    $("#option-extension-whitelist").val(settings.extension_whitelist()?.join(", "));
 
-        $("#option-enable-automation").prop("checked", settings.enable_automation());
-        $("#option-extension-whitelist").val(settings.extension_whitelist()?.join(", "));
+    $("#option-enable-automation").on("change", async e => {
+        await settings.load();
+        settings.enable_automation(e.target.checked);
+    });
 
-        $("#option-enable-automation").on("change", e => {
-            settings.enable_automation(e.target.checked);
-        });
+    $("#option-extension-whitelist").on("input", async e => {
+        await settings.load();
 
-        $("#option-extension-whitelist").on("input", e => {
-            if (e.target.value) {
-                let ids = e.target.value.split(",").map(s => s.trim()).filter(s => !!s);
-                if (ids.length)
-                    settings.extension_whitelist(ids);
-                else
-                    settings.extension_whitelist(null);
-            }
+        if (e.target.value) {
+            let ids = e.target.value.split(",").map(s => s.trim()).filter(s => !!s);
+            if (ids.length)
+                settings.extension_whitelist(ids);
             else
                 settings.extension_whitelist(null);
-        });
+        }
+        else
+            settings.extension_whitelist(null);
     });
 }
 
@@ -44,35 +44,50 @@ async function configureDBPath() {
     });
 }
 
+function configureBackupCompressionPanel() {
+    $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
+    $("#option-compression-level").val(settings.backup_compression_level() || "5");
+
+    $("#option-compression-method option[value='EMPTY']").remove();
+    $("#option-compression-level option[value='EMPTY']").remove();
+
+    $("#option-compression-method").on("change", async e => {
+        await settings.load();
+        settings.backup_compression_method(e.target.value)
+    });
+    $("#option-compression-level").on("change", async  e => {
+        await settings.load();
+        settings.backup_compression_level(parseInt(e.target.value))
+    });
+}
+
 function configureRepairPanel() {
-    $("#option-repair-images").on("change", e => {
+    $("#option-repair-images").on("change", async e => {
+        await settings.load();
         settings.repair_icons(e.target.checked);
     });
 
-    settings.load(settings => {
-        $("#calculate-size-link").on("click", e => {
-            e.preventDefault();
-            send.recalculateArchiveSize();
-            $("#calculate-size-link").off("click");
-        });
+    $("#calculate-size-link").on("click", e => {
+        e.preventDefault();
+        send.recalculateArchiveSize();
+        $("#calculate-size-link").off("click");
+    });
 
-        $("#reindex-content-link").on("click", e => {
-            e.preventDefault();
-            send.reindexArchiveContent();
-            $("#reindex-content-link").off("click");
-        });
+    $("#reindex-content-link").on("click", e => {
+        e.preventDefault();
+        send.reindexArchiveContent();
+        $("#reindex-content-link").off("click");
+    });
 
-        $("#reset-cloud-link").on("click", async e => {
-            e.preventDefault();
+    $("#reset-cloud-link").on("click", async e => {
+        e.preventDefault();
 
-            if (confirm("This will remove all cloud content. Are you sure?")) {
-                let success = await send.resetCloud();
+        if (confirm("This will remove all cloud content. Are you sure?")) {
+            let success = await send.resetCloud();
 
-                if (!success)
-                    showNotification("Error accessing cloud.")
-            }
-
-        });
+            if (!success)
+                showNotification("Error accessing cloud.")
+        }
     });
 }
 
@@ -165,9 +180,13 @@ function configureImpExpPanel() {
 }
 
 window.onload = async function() {
+    await settings.load();
+
     initHelpMarks();
     configureAutomationPanel();
+    configureDBPath();
+    configureBackupCompressionPanel();
     configureRepairPanel();
     configureImpExpPanel();
-    configureDBPath();
+
 }

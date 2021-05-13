@@ -22,6 +22,18 @@
     margin-bottom: 5px;
 }
 
+.double-container {
+    display: flex;
+}
+
+.double-first, .double-last {
+    flex: 0 0 320px;
+}
+
+.double-last {
+    margin-left: 20px;
+}
+
 #automation-panel-title {
     width: 100%;
 }

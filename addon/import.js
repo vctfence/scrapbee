@@ -765,6 +765,9 @@ export async function exportJSON(file, nodes, shelf, uuid, _, comment, progress)
                 }
             }
         }
+
+        if (progress)
+            send.exportProgress({finished: true});
     }
 }
 
@@ -908,6 +911,8 @@ export async function importRDF(shelf, path, threads, quick) {
     let bookmarks = [];
 
     await traverseRDFTree(rdf, async (parent, node) => {
+        const now = new Date();
+
         let data = {
             pos: pos++,
                 uri: node.__sb_source,
@@ -920,7 +925,9 @@ export async function importRDF(shelf, path, threads, quick) {
             details: node.__sb_comment,
             parent_id: parent? id_map.get(parent.__sb_id): shelf_node.id,
             todo_state: node.__sb_type === "marked"? 1: undefined,
-            icon: node.__sb_icon
+            icon: node.__sb_icon,
+            date_added: now,
+            date_modified: now
         };
 
         if (quick) {

@@ -23,7 +23,7 @@ import {
     openContainerTab,
     readFile, ReadLine,
     showNotification,
-    stringByteLengthUTF8
+    stringByteLengthUTF8, toHHMMSS
 } from "./utils.js";
 
 import {
@@ -33,7 +33,7 @@ import {
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES,
     RDF_EXTERNAL_NAME,
-    isSpecialShelf, EVERYTHING, DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME
+    isSpecialShelf, EVERYTHING, DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME, FIREFOX_BOOKMARK_MOBILE
 } from "./storage_constants.js";
 import UUID from "./lib/uuid.js";
 
@@ -105,20 +105,71 @@ export async function browseNode(node, external_tab, preserve_history, container
                                 ? browser.tabs.update(external_tab.id, {"url": archiveURL, "loadReplace": !preserve_history})
                                 : browser.tabs.create({"url": archiveURL}))
                             .then(archive_tab => {
-                                let listener = async (id, changed, tab) => {
-                                    if (tab.id === archive_tab.id && changed.status === "complete") {
-                                        browser.tabs.onUpdated.removeListener(listener);
 
-                                        await browser.tabs.insertCSS(tab.id, {file: "edit.css"})
+                                // Tab may be automatically reloaded if charset encoding is not found in first 1024 bytes
+                                // A twisted logic is necessary to load the editor toolbar in this case
+                                // This may happen if a large favicon is the first tag under the <head>
+                                // Corrected version of page capture solves this problem by forcing encoding meta to be the first tag
+                                // But for existing pages a workaround is necessary
 
-                                        let code = `var __scrapyardHideToolbar = ${settings.do_not_show_archive_toolbar()}`;
-                                        await browser.tabs.executeScript(tab.id, {code: code})
+                                let configureTab = async tab => {
+                                    browser.tabs.onUpdated.removeListener(listener)
 
-                                        await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"})
-                                        await browser.tabs.executeScript(tab.id, {file: "edit-content.js"})
+                                    await browser.tabs.insertCSS(tab.id, {file: "edit.css"});
+                                    await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"});
+                                    await browser.tabs.executeScript(tab.id, {file: "edit-content.js"});
 
-                                        if (!helperApp)
-                                            URL.revokeObjectURL(objectURL);
+                                    if (!helperApp)
+                                        URL.revokeObjectURL(objectURL);
+                                };
+
+                                let completed = false;
+                                let retryTimeout;
+                                let retries = 0;
+                                let lastState;
+                                let urlChanges = 0;
+
+                                let checkStatus = tab => {
+                                    if (lastState === "complete") { // OK, the page is loaded, show toolbar
+                                        configureTab(tab);
+                                    }
+                                    else if (lastState !== "complete" && retries < 3) { // Wait 3 more seconds
+                                        retries += 1;
+                                        retryTimeout = setTimeout(() => checkStatus(tab), 1000);
+                                    }
+                                    else {
+                                        configureTab(tab); // Try to show the toolbar and remove the listener
+                                    }
+                                };
+
+                                var listener = async (id, changed, tab) => {
+                                    if (tab.id === archive_tab.id) {
+                                        // Register first completed state, "loading" states will follow if the tab is reloaded
+                                        if (!completed)
+                                            completed = changed.status === "complete";
+
+                                        // Register URL change events, there should be more than one if the tab is reloaded
+                                        if (changed.url)
+                                            urlChanges += 1;
+
+                                        // This should work for the most of properly captured well-formed pages
+                                        if (changed.status === "complete" && tab.title !== tab.url) {
+                                            clearTimeout(retryTimeout);
+                                            configureTab(tab);
+                                        }
+                                        // This should work for reloaded pages without <title> tag
+                                        else if (changed.status === "complete" && urlChanges > 1) {
+                                            clearTimeout(retryTimeout);
+                                            configureTab(tab);
+                                        }
+                                        // This should work for non-reloaded pages without <title> tag
+                                        else if (completed) {
+                                            // Continue to register states
+                                            lastState = changed.status;
+                                            clearTimeout(retryTimeout);
+                                            // When changes halted more than for one second, check if the last state is "complete"
+                                            retryTimeout = setTimeout(() => checkStatus(tab), 1000);
+                                        }
                                     }
                                 };
 
@@ -164,9 +215,12 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
         case "GET_BOOKMARK_INFO":
             let node = await backend.getNode(message.id);
-            node.__formatted_size = formatBytes(node.size);
-            node.__formatted_date = node.date_added.toString().replace(/:[^:]*$/, "");
+            node.__formatted_size = node.size? formatBytes(node.size): null;
+            node.__formatted_date = node.date_added? node.date_added.toString().replace(/:[^:]*$/, ""): null;
             return node;
+
+        case "GET_HIDE_TOOLBAR_SETTING":
+            return settings.do_not_show_archive_toolbar();
 
         case "COPY_NODES":
             return backend.copyNodes(message.node_ids, message.dest_id);
@@ -266,12 +320,14 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
                 const file = {
                     append: async function (text) {
-                        await port.postMessage({
+                        port.postMessage({
                             type: "EXPORT_PUSH_TEXT",
                             text: text
                         })
                     }
                 };
+
+                await new Promise(resolve => setTimeout(resolve, 50));
 
                 await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
 
@@ -389,32 +445,45 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 nodes.shift();
             }
 
+            const mobileBookmarks = nodes.find(n => n.external_id === FIREFOX_BOOKMARK_MOBILE);
+            if (mobileBookmarks) {
+                const mobileSubtree = nodes.filter(n => n.parent_id === mobileBookmarks.id);
+                for (const n of mobileSubtree)
+                    nodes.splice(nodes.indexOf(n), 1);
+                nodes.splice(nodes.indexOf(mobileBookmarks), 1);
+            }
+
             let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
 
             try {
-                let form = new FormData();
-                form.append("directory", message.directory);
-                form.append("file", backupFile);
-                form.append("compress", message.compress);
-
-                nativeBackend.fetch("/backup/initialize", {method: "POST", body: form});
+                const process = nativeBackend.post("/backup/initialize", {
+                    directory: message.directory,
+                    file: backupFile,
+                    compress: message.compress,
+                    method: message.method,
+                    level: message.level
+                });
 
                 const port = await nativeBackend.getPort();
 
                 const file = {
                     append: async function (text) {
-                        await port.postMessage({
+                        port.postMessage({
                             type: "BACKUP_PUSH_TEXT",
                             text: text
                         })
                     }
                 };
 
+                await new Promise(resolve => setTimeout(resolve, 50));
+
                 await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
 
                 port.postMessage({
                     type: "BACKUP_FINISH"
                 });
+
+                await process;
             } catch (e) {
                 console.log(e);
             }
@@ -425,11 +494,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             send.startProcessingIndication();
 
             try {
-                let form = new FormData();
-                form.append("directory", message.directory);
-                form.append("file", message.meta.file);
-
-                await nativeBackend.fetch("/restore/initialize", {method: "POST", body: form});
+                await nativeBackend.post("/restore/initialize", {
+                    directory: message.directory,
+                    file: message.meta.file
+                });
 
                 const Reader = class {
                     async* lines() {
@@ -451,7 +519,6 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             }
 
             send.stopProcessingIndication();
-
         }
         break;
 
@@ -459,11 +526,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             send.startProcessingIndication();
 
             try {
-                let form = new FormData();
-                form.append("directory", message.directory);
-                form.append("file", message.meta.file);
-
-                await nativeBackend.fetch("/backup/delete", {method: "POST", body: form});
+                await nativeBackend.post("/backup/delete", {
+                    directory: message.directory,
+                    file: message.meta.file
+                });
             } catch (e) {
                 console.log(e);
                 return false;

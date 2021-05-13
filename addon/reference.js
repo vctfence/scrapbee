@@ -1,14 +1,16 @@
 import {send} from "./proxy.js";
 import {backend} from "./backend.js";
+import {settings} from "./settings.js";
 
 async function openReference(tab) {
+    await settings.load();
+
     let url = decodeURIComponent(new URL(tab.url).hash.substr(1));
 
     if (url && url.startsWith("ext+scrapyard:")) {
         let id = /ext\+scrapyard:\/\/([^#/]+)/i.exec(url)[1];
 
         switch (id) {
-            case "automation":
             case "advanced":
                 browser.tabs.update(tab.id, {"url": browser.runtime.getURL("advanced.html"), "loadReplace": true});
                 return;

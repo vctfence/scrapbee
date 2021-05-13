@@ -5,7 +5,8 @@ import tempfile
 import platform
 import zipfile
 import logging
-import time
+#import datetime
+#import time
 import json
 import os
 import re
@@ -18,7 +19,7 @@ from werkzeug.serving import make_server
 
 from . import browser
 
-DEBUG = True
+DEBUG = False
 
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -28,7 +29,7 @@ app.logger.disabled = True
 
 ###
 if DEBUG:
-    logging.basicConfig(filename='debug.log', encoding='utf-8', level=logging.DEBUG)
+    logging.basicConfig(filename='d:/tmp/debug.log', encoding='utf-8', level=logging.DEBUG)
 ###
 
 auth = None
@@ -281,15 +282,18 @@ BACKUP_COMPRESSED_EXT = ".zip"
 
 
 def backup_peek_meta_compressed(path):
-    compressed = os.path.splitext(os.path.basename(path))[0] + BACKUP_JSON_EXT
-    with zipfile.ZipFile(path, "r") as zin:
-        with zin.open(compressed) as backup:
-            meta = backup.readline()
-            if meta:
-                meta = meta.decode("utf-8")
-                return meta
-            else:
-                return None
+    try:
+        with zipfile.ZipFile(path, "r") as zin:
+            compressed = zin.namelist()[0]
+            with zin.open(compressed) as backup:
+                meta = backup.readline()
+                if meta:
+                    meta = meta.decode("utf-8")
+                    return meta
+                else:
+                    return None
+    except:
+        return None
 
 
 def backup_peek_meta_plain(path):
@@ -320,6 +324,7 @@ def backup_list():
             meta = backup_peek_meta(path)
             if meta:
                 meta = meta.strip()
+                meta = re.sub(r"\}$", f",\"file_size\":{os.path.getsize(path)}}}", meta)
                 result += f"\"{file}\": {meta}"
                 ctr += 1
                 if ctr < nfiles:
@@ -356,10 +361,21 @@ def backup_initialize():
 
     if compress:
         compressed = re.sub(f"{BACKUP_JSON_EXT}$", BACKUP_COMPRESSED_EXT, backup_file_path)
-        logging.debug(compressed)
-        with zipfile.ZipFile(compressed, "w", zipfile.ZIP_DEFLATED, compresslevel=5) as zout:
-            with zout.open(request.form["file"], "w") as backup:
-                return do_backup(backup, True)
+        method = {
+            "DEFLATE": zipfile.ZIP_DEFLATED,
+            "LZMA": zipfile.ZIP_LZMA,
+            "BZIP2": zipfile.ZIP_BZIP2
+        }.get(request.form["method"], zipfile.ZIP_DEFLATED)
+        level = int(request.form["level"])
+
+        try:
+            zout = zipfile.ZipFile(compressed, "w", method, compresslevel=level)
+            backup = zout.open(request.form["file"], "w")
+            do_backup(backup, True)
+        finally:
+            backup.close()
+            zout.close()
+        return "OK"
     else:
         with open(backup_file_path, "w", encoding="utf-8") as backup:
             return do_backup(backup)
@@ -380,8 +396,8 @@ def restore_initialize():
     backup_compressed = backup_file_path.endswith(BACKUP_COMPRESSED_EXT)
 
     if backup_compressed:
-        compressed = os.path.splitext(os.path.basename(backup_file_path))[0] + BACKUP_JSON_EXT
         backup_file = zipfile.ZipFile(backup_file_path, 'r')
+        compressed = backup_file.namelist()[0]
         json_file = backup_file.open(compressed)
     else:
         json_file = open(backup_file_path, "r", encoding="utf-8")
@@ -393,9 +409,9 @@ def restore_initialize():
 def restore_get_line():
     line = json_file.readline()
     if line:
-        if backup_compressed:
-            line = line.decode("utf-8")
-        line = line.strip()
+        # if backup_compressed:
+        #     line = line.decode("utf-8")
+        # line = line.strip()
         return line
     else:
         return "", 204

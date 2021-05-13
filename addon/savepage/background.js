@@ -1271,14 +1271,20 @@ async function initiateAction(tab, menuaction, bookmark)
                     if (selection)
                         break;
                 } catch (e) {
-//                  console.error(e);
+                  console.error(e);
                 }
             }
         }
 
         let response;
-        let performAction = () => browser.tabs.sendMessage(tab.id, {type: "performAction", menuaction: menuaction,
-                                        saveditems: 2, selection: selection, bookmark: bookmark});
+        let performAction = () => browser.tabs.sendMessage(tab.id, {
+                type: "performAction",
+                menuaction: menuaction,
+                saveditems: 2,
+                selection: selection,
+                bookmark: bookmark,
+                animate: settings.animate_capture_image()
+            });
 
         try {
             response = await performAction();
@@ -1311,8 +1317,7 @@ async function initiateAction(tab, menuaction, bookmark)
 
                 await browser.tabs.executeScript(tab.id, {file: "/savepage/content.js"});
             } catch (e) {
-                // provisional capture of PDF, etc.
-                // TODO: rework with the account of savepage settings
+                // capture of binary files
 
                 let xhr = new XMLHttpRequest();
 
@@ -1322,7 +1327,7 @@ async function initiateAction(tab, menuaction, bookmark)
                 xhr.responseType = "arraybuffer";
                 xhr.timeout = maxResourceTime * 1000;
                 xhr.onerror = function (e) {
-                    console.log(e)
+                    console.error(e)
                 };
                 xhr.onloadend = function () {
                     if (this.status === 200) {

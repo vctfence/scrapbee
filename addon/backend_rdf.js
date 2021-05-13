@@ -41,12 +41,8 @@ class RDFDoc {
     async write () {
         try {
             let content = this._formatXML(this.doc)
-            if (content) {
-                let form = new FormData();
-                form.append("rdf_content", content);
-
-                await nativeBackend.fetch(`/rdf/root/save/${this.uuid}`, {method: "POST", body: form});
-            }
+            if (content)
+                await nativeBackend.post(`/rdf/root/save/${this.uuid}`, {rdf_content: content});
         }
         catch (e) {
             console.log(e);
@@ -226,10 +222,7 @@ export class RDFBackend {
             await backend.deleteBlob(node_id);
 
             try {
-                let form = new FormData();
-                form.append("item_content", data);
-
-                await nativeBackend.fetch(`/rdf/save_item/${node.uuid}`, {method: "POST", body: form});
+                await nativeBackend.post(`/rdf/save_item/${node.uuid}`, {item_content: data});
             }
             catch (e) {
                 console.log(e);

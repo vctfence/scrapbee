@@ -3,16 +3,15 @@ import {backend} from "./backend.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
-import {loadShelveOptions, parseHtml, showNotification, testFavicon} from "./utils.js";
+import {formatBytes, loadShelveOptions, parseHtml, showNotification, testFavicon, toHHMMSS} from "./utils.js";
 import {
-    isSpecialShelf,
+    CLOUD_SHELF_NAME,
     EVERYTHING,
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
     FIREFOX_SHELF_NAME,
-    CLOUD_SHELF_NAME
+    isSpecialShelf,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK
 } from "./storage_constants.js";
-import {TREE_STATE_PREFIX} from "./tree.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -104,6 +103,7 @@ function loadScrapyardSettings() {
     document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
     document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
     document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
+    document.getElementById("option-animate-capture-image").checked = settings.animate_capture_image();
     document.getElementById("option-do-not-show-archive-toolbar").checked = settings.do_not_show_archive_toolbar();
     document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
     document.getElementById("option-display-random-bookmark").checked = settings.display_random_bookmark();
@@ -116,7 +116,9 @@ function loadScrapyardSettings() {
 
     document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
 
-    $("#option-enable-cloud").on("change", e => {
+    $("#option-enable-cloud").on("change", async e => {
+        await settings.load();
+
         settings.cloud_enabled(e.target.checked,
             async () => {
                 if (e.target.checked) {
@@ -130,7 +132,9 @@ function loadScrapyardSettings() {
 
     document.getElementById("option-cloud-background-sync").checked = settings.cloud_background_sync();
 
-    $("#option-cloud-background-sync").on("change", e => {
+    $("#option-cloud-background-sync").on("change", async e => {
+        await settings.load();
+
         settings.cloud_background_sync(e.target.checked,
             () => send.enableCloudBackgroundSync());
     });
@@ -146,7 +150,9 @@ function loadScrapyardSettings() {
     document.getElementById("option-sidebar-theme").value = localStorage.getItem("scrapyard-sidebar-theme") || "light";
 }
 
-function storeScrapyardSettings() {
+async function storeScrapyardSettings() {
+    await settings.load();
+
     const currentSidebarHeight = settings.shelf_list_height();
     const newSidebarHeight = parseInt(document.getElementById("option-shelf-list-max-height").value);
     if (currentSidebarHeight !== newSidebarHeight)
@@ -160,6 +166,7 @@ function storeScrapyardSettings() {
         () => send.reconcileBrowserBookmarkDb());
     settings.do_not_show_archive_toolbar(document.getElementById("option-do-not-show-archive-toolbar").checked);
     settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
+    settings.animate_capture_image(document.getElementById("option-animate-capture-image").checked);
     settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
     settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
     settings.export_format(document.getElementById("option-export-format").value);
@@ -560,23 +567,41 @@ function startCheckLinks() {
 // Backup //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let backupTree;
+let availableBackups;
+let overallBackupSize;
 let backupIsInProcess;
 let restoreIsInProcess;
+let processingInterval;
+let processingTime;
 
 function initializeBackup() {
     $("#backup-directory-path").val(settings.backup_directory_path());
 
-    let timeout;
+    let filterTimeout;
+    $("#backup-filter").on("input", e => {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+           filterBackups(e.target.value);
+        }, 1000)
+
+    });
+
+    let pathTimeout;
     $("#backup-directory-path").on("input", e => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
+        clearTimeout(pathTimeout);
+        pathTimeout = setTimeout(() => {
             settings.backup_directory_path(e.target.value);
             backupListFiles();
         }, 1000)
 
     });
 
+    $("#backup-directory-path-refresh").on("click", e => backupListFiles());
+
     $("#backup-button").on("click", async e => backupShelf());
+
+    $("#compress-backup").prop("checked", settings.enable_backup_compression());
+    $("#compress-backup").on("change", e => settings.enable_backup_compression(e.target.checked))
 
     loadShelveOptions("#backup-shelf");
 
@@ -585,7 +610,7 @@ function initializeBackup() {
         core: {
             worker: false,
             animation: 0,
-            multiple: false,
+            multiple: true,
             themes: {
                 name: "default",
                 dots: false,
@@ -607,8 +632,9 @@ function backupTreeContextMenu(jnode) {
         return null;
 
     let notRestorable = () => {
+        const selected = backupTree.get_selected(true);
         const name = jnode.data.name.toLowerCase();
-        return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME;
+        return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME || selected?.length > 1;
     };
 
     return {
@@ -619,12 +645,13 @@ function backupTreeContextMenu(jnode) {
         },
         restoreAsSeparateShelf: {
             label: "Restore as a Separate Shelf",
+            _disabled: backupTree.get_selected(true).length > 1,
             action: () => restoreShelf(jnode, true)
         },
         delete: {
             separator_before: true,
             label: "Delete",
-            action: () => setTimeout(() => deleteBackup(jnode))
+            action: () => setTimeout(() => deleteBackups())
         },
     };
 }
@@ -643,9 +670,12 @@ function backupToJsTreeNode(node) {
     jnode.data = node;
     jnode.parent = "#"
 
+    const fileSize = "File size: " + formatBytes(node.file_size);
+    const tooltip = node.comment? node.comment + "\x0A" + fileSize: fileSize;
+
     jnode.li_attr = {
         class: "show_tooltip",
-        title: node.comment
+        title: tooltip
     };
 
     return jnode;
@@ -655,29 +685,127 @@ function backupSetStatus(html) {
     $("#backup-status").html(html);
 }
 
-async function backupShelf() {
-    let exportListener = message => {
-        if (message.type === "EXPORT_PROGRESS") {
-            let bar = $("#backup-progress-bar");
-            bar.val(message.progress);
+function backupUpdateTime() {
+    let delta = Date.now() - processingTime;
+    $("#backup-processing-time").text(toHHMMSS(delta));
+}
+
+function backupUpdateOverallSize() {
+    if (overallBackupSize)
+        $("#backup-overall-file-size").html(`<b>Overall backup size:</b> ${formatBytes(overallBackupSize)}`);
+    else
+        $("#backup-overall-file-size").html("&nbsp;");
+}
+
+async function populateBackup() {
+    const helperApp = await send.helperAppHasVersion({version: "0.3"});
+
+    if (helperApp) {
+        await backupListFiles();
+        $("#backup-button").attr("disabled", false);
+    }
+    else {
+        backupSetStatus(`<div>Scrapyard <a href="#helperapp">helper application</a> v0.3+ is required</div>`);
+        $("#backup-button").attr("disabled", true);
+    }
+}
+
+let listingBackups = false;
+async function backupListFiles() {
+    if (!listingBackups) {
+        const directory = settings.backup_directory_path();
+
+        try {
+            listingBackups = true;
+            backupSetStatus("Loading backups...");
+
+            const backups = await send.listBackups({directory});
+            if (backups) {
+                availableBackups = [];
+                for (let [k, v] of Object.entries(backups)) {
+                    v.file = k;
+                    availableBackups.push(v);
+                }
+
+                overallBackupSize = availableBackups.reduce((a, b) => a + b.file_size, 0);
+
+                availableBackups.sort((a, b) => b.timestamp - a.timestamp);
+                availableBackups = availableBackups.map(n => backupToJsTreeNode(n));
+
+                backupTree.settings.core.data = availableBackups;
+                backupTree.refresh(true);
+
+                backupUpdateOverallSize();
+            }
+            else {
+                backupTree.settings.core.data = [];
+                backupTree.refresh(true);
+            }
         }
-    };
+        finally {
+            listingBackups = false;
+            backupSetStatus("Ready");
+        }
+    }
+}
 
-    browser.runtime.onMessage.addListener(exportListener);
+function filterBackups(text) {
+    if (text) {
+        text = text.toLowerCase();
+        backupTree.settings.core.data =
+            availableBackups.filter(b => b.text.replace(/<[^>]+>/g, "").toLowerCase().includes(text));
+        backupTree.refresh(true);
+    }
+    else {
+        backupTree.settings.core.data = availableBackups;
+        backupTree.refresh(true);
+    }
+}
 
-    backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-basis: 85%;"/>`);
+async function backupShelf() {
+    await settings.load();
+
+    if (!settings.backup_directory_path()) {
+        showNotification("Please, specify backup directory path.")
+        return;
+    }
+
+    backupSetStatus(`<div id="backup-progress-container">Progress:<progress id="backup-progress-bar" max="100" value="0"
+                               style="margin-left: 10px; flex-grow: 1;"/></div>
+                          <div id="backup-processing-time" style="margin-right: 15px">00:00</div>`);
 
     send.startProcessingIndication();
+    processingInterval = setInterval(backupUpdateTime, 1000);
+    processingTime = Date.now();
 
     try {
         backupIsInProcess = true;
         $("#backup-button").prop("disabled", true);
 
+        const compress = !!$("#compress-backup:checked").length;
+
+        let exportListener = message => {
+            if (message.type === "EXPORT_PROGRESS") {
+                if (message.finished) {
+                    if (compress) {
+                        $("#backup-progress-container").remove();
+                        $("#backup-status").prepend(`<span>Compressing...</span>`);
+                    }
+                }
+                else
+                    $("#backup-progress-bar").val(message.progress);
+            }
+        };
+
+        browser.runtime.onMessage.addListener(exportListener);
+
         await send.backupShelf({
             directory: settings.backup_directory_path(),
             shelf: $("#backup-shelf option:selected").text(),
             comment: $("#backup-comment").val(),
-            compress: !!$("#compress-backup:checked").length
+            compress,
+            method: settings.backup_compression_method() || "DEFLATE",
+            level: settings.backup_compression_level() || "5"
         });
 
         browser.runtime.onMessage.removeListener(exportListener);
@@ -690,6 +818,7 @@ async function backupShelf() {
     finally {
         $("#backup-button").prop("disabled", false);
         send.stopProcessingIndication();
+        clearInterval(processingInterval);
         backupIsInProcess = false;
     }
 }
@@ -714,7 +843,11 @@ async function restoreShelf(jnode, newShelf) {
 
     browser.runtime.onMessage.addListener(importListener);
 
-    backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-basis: 85%;"/>`)
+    backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-grow: 1;"/>
+                            <div id="backup-processing-time" style="margin-right: 15px">00:00</div>`)
+
+    processingInterval = setInterval(backupUpdateTime, 1000);
+    processingTime = Date.now();
 
     try {
         restoreIsInProcess = true;
@@ -732,64 +865,29 @@ async function restoreShelf(jnode, newShelf) {
     finally {
         browser.runtime.onMessage.removeListener(importListener);
         $("#backup-button").prop("disabled", false);
+        clearInterval(processingInterval);
         backupSetStatus("Ready");
         restoreIsInProcess = false;
     }
 }
 
-async function deleteBackup(jnode) {
-    if (!confirm(`Delete the selected backup?`))
+async function deleteBackups() {
+    if (!confirm(`Delete the selected backups?`))
         return;
 
-    const success = await send.deleteBackup({directory: settings.backup_directory_path(),
-                                             meta: jnode.data});
+    const selected = backupTree.get_selected(true);
 
-    if (success)
-        backupTree.delete_node(jnode);
-}
+    for (let jnode of selected) {
+        const success = await send.deleteBackup({
+            directory: settings.backup_directory_path(),
+            meta: jnode.data
+        });
 
-let listingBackups = false;
-async function backupListFiles() {
-    if (!listingBackups) {
-        const directory = settings.backup_directory_path();
-
-        try {
-            listingBackups = true;
-            backupSetStatus("Loading backups...");
-
-            const backups = await send.listBackups({directory});
-            if (backups) {
-                const nodes = [];
-                for (let [k, v] of Object.entries(backups)) {
-                    v.file = k;
-                    nodes.push(v);
-                }
-
-                nodes.sort((a, b) => b.timestamp - a.timestamp);
-
-                backupTree.settings.core.data = nodes.map(n => backupToJsTreeNode(n));
-                backupTree.refresh(true);
-            }
-            else {
-                backupTree.settings.core.data = [];
-                backupTree.refresh(true);
-            }
-        }
-        finally {
-            listingBackups = false;
-            backupSetStatus("Ready");
+        if (success) {
+            overallBackupSize -= jnode.data.file_size;
+            backupTree.delete_node(jnode);
         }
     }
-}
 
-async function populateBackup() {
-    const helperApp = await send.helperAppHasVersion({version: "0.3"});
-
-    if (helperApp) {
-        await backupListFiles();
-    }
-    else {
-        backupSetStatus(`Scrapyard <a href="#helperapp">helper application</a> v0.3+ is required`);
-        $("#backup-button").attr("disabled", true);
-    }
+    backupUpdateOverallSize();
 }

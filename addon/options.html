@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="tree.css"/>
 
     <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="fonts/fontawesome.css"/>
 
     <script type="text/javascript" src="lib/jquery.js"></script>
     <script type="text/javascript" src="proto.js"></script>
@@ -42,16 +43,15 @@
                                 <form>
                                     <fieldset style="border: none;">
                                         <div style="margin-bottom: 5px; margin-left: 0;">
+                                            <label for="option-sidebar-theme">Sidebar theme:&nbsp;&nbsp;&nbsp;</label>
+                                            <select id="option-sidebar-theme" type="select" style="color: black">
+                                                <option value="light" selected="selected">Light</option>
+                                                <option value="dark">Dark</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-bottom: 5px; margin-left: 0;">
                                             <label for="option-shelf-list-max-height">Maximum sidebar shelf list height (px): </label>
                                             <input id="option-shelf-list-max-height" type="number"/>
-                                        </div>
-                                        <input id="option-show-firefox-bookmarks" type="checkbox"/>
-                                        <label for="option-show-firefox-bookmarks">Show Firefox bookmarks shelf</label>
-                                        <div style="margin: 0; margin-left: 20px; width: max-content;">
-                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
-                                            <label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
-                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"/>
-                                            <label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
                                         </div>
                                     </fieldset>
                                 </form>
@@ -59,14 +59,6 @@
                             <div class="double-last">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <div style="margin-bottom: 5px; margin-left: 0;">
-                                            <label for="option-sidebar-theme">Sidebar theme:&nbsp;&nbsp;&nbsp;</label>
-                                            <select id="option-sidebar-theme" type="select" style="color: black">
-                                                <option value="light" selected="selected">Light</option>
-                                                <option value="dark">Dark</option>
-                                            </select>
-                                        </div>
-
                                         <input id="option-capitalize-builtin-shelf-names" type="checkbox"/>
                                         <label for="option-capitalize-builtin-shelf-names">Capitalize builtin shelf names</label><br>
                                         <input id="option-do-not-show-archive-toolbar" type="checkbox"/>
@@ -81,16 +73,47 @@
                 </td>
             </tr>
             <tr>
+                <td>Firefox Integration</td>
+                <td>
+                    <div class="panel" id="firefox-integration" >
+                        <div class="double-container">
+                            <div class="double-first">
+                                <form>
+                                    <fieldset style="border: none;">
+                                        <input id="option-show-firefox-bookmarks" type="checkbox"/>
+                                        <label for="option-show-firefox-bookmarks">Enable Firefox bookmark integration</label>
+                                        <div style="margin: 0; margin-left: 20px; width: max-content;">
+                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
+                                            <label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
+                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"/>
+                                            <label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
+                                        </div>
+                                    </fieldset>
+                                </form>
+                            </div>
+                            <div class="double-last">
+                                <form>
+                                    <fieldset style="border: none;">
+                                        <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"/>
+                                        <label for="option-do-not-switch-to-ff-bookmark">Do not switch to new Firefox bookmarks</label>
+                                    </fieldset>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
                 <td>Behavior</td>
                 <td>
-                    <div class="panel double-container" id="export">
+                    <div class="panel double-container" id="behavior">
                         <div class="double-first">
                             <form>
                                 <fieldset style="border: none;">
-                                    <input id="option-switch-to-bookmark" type="checkbox"/><label for="option-switch-to-bookmark"
-                                >Automatically switch to newly created bookmarks</label><br>
-                                    <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"/><label for="option-do-not-switch-to-ff-bookmark"
-                                >Do not switch to new Firefox bookmarks</label>
+                                    <input id="option-switch-to-bookmark" type="checkbox"/>
+                                    <label for="option-switch-to-bookmark">Automatically switch to newly created bookmarks</label><br>
+                                    <input id="option-animate-capture-image" type="checkbox"/>
+                                    <label for="option-animate-capture-image">Animate page capture image</label>
                                 </fieldset>
                             </form>
                         </div>
@@ -383,9 +406,11 @@
             <div id="backup-container">
                 <div id="backup-list-container">
                     <h3 id="backup-list-title">Available Backups</h3>
+                    <input id="backup-filter" type="text" placeholder="Filter"/>
                     <div id="backup-tree-container">
                         <div id="backup-tree"></div>
                     </div>
+                    <div id="backup-overall-file-size">&nbsp;</div>
                 </div>
                 <div id="backup-controls-container">
                     <div id="backup-dir-container">
@@ -395,6 +420,7 @@
                             <span class="tips hide">For example: <b>d:/backups/scrapyard</b><br>
                             Choose a directory on the partition that is likely to survive system failure or reinstallation.</span>
                             <input id="backup-directory-path" type="text"/>
+                            <i id="backup-directory-path-refresh">&#xF2F1;</i>
                         </div>
                     </div>
                     <h3 id="create-backup-title">Create Backup</h3>
@@ -408,8 +434,8 @@
                         <div id="backup-comment-container">
                             Comment:&nbsp;<input id="backup-comment" type="text"/>
                         </div>
-                        <input id="backup-button" type="button" class="blue-button" value="Backup"/>
-                        <div style="display: flex; flex-direction: row; align-content: center">
+                        <input id="backup-button" type="button" class="blue-button" value="Backup" disabled="true"/>
+                        <div id="backup-compression-container">
                             <input id="compress-backup" type="checkbox" />
                             <label for="compress-backup"><img class="zip-icon" title="Compress" src="icons/zip.svg"/></label>
                         </div>
@@ -495,12 +521,13 @@
     <div id="div-helperapp" class="div-area" style="display:none;">
         <div style="max-width: 800px; font-size: 110%;">
         <h2>Scrapyard Helper Application</h2>
-        <p>Scrapyard helper application allows to transcend the limits of Firefox WebExtensions by providing several features that
-        are otherwise impossible:</p>
+            <p>Scrapyard helper application allows to transcend the limits of Firefox WebExtensions
+                by providing several features that are otherwise impossible:</p>
         <ul>
             <li>Run scripts and display embedded objects at the saved pages.</li>
             <li>Import and browse Scrapbook RDF archives from any filesystem location.</li>
             <li>Improve export performance.</li>
+            <li>Manage backups.</li>
         </ul>
 
         <p>On Windows the helper application could be installed automatically without the need of any configuration. It could also be installed
@@ -514,7 +541,8 @@
                 <li><a id="helper-manual-inst" href="#helperapp">Archive for manual installation</a></li>
             </ul>
 
-            <p>It is necessary to restart Firefox after the application has been installed, or to completely close it when updating to a new version.</p>
+            <p>It is necessary to restart Firefox after the application has been installed, or to
+                completely close the browser when updating to a new version.</p>
         </div>
     </div>
     <div id="div-help" class="div-area" style="display:none;"></div>

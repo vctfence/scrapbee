@@ -1,0 +1,3 @@
+helper.py
+setup.py
+setup.nsi

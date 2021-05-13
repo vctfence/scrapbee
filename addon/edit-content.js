@@ -1,5 +1,3 @@
-const TOOLBAR_HEIGHT = 26;
-
 class EditToolBar {
     constructor() {
         var self = this;
@@ -82,7 +80,21 @@ class EditToolBar {
     }
 
     formatPageInfo(node) {
-        return `<b>Added on:</b> ${node.__formatted_date}, <b>Size:</b> ${node.__formatted_size}`;
+        let html = "";
+
+        if (node.__formatted_date)
+            html += `<b>Added on:</b> ${node.__formatted_date}`;
+
+        if (node.__formatted_date && node.__formatted_size)
+            html += ", ";
+
+        if (node.__formatted_size)
+            html += `<b>Size:</b> ${node.__formatted_size}`;
+
+        if (!html)
+            html = "&lt;no data&gt;";
+
+        return html;
     }
 
     saveDoc() {
@@ -137,6 +149,10 @@ class EditToolBar {
     }
 
     buildTools() {
+        const TOOLBAR_HEIGHT = 26;
+        let scrapyardHideToolbar = false;
+
+
         var self = this;
         var editing = false;
         var contentEditing = false;
@@ -183,7 +199,7 @@ class EditToolBar {
         editBar.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
 
         /** body */
-        if (!__scrapyardHideToolbar)
+        if (!scrapyardHideToolbar)
             document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px !important`;
 
         /** save button */
@@ -374,7 +390,7 @@ class EditToolBar {
             }
         }, false);
 
-        $(editBar).append(`<span style="margin-left: 8px; display: inline-block;">Original URL: </span>`);
+        $(editBar).append(`<span style="margin-left: 8px; display: inline-block; color: black;">Original URL: </span>`);
 
         /** the original url input */
         var txt = document.createElement("input");
@@ -423,9 +439,6 @@ class EditToolBar {
             document.body.style.marginBottom = "0 !important";
         });
 
-        if (!__scrapyardHideToolbar)
-            setTimeout(() => rootContainer.style.display = "block", 300);
-
         $(".help-mark", editBar).hover(function(e){
             $(this).next(".tips.hide").show().css({"margin-top": "-7px"});
         }, function(){
@@ -442,11 +455,19 @@ class EditToolBar {
         document.addEventListener("keydown", e => {
             if (e.code === "KeyT" && e.ctrlKey && e.altKey) {
                 $(rootContainer).toggle();
-                __scrapyardHideToolbar = !__scrapyardHideToolbar;
-                document.body.style.marginBottom = __scrapyardHideToolbar
+                scrapyardHideToolbar = !scrapyardHideToolbar;
+                document.body.style.marginBottom = scrapyardHideToolbar
                     ? "0 !important"
                     : `${TOOLBAR_HEIGHT * 2}px !important`;
             }
+        });
+
+        browser.runtime.sendMessage({
+            type: 'GET_HIDE_TOOLBAR_SETTING'
+        }).then(hide => {
+            scrapyardHideToolbar = hide;
+            if (!scrapyardHideToolbar)
+                setTimeout(() => rootContainer.style.display = "block", 300);
         });
     }
 }

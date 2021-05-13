@@ -16,6 +16,9 @@ import {
     showNotification
 } from "./utils.js";
 import {
+    isContainer,
+    isEndpoint,
+    isSpecialShelf,
     CLOUD_EXTERNAL_NAME,
     ENDPOINT_TYPES,
     EVERYTHING,
@@ -38,9 +41,10 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    isContainer,
-    isEndpoint,
-    isSpecialShelf, DEFAULT_POSITION, EVERYTHING_SHELF_ID, TODO_SHELF_ID, DONE_SHELF_ID, DEFAULT_SHELF_NAME
+    EVERYTHING_SHELF_ID,
+    TODO_SHELF_ID,
+    DONE_SHELF_ID,
+    DEFAULT_SHELF_NAME
 } from "./storage_constants.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";

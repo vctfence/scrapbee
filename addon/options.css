@@ -294,6 +294,10 @@ a.left-index, a:visited.left-index {
     box-sizing: border-box;
 }
 
+#backup-filter {
+    margin-bottom: 5px;
+}
+
 #backup-list-container {
     display: flex;
     flex-direction: column;
@@ -327,6 +331,18 @@ a.left-index, a:visited.left-index {
 #backup-directory-path {
     flex-grow: 1;
     margin-left: 5px;
+    margin-right: 5px;
+}
+
+#backup-directory-path-refresh {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    cursor: pointer;
+    background-color: white;
+    display: block;
+    user-select: none;
+    margin-right: 2px;
 }
 
 #backup-tree-container {
@@ -347,6 +363,10 @@ a.left-index, a:visited.left-index {
     color: #5a5a5a;
 }
 
+#backup-overall-file-size {
+    margin-top: 5px;
+}
+
 #backup-controls-container {
     flex-grow: 1;
     padding-left: 100px;
@@ -356,12 +376,18 @@ a.left-index, a:visited.left-index {
     flex-direction: column;
 }
 
+#backup-compression-container {
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+}
+
 #backup-status-container {
 
 }
 
 #backup-status {
-    padding-left: 15px;
+    margin-left: 15px;
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -386,6 +412,11 @@ a.left-index, a:visited.left-index {
 }
 
 #backup-comment {
+    flex-grow: 1;
+}
+
+#backup-progress-container {
+    display: flex;
     flex-grow: 1;
 }
 

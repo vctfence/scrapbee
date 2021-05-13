@@ -1,8 +1,7 @@
-; Script generated with the Venis Install Wizard
+Unicode True
 
-; Define your application name
 !define APPNAME "Scrapyard Helper"
-!define VERSION "0.2.0"
+!define VERSION "0.3.0"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
