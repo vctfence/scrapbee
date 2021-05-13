@@ -1,9 +1,9 @@
 import {send} from "./proxy.js";
-import {backend} from "./backend.js"
+import {backend, loadShelfListOptions} from "./backend.js"
 import {cloudBackend} from "./backend_cloud.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {settings} from "./settings.js"
-import {formatBytes, loadShelveOptions, parseHtml, showNotification, testFavicon, toHHMMSS} from "./utils.js";
+import {formatBytes, toHHMMSS} from "./utils.js";
 import {
     CLOUD_SHELF_NAME,
     EVERYTHING,
@@ -12,6 +12,9 @@ import {
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK
 } from "./storage_constants.js";
+import {testFavicon} from "./favicon.js";
+import {parseHtml} from "./utils_html.js";
+import {showNotification} from "./utils_browser.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -433,7 +436,7 @@ function initializeLinkChecker() {
     $("#start-check-links").on("click", startCheckLinks);
     $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
-    loadShelveOptions("#link-scope");
+    loadShelfListOptions("#link-scope");
 }
 
 function stopCheckLinks() {
@@ -603,7 +606,7 @@ function initializeBackup() {
     $("#compress-backup").prop("checked", settings.enable_backup_compression());
     $("#compress-backup").on("change", e => settings.enable_backup_compression(e.target.checked))
 
-    loadShelveOptions("#backup-shelf");
+    loadShelfListOptions("#backup-shelf");
 
     $("#backup-tree").jstree({
         plugins: ["wholerow", "contextmenu"],

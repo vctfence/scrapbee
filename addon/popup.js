@@ -2,7 +2,7 @@ import {backend} from "./backend.js";
 import {settings} from "./settings.js"
 import {BookmarkTree} from "./tree.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
-import {getFaviconFromTab, testFavicon} from "./utils.js";
+import {getFaviconFromTab, testFavicon} from "./favicon.js";
 
 let tree;
 

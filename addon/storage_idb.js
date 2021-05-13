@@ -16,7 +16,8 @@ import {
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
-import {notes2html, stringByteLengthUTF8} from "./utils.js";
+import {stringByteLengthUTF8} from "./utils.js";
+import {notes2html} from "./notes_render.js";
 
 
 const dexie = new Dexie("scrapyard");

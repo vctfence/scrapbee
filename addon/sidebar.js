@@ -1,6 +1,6 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js"
-import {backend} from "./backend.js"
+import {backend, formatShelfName} from "./backend.js"
 import {ishellBackend} from "./backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
@@ -11,7 +11,7 @@ import {
     SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE
 } from "./search.js";
 
-import {formatShelfName, openPage, pathToNameExt, showNotification} from "./utils.js";
+import {pathToNameExt} from "./utils.js";
 import {
     CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
@@ -22,6 +22,7 @@ import {
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
     isSpecialShelf, isEndpoint
 } from "./storage_constants.js";
+import {openPage, showNotification} from "./utils_browser.js";
 
 const INPUT_TIMEOUT = 1000;
 

@@ -1,20 +1,32 @@
-import {delegateProxy, send} from "./proxy.js";
+import {delegateProxy} from "./proxy.js";
 import IDBStorage from "./storage_idb.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {browserBackend} from "./backend_browser.js";
-import {computeSHA1, getMimetypeExt, readBlob} from "./utils.js";
+import {computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
+    CLOUD_SHELF_ID,
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
     EVERYTHING,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
-    SPECIAL_UUIDS, TODO_SHELF_NAME,
+    EVERYTHING_SHELF_ID,
+    FIREFOX_SHELF_ID,
     isContainer,
-    isEndpoint, NODE_TYPE_NOTES
+    isEndpoint,
+    isSpecialShelf,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_NOTES,
+    NODE_TYPE_SEPARATOR,
+    NODE_TYPE_SHELF,
+    SPECIAL_UUIDS,
+    TODO_SHELF_NAME
 } from "./storage_constants.js";
+import {readBlob} from "./io.js";
+import {settings} from "./settings.js";
 
 class ExternalEventProvider {
     constructor() {
@@ -831,3 +843,37 @@ export class Backend extends ExternalEventProvider {
 }
 
 export let backend = new Backend(new IDBStorage());
+
+export function formatShelfName(name) {
+    return settings.capitalize_builtin_shelf_names() ? name.capitalize() : name;
+}
+
+export async function loadShelfListOptions(element) {
+    $(element).html(`<option value="${EVERYTHING_SHELF_ID}">${formatShelfName(EVERYTHING)}</option>`);
+
+    let shelves = await backend.listShelves();
+    shelves.sort((a, b) => {
+        if (a.name < b.name)
+            return -1;
+        if (a.name > b.name)
+            return 1;
+
+        return 0;
+    });
+
+    let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
+    shelves.splice(shelves.indexOf(cloud_shelf), 1);
+
+    let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+    shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
+
+    let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
+    shelves.splice(shelves.indexOf(default_shelf), 1);
+
+    shelves = [cloud_shelf, browser_bookmarks_shelf, default_shelf, ...shelves];
+
+    for (let shelf of shelves) {
+        let name = isSpecialShelf(shelf.name) ? formatShelfName(shelf.name) : shelf.name;
+        $("<option></option>").appendTo($(element)).html(name).attr("value", shelf.id);
+    }
+}

@@ -17,12 +17,7 @@ import {
 } from "./import.js";
 
 import {
-    formatBytes, getActiveTab, getFaviconFromTab, getMimetypeExt,
-    isSpecialPage,
-    notifySpecialPage,
-    openContainerTab,
-    readFile, ReadLine,
-    showNotification,
+    formatBytes, getMimetypeExt,
     stringByteLengthUTF8
 } from "./utils.js";
 
@@ -42,6 +37,9 @@ import {
     NODE_TYPE_GROUP, FIREFOX_SHELF_NAME, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_MENU
 } from "./storage_constants.js";
 import UUID from "./lib/uuid.js";
+import {readFile, ReadLine} from "./io.js";
+import {getFaviconFromTab} from "./favicon.js";
+import {getActiveTab, openContainerTab, showNotification} from "./utils_browser.js";
 
 
 /* Internal message listener */
@@ -522,6 +520,23 @@ function createArchive(data) {
     send.beforeBookmarkAdded({node: data})
         .then(addBookmark)
         .catch(addBookmark);
+}
+
+export function isSpecialPage(url)
+{
+    return (url.substr(0,6) === "about:" || url.substr(0,7) === "chrome:"
+        || url.substr(0,12) === "view-source:" || url.substr(0,14) === "moz-extension:"
+        || url.substr(0,26) === "https://addons.mozilla.org" || url.substr(0,17) === "chrome-extension:"
+        || url.substr(0,34) === "https://chrome.google.com/webstore");
+}
+
+export function notifySpecialPage() {
+    showNotification("Scrapyard cannot be used with special pages:\n" +
+        "about:, moz-extension:,\n" +
+        "https://addons.mozilla.org,\n" +
+        "chrome:, chrome-extension:,\n" +
+        "https://chrome.google.com/webstore,\n" +
+        "view-source:");
 }
 
 async function captureTab(tab, bookmark)

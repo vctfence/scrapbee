@@ -1,10 +1,10 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {JSONStorage} from "./storage_json.js";
-import {readBlob} from "./utils.js";
 
 import DropboxAuth from "./lib/dropbox/auth.js";
 import Dropbox from "./lib/dropbox/dropbox.js"
+import {readBlob} from "./io.js";
 
 const APP_KEY = "0y7co3j1k4oc7up";
 const DROPBOX_APP_PATH = "/Cloud";

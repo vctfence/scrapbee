@@ -1,6 +1,5 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {getFavicon} from "./utils.js";
 import {backend} from "./backend.js";
 import {
     FIREFOX_BOOKMARK_MENU,
@@ -8,6 +7,7 @@ import {
     NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
     isContainer, isEndpoint,
 } from "./storage_constants.js";
+import {getFavicon} from "./favicon.js";
 
 export class BrowserBackend {
 

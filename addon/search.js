@@ -1,7 +1,7 @@
 import {backend} from "./backend.js"
 import {TREE_STATE_PREFIX} from "./tree.js";
 import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
-import {openContainerTab} from "./utils.js";
+import {openContainerTab} from "./utils_browser.js";
 
 
 export const SEARCH_MODE_TITLE = 1;

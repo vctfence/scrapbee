@@ -1,7 +1,7 @@
 import UUID from "./lib/uuid.js"
 import {settings} from "./settings.js"
-import {showNotification} from "./utils.js"
 import {backend} from "./backend.js";
+import {showNotification} from "./utils_browser.js";
 
 
 class NativeBackend {

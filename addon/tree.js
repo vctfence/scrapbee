@@ -1,20 +1,11 @@
 import {send} from "./proxy.js";
-import {backend} from "./backend.js"
+import {backend, formatShelfName} from "./backend.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {cloudBackend} from "./backend_cloud.js"
 
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
-import {
-    formatShelfName,
-    getActiveTab,
-    getThemeVar,
-    isElementInViewport,
-    notes2html,
-    openContainerTab,
-    showNotification
-} from "./utils.js";
 import {
     isContainer,
     isEndpoint,
@@ -46,6 +37,9 @@ import {
     DONE_SHELF_ID,
     DEFAULT_SHELF_NAME
 } from "./storage_constants.js";
+import {notes2html} from "./notes_render.js";
+import {getThemeVar, isElementInViewport} from "./utils_html.js";
+import {getActiveTab, openContainerTab, showNotification} from "./utils_browser.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 

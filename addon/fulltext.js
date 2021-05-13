@@ -1,11 +1,12 @@
 import {send} from "./proxy.js"
-import {backend} from "./backend.js";
+import {backend, loadShelfListOptions} from "./backend.js";
 import {settings} from "./settings.js";
-import {fixDocumentEncoding, getActiveTab, loadShelveOptions, parseHtml} from "./utils.js"
+import {fixDocumentEncoding, parseHtml} from "./utils_html.js";
+import {getActiveTab} from "./utils_browser.js";
 
 window.onload = async function() {
     await settings.load();
-    await loadShelveOptions("#search-scope");
+    await loadShelfListOptions("#search-scope");
 
     $("#search-button").on("click", e => performSearch());
     $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});

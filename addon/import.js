@@ -1,6 +1,6 @@
 import {send} from "./proxy.js";
 import * as org from "./lib/org/org.js"
-import {backend} from "./backend.js"
+import {backend, formatShelfName} from "./backend.js"
 import {nativeBackend} from "./backend_native.js"
 import UUID from "./lib/uuid.js";
 
@@ -14,7 +14,8 @@ import {
 
 import {packPage} from "./background.js"
 
-import {formatShelfName, getFavicon, getFaviconFromTab, partition} from "./utils.js"
+import {partition} from "./utils.js"
+import {getFavicon, getFaviconFromTab} from "./favicon.js";
 
 const EXPORT_VERSION = 1;
 
@@ -853,9 +854,10 @@ async function importRDFArchive(node, scrapbook_id, _) {
 
     let initializer = async (bookmark, tab) => {
         let icon = await getFaviconFromTab(tab, true);
+
         if (icon) {
             bookmark.icon = icon;
-            await backend.updateNode(bookmark);
+            await backend.storeIcon(bookmark);
         }
 
         node.__mute_ui = true;

@@ -1,6 +1,5 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {getFavicon, notes2html, showNotification} from "./utils.js";
 import {dropboxBackend} from "./backend_dropbox.js";
 import {backend} from "./backend.js";
 
@@ -11,6 +10,9 @@ import {
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
     isContainer
 } from "./storage_constants.js";
+import {notes2html} from "./notes_render.js";
+import {getFavicon} from "./favicon.js";
+import {showNotification} from "./utils_browser.js";
 
 export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 
