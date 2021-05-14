@@ -112,8 +112,10 @@
                                 <fieldset style="border: none;">
                                     <input id="option-switch-to-bookmark" type="checkbox"/>
                                     <label for="option-switch-to-bookmark">Automatically switch to newly created bookmarks</label><br>
-                                    <input id="option-animate-capture-image" type="checkbox"/>
-                                    <label for="option-animate-capture-image">Animate page capture image</label>
+                                    <input id="option-display-random-bookmark" type="checkbox"/><label for="option-display-random-bookmark"
+                                >Display random bookmarks in the sidebar</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">Display random bookmarks from your collection at the bottom of sidebar.</span>
                                 </fieldset>
                             </form>
                         </div>
@@ -124,11 +126,6 @@
                                 >Left click opens bookmarks in the active tab</label>
                                 <i class="help-mark"></i>
                                 <span class="tips hide">Do not create new tabs for the opened bookmarks.</span><br>
-
-                                    <input id="option-display-random-bookmark" type="checkbox"/><label for="option-display-random-bookmark"
-                                >Display random bookmarks in the sidebar</label>
-                                    <i class="help-mark"></i>
-                                    <span class="tips hide">Display random bookmarks from your collection at the bottom of sidebar.</span>
                                 </fieldset>
                             </form>
                         </div>
@@ -418,7 +415,7 @@
                         <div id="backup-directory-path-container">
                             <i class="help-mark"></i>
                             <span class="tips hide">For example: <b>d:/backups/scrapyard</b><br>
-                            Choose a directory on the partition that is likely to survive system failure or reinstallation.</span>
+                            Choose a directory on the partition/cloud that is likely to survive system failure or reinstallation.</span>
                             <input id="backup-directory-path" type="text"/>
                             <i id="backup-directory-path-refresh" title="Refresh backup list">&#xF2F1;</i>
                         </div>

@@ -231,7 +231,7 @@ var addedBookmark;
 var selectionElement;
 var skipIfSelected;
 
-function lockDocument(animate) {
+function lockDocument() {
     if (document.body.firstChild && document.body.firstChild.id !== "scrapyard-waiting") {
         let lock = document.createElement("div");
         lock.id = "scrapyard-waiting";
@@ -250,7 +250,7 @@ function lockDocument(animate) {
         lock.style.justifyContent = "center";
 
         let image = document.createElement("object");
-        image.setAttribute("data", browser.extension.getURL(`icons/lock${animate? "": "2"}.svg`));
+        image.setAttribute("data", browser.extension.getURL(`icons/lock.svg`));
         image.setAttribute("type", "image/svg+xml");
         lock.appendChild(image);
 
@@ -541,7 +541,7 @@ function addListeners()
                 // Scrapyard //////////////////////////////////////////////////////////////////
                 if (menuAction <= 2) {
                     clearDocumentEncoding(document);
-                    lockDocument(message.animate);
+                    lockDocument();
                 }
 
                 if (document.readyState === "complete")

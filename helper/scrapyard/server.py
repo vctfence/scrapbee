@@ -19,7 +19,7 @@ from werkzeug.serving import make_server
 
 from . import browser
 
-DEBUG = False
+DEBUG = True
 
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -100,6 +100,10 @@ def root():
     return "Scrapyard helper application"
 
 
+# Utility routines
+
+# Find IDB path on the current Firefox profile
+
 def find_db_path(mozilla_root, profiles, addon_id):
     profiles = [profiles[k] for k in profiles.keys() if k.startswith("Profile")]
 
@@ -137,6 +141,7 @@ def get_db_path(addon_id):
     else:
         return abort(404)
 
+
 # Browse regular scrapyard archives
 
 @app.route("/browse/<uuid>")
@@ -148,6 +153,43 @@ def browse(uuid):
         if msg["byte_length"]:
             blob = blob.encode("latin1")
         return flask.Response(blob, mimetype=msg["content_type"])
+
+
+# Serve a local file
+
+serve_path_map = {}
+
+
+@app.route("/serve/set_path/<uuid>", methods=['POST'])
+def serve_set_path(uuid):
+    global serve_path_map
+    path = request.form["path"]
+    if path and os.path.exists(path):
+        serve_path_map[uuid] = request.form["path"]
+    return "OK"
+
+
+@app.route("/serve/release_path/<uuid>", methods=['GET'])
+def serve_release_path(uuid):
+    global serve_path_map
+    del serve_path_map[uuid]
+    return "OK"
+
+
+@app.route("/serve/file/<uuid>/", methods=['GET'])
+def serve_file(uuid):
+    path = serve_path_map[uuid]
+    if path:
+        [directory, file] = os.path.split(path)
+        return flask.send_from_directory(directory, file)
+    else:
+        abort(404)
+
+
+@app.route("/serve/file/<uuid>/<path:file>", methods=['GET'])
+def serve_file_deps(uuid, file):
+    [directory, _] = os.path.split(serve_path_map[uuid])
+    return flask.send_from_directory(directory, file)
 
 
 # Scrapbook RDF support

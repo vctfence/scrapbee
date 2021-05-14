@@ -106,7 +106,6 @@ function loadScrapyardSettings() {
     document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
     document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
     document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
-    document.getElementById("option-animate-capture-image").checked = settings.animate_capture_image();
     document.getElementById("option-do-not-show-archive-toolbar").checked = settings.do_not_show_archive_toolbar();
     document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
     document.getElementById("option-display-random-bookmark").checked = settings.display_random_bookmark();
@@ -169,7 +168,6 @@ async function storeScrapyardSettings() {
         () => send.reconcileBrowserBookmarkDb());
     settings.do_not_show_archive_toolbar(document.getElementById("option-do-not-show-archive-toolbar").checked);
     settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
-    settings.animate_capture_image(document.getElementById("option-animate-capture-image").checked);
     settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
     settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
     settings.export_format(document.getElementById("option-export-format").value);

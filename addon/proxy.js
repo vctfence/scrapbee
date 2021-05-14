@@ -15,10 +15,10 @@ export function delegateProxy (target, origin) {
     })
 }
 
+
 function makeMessageName(name) {
     return name.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1_$2').toUpperCase();
 }
-
 
 export let send = new Proxy({}, {
     get(target, key, receiver) {
@@ -31,4 +31,4 @@ export let send = new Proxy({}, {
             return browser.runtime.sendMessage(payload);
         };
     }
-})
+});

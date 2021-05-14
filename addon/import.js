@@ -12,10 +12,9 @@ import {
     isContainer
 } from "./storage_constants.js";
 
-import {packPage} from "./background.js"
-
 import {partition} from "./utils.js"
 import {getFavicon, getFaviconFromTab} from "./favicon.js";
+import {packPage} from "./core_bookmarking.js";
 
 const EXPORT_VERSION = 1;
 

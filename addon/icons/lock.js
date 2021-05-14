@@ -2,7 +2,6 @@
     t.__SVGATOR_PLAYER__ = n()
 })(this, (function () {
     "use strict";
-    console.log("from svg");
 
     function t(n) {
         return (t = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (t) {
@@ -1115,7 +1114,8 @@
         }]), u
     }(L)
 }));
-__SVGATOR_PLAYER__.build({
+
+var animation = {
     "root": "eT9VLHb5slv1",
     "animations": [{
         "duration": 5000,
@@ -1251,6 +1251,15 @@ __SVGATOR_PLAYER__.build({
         "alternate": false,
         "speed": 1
     }
-})
+};
 
+var clip = document.querySelector('#eT9VLHb5slv4');
+clip.addEventListener('mouseenter', startAnimation);
 
+var animated = false;
+function startAnimation() {
+    if (animated)
+        return;
+    animated = true;
+    __SVGATOR_PLAYER__.build(animation)
+}

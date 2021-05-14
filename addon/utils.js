@@ -75,10 +75,16 @@ export function getMimetypeExt(url) {
     if (!url)
         return null;
 
+    url = url.toLowerCase();
+
     if (url.endsWith(".png"))
         return "image/png";
+    else if (url.endsWith(".bmp"))
+        return "image/bmp";
     else if (url.endsWith(".gif"))
         return "image/gif";
+    else if (url.endsWith(".tif") || url.endsWith(".tiff"))
+        return "image/tiff";
     else if (url.endsWith(".jpg") || url.endsWith(".jpeg"))
         return "image/jpeg";
     else if (url.endsWith(".ico"))
@@ -87,8 +93,20 @@ export function getMimetypeExt(url) {
         return "image/svg+xml";
     else if (url.endsWith(".webp"))
         return "image/webp";
+    else if (url.endsWith(".webm"))
+        return "video/webm";
+    else if (url.endsWith(".mp4") || url.endsWith(".m4v"))
+        return "video/mp4";
+    else if (url.endsWith(".mpeg"))
+        return "video/mpeg";
+    else if (url.endsWith(".avi"))
+        return "video/x-msvideo";
     else if (url.endsWith(".pdf"))
         return "application/pdf";
+    else if (url.endsWith(".html") || url.endsWith(".htm"))
+        return "text/html";
+    else if (url.endsWith(".txt"))
+        return "text/plain";
     else
         return null;
 }

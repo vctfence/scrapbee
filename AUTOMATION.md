@@ -2,7 +2,7 @@
 
 Automation is a powerful feature that allows to programmatically create, modify, and delete Scrapyard bookmarks
 from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions.
-For example, with this API you can import hierarchical content, manage TODO
+For example, with this API you can upload local files to Scrapyard, import hierarchical content, manage TODO
 lists, or create something similar to the former Firefox "Live Bookmarks".
 
 Currently, automation is experimental, and should be
@@ -49,6 +49,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
                                                   // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED
                                                   // TODO states respectively
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
+    comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
     select:     true                              // Select the bookmark in the interface
 });
@@ -82,12 +83,16 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
                                                     // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED
                                                     // TODO states respectively
     todo_date:    "YYYY-MM-DD",                     // TODO expiration date
+    comments:     "comment text",                   // Bookmark comments
     container:    "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
     content:      "<p>Archive content</p>",         // A String or ArrayBuffer, representing the text or bytes of the archived content
                                                     // HTML-pages, images, PDF-documents, and other files could be stored
     content_type: "text/html",                      // MIME-type of the stored content
-    pack:         true,                             // Pakck and store the page specified by the bookmark url, do not use the content parameter
-    hide_tab:     false,                            // Hide tab, necessary to pack the page
+    pack:         true,                             // Pakck and store the page specified by the 'url' parameter,
+                                                    // do not use the 'content' parameter
+    local:        true,                             // The 'url' parameter contains path to a local file
+                                                    // (helper application v0.3.1+ is required to capture local files)
+    hide_tab:     false,                            // Hide tab necessary to pack the page
     select:       true                              // Select the bookmark in the interface
 });
 ```
@@ -120,11 +125,17 @@ tabs and offer to remove the addon.
 browser.runtime.sendMessage("scrapyard-we@firefox", {
     type:     "SCRAPYARD_PACK_PAGE",
     url:      "http://example.com",  // URL of the page to be packed
+    local:    true,                  // The 'url' parameter contains path to a local file
+                                     // (helper application v0.3.1+ is required to capture local files)
     hide_tab: false                  // Hide the tab used by the API
 });
 ```
 
-Returns an HTML string with the content of the specified page and all its referenced resources.
+Returns an object with the following fields:
+
+* html - HTML string with the content of the specified page and all its referenced resources.
+* title - title of the captured page.
+* icon - page favicon URL.
 
 #### SCRAPYARD_GET_UUID
 
@@ -146,6 +157,7 @@ Returns an object with the following properties:
 * details
 * todo_state
 * todo_date
+* comments
 * container
 
 #### SCRAPYARD_UPDATE_UUID
@@ -165,6 +177,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
                                                   // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED
                                                   // TODO states respectively
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
+    comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
     refresh:    true                              // Refresh the sidebar
 });
@@ -189,7 +202,7 @@ It is preferable to use the `refresh` parameter only on the last invocation in t
 
 #### SCRAPYARD_BROWSE_UUID
 
-Opens a bookmark or archive defined by the UUID, which, for instance, could be
+Opens a bookmark or archive defined by the UUID, which could be
 found at the bookmark property dialog.
 
 ```js
@@ -199,7 +212,9 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 });
 ```
 
-### Examples: Creating Dedicated iShell Bookmark Commands
+### Examples
+
+#### Creating Dedicated iShell Bookmark Commands
 
 You can quickly open dedicated bookmarks by iShell commands without using mouse. This may
 be helpful in the case of bookmarks with assigned multi-account containers. The example below
@@ -300,6 +315,79 @@ createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297"
                                   "work":     "6C53355203D94BC59996E21D15C86C3E"});
 
 ```
+
+#### Uploading Local Files to Scrapyard
+
+Because it is impossible to get a local file path in Firefox by any means other than textual user input, Scrapyard does
+not offer any built-in functionality to upload local files. Although, if you copy a full file path from your favorite file
+manager, you can pass it to the following iShell command to store this file in Scrapyard (helper application v0.3.1+ is required).
+
+```js
+/**
+    Store local files in Scrapyard
+
+    @command
+    @description Stores a file in the specified Scrapyard directory
+*/
+class UploadFile {
+    constructor(args) {
+        args[OBJECT] = {nountype: noun_arb_text, label: "path"};
+        // cmdAPI.scrapyard.noun_type_directory provides the list of all Scrapyard directories
+        // to autocompletion
+        args[AT] = {nountype: cmdAPI.scrapyard.noun_type_directory, label: "directory"};
+    }
+
+    preview({OBJECT, AT}, display) {
+        display.text(`Archive <b>${OBJECT?.text}</b> at <b>${AT?.text}</b>.`);
+    }
+
+    async execute({OBJECT, AT}) {
+        if (!OBJECT?.text)
+            return;
+
+        const localPath = OBJECT.text;
+
+        let title = localPath.replaceAll("\\", "/").split("/");
+        title = title[title.length - 1]; // use file name as a generic bookmark title
+
+        let icon = "";
+        let content;
+
+        const isHtml = /\.html?$/i.test(localPath);
+
+        // Gracefully capture HTML
+        if (isHtml) {
+            // cmdAPI.scrapyard offers a more concise way to send messages to Scrapyard from iShell.
+            // Method names are camel-case message suffixes with the "SCRAPYARD_" part omitted.
+            // There is no need to specify Scrapyard addon ID and the 'type' parameter.
+            const page = await cmdAPI.scrapyard.packPage({
+                url: localPath,
+                local: true
+            });
+
+            title = page.title;
+            icon = page.icon;
+            content = page.html;
+        }
+
+        // Just save content if HTML is already obtained.
+        // Otherwise, use the 'local' parameter to indicate that the local path needs to be captured.
+        cmdAPI.scrapyard.addArchive({
+            title:        title,
+            url:          isHtml? "": localPath,
+            icon:         icon,
+            path:         AT?.text,
+            content:      content,
+            local:        !isHtml,
+            select:       true
+        });
+    }
+}
+```
+
+Example usage:
+
+**upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
 
 See the iShell [tutorial](https://gchristensen.github.io/ishell/res/tutorial.html) for more details on command authoring.
 
