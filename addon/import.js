@@ -661,6 +661,12 @@ export async function importJSON(shelf, reader, progress) {
         }
     }
 
+    if (progress) {
+        console.log(ctr, meta.entities);
+        if (ctr !== meta.entities)
+            throw new Error("Not all records have been imported.")
+    }
+
     return shelf_node;
 }
 

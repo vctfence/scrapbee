@@ -1117,42 +1117,40 @@ async function backupShelf(message) {
 
     let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
 
-    try {
-        const process = nativeBackend.post("/backup/initialize", {
-            directory: message.directory,
-            file: backupFile,
-            compress: message.compress,
-            method: message.method,
-            level: message.level
-        });
+    const process = nativeBackend.post("/backup/initialize", {
+        directory: message.directory,
+        file: backupFile,
+        compress: message.compress,
+        method: message.method,
+        level: message.level
+    });
 
-        const port = await nativeBackend.getPort();
+    const port = await nativeBackend.getPort();
 
-        const file = {
-            append: async function (text) {
-                port.postMessage({
-                    type: "BACKUP_PUSH_TEXT",
-                    text: text
-                })
-            }
-        };
+    const file = {
+        append: async function (text) {
+            port.postMessage({
+                type: "BACKUP_PUSH_TEXT",
+                text: text
+            })
+        }
+    };
 
-        await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 50));
 
-        await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
+    await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
 
-        port.postMessage({
-            type: "BACKUP_FINISH"
-        });
+    port.postMessage({
+        type: "BACKUP_FINISH"
+    });
 
-        await process;
-    } catch (e) {
-        console.log(e);
-    }
+    await process;
 }
 
 async function restoreShelf(message) {
     send.startProcessingIndication();
+
+    let error;
 
     try {
         await nativeBackend.post("/restore/initialize", {
@@ -1176,10 +1174,13 @@ async function restoreShelf(message) {
         send.nodesImported({shelf});
 
     } catch (e) {
-        console.log(e);
+        error = e;
     }
 
     send.stopProcessingIndication();
+
+    if (error)
+        throw error;
 }
 
 async function deleteBackup(message) {

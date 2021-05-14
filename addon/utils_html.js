@@ -15,18 +15,6 @@ export function escapeHtml(string) {
     });
 }
 
-// export function parseHtml(htmlText) {
-//     let doc = document.implementation.createHTMLDocument("");
-//     let doc_elt = doc.documentElement;
-//
-//     htmlText = htmlText.replace(/^.*?<html[^>]*>/is, "");
-//     htmlText = htmlText.replace(/<\/html>.*?$/is, "");
-//
-//     doc_elt.innerHTML = htmlText;
-//
-//     return doc;
-// }
-
 export function parseHtml(htmlText) {
     var doc = document.implementation.createHTMLDocument("")
         , doc_elt = doc.documentElement

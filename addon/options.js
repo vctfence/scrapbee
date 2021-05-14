@@ -508,7 +508,7 @@ function startCheckLinks() {
 
                             if (type && type.toLowerCase().startsWith("text/html")) {
                                 let doc = parseHtml(this.responseText);
-                                let faviconElt = doc.querySelector("link[rel*='icon'], head link[rel*='shortcut']");
+                                let faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
 
                                 if (faviconElt)
                                     favicon = await testFavicon(new URL(faviconElt.href, base));
@@ -811,14 +811,14 @@ async function backupShelf() {
             level: settings.backup_compression_level() || "5"
         });
 
-        browser.runtime.onMessage.removeListener(exportListener);
-
         await backupListFiles();
     }
     catch (e) {
         console.error(e);
+        showNotification("Backup has failed: " + e.message);
     }
     finally {
+        browser.runtime.onMessage.removeListener(exportListener);
         $("#backup-button").prop("disabled", false);
         send.stopProcessingIndication();
         clearInterval(processingInterval);
@@ -864,6 +864,7 @@ async function restoreShelf(jnode, newShelf) {
     }
     catch (e) {
         console.error(e);
+        showNotification("Restore has failed: " + e.message);
     }
     finally {
         browser.runtime.onMessage.removeListener(importListener);
