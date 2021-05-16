@@ -1,9 +1,9 @@
-import {send} from "./proxy.js";
-import {backend, loadShelfListOptions} from "./backend.js"
-import {cloudBackend} from "./backend_cloud.js"
-import {dropboxBackend} from "./backend_dropbox.js"
-import {settings} from "./settings.js"
-import {formatBytes, toHHMMSS} from "./utils.js";
+import {send} from "../proxy.js";
+import {backend, loadShelfListOptions} from "../backend.js"
+import {cloudBackend} from "../backend_cloud.js"
+import {dropboxBackend} from "../backend_dropbox.js"
+import {settings} from "../settings.js"
+import {formatBytes, toHHMMSS} from "../utils.js";
 import {
     isSpecialShelf,
     CLOUD_SHELF_NAME,
@@ -11,11 +11,11 @@ import {
     FIREFOX_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK
-} from "./storage_constants.js";
-import {testFavicon} from "./favicon.js";
-import {parseHtml} from "./utils_html.js";
-import {showNotification} from "./utils_browser.js";
-import {nativeBackend} from "./backend_native.js";
+} from "../storage_constants.js";
+import {testFavicon} from "../favicon.js";
+import {parseHtml} from "../utils_html.js";
+import {showNotification} from "../utils_browser.js";
+import {fetchText} from "../utils_io.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -313,17 +313,11 @@ window.onload = async function() {
             storeSavePageSettings();
     }
 
-    fetch("help.html").then(response => {
-        return response.text();
-    }).then(text => {
-        $("#div-help").html(text);
-    });
+    let help = await fetchText("locales/en/help.html");
+    help = help.replaceAll(`src="images/`, `src="locales/en/images/`);
+    $("#div-help").html(help);
 
-    fetch("changes.html").then(response => {
-        return response.text();
-    }).then(text => {
-        $("#about-changes").html(text);
-    });
+    $("#about-changes").html(await fetchText("changes.html"));
 
     // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
 

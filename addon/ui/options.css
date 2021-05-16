@@ -193,7 +193,7 @@ h2{
     width:16px;
     height:16px;
     margin-left: 4px;
-    background-image: url(icons/help-mark.svg);
+    background-image: url(../icons/help-mark.svg);
     background-size: 16px 16px;
     vertical-align:middle;
     display:inline-block;

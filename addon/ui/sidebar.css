@@ -1,10 +1,10 @@
 :root {
     --theme-background: white;
 
-    --themed-comments-icon: url("icons/comments.svg");
-    --themed-comments-filled-icon: url("icons/comments-filled.svg");
-    --themed-properties-icon: url("icons/properties.svg");
-    --themed-containers-icon: url("icons/containers.svg");
+    --themed-comments-icon: url("../icons/comments.svg");
+    --themed-comments-filled-icon: url("../icons/comments-filled.svg");
+    --themed-properties-icon: url("../icons/properties.svg");
+    --themed-containers-icon: url("../icons/containers.svg");
 }
 
 *{

@@ -44,16 +44,9 @@ body {
     vertical-align: middle;
 }
 
-
 .property-row input, .property-row select, .selectric-wrapper {
 	flex: 1 1 auto;
 }
-
-
-
-/*#bookmark-folder,  #bookmark-folder option {*/
-    /*font-family: 'FontAwesome', 'Arial', 'Helvetica', sans-serif;*/
-/*}*/
 
 .tree-container {
 	width: 100%;
@@ -98,7 +91,7 @@ body {
 }
 
 #create-bookmark:hover {
-	background: #00AAC5;	
+	background: #00AAC5;
 }
 
 
@@ -108,7 +101,7 @@ body {
 }
 
 #create-archive:hover {
-	background: #FFAD57;	
+	background: #FFAD57;
 }
 
 .selectric {
@@ -129,7 +122,7 @@ body {
     left: 2px;
     height: 16px;
     width: 16px;
-    background-image: url("icons/group.svg")
+    background-image: url("../icons/group.svg")
 }
 
 .selectric .label {

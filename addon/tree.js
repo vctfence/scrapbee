@@ -3,7 +3,7 @@ import {backend, formatShelfName} from "./backend.js"
 import {dropboxBackend} from "./backend_dropbox.js"
 import {cloudBackend} from "./backend_cloud.js"
 
-import {showDlg, confirm} from "./dialog.js"
+import {showDlg, confirm} from "./ui/dialog.js"
 import {settings} from "./settings.js";
 import {GetPocket} from "./lib/pocket.js";
 import {
@@ -40,10 +40,7 @@ import {
 import {notes2html} from "./notes_render.js";
 import {getThemeVar, isElementInViewport} from "./utils_html.js";
 import {getActiveTab, openContainerTab, showNotification} from "./utils_browser.js";
-import {nativeBackend} from "./backend_native.js";
-import {packUrl, packUrlExt} from "./core_bookmarking.js";
-import {cleanUpLocalFileCapture, setUpLocalFileCapture} from "./core_automation.js";
-import {getMimetypeExt, IMAGE_FORMATS} from "./utils.js";
+import {IMAGE_FORMATS} from "./utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
@@ -631,7 +628,7 @@ class BookmarkTree {
             id: id,
             text: "New Folder",
             type: NODE_TYPE_GROUP,
-            icon: "icons/group.svg",
+            icon: "/icons/group.svg",
             li_attr: {"class": "scrapyard-group"}
         });
 
@@ -959,7 +956,7 @@ class BookmarkTree {
                 submenu: {
                     cloudItem: {
                         label: "Cloud",
-                        icon: (getThemeVar("--theme-background").trim() === "white"? "icons/cloud.png": "icons/cloud2.png"),
+                        icon: (getThemeVar("--theme-background").trim() === "white"? "/icons/cloud.png": "/icons/cloud2.png"),
                         _disabled: !settings.cloud_enabled() || !cloudBackend.isAuthenticated(),
                         action: async function () {
                             self.startProcessingIndication();
@@ -970,7 +967,7 @@ class BookmarkTree {
                     },
                     pocketItem: {
                         label: "Pocket",
-                        icon: "icons/pocket.svg",
+                        icon: "/icons/pocket.svg",
                         action: async function () {
                             const auth_handler = auth_url => new Promise(async (resolve, reject) => {
                                 let pocket_tab = await browser.tabs.create({url: auth_url});
@@ -1009,7 +1006,7 @@ class BookmarkTree {
                     },
                     dropboxItem: {
                         label: "Dropbox",
-                        icon: "icons/dropbox.png",
+                        icon: "/icons/dropbox.png",
                         action: async function () {
                             for (let node of selectedNodes) {
                                 let filename, content;
@@ -1130,35 +1127,35 @@ class BookmarkTree {
                 submenu: {
                     todoItem: {
                         label: "TODO",
-                        icon: "icons/todo.svg",
+                        icon: "/icons/todo.svg",
                         action: function () {
                             setTODOState(TODO_STATE_TODO);
                         }
                     },
                     waitingItem: {
                         label: "WAITING",
-                        icon: "icons/waiting.svg",
+                        icon: "/icons/waiting.svg",
                         action: function () {
                             setTODOState(TODO_STATE_WAITING);
                         }
                     },
                     postponedItem: {
                         label: "POSTPONED",
-                        icon: "icons/postponed.svg",
+                        icon: "/icons/postponed.svg",
                         action: function () {
                             setTODOState(TODO_STATE_POSTPONED);
                         }
                     },
                     cancelledItem: {
                         label: "CANCELLED",
-                        icon: "icons/cancelled.svg",
+                        icon: "/icons/cancelled.svg",
                         action: function () {
                             setTODOState(TODO_STATE_CANCELLED);
                         }
                     },
                     doneItem: {
                         label: "DONE",
-                        icon: "icons/done.svg",
+                        icon: "/icons/done.svg",
                         action: function () {
                             setTODOState(TODO_STATE_DONE);
                         }
@@ -1178,7 +1175,7 @@ class BookmarkTree {
                 action: async () => {
                     settings.load(settings => {
                         let query = `?menu=true&repairIcons=${!!settings.repair_icons()}&scope=${o(ctxNode).id}`
-                        browser.tabs.create({url: `/options.html${query}#links`, active: true});
+                        browser.tabs.create({url: `/ui/options.html${query}#links`, active: true});
                     });
                 }
             },

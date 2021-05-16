@@ -172,23 +172,23 @@ span.task-status.done {
 }
 
 #font-size-smaller, #editor-font-size-smaller {
-    background-image: url("/icons/font-smaller.svg");
+    background-image: url("../icons/font-smaller.svg");
 }
 
 #font-size-default, #editor-font-size-default {
-    background-image: url("/icons/font-default.svg");
+    background-image: url("../icons/font-default.svg");
 }
 
 #font-size-larger, #editor-font-size-larger {
-    background-image: url("/icons/font-larger.svg");
+    background-image: url("../icons/font-larger.svg");
 }
 
 #decrease-width, #decrease-width {
-    background-image: url("/icons/dec.svg");
+    background-image: url("../icons/dec.svg");
 }
 
 #increase-width {
-    background-image: url("/icons/inc.svg");
+    background-image: url("../icons/inc.svg");
 }
 
 pre.plaintext {
@@ -264,14 +264,14 @@ p.linebreak-true {
 }
 
 button.ql-showHtml {
-    background-image: url("/icons/code.svg") !important;
+    background-image: url("../icons/code.svg") !important;
     background-size: 16px 16px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
 }
 
 button.ql-hr {
-    background-image: url("/icons/line.svg") !important;
+    background-image: url("../icons/line.svg") !important;
     /*background-size: 16px 16px !important;*/
     background-position: center !important;
     background-repeat: no-repeat !important;

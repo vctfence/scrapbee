@@ -1,8 +1,9 @@
-import {send} from "./proxy.js";
-import {backend} from "./backend.js"
-import * as org from "./lib/org/org.js"
-import {NODE_TYPE_NOTES} from "./storage_constants.js";
-import {applyInlineStyles, markdown2html, org2html, text2html} from "./notes_render.js";
+import {send} from "../proxy.js";
+import {backend} from "../backend.js"
+import * as org from "../lib/org/org.js"
+import {NODE_TYPE_NOTES} from "../storage_constants.js";
+import {markdown2html, org2html, text2html} from "../notes_render.js";
+import {applyInlineStyles} from "../utils_html.js";
 
 let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
 #+CSS: p {text-align: justify;}

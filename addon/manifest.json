@@ -41,7 +41,7 @@
     ],
     "sidebar_action": {
         "default_title": "Scrapyard",
-        "default_panel": "sidebar.html",
+        "default_panel": "ui/sidebar.html",
         "default_icon": "icons/scrapyard.svg"
     },
     "commands": {
@@ -61,11 +61,11 @@
             "64": "icons/scrapyard.svg"
         },
         "default_title": "Scrapyard",
-        "default_popup": "popup.html"
+        "default_popup": "ui/popup.html"
     },
     "options_ui": {
         "open_in_tab": true,
-        "page": "options.html"
+        "page": "ui/options.html"
     },
     "web_accessible_resources": [
         "icons/lock.svg",

@@ -1,6 +1,6 @@
-import {send} from "./proxy.js";
-import {settings} from "./settings.js";
-import {showNotification} from "./utils_browser.js";
+import {send} from "../proxy.js";
+import {settings} from "../settings.js";
+import {showNotification} from "../utils_browser.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){

@@ -427,9 +427,9 @@ export async function browseNode(node, external_tab, preserve_history, container
                             let configureTab = async tab => {
                                 browser.tabs.onUpdated.removeListener(listener)
 
-                                await browser.tabs.insertCSS(tab.id, {file: "edit.css"});
+                                await browser.tabs.insertCSS(tab.id, {file: "ui/edit_toobar.css"});
                                 await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"});
-                                await browser.tabs.executeScript(tab.id, {file: "edit-content.js"});
+                                await browser.tabs.executeScript(tab.id, {file: "ui/edit_toolbar.js"});
 
                                 if (!helperApp)
                                     URL.revokeObjectURL(objectURL);
@@ -496,18 +496,18 @@ export async function browseNode(node, external_tab, preserve_history, container
         case NODE_TYPE_NOTES:
             return (external_tab
                 ? browser.tabs.update(external_tab.id, {
-                    "url": "notes.html#" + node.uuid + ":" + node.id,
+                    "url": "ui/notes.html#" + node.uuid + ":" + node.id,
                     "loadReplace": !preserve_history
                 })
-                : browser.tabs.create({"url": "notes.html#" + node.uuid + ":" + node.id}));
+                : browser.tabs.create({"url": "ui/notes.html#" + node.uuid + ":" + node.id}));
     }
 }
 
 export function browseNotes(message) {
     (message.tab
         ? browser.tabs.update(message.tab.id, {
-            "url": "notes.html#" + message.uuid + ":" + message.id,
+            "url": "ui/notes.html#" + message.uuid + ":" + message.id,
             "loadReplace": true
         })
-        : browser.tabs.create({"url": "notes.html#" + message.uuid + ":" + message.id}));
+        : browser.tabs.create({"url": "ui/notes.html#" + message.uuid + ":" + message.id}));
 }

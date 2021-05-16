@@ -1,8 +1,8 @@
-import {send} from "./proxy.js"
-import {backend, loadShelfListOptions} from "./backend.js";
-import {settings} from "./settings.js";
-import {fixDocumentEncoding, parseHtml} from "./utils_html.js";
-import {getActiveTab} from "./utils_browser.js";
+import {send} from "../proxy.js"
+import {backend, loadShelfListOptions} from "../backend.js";
+import {settings} from "../settings.js";
+import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
+import {getActiveTab} from "../utils_browser.js";
 
 window.onload = async function() {
     await settings.load();
@@ -48,7 +48,7 @@ async function previewResult(query, node) {
 
 async function appendSearchResult(query, node, occurrences) {
     const foundItems = $("#found-items");
-    const fallbackIcon = "icons/globe.svg";
+    const fallbackIcon = "/icons/globe.svg";
 
     let icon = node.icon;
     if (node.stored_icon)
@@ -60,9 +60,9 @@ async function appendSearchResult(query, node, occurrences) {
     let html = `<tr  id="row_${node.id}">
                   <td class="result-actions">
                     <div class="cell-content">
-                      <img id="select_${node.id}" class="result-action-icon" src="icons/tree-select.svg" title="Select"/>
-                      <img id="open_this_tab_${node.id}" class="result-action-icon" src="icons/open-link-this-tab.svg" title="Open in this tab"/>
-                      <img id="open_${node.id}" class="result-action-icon" src="icons/open-link.svg" title="Open in new tab"/>&nbsp;
+                      <img id="select_${node.id}" class="result-action-icon" src="../icons/tree-select.svg" title="Select"/>
+                      <img id="open_this_tab_${node.id}" class="result-action-icon" src="../icons/open-link-this-tab.svg" title="Open in this tab"/>
+                      <img id="open_${node.id}" class="result-action-icon" src="../icons/open-link.svg" title="Open in new tab"/>&nbsp;
                     </div>
                   </td>
                   <td id="item_${node.id}" class="search-result result-row">
@@ -72,7 +72,7 @@ async function appendSearchResult(query, node, occurrences) {
                    </div>
                  </td>
                  <td id="occurrences_${node.id}" class="occurrences result-row">
-                   <div class="cell-content">${occurrences} ${occurrences === 1? " occurrence": " occurrences"}</div>
+                   <div class="cell-content">${occurrences} ${occurrences === 1 ? " occurrence" : " occurrences"}</div>
                  </td>
                </tr>`;
 

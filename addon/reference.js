@@ -12,7 +12,7 @@ async function openReference(tab) {
 
         switch (id) {
             case "advanced":
-                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("advanced.html"), "loadReplace": true});
+                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("ui/advanced.html"), "loadReplace": true});
                 return;
         }
 

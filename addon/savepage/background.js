@@ -866,7 +866,7 @@ function checkError()
 
 function alertNotify(message)
 {
-    chrome.notifications.create("alert",{ type: "basic", iconUrl: "icons/scrapyard.svg", title: "Scrapyard", message: "" + message });
+    chrome.notifications.create("alert",{ type: "basic", iconUrl: "/icons/scrapyard.svg", title: "Scrapyard", message: "" + message });
 }
 
 /************************************************************************/
@@ -875,7 +875,7 @@ function alertNotify(message)
 
 function debugNotify(message)
 {
-    chrome.notifications.create("debug",{ type: "basic", iconUrl: "icons/scrapyard.svg", title: "Scrapyard - DEBUG", message: "" + message });
+    chrome.notifications.create("debug",{ type: "basic", iconUrl: "/icons/scrapyard.svg", title: "Scrapyard - DEBUG", message: "" + message });
 }
 
 /************************************************************************/

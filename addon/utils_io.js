@@ -120,3 +120,9 @@ export class ReadLine {
         });
     }
 }
+
+export async function fetchText(url, init) {
+    const response = await fetch(url, init);
+    if (response.ok)
+        return response.text();
+}

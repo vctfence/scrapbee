@@ -1,4 +1,4 @@
-class EditToolBar {
+class Edit_toolbar {
     constructor() {
         var self = this;
         this.$cap = $("<div>").appendTo(document.body);
@@ -182,7 +182,7 @@ class EditToolBar {
         this.shadowRoot = shadow;
         shadow.innerHTML = `
             <style>
-                @import url('${browser.runtime.getURL("edit.css")}')
+                @import url('${browser.runtime.getURL("ui/edit_toobar.css")}')
             </style>
         `;
 
@@ -373,7 +373,7 @@ class EditToolBar {
                     });
                 }
                 else {
-                    let notes_page = location.origin.replace(/^blob:/, "") + "/notes.html?i"
+                    let notes_page = location.origin.replace(/^blob:/, "") + "/ui/notes.html?i"
 
                     $(document.body).prepend(`<iframe id="notes-ifrm" frameborder="0" src="${notes_page}${location.hash}"/>
                                                 <div id="notes-container"></div>`)
@@ -473,7 +473,7 @@ class EditToolBar {
 }
 
 $(document).ready(function () {
-    var toolbar = new EditToolBar();
+    var toolbar = new Edit_toolbar();
 
     $(window).on("beforeunload", e => {
         if (toolbar._unsavedChanges)
@@ -585,4 +585,4 @@ function isDescendant(parent, child) {
     return false;
 }
 
-console.log("==> edit-content.js loaded")
+console.log("==> edit_toolbar.js loaded")

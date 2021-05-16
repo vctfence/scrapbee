@@ -1,17 +1,17 @@
-import {send} from "./proxy.js";
-import {settings} from "./settings.js"
-import {backend, formatShelfName} from "./backend.js"
-import {ishellBackend} from "./backend_ishell.js"
-import {BookmarkTree} from "./tree.js"
+import {send} from "../proxy.js";
+import {settings} from "../settings.js"
+import {backend, formatShelfName} from "../backend.js"
+import {ishellBackend} from "../backend_ishell.js"
+import {BookmarkTree} from "../tree.js"
 import {showDlg, confirm} from "./dialog.js"
 
 import {
     SearchContext,
     SEARCH_MODE_TITLE, SEARCH_MODE_TAGS, SEARCH_MODE_CONTENT,
     SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE
-} from "./search.js";
+} from "../search.js";
 
-import {pathToNameExt} from "./utils.js";
+import {pathToNameExt} from "../utils.js";
 import {
     CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
@@ -21,8 +21,8 @@ import {
     NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
     isSpecialShelf, isEndpoint
-} from "./storage_constants.js";
-import {openPage, showNotification} from "./utils_browser.js";
+} from "../storage_constants.js";
+import {openPage, showNotification} from "../utils_browser.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -182,42 +182,42 @@ window.onload = async function () {
     });
 
     $("#shelf-menu-search-title").click(() => {
-        $("#search-mode-switch").prop("src", "icons/bookmark.svg");
+        $("#search-mode-switch").prop("src", "/icons/bookmark.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TITLE, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-tags").click(() => {
-        $("#search-mode-switch").prop("src", "icons/tags.svg");
+        $("#search-mode-switch").prop("src", "/icons/tags.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-content").click(() => {
-        $("#search-mode-switch").prop("src", "icons/content-web.svg");
+        $("#search-mode-switch").prop("src", "/icons/content-web.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_CONTENT, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-notes").click(() => {
-        $("#search-mode-switch").prop("src", "icons/content-notes.svg");
+        $("#search-mode-switch").prop("src", "/icons/content-notes.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_NOTES, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-comments").click(() => {
-        $("#search-mode-switch").prop("src", "icons/content-comments.svg");
+        $("#search-mode-switch").prop("src", "/icons/content-comments.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_COMMENTS, getCurrentShelf().name);
         performSearch();
     });
 
     $("#shelf-menu-search-date").click(() => {
-        $("#search-mode-switch").prop("src", "icons/calendar.svg");
+        $("#search-mode-switch").prop("src", "/icons/calendar.svg");
         $("#search-input").attr("placeholder", "examples: 2021-02-24, before 2021-02-24, after 2021-02-24")
         context.setMode(SEARCH_MODE_DATE, getCurrentShelf().name);
         performSearch();
@@ -329,11 +329,11 @@ window.onload = async function () {
 };
 
 function startProcessingIndication() {
-    $("#shelf-menu-button").attr("src", "icons/grid.svg");
+    $("#shelf-menu-button").attr("src", "/icons/grid.svg");
 }
 
 function stopProcessingIndication() {
-    $("#shelf-menu-button").attr("src", "icons/menu.svg");
+    $("#shelf-menu-button").attr("src", "/icons/menu.svg");
 }
 
 async function loadShelves(synchronize = true, clearSelection = false) {
@@ -742,7 +742,7 @@ function internalMessages(message, sender, sendResponse) {
             $("#footer").css("display", "none");
     }
     else if (message.type === "RELOAD_SIDEBAR") {
-        const sidebarUrl =  browser.runtime.getURL(`/sidebar.html#shelf-list-height-${message.height}`);
+        const sidebarUrl =  browser.runtime.getURL(`/ui/sidebar.html#shelf-list-height-${message.height}`);
         browser.sidebarAction.setPanel({panel: sidebarUrl});
     }
 }
