@@ -35,7 +35,7 @@ if DEBUG:
     logging.basicConfig(filename='d:/tmp/debug.log', encoding='utf-8', level=logging.DEBUG)
 ###
 
-auth = None
+auth_token = None
 host = "localhost"
 port = None
 httpd = None
@@ -60,9 +60,9 @@ class Httpd(threading.Thread):
 def start(a_port, an_auth):
     global httpd
     global port
-    global auth
+    global auth_token
     port = a_port
-    auth = an_auth
+    auth_token = an_auth
     httpd = Httpd(app, a_port)
     #httpd.setDaemon(True)
     httpd.start()
@@ -76,9 +76,8 @@ def stop():
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth = True #request.authorization
-        if not auth:
-            abort(401)
+        if not request.authorization or request.authorization["password"] != auth_token:
+            return abort(401)
         return f(*args, **kwargs)
     return decorated
 
@@ -128,6 +127,7 @@ def find_db_path(mozilla_root, profiles, addon_id):
 
 # try to get the Scrapyard addon database path
 @app.route("/request/idb_path/<addon_id>")
+@requires_auth
 def get_db_path(addon_id):
     mozilla_root = ""
 
@@ -155,6 +155,7 @@ def get_db_path(addon_id):
 
 
 @app.route("/exit")
+@requires_auth
 def exit_app():
     os._exit(0)
 
@@ -182,6 +183,7 @@ serve_mutex = threading.Lock()
 
 
 @app.route("/serve/set_path/<uuid>", methods=['POST'])
+@requires_auth
 def serve_set_path(uuid):
     global serve_path_map
     path = request.form["path"]
@@ -193,6 +195,7 @@ def serve_set_path(uuid):
 
 
 @app.route("/serve/release_path/<uuid>", methods=['GET'])
+@requires_auth
 def serve_release_path(uuid):
     global serve_path_map
     serve_mutex.acquire()
@@ -230,14 +233,17 @@ def open_file_dialog(queue):
     root.withdraw()
 
     icon_dir = os.path.split(__file__)[0]
-    icon = PhotoImage(file=os.path.join(icon_dir, "scrapyard.png"))
-    root.iconphoto(False, icon)
+    icon_path = os.path.join(icon_dir, "scrapyard.png")
+    if os.path.exists(icon_path):
+        icon = PhotoImage(file=icon_path)
+        root.iconphoto(False, icon)
 
     filename = askopenfilenames()
     queue.put(filename)
 
 
 @app.route("/upload/open_file_dialog", methods=['GET'])
+@requires_auth
 def upload_show_dialog():
     try:
         queue = multiprocessing.Queue()
@@ -272,6 +278,7 @@ rdf_import_directory = None
 
 
 @app.route("/rdf/import/<file>", methods=['POST'])
+@requires_auth
 def rdf_import(file):
     global rdf_import_directory
     form = request.form
@@ -307,6 +314,7 @@ def rdf_browse(uuid, file):
 # Get Scrapbook rdf file for a given node uuid
 
 @app.route("/rdf/root/<uuid>", methods=['GET'])
+@requires_auth
 def rdf_root(uuid):
     message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_ROOT", "uuid": uuid}))
@@ -320,6 +328,7 @@ def rdf_root(uuid):
 # Save Scrapbook rdf file for a given node uuid
 
 @app.route("/rdf/root/save/<uuid>", methods=['POST'])
+@requires_auth
 def rdf_root_save(uuid):
     message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_ROOT", "uuid": uuid}))
@@ -336,6 +345,7 @@ def rdf_root_save(uuid):
 # Save Scrpabook data file
 
 @app.route("/rdf/save_item/<uuid>", methods=['POST'])
+@requires_auth
 def rdf_item_save(uuid):
     message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid}))
@@ -355,6 +365,7 @@ def rdf_item_save(uuid):
 # Delete Scrapbook data file
 
 @app.route("/rdf/delete_item/<uuid>", methods=['GET'])
+@requires_auth
 def rdf_item_delete(uuid):
     message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid}))
@@ -382,6 +393,7 @@ export_file = None
 
 
 @app.route("/export/initialize", methods=['GET'])
+@requires_auth
 def export_initialize():
     global export_file
     export_file = os.path.join(tempfile.gettempdir(), next(tempfile._get_candidate_names()))
@@ -409,6 +421,7 @@ def export_download():
 
 
 @app.route("/export/finalize", methods=['GET'])
+@requires_auth
 def export_finalize():
     global export_file
     os.remove(export_file)
@@ -450,6 +463,7 @@ def backup_peek_meta(path):
 
 
 @app.route("/backup/list", methods=['POST'])
+@requires_auth
 def backup_list():
     directory = request.form["directory"]
 
@@ -483,6 +497,7 @@ def backup_list():
 
 
 @app.route("/backup/initialize", methods=['POST'])
+@requires_auth
 def backup_initialize():
     directory = request.form["directory"]
     directory = os.path.expanduser(directory)
@@ -537,6 +552,7 @@ json_file = None
 
 
 @app.route("/restore/initialize", methods=['POST'])
+@requires_auth
 def restore_initialize():
     directory = request.form["directory"]
     directory = os.path.expanduser(directory)
@@ -557,6 +573,7 @@ def restore_initialize():
 
 
 @app.route("/restore/get_line", methods=['GET'])
+@requires_auth
 def restore_get_line():
     line = json_file.readline()
     if line:
@@ -569,6 +586,7 @@ def restore_get_line():
 
 
 @app.route("/restore/finalize", methods=['GET'])
+@requires_auth
 def restore_finalize():
     global backup_compressed, backup_file, json_file
     json_file.close()
@@ -581,6 +599,7 @@ def restore_finalize():
 
 
 @app.route("/backup/delete", methods=['POST'])
+@requires_auth
 def backup_delete():
     directory = request.form["directory"]
     directory = os.path.expanduser(directory)

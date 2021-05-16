@@ -139,17 +139,27 @@ class NativeBackend {
         return `http://localhost:${settings.helper_port_number()}${path}`;
     }
 
+    _injectAuth(init) {
+        init = init || {};
+        init.headers = init.headers || {};
+        init.headers["Authorization"] = "Basic " + btoa("default:" + this.auth);
+        return init;
+    }
+
     fetch(path, init) {
+        init = this._injectAuth(init);
         return window.fetch(this.url(path), init);
     }
 
     async fetchText(path, init) {
+        init = this._injectAuth(init);
         let response = await window.fetch(this.url(path), init);
         if (response.ok)
             return response.text();
     }
 
     async fetchJSON(path, init) {
+        init = this._injectAuth(init);
         let response = await window.fetch(this.url(path), init);
         if (response.ok)
             return response.json();
@@ -161,7 +171,9 @@ class NativeBackend {
         for (const [k, v] of Object.entries(fields))
             form.append(k, v);
 
-        return this.fetch(path, {method: "POST", body: form});
+        const init = this._injectAuth({method: "POST", body: form});
+
+        return this.fetch(path, init);
     }
 
 }

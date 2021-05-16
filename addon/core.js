@@ -145,6 +145,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             cloudBackend.startBackgroundSync(settings.cloud_background_sync());
             break;
 
+        case "HELPER_APP_GET_VERSION":
+            await nativeBackend.probe();
+            return nativeBackend.getVersion();
+
         case "HELPER_APP_HAS_VERSION":
             return nativeBackend.hasVersion(message.version);
 

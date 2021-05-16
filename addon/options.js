@@ -205,9 +205,7 @@ function loadHelperAppLinks() {
             link.href = release.assets[1].browser_download_url;
             helperAppLinksLoaded = true;
 
-            const helperApp = await nativeBackend.probe();
-            const installedVersion = nativeBackend.getVersion();
-
+            const installedVersion = await send.helperAppGetVersion();
             const INSTALLED_VERSION_TEXT = `<b>Installed version:</b> %%%`;
 
             if (installedVersion)
