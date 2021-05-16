@@ -228,7 +228,7 @@ function saveNotes() {
     if (format === "delta")
         options.html = renderEditorContent();
 
-    backend.storeNotes(options);
+    send.storeNotes({options});
     send.notesChanged({node_id: node_id, removed: !options.content});
     editorChange = false;
 }
@@ -655,7 +655,7 @@ window.onload = function() {
             }
 
         }).catch(e => {
-            console.log(e)
+            console.error(e)
         });
 
     $("#editor").on("input", editorSaveOnChange);
@@ -707,13 +707,13 @@ window.onload = function() {
                 $("#editor-font-sizes").show();
         }
 
-        backend.storeNotes({node_id, format});
+        send.storeNotes({options: {node_id, format}});
     });
 
     $("#notes-align").on("change", e => {
         align = $("#notes-align").val();
         alignNotes();
-        backend.storeNotes({node_id, align});
+        send.storeNotes({options: {node_id, align}});
     });
 
     $("#notes-width").on("change", e => {
@@ -742,7 +742,7 @@ window.onload = function() {
                 width = selectedWidth;
         }
 
-        backend.storeNotes({node_id, width});
+        send.storeNotes({options: {node_id, width}});
     });
 
     function changeWidth(op) {
@@ -764,7 +764,7 @@ window.onload = function() {
             actualWidthElt.show();
             $("#notes-width").val("actual");
             $("#notes").css("width", newWidth);
-            backend.storeNotes({node_id, width: newWidth});
+            send.storeNotes({options: {node_id, width: newWidth}});
         }
     }
 

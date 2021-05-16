@@ -1,5 +1,7 @@
 
 function captureSelection(options) {
+    const EXTRACTION_ID = "scrapyard-selection-extraction-id";
+
     let sel = window.getSelection();
     let root = null;
     let id = 1;
@@ -12,9 +14,9 @@ function captureSelection(options) {
 
         // mark all encountered parents including <html>
         while (parent && parent.localName !== "html") {
-            let parentId = parent.getAttribute("savepage-extraction-id");
+            let parentId = parent.getAttribute(EXTRACTION_ID);
             if (!parentId)
-                parent.setAttribute("savepage-extraction-id", id++);
+                parent.setAttribute(EXTRACTION_ID, id++);
 
             parents.push(parent.cloneNode(false));
             parent = parent.parentElement;
@@ -28,11 +30,11 @@ function captureSelection(options) {
 
             // traverse parents, drop ones that already attached to root
             while (parents.length
-            && root.querySelector(`*[savepage-extraction-id='${parents[0].getAttribute("savepage-extraction-id")}']`)) {
+            && root.querySelector(`*[${EXTRACTION_ID}='${parents[0].getAttribute(EXTRACTION_ID)}']`)) {
                 next = parents.shift();
             }
 
-            let existing = root.querySelector(`*[savepage-extraction-id='${next.getAttribute("savepage-extraction-id")}']`);
+            let existing = root.querySelector(`*[${EXTRACTION_ID}='${next.getAttribute(EXTRACTION_ID)}']`);
 
             if (!existing)
                 root.appendChild(next)
@@ -84,8 +86,8 @@ function captureSelection(options) {
         }
     }
 
-    document.querySelectorAll(`*[savepage-extraction-id]`)
-        .forEach(e => e.removeAttribute("savepage-extraction-id"));
+    document.querySelectorAll(`*[${EXTRACTION_ID}]`)
+        .forEach(e => e.removeAttribute(EXTRACTION_ID));
 
     let html;
 

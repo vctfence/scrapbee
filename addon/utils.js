@@ -108,8 +108,19 @@ export function getMimetypeExt(url) {
     else if (url.endsWith(".txt"))
         return "text/plain";
     else
-        return null;
+        return "application/octet-stream";
 }
+
+export const IMAGE_FORMATS = [
+    "image/png",
+    "image/bmp",
+    "image/gif",
+    "image/tiff",
+    "image/jpeg",
+    "image/x-icon",
+    "image/webp",
+    "image/svg+xml"
+];
 
 // https://stackoverflow.com/a/34920444/1689848
 export function stringByteLengthUTF8(s) {

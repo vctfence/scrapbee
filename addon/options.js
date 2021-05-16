@@ -15,6 +15,7 @@ import {
 import {testFavicon} from "./favicon.js";
 import {parseHtml} from "./utils_html.js";
 import {showNotification} from "./utils_browser.js";
+import {nativeBackend} from "./backend_native.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -195,7 +196,7 @@ function loadHelperAppLinks() {
 
     // Load helper app links
     var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = async function () {
         if (this.readyState == 4 && this.status == 200) {
             let release = JSON.parse(this.responseText);
             let link = document.getElementById("helper-windows-inst");
@@ -203,6 +204,21 @@ function loadHelperAppLinks() {
             link = document.getElementById("helper-manual-inst");
             link.href = release.assets[1].browser_download_url;
             helperAppLinksLoaded = true;
+
+            const helperApp = await nativeBackend.probe();
+            const installedVersion = nativeBackend.getVersion();
+
+            const INSTALLED_VERSION_TEXT = `<b>Installed version:</b> %%%`;
+
+            if (installedVersion)
+                $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT.replace("%%%", "v" + installedVersion));
+            else
+                $("#helper-app-version").html(INSTALLED_VERSION_TEXT.replace("%%%", "not installed"));
+
+            let version = release.name.split(" ");
+            version = version[version.length - 1];
+
+            $("#helper-app-version").html(`<b>Latest version:</b> ${version}`);
         }
     };
     xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
@@ -480,7 +496,7 @@ function startCheckLinks() {
                     xhr.open("GET", node.uri);
                     xhr.timeout = parseInt($("#link-check-timeout").val()) * 1000;
                     xhr.ontimeout = function () {this._timedout = true};
-                    xhr.onerror = function (e) {console.log(e)};
+                    xhr.onerror = function (e) {console.error(e)};
                     xhr.onloadend = async function (e) {
                         if (!this.status || this.status >= 400) {
                             $("#invalid-links-container").show();
@@ -779,26 +795,26 @@ async function backupShelf() {
     processingInterval = setInterval(backupUpdateTime, 1000);
     processingTime = Date.now();
 
+    const compress = !!$("#compress-backup:checked").length;
+
+    let exportListener = message => {
+        if (message.type === "EXPORT_PROGRESS") {
+            if (message.finished) {
+                if (compress) {
+                    $("#backup-progress-container").remove();
+                    $("#backup-status").prepend(`<span>Compressing...</span>`);
+                }
+            }
+            else
+                $("#backup-progress-bar").val(message.progress);
+        }
+    };
+
+    browser.runtime.onMessage.addListener(exportListener);
+
     try {
         backupIsInProcess = true;
         $("#backup-button").prop("disabled", true);
-
-        const compress = !!$("#compress-backup:checked").length;
-
-        let exportListener = message => {
-            if (message.type === "EXPORT_PROGRESS") {
-                if (message.finished) {
-                    if (compress) {
-                        $("#backup-progress-container").remove();
-                        $("#backup-status").prepend(`<span>Compressing...</span>`);
-                    }
-                }
-                else
-                    $("#backup-progress-bar").val(message.progress);
-            }
-        };
-
-        browser.runtime.onMessage.addListener(exportListener);
 
         await send.backupShelf({
             directory: settings.backup_directory_path(),

@@ -25,7 +25,7 @@ import {
     SPECIAL_UUIDS,
     TODO_SHELF_NAME
 } from "./storage_constants.js";
-import {readBlob} from "./io.js";
+import {readBlob} from "./utils_io.js";
 import {settings} from "./settings.js";
 
 class ExternalEventProvider {
@@ -221,6 +221,9 @@ export class Backend extends ExternalEventProvider {
     async reifyBlob(blob, binarystring = false) {
         let result;
 
+        if (!blob)
+            return null;
+
         if (blob.byte_length) {
             if (blob.data) {
                 if (binarystring)
@@ -273,6 +276,7 @@ export class Backend extends ExternalEventProvider {
                       // path,   // filter by hierarchical node group path (string), the first item in the path is a name of a shelf
                       // tags,   // filter for node tags (string, containing comma separated list)
                       // date,   // filter nodes by date
+                      // date2,  // the second date in query
                       // period, // chronological period: "" (exact date), "before", "after"
                       // types,  // filter for node types (array of integers)
                       // limit,  // limit for the returned record number
@@ -340,7 +344,7 @@ export class Backend extends ExternalEventProvider {
             await this.reorderExternalBookmarks(positions);
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
         }
         return this.updateNodes(positions);
     }
@@ -618,7 +622,7 @@ export class Backend extends ExternalEventProvider {
                     }
                 }
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         }
 
@@ -705,25 +709,39 @@ export class Backend extends ExternalEventProvider {
                         return id;
                     }
                     else {
-                        const response = await fetch(node.icon);
+                        try {
+                            const response = await fetch(node.icon);
 
-                        if (response.ok) {
-                            let type = response.headers.get("content-type");
-                            if (!type)
-                                type = getMimetypeExt(node.icon);
+                            if (response.ok) {
+                                let type = response.headers.get("content-type");
 
-                            if (type.startsWith("image")) {
-                                const buffer = await response.arrayBuffer();
-                                const [id, iconUrl] = await convertAndStore(buffer, type);
-                                await updateNode(node, iconUrl);
-                                return id;
+                                if (!type) {
+                                    let iconUrl = new URL(node.icon);
+                                    type = getMimetypeExt(iconUrl.pathname);
+                                }
+
+                                if (type.startsWith("image")) {
+                                    const buffer = await response.arrayBuffer();
+                                    if (buffer.byteLength) {
+                                        const [id, iconUrl] = await convertAndStore(buffer, type);
+                                        await updateNode(node, iconUrl);
+                                        return id;
+                                    }
+                                }
                             }
+                        }
+                        catch (e) {
+                            node.icon = null;
+                            node.stored_icon = false;
+                            if (node.id)
+                                await this.updateNode(node);
+                            console.error(e);
                         }
                     }
                 }
             }
             catch (e) {
-                console.log(e);
+                console.error(e);
             }
         }
     }

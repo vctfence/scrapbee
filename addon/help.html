@@ -14,6 +14,10 @@
     }
 
     #help-content li {
+        padding: 0;
+    }
+
+    #help-content li {
         padding-bottom: 8px;
     }
 
@@ -58,6 +62,7 @@
         padding-left: 30px;
     }
 
+    span.query,
     #help-content code.rainbow, #help-content code.rainbow span {
         font-family: "Lucida Console", "Courier New", monospace !important;
         font-size: 10pt;
@@ -126,7 +131,14 @@
         by title/URL, tags, date, content of archived web-pages, content of attached notes or comments.
         Use the "Everything" shelf to search through all bookmarks. Although this filter is
         reasonably fast, it matches all items that contain all the entered words longer than 2 characters
-        in any order and distance.</p>
+        in any order and distance. Filtering by date supports simple queries:</p>
+
+    <ul>
+        <li><span class="query">2021-02-24</span> - the exact date.</li>
+        <li><span class="query"><i>before</i> 2021-02-24</span> - before the specified date (the specified date is not included).</li>
+        <li><span class="query"><i>after</i> 2021-02-24</span> - after the specified date (the specified date is not included).</li>
+        <li><span class="query"><i>between</i> 2021-02-24 <i>and</i> 2021-03-24</span> - between the specified dates (the specified dates are included).</li>
+    </ul>
 
     <p style="text-align: center">
         <img src="images/help/search-sidebar.png">

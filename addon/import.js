@@ -447,7 +447,7 @@ export async function importHtml(shelf, text) {
                         }
                         await backend.updateNode(node);
                     } catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
                 }
             }
@@ -473,7 +473,7 @@ function parseJSONObject(line) {
             object = JSON.parse(line);
     }
     catch (e) {
-        console.log(e)
+        console.error(e)
     }
 
     return object;
@@ -661,7 +661,6 @@ export async function importJSON(shelf, reader, progress) {
     }
 
     if (progress) {
-        console.log(ctr, meta.entities);
         if (ctr !== meta.entities)
             throw new Error("Not all records have been imported.")
     }
@@ -894,7 +893,7 @@ export async function importRDF(shelf, path, threads, quick) {
         xml = await nativeBackend.fetchText(`/rdf/import/${rdf_file}`, {method: "POST", body: form});
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
     }
 
     if (!xml)

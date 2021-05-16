@@ -67,10 +67,13 @@ function configureRepairPanel() {
         settings.repair_icons(e.target.checked);
     });
 
-    $("#calculate-size-link").on("click", e => {
+    $("#optimize-database-link").on("click", e => {
         e.preventDefault();
-        send.recalculateArchiveSize();
-        $("#calculate-size-link").off("click");
+        if (confirm("It is recommended to make a full backup before the optimization. "
+                        + "This action will take some time. Continue?")) {
+            send.optimizeDatabase();
+            $("#optimize-database-link").off("click");
+        }
     });
 
     $("#reindex-content-link").on("click", e => {
@@ -82,7 +85,7 @@ function configureRepairPanel() {
     $("#reset-cloud-link").on("click", async e => {
         e.preventDefault();
 
-        if (confirm("This will remove all cloud content. Are you sure?")) {
+        if (confirm("This will remove all cloud content. Continue?")) {
             let success = await send.resetCloud();
 
             if (!success)

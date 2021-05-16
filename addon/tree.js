@@ -40,6 +40,10 @@ import {
 import {notes2html} from "./notes_render.js";
 import {getThemeVar, isElementInViewport} from "./utils_html.js";
 import {getActiveTab, openContainerTab, showNotification} from "./utils_browser.js";
+import {nativeBackend} from "./backend_native.js";
+import {packUrl, packUrlExt} from "./core_bookmarking.js";
+import {cleanUpLocalFileCapture, setUpLocalFileCapture} from "./core_automation.js";
+import {getMimetypeExt, IMAGE_FORMATS} from "./utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
@@ -459,6 +463,10 @@ class BookmarkTree {
             if (!node.icon) {
                 if (node.type === NODE_TYPE_NOTES)
                     jnode.icon = "var(--themed-notes-icon)";
+                else if (node.content_type === "application/pdf")
+                    jnode.icon = "var(--themed-pdf-icon)";
+                else if (IMAGE_FORMATS.some(f => f === node.content_type))
+                    jnode.icon = "var(--themed-image-icon)";
                 else {
                     jnode.icon = "var(--themed-globe-icon)";
                     jnode.a_attr.class += " generic-icon";
@@ -784,8 +792,10 @@ class BookmarkTree {
                         children.forEach(c => c.type = NODE_TYPE_BOOKMARK);
                         children.sort((a, b) => a.pos - b.pos);
 
-                        for (let node of children)
+                        for (let node of children) {
+                            delete node.tag_list;
                             await send.browseNode({node, container: obj.item.__container_id});
+                        }
                     }
                     else {
                         for (let n of selectedNodes) {
@@ -989,7 +999,7 @@ class BookmarkTree {
                                     url: o(n).uri,
                                     tags: o(n).tags
                                 }));
-                                await pocket.modify(actions).catch(e => console.log(e));
+                                await pocket.modify(actions).catch(e => console.error(e));
 
                                 showNotification(`Successfully added bookmark${selectedNodes.length > 1
                                     ? "s"
@@ -1164,12 +1174,18 @@ class BookmarkTree {
             },
             checkLinksItem: {
                 separator_before: true,
-                label: "Check Links",
+                label: "Check Links...",
                 action: async () => {
                     settings.load(settings => {
                         let query = `?menu=true&repairIcons=${!!settings.repair_icons()}&scope=${o(ctxNode).id}`
                         browser.tabs.create({url: `/options.html${query}#links`, active: true});
                     });
+                }
+            },
+            uploadItem: {
+                label: "Upload...",
+                action: async () => {
+                    send.uploadFiles({parent_id: o(ctxNode).id})
                 }
             },
             deleteItem: {
@@ -1381,6 +1397,7 @@ class BookmarkTree {
                 delete items.renameItem;
                 delete items.rdfPathItem;
                 delete items.checkLinksItem;
+                delete items.uploadItem;
                 if (o(ctxNode).external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
                     delete items.copyItem;

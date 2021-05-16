@@ -81,7 +81,8 @@ export const NODE_PROPERTIES =
      "has_comments",
      "external",
      "external_id",
-     "container"
+     "container",
+     "content_type"
     ];
 
 export function isContainer(node) {

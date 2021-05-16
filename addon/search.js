@@ -102,12 +102,21 @@ export class DateSearchProvider extends SearchProvider {
             path = this.shelf;
 
         if (text) {
-            const m = /(.*)(\d{4}-\d{2}-\d{2})/.exec(text.trim().toLowerCase());
+            const dates = [];
+            for (const m of text.matchAll(/(\d{4}-\d{2}-\d{2})/g))
+                dates.push(m[1]);
+
+            if (dates.length === 1)
+                dates.push(undefined);
+
+            const period = /(.*?)\d{4}-\d{2}-\d{2}/.exec(text.trim().toLowerCase())[1];
+
             return backend.listNodes({
                 depth: "subtree",
                 path: path,
-                date: m[2],
-                period: m[1].trim(),
+                date: dates[0],
+                date2: dates[1],
+                period: period.trim(),
                 types: ENDPOINT_TYPES
             });
         }
@@ -115,15 +124,17 @@ export class DateSearchProvider extends SearchProvider {
     }
 
     isInputValid(text) {
-        const daterx = /^(?:\d{4}-\d{2}-\d{2})|(?:before\s+\d{4}-\d{2}-\d{2})|(?:after\s+\d{4}-\d{2}-\d{2})$/i;
+        const daterx = /^\s*(?:\d{4}-\d{2}-\d{2})|(?:before\s+\d{4}-\d{2}-\d{2})|(?:after\s+\d{4}-\d{2}-\d{2})|(?:between\s+\d{4}-\d{2}-\d{2}\s+and\s+\d{4}-\d{2}-\d{2})\s*$/i;
 
         if (super.isInputValid(text)) {
             text = text.trim()
             if (daterx.test(text)) {
-                const m = /(.*)(\d{4}-\d{2}-\d{2})/.exec(text);
+                for (const m of text.matchAll(/(\d{4}-\d{2}-\d{2})/g)) {
+                    if (isNaN(new Date(m[1])))
+                        return false
+                }
 
-                if (!isNaN(new Date(m[2])))
-                    return true;
+                return true;
             }
         }
 

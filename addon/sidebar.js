@@ -268,9 +268,9 @@ window.onload = async function () {
     });
 
     $("#btnAnnouncement").click(e => {
-        browser.tabs.create({"url": browser.runtime.getURL("options.html#about")});
+        openPage(settings.pending_announcement())
+        settings.pending_announcement(null);
         $("#btnAnnouncement").hide();
-        settings.pending_announcement(false);
     })
 
     tree.onRenameShelf = node => {
@@ -299,6 +299,7 @@ window.onload = async function () {
     };
 
     tree.sidebarSelectNode = selectNode;
+    tree.sidebarReload = sidebarReload;
 
     browser.runtime.onMessage.addListener(internalMessages);
     browser.runtime.onMessageExternal.addListener(externalMessages);
@@ -564,6 +565,11 @@ function selectNode(node) {
     });
 }
 
+function sidebarReload() {
+    let last_shelf = settings.last_shelf();
+    switchShelf(last_shelf, false);
+}
+
 function styleBuiltinShelf() {
     let {name} = getCurrentShelf();
 
@@ -680,8 +686,7 @@ function internalMessages(message, sender, sendResponse) {
         tree.setNotesState(message.node_id, !message.removed);
     }
     else if (message.type === "NODES_UPDATED") {
-        let last_shelf = settings.last_shelf();
-        switchShelf(last_shelf, false);
+        sidebarReload();
     }
     else if (message.type === "NODES_READY") {
         let last_shelf = settings.last_shelf();

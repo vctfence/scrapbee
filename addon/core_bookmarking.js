@@ -1,7 +1,14 @@
-import {getMimetypeExt} from "./utils.js";
+import {formatBytes, getMimetypeExt} from "./utils.js";
 import {backend} from "./backend.js";
 import {send} from "./proxy.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage_constants.js";
+import {
+    CLOUD_SHELF_ID,
+    DEFAULT_POSITION,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_NOTES,
+    RDF_EXTERNAL_NAME
+} from "./storage_constants.js";
 import {getActiveTab, openContainerTab, showNotification} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
@@ -42,6 +49,27 @@ export function createArchive(data) {
     send.beforeBookmarkAdded({node: data})
         .then(addBookmark)
         .catch(addBookmark);
+}
+
+export async function getBookmarkInfo(message) {
+    let node = await backend.getNode(message.id);
+    node.__formatted_size = node.size ? formatBytes(node.size) : null;
+    node.__formatted_date = node.date_added
+        ? node.date_added.toString().replace(/:[^:]*$/, "")
+        : null;
+    return node;
+}
+
+export function shareBookmarkToCloud(message) {
+    return backend.copyNodes(message.node_ids, CLOUD_SHELF_ID)
+        .then(async newNodes => {
+            newNodes = newNodes.filter(n => message.node_ids.some(id => id === n.old_id));
+            for (let n of newNodes) {
+                n.pos = DEFAULT_POSITION;
+                await backend.updateNode(n);
+            }
+            await backend.updateExternalBookmarks(newNodes);
+        });
 }
 
 export function isSpecialPage(url) {
@@ -139,8 +167,10 @@ export async function captureTab(tab, bookmark) {
                 xhr.onloadend = function () {
                     if (this.status === 200) {
                         let contentType = this.getResponseHeader("Content-Type");
-                        if (contentType == null)
-                            contentType = getMimetypeExt(tab.url) || "application/pdf";
+                        if (contentType == null) {
+                            const url = new URL(tab.url);
+                            contentType = getMimetypeExt(url.pathname) || "application/pdf";
+                        }
 
                         backend.storeBlob(bookmark.id, this.response, contentType);
 
@@ -237,7 +267,7 @@ export async function packUrl(url, hide_tab) {
 }
 
 export async function packUrlExt(url, hide_tab) {
-    let resolver = (m, t) => ({html: m.data, title: t.title, icon: t.favIconUrl});
+    let resolver = (m, t) => ({html: m.data, title: url.endsWith(t.title)? undefined: t.title, icon: t.favIconUrl});
     return packPage(url, {}, b => b.__page_packing = true, resolver, hide_tab);
 }
 
@@ -257,12 +287,67 @@ export function storePageHtml(message) {
             }
         })
         .catch(e => {
-            console.log(e);
+            console.error(e);
             if (!message.bookmark.__mute_ui) {
                 chrome.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
                 alertNotify("Error archiving page.");
             }
         });
+}
+
+export async function uploadFiles(message) {
+    send.startProcessingIndication();
+
+    const helperApp = nativeBackend.probe(true);
+    if (helperApp) {
+        const uuids = await nativeBackend.fetchJSON("/upload/open_file_dialog");
+
+        for (const [uuid, file] of Object.entries(uuids)) {
+            const url =  nativeBackend.url(`/serve/file/${uuid}/`);
+            const isHtml = /\.html?$/i.test(file);
+
+            let bookmark = {uri: "", parent_id: message.parent_id};
+
+            bookmark.name = file.replaceAll("\\", "/").split("/");
+            bookmark.name = bookmark.name[bookmark.name.length - 1];
+
+            let content;
+            let contentType = getMimetypeExt(file);
+
+            try {
+                if (isHtml) {
+                    const page = await packUrlExt(url);
+                    bookmark.name = page.title || bookmark.name;
+                    bookmark.icon = page.icon;
+                    content = page.html;
+                }
+                else {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        contentType = response.headers.get("content-type") || contentType;
+                        content = await response.arrayBuffer();
+                    }
+                }
+
+                bookmark = await backend.addBookmark(bookmark, NODE_TYPE_ARCHIVE);
+                if (content)
+                    await backend.storeBlob(bookmark.id, content, contentType);
+                else
+                    throw new Error();
+            }
+            catch (e) {
+                console.error(e);
+                showNotification(`Can not upload ${bookmark.name}`);
+            }
+
+            await nativeBackend.fetch(`/serve/release_path/${uuid}`);
+        }
+
+        if (Object.entries(uuids).length)
+            send.nodesUpdated();
+    }
+
+    send.stopProcessingIndication();
 }
 
 export async function browseNode(node, external_tab, preserve_history, container) {
@@ -416,4 +501,13 @@ export async function browseNode(node, external_tab, preserve_history, container
                 })
                 : browser.tabs.create({"url": "notes.html#" + node.uuid + ":" + node.id}));
     }
+}
+
+export function browseNotes(message) {
+    (message.tab
+        ? browser.tabs.update(message.tab.id, {
+            "url": "notes.html#" + message.uuid + ":" + message.id,
+            "loadReplace": true
+        })
+        : browser.tabs.create({"url": "notes.html#" + message.uuid + ":" + message.id}));
 }

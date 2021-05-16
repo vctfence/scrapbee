@@ -4,7 +4,7 @@ import {JSONStorage} from "./storage_json.js";
 
 import DropboxAuth from "./lib/dropbox/auth.js";
 import Dropbox from "./lib/dropbox/dropbox.js"
-import {readBlob} from "./io.js";
+import {readBlob} from "./utils_io.js";
 
 const APP_KEY = "0y7co3j1k4oc7up";
 const DROPBOX_APP_PATH = "/Cloud";
@@ -69,7 +69,7 @@ export class DropboxBackend {
                                                 resolve(true);
                                             })
                                             .error(e => {
-                                                console.log(e);
+                                                console.error(e);
                                                 resolve(false);
                                             });
                                     }
@@ -101,7 +101,7 @@ export class DropboxBackend {
                         contents: data
                     });
                 } catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             };
         }
@@ -116,7 +116,7 @@ export class DropboxBackend {
                     return readBlob(fileBlob, node.byte_length? "binary": "string");
                 }
                 catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             };
         }
@@ -129,7 +129,7 @@ export class DropboxBackend {
                     });
                 }
                 catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             };
         }
@@ -199,7 +199,7 @@ export class DropboxBackend {
                         storage = new JSONStorage({cloud: "Scrapyard"});
                     }
                 else
-                    console.log(e);
+                    console.error(e);
             }
         else
             storage = new JSONStorage({cloud: "Scrapyard"});
@@ -229,7 +229,7 @@ export class DropboxBackend {
                 return new Date(meta.server_modified);
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
         }
 
         return null;

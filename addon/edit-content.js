@@ -111,7 +111,7 @@ class EditToolBar {
         if (bar)
             bar.parentNode.removeChild(bar);
 
-        let chars = doc.querySelector("meta[http-equiv='Content-Type'], meta[http-equiv='content-type']");
+        let chars = doc.querySelector("meta[http-equiv='content-type' i]");
         if (chars) {
             chars.parentNode.removeChild(chars);
             chars.setAttribute("content", "text/html; charset=utf-8");

@@ -1,50 +1,21 @@
 import {backend} from "./backend.js";
 import {send} from "./proxy.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES} from "./storage_constants.js";
-import {stringByteLengthUTF8} from "./utils.js";
+import {computeSHA1, stringByteLengthUTF8} from "./utils.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud.js";
+import {nativeBackend} from "./backend_native.js";
+import {parseHtml, clearDocumentEncoding} from "./utils_html.js";
 
-export async function recalculateArchiveSize() {
-    const nodeIDs = await backend.getNodeIds();
+export async function getAddonIDBPath() {
+    let helperApp = await nativeBackend.probe();
 
-    send.startProcessingIndication();
+    if (!helperApp)
+        return;
 
-    for (let id of nodeIDs) {
-        const node = await backend.getNode(id);
+    const addonId = browser.runtime.getURL("/").split("/")[2];
 
-        if (node.type === NODE_TYPE_ARCHIVE) {
-            const blob = await backend.fetchBlob(node.id);
-
-            if (blob && blob.data) {
-                if (blob.byte_length)
-                    node.size = blob.byte_length;
-                else
-                    node.size = stringByteLengthUTF8(blob.data);
-
-                await backend.updateNode(node);
-            }
-            else if (blob && blob.object) {
-                node.size = blob.object.size;
-                await backend.updateNode(node);
-            }
-        }
-        else if (node.type === NODE_TYPE_NOTES && node.has_notes) {
-            const notes = await backend.fetchNotes(node.id);
-
-            if (notes) {
-                node.size = stringByteLengthUTF8(notes.content);
-                if (notes.format === "delta")
-                    node.size += stringByteLengthUTF8(notes.html);
-            }
-
-            await backend.updateNode(node);
-        }
-    }
-
-    settings.archve_size_repaired(true);
-
-    send.stopProcessingIndication();
+    return nativeBackend.fetchText(`/request/idb_path/${addonId}`)
 }
 
 export async function reindexArchiveContent() {
@@ -103,4 +74,75 @@ export async function resetCloud() {
     send.stopProcessingIndication();
 
     return true;
+}
+
+export async function optimizeDatabase() {
+    const DEBUG = false;
+    const nodeIDs = await backend.getNodeIds();
+    //const nodeIDs = await backend.queryFullSubtree(1, true);
+
+    send.startProcessingIndication();
+
+    for (let id of nodeIDs) {
+        try {
+            const node = await backend.getNode(id);
+            let actionTaken = false;
+
+            if (node.icon && !node.stored_icon) {
+                await backend.storeIcon(node);
+
+                if (DEBUG)
+                    console.log("storing icon");
+
+                if (!node.stored_icon) {
+                    node.icon = null;
+
+                    if (DEBUG)
+                        console.log("nullified icon");
+                }
+
+                actionTaken = true;
+            }
+            else if (node.icon && node.stored_icon && !node.icon.startsWith("hash:")) {
+                const icon = await backend.fetchIcon(node.id);
+                node.icon = "hash:" + (await computeSHA1(icon));
+
+                if (DEBUG)
+                    console.log("hashing icon");
+                actionTaken = true;
+            }
+
+            if (node.type === NODE_TYPE_ARCHIVE) {
+                const blob = await backend.fetchBlob(node.id);
+
+                if (blob) {
+                    let data = await backend.reifyBlob(blob);
+
+                    if (!blob.type && typeof data === "string" && !blob.byte_length
+                        || blob.type && blob.type.startsWith("text/html")) {
+                        blob.type = "text/html";
+                        const doc = parseHtml(data);
+                        clearDocumentEncoding(doc);
+                        $(doc.head).prepend("<meta charset=\"utf-8\">")
+                        data = doc.documentElement.outerHTML;
+                    }
+
+                    await backend.deleteBlob(node.id);
+                    await backend.storeBlobLowLevel(node.id, data, blob.type, blob.byte_length);
+                    actionTaken = true;
+                }
+            }
+
+            if (actionTaken) {
+                await backend.updateNode(node);
+                if (DEBUG)
+                    console.log("Processed: %s", node.name);
+            }
+        }
+        catch (e) {
+            console.error(e);
+        }
+    }
+
+    send.stopProcessingIndication();
 }

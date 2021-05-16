@@ -31,8 +31,21 @@ export function parseHtml(htmlText) {
     return doc;
 }
 
+export function clearDocumentEncoding(doc) {
+    let chars = doc.querySelector("meta[http-equiv='content-type' i]");
+
+    if (chars)
+        chars.parentNode.removeChild(chars);
+    else {
+        chars = doc.querySelector("meta[charset]");
+
+        if (chars)
+            chars.parentNode.removeChild(chars);
+    }
+}
+
 export function fixDocumentEncoding(doc) {
-    let chars = doc.querySelector("meta[http-equiv='Content-Type'], meta[http-equiv='content-type']");
+    let chars = doc.querySelector("meta[http-equiv='content-type' i]");
     if (chars) {
         chars.parentNode.removeChild(chars);
         chars.setAttribute("content", "text/html; charset=utf-8");

@@ -1,6 +1,8 @@
+import multiprocessing
 import configparser
 import traceback
 import threading
+import mimetypes
 import tempfile
 import platform
 import zipfile
@@ -8,6 +10,7 @@ import logging
 #import datetime
 #import time
 import json
+import uuid
 import os
 import re
 from functools import wraps
@@ -19,7 +22,7 @@ from werkzeug.serving import make_server
 
 from . import browser
 
-DEBUG = True
+DEBUG = False
 
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -37,11 +40,13 @@ host = "localhost"
 port = None
 httpd = None
 
+message_mutex = threading.Lock()
+
 class Httpd(threading.Thread):
 
     def __init__(self, app, port):
         threading.Thread.__init__(self)
-        self.srv = make_server(host, port, app)
+        self.srv = make_server(host, port, app, True)
         self.ctx = app.app_context()
         self.ctx.push()
 
@@ -124,10 +129,17 @@ def find_db_path(mozilla_root, profiles, addon_id):
 # try to get the Scrapyard addon database path
 @app.route("/request/idb_path/<addon_id>")
 def get_db_path(addon_id):
-    if platform.system() != "Windows":
+    mozilla_root = ""
+
+    if platform.system() == "Windows":
+        mozilla_root = os.environ["APPDATA"] + "/Mozilla/Firefox/"
+    elif platform.system() == "Linux":
+        mozilla_root = os.path.expanduser("~/.mozilla/firefox/")
+    elif platform.system() == "Darwin":
+        mozilla_root = os.path.expanduser("~/Library/Application Support/Firefox/")
+    else:
         return abort(404)
 
-    mozilla_root = os.environ["APPDATA"] + "/Mozilla/Firefox/"
     profiles_ini = f"{mozilla_root}profiles.ini"
 
     if os.path.exists(profiles_ini):
@@ -137,17 +149,25 @@ def get_db_path(addon_id):
         if path:
             return path
         else:
-            abort(404)
+            return abort(404)
     else:
         return abort(404)
+
+
+@app.route("/exit")
+def exit_app():
+    os._exit(0)
 
 
 # Browse regular scrapyard archives
 
 @app.route("/browse/<uuid>")
 def browse(uuid):
+    message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_PUSH_BLOB", "uuid": uuid}))
     msg = browser.get_message()
+    message_mutex.release()
+
     if msg["type"] == "PUSH_BLOB":
         blob = msg["blob"]
         if msg["byte_length"]:
@@ -158,6 +178,7 @@ def browse(uuid):
 # Serve a local file
 
 serve_path_map = {}
+serve_mutex = threading.Lock()
 
 
 @app.route("/serve/set_path/<uuid>", methods=['POST'])
@@ -165,14 +186,18 @@ def serve_set_path(uuid):
     global serve_path_map
     path = request.form["path"]
     if path and os.path.exists(path):
+        serve_mutex.acquire()
         serve_path_map[uuid] = request.form["path"]
+        serve_mutex.release()
     return "OK"
 
 
 @app.route("/serve/release_path/<uuid>", methods=['GET'])
 def serve_release_path(uuid):
     global serve_path_map
+    serve_mutex.acquire()
     del serve_path_map[uuid]
+    serve_mutex.release()
     return "OK"
 
 
@@ -181,7 +206,11 @@ def serve_file(uuid):
     path = serve_path_map[uuid]
     if path:
         [directory, file] = os.path.split(path)
-        return flask.send_from_directory(directory, file)
+        response = flask.make_response(flask.send_from_directory(directory, file))
+        mime_type = mimetypes.guess_type(path)[0]
+        if mime_type:
+            response.headers["content-type"] = mime_type
+        return response
     else:
         abort(404)
 
@@ -190,6 +219,51 @@ def serve_file(uuid):
 def serve_file_deps(uuid, file):
     [directory, _] = os.path.split(serve_path_map[uuid])
     return flask.send_from_directory(directory, file)
+
+
+def open_file_dialog(queue):
+    import os
+    from tkinter import Tk, PhotoImage
+    from tkinter.filedialog import askopenfilenames
+
+    root = Tk()
+    root.withdraw()
+
+    icon_dir = os.path.split(__file__)[0]
+    icon = PhotoImage(file=os.path.join(icon_dir, "scrapyard.png"))
+    root.iconphoto(False, icon)
+
+    filename = askopenfilenames()
+    queue.put(filename)
+
+
+@app.route("/upload/open_file_dialog", methods=['GET'])
+def upload_show_dialog():
+    try:
+        queue = multiprocessing.Queue()
+        p = multiprocessing.Process(target=open_file_dialog, args=(queue,))
+        p.start()
+        p.join()
+
+        files = queue.get()
+        uuids = {}
+
+        if files:
+            serve_mutex.acquire()
+
+            for file in files:
+                if os.path.isfile(file):
+                    file_uuid = uuid.uuid4().hex
+                    uuids[file_uuid] = file
+                    serve_path_map[file_uuid] = file
+
+            serve_mutex.release()
+
+    except Exception as e:
+        logging.debug(e)
+        return "[]"
+
+    return json.dumps(uuids)
 
 
 # Scrapbook RDF support
@@ -210,15 +284,18 @@ def rdf_import_files(file):
     return flask.send_from_directory(rdf_import_directory, file)
 
 
-rdf_browse_directories = dict()
+rdf_browse_directories = {}
 
 
 @app.route("/rdf/browse/<uuid>/<path:file>", methods=['GET'])
 def rdf_browse(uuid, file):
     if file == "_":
+        message_mutex.acquire()
         browser.send_message(json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid}))
         msg = browser.get_message()
         rdf_browse_directories[uuid] = msg["rdf_directory"]
+        message_mutex.release()
+
         if msg["type"] == "RDF_PATH" and msg["uuid"] == uuid:
             return flask.send_from_directory(rdf_browse_directories[uuid], f"index.html")
         else:
@@ -231,8 +308,11 @@ def rdf_browse(uuid, file):
 
 @app.route("/rdf/root/<uuid>", methods=['GET'])
 def rdf_root(uuid):
+    message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_ROOT", "uuid": uuid}))
     msg = browser.get_message()
+    message_mutex.release()
+
     if msg["type"] == "RDF_ROOT" and msg["uuid"] == uuid:
         return flask.send_file(msg["rdf_file"])
 
@@ -241,8 +321,11 @@ def rdf_root(uuid):
 
 @app.route("/rdf/root/save/<uuid>", methods=['POST'])
 def rdf_root_save(uuid):
+    message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_ROOT", "uuid": uuid}))
     msg = browser.get_message()
+    message_mutex.release()
+
     if msg["type"] == "RDF_ROOT" and msg["uuid"] == uuid:
         with open(msg["rdf_file"], 'w', encoding='utf-8') as fp:
             fp.write(request.form["rdf_content"])
@@ -254,10 +337,15 @@ def rdf_root_save(uuid):
 
 @app.route("/rdf/save_item/<uuid>", methods=['POST'])
 def rdf_item_save(uuid):
+    message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid}))
     msg = browser.get_message()
+    message_mutex.release()
+
     rdf_item_path = msg["rdf_directory"]
-    Path(rdf_item_path).mkdir(parents=True, exist_ok=True)
+    if not os.path.exists(rdf_item_path):
+        Path(rdf_item_path).mkdir(parents=True, exist_ok=True)
+
     if msg["type"] == "RDF_PATH" and msg["uuid"] == uuid:
         with open(os.path.join(rdf_item_path, "index.html"), 'w', encoding='utf-8') as fp:
             fp.write(request.form["item_content"])
@@ -268,8 +356,11 @@ def rdf_item_save(uuid):
 
 @app.route("/rdf/delete_item/<uuid>", methods=['GET'])
 def rdf_item_delete(uuid):
+    message_mutex.acquire()
     browser.send_message(json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid}))
     msg = browser.get_message()
+    message_mutex.release()
+
     rdf_item_path = msg["rdf_directory"]
 
     def rm_tree(pth: Path):
@@ -294,14 +385,22 @@ export_file = None
 def export_initialize():
     global export_file
     export_file = os.path.join(tempfile.gettempdir(), next(tempfile._get_candidate_names()))
-    with open(export_file, mode="w", encoding="utf-8") as fp:
-        while True:
-            msg = browser.get_message()
-            if msg["type"] == "EXPORT_PUSH_TEXT":
-                fp.write(msg["text"])
-            elif msg["type"] == "EXPORT_FINISH":
-                fp.flush()
-                return "OK"
+
+    message_mutex.acquire()
+    try:
+        with open(export_file, mode="w", encoding="utf-8") as fp:
+            while True:
+                msg = browser.get_message()
+                if msg["type"] == "EXPORT_PUSH_TEXT":
+                    fp.write(msg["text"])
+                elif msg["type"] == "EXPORT_FINISH":
+                    fp.flush()
+                    break
+    finally:
+        message_mutex.release()
+
+    return "OK"
+
 
 
 @app.route("/export/download", methods=['GET'])
@@ -355,6 +454,8 @@ def backup_list():
     directory = request.form["directory"]
 
     if os.path.exists(directory):
+        directory = os.path.expanduser(directory)
+
         result = "{"
 
         files = [f for f in os.listdir(directory) if f.endswith(BACKUP_JSON_EXT) or f.endswith(BACKUP_COMPRESSED_EXT)]
@@ -384,22 +485,28 @@ def backup_list():
 @app.route("/backup/initialize", methods=['POST'])
 def backup_initialize():
     directory = request.form["directory"]
+    directory = os.path.expanduser(directory)
     backup_file_path = os.path.join(directory, request.form["file"])
 
-    Path(directory).mkdir(parents=True, exist_ok=True)
+    if not os.path.exists(directory):
+        Path(directory).mkdir(parents=True, exist_ok=True)
 
     compress = request.form["compress"] == "true"
 
     def do_backup(backup, encode=False):
-        while True:
-            msg = browser.get_message()
-            if msg["type"] == "BACKUP_PUSH_TEXT":
-                if encode:
-                    backup.write(msg["text"].encode("utf-8"))
-                else:
-                    backup.write(msg["text"])
-            elif msg["type"] == "BACKUP_FINISH":
-                return "OK"
+        message_mutex.acquire()
+        try:
+            while True:
+                msg = browser.get_message()
+                if msg["type"] == "BACKUP_PUSH_TEXT":
+                    if encode:
+                        backup.write(msg["text"].encode("utf-8"))
+                    else:
+                        backup.write(msg["text"])
+                elif msg["type"] == "BACKUP_FINISH":
+                    break
+        finally:
+            message_mutex.release()
 
     if compress:
         compressed = re.sub(f"{BACKUP_JSON_EXT}$", BACKUP_COMPRESSED_EXT, backup_file_path)
@@ -420,7 +527,8 @@ def backup_initialize():
         return "OK"
     else:
         with open(backup_file_path, "w", encoding="utf-8") as backup:
-            return do_backup(backup)
+            do_backup(backup)
+            return "OK"
 
 
 backup_compressed = False
@@ -431,6 +539,7 @@ json_file = None
 @app.route("/restore/initialize", methods=['POST'])
 def restore_initialize():
     directory = request.form["directory"]
+    directory = os.path.expanduser(directory)
     backup_file_path = os.path.join(directory, request.form["file"])
 
     global backup_compressed, backup_file, json_file
@@ -474,6 +583,7 @@ def restore_finalize():
 @app.route("/backup/delete", methods=['POST'])
 def backup_delete():
     directory = request.form["directory"]
+    directory = os.path.expanduser(directory)
     backup_file_path = os.path.join(directory, request.form["file"])
 
     os.remove(backup_file_path)

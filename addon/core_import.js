@@ -1,6 +1,6 @@
 import {isSpecialShelf} from "./storage_constants.js";
 import {exportJSON, exportOrg, importHtml, importJSON, importOrg, importRDF} from "./import.js";
-import {readFile, ReadLine} from "./io.js";
+import {readFile, ReadLine} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {backend} from "./backend.js";
 import {settings} from "./settings.js";
@@ -58,7 +58,7 @@ export async function exportFile(message) {
         try {
             nativeBackend.fetch("/export/initialize");
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
 
         const port = await nativeBackend.getPort();

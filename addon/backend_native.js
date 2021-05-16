@@ -52,6 +52,7 @@ class NativeBackend {
         const port = await this.getPort();
         if (!port && verbose)
             showNotification({message: "Can not connect to the helper application."})
+
         return !!port;
     }
 
@@ -63,7 +64,10 @@ class NativeBackend {
         }
     }
 
-    hasVersion(version) {
+    async hasVersion(version) {
+        if (!await this.probe())
+            return false;
+
         let installed = this.getVersion();
 
         if (installed) {

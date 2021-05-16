@@ -124,7 +124,7 @@ export async function deleteBackup(message) {
             file: message.meta.file
         });
     } catch (e) {
-        console.log(e);
+        console.error(e);
         return false;
     }
 

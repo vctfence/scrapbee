@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='scrapyard_helper',
-    version='0.3.0',
+    version='0.4',
     packages=['scrapyard'],
     url='',
     license='',

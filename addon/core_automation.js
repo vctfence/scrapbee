@@ -24,6 +24,14 @@ export function isAutomationAllowed(sender) {
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
 }
 
+export function scrapyardGetVersion(sender) {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
+    return browser.runtime.getManifest().version;
+}
+
 export function renderPath(node, nodes) {
     let path = [];
     let parent = node;
@@ -154,7 +162,7 @@ export async function createArchiveExternal(message, sender) {
         return;
 
     if (!message.content_type)
-        message.content_type = getMimetypeExt(message.uri) || "text/html";
+        message.content_type = getMimetypeExt(message.uri);
 
     let saveContent = (bookmark, content) => {
         return backend.storeBlob(bookmark.id, content, message.pack ? "text/html" : message.content_type)
@@ -182,8 +190,10 @@ export async function createArchiveExternal(message, sender) {
                     content = await packUrl(local_uri, message.hide_tab);
                 else {
                     const response = await fetch(local_uri);
-                    if (response.ok)
+                    if (response.ok) {
+                        message.content_type = response.headers.get("content-type") || message.content_type;
                         content = await response.arrayBuffer();
+                    }
                 }
 
                 await cleanUpLocalFileCapture(message);

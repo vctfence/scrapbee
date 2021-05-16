@@ -1,3 +1,8 @@
+import multiprocessing
+
 from scrapyard import helper
 
-helper.main()
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    helper.main()
+

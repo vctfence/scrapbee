@@ -888,4 +888,4 @@ function updateContextMenus() {
 
 }
 
-console.log("==> savepage/core.js loaded");
+console.log("==> savepage/background.js loaded");

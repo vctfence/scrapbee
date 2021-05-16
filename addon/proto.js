@@ -19,7 +19,7 @@ String.prototype.indexWords = function (html = true) {
         ));
     }
     catch (e) {
-        console.log(e)
+        console.error(e)
         console.log("Index creation has failed.")
         return [];
     }

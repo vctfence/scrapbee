@@ -267,7 +267,7 @@ function unlockDocument() {
 }
 
 function clearDocumentEncoding(doc) {
-    let chars = doc.querySelector("meta[http-equiv='Content-Type'], meta[http-equiv='content-type']");
+    let chars = doc.querySelector("meta[http-equiv='content-type' i]");
     if (chars)
         chars.parentNode.removeChild(chars);
     else {

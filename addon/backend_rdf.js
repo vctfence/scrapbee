@@ -45,7 +45,7 @@ class RDFDoc {
                 await nativeBackend.post(`/rdf/root/save/${this.uuid}`, {rdf_content: content});
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
         }
     }
 
@@ -60,7 +60,7 @@ class RDFDoc {
             xml = await nativeBackend.fetchText(`/rdf/root/${node.uuid}`);
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
         }
 
         if (!xml)
@@ -225,7 +225,7 @@ export class RDFBackend {
                 await nativeBackend.post(`/rdf/save_item/${node.uuid}`, {item_content: data});
             }
             catch (e) {
-                console.log(e);
+                console.error(e);
             }
         }
     }
@@ -246,7 +246,7 @@ export class RDFBackend {
                         try {
                             await nativeBackend.fetch(`/rdf/delete_item/${node.uuid}`);
                         } catch (e) {
-                            console.log(e);
+                            console.error(e);
                         }
                     }
                 }

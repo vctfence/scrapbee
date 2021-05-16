@@ -414,7 +414,7 @@
                         <h3 id="backup-dir-title">Backup Directory</h3>
                         <div id="backup-directory-path-container">
                             <i class="help-mark"></i>
-                            <span class="tips hide">For example: <b>d:/backups/scrapyard</b><br>
+                            <span class="tips hide">For example: <b>d:\backups\scrapyard</b> or <b>~/backups/scrapyard</b><br>
                             Choose a directory on the partition/cloud that is likely to survive system failure or reinstallation.</span>
                             <input id="backup-directory-path" type="text"/>
                             <i id="backup-directory-path-refresh" title="Refresh backup list">&#xF2F1;</i>
@@ -521,16 +521,21 @@
             <p>Scrapyard helper application allows to transcend the limits of Firefox WebExtensions
                 by providing several features that are otherwise impossible:</p>
         <ul>
-            <li>Run scripts and display embedded objects at the saved pages.</li>
             <li>Import and browse Scrapbook RDF archives from any filesystem location.</li>
+            <li>Run scripts and display embedded objects at the saved pages.</li>
             <li>Improve export performance.</li>
+            <li>Upload local files.</li>
             <li>Manage backups.</li>
         </ul>
 
-        <p>On Windows the helper application could be installed automatically without the need of any configuration. It could also be installed
-            manually on any system that supports Python 3.6+ (you may need to consult
-            <a href="https://wiki.mozilla.org/WebExtensions/Native_Messaging#Host_Manifests" target="_blank">Mozilla Wiki</a>
-            for more details).</p>
+            <p id="helper-app-version-installed"><b>Installed version:</b> checking...</p>
+            <p id="helper-app-version"><b>Latest version:</b> checking...</p>
+
+
+            <p>On Windows the helper application could be installed automatically without the need of any configuration. It could also be installed
+                manually on any system that supports Python 3.6+ with Tcl/Tk (you may need to consult
+                <a href="https://wiki.mozilla.org/WebExtensions/Native_Messaging#Host_Manifests" target="_blank">Mozilla Wiki</a>
+                for more details on the configuration of native messaging).</p>
 
             <h3>Downloads</h3>
             <ul>
@@ -539,7 +544,7 @@
             </ul>
 
             <p>It is necessary to restart Firefox after the application has been installed, or to
-                completely close the browser when updating to a new version.</p>
+                completely close the browser before updating to a new version.</p>
         </div>
     </div>
     <div id="div-help" class="div-area" style="display:none;"></div>

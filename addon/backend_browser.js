@@ -76,7 +76,7 @@ export class BrowserBackend {
                     return browser.bookmarks.removeTree(n.external_id);
                 }
                 catch (e) {
-                    //console.log(e);
+                    //console.error(e);
                 }
             }));
 
@@ -85,7 +85,7 @@ export class BrowserBackend {
                     return browser.bookmarks.remove(n.external_id);
                 }
                 catch (e) {
-                    //console.log(e);
+                    //console.error(e);
                 }
             }));
         });
@@ -197,7 +197,7 @@ export class BrowserBackend {
                             return browser.bookmarks.remove(id);
                     }
                     catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
                 }));
             }
@@ -243,7 +243,7 @@ export class BrowserBackend {
                         }
                     }
                     catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
                 }));
             }
@@ -297,7 +297,7 @@ export class BrowserBackend {
                         send.bookmarkCreated({node: node});
                 }
             }
-            catch (e) {console.log(e)}
+            catch (e) {console.error(e)}
 
             this.releaseListenerLock();
 
@@ -318,7 +318,7 @@ export class BrowserBackend {
                     send.externalNodeRemoved({node: node});
                 }
             }
-            catch (e) {console.log(e)}
+            catch (e) {console.error(e)}
 
             this.releaseListenerLock();
         })();
@@ -340,7 +340,7 @@ export class BrowserBackend {
                     send.externalNodeUpdated({node: node});
                 }
             }
-            catch (e) {console.log(e)}
+            catch (e) {console.error(e)}
 
             this.releaseListenerLock();
         })();
@@ -382,7 +382,7 @@ export class BrowserBackend {
                     //send.externalNodeUpdated({node: updated_node});
                 }
             }
-            catch (e) {console.log(e)}
+            catch (e) {console.error(e)}
 
             this.releaseListenerLock();
         })();
@@ -427,7 +427,7 @@ export class BrowserBackend {
         else
             this.getUILock();
 
-        try {await f()} catch (e) {console.log(e);}
+        try {await f()} catch (e) {console.error(e);}
 
         if (ui_context)
             await send.uiLockRelease();
@@ -530,7 +530,7 @@ export class BrowserBackend {
                             }
                             await backend.updateNode(node);
                         } catch (e) {
-                            console.log(e);
+                            console.error(e);
                         }
                     }
                     //console.log(node.icon + " (" + item[1] + ")");

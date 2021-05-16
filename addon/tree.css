@@ -3,6 +3,8 @@
     --themed-notes-icon: url("/icons/notes.svg");
     --themed-cloud-icon: url("/icons/cloud.svg");
     --themed-cloud-sync-icon: url("/icons/cloud_sync.svg");
+    --themed-image-icon: url("/icons/format-image.svg");
+    --themed-pdf-icon: url("/icons/format-pdf.svg");
 }
 
 #treeview {

@@ -34,12 +34,13 @@ to obtain the desired features.
 * ~~Multi-account containers support [DONE]~~
 * ~~Automation API [DONE]~~
 * ~~Full text search through archived content, notes and comments [DONE]~~
+* ~~Backup management UI [DONE]~~
 
 ### Project status
 
 Currently, the project is considered as a permanent alpha: be prepared for breaking changes, devastating bugs and
 groundbreaking experiments. Please, backup your Firefox profile often. Scrapyard also could be incredibly buggy at times,
-when major internal refactoring are performed, since I have not enough resources for proper QA, so users are the last
+when major internal refactorings are performed, since I have not enough resources for the proper QA, so users are the last
 frontier of it. Nevertheless, do not forget to donate if you have a good use of the software.
 
 ### The current status of cloud support

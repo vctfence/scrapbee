@@ -2,7 +2,7 @@
 
 Automation is a powerful feature that allows to programmatically create, modify, and delete Scrapyard bookmarks
 from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions.
-For example, with this API you can upload local files to Scrapyard, import hierarchical content, manage TODO
+For example, with this API you can import hierarchical content, manage TODO
 lists, or create something similar to the former Firefox "Live Bookmarks".
 
 Currently, automation is experimental, and should be
@@ -91,7 +91,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     pack:         true,                             // Pakck and store the page specified by the 'url' parameter,
                                                     // do not use the 'content' parameter
     local:        true,                             // The 'url' parameter contains path to a local file
-                                                    // (helper application v0.3.1+ is required to capture local files)
+                                                    // (helper application v0.4+ is required to capture local files)
     hide_tab:     false,                            // Hide tab necessary to pack the page
     select:       true                              // Select the bookmark in the interface
 });
@@ -107,6 +107,10 @@ parameter. "text/html" content type is assumed. A new tab is created, which is r
 The tab could be hidden through the `hide_tab` message option. Although this option may be useful
 in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
 tabs and offer to remove the addon.
+
+The `pack` and `content` parameters are ignored if the `local` parameter is set to `true`. The addon will perform
+packing of HTML content automatically, although it may be a better option to use `SCRAPYARD_PACK_PAGE` API to import HTML
+content to obtain page icon and title.
 
 Returns UUID of the newly created archive.
 
@@ -126,7 +130,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     type:     "SCRAPYARD_PACK_PAGE",
     url:      "http://example.com",  // URL of the page to be packed
     local:    true,                  // The 'url' parameter contains path to a local file
-                                     // (helper application v0.3.1+ is required to capture local files)
+                                     // (helper application v0.4+ is required to capture local files)
     hide_tab: false                  // Hide the tab used by the API
 });
 ```
@@ -318,27 +322,38 @@ createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297"
 
 #### Uploading Local Files to Scrapyard
 
-Because it is impossible to get a local file path in Firefox by any means other than textual user input, Scrapyard does
-not offer any built-in functionality to upload local files. Although, if you copy a full file path from your favorite file
-manager, you can pass it to the following iShell command to store this file in Scrapyard (helper application v0.3.1+ is required).
+You can pass a local file path to the following iShell command to store this file in Scrapyard
+under the folder specified by the `at` argument (helper application v0.4+ is required).
 
 ```js
 /**
-    Store local files in Scrapyard
+    # Syntax
+    **upload-file** _file path_ **at** _folder path_
+
+    # Arguments
+    - _file path_ - a local file path
+    - _folder path_ - a full path of a folder in Scrapyard
+
+    # Examples
+    **upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
 
     @command
-    @description Stores a file in the specified Scrapyard directory
-*/
+    @markdown
+    @icon /res/icons/scrapyard.svg
+    @description Stores a local file at the specified Scrapyard folder
+    @uuid 674BF919-3BCA-4378-AB8F-C873F8CFE42A
+ */
 class UploadFile {
     constructor(args) {
         args[OBJECT] = {nountype: noun_arb_text, label: "path"};
         // cmdAPI.scrapyard.noun_type_directory provides the list of all Scrapyard directories
         // to autocompletion
-        args[AT] = {nountype: cmdAPI.scrapyard.noun_type_directory, label: "directory"};
+        const directory_type = cmdAPI.scrapyard?.noun_type_directory || {suggest: () => ({})};
+        args[AT] = {nountype: directory_type, label: "directory"};
     }
 
     preview({OBJECT, AT}, display) {
-        display.text(`Archive <b>${OBJECT?.text}</b> at <b>${AT?.text}</b>.`);
+        display.text(`Archive file <b>${OBJECT?.text}</b> at the <b>${AT?.text}</b> folder in Scrapyard.`);
     }
 
     async execute({OBJECT, AT}) {
@@ -348,7 +363,7 @@ class UploadFile {
         const localPath = OBJECT.text;
 
         let title = localPath.replaceAll("\\", "/").split("/");
-        title = title[title.length - 1]; // use file name as a generic bookmark title
+        title = title[title.length - 1]; // use file name as the default bookmark title
 
         let icon = "";
         let content;
@@ -365,7 +380,7 @@ class UploadFile {
                 local: true
             });
 
-            title = page.title;
+            title = page.title || title;
             icon = page.icon;
             content = page.html;
         }
@@ -373,13 +388,13 @@ class UploadFile {
         // Just save content if HTML is already obtained.
         // Otherwise, use the 'local' parameter to indicate that the local path needs to be captured.
         cmdAPI.scrapyard.addArchive({
-            title:        title,
-            url:          isHtml? "": localPath,
-            icon:         icon,
-            path:         AT?.text,
-            content:      content,
-            local:        !isHtml,
-            select:       true
+            title:   title,
+            url:     isHtml? "": localPath,
+            icon:    icon,
+            path:    AT?.text,
+            content: content,
+            local:   !isHtml,
+            select:  true
         });
     }
 }

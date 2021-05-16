@@ -40,6 +40,8 @@
     --themed-comments-filled-icon: url("icons/comments-filled2.svg");
     --themed-properties-icon: url("icons/properties2.svg");
     --themed-containers-icon: url("icons/containers2.svg");
+    --themed-image-icon: url("/icons/format-image2.svg");
+    --themed-pdf-icon: url("/icons/format-pdf2.svg");
 }
 
 html, body, .toolbar, .footer, .black-button, .simple-menu, .dlg, .dlg *, #div-form-left, .div-area, .div-area * {

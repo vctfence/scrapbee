@@ -261,7 +261,7 @@ class IDBStorage {
     }
 
     async queryNodes(group, options) {
-        let {search, tags, date, period, types, path, limit, depth, order} = options;
+        let {search, tags, date, date2, period, types, path, limit, depth, order} = options;
         let searchrx = search? new RegExp(search, "i"): null;
         let query = dexie.nodes;
 
@@ -285,10 +285,15 @@ class IDBStorage {
 
         if (date) {
             date = (new Date(date)).getTime();
+            date2 = (new Date(date2)).getTime();
             if (isNaN(date))
                 date = null;
-            if (date && period)
-                period = period === "after"? 1: -1;
+            if (isNaN(date2))
+                date2 = null;
+            if (date && (period === "before" || period === "after"))
+                period = period === "after" ? 1 : -1;
+            else if (date && date2 && period === "between")
+                period = 2;
             else
                 period = 0;
         }
@@ -318,15 +323,18 @@ class IDBStorage {
                 const nodeMillis = node.date_added?.getTime? node.date_added.getTime(): null;
 
                 if (nodeMillis) {
-                    const nodeDate = new Date(nodeMillis);
+                    let nodeDate = new Date(nodeMillis);
                     nodeDate.setUTCHours(0, 0, 0, 0);
+                    nodeDate = nodeDate.getTime();
 
                     if (period === 0)
-                        result = result && date === nodeDate.getTime();
-                    else if (period > 0)
-                        result = result && date < nodeDate.getTime();
-                    else if (period < 0)
-                        result = result && date > nodeDate.getTime();
+                        result = result && date === nodeDate;
+                    else if (period === 1)
+                        result = result && date < nodeDate;
+                    else if (period === -1)
+                        result = result && date > nodeDate;
+                    else if (period === 2)
+                        result = result && nodeDate >= date && nodeDate <= date2;
                 }
                 else
                     result = false;
@@ -558,6 +566,7 @@ class IDBStorage {
             await dexie.blobs.add(options);
 
             node.size = object.size;
+            node.content_type = content_type;
             await this.updateNode(node);
 
             if (index?.words)

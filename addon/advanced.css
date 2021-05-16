@@ -61,7 +61,7 @@
     background-color: white;
 }
 
-#calculate-size, #reindex-content, #reset-cloud, #export-settings, #import-settings {
+#optimize-database, #calculate-size, #reindex-content, #reset-cloud, #export-settings, #import-settings {
     padding-top: 10px;
     margin-bottom: 0;
 }

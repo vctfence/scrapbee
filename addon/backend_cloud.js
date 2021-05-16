@@ -76,7 +76,7 @@ export class CloudBackend {
             await this._provider.persistDB(db);
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
             if (fe) fe(e);
         }
     }
@@ -193,7 +193,7 @@ export class CloudBackend {
                 }
             }
             catch (e) {
-                console.log(e);
+                console.error(e);
             }
         });
     }
@@ -419,7 +419,7 @@ export class CloudBackend {
                         }
                     }
                     catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
                 }));
             }
@@ -466,7 +466,7 @@ export class CloudBackend {
                     }
                 }
                 catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             }));
         }
@@ -543,7 +543,7 @@ export class CloudBackend {
                         }
                     }
                     catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
                 }
                 else {
@@ -586,7 +586,7 @@ export class CloudBackend {
             let db_root = await backend.getNode(CLOUD_SHELF_ID);
             if (!db_root) {
                 db_root = await backend.addNode(this.newCloudRootNode(), false, true, false);
-                try {await send.shelvesChanged()} catch (e) {console.log(e)}
+                try {await send.shelvesChanged()} catch (e) {console.error(e)}
             }
 
             let cloud_last_modified = await this.getLastModified();
@@ -656,7 +656,7 @@ export class CloudBackend {
                             // if (icon)
                             //     await backend.updateNode(node);
                         } catch (e) {
-                            console.log(e);
+                            console.error(e);
                         }
                     }
                     else if (node.icon && node.stored_icon) {
@@ -678,6 +678,15 @@ export class CloudBackend {
             await backend.deleteExternalNodes(null, CLOUD_EXTERNAL_NAME);
             send.shelvesChanged();
         }
+    }
+
+    startBackgroundSync(enable) {
+        if (enable)
+            this._backgroundSyncInterval = setInterval(
+                () => this.reconcileCloudBookmarksDB(),
+                15 * 60 * 1000);
+        else if (this._backgroundSyncInterval)
+            clearInterval(this._backgroundSyncInterval);
     }
 }
 
