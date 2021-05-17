@@ -62,29 +62,56 @@ function configureBackupCompressionPanel() {
 }
 
 function configureRepairPanel() {
-    $("#option-repair-images").on("change", async e => {
+    $("#option-repair-icons").prop("checked", settings.repair_icons());
+    $("#option-repair-icons").on("change", async e => {
         await settings.load();
         settings.repair_icons(e.target.checked);
     });
 
     $("#optimize-database-link").on("click", e => {
         e.preventDefault();
-        if (confirm("It is recommended to make a full backup before the optimization. "
-                        + "This action will take some time. Continue?")) {
+        if (confirm("It is recommended to make a full backup before the optimization. Continue?")) {
+
+            let progressListener = message => {
+                if (message.type === "DATABASE_OPTIMIZATION_PROGRESS") {
+                    $("#optimize-database-progress").text(`Progress: ${message.progress}%`);
+                }
+                else if (message.type === "DATABASE_OPTIMIZATION_FINISHED") {
+                    $("#optimize-database-progress").text(``);
+                    browser.runtime.onMessage.removeListener(progressListener);
+                }
+            };
+
+            browser.runtime.onMessage.addListener(progressListener);
+
             send.optimizeDatabase();
             $("#optimize-database-link").off("click");
+            $("#optimize-database-progress").text(`Progress: 0%`);
         }
     });
 
     $("#reindex-content-link").on("click", e => {
         e.preventDefault();
+
+        let progressListener = message => {
+            if (message.type === "INDEX_UPDATE_PROGRESS") {
+                $("#reindex-content-progress").text(`Progress: ${message.progress}%`);
+            }
+            else if (message.type === "INDEX_UPDATE_FINISHED") {
+                $("#reindex-content-progress").text(``);
+                browser.runtime.onMessage.removeListener(progressListener);
+            }
+        };
+
+        browser.runtime.onMessage.addListener(progressListener);
+
         send.reindexArchiveContent();
         $("#reindex-content-link").off("click");
+        $("#reindex-content-progress").text(`Progress: 0%`);
     });
 
     $("#reset-cloud-link").on("click", async e => {
         e.preventDefault();
-
         if (confirm("This will remove all cloud content. Continue?")) {
             let success = await send.resetCloud();
 

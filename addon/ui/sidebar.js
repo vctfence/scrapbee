@@ -2,7 +2,7 @@ import {send} from "../proxy.js";
 import {settings} from "../settings.js"
 import {backend, formatShelfName} from "../backend.js"
 import {ishellBackend} from "../backend_ishell.js"
-import {BookmarkTree} from "../tree.js"
+import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
 
 import {

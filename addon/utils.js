@@ -199,3 +199,17 @@ export function toHHMMSS (msecs) {
         .join(":");
 }
 
+export function cleanObject(object, forUpdate) {
+    for (let key of Object.keys(object)) {
+        if (object[key] === 0)
+            continue;
+
+        if (!object[key])
+            if (forUpdate)
+                object[key] = undefined;
+            else
+                delete object[key];
+    }
+
+    return object;
+}

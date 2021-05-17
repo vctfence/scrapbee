@@ -40,7 +40,6 @@ export class CloudBackend {
     newCloudRootNode() {
         return {id: CLOUD_SHELF_ID,
             pos: -2,
-            icon: "/icons/group.svg",
             name: CLOUD_SHELF_NAME,
             uuid: CLOUD_SHELF_NAME,
             type: NODE_TYPE_SHELF,
@@ -396,16 +395,16 @@ export class CloudBackend {
                 }));
             } else {
                 return Promise.all(cloud_nodes.map(async n => {
-                    n.external = null;
-                    n.external_id = null;
+                    n.external = undefined;
+                    n.external_id = undefined;
                     await backend.updateNode(n);
 
                     try {
                         if (isContainer(n)) {
                             await backend.traverse(n, async (parent, node) => {
                                 if (parent) {
-                                    node.external = null;
-                                    node.external_id = null;
+                                    node.external = undefined;
+                                    node.external_id = undefined;
                                     await backend.updateNode(node);
 
                                     await this.cleanBookmarkAssets(db, node);
@@ -450,16 +449,16 @@ export class CloudBackend {
         }
         else {
             return Promise.all(cloud_nodes.map(async n => {
-                n.external = null;
-                n.external_id = null;
+                n.external = undefined;
+                n.external_id = undefined;
                 await backend.updateNode(n);
 
                 try {
                     if (isContainer(n)) {
                         await backend.traverse(n, async (parent, node) => {
                             if (parent) {
-                                node.external = null;
-                                node.external_id = null;
+                                node.external = undefined;
+                                node.external_id = undefined;
                                 await backend.updateNode(node);
                             }
                         });

@@ -22,7 +22,7 @@ from werkzeug.serving import make_server
 
 from . import browser
 
-DEBUG = False
+DEBUG = True
 
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -187,10 +187,12 @@ serve_mutex = threading.Lock()
 def serve_set_path(uuid):
     global serve_path_map
     path = request.form["path"]
-    if path and os.path.exists(path):
-        serve_mutex.acquire()
-        serve_path_map[uuid] = request.form["path"]
-        serve_mutex.release()
+    if path:
+        path = os.path.expanduser(path)
+        if path and os.path.exists(path):
+            serve_mutex.acquire()
+            serve_path_map[uuid] = path
+            serve_mutex.release()
     return "OK"
 
 
@@ -473,22 +475,16 @@ def backup_list():
         result = "{"
 
         files = [f for f in os.listdir(directory) if f.endswith(BACKUP_JSON_EXT) or f.endswith(BACKUP_COMPRESSED_EXT)]
-        nfiles = len(files)
-        ctr = 0
 
         for file in files:
             path = os.path.join(directory, file)
             meta = backup_peek_meta(path)
             if meta:
                 meta = meta.strip()
-                meta = re.sub(r"\}$", f",\"file_size\":{os.path.getsize(path)}}}", meta)
-                result += f"\"{file}\": {meta}"
-                ctr += 1
-                if ctr < nfiles:
-                    result += ","
-            else:
-                nfiles -= 1
+                meta = re.sub(r"}$", f",\"file_size\":{os.path.getsize(path)}}}", meta)
+                result += f"\"{file}\": {meta},"
 
+        result = re.sub(r",$", "", result)
         result += "}"
 
         return result

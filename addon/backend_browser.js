@@ -25,7 +25,6 @@ export class BrowserBackend {
     newBrowserRootNode() {
         return {id: FIREFOX_SHELF_ID,
             pos: -1,
-            icon: "/icons/firefox.svg",
             name: FIREFOX_SHELF_NAME,
             uuid: FIREFOX_SHELF_UUID,
             type: NODE_TYPE_SHELF,
@@ -178,16 +177,16 @@ export class BrowserBackend {
                 return Promise.all(browser_nodes.map(async n => {
                     let id = n.external_id;
 
-                    n.external = null;
-                    n.external_id = null;
+                    n.external = undefined;
+                    n.external_id = undefined;
                     await backend.updateNode(n);
 
                     try {
                         if (isContainer(n)) {
                             await backend.traverse(n, async (parent, node) => {
                                 if (parent) {
-                                    node.external = null;
-                                    node.external_id = null;
+                                    node.external = undefined;
+                                    node.external_id = undefined;
                                     await backend.updateNode(node);
                                 }
                             });
@@ -227,16 +226,16 @@ export class BrowserBackend {
                 }));
             } else {
                 return Promise.all(browser_nodes.map(async n => {
-                    n.external = null;
-                    n.external_id = null;
+                    n.external = undefined;
+                    n.external_id = undefined;
                     await backend.updateNode(n);
 
                     try {
                         if (isContainer(n)) {
                             await backend.traverse(n, async (parent, node) => {
                                 if (parent) {
-                                    node.external = null;
-                                    node.external_id = null;
+                                    node.external = undefined;
+                                    node.external_id = undefined;
                                     await backend.updateNode(node);
                                 }
                             });

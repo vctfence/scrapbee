@@ -85,14 +85,16 @@
         <p class="panel-title">Repair</p>
         <form>
         <fieldset style="border: none;">
-            <input id="option-repair-images" type="checkbox"/> <label for="option-repair-images">Repair icons when checking links with context menu</label>
+            <input id="option-repair-icons" type="checkbox"/> <label for="option-repair-icons">Repair icons when checking links with context menu</label>
             <div id="optimize-database">
                 <a id="optimize-database-link" href="#">Optimize database</a>
                 <i class="help-mark"></i>
-                <span class="tips hide">Database optimization may improve Scrapyard performance if you installed it before v0.12.</span>
+                <span class="tips hide">Database optimization may improve Scrapyard performance if you installed the add-on before v0.12.</span>
+                &nbsp;<span id="optimize-database-progress"></span>
             </div>
             <div id="reindex-content">
                 <a id="reindex-content-link" href="#">Rebuild search index</a>
+                &nbsp;<span id="reindex-content-progress"></span>
             </div>
 
             <div id="reset-cloud">

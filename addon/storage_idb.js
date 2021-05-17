@@ -207,6 +207,10 @@ class IDBStorage {
             return dexie.nodes.each(iterator);
     }
 
+    filterNodes(filter) {
+        return dexie.nodes.filter(filter).toArray();
+    }
+
     async _selectDirectChildrenIdsOf(node_id, children) {
         await dexie.nodes.where("parent_id").equals(node_id).each(n => children.push(n.id));
     }
@@ -501,7 +505,7 @@ class IDBStorage {
     }
 
     // at first all objects were stored as plain strings
-    // legacy implementation for reference
+    // legacy implementation for the reference
     // async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
     //     let node = await this.getNode(node_id);
     //
@@ -559,8 +563,8 @@ class IDBStorage {
                 node_id: node.id,
                 // data, // legacy string content, may present in existing records
                 object, // new blob content
-                byte_length: byte_length,
-                type: content_type
+                byte_length: byte_length, // presence of this field indicates that the the object is binary
+                type: content_type || "text/html"
             };
 
             await dexie.blobs.add(options);
@@ -587,7 +591,7 @@ class IDBStorage {
 
             await dexie.blobs.where("node_id").equals(node.id).modify({
                 object,
-                data: null
+                data: undefined // undefined removes fields from IDB
             });
 
             node.size = object.size;

@@ -195,10 +195,10 @@ h2{
     margin-left: 4px;
     background-image: url(../icons/help-mark.svg);
     background-size: 16px 16px;
+    background-repeat: no-repeat;
     vertical-align:middle;
     display:inline-block;
 }
-
 
 form
 {
@@ -382,9 +382,10 @@ a.left-index, a:visited.left-index {
     align-content: center;
 }
 
-#backup-status-container {
-
+#compress-backup {
+    margin-left: 0;
 }
+
 
 #backup-status {
     margin-left: 15px;

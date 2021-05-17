@@ -1,9 +1,9 @@
 import {send} from "./proxy.js";
 import {nativeBackend} from "./backend_native.js";
-import {exportJSON, importJSON} from "./import.js";
 import {CLOUD_SHELF_ID, EVERYTHING, FIREFOX_BOOKMARK_MOBILE} from "./storage_constants.js";
 import {backend} from "./backend.js";
 import UUID from "./lib/uuid.js";
+import {exportJSON, importJSON} from "./import_json.js";
 
 export function listBackups(message) {
     let form = new FormData();
@@ -83,6 +83,7 @@ export async function restoreShelf(message) {
     send.startProcessingIndication();
 
     let error;
+    let shelf;
 
     try {
         await nativeBackend.post("/restore/initialize", {
@@ -99,14 +100,14 @@ export async function restoreShelf(message) {
         };
 
         const shelfName = message.new_shelf ? message.meta.alt_name : message.meta.name;
-        const shelf = await importJSON(shelfName, new Reader(), true);
+        shelf = await importJSON(shelfName, new Reader(), true);
 
         await nativeBackend.fetch("/restore/finalize");
-
-        send.nodesImported({shelf});
-
     } catch (e) {
         error = e;
+    }
+    finally {
+        send.nodesImported({shelf});
     }
 
     send.stopProcessingIndication();

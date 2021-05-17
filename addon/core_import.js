@@ -1,11 +1,14 @@
 import {isSpecialShelf} from "./storage_constants.js";
-import {exportJSON, exportOrg, importHtml, importJSON, importOrg, importRDF} from "./import.js";
 import {readFile, ReadLine} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {backend} from "./backend.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
 import UUID from "./lib/uuid.js";
+import {exportOrg, importOrg} from "./import_org.js";
+import {exportJSON, importJSON} from "./import_json.js";
+import {importHtml} from "./import_html.js";
+import {importRDF} from "./import_rdf.js";
 
 export function importFile(message) {
     const shelf = isSpecialShelf(message.file_name) ? message.file_name.toLocaleLowerCase() : message.file_name;

@@ -1,11 +1,11 @@
-import {send} from "./proxy.js";
-import {backend, formatShelfName} from "./backend.js"
-import {dropboxBackend} from "./backend_dropbox.js"
-import {cloudBackend} from "./backend_cloud.js"
+import {send} from "../proxy.js";
+import {backend, formatShelfName} from "../backend.js"
+import {dropboxBackend} from "../backend_dropbox.js"
+import {cloudBackend} from "../backend_cloud.js"
 
-import {showDlg, confirm} from "./ui/dialog.js"
-import {settings} from "./settings.js";
-import {GetPocket} from "./lib/pocket.js";
+import {showDlg, confirm} from "./dialog.js"
+import {settings} from "../settings.js";
+import {GetPocket} from "../lib/pocket.js";
 import {
     isContainer,
     isEndpoint,
@@ -36,11 +36,11 @@ import {
     TODO_SHELF_ID,
     DONE_SHELF_ID,
     DEFAULT_SHELF_NAME
-} from "./storage_constants.js";
-import {notes2html} from "./notes_render.js";
-import {getThemeVar, isElementInViewport} from "./utils_html.js";
-import {getActiveTab, openContainerTab, showNotification} from "./utils_browser.js";
-import {IMAGE_FORMATS} from "./utils.js";
+} from "../storage_constants.js";
+import {notes2html} from "../notes_render.js";
+import {getThemeVar, isElementInViewport} from "../utils_html.js";
+import {getActiveTab, openContainerTab, showNotification} from "../utils_browser.js";
+import {IMAGE_FORMATS} from "../utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
@@ -395,6 +395,7 @@ class BookmarkTree {
         if (node.type === NODE_TYPE_SHELF && node.external === FIREFOX_SHELF_NAME) {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
+            jnode.icon = "/icons/firefox.svg";
             if (!settings.show_firefox_bookmarks()) {
                 jnode.state = {hidden: true};
             }
@@ -1174,8 +1175,8 @@ class BookmarkTree {
                 label: "Check Links...",
                 action: async () => {
                     settings.load(settings => {
-                        let query = `?menu=true&repairIcons=${!!settings.repair_icons()}&scope=${o(ctxNode).id}`
-                        browser.tabs.create({url: `/ui/options.html${query}#links`, active: true});
+                        let query = `?menu=true&repairIcons=${settings.repair_icons()}&scope=${o(ctxNode).id}`
+                        browser.tabs.create({url: `options.html${query}#links`, active: true});
                     });
                 }
             },
@@ -1258,8 +1259,8 @@ class BookmarkTree {
                             Object.assign(properties, newProperties);
 
                             if (!properties.icon) {
-                                properties.icon = null;
-                                properties.stored_icon = false;
+                                properties.icon = undefined;
+                                properties.stored_icon = undefined;
                             }
 
                             self.startProcessingIndication();
@@ -1286,7 +1287,7 @@ class BookmarkTree {
 
                             tree.redraw_node(ctxNode, true, false, true);
 
-                            $("#" + properties.id).prop('title', `${properties.name}\x0A${properties.uri}`);
+                            $("#" + properties.id).prop('title', `${properties.name}${properties.uri? "\x0A" + properties.uri: ""}`);
                         });
                     }
                 }

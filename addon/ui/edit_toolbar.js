@@ -393,24 +393,24 @@ class Edit_toolbar {
         $(editBar).append(`<span style="margin-left: 8px; display: inline-block; color: black;">Original URL: </span>`);
 
         /** the original url input */
-        var txt = document.createElement("input");
-        txt.type = "text";
-        txt.className = "original-url-text";
-        $(txt).attr("readonly", "true")
-        editBar.appendChild(txt);
+        var originalURLText = document.createElement("input");
+        originalURLText.type = "text";
+        originalURLText.className = "original-url-text";
+        $(originalURLText).attr("readonly", "true")
+        editBar.appendChild(originalURLText);
 
         /** go button */
-        var link = document.createElement("a");
-        $(link).attr("target", "_blank");
-        editBar.appendChild(link);
+        var originalURLLink = document.createElement("a");
+        $(originalURLLink).attr("target", "_blank");
+        editBar.appendChild(originalURLLink);
 
         browser.runtime.sendMessage({
             type: 'GET_BOOKMARK_INFO',
             uuid: location.hash.split(":")[0].substring(1),
             id: parseInt(location.hash.split(":")[1])
         }).then(node => {
-            txt.value = node.uri;
-            link.href = node.uri;
+            originalURLText.value = node.uri || "";
+            originalURLLink.href = node.uri || "#";
             $("#page-info", editBar).html(self.formatPageInfo(node))
         });
 
@@ -419,8 +419,9 @@ class Edit_toolbar {
         btn.className = "blue-button go-button"
         btn.value = chrome.i18n.getMessage("Go");
         editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            $(link)[0].click();
+        btn.addEventListener("click", e => {
+            if (originalURLLink.href !== "#")
+                originalURLLink.click();
         });
 
         /** page info */
@@ -440,14 +441,14 @@ class Edit_toolbar {
         });
 
         $(".help-mark", editBar).hover(function(e){
-            $(this).next(".tips.hide").show().css({"margin-top": "-7px"});
+            $(this).next(".tips.hide").show().css({"margin-top": "-12px", "margin-left": "5px"});
         }, function(){
             $(this).next(".tips.hide").hide();
         });
 
         $(".i-mark", editBar).hover(function(e){
-            $(this).prev(".tips.hide").show().css({"margin-top": "-7px", "position": "absolute", "right": "100%",
-                                                   "margin-right": "-10px"});
+            $(this).prev(".tips.hide").show().css({"margin-top": "-12px", "position": "absolute", "right": "100%",
+                                                   "margin-right": "-14px"});
         }, function(){
             $(this).prev(".tips.hide").hide();
         });

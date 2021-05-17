@@ -62,15 +62,14 @@ export function renderPath(node, nodes) {
 
 export async function setUpBookmarkMessage(message, sender, activeTab) {
     if (message.type === NODE_TYPE_ARCHIVE && message.url === "")
-        message.uri = "";
+        message.uri = undefined;
     else if (!message.uri)
         message.uri = message.url || activeTab.url;
 
     const specialPage = isSpecialPage(message.uri);
 
     if (message.uri === null || message.uri === undefined || specialPage) {
-        if (specialPage)
-            notifySpecialPage();
+        notifySpecialPage();
         return false;
     }
 
@@ -78,7 +77,7 @@ export async function setUpBookmarkMessage(message, sender, activeTab) {
         message.name = message.title || activeTab.title;
 
     if (message.icon === "")
-        message.icon = null;
+        message.icon = undefined;
     else if (!message.icon)
         message.icon = await getFaviconFromTab(activeTab);
 
@@ -257,8 +256,8 @@ export async function updateNodeExternal(message, sender) {
     Object.assign(node, message);
 
     if (message.icon === "") {
-        message.icon = null;
-        message.stored_icon = false;
+        message.icon = undefined;
+        message.stored_icon = undefined;
     }
     else if (message.icon)
         await backend.storeIcon(node);
