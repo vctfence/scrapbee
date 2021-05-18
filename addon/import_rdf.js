@@ -181,14 +181,16 @@ export async function importRDF(shelf, path, threads, quick) {
 
 
     if (!quick) {
-        let progress = 0;
         let parts = bookmarks.length > threads ? partition([...bookmarks], threads) : bookmarks.map(b => [b]);
+        let progress = Array.from(new Array(parts.length),() => []);
 
-        let importf = async (items) => {
+        let importf = async (items, id) => {
             if (items.length) {
                 let bookmark = items.shift();
                 let scrapbook_id = reverse_id_map.get(bookmark.id);
-                let percent = Math.round((++progress / total) * 100);
+
+                progress[id].push(1);
+                let percent = Math.round((progress.reduce((a, p) => a + p.length, 0) / total) * 100);
 
                 try {
                     await importRDFArchive(bookmark, scrapbook_id, rdf_directory);
@@ -199,13 +201,16 @@ export async function importRDF(shelf, path, threads, quick) {
                 send.rdfImportProgress({progress: percent});
 
                 if (!cancelled)
-                    await importf(items);
+                    await importf(items, id);
             }
         };
 
         //let startTime = new Date().getTime() / 1000;
+
+        let id = 0;
+        console.log(parts.length, parts)
+        await Promise.all(parts.map(part => importf(part, id++)));
         send.rdfImportProgress({progress: 0});
-        await Promise.all(parts.map(bb => importf(bb)));
 
         // let loadTime = Math.round(new Date().getTime() / 1000 - startTime);
         // let m = Math.floor(loadTime / 60);

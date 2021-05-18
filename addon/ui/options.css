@@ -359,6 +359,11 @@ a.left-index, a:visited.left-index {
     width: 2px !important;
 }
 
+#backup-shelves-container {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
 .backup-comment {
     color: #5a5a5a;
 }
@@ -438,6 +443,7 @@ a.left-index, a:visited.left-index {
 }
 
 #link-check-timeout {
+    margin-left: 8px;
     margin-right: 8px;
     width: 50px;
 }
@@ -446,7 +452,7 @@ a.left-index, a:visited.left-index {
     width: 16px;
     height: 16px;
     display: inline-block;
-    margin-bottom: -3px;
+    margin-right: 4px;
 }
 
 #check-links {
@@ -469,6 +475,13 @@ a.left-index, a:visited.left-index {
     line-height: 22px;
     vertical-align: middle;
     margin-left: 16px;
+}
+
+#link-check-options {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    align-content: center;
 }
 
 #rdf-import-options {

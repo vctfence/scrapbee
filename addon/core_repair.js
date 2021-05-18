@@ -24,16 +24,12 @@ export async function optimizeDatabase() {
     //const nodeIDs = await backend.queryFullSubtree(1, true);
 
     let fixDate = (node, key) => {
-        if (!node[key] instanceof Date) {
-            if (node[key])
-                try {
-                    node[key] = new Date(node[key]);
-                    if (isNaN(node[key]))
-                        node[key] = new Date(0);
-                }
-                catch (e) {
+        if (!(node[key] instanceof Date)) {
+            if (node[key]) {
+                node[key] = new Date(node[key]);
+                if (isNaN(node[key]))
                     node[key] = new Date(0);
-                }
+            }
             else
                 node[key] = new Date(0);
         }
@@ -114,8 +110,8 @@ export async function optimizeDatabase() {
                     actionTaken = true;
                 }
             }
-            else
-                await backend.updateNode(node);
+
+            await backend.updateNode(node);
 
             if (actionTaken) {
                 if (DEBUG)

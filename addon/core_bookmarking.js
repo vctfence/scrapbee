@@ -296,10 +296,12 @@ export function storePageHtml(message) {
 }
 
 export async function uploadFiles(message) {
-    send.startProcessingIndication();
 
-    const helperApp = nativeBackend.probe(true);
+    const helperApp = await nativeBackend.hasVersion("0.4");
+
     if (helperApp) {
+        send.startProcessingIndication();
+
         const uuids = await nativeBackend.fetchJSON("/upload/open_file_dialog");
 
         for (const [uuid, file] of Object.entries(uuids)) {
@@ -343,11 +345,14 @@ export async function uploadFiles(message) {
             await nativeBackend.fetch(`/serve/release_path/${uuid}`);
         }
 
+        send.stopProcessingIndication();
+
         if (Object.entries(uuids).length)
             send.nodesUpdated();
     }
-
-    send.stopProcessingIndication();
+    else {
+        showNotification(`Helper application v0.4+ is required for this feature.`);
+    }
 }
 
 export async function browseNode(node, external_tab, preserve_history, container) {

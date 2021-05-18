@@ -47,7 +47,7 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     return favicon;
 }
 
-export function getFavicon(url, tryRootFirst = false, usePageOnly = false) {
+export function getFavicon(url, tryRootFirst, usePageOnly, doc) {
     let load_url = (url, type, timeout = 10000) => {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
@@ -79,20 +79,23 @@ export function getFavicon(url, tryRootFirst = false, usePageOnly = false) {
         return r && r.response.byteLength && valid_type;
     };
 
-    let extract_link = r => {
-        if (r.response && r.response.querySelector) {
-            let link = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-            if (link)
-                return new URL(link.href, origin).toString();
-        }
-        return undefined;
-    };
-
     let parsedUrl = new URL(url);
 
     // get a nice favicon for wikipedia
     if (parsedUrl.origin && parsedUrl.origin.endsWith("wikipedia.org"))
         return "https://en.wikipedia.org/favicon.ico";
+
+    let extract_link = r => {
+        if (r.response && r.response.querySelector) {
+            let link = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
+            if (link)
+                return new URL(link.href, parsedUrl.origin).toString();
+        }
+        return undefined;
+    };
+
+    if (doc)
+        return extract_link({response: doc});
 
     let default_icon = parsedUrl.origin + "/favicon.ico";
     let get_html_icon = () => load_url(url, "document").then(extract_link).catch(e => undefined);

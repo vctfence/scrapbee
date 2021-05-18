@@ -22,7 +22,7 @@ from werkzeug.serving import make_server
 
 from . import browser
 
-DEBUG = True
+DEBUG = False
 
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -441,6 +441,8 @@ def backup_peek_meta_compressed(path):
     try:
         with zipfile.ZipFile(path, "r") as zin:
             compressed = zin.namelist()[0]
+            if not compressed.endswith(BACKUP_JSON_EXT):
+                return None
             with zin.open(compressed) as backup:
                 meta = backup.readline()
                 if meta:

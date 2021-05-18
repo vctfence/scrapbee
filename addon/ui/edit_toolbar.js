@@ -82,14 +82,14 @@ class Edit_toolbar {
     formatPageInfo(node) {
         let html = "";
 
-        if (node.__formatted_date)
-            html += `<b>Added on:</b> ${node.__formatted_date}`;
+        if (node?.__formatted_date)
+            html += `<b>Added on:</b> ${node?.__formatted_date}`;
 
-        if (node.__formatted_date && node.__formatted_size)
+        if (node?.__formatted_date && node?.__formatted_size)
             html += ", ";
 
-        if (node.__formatted_size)
-            html += `<b>Size:</b> ${node.__formatted_size}`;
+        if (node?.__formatted_size)
+            html += `<b>Size:</b> ${node?.__formatted_size}`;
 
         if (!html)
             html = "&lt;no data&gt;";
@@ -409,8 +409,8 @@ class Edit_toolbar {
             uuid: location.hash.split(":")[0].substring(1),
             id: parseInt(location.hash.split(":")[1])
         }).then(node => {
-            originalURLText.value = node.uri || "";
-            originalURLLink.href = node.uri || "#";
+            originalURLText.value = node?.uri || "";
+            originalURLLink.href = node?.uri || "#";
             $("#page-info", editBar).html(self.formatPageInfo(node))
         });
 

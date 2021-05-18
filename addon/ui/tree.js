@@ -40,7 +40,7 @@ import {
 import {notes2html} from "../notes_render.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTab, openContainerTab, showNotification} from "../utils_browser.js";
-import {IMAGE_FORMATS} from "../utils.js";
+import {cleanObject, IMAGE_FORMATS} from "../utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
@@ -323,6 +323,10 @@ class BookmarkTree {
     //     return "";
     // }
 
+    static _formatNodeTooltip(node) {
+        return `${node.name}${node.uri? "\x0A" + node.uri: ""}`;
+    }
+
     static _styleTODO(node) {
         if (node.todo_state)
             return " todo-state-" + (node._overdue
@@ -434,7 +438,7 @@ class BookmarkTree {
         else if (node.type !== NODE_TYPE_SHELF) {
             jnode.li_attr = {
                 class: "show_tooltip",
-                title: `${node.name}${node.uri? "\x0A" + node.uri: ""}`,
+                title: BookmarkTree._formatNodeTooltip(node),
                 //"data-id": node.id,
                 "data-clickable": "true"
             };
@@ -1243,7 +1247,7 @@ class BookmarkTree {
             propertiesItem: {
                 separator_before: true,
                 label: "Properties...",
-                action: async function () {
+                action: async () => {
                     if (isEndpoint(o(ctxNode))) {
                         let properties = await backend.getNode(o(ctxNode).id);
 
@@ -1272,6 +1276,8 @@ class BookmarkTree {
 
                             delete properties.comments;
 
+                            cleanObject(properties, true);
+
                             await backend.updateBookmark(properties);
 
                             self.stopProcessingIndication();
@@ -1287,7 +1293,7 @@ class BookmarkTree {
 
                             tree.redraw_node(ctxNode, true, false, true);
 
-                            $("#" + properties.id).prop('title', `${properties.name}${properties.uri? "\x0A" + properties.uri: ""}`);
+                            $("#" + properties.id).prop('title', BookmarkTree._formatNodeTooltip(properties));
                         });
                     }
                 }

@@ -10,11 +10,13 @@ import {
 } from "./storage_constants.js";
 import {settings} from "./settings.js";
 import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./core_bookmarking.js";
-import {getFaviconFromTab} from "./favicon.js";
+import {getFavicon, getFaviconFromTab} from "./favicon.js";
 import {backend} from "./backend.js";
 import {send} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
+import {parseHtml} from "./utils_html.js";
+import {fetchText} from "./utils_io.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
@@ -76,9 +78,9 @@ export async function setUpBookmarkMessage(message, sender, activeTab) {
     if (!message.name)
         message.name = message.title || activeTab.title;
 
-    if (message.icon === "")
+    if (message.icon === "" || message.pack)
         message.icon = undefined;
-    else if (!message.icon)
+    else if (!message.icon && !message.local)
         message.icon = await getFaviconFromTab(activeTab);
 
     const path = backend.expandPath(message.path);
@@ -89,6 +91,7 @@ export async function setUpBookmarkMessage(message, sender, activeTab) {
     // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
     message.__automation = !(sender.ishell && message.search);
 
+    // adding bookmark from ishell, take preparations in UI
     if (!message.__automation) {
         try {
             backend.setTentativeId(message);
@@ -133,6 +136,33 @@ export async function createBookmarkExternal(message, sender) {
 
     if (!await setUpBookmarkMessage(message, sender, await getActiveTab()))
         return;
+
+    if (message.icon === true || message.title === true) {
+        try {
+            const content = await fetchText(message.uri);
+            const doc = parseHtml(content);
+
+            if (message.icon === true)
+                message.icon = await getFavicon(message.uri, false, false, doc);
+
+            if (message.title === true) {
+                const titleElement = doc.querySelector("title");
+                if (titleElement)
+                    message.name = titleElement.textContent;
+                else
+                    message.name = "Untitled";
+            }
+        }
+        catch (e) {
+            if (message.icon === true)
+                message.icon = undefined;
+
+            if (message.title === true)
+                message.name = "Untitled";
+
+            console.error(e);
+        }
+    }
 
     return backend.addBookmark(message, NODE_TYPE_BOOKMARK)
         .then(async bookmark => {
@@ -185,8 +215,18 @@ export async function createArchiveExternal(message, sender) {
                 const local_uri = await setUpLocalFileCapture(message);
 
                 let content;
-                if (message.content_type === "text/html")
-                    content = await packUrl(local_uri, message.hide_tab);
+                if (message.content_type === "text/html") {
+                    const page = await packUrlExt(local_uri, message.hide_tab);
+                    if (page.icon && (message.icon === null || message.icon === undefined)) {
+                        bookmark.icon = page.icon
+                        await backend.storeIcon(bookmark);
+                    }
+
+                    if (page.title)
+                        bookmark.name = page.title;
+
+                    content = page.html;
+                }
                 else {
                     const response = await fetch(local_uri);
                     if (response.ok) {
@@ -203,7 +243,17 @@ export async function createArchiveExternal(message, sender) {
                 return saveContent(bookmark, content);
             }
             else if (message.pack) {
-                return saveContent(bookmark, await packUrl(message.url, message.hide_tab));
+                const page = await packUrlExt(message.url, message.hide_tab);
+                if (page.icon) {
+                    bookmark.icon = page.icon
+                    await backend.storeIcon(bookmark);
+                }
+
+                bookmark.name = page.title;
+
+                await backend.updateBookmark(bookmark);
+
+                return saveContent(bookmark, page.html);
             }
             else if (message.content) {
                 return saveContent(bookmark, message.content)

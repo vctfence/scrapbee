@@ -17,7 +17,8 @@ class NativeBackend {
         else {
             this.port = new Promise(async (resolve, reject) => {
                 let port = browser.runtime.connectNative("scrapyard_helper");
-                port.onDisconnect.addListener((error) => {
+
+                port.onDisconnect.addListener(error => {
                     resolve(null);
                     this.port = null;
                 })
@@ -35,13 +36,20 @@ class NativeBackend {
 
                 port.onMessage.addListener(initListener);
 
-                settings.load(s => {
+                await settings.load();
+
+                try {
                     port.postMessage({
                         type: "INITIALIZE",
                         port: settings.helper_port_number(),
                         auth: this.auth
                     });
-                });
+                }
+                catch (e) {
+                    //console.error(e, e.name)
+                    resolve(null);
+                    this.port = null;
+                }
             });
 
             return this.port;
@@ -52,7 +60,6 @@ class NativeBackend {
         const port = await this.getPort();
         if (!port && verbose)
             showNotification({message: "Can not connect to the helper application."})
-
         return !!port;
     }
 
@@ -65,7 +72,7 @@ class NativeBackend {
     }
 
     async hasVersion(version) {
-        if (!await this.probe())
+        if (!(await this.probe()))
             return false;
 
         let installed = this.getVersion();

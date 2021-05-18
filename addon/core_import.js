@@ -41,7 +41,7 @@ export async function exportFile(message) {
     }
 
     let exportf = format === "json" ? exportJSON : exportOrg;
-    let file_name = shelf.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_")
+    let file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_")
         + `.${format == "json" ? "jsonl" : format}`;
 
     let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));

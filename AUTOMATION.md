@@ -39,15 +39,14 @@ Creates a bookmark in Scrapyard.
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
     type:       "SCRAPYARD_ADD_BOOKMARK",
-    title:      "Bookmark Title",                 // Bookmark title
     url:        "http://example.com",             // Bookmark URL
+    title:      "Bookmark Title",                 // Bookmark title
     icon:       "http://example.com/favicon.ico", // URL of bookmark favicon
-    path:       "shelf/my/directory",             // Bookmark sehlf and directory
+    path:       "shelf/my/directory",             // Bookmark shelf and directory
     tags:       "comma, separated",               // List of bookmark tags
     details:    "Bookmark details",               // Bookmark details
     todo_state: 1,                                // One of the following integers: 1, 2, 3, 4, 5
-                                                  // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED
-                                                  // TODO states respectively
+                                                  // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED states respectively
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
     comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
@@ -56,10 +55,13 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 ```
 
 All parameters are optional. Directories in the bookmark path will be created automatically, if not exist.
-The relevant missing parameters (url, title, icon) will be captured from the active tab. In this and the
+The relevant missing parameters (`url`, `title`, `icon`) will be captured from the active tab. In this and the
 following API the icon URL is used by Scrapyard only to store its image in the database, so it may be a URL from a
 local server, or a [data-URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
 If this parameter is explicitly set to an empty string, the default icon will be used.
+
+If `title` or `icon` parameters are explicitly set to `true`, bookmark title or icon will be extracted from the page
+defined by the `url` parameter.
 
 Returns UUID of the newly created bookmark.
 
@@ -73,15 +75,14 @@ Creates an archive in Scrapyard.
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
     type:         "SCRAPYARD_ADD_ARCHIVE",
-    title:        "Bookmark Title",                 // Bookmark title
     url:          "http://example.com",             // Bookmark URL
+    title:        "Bookmark Title",                 // Bookmark title
     icon:         "http://example.com/favicon.ico", // URL of bookmark favicon
-    path:         "shelf/my/directory",             // Bookmark sehlf and directory
+    path:         "shelf/my/directory",             // Bookmark shelf and directory
     tags:         "comma, separated",               // List of bookmark tags
     details:      "Bookmark details",               // Bookmark details
     todo_state:   1,                                // One of the following integers: 1, 2, 3, 4, 5
-                                                    // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED
-                                                    // TODO states respectively
+                                                    // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED states respectively
     todo_date:    "YYYY-MM-DD",                     // TODO expiration date
     comments:     "comment text",                   // Bookmark comments
     container:    "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
@@ -98,19 +99,22 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 ```
 
 All parameters are optional. Directories in the bookmark path will be created automatically, if not exist.
-The relevant missing parameters (url, title, icon, content, content_type) will be captured
+The relevant missing parameters (`url`, `title`, `icon`, `content`, `content_type`) will be captured
 from the active tab. If the `url` parameter is explicitly set to an empty string,
 it will remain empty.
 
-When the `pack` parameter is specified, this API ignores the `content` parameter, and packs, then stores the page defined by the `url`
-parameter. "text/html" content type is assumed. A new tab is created, which is required for page packing (see the API below).
-The tab could be hidden through the `hide_tab` message option. Although this option may be useful
+When the `pack` parameter is specified, this API ignores the `content`, `title`, and `icon` parameters,
+and packs, then stores the page defined by the `url` parameter. "text/html" content type is assumed.
+A new tab is created, which is required for page packing (see the API below).
+This tab could be hidden through the `hide_tab` message option. Although this option may be useful
 in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
 tabs and offer to remove the addon.
 
 The `pack` and `content` parameters are ignored if the `local` parameter is set to `true`. The addon will perform
-packing of HTML content automatically, although it may be a better option to use `SCRAPYARD_PACK_PAGE` API to import HTML
-content to obtain page icon and title.
+packing of the HTML content as the `pack` option, or store binary content otherwise. The `title` and `icon` parameters are
+taken into account.
+
+If `pack` or `local` parameters are used, bookmark icon and title will be set automatically in the case of HTML content.
 
 Returns UUID of the newly created archive.
 
@@ -119,9 +123,10 @@ Returns UUID of the newly created archive.
 Packs content of all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
 When displayed in the browser, such a page will not rely on any external dependencies
 and could be served from a database.
-Use this API, for example, when you need to get icon or title from the captured page, or to somehow modify it.
+Use this API, for example, when you need to somehow modify the captured page.
+
 This API creates a new tab which is required for its operation and closes it on completion.
-The tab could be hidden through the `hide_tab` message option. Although this option may be useful
+This tab could be hidden through the `hide_tab` message option. Although this option may be useful
 in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
 tabs and offer to remove the addon.
 
@@ -178,8 +183,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     tags:       "comma, separated",               // List of bookmark tags
     details:    "Bookmark details",               // Bookmark details
     todo_state: 1,                                // One of the following integers: 1, 2, 3, 4, 5
-                                                  // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED
-                                                  // TODO states respectively
+                                                  // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED states respectively
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
     comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
@@ -348,8 +352,8 @@ class UploadFile {
         args[OBJECT] = {nountype: noun_arb_text, label: "path"};
         // cmdAPI.scrapyard.noun_type_directory provides the list of all Scrapyard directories
         // to autocompletion
-        const directory_type = cmdAPI.scrapyard?.noun_type_directory || {suggest: () => ({})};
-        args[AT] = {nountype: directory_type, label: "directory"};
+        const directory_noun = cmdAPI.scrapyard?.noun_type_directory || {suggest: () => ({})};
+        args[AT] = {nountype: directory_noun, label: "directory"};
     }
 
     preview({OBJECT, AT}, display) {
@@ -365,35 +369,14 @@ class UploadFile {
         let title = localPath.replaceAll("\\", "/").split("/");
         title = title[title.length - 1]; // use file name as the default bookmark title
 
-        let icon = "";
-        let content;
-
-        const isHtml = /\.html?$/i.test(localPath);
-
-        // Gracefully capture HTML
-        if (isHtml) {
-            // cmdAPI.scrapyard offers a more concise way to send messages to Scrapyard from iShell.
-            // Method names are camel-case message suffixes with the "SCRAPYARD_" part omitted.
-            // There is no need to specify Scrapyard addon ID and the 'type' parameter.
-            const page = await cmdAPI.scrapyard.packPage({
-                url: localPath,
-                local: true
-            });
-
-            title = page.title || title;
-            icon = page.icon;
-            content = page.html;
-        }
-
-        // Just save content if HTML is already obtained.
-        // Otherwise, use the 'local' parameter to indicate that the local path needs to be captured.
+        // cmdAPI.scrapyard offers a more concise way to send messages to Scrapyard from iShell.
+        // Method names are camel-case message suffixes with the "SCRAPYARD_" part omitted.
+        // There is no need to specify Scrapyard addon ID and the 'type' parameter.
         cmdAPI.scrapyard.addArchive({
             title:   title,
-            url:     isHtml? "": localPath,
-            icon:    icon,
+            url:     localPath,
             path:    AT?.text,
-            content: content,
-            local:   !isHtml,
+            local:   true,
             select:  true
         });
     }

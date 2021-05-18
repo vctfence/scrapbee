@@ -5,6 +5,11 @@ export function partition(items, size) {
     while (items.length > 0)
         result.push(items.splice(0, n));
 
+    if (result.length > size) {
+        result[result.length - 2] = [...result[result.length - 2], result[result.length - 1]];
+        result.splice(result.length - 1, 1);
+    }
+
     return result;
 }
 

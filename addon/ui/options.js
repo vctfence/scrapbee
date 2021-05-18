@@ -205,18 +205,20 @@ function loadHelperAppLinks() {
             link.href = release.assets[1].browser_download_url;
             helperAppLinksLoaded = true;
 
-            const installedVersion = await send.helperAppGetVersion();
-            const INSTALLED_VERSION_TEXT = `<b>Installed version:</b> %%%`;
-
-            if (installedVersion)
-                $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT.replace("%%%", "v" + installedVersion));
-            else
-                $("#helper-app-version").html(INSTALLED_VERSION_TEXT.replace("%%%", "not installed"));
-
             let version = release.name.split(" ");
             version = version[version.length - 1];
 
             $("#helper-app-version").html(`<b>Latest version:</b> ${version}`);
+
+            const installedVersion = await send.helperAppGetVersion();
+            const INSTALLED_VERSION_TEXT = `<b>Installed version:</b> %%%`;
+
+            if (installedVersion)
+                $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT
+                    .replace("%%%", "v" + installedVersion));
+            else
+                $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT
+                    .replace("%%%", "not installed"));
         }
     };
     xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
@@ -386,6 +388,8 @@ async function onStartRDFImport(e) {
     //$("#rdf-import-progress").val(0);
     //$("#rdf-progress-row").show();
 
+    let runningProgress = 0;
+
     let importListener = message => {
         if (message.type === "RDF_IMPORT_PROGRESS") {
             let bar = $("#rdf-import-progress");
@@ -393,7 +397,10 @@ async function onStartRDFImport(e) {
                 bar = $(`<progress id="rdf-import-progress" max="100" value="0"/>`);
                 progress_row.empty().append(bar);
             }
-            bar.val(message.progress);
+            if (message.progress > runningProgress) {
+                runningProgress = message.progress;
+                bar.val(message.progress);
+            }
         }
         else if (message.type === "RDF_IMPORT_ERROR") {
             let invalid_link = `<a href="#" target="_blank" data-id="${message.bookmark.id}"
@@ -714,7 +721,7 @@ async function populateBackup() {
         $("#backup-button").attr("disabled", false);
     }
     else {
-        backupSetStatus(`<div>Scrapyard <a href="#helperapp">helper application</a> v0.3+ is required</div>`);
+        backupSetStatus(`<div>Scrapyard <a href="#helperapp">helper application</a> v0.4+ is required</div>`);
         $("#backup-button").attr("disabled", true);
     }
 }
