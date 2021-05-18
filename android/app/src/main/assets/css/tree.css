@@ -4,6 +4,8 @@
 .jstree-default .jstree-node {
     margin-left: 16px;
     min-width: 16px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 .jstree-default .jstree-icon:empty {
     width: 16px;

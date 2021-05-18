@@ -97,7 +97,7 @@ public class BrowseBookmarksFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_browse_bookmarks, container, false);
         final Resources r = rootView.getResources();
 
-        String url = "file:///android_asset/browser.html";
+        String url = "file:///android_asset/treeview.html";
 
         //WebView.setWebContentsDebuggingEnabled(true);
 

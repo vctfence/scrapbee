@@ -112,7 +112,7 @@ function configureRepairPanel() {
 
     $("#reset-cloud-link").on("click", async e => {
         e.preventDefault();
-        if (confirm("This will remove all cloud content. Continue?")) {
+        if (confirm("This will remove all Cloud shelf content. Continue?")) {
             let success = await send.resetCloud();
 
             if (!success)

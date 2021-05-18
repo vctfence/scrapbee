@@ -58,7 +58,7 @@ public class BrowseArchiveFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_browse_archive, container, false);
         final Resources r = rootView.getResources();
 
-        String url = "file:///android_asset/loading.html";
+        String url = "file:///android_asset/browser.html";
         WebView browser = (WebView) rootView.findViewById(R.id.wvBrowseArchive);
         browser.getSettings().setJavaScriptEnabled(true);
         browser.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
