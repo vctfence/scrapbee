@@ -1255,6 +1255,7 @@ var animation = {
 
 var clip = document.querySelector('#eT9VLHb5slv4');
 clip.addEventListener('mouseenter', startAnimation);
+clip.addEventListener('mousemove', startAnimation);
 
 var animated = false;
 function startAnimation() {

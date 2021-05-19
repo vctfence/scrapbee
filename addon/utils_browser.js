@@ -31,6 +31,10 @@ export async function openPage(url) {
     return browser.tabs.create({"url": url});
 }
 
+export async function updateTab(tab, url, preserveHistory) {
+    return browser.tabs.update(tab.id, {"url": url, "loadReplace": !preserveHistory})
+}
+
 export async function openContainerTab(url, container) {
     try {
         return await browser.tabs.create({"url": url, cookieStoreId: container});

@@ -1,18 +1,20 @@
 import {backend} from "./backend.js";
+import {receiveExternal} from "./proxy.js";
 import {renderPath} from "./core_automation.js";
 import {NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./storage_constants.js";
 import {browseNode} from "./core_bookmarking.js";
+import {ishellBackend} from "./backend_ishell.js";
 
-export async function scrapyardListShelves(sender) {
-    if (!sender.ishell)
+receiveExternal.scrapyardListShelves = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
     let shelves = await backend.listShelves();
     return shelves.map(n => ({name: n.name}));
-}
+};
 
-export async function scrapyardListGroups(sender) {
-    if (!sender.ishell)
+receiveExternal.scrapyardListGroups = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
     let shelves = await backend.listShelves();
@@ -23,18 +25,18 @@ export async function scrapyardListGroups(sender) {
     groups = groups.map(n => ({name: n.name, path: n.path}));
 
     return [...shelves, ...groups];
-}
+};
 
-export async function scrapyardListTags(sender) {
-    if (!sender.ishell)
+receiveExternal.scrapyardListTags = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
     let tags = await backend.queryTags();
     return tags.map(t => ({name: t.name.toLocaleLowerCase()}));
-}
+};
 
-export async function scrapyardListNodes(message, sender) {
-    if (!sender.ishell)
+receiveExternal.scrapyardListNodes = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
     delete message.type;
@@ -60,14 +62,14 @@ export async function scrapyardListNodes(message, sender) {
         return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
     else
         return nodes;
-}
+};
 
-export function scrapyardBrowseNode(message, sender) {
-    if (!sender.ishell)
+receiveExternal.scrapyardBrowseNode = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
     if (message.node.uuid)
         backend.getNode(message.node.uuid, true).then(node => browseNode(node));
     else
         browseNode(message.node);
-}
+};

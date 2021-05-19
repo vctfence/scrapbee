@@ -158,6 +158,7 @@ function showDlg(name, data, callback) {
         });
         $dlg.find("input.button-cancel").bind("click.dlg", function () {
             $dlg.remove();
+            resolve(null);
         });
 
         let more_properties = $dlg.find("#more-properties");

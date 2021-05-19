@@ -214,7 +214,7 @@ export function initializeOmnibox() {
     let suggestions;
 
     const makeSuggestion = function(node) {
-        let suggestion = {__node: node, description: node.name};
+        let suggestion = {__node: node, description: node.name || ""};
         if (node.type === NODE_TYPE_BOOKMARK)
             suggestion.content = node.uri;
         else

@@ -271,18 +271,15 @@ async function objectToProperties(object) {
 
     for (let key of ORG_EXPORTED_KEYS) {
         if (node[key]) {
-            if (key === "date_added" || key === "date_modified")
-                try {
-                    if (node[key] instanceof Date)
-                        node[key] = node[key].getTime();
-                    else
-                        node[key] = new Date(node[key]).getTime();
+            if (key === "date_added" || key === "date_modified") {
+                if (node[key] instanceof Date)
+                    node[key] = node[key].getTime();
+                else
+                    node[key] = new Date(node[key]).getTime();
 
-                    if (isNaN(node[key]))
-                        node[key] = new Date(node[key]).getTime();
-                } catch (e) {
-                    node[key] = new Date().getTime();
-                }
+                if (isNaN(node[key]))
+                    node[key] = new Date(0).getTime();
+            }
 
             lines.push(`:${key}: ${node[key]}`);
         }
@@ -359,7 +356,7 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow) {
 
     for (let node of nodes) {
         if (node.type === NODE_TYPE_SHELF || node.type === NODE_TYPE_GROUP) {
-            let line = "\n" + "*".repeat(node.level) + " " + node.name;
+            let line = "\n" + "*".repeat(node.level) + " " + (node.name || "");
             await file.append(line);
         }
         else {

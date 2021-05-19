@@ -790,7 +790,7 @@ async function backupShelf() {
                                style="margin-left: 10px; flex-grow: 1;"/></div>
                           <div id="backup-processing-time" style="margin-right: 15px">00:00</div>`);
 
-    send.startProcessingIndication();
+    send.startProcessingIndication({no_wait: true});
     processingInterval = setInterval(backupUpdateTime, 1000);
     processingTime = Date.now();
 

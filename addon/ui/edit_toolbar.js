@@ -123,7 +123,7 @@ class EditToolbar {
             type: 'UPDATE_ARCHIVE',
             id: parseInt(location.hash.split(":")[1]),
             data: "<!DOCTYPE html>" + doc.outerHTML
-        }).then(() => {
+        }).then(async () => {
             return browser.runtime.sendMessage({
                 type: 'GET_BOOKMARK_INFO',
                 uuid: location.hash.split(":")[0].substring(1),

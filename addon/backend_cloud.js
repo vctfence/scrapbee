@@ -488,7 +488,6 @@ export class CloudBackend {
 
     // should only be called in the background script through message
     async reconcileCloudBookmarksDB(verbose) {
-
         if (verbose) {
             // resolve inconsistency after the migration to the new dropbox authorization protocol
             if (settings.dropbox___dbat() && !this.isAuthenticated()) {

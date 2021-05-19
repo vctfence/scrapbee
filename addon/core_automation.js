@@ -12,27 +12,28 @@ import {settings} from "./settings.js";
 import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./core_bookmarking.js";
 import {getFavicon, getFaviconFromTab} from "./favicon.js";
 import {backend} from "./backend.js";
-import {send} from "./proxy.js";
+import {send, receiveExternal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
+import {ishellBackend} from "./backend_ishell.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
 
-    return sender.ishell
+    return ishellBackend.isIShell(sender.id)
         || (settings.enable_automation() && (!extension_whitelist
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
 }
 
-export function scrapyardGetVersion(sender) {
+receiveExternal.scrapyardGetVersion = (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
     window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
     return browser.runtime.getManifest().version;
-}
+};
 
 export function renderPath(node, nodes) {
     let path = [];
@@ -89,7 +90,7 @@ export async function setUpBookmarkMessage(message, sender, activeTab) {
     delete message.path;
 
     // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
-    message.__automation = !(sender.ishell && message.search);
+    message.__automation = !(ishellBackend.isIShell(sender.id) && message.search);
 
     // adding bookmark from ishell, take preparations in UI
     if (!message.__automation) {
@@ -128,7 +129,7 @@ export async function cleanUpLocalFileCapture(message) {
         await nativeBackend.fetch(`/serve/release_path/${message.__local_uuid}`);
 }
 
-export async function createBookmarkExternal(message, sender) {
+receiveExternal.scrapyardAddBookmark = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
@@ -177,9 +178,9 @@ export async function createBookmarkExternal(message, sender) {
 
             return bookmark.uuid;
         });
-}
+};
 
-export async function createArchiveExternal(message, sender) {
+receiveExternal.scrapyardAddArchive = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
@@ -266,9 +267,9 @@ export async function createArchiveExternal(message, sender) {
                 return bookmark.uuid;
             }
         });
-}
+};
 
-export async function getNodeExternal(message, sender) {
+receiveExternal.scrapyardGetUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
@@ -289,9 +290,9 @@ export async function getNodeExternal(message, sender) {
             container: node.container
         }
     }
-}
+};
 
-export async function updateNodeExternal(message, sender) {
+receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
@@ -319,9 +320,9 @@ export async function updateNodeExternal(message, sender) {
 
     if (message.refresh)
         send.nodesUpdated();
-}
+};
 
-export async function removeNodeExternal(message, sender) {
+receiveExternal.scrapyardRemoveUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
@@ -332,9 +333,9 @@ export async function removeNodeExternal(message, sender) {
 
     if (message.refresh)
         send.nodesUpdated();
-}
+};
 
-export async function packPageExternal(message, sender) {
+receiveExternal.scrapyardPackPage = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
@@ -352,13 +353,13 @@ export async function packPageExternal(message, sender) {
     }
     else
         return packUrlExt(message.url, message.hide_tab);
-}
+};
 
-export async function browseNodeExternal(message, sender) {
+receiveExternal.scrapyardBrowseUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
     const node = await backend.getNode(message.uuid, true);
     if (node)
         browseNode(node);
-}
+};

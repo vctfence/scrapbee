@@ -2,17 +2,18 @@ import {send} from "./proxy.js";
 import {nativeBackend} from "./backend_native.js";
 import {CLOUD_SHELF_ID, EVERYTHING, FIREFOX_BOOKMARK_MOBILE} from "./storage_constants.js";
 import {backend} from "./backend.js";
+import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";
 import {exportJSON, importJSON} from "./import_json.js";
 
-export function listBackups(message) {
+receive.listBackups = message => {
     let form = new FormData();
     form.append("directory", message.directory);
 
     return nativeBackend.fetchJSON(`/backup/list`, {method: "POST", body: form});
-}
+};
 
-export async function backupShelf(message) {
+receive.backupShelf = async message => {
     const everything = message.shelf.toLowerCase() === EVERYTHING;
     let shelf, shelfName, shelfUUID;
 
@@ -80,10 +81,10 @@ export async function backupShelf(message) {
     }
 
     await process;
-}
+};
 
-export async function restoreShelf(message) {
-    send.startProcessingIndication();
+receive.restoreShelf = async message => {
+    send.startProcessingIndication({no_wait: true});
 
     let error;
     let shelf;
@@ -111,24 +112,23 @@ export async function restoreShelf(message) {
             }
         };
 
-        const shelfName = message.new_shelf ? message.meta.alt_name : message.meta.name;
+        const shelfName = message.new_shelf? message.meta.alt_name: message.meta.name;
         shelf = await importJSON(shelfName, new Reader(), true);
     } catch (e) {
         error = e;
     }
     finally {
         await nativeBackend.fetch("/restore/finalize");
+        send.stopProcessingIndication();
         send.nodesImported({shelf});
     }
 
-    send.stopProcessingIndication();
-
     if (error)
         throw error;
-}
+};
 
-export async function deleteBackup(message) {
-    send.startProcessingIndication();
+receive.deleteBackup = async message => {
+    send.startProcessingIndication({no_wait: true});
 
     try {
         await nativeBackend.post("/backup/delete", {

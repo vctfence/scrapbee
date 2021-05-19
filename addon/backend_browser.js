@@ -105,8 +105,7 @@ export class BrowserBackend {
 
         if (node.external === FIREFOX_SHELF_NAME) {
             return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id,
-                {title: node.name,
-                    url: node.uri}));
+                {title: node.name, url: node.uri}));
         }
     }
 

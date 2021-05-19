@@ -21,16 +21,9 @@ import {cleanObject} from "./utils.js";
 
 const FORMAT_VERSION = 2;
 
-function parseJSONObject(line) {
-    try {
-        return JSON.parse(line);
-    } catch (e) {
-        console.error(e)
-    }
-}
-
 async function importJSONObject(object) {
-    let node;
+    if (!object.name)
+        object.name = "";
 
     if (object.date_added)
         object.date_added = new Date(object.date_added);
@@ -48,6 +41,8 @@ async function importJSONObject(object) {
 
     let icon_data = object.icon_data;
     delete object.icon_data;
+
+    let node;
 
     if (object.type === NODE_TYPE_ARCHIVE) {
         let blob = object.blob;
@@ -93,7 +88,7 @@ export async function importJSON(shelf, reader, progress) {
 
     meta_line = meta_line.replace(/^\[/, "");
     meta_line = meta_line.replace(/,$/, "");
-    const meta = parseJSONObject(meta_line);
+    const meta = JSON.parse(meta_line);
 
     if (!meta)
         return Promise.reject(new Error("invalid file format"));
@@ -101,7 +96,7 @@ export async function importJSON(shelf, reader, progress) {
     if (meta.version > FORMAT_VERSION)
         return Promise.reject(new Error("export format is not supported"));
 
-    let parseJSONObjectImpl = parseJSONObject;
+    let parseJSONObjectImpl = JSON.parse;
     let importJSONObjectImpl = importJSONObject;
 
     switch (meta.version) {
@@ -144,8 +139,8 @@ export async function importJSON(shelf, reader, progress) {
     renameSpecialShelves(first_object);
 
     // Do not import "default" shelf, because it is always there, but import as group if aliased
-    if (first_object.name.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliased_everything) {
-        if (aliased_everything && first_object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME)
+    if (first_object.name?.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliased_everything) {
+        if (aliased_everything && first_object.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME)
             first_object.uuid = UUID.numeric();
 
         first_object = await importJSONObjectImpl(first_object);
@@ -165,12 +160,12 @@ export async function importJSON(shelf, reader, progress) {
             renameSpecialShelves(object);
 
             // Do not import "default" shelf, because it is always there (non-aliased import)
-            if (object.type === NODE_TYPE_SHELF && object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME
+            if (object.type === NODE_TYPE_SHELF && object.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME
                 && !aliased_everything) {
                 ctr += 1;
                 continue;
             }
-            else if (object.type === NODE_TYPE_SHELF && object.name.toLocaleLowerCase() === DEFAULT_SHELF_NAME
+            else if (object.type === NODE_TYPE_SHELF && object.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME
                 && aliased_everything)
                 object.uuid = UUID.numeric();
 
@@ -201,39 +196,38 @@ export async function importJSON(shelf, reader, progress) {
 
     if (progress) {
         if (ctr !== meta.entities)
-            throw new Error("some nodes are missing")
+            throw new Error("some records are missing")
     }
 
     return shelf_node;
 }
 
 async function objectToJSON(object) {
-    let node = object;
-
-    delete node.level;
-    delete node.tag_list;
-
-    if (node.external === FIREFOX_SHELF_NAME) {
-        delete node.external;
-        delete node.external_id;
-    }
+    let node = cleanObject(object);
 
     for (let key of Object.keys(node)) {
         if (!NODE_PROPERTIES.some(k => k === key))
             delete node[key];
 
-        if (key === "date_added" || key === "date_modified")
-            try {
-                if (node[key] instanceof Date)
-                    node[key] = node[key].getTime();
-                else
-                    node[key] = new Date(node[key]).getTime();
+        if (key === "date_added" || key === "date_modified") {
+            if (node[key] instanceof Date)
+                node[key] = node[key].getTime();
+            else
+                node[key] = new Date(node[key]).getTime();
 
-                if (isNaN(node[key]))
-                    node[key] = new Date(node[key]).getTime();
-            } catch (e) {
-                node[key] = new Date().getTime();
-            }
+            if (isNaN(node[key]))
+                node[key] = new Date(0).getTime();
+        }
+    }
+
+    if (!node.name)
+        node.name = "";
+
+    delete node.tag_list;
+
+    if (node.external === FIREFOX_SHELF_NAME) {
+        delete node.external;
+        delete node.external_id;
     }
 
     if (node.type === NODE_TYPE_ARCHIVE) {
@@ -270,7 +264,7 @@ async function objectToJSON(object) {
         node.icon_data = icon;
     }
 
-    return JSON.stringify(cleanObject(node));
+    return JSON.stringify(node);
 }
 
 export async function exportJSON(file, nodes, shelf, uuid, _, comment, progress) {

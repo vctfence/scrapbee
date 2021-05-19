@@ -1,5 +1,5 @@
 import {backend} from "./backend.js";
-import {send} from "./proxy.js";
+import {send, receive} from "./proxy.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
 import {cleanObject, computeSHA1, formatBytes} from "./utils.js";
 import {settings} from "./settings.js";
@@ -7,7 +7,7 @@ import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
 import {parseHtml, fixDocumentEncoding} from "./utils_html.js";
 
-export async function getAddonIDBPath() {
+receive.getAddonIdbPath = async message => {
     let helperApp = await nativeBackend.probe();
 
     if (!helperApp)
@@ -16,9 +16,9 @@ export async function getAddonIDBPath() {
     const addonId = browser.runtime.getURL("/").split("/")[2];
 
     return nativeBackend.fetchText(`/request/idb_path/${addonId}`)
-}
+};
 
-export async function optimizeDatabase() {
+receive.optimizeDatabase = async message => {
     const DEBUG = false;
     const nodeIDs = await backend.getNodeIds();
     //const nodeIDs = await backend.queryFullSubtree(1, true);
@@ -35,7 +35,7 @@ export async function optimizeDatabase() {
         }
     }
 
-    send.startProcessingIndication();
+    send.startProcessingIndication({no_wait: true});
 
     let currentProgress = 0;
     let ctr = 0;
@@ -90,6 +90,9 @@ export async function optimizeDatabase() {
 
             cleanObject(node, true);
 
+            if (!node.name)
+                node.name = "";
+
             if (node.type === NODE_TYPE_ARCHIVE) {
                 const blob = await backend.fetchBlob(node.id);
 
@@ -133,10 +136,10 @@ export async function optimizeDatabase() {
     send.databaseOptimizationFinished();
 
     send.stopProcessingIndication();
-}
+};
 
-export async function reindexArchiveContent() {
-    send.startProcessingIndication();
+receive.reindexArchiveContent = async message => {
+    send.startProcessingIndication({no_wait: true});
 
     const nodes = await backend.filterNodes(n => n.type === NODE_TYPE_ARCHIVE || n.has_notes || n.has_comments);
 
@@ -189,13 +192,13 @@ export async function reindexArchiveContent() {
     send.indexUpdateFinished();
 
     send.stopProcessingIndication();
-}
+};
 
-export async function resetCloud() {
+receive.resetCloud = async message => {
     if (!cloudBackend.isAuthenticated())
         return false;
 
-    send.startProcessingIndication();
+    send.startProcessingIndication({no_wait: true});
 
     await cloudBackend.reset();
 

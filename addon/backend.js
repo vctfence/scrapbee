@@ -480,6 +480,9 @@ export class Backend extends ExternalEventProvider {
     }
 
     async _ensureUnique(parent_id, name) {
+        if (!name)
+            return "";
+
         let children;
 
         if (parent_id)
@@ -791,7 +794,7 @@ export class Backend extends ExternalEventProvider {
             return;
 
         if (data.type !== NODE_TYPE_SHELF)
-            data.parent_id = data.parent_id? data.parent_id: (await this.getGroupByPath(data.path)).id;
+            data.parent_id = data.parent_id || (await this.getGroupByPath(data.path)).id;
 
         data = Object.assign({}, data);
         data.name = await this._ensureUnique(data.parent_id, data.name);
@@ -870,7 +873,7 @@ export class Backend extends ExternalEventProvider {
 export let backend = new Backend(new IDBStorage());
 
 export function formatShelfName(name) {
-    return settings.capitalize_builtin_shelf_names() ? name.capitalize() : name;
+    return settings.capitalize_builtin_shelf_names() ? name?.capitalize() : name;
 }
 
 export async function loadShelfListOptions(element) {

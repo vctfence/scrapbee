@@ -4,13 +4,14 @@ import {ishellBackend} from "./backend_ishell.js";
 import {backend} from "./backend.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
+import {receive} from "./proxy.js";
 import UUID from "./lib/uuid.js";
 import {exportOrg, importOrg} from "./import_org.js";
 import {exportJSON, importJSON} from "./import_json.js";
 import {importHtml} from "./import_html.js";
 import {importRDF} from "./import_rdf.js";
 
-export function importFile(message) {
+receive.importFile = message => {
     const shelf = isSpecialShelf(message.file_name) ? message.file_name.toLocaleLowerCase() : message.file_name;
 
     let importf = ({
@@ -27,9 +28,9 @@ export function importFile(message) {
         ishellBackend.enableInvalidation(invalidation_state);
         ishellBackend.invalidateCompletion();
     });
-}
+};
 
-export async function exportFile(message) {
+receive.exportFile = async message => {
     const shelf = isSpecialShelf(message.shelf) ? message.shelf.toLocaleLowerCase() : message.shelf;
 
     let format = settings.export_format() ? settings.export_format() : "json";
@@ -158,4 +159,4 @@ export async function exportFile(message) {
             browser.downloads.onChanged.addListener(download_listener);
         }
     }
-}
+};
