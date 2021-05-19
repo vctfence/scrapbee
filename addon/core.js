@@ -75,13 +75,13 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             return settings.do_not_show_archive_toolbar();
 
         case "COPY_NODES":
-            return backend.copyNodes(message.node_ids, message.dest_id);
+            return backend.copyNodes(message.node_ids, message.dest_id, message.move_last);
 
         case "SHARE_TO_CLOUD":
             return shareBookmarkToCloud(message);
 
         case "MOVE_NODES":
-            return backend.moveNodes(message.node_ids, message.dest_id);
+            return backend.moveNodes(message.node_ids, message.dest_id, message.move_last);
 
         case "DELETE_NODES":
             return backend.deleteNodes(message.node_ids);

@@ -7,7 +7,7 @@ import {computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
-    CLOUD_SHELF_ID,
+    CLOUD_SHELF_ID, DEFAULT_POSITION,
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
     EVERYTHING,
@@ -550,7 +550,7 @@ export class Backend extends ExternalEventProvider {
         return this.getNode(id);
     }
 
-    async moveNodes(ids, dest_id) {
+    async moveNodes(ids, dest_id, move_last) {
         let nodes = await this.getNodes(ids);
 
         await this.moveExternalBookmarks(nodes, dest_id);
@@ -558,6 +558,10 @@ export class Backend extends ExternalEventProvider {
         for (let n of nodes) {
             n.parent_id = dest_id;
             n.name = await this._ensureUnique(dest_id, n.name);
+
+            if (move_last)
+                n.pos = DEFAULT_POSITION;
+
             await this.updateNode(n);
         }
 
@@ -567,7 +571,7 @@ export class Backend extends ExternalEventProvider {
         return this.queryFullSubtree(ids, false, true);
     }
 
-    async copyNodes(ids, dest_id) {
+    async copyNodes(ids, dest_id, move_last) {
         let all_nodes = await this.queryFullSubtree(ids, false, true);
         let new_nodes = [];
 
@@ -586,6 +590,9 @@ export class Backend extends ExternalEventProvider {
 
             delete n.id;
             delete n.date_modified;
+
+            if (move_last && ids.some(id => id === n.old_id))
+                n.pos = DEFAULT_POSITION;
 
             new_nodes.push(Object.assign(n, await this.addNode(n, false)));
 
@@ -626,11 +633,11 @@ export class Backend extends ExternalEventProvider {
             }
         }
 
-        let original_nodes = new_nodes.filter(n => ids.some(id => id === n.old_id));
+        let top_nodes = new_nodes.filter(n => ids.some(id => id === n.old_id));
 
-        await this.copyExternalBookmarks(original_nodes, dest_id);
+        await this.copyExternalBookmarks(top_nodes, dest_id);
 
-        if (original_nodes.some(n => n.type === NODE_TYPE_GROUP))
+        if (top_nodes.some(n => n.type === NODE_TYPE_GROUP))
             this.invalidateExternalCompletion();
 
         return new_nodes;

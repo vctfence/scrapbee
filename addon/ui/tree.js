@@ -500,7 +500,12 @@ class BookmarkTree {
     }
 
     get selected() {
-        return this._jstree.get_node(this._jstree.get_selected())
+        return this._jstree.get_selected(true)
+    }
+
+    getSelectedNodes() {
+        const selection = this._jstree.get_top_selected().map(id => parseInt(id));
+        return this.odata.filter(n => selection.some(id => id === n.id));
     }
 
     update(nodes, everything = false, clearSelected = false) {
@@ -605,14 +610,20 @@ class BookmarkTree {
         }
     }
 
-    selectNode(nodeId, open, forceScroll) {
+    openNode(nodeId) {
         let jnode = this._jstree.get_node(nodeId);
+        this._jstree.open_node(jnode);
+    }
 
+    selectNode(nodeId, open, forceScroll) {
         this._jstree.deselect_all(true);
         this._jstree.select_node(nodeId);
 
+        if (Array.isArray(nodeId))
+            nodeId = nodeId[0];
+
         if (open)
-            this._jstree.open_node(jnode);
+            this._jstree.open_node(nodeId);
 
         let domNode = document.getElementById(nodeId.toString());
 
@@ -628,7 +639,11 @@ class BookmarkTree {
     }
 
     async createNewGroupUnderSelection(id) {
-        let selectedJnode = this.selected;
+        let selectedJnode = this.selected?.[0];
+
+        if (!selectedJnode)
+            return;
+
         let jnode = this._jstree.create_node(selectedJnode, {
             id: id,
             text: "New Folder",
@@ -1278,7 +1293,7 @@ class BookmarkTree {
 
                             cleanObject(properties, true);
 
-                            await backend.updateBookmark(properties);
+                            properties = await backend.updateBookmark(properties);
 
                             self.stopProcessingIndication();
 

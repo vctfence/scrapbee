@@ -61,15 +61,7 @@ export async function getBookmarkInfo(message) {
 }
 
 export function shareBookmarkToCloud(message) {
-    return backend.copyNodes(message.node_ids, CLOUD_SHELF_ID)
-        .then(async newNodes => {
-            newNodes = newNodes.filter(n => message.node_ids.some(id => id === n.old_id));
-            for (let n of newNodes) {
-                n.pos = DEFAULT_POSITION;
-                await backend.updateNode(n);
-            }
-            await backend.updateExternalBookmarks(newNodes);
-        });
+    return backend.copyNodes(message.node_ids, CLOUD_SHELF_ID, true);
 }
 
 export function isSpecialPage(url) {

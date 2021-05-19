@@ -20,7 +20,7 @@ import {
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
     NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
-    isSpecialShelf, isEndpoint
+    isSpecialShelf, isEndpoint, DEFAULT_POSITION
 } from "../storage_constants.js";
 import {openPage, showNotification} from "../utils_browser.js";
 
@@ -289,14 +289,8 @@ window.onload = async function () {
         }
     };
 
-    let processing_timeout;
-    tree.startProcessingIndication = () => {
-        processing_timeout = setTimeout(startProcessingIndication, 1000)
-    };
-    tree.stopProcessingIndication = () => {
-        stopProcessingIndication();
-        clearTimeout(processing_timeout);
-    };
+    tree.startProcessingIndication = startProcessingIndication;
+    tree.stopProcessingIndication = stopProcessingIndication;
 
     tree.sidebarSelectNode = selectNode;
     tree.sidebarReload = sidebarReload;
@@ -328,11 +322,14 @@ window.onload = async function () {
         displayRandomBookmark();
 };
 
+let processingTimeout;
 function startProcessingIndication() {
-    $("#shelf-menu-button").attr("src", "/icons/grid.svg");
+    const startIndication = () => $("#shelf-menu-button").attr("src", "/icons/grid.svg");
+    processingTimeout = setTimeout(startIndication, 1000)
 }
 
 function stopProcessingIndication() {
+    clearTimeout(processingTimeout);
     $("#shelf-menu-button").attr("src", "/icons/menu.svg");
 }
 
@@ -760,33 +757,91 @@ function externalMessages(message, sender, sendResponse) {
                 let external_path = backend.expandPath(message.name);
                 let [shelf, ...path] = external_path.split("/");
 
-                backend.queryShelf(shelf).then(shelfNode => {
+                backend.queryShelf(shelf).then(async shelfNode => {
                     if (shelfNode) {
-                        backend.getGroupByPath(external_path).then(group => {
-                            shelfList.val(shelfNode.id);
-                            shelfList.selectric("refresh");
-                            switchShelf(shelfNode.id).then(() => {
-                                tree.selectNode(group.id, true);
-                            });
-                        });
-                    } else {
+                        const group = await backend.getGroupByPath(external_path);
+                        shelfList.val(shelfNode.id);
+                        shelfList.selectric("refresh");
+                        await switchShelf(shelfNode.id);
+                        tree.selectNode(group.id, true);
+                    }
+                    else {
                         if (!isSpecialShelf(shelf)) {
-                            backend.createGroup(null, shelf, NODE_TYPE_SHELF).then(shelfNode => {
-                                if (shelfNode) {
-                                    backend.getGroupByPath(external_path).then(group => {
-                                        settings.last_shelf(shelfNode.id);
-                                        loadShelves().then(() => {
-                                            tree.selectNode(group.id, true);
-                                        });
-                                    });
-                                }
-                            });
-                        } else {
+                            const shelfNode = await backend.createGroup(null, shelf, NODE_TYPE_SHELF);
+                            if (shelfNode) {
+                                let group = await backend.getGroupByPath(external_path);
+
+                                settings.last_shelf(shelfNode.id);
+                                await loadShelves();
+
+                                tree.selectNode(group.id, true);
+                            }
+                        }
+                        else {
                             showNotification({message: "Can not create shelf with this name."});
                         }
                     }
                 });
             }
+            break;
+
+        case "SCRAPYARD_COPY_AT": {
+            if (!sender.ishell)
+                throw new Error();
+
+            let external_path = backend.expandPath(message.path);
+            let selection = tree.getSelectedNodes();
+            selection.sort((a, b) => a.pos - b.pos);
+            selection = selection.map(n => n.id);
+
+            backend.getGroupByPath(external_path)
+                .then(async group => {
+                    let newNodes = await send.copyNodes({node_ids: selection, dest_id: group.id, move_last: true});
+                    let topNodes = newNodes.filter(n => selection.some(id => id === n.old_id)).map(n => n.id);
+
+                    if (message.action === "switching") {
+                        const [shelf, ...path] = external_path.split("/");
+                        const shelfNode = await backend.queryShelf(shelf);
+
+                        settings.last_shelf(shelfNode.id);
+                        await loadShelves();
+
+                        tree.openNode(group.id)
+                        tree.selectNode(topNodes);
+                    }
+                    else
+                        await switchShelf(settings.last_shelf());
+                });
+        }
+            break;
+
+        case "SCRAPYARD_MOVE_AT": {
+            if (!sender.ishell)
+                throw new Error();
+
+            let external_path = backend.expandPath(message.path);
+            let selection = tree.getSelectedNodes();
+            selection.sort((a, b) => a.pos - b.pos);
+            selection = selection.map(n => n.id);
+
+            backend.getGroupByPath(external_path)
+                .then(async group => {
+                    await send.moveNodes({node_ids: selection, dest_id: group.id, move_last: true});
+
+                    if (message.action === "switching") {
+                        const [shelf, ...path] = external_path.split("/");
+                        const shelfNode = await backend.queryShelf(shelf);
+
+                        settings.last_shelf(shelfNode.id);
+                        await loadShelves();
+
+                        tree.openNode(group.id)
+                        tree.selectNode(selection);
+                    }
+                    else
+                        await switchShelf(settings.last_shelf());
+                });
+        }
             break;
     }
 }
