@@ -267,15 +267,11 @@ function unlockDocument() {
 }
 
 function clearDocumentEncoding(doc) {
-    let chars = doc.querySelector("meta[http-equiv='content-type' i]");
-    if (chars)
-        chars.parentNode.removeChild(chars);
-    else {
-        chars = doc.querySelector("meta[charset]");
+    let meta = doc.querySelector("meta[http-equiv='content-type' i]")
+        || doc.querySelector("meta[charset]");
 
-        if (chars)
-            chars.parentNode.removeChild(chars);
-    }
+    if (meta)
+        meta.parentNode.removeChild(meta);
 }
 ////////////////////////////////////////////////////////////////// Scrapyard //
 

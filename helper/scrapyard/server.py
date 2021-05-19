@@ -210,8 +210,7 @@ def serve_release_path(uuid):
 def serve_file(uuid):
     path = serve_path_map[uuid]
     if path:
-        [directory, file] = os.path.split(path)
-        response = flask.make_response(flask.send_from_directory(directory, file))
+        response = flask.make_response(flask.send_file(path))
         mime_type = mimetypes.guess_type(path)[0]
         if mime_type:
             response.headers["content-type"] = mime_type

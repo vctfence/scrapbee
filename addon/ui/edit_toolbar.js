@@ -1,17 +1,15 @@
-class Edit_toolbar {
+class EditToolbar {
     constructor() {
-        var self = this;
-        this.$cap = $("<div>").appendTo(document.body);
+        this.targetBorder = $("<div id='scrapyard-dom-eraser-border'>").appendTo(document.body);
         this.buildTools()
 
-        window.addEventListener("mousedown", function (e) {
-            if (e.button == 0) {
+        window.addEventListener("mousedown", e => {
+            if (e.button === 0) {
                 /** remove dom node by cleaner */
-                if(!isDescendant(self.div, e.target) /** out of toolbar */
-                    && self.last && self.editing){
+                if (!isDescendant(this.rootContainer, e.target) && this.last && this.erasing) {
                     e.preventDefault();
-                    self.last.parentNode.removeChild(self.last);
-                    self.last=null;
+                    this.last.parentNode.removeChild(this.last);
+                    this.last = null;
                     /** check next hover target after current target removed */
                     var em = new Event('mousemove');
                     em.pageX = e.pageX;
@@ -19,36 +17,39 @@ class Edit_toolbar {
                     window.dispatchEvent(em);
                 }
                 /** hide marker-pen menu when click somewhere */
-                if (!$(e.target).hasClass("mark-pen-btn")) {
-                    if ($(self.menu).is(":visible")) {
+                if (!$(e.target).hasClass("scrapyard-marker-button")) {
+                    if ($(this.menu).is(":visible")) {
                         e.preventDefault();
-                        $(self.menu).hide();
+                        $(this.menu).hide();
                     }
                 }
             }
         });
 
-        window.addEventListener("mousemove", function(e){
+        window.addEventListener("mousemove", e => {
             /** hover dom node by cleaner */
-            if(self.editing){
+            if (this.erasing) {
 
                 var dom = document.elementFromPoint(e.pageX, e.pageY - window.scrollY);
-                if(dom && !isDescendant(self.rootContainer, dom)){
-                    if(dom != document.body && $(document.body).closest(dom).length == 0){
-                        self.last = dom;
+                if (dom && !isDescendant(this.rootContainer, dom)) {
+                    if (dom !== document.body && $(document.body).closest(dom).length === 0) {
+                        this.last = dom;
                         var r = dom.getBoundingClientRect();
-                        self.$cap.css("pointer-events", "none");
-                        self.$cap.css("box-sizing", "border-box");
-                        self.$cap.css({border: "2px solid #f00",
+                        this.targetBorder.css("pointer-events", "none");
+                        this.targetBorder.css("box-sizing", "border-box");
+                        this.targetBorder.css({
+                            border: "2px solid #f00",
                             position: "absolute",
-                            left: parseInt(r.left)+"px",
-                            top: parseInt(r.top + window.scrollY)+"px",
-                            width:r.width+"px",
-                            height:r.height+"px",
-                            zIndex: 2147483646});
-                        self.$cap.show();
-                    }else{
-                        self.$cap.hide();
+                            left: parseInt(r.left) + "px",
+                            top: parseInt(r.top + window.scrollY) + "px",
+                            width: r.width + "px",
+                            height: r.height + "px",
+                            zIndex: 2147483646
+                        });
+                        this.targetBorder.show();
+                    }
+                    else {
+                        this.targetBorder.hide();
                         // document.body or ancestors
                     }
                 }
@@ -57,7 +58,7 @@ class Edit_toolbar {
     }
 
     isSelectionPresent() {
-        var selection = window.getSelection();
+        let selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
             return !selection.getRangeAt(0).collapsed;
         }
@@ -65,18 +66,18 @@ class Edit_toolbar {
     }
 
     deselect() {
-        var selection = window.getSelection();
+        let selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
             selection.collapseToStart();
         }
     }
 
-    toggleDomEdit(on) {
+    toggleDomEraser(on) {
         this.last = null;
-        this.editing = on;
-        this.$cap.hide();
+        this.erasing = on;
+        this.targetBorder.hide();
         $(this.editBar).find("input[type=button]").prop("disabled", on);
-        document.body.style.cursor = this.editing? "crosshair": "";
+        document.body.style.cursor = this.erasing? "crosshair": "";
     }
 
     formatPageInfo(node) {
@@ -97,312 +98,204 @@ class Edit_toolbar {
         return html;
     }
 
-    saveDoc() {
-        let btn = $("#scrapyard-save-doc-button", this.shadowRoot);
-        btn.addClass("flash-button");
+    _fixDocumentEncoding(doc) {
+        let meta = doc.querySelector("meta[http-equiv='content-type' i]")
+                        || doc.querySelector("meta[charset]");
 
-        setTimeout(function() {
-            btn.removeClass("flash-button");
-        },1000);
+        if (meta)
+            meta.parentNode.removeChild(meta);
+
+        $(doc.getElementsByTagName("head")[0]).prepend(`<meta charset="utf-8">`);
+    }
+
+    saveDoc() {
+        let saveButton = $("#scrapyard-save-doc-button", this.shadowRoot);
+        saveButton.addClass("scrapyard-flash-button");
+
+        setTimeout(() => saveButton.removeClass("scrapyard-flash-button"),1000);
 
         let doc = document.documentElement.cloneNode(true);
-        let bar = doc.querySelector(".scrapyard-edit-bar-container");
+        $(`#scrapyard-edit-bar-container, #scrapyard-dom-eraser-border`, doc).remove();
 
-        if (bar)
-            bar.parentNode.removeChild(bar);
-
-        let chars = doc.querySelector("meta[http-equiv='content-type' i]");
-        if (chars) {
-            chars.parentNode.removeChild(chars);
-            chars.setAttribute("content", "text/html; charset=utf-8");
-            doc.getElementsByTagName("head")[0].prepend(chars);
-        }
-        else {
-            chars = doc.querySelector("meta[charset]");
-
-            if (chars) {
-                chars.parentNode.removeChild(chars);
-                chars.setAttribute("charset", "utf-8");
-                doc.getElementsByTagName("head")[0].prepend(chars);
-            }
-            else {
-                chars = document.createElement("meta");
-                chars.setAttribute("http-equiv", 'Content-Type');
-                chars.setAttribute("content", "text/html; charset=utf-8");
-                doc.getElementsByTagName("head")[0].prepend(chars);
-            }
-        }
+        this._fixDocumentEncoding(doc);
 
         browser.runtime.sendMessage({
             type: 'UPDATE_ARCHIVE',
             id: parseInt(location.hash.split(":")[1]),
             data: "<!DOCTYPE html>" + doc.outerHTML
         }).then(() => {
-            browser.runtime.sendMessage({
+            return browser.runtime.sendMessage({
                 type: 'GET_BOOKMARK_INFO',
                 uuid: location.hash.split(":")[0].substring(1),
                 id: parseInt(location.hash.split(":")[1])
-            }).then(node => {
-                $("#page-info", this.editBar).html(this.formatPageInfo(node))
             });
+        })
+        .then(node => {
+            $("#scrapyard-page-info", this.editBar).html(this.formatPageInfo(node))
         });
     }
 
     buildTools() {
-        const TOOLBAR_HEIGHT = 26;
+        const CONTAINER_HEIGHT = 42;
+        const EXTENSION_ID = browser.i18n.getMessage("@@extension_id");
+        const documentMarginBottom = document.body.style.marginBottom;
+
+        let erasing = false;
+        let contentEditing = false;
         let scrapyardHideToolbar = false;
 
-
-        var self = this;
-        var editing = false;
-        var contentEditing = false;
-        var extension_id = browser.i18n.getMessage("@@extension_id");
-
         /** toolbar */
-        var rootContainer = document.createElement("div");
-        rootContainer.style.display = "none";
-        rootContainer.style.position = "fixed";
-        rootContainer.style.left = "0";
-        rootContainer.style.right = "0";
-        rootContainer.style.bottom = "0";
-        rootContainer.style.zIndex = "2147483647";
-        rootContainer.style.width = "100%";
-        rootContainer.style.height = "42px";
-        rootContainer.style.margin = "0";
-        rootContainer.style.padding = "0";
-        rootContainer.className = "scrapyard-edit-bar-container";
-        document.body.appendChild(rootContainer);
+        const rootContainer = $(`<div id="scrapyard-edit-bar-container"
+                                      style="display: none; position: fixed; left: 0px; right: 0px; bottom: 0px;
+                                             z-index: 2147483647; width: 100%; height: ${CONTAINER_HEIGHT}px;
+                                             margin: 0px; padding: 0px;"></div>`)
+            .appendTo(document.body)[0];
         this.rootContainer = rootContainer;
 
-        var editBar = document.createElement("div");
-        editBar.className = "scrapyard-edit-bar";
-        //editBar.setAttribute("part", "scrapyard-edit-bar");
-        editBar.style.height = `${TOOLBAR_HEIGHT}px`;
-        let shadow = rootContainer.attachShadow({mode: 'open'});
-        this.shadowRoot = shadow;
-        shadow.innerHTML = `
+        const shadowRoot = this.shadowRoot = rootContainer.attachShadow({mode: 'open'});
+        shadowRoot.innerHTML = `
             <style>
                 @import url('${browser.runtime.getURL("ui/edit_toobar.css")}')
             </style>
-        `;
+            <div id="scrapyard-edit-bar">`;
 
-        shadow.appendChild(editBar);
-        this.editBar = editBar;
+        const editBar = this.editBar = $("#scrapyard-edit-bar", shadowRoot)[0];
+        const append = html => $(html).appendTo(editBar);
 
-        /** icon */
-        var img = document.createElement("img");
-        img.id = "scrapyard-icon"
-        img.src = `moz-extension://${extension_id}/icons/scrapyard.svg`;
-        img.setAttribute("width", "20px");
-        img.setAttribute("height", "20px");
-        editBar.appendChild(img);
-        editBar.innerHTML += " <b id='scrapyard-brand'>Scrapyard</b>&nbsp;&nbsp;";
+        append(`<img id="scrapyard-icon" src="moz-extension://${EXTENSION_ID}/icons/scrapyard.svg">
+                     <b id="scrapyard-brand">Scrapyard</b>`);
 
-        /** body */
-        if (!scrapyardHideToolbar)
-            document.body.style.marginBottom = `${TOOLBAR_HEIGHT * 2}px !important`;
+        append(`<input id="scrapyard-save-doc-button" type="button" class="yellow-button" value="Save">`)
+            .on("click", e => {
+                this._unsavedChanges = false;
+                this.saveDoc();
+            });
 
-        /** save button */
-        var btn = document.createElement("input");
-        btn.id = "scrapyard-save-doc-button"
-        btn.type = "button";
-        btn.className = "yellow-button"
-        btn.value = chrome.i18n.getMessage("save");
-        editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            self._unsavedChanges = false;
-            self.saveDoc();
-        });
+        append(`<input id="scrapyard-edit-doc-button" type="button" class="blue-button" value="Edit Document">`)
+            .on("click", e => {
+                contentEditing = !contentEditing;
+                e.target.className = contentEditing? "yellow-button": "blue-button";
+                e.target.value = chrome.i18n.getMessage(contentEditing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
 
-        /** edit document button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.id = "btn-edit-document";
-        btn.className = "blue-button";
-        btn.style.width = "81px";
-        btn.value = chrome.i18n.getMessage("MODIFY_DOM_ON");
-        editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            contentEditing = !contentEditing;
-            this.className = contentEditing? "yellow-button": "blue-button";
-            this.value = chrome.i18n.getMessage(contentEditing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
+                document.designMode = document.designMode === "on"? "off": "on";
 
-            document.designMode = document.designMode === "on"? "off": "on";
-        });
+                $("#scrapyard-dom-eraser-button", editBar).prop("disabled", contentEditing);
+            });
 
-        $(editBar).append(`<div style="position: relative;"><i class="help-mark"></i><span class="tips hide">
-                         To remove content, text-select it (including images and other media) and press Del key on keyboard.
-                         It is also possible to type something in. Press F7 to turn on caret browsing.
-                       </span></div>`);
+        append(`<div class="scrapyard-icon-container">
+                         <i class="scrapyard-help-mark"></i>
+                         <span class="scrapyard-tips scrapyard-hide">
+                             To remove content, text-select it (including images and other media) and press Del key on keyboard.
+                             It is also possible to type something in. Press F7 to turn on caret browsing.
+                         </span>
+                     </div>`);
 
-        /** modify dom button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.id = "btn-dom-eraser";
-        btn.className = "blue-button";
-        btn.value = "DOM Eraser";
-        editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            editing = !editing;
-            self.toggleDomEdit(editing)
-            this.className = editing? "yellow-button": "blue-button";
-            $(this).prop("disabled", false);
-        });
+        append(`<input id="scrapyard-dom-eraser-button" type="button" class="blue-button" value="DOM Eraser">`)
+            .on("click", e => {
+                erasing = !erasing;
+                this.toggleDomEraser(erasing)
+                e.target.className = erasing? "yellow-button": "blue-button";
+                $(e.target).prop("disabled", false);
+            });
 
-        /** mark pen button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.className = "blue-button mark-pen-btn"
-        btn.value = chrome.i18n.getMessage("MARK_PEN");
-        editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            $(self.menu).toggle();
-            var rect_div = self.editBar.getBoundingClientRect();
-            var rect_btn = this.getBoundingClientRect();
-            $(self.menu).css("bottom", (rect_div.bottom - rect_btn.top) + "px");
-            $(self.menu).css("left", rect_btn.left + "px");
-        });
+        append(`<input id="scrapyard-marker-button" type="button" class="blue-button" value="Marker Pen">`)
+            .on("click", e => {
+                $(this.menu).toggle();
+                let rect_div = editBar.getBoundingClientRect();
+                let rect_btn = e.target.getBoundingClientRect();
+                $(this.menu).css("bottom", (rect_div.bottom - rect_btn.top) + "px");
+                $(this.menu).css("left", rect_btn.left + "px");
+            });
 
-        /** mark pen menu */
-        var $m = $("<div>").appendTo(this.editBar);
-        $m.css({
-            position: 'absolute',
-            zIndex: 2147483646,
-            border: "1px solid #999",
-            background: "#fff",
-            display: "none",
-            boxShadow: "5px 5px 5px #888888",
-            borderWidth: "1px 1px 0px 1px"
-        });
+        const menu = append(`<div id="scrapyard-marker-menu"></div>`);
+        const appendMenu = html => $(html).appendTo(menu);
+        this.menu = menu[0];
 
-        /** marker cleaner */
-        var $item = $("<div>").appendTo($m).css({
-            height: "14px",
-            color: "#333",
-            cursor: "pointer",
-            borderBottom: "1px solid #999",
-            padding: "8px 20px",
-            verticalAlign: "middle"
-        }).bind("mousedown", e => {
-            e.preventDefault()
-            $(self.menu).hide();
-            if (self.isSelectionPresent()) {
-                clearMarkPen();
-                this.deselect();
-            } else {
-                alert("No active selection.");
-            }
-        });
-        $(`<div class='scrapyard-menu-item'>Clear Markers</div>`).appendTo($item).css({
-            height: "14px",
-            lineHeight: "14px",
-            minWidth: "200px"
-        });
-
-        /** markers */
-        for (let child of ["scrapyard-marker-1", "scrapyard-marker-2", "scrapyard-marker-3", "scrapyard-marker-4",
-            "scrapyard-marker-5", "scrapyard-marker-6", "scrapyard-marker-7", "scrapyard-marker-8"]) {
-            var $item = $("<div>").appendTo($m).css({
-                height: "14px",
-                color: "#333",
-                cursor: "pointer",
-                borderBottom: "1px solid #999",
-                padding: "8px 20px",
-                verticalAlign: "middle"
-            }).bind("mousedown", e => {
+        appendMenu(`<div class="scrapyard-menu-item-wrapper">
+                            <div class='scrapyard-menu-item'>Clear Markers</div>
+                         </div>`)
+            .on("mousedown", e => {
                 e.preventDefault()
-                $(self.menu).hide();
-                if (self.isSelectionPresent()) {
-                    mark(child);
-                    self._unsavedChanges = true;
+
+                $(menu).hide();
+                if (this.isSelectionPresent()) {
+                    clearMarkPen();
                     this.deselect();
-                } else {
-                    alert("No active selection.");
                 }
+                else
+                    alert("No active selection.");
             });
-            $(`<div class='scrapyard-menu-item ${child}'>Example Text</div>`).appendTo($item).css({
-                height: "14px",
-                lineHeight: "14px",
-                minWidth: "200px"
-            });
+
+
+        for (let i = 1; i <= 8; ++i) {
+            appendMenu(`<div class="scrapyard-menu-item-wrapper">
+                                <div class='scrapyard-menu-item scrapyard-marker-${i}'>Example Text</div>
+                             </div>`)
+                .on("mousedown", e => {
+                    e.preventDefault()
+
+                    $(menu).hide();
+                    if (this.isSelectionPresent()) {
+                        mark(`scrapyard-marker-${i}`);
+                        this._unsavedChanges = true;
+                        this.deselect();
+                    }
+                    else
+                        alert("No active selection.");
+                });
         }
-        this.menu = $m[0];
 
-        /** auto-open check */
-        var autoOpenCheck = document.createElement("input");
-        autoOpenCheck.type = "checkbox";
-        autoOpenCheck.id = "scrapyard-auto-open-check";
-        autoOpenCheck.name = "auto-open-check";
-        editBar.appendChild(autoOpenCheck);
+        const autoOpenCheck = append(`<input id="scrapyard-auto-open-check" type="checkbox">`)[0];
+        append("<label for='scrapyard-auto-open-check'>Auto open</label>");
 
-        document.addEventListener('mouseup', e => {
-            if (autoOpenCheck.checked && this.isSelectionPresent()) {
-                $(".mark-pen-btn", self.shadowRoot).click();
-            }
-        });
-        document.addEventListener('mousedown', e => {
-            if (autoOpenCheck.checked && this.isSelectionPresent() && $(self.menu).is(":visible")
-                && e.target !== self.menu) {
-                $(self.menu).hide();
-            }
+        $(document).on('mouseup', e => {
+            if (autoOpenCheck.checked && this.isSelectionPresent())
+                $("#scrapyard-marker-button", shadowRoot).click();
+        })
+        $(document).on('mousedown', e => {
+            if (autoOpenCheck.checked && this.isSelectionPresent() && $(menu).is(":visible") && e.target !== menu)
+                $(menu).hide();
         });
 
-        $(editBar).append("<label for='scrapyard-auto-open-check'>Auto open</label>");
+        append(`<input id="scrapyard-view-notes" type="button" class="blue-button" value="Notes">`)
+            .on("click", e => {
+                const iframe = $("#scrapyard-notes-frame");
 
-
-        /** notes button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.id = "view-notes";
-        btn.className = "blue-button";
-        btn.value = chrome.i18n.getMessage("NOTES");
-        editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            var ifrm = $("#notes-ifrm");
-            if (ifrm.length) {
-                ifrm.remove();
-                $("#notes-container").remove();
-                $(document.body).removeClass("scrapyard-no-overflow");
-            }
-            else {
-                if (location.origin.startsWith("http")) {
-                    browser.runtime.sendMessage({
-                        type: 'BROWSE_NOTES',
-                        uuid: location.hash.split(":")[0].substring(1),
-                        id: parseInt(location.hash.split(":")[1])
-                    });
+                if (iframe.length) {
+                    iframe.remove();
+                    $("#scrapyard-notes-container").remove();
+                    $(document.body).removeClass("scrapyard-no-overflow");
                 }
                 else {
-                    let notes_page = location.origin.replace(/^blob:/, "") + "/ui/notes.html?i"
+                    if (location.origin.startsWith("http")) {
+                        browser.runtime.sendMessage({
+                            type: 'BROWSE_NOTES',
+                            uuid: location.hash.split(":")[0].substring(1),
+                            id: parseInt(location.hash.split(":")[1])
+                        });
+                    }
+                    else {
+                        let notes_page = location.origin.replace(/^blob:/, "") + "/ui/notes.html?i"
 
-                    $(document.body).prepend(`<iframe id="notes-ifrm" frameborder="0" src="${notes_page}${location.hash}"/>
-                                                <div id="notes-container"></div>`)
-                        .addClass("scrapyard-no-overflow");
+                        $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notes_page}${location.hash}"/>
+                                                  <div id="scrapyard-notes-container"></div>`)
+                            .addClass("scrapyard-no-overflow");
+                    }
                 }
-            }
-        });
+            });
+
 
         window.addEventListener("message", e => {
             if (e.data === "SCRAPYARD_CLOSE_NOTES") {
-                $("#notes-ifrm").remove();
-                $("#notes-container").remove();
+                $("#scrapyard-notes-frame").remove();
+                $("#scrapyard-notes-container").remove();
                 $(document.body).removeClass("scrapyard-no-overflow");
             }
         }, false);
 
-        $(editBar).append(`<span style="margin-left: 8px; display: inline-block; color: black;">Original URL: </span>`);
-
-        /** the original url input */
-        var originalURLText = document.createElement("input");
-        originalURLText.type = "text";
-        originalURLText.className = "original-url-text";
-        $(originalURLText).attr("readonly", "true")
-        editBar.appendChild(originalURLText);
-
-        /** go button */
-        var originalURLLink = document.createElement("a");
-        $(originalURLLink).attr("target", "_blank");
-        editBar.appendChild(originalURLLink);
+        append(`<span id="scrapyard-original-url-label">Original URL: </span>`);
+        const originalURLText = append(`<input id="scrapyard-original-url-text" type="text" readonly="readonly">`)[0];
+        const originalURLLink = append(`<a id="scrapyard-original-url-link" target="_blank" href="#"></a>`)[0];
 
         browser.runtime.sendMessage({
             type: 'GET_BOOKMARK_INFO',
@@ -411,70 +304,66 @@ class Edit_toolbar {
         }).then(node => {
             originalURLText.value = node?.uri || "";
             originalURLLink.href = node?.uri || "#";
-            $("#page-info", editBar).html(self.formatPageInfo(node))
+            $("#scrapyard-page-info", editBar).html(this.formatPageInfo(node))
         });
 
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.className = "blue-button go-button"
-        btn.value = chrome.i18n.getMessage("Go");
-        editBar.appendChild(btn);
-        btn.addEventListener("click", e => {
-            if (originalURLLink.href !== "#")
-                originalURLLink.click();
+        append(`<input id="scrapyard-go-button" class="blue-button" type="button" value="Go">`)
+            .on("click", e => {
+                if (originalURLLink.href !== "#")
+                    originalURLLink.click();
+            });
+
+        append(`<div class="scrapyard-icon-container">
+                        <span id="scrapyard-page-info" class="scrapyard-tips scrapyard-hide"></span>
+                        <i class="scrapyard-i-mark"></i>
+                     </div>`);
+
+        append(`<input id="scrapyard-hide-button" type="button" class="blue-button" value="Hide">`)
+            .on("click", e => {
+                scrapyardHideToolbar = true;
+                document.body.style.marginBottom = documentMarginBottom;
+                $(rootContainer).hide();
+            });
+
+        $(".scrapyard-help-mark", editBar).hover(e => {
+            $(e.target).next(".scrapyard-tips.scrapyard-hide").show().css({"margin-top": "2px", "position": "absolute",
+                                                                            "left": "100%", "margin-left": "4px"});
+        }, e => {
+            $(e.target).next(".scrapyard-tips.scrapyard-hide").hide();
         });
 
-        /** page info */
-
-        $(editBar).append(`<div style="position: relative;"><span class="tips hide" id="page-info"></span><i class="i-mark"></i></div>`);
-
-
-        /** hide button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.className = "blue-button hide-button"
-        btn.value = chrome.i18n.getMessage("Hide");
-        editBar.appendChild(btn);
-        btn.addEventListener("click", function () {
-            $(rootContainer).hide();
-            document.body.style.marginBottom = "0 !important";
+        $(".scrapyard-i-mark", editBar).hover(e => {
+            $(e.target).prev(".scrapyard-tips.scrapyard-hide").show().css({"margin-top": "2px", "position": "absolute",
+                                                                           "right": "100%", "margin-right": "-14px"});
+        }, e => {
+            $(e.target).prev(".scrapyard-tips.scrapyard-hide").hide();
         });
 
-        $(".help-mark", editBar).hover(function(e){
-            $(this).next(".tips.hide").show().css({"margin-top": "-12px", "margin-left": "5px"});
-        }, function(){
-            $(this).next(".tips.hide").hide();
-        });
-
-        $(".i-mark", editBar).hover(function(e){
-            $(this).prev(".tips.hide").show().css({"margin-top": "-12px", "position": "absolute", "right": "100%",
-                                                   "margin-right": "-14px"});
-        }, function(){
-            $(this).prev(".tips.hide").hide();
-        });
-
-        document.addEventListener("keydown", e => {
+        $(document).on("keydown", e => {
             if (e.code === "KeyT" && e.ctrlKey && e.altKey) {
                 $(rootContainer).toggle();
                 scrapyardHideToolbar = !scrapyardHideToolbar;
+                console.log(scrapyardHideToolbar)
                 document.body.style.marginBottom = scrapyardHideToolbar
-                    ? "0 !important"
-                    : `${TOOLBAR_HEIGHT * 2}px !important`;
+                    ? documentMarginBottom
+                    : `${CONTAINER_HEIGHT + 10}px`;
+                console.log(document.body.style.marginBottom)
             }
         });
 
-        browser.runtime.sendMessage({
-            type: 'GET_HIDE_TOOLBAR_SETTING'
-        }).then(hide => {
-            scrapyardHideToolbar = hide;
-            if (!scrapyardHideToolbar)
-                setTimeout(() => rootContainer.style.display = "block", 300);
-        });
+        browser.runtime.sendMessage({type: 'GET_HIDE_TOOLBAR_SETTING'})
+            .then(hide => {
+                scrapyardHideToolbar = hide;
+                if (!scrapyardHideToolbar) {
+                    document.body.style.marginBottom = `${CONTAINER_HEIGHT + 10}px`;
+                    setTimeout(() => rootContainer.style.display = "block", 300);
+                }
+            });
     }
 }
 
 $(document).ready(function () {
-    var toolbar = new Edit_toolbar();
+    const toolbar = new EditToolbar();
 
     $(window).on("beforeunload", e => {
         if (toolbar._unsavedChanges)

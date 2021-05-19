@@ -5,7 +5,7 @@ import {cleanObject, computeSHA1, formatBytes} from "./utils.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
-import {parseHtml, clearDocumentEncoding} from "./utils_html.js";
+import {parseHtml, fixDocumentEncoding} from "./utils_html.js";
 
 export async function getAddonIDBPath() {
     let helperApp = await nativeBackend.probe();
@@ -100,8 +100,7 @@ export async function optimizeDatabase() {
                             || blob.type && blob.type.startsWith("text/html")) {
                         blob.type = "text/html";
                         const doc = parseHtml(content);
-                        clearDocumentEncoding(doc);
-                        $(doc.head).prepend("<meta charset=\"utf-8\">")
+                        fixDocumentEncoding(doc);
                         content = doc.documentElement.outerHTML;
                     }
 

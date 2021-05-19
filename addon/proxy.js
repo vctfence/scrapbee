@@ -32,3 +32,30 @@ export let send = new Proxy({}, {
         };
     }
 });
+
+export let receive = new Proxy(() => {}, {
+    methods: new Map(),
+
+    set(target, key, value, receiver) {
+        const type = makeMessageName(key);
+        receiver.methods.set(type, value);
+        console.log(value)
+        console.log(target)
+        console.log(receiver)
+        return true;
+    },
+
+    apply(target, thisArg, argumentsList) {
+        console.log(thisArg);
+        console.log(target);
+        console.log(argumentsList);
+        // const [message, sender] = argumentsList;
+        //
+        // const method = target[message.type];
+        // console.log(message.type)
+        // if (method)
+        //     Reflect.apply(method, thisArg, argumentsList);
+        // else
+        //     console.error(`No method for message type: ${message.type}`);
+    }
+});

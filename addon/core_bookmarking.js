@@ -1,6 +1,6 @@
 import {formatBytes, getMimetypeExt} from "./utils.js";
 import {backend} from "./backend.js";
-import {send} from "./proxy.js";
+import {send, receive} from "./proxy.js";
 import {
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
@@ -29,6 +29,25 @@ export function createBookmark(data) {
         .then(addBookmark)
         .catch(addBookmark);
 }
+
+// receive.createBookmark = data => {
+//     console.log(this)
+//
+//     if (isSpecialPage(data.uri)) {
+//         notifySpecialPage();
+//         return;
+//     }
+//
+//     const addBookmark = () =>
+//         backend.addBookmark(data, NODE_TYPE_BOOKMARK).then(bookmark => {
+//             send.bookmarkAdded({node: bookmark});
+//         });
+//
+//     backend.setTentativeId(data);
+//     send.beforeBookmarkAdded({node: data})
+//         .then(addBookmark)
+//         .catch(addBookmark);
+// };
 
 export function createArchive(data) {
     if (isSpecialPage(data.uri)) {

@@ -32,40 +32,16 @@ export function parseHtml(htmlText) {
 }
 
 export function clearDocumentEncoding(doc) {
-    let chars = doc.querySelector("meta[http-equiv='content-type' i]");
+    let meta = doc.querySelector("meta[http-equiv='content-type' i]")
+        || doc.querySelector("meta[charset]");
 
-    if (chars)
-        chars.parentNode.removeChild(chars);
-    else {
-        chars = doc.querySelector("meta[charset]");
-
-        if (chars)
-            chars.parentNode.removeChild(chars);
-    }
+    if (meta)
+        meta.parentNode.removeChild(meta);
 }
 
 export function fixDocumentEncoding(doc) {
-    let chars = doc.querySelector("meta[http-equiv='content-type' i]");
-    if (chars) {
-        chars.parentNode.removeChild(chars);
-        chars.setAttribute("content", "text/html; charset=utf-8");
-        doc.getElementsByTagName("head")[0].prepend(chars);
-    }
-    else {
-        chars = doc.querySelector("meta[charset]");
-
-        if (chars) {
-            chars.parentNode.removeChild(chars);
-            chars.setAttribute("charset", "utf-8");
-            doc.getElementsByTagName("head")[0].prepend(chars);
-        }
-        else {
-            chars = document.createElement("meta");
-            chars.setAttribute("http-equiv", 'Content-Type');
-            chars.setAttribute("content", "text/html; charset=utf-8");
-            doc.getElementsByTagName("head")[0].prepend(chars);
-        }
-    }
+    clearDocumentEncoding(doc);
+    $(doc.getElementsByTagName("head")[0]).prepend(`<meta charset="utf-8">`);
 }
 
 export function isElementInViewport(el) {

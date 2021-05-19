@@ -5,11 +5,11 @@ import {nativeBackend} from "./backend_native.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
+import {receive} from "./proxy.js";
 import {
     browseNode,
     browseNotes,
     createArchive,
-    createBookmark,
     getBookmarkInfo,
     shareBookmarkToCloud,
     storePageHtml, uploadFiles
@@ -42,7 +42,9 @@ import {
 
 
 /* Internal message listener */
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+browser.runtime.onMessage.addListener(async (message, sender) => {
+
+//    receive(message, sender);
 
     switch (message.type) {
 
@@ -72,6 +74,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             return getBookmarkInfo(message);
 
         case "GET_HIDE_TOOLBAR_SETTING":
+            await settings.load();
             return settings.do_not_show_archive_toolbar();
 
         case "COPY_NODES":

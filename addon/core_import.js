@@ -130,6 +130,7 @@ export async function exportFile(message) {
             }
         };
 
+        await backend.exportCleanStorage();
         await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
         await file.flush();
 

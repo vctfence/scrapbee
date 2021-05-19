@@ -70,11 +70,14 @@ export async function backupShelf(message) {
 
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
-
-    port.postMessage({
-        type: "BACKUP_FINISH"
-    });
+    try {
+        await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
+    }
+    finally {
+        port.postMessage({
+            type: "BACKUP_FINISH"
+        });
+    }
 
     await process;
 }
@@ -93,20 +96,28 @@ export async function restoreShelf(message) {
 
         const Reader = class {
             async* lines() {
-                let line;
-                while (line = await nativeBackend.fetchText("/restore/get_line"))
-                    yield line;
+                while (true) {
+                    const response = await nativeBackend.fetch("/restore/get_line");
+                    if (response.ok) {
+                        const line = await response.text();
+                        if (line)
+                            yield line;
+                        else
+                            break;
+                    }
+                    else
+                        throw new Error("unknown error");
+                }
             }
         };
 
         const shelfName = message.new_shelf ? message.meta.alt_name : message.meta.name;
         shelf = await importJSON(shelfName, new Reader(), true);
-
-        await nativeBackend.fetch("/restore/finalize");
     } catch (e) {
         error = e;
     }
     finally {
+        await nativeBackend.fetch("/restore/finalize");
         send.nodesImported({shelf});
     }
 

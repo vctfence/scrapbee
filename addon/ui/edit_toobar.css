@@ -1,143 +1,189 @@
-.scrapyard-edit-bar-container {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 2147483647 !important;
-    width: 100% !important;
-    height: 42px !important;
-    margin: 0 !important;
-    padding: 0 !important;
+#scrapyard-edit-bar {
+    background: #aaa;
+    border-top: 1px solid #999;
+    width: 100%;
+    height: 26px;
+    white-space: nowrap;
+    text-align: left;
+    display: flex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    line-height: 26px;
+    font-weight: normal;
+    letter-spacing: normal;
+    align-items: center;
 }
 
-.scrapyard-edit-bar {
-    background: #aaa !important;
-    border-top: 1px solid #999  !important;
-    width: 100%  !important;
-    height: 26px !important;
-    white-space: nowrap !important;
-    text-align:left;
-    display: flex;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-    line-height: 26px !important;
-    font-weight: normal !important;
-    letter-spacing: normal !important;
-    align-items: center !important;
-}
-.scrapyard-edit-bar * {
+#scrapyard-edit-bar * {
     flex: 0 1 auto;
 }
-.original-url-text {
-    flex: 1 1 auto;
-    margin: 0 !important;
-    margin-left: 4px !important;
-    margin-right: 16px !important;
-    height: 16px !important;
-    /*margin-top: 2px !important;*/
-    padding: 0 !important;
-    letter-spacing: normal !important;
-    border: 1px solid #777 !important;
+
+#scrapyard-original-url-label {
+    margin-left: 8px;
+    display: inline-block;
+    color: black;
 }
-#scrapyard-icon{
-    vertical-Align:middle;
-    margin-Left:10px;
-    margin-top:4px;
-    width :20px;
-    height : 20px;
+
+#scrapyard-original-url-text {
+    margin: 0;
+    margin-left: 4px;
+    margin-right: 4px;
+    height: 16px;
+    /*margin-top: 2px;*/
+    padding: 0;
+    letter-spacing: normal;
+    border: 1px solid #777;
+    flex-grow: 1;
+    flex-shrink: 0;
 }
+
+#scrapyard-icon {
+    vertical-Align: middle;
+    margin-Left: 10px;
+    margin-top: 4px;
+    width: 20px;
+    height: 20px;
+}
+
 #scrapyard-brand {
     margin-top: 2px;
     margin-left: 5px;
-    color: black !important;
-    font-weight: bold !important;
-    letter-spacing: normal !important;
+    margin-right: 5px;
+    color: black;
+    font-weight: bold;
+    letter-spacing: normal;
 }
-.scrapyard-edit-bar,  .scrapyard-edit-bar *, .scrapyard-edit-bar input[type=button].blue-button,
-.scrapyard-edit-bar input[type=button].yellow-button, .scrapyard-edit-bar input[type=text].original-url-text {
-    font-family:
-        "Helvetica",
-        "Lucida Sans Unicode",
-        "Lucida Sans",
-        "Trebuchet MS",
-        "Open Sans",
-        "Fira Sans",
-        "Liberation Sans",
-        "Nimbus Sans L",
-        "WenQuanYi Micro Hei",
-		sans-serif !important;
-    font-size:12px !important;
-    box-sizing: content-box !important;
+
+#scrapyard-edit-doc-button {
+    width: 81px;
 }
-.scrapyard-edit-bar input[type=button].blue-button,
-.scrapyard-edit-bar input[type=button].yellow-button,
-.scrapyard-edit-bar input[type=button].black-button {
-    background:#09c;
-    color:#fff;
-    cursor:pointer;
-    border-radius:5px;
-    padding:3px 15px;
-    border:none;
-    line-height:20px;
-    margin-left:5px;
-    text-transform: none !important;
-    font-weight: normal !important;
-    letter-spacing: normal !important;
+
+#scrapyard-edit-bar, #scrapyard-edit-bar *, #scrapyard-edit-bar input[type=button].blue-button,
+#scrapyard-edit-bar input[type=button].yellow-button, #scrapyard-edit-bar input[type=text].original-url-text {
+    font-family: "Helvetica",
+    "Lucida Sans Unicode",
+    "Lucida Sans",
+    "Trebuchet MS",
+    "Open Sans",
+    "Fira Sans",
+    "Liberation Sans",
+    "Nimbus Sans L",
+    "WenQuanYi Micro Hei",
+    sans-serif;
+    font-size: 12px;
+    box-sizing: content-box;
 }
-.scrapyard-edit-bar input[type=button].yellow-button{
-    background:#f70;
+
+#scrapyard-edit-bar input[type=button].blue-button,
+#scrapyard-edit-bar input[type=button].yellow-button,
+#scrapyard-edit-bar input[type=button].black-button {
+    background: #09c;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 3px 15px;
+    border: none;
+    line-height: 20px;
+    margin-left: 5px;
+    text-transform: none;
+    font-weight: normal;
+    letter-spacing: normal;
 }
-.scrapyard-edit-bar input[type=button].black-button{
-    background:#000;
+
+#scrapyard-edit-bar input[type=button].yellow-button {
+    background: #f70;
 }
-.scrapyard-edit-bar input[type=button]:disabled{
-    background:#555;
+
+#scrapyard-edit-bar input[type=button].black-button {
+    background: #000;
 }
-.scrapyard-menu-item{
-    text-align:center;
+
+#scrapyard-edit-bar input[type=button]:disabled {
+    background: #555;
 }
-.hide-button {
+
+.scrapyard-menu-item-wrapper {
+    height: 14px;
+    color: #333;
+    cursor: pointer;
+    border-bottom: 1px solid #999;
+    padding: 8px 20px;
+    vertical-align: middle;
+}
+
+.scrapyard-menu-item {
+    text-align: center;
+    height: 14px;
+    line-height: 14px;
+    min-width: 200px;
+}
+
+#scrapyard-hide-button {
     margin-right: 8px;
 }
-.go-button {
-    margin-left: 0 !important;
+
+#scrapyard-go-button {
+    margin-left: 0;
 }
+
+#scrapyard-marker-menu {
+    position: absolute;
+    z-index: 2147483646;
+    border: 1px solid #999;
+    background: #fff;
+    display: none;
+    box-shadow: 5px 5px 5px #888888;
+    border-width: 1px 1px 0px 1px;
+}
+
+#scrapyard-marker-cleaner {
+
+}
+
 #scrapyard-auto-open-check {
     margin-left: 5px;
 }
+
 #scrapyard-auto-open-check ~ label {
-    margin: 0 !important;
-    padding: 0 !important;
-    padding-left: 2px !important;
-    padding-top: 2px !important;
-    color: black !important;
-    font-weight: normal !important;
-    letter-spacing: normal !important;
+    margin: 0;
+    padding: 0;
+    padding-left: 2px;
+    padding-top: 2px;
+    color: black;
+    font-weight: normal;
+    letter-spacing: normal;
 }
 
-.scrapyard-marker-1{
+.scrapyard-marker-1 {
     background: #f2cfff;;
 }
-.scrapyard-marker-2{
+
+.scrapyard-marker-2 {
     background: #b2e8f6;
 }
-.scrapyard-marker-3{
+
+.scrapyard-marker-3 {
     background: #bcffc1;
 }
-.scrapyard-marker-4{
-    background:#fff2a1 ;
+
+.scrapyard-marker-4 {
+    background: #fff2a1;
 }
-.scrapyard-marker-5{
-    border-bottom:2px solid #28c628;
+
+.scrapyard-marker-5 {
+    border-bottom: 2px solid #28c628;
 }
-.scrapyard-marker-6{
-    border-bottom:2px solid #f00;
+
+.scrapyard-marker-6 {
+    border-bottom: 2px solid #f00;
 }
-.scrapyard-marker-7{
-    border-bottom:2px dotted #28c628;
+
+.scrapyard-marker-7 {
+    border-bottom: 2px dotted #28c628;
 }
-.scrapyard-marker-8{
-    border-bottom:2px dotted #f00;
+
+.scrapyard-marker-8 {
+    border-bottom: 2px dotted #f00;
 }
 
 
@@ -145,7 +191,7 @@
     overflow: hidden;
 }
 
-#notes-container {
+#scrapyard-notes-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -156,61 +202,76 @@
     z-index: 2000000;
 }
 
-#notes-ifrm {
+#scrapyard-notes-frame {
     position: fixed;
     top: 10%;
     left: 10%;
     width: 80%;
     height: 80%;
-    z-index: 2000001;
+    z-index: 2147483600;
+    border: none;
 }
 
 @keyframes flash {
-    0% { opacity: 1.0; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1.0; }
+    0% {
+        opacity: 1.0;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1.0;
+    }
 }
 
-.flash-button {
+.scrapyard-flash-button {
     animation-name: flash;
     animation-duration: 1s;
     animation-timing-function: linear;
     animation-iteration-count: 1;
 }
 
-.help-mark, .i-mark {
-    width:16px;
-    height:16px;
+.scrapyard-icon-container {
+    position: relative;
+    height: 16px;
+    display: flex;
+    align-content: center;
+    align-items: center;
+}
+
+.scrapyard-help-mark, .scrapyard-i-mark {
+    width: 16px;
+    height: 16px;
     margin-left: 4px;
     background-image: url(../icons/help-mark.svg);
     background-size: 16px 16px;
     background-repeat: no-repeat;
-    vertical-align:middle;
-    display:inline-block;
+    vertical-align: middle;
+    display: inline-block;
 }
 
-.i-mark {
+.scrapyard-i-mark {
     background-image: url(../icons/page-info.svg);
-    width:18px;
-    height:18px;
+    width: 18px;
+    height: 18px;
     background-size: 18px 18px;
     margin-left: 16px;
     margin-right: 10px;
     margin-top: -2px;
 }
 
-.tips {
-    border-radius:5px;
-    border:1px solid #555;
+.scrapyard-tips {
+    border-radius: 5px;
+    border: 1px solid #555;
     background: #d2d2d2;
-    padding:5px;
-    margin-bottom:5px;
-    text-align:left;
+    padding: 5px;
+    margin-bottom: 5px;
+    text-align: left;
     z-index: 2147483647;
     color: black;
 }
 
-.tips.hide {
+.scrapyard-tips.scrapyard-hide {
     display: none;
     position: absolute;
 }

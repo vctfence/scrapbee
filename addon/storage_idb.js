@@ -825,6 +825,10 @@ class IDBStorage {
         return handler();
     }
 
+    exportCleanStorage() {
+        return dexie.export_storage.clear();
+    }
+
     exportPutBlob(process_id, blob) {
         return dexie.export_storage.add({
             process_id,
