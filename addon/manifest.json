@@ -1,8 +1,8 @@
 {
-    "version": "0.12.3",
+    "version": "0.12.4",
     "applications": {
         "gecko": {
-            "id": "scrapyard@firefox",
+            "id": "scrapyard-we@firefox",
             "strict_min_version": "78.0"
         }
     },

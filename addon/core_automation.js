@@ -352,8 +352,10 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
         throw new Error();
 
     let entries;
+    let container;
     if (message.uuid === null) {
         entries = await backend.queryShelf();
+        container = true;
     }
     else {
         const API_UUID_TO_DB = {
@@ -368,7 +370,8 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
                 : message.uuid;
 
         const node = await backend.getNode(uuid, true);
-        if (node && isContainer(node))
+        container = node && isContainer(node);
+        if (container)
             entries = await backend.getChildNodes(node.id);
         else
             entries = [];
@@ -382,7 +385,7 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
         result.push(await nodeToAPIObject(entry));
     }
 
-    return result.length? result: undefined;
+    return container? result: undefined;
 };
 
 receiveExternal.scrapyardListPath = async (message, sender) => {
@@ -390,13 +393,16 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
         throw new Error();
 
     let entries;
+    let container;
     if (message.path === "/") {
         entries = await backend.queryShelf();
+        container = true;
     }
     else {
         const path = backend.expandPath(message.path);
         const node = await backend._queryGroup(path);
-        if (node)
+        container = !!node;
+        if (container)
             entries = await backend.getChildNodes(node.id);
         else
             entries = [];
@@ -410,7 +416,7 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
         result.push(await nodeToAPIObject(entry));
     }
 
-    return result.length? result: undefined;
+    return container? result: undefined;
 };
 
 receiveExternal.scrapyardUpdateUuid = async (message, sender) => {

@@ -691,8 +691,6 @@ receive.nodesImported = message => {
     settings.last_shelf(shelfId, async () => {
         try {
             await loadShelves(false);
-            if (shelfId !== EVERYTHING_SHELF_ID)
-                setTimeout(() => tree.openRoot(), 50);
         } catch (e) {
             console.error(e);
         }
