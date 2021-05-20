@@ -148,12 +148,12 @@ Returns an object with the following properties:
 
 #### SCRAPYARD_GET_UUID
 
-Retrieves the properties of a bookmark or archive defined by the given UUID.
+Retrieves the properties of a bookmark or archive defined by the `uuid` parameter.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:       "SCRAPYARD_GET_UUID",
-    uuid:       "F0D858C6ED40416AA402EB2C3257EA17"
+    type: "SCRAPYARD_GET_UUID",
+    uuid: "F0D858C6ED40416AA402EB2C3257EA17"
 });
 ```
 
@@ -180,8 +180,8 @@ in the same format as `SCRAPYARD_GET_UUID`.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:       "SCRAPYARD_LIST_UUID",
-    uuid:       null
+    type: "SCRAPYARD_LIST_UUID",
+    uuid: null
 });
 ```
 
@@ -194,8 +194,8 @@ in the same format as `SCRAPYARD_GET_UUID`.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:       "SCRAPYARD_LIST_PATH",
-    path:       "/"
+    type: "SCRAPYARD_LIST_PATH",
+    path: "/"
 });
 ```
 
@@ -203,7 +203,7 @@ If `/` is specified as the value of the `path` parameter, the list of all existi
 
 #### SCRAPYARD_UPDATE_UUID
 
-Updates the properties of a bookmark, archive, or folder, represented by the given UUID.
+Updates the properties of a bookmark, archive, or folder represented by the given UUID.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
