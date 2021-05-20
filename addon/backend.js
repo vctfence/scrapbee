@@ -171,8 +171,9 @@ export class Backend extends ExternalEventProvider {
     _normalizePath(path) {
         if (path) {
             path = path.trim();
+            path = path.replace("\\", "/");
             if (path.startsWith("/"))
-                path = DEFAULT_SHELF_NAME + path;
+                path = path.replace(/^\//, "");
             else if (!path)
                 path = DEFAULT_SHELF_NAME;
 

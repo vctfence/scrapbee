@@ -5,6 +5,15 @@ export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
 export const NODE_TYPE_NOTES = 6;
 
+export const NODE_TYPE_NAMES = {
+    [NODE_TYPE_SHELF]: "shelf",
+    [NODE_TYPE_GROUP]: "folder",
+    [NODE_TYPE_BOOKMARK]: "bookmark",
+    [NODE_TYPE_ARCHIVE]: "archive",
+    [NODE_TYPE_SEPARATOR]: "separator",
+    [NODE_TYPE_NOTES]: "notes"
+};
+
 export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
 export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP];
 
@@ -41,7 +50,9 @@ export const TODO_SHELF_NAME = "TODO";
 export const DONE_SHELF_NAME = "DONE";
 
 export const EVERYTHING = "everything";
+
 export const DEFAULT_SHELF_NAME = "default";
+export const DEFAULT_SHELF_UUID = DEFAULT_SHELF_ID.toString();
 
 export const FIREFOX_SHELF_NAME = "firefox";
 export const FIREFOX_SHELF_UUID = "browser_bookmarks";
@@ -51,6 +62,7 @@ export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
 export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
 export const CLOUD_SHELF_NAME = "cloud";
+export const CLOUD_SHELF_UUID = CLOUD_SHELF_NAME;
 export const CLOUD_EXTERNAL_NAME = "cloud";
 
 export const RDF_EXTERNAL_NAME = "rdf";
@@ -94,7 +106,7 @@ export function isEndpoint(node) {
 }
 
 export function isSpecialShelf(name) {
-    name = name.toLocaleUpperCase();
+    name = name?.toLocaleUpperCase();
     return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
         || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
         || name === CLOUD_SHELF_NAME.toLocaleUpperCase()

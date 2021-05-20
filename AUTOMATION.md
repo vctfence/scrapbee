@@ -45,8 +45,8 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     path:       "shelf/my/directory",             // Bookmark shelf and directory
     tags:       "comma, separated",               // List of bookmark tags
     details:    "Bookmark details",               // Bookmark details
-    todo_state: 1,                                // One of the following integers: 1, 2, 3, 4, 5
-                                                  // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED states respectively
+    todo_state: "TODO",                           // One of the following strings:
+                                                  // TODO, WAITING, POSTPONED, DONE, CANCELLED
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
     comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
@@ -81,8 +81,8 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     path:         "shelf/my/directory",             // Bookmark shelf and directory
     tags:         "comma, separated",               // List of bookmark tags
     details:      "Bookmark details",               // Bookmark details
-    todo_state:   1,                                // One of the following integers: 1, 2, 3, 4, 5
-                                                    // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED states respectively
+    todo_state:   "TODO",                           // One of the following strings:
+                                                    // TODO, WAITING, POSTPONED, DONE, CANCELLED
     todo_date:    "YYYY-MM-DD",                     // TODO expiration date
     comments:     "comment text",                   // Bookmark comments
     container:    "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
@@ -114,7 +114,7 @@ The `pack` and `content` parameters are ignored if the `local` parameter is set 
 packing of the HTML content as the `pack` option, or store binary content otherwise. The `title` and `icon` parameters are
 taken into account.
 
-If `pack` or `local` parameters are used, bookmark icon and title will be set automatically in the case of HTML content.
+If the `pack` or `local` parameters are used, bookmark icon and title will be set automatically in the case of HTML content.
 
 Returns UUID of the newly created archive.
 
@@ -140,7 +140,7 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 });
 ```
 
-Returns an object with the following fields:
+Returns an object with the following properties:
 
 * html - HTML string with the content of the specified page and all its referenced resources.
 * title - title of the captured page.
@@ -159,9 +159,11 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 
 Returns an object with the following properties:
 
+* type
 * uuid
 * title
 * url
+* icon
 * tags
 * details
 * todo_state
@@ -169,9 +171,39 @@ Returns an object with the following properties:
 * comments
 * container
 
+Only `type`, `uuid`, and `title` properties are always present.
+
+#### SCRAPYARD_LIST_UUID
+
+Lists the direct descendants of a shelf or folder defined by the `uuid` parameter
+in the same format as `SCRAPYARD_GET_UUID`.
+
+```js
+browser.runtime.sendMessage("scrapyard-we@firefox", {
+    type:       "SCRAPYARD_LIST_UUID",
+    uuid:       null
+});
+```
+
+If `null` is specified as the value of the `uuid` parameter, the list of all existing shelves is returned.
+
+#### SCRAPYARD_LIST_PATH
+
+Lists the direct descendants of a shelf or folder defined by the `path` parameter
+in the same format as `SCRAPYARD_GET_UUID`.
+
+```js
+browser.runtime.sendMessage("scrapyard-we@firefox", {
+    type:       "SCRAPYARD_LIST_PATH",
+    path:       "/"
+});
+```
+
+If `/` is specified as the value of the `path` parameter, the list of all existing shelves is returned.
+
 #### SCRAPYARD_UPDATE_UUID
 
-Updates the properties of a bookmark or archive defined by the given UUID.
+Updates the properties of a bookmark, archive, or folder, represented by the given UUID.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
@@ -182,8 +214,8 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     icon:       "http://example.com/favicon.ico", // URL of bookmark favicon
     tags:       "comma, separated",               // List of bookmark tags
     details:    "Bookmark details",               // Bookmark details
-    todo_state: 1,                                // One of the following integers: 1, 2, 3, 4, 5
-                                                  // which represent the TODO, WAITING, POSTPONED, DONE, CANCELLED states respectively
+    todo_state: "TODO",                           // One of the following strings:
+                                                  // TODO, WAITING, POSTPONED, DONE, CANCELLED
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
     comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
@@ -351,7 +383,7 @@ class UploadFile {
     constructor(args) {
         args[OBJECT] = {nountype: noun_arb_text, label: "path"};
         // cmdAPI.scrapyard.noun_type_directory provides the list of all Scrapyard directories
-        // to autocompletion
+        // to autocompletion. Precaution is takein for the case of missing Scrapyard add-on.
         const directory_noun = cmdAPI.scrapyard?.noun_type_directory || {suggest: () => ({})};
         args[AT] = {nountype: directory_noun, label: "directory"};
     }
@@ -369,8 +401,9 @@ class UploadFile {
         let title = localPath.replaceAll("\\", "/").split("/");
         title = title[title.length - 1]; // use file name as the default bookmark title
 
-        // cmdAPI.scrapyard offers a more concise way to send messages to Scrapyard from iShell.
+        // cmdAPI.scrapyard methods offers a more concise way to send messages to Scrapyard from iShell.
         // Method names are camel-case message suffixes with the "SCRAPYARD_" part omitted.
+        // For example, the method name for SCRAPYARD_LIST_UUID will be: listUuid.
         // There is no need to specify Scrapyard addon ID and the 'type' parameter.
         cmdAPI.scrapyard.addArchive({
             title:   title,

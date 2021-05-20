@@ -145,12 +145,12 @@ class EditToolbar {
         let scrapyardHideToolbar = false;
 
         /** toolbar */
-        const rootContainer = $(`<div id="scrapyard-edit-bar-container"
-                                      style="display: none; position: fixed; left: 0px; right: 0px; bottom: 0px;
-                                             z-index: 2147483647; width: 100%; height: ${CONTAINER_HEIGHT}px;
-                                             margin: 0px; padding: 0px;"></div>`)
+        const rootContainer = this.rootContainer =
+            $(`<div id="scrapyard-edit-bar-container"
+                    style="display: none; position: fixed; left: 0; right: 0; bottom: 0;
+                    z-index: 2147483647; width: 100%; height: ${CONTAINER_HEIGHT}px;
+                    margin: 0; padding: 0;"></div>`)
             .appendTo(document.body)[0];
-        this.rootContainer = rootContainer;
 
         const shadowRoot = this.shadowRoot = rootContainer.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = `
@@ -343,11 +343,10 @@ class EditToolbar {
             if (e.code === "KeyT" && e.ctrlKey && e.altKey) {
                 $(rootContainer).toggle();
                 scrapyardHideToolbar = !scrapyardHideToolbar;
-                console.log(scrapyardHideToolbar)
-                document.body.style.marginBottom = scrapyardHideToolbar
-                    ? documentMarginBottom
-                    : `${CONTAINER_HEIGHT + 10}px`;
-                console.log(document.body.style.marginBottom)
+                document.body.style.marginBottom =
+                    scrapyardHideToolbar
+                        ? documentMarginBottom
+                        : `${CONTAINER_HEIGHT + 10}px`;
             }
         });
 
@@ -355,8 +354,10 @@ class EditToolbar {
             .then(hide => {
                 scrapyardHideToolbar = hide;
                 if (!scrapyardHideToolbar) {
-                    document.body.style.marginBottom = `${CONTAINER_HEIGHT + 10}px`;
-                    setTimeout(() => rootContainer.style.display = "block", 300);
+                    setTimeout(() => {
+                        document.body.style.marginBottom = `${CONTAINER_HEIGHT + 10}px`;
+                        rootContainer.style.display = "block"
+                    }, 300);
                 }
             });
     }

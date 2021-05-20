@@ -1,12 +1,13 @@
 import {nativeBackend} from "./backend_native.js";
 import UUID from "./lib/uuid.js";
 import {
-    DEFAULT_SHELF_NAME,
-    FIREFOX_BOOKMARK_MENU,
-    FIREFOX_BOOKMARK_UNFILED,
-    FIREFOX_SHELF_NAME,
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK
+    isContainer, isSpecialShelf,
+    TODO_NAMES, TODO_STATES,
+    CLOUD_SHELF_NAME, CLOUD_SHELF_UUID,
+    DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
+    FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES, NODE_PROPERTIES
 } from "./storage_constants.js";
 import {settings} from "./settings.js";
 import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./core_bookmarking.js";
@@ -25,6 +26,18 @@ export function isAutomationAllowed(sender) {
     return ishellBackend.isIShell(sender.id)
         || (settings.enable_automation() && (!extension_whitelist
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
+}
+
+const ALLOWED_API_FIELDS = ["type", "uuid", "title", "url", "icon", "tags", "details", "todo_state", "todo_date",
+                            "comments", "container", "content", "content_type", "pack", "local", "select", "refresh",
+                            "hide_tab"];
+
+function sanitizeIncomingObject(object) {
+    for (let key of Object.keys(object))
+        if (!ALLOWED_API_FIELDS.some(k => k === key))
+            delete object[key];
+
+    return object;
 }
 
 receiveExternal.scrapyardGetVersion = (message, sender) => {
@@ -64,6 +77,14 @@ export function renderPath(node, nodes) {
 }
 
 export async function setUpBookmarkMessage(message, sender, activeTab) {
+    // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
+    const automation = !(ishellBackend.isIShell(sender.id) && message.search);
+
+    if (automation)
+        sanitizeIncomingObject(message);
+
+    message.__automation = automation;
+
     if (message.type === NODE_TYPE_ARCHIVE && message.url === "")
         message.uri = undefined;
     else if (!message.uri)
@@ -89,11 +110,8 @@ export async function setUpBookmarkMessage(message, sender, activeTab) {
     message.parent_id = group.id;
     delete message.path;
 
-    // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
-    message.__automation = !(ishellBackend.isIShell(sender.id) && message.search);
-
     // adding bookmark from ishell, take preparations in UI
-    if (!message.__automation) {
+    if (!automation) {
         try {
             backend.setTentativeId(message);
             await send.beforeBookmarkAdded({node: message});
@@ -269,38 +287,163 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
         });
 };
 
+async function nodeToAPIObject(node) {
+    if (node) {
+        const comments =
+            node.has_comments
+                ? await backend.fetchComments(node.id)
+                : undefined;
+
+        const icon =
+            node.stored_icon
+                ? await backend.fetchIcon(node.id)
+                : node.icon;
+
+        const uuid =
+            isSpecialShelf(node.name)
+                ? node.name.toLowerCase()
+                : node.uuid;
+
+        const options = {
+            type: NODE_TYPE_NAMES[node.type],
+            uuid: uuid,
+            title: node.name || ""
+        };
+
+        if (node.uri)
+            options.url = node.uri;
+
+        if (icon)
+            options.icon = icon;
+
+        if (node.tags)
+            options.tags = node.tags;
+
+        if (node.details)
+            options.details = node.details;
+
+        if (node.todo_state)
+            options.todo_state = TODO_NAMES[node.todo_state];
+
+        if (node.todo_date)
+            options.todo_date = node.todo_date;
+
+        if (comments)
+            options.comments = comments;
+
+        if (node.container)
+            options.container = node.container;
+
+        return options;
+    }
+}
+
 receiveExternal.scrapyardGetUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
     const node = await backend.getNode(message.uuid, true);
 
-    if (node) {
-        const comments = await backend.fetchComments(node.id)
+    return nodeToAPIObject(node);
+};
 
-        return {
-            uuid: node.uuid,
-            title: node.name,
-            url: node.uri,
-            tags: node.tags,
-            details: node.details,
-            todo_state: node.todo_state,
-            todo_date: node.todo_date,
-            comments: comments,
-            container: node.container
-        }
+receiveExternal.scrapyardListUuid = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    let entries;
+    if (message.uuid === null) {
+        entries = await backend.queryShelf();
     }
+    else {
+        const API_UUID_TO_DB = {
+            [CLOUD_SHELF_NAME]: CLOUD_SHELF_UUID,
+            [FIREFOX_SHELF_NAME]: FIREFOX_SHELF_UUID,
+            [DEFAULT_SHELF_NAME]: DEFAULT_SHELF_UUID,
+        };
+
+        const uuid =
+            isSpecialShelf(message.uuid)
+                ? API_UUID_TO_DB[message.uuid]
+                : message.uuid;
+
+        const node = await backend.getNode(uuid, true);
+        if (node && isContainer(node))
+            entries = await backend.getChildNodes(node.id);
+        else
+            entries = [];
+    }
+
+    entries.sort((a, b) => a.pos - b.pos);
+
+    let result = [];
+
+    for (let entry of entries) {
+        result.push(await nodeToAPIObject(entry));
+    }
+
+    return result.length? result: undefined;
+};
+
+receiveExternal.scrapyardListPath = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    let entries;
+    if (message.path === "/") {
+        entries = await backend.queryShelf();
+    }
+    else {
+        const path = backend.expandPath(message.path);
+        const node = await backend._queryGroup(path);
+        if (node)
+            entries = await backend.getChildNodes(node.id);
+        else
+            entries = [];
+    }
+
+    entries.sort((a, b) => a.pos - b.pos);
+
+    let result = [];
+
+    for (let entry of entries) {
+        result.push(await nodeToAPIObject(entry));
+    }
+
+    return result.length? result: undefined;
 };
 
 receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
+    if (isSpecialShelf(message.uuid))
+        throw new Error("Can not modify built-in shelves.");
+
+    const refresh = message.refresh;
+
     delete message.type;
-    if (message.url)
+    sanitizeIncomingObject(message);
+
+    if (message.url) {
         message.uri = message.url;
-    if (message.title)
-        message.name = message.title;
+        delete message.url;
+    }
+
+    if (message.title) {
+        message.name = message.title || "";
+        delete message.title;
+    }
+
+    if (message.todo_state) {
+        if (typeof message.todo_state === "number"
+            && (message.todo_state < TODO_STATE_TODO
+                || message.todo_state > TODO_STATE_CANCELLED)) {
+            message.todo_state = undefined;
+        }
+        else if (typeof message.todo_state === "string")
+            message.todo_state = TODO_STATES[message.todo_state.toUpperCase()];
+    }
 
     const node = await backend.getNode(message.uuid, true);
 
@@ -313,12 +456,14 @@ receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
     else if (message.icon)
         await backend.storeIcon(node);
 
-    if (message.hasOwnProperty("comments"))
+    if (message.hasOwnProperty("comments")) {
         await backend.storeComments(node.id, message.comments);
+        delete node.comments;
+    }
 
     await backend.updateBookmark(node);
 
-    if (message.refresh)
+    if (refresh)
         send.nodesUpdated();
 };
 

@@ -115,7 +115,7 @@ export async function captureTab(tab, bookmark) {
         notifySpecialPage();
     }
     else {
-        // Acquire selection html, if present
+        // Acquire selection html, if presents
 
         let selection;
         let frames = await browser.webNavigation.getAllFrames({tabId: tab.id});
