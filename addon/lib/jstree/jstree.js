@@ -3444,8 +3444,8 @@
 					'open' : [],
 					'loaded' : [],
 					'scroll' : {
-						'left' : this.element.scrollLeft(),
-						'top' : this.element.scrollTop()
+						'left' : this.element.parent().scrollLeft(),
+						'top' : this.element.parent().scrollTop()
 					},
 					/*!
 					'themes' : {
@@ -3518,10 +3518,10 @@
 					}
 					if(state.core.scroll) {
 						if(state.core.scroll && state.core.scroll.left !== undefined) {
-							this.element.scrollLeft(state.core.scroll.left);
+							this.element.parent().scrollLeft(state.core.scroll.left);
 						}
 						if(state.core.scroll && state.core.scroll.top !== undefined) {
-							this.element.scrollTop(state.core.scroll.top);
+							this.element.parent().scrollTop(state.core.scroll.top);
 						}
 						delete state.core.scroll;
 						this.set_state(state, callback);

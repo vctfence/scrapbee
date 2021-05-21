@@ -499,8 +499,7 @@ async function performImport(file, file_name, file_ext) {
         else {
             const shelf = await backend.queryShelf(file_name);
             settings.last_shelf(shelf.id);
-            await loadShelves()
-            tree.openRoot();
+            await loadShelves();
         }
     }
     catch (e) {

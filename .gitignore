@@ -11,7 +11,7 @@ backend/flask.bat
 addon/.web-extension-id
 addon/web-ext-artifacts
 addon/debug.log
-helper/__pycache__
+__pycache__
 helper/build/
 helper/dist/
 helper/scrapyard_helper.spec

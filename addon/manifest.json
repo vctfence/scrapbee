@@ -2,7 +2,7 @@
     "version": "0.12.4",
     "applications": {
         "gecko": {
-            "id": "scrapyard-we@firefox",
+            "id": "scrapyard@firefox",
             "strict_min_version": "78.0"
         }
     },
