@@ -436,10 +436,8 @@ receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
         delete message.url;
     }
 
-    if (message.title) {
-        message.name = message.title || "";
-        delete message.title;
-    }
+    message.name = message.title || "";
+    delete message.title;
 
     if (message.todo_state) {
         if (typeof message.todo_state === "number"

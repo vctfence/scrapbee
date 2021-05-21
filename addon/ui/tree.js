@@ -121,8 +121,6 @@ class BookmarkTree {
 
         this._jstree = $(element).jstree(true);
 
-        log(this._jstree)
-
         this.iconCache = new Map();
 
         this._jstree.__icon_set_hook = (jnode) => {

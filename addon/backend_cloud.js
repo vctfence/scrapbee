@@ -8,7 +8,7 @@ import {
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
-    isContainer
+    isContainer, CLOUD_SHELF_UUID
 } from "./storage_constants.js";
 import {notes2html} from "./notes_render.js";
 import {getFavicon} from "./favicon.js";
@@ -39,11 +39,11 @@ export class CloudBackend {
 
     newCloudRootNode() {
         return {id: CLOUD_SHELF_ID,
-            pos: -2,
-            name: CLOUD_SHELF_NAME,
-            uuid: CLOUD_SHELF_NAME,
-            type: NODE_TYPE_SHELF,
-            external: CLOUD_EXTERNAL_NAME};
+                pos: -2,
+                name: CLOUD_SHELF_NAME,
+                uuid: CLOUD_SHELF_UUID,
+                type: NODE_TYPE_SHELF,
+                external: CLOUD_EXTERNAL_NAME};
     }
 
     async getTree(root) {

@@ -9,43 +9,82 @@ import {
 } from "./storage_constants.js";
 import {getFavicon} from "./favicon.js";
 
+const CATEGORY_ADDED = 0;
+const CATEGORY_CHANGED = 1;
+const CATEGORY_MOVED = 2;
+const CATEGORY_REMOVED = 3;
+
 export class BrowserBackend {
 
     constructor() {
-        this._browserListenerOnBookmarkCreated = this.onBookmarkCreated.bind(this);
-        this._browserListenerOnBookmarkRemoved = this.onBookmarkRemoved.bind(this);
-        this._browserListenerOnBookmarkChanged = this.onBookmarkChanged.bind(this);
-        this._browserListenerOnBookmarkMoved = this.onBookmarkMoved.bind(this);
+        this._browserListenerOnBookmarkCreated = BrowserBackend.onBookmarkCreated.bind(this);
+        this._browserListenerOnBookmarkRemoved = BrowserBackend.onBookmarkRemoved.bind(this);
+        this._browserListenerOnBookmarkChanged = BrowserBackend.onBookmarkChanged.bind(this);
+        this._browserListenerOnBookmarkMoved = BrowserBackend.onBookmarkMoved.bind(this);
         this._listenersInstalled = false;
 
         this._uiSemaphore = 0;
         this._listenerSemaphore = 0;
+
+        // bookmark ids that were operated through the Scrapyard UI
+        // used to mute the corresponding listeners to avoid bookmark duplication
+        this._uiBookmarks = {
+            [CATEGORY_ADDED]: [],
+            [CATEGORY_CHANGED]: [],
+            [CATEGORY_MOVED]: [],
+            [CATEGORY_REMOVED]: []
+        };
     }
 
     newBrowserRootNode() {
         return {id: FIREFOX_SHELF_ID,
-            pos: -1,
-            name: FIREFOX_SHELF_NAME,
-            uuid: FIREFOX_SHELF_UUID,
-            type: NODE_TYPE_SHELF,
-            external: FIREFOX_SHELF_NAME};
+                pos: -1,
+                name: FIREFOX_SHELF_NAME,
+                uuid: FIREFOX_SHELF_UUID,
+                type: NODE_TYPE_SHELF,
+                external: FIREFOX_SHELF_NAME};
     }
 
     _convertType(node) {
         return ({"folder": NODE_TYPE_GROUP,
-            "bookmark": NODE_TYPE_BOOKMARK,
-            "separator": NODE_TYPE_SEPARATOR})[node.type];
+                 "bookmark": NODE_TYPE_BOOKMARK,
+                 "separator": NODE_TYPE_SEPARATOR})[node.type];
     }
 
     _toBrowserType(node) {
         return ({NODE_TYPE_GROUP: "folder",
-            NODE_TYPE_SHELF: "folder",
-            NODE_TYPE_ARCHIVE: "bookmark",
-            NODE_TYPE_BOOKMARK: "bookmark",
-            NODE_TYPE_NOTES: "separator",
-            NODE_TYPE_SEPARATOR: "separator"})[node.type];
+                 NODE_TYPE_SHELF: "folder",
+                 NODE_TYPE_ARCHIVE: "bookmark",
+                 NODE_TYPE_BOOKMARK: "bookmark",
+                 NODE_TYPE_NOTES: "separator",
+                 NODE_TYPE_SEPARATOR: "separator"})[node.type];
     }
 
+    _isUIContext() {
+        return window.location.pathname !== "/background.html";
+    }
+
+    markUIBookmarks(bookmarks, category) {
+        if (this._isUIContext()) {
+            send.memorizeUIBookmarks({bookmarks, category})
+        }
+        else {
+            if (!Array.isArray(bookmarks))
+                bookmarks = [bookmarks];
+
+            this._uiBookmarks[category] = [...this._uiBookmarks[category], ...bookmarks];
+        }
+
+        let unmark = () => {
+            for (const bookmark of bookmarks) {
+                let index = this._uiBookmarks[category].indexOf(bookmark);
+                if (index >= 0)
+                    this._uiBookmarks[category].splice(index, 1);
+            }
+        };
+
+        setTimeout(unmark, 10000);
+    }
 
     convertBookmark(bookmark, parent) {
         return {
@@ -60,95 +99,96 @@ export class BrowserBackend {
         };
     }
 
+    async createBrowserBookmark(node, parent_id) {
+        const type = this._toBrowserType(node);
+        const bookmark = await browser.bookmarks.create({
+                                            url: node.uri,
+                                            title: node.name,
+                                            type: type,
+                                            parentId: parent_id,
+                                            index: type === "folder"? undefined: node.pos
+                                        });
+
+        this.markUIBookmarks(bookmark.id, CATEGORY_ADDED);
+
+        node.external = FIREFOX_SHELF_NAME;
+        node.external_id = bookmark.id;
+        return backend.updateNode(node);
+    }
+
+    async createBookmark(node, parent) {
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
+            return;
+
+        if (parent.external === FIREFOX_SHELF_NAME)
+            return this.muteBrowserListeners(() => this.createBrowserBookmark(node, parent.external_id));
+    }
+
+    async createBookmarkFolder(node, parent_id) {
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
+            return;
+
+        if (typeof parent_id !== "object")
+            parent_id = await backend.getNode(parent_id);
+
+        if (parent_id && parent_id.external === FIREFOX_SHELF_NAME)
+            return this.muteBrowserListeners(() => this.createBrowserBookmark(node, parent_id.external_id));
+    }
+
     async deleteBookmarks(nodes) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
         let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME && isEndpoint(n));
 
-        let externalGroups = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
-            &&  n.type === NODE_TYPE_GROUP);
+        let externalGroups = nodes.filter(n => n.external === FIREFOX_SHELF_NAME &&  n.type === NODE_TYPE_GROUP);
 
         return this.muteBrowserListeners(async () => {
             await Promise.all(externalGroups.map(n => {
                 try {
+                    this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
                     return browser.bookmarks.removeTree(n.external_id);
                 }
                 catch (e) {
-                    //console.error(e);
+                    console.error(e);
                 }
             }));
 
             return Promise.all(externalEndpoints.map(n => {
                 try {
+                    this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
                     return browser.bookmarks.remove(n.external_id);
                 }
                 catch (e) {
-                    //console.error(e);
+                    console.error(e);
                 }
             }));
         });
     }
 
     async renameBookmark(node) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
         if (node.external === FIREFOX_SHELF_NAME) {
+            this.markUIBookmarks(node.external_id, CATEGORY_CHANGED);
             return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id, {title: node.name}));
         }
     }
 
     async updateBookmark(node) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
         if (node.external === FIREFOX_SHELF_NAME) {
+            this.markUIBookmarks(node.external_id, CATEGORY_CHANGED);
             return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id,
-                {title: node.name, url: node.uri}));
-        }
-    }
-
-    async createBrowserBookmark(node, parent_id) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
-            return;
-
-        let type = this._toBrowserType(node);
-        return browser.bookmarks.create({url: node.uri,
-            title: node.name,
-            type: type,
-            parentId: parent_id,
-            index: type === "folder"? undefined: node.pos})
-            .then(bookmark => {
-                node.external = FIREFOX_SHELF_NAME;
-                node.external_id = bookmark.id;
-                return backend.updateNode(node);
-            });
-    }
-
-    async createBookmark(node, parent) {
-        if (parent.external === FIREFOX_SHELF_NAME) {
-            await this.muteBrowserListeners(async () =>
-                await this.createBrowserBookmark(node, parent.external_id));
-        }
-    }
-
-    async createBookmarkFolder(node, parent_id) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
-            return;
-
-        if (typeof parent_id !== "object")
-            parent_id = await backend.getNode(parent_id);
-
-        if (parent_id && parent_id.external === FIREFOX_SHELF_NAME) {
-            return this.muteBrowserListeners(() => {
-                return this.createBrowserBookmark(node, parent_id.external_id);
-            });
+                                                                                    {title: node.name, url: node.uri}));
         }
     }
 
     async moveBookmarks(nodes, dest_id) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
         let dest = await backend.getNode(dest_id);
@@ -160,8 +200,10 @@ export class BrowserBackend {
 
         return this.muteBrowserListeners(async () => {
             if (dest.external === FIREFOX_SHELF_NAME) {
-                await Promise.all(browser_nodes.map(async n =>
-                    browser.bookmarks.move(n.external_id, {parentId: dest.external_id, index: n.pos})
+                await Promise.all(browser_nodes.map(n => {
+                        this.markUIBookmarks(n.external_id, CATEGORY_MOVED);
+                        return browser.bookmarks.move(n.external_id, {parentId: dest.external_id, index: n.pos})
+                    }
                 ));
 
                 return Promise.all(other_nodes.map(n => {
@@ -189,10 +231,13 @@ export class BrowserBackend {
                                     await backend.updateNode(node);
                                 }
                             });
+                            this.markUIBookmarks(id, CATEGORY_REMOVED);
                             return browser.bookmarks.removeTree(id);
                         }
-                        else
+                        else {
+                            this.markUIBookmarks(id, CATEGORY_REMOVED);
                             return browser.bookmarks.remove(id);
+                        }
                     }
                     catch (e) {
                         console.error(e);
@@ -203,7 +248,7 @@ export class BrowserBackend {
     }
 
     async copyBookmarks(nodes, dest_id) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
         let dest = await backend.getNode(dest_id);
@@ -249,7 +294,7 @@ export class BrowserBackend {
     }
 
     async reorderBookmarks(nodes) {
-        if (!settings.show_firefox_bookmarks() || await this.isListenerLocked())
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
         nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME && n.external_id);
@@ -257,134 +302,126 @@ export class BrowserBackend {
         if (nodes.length)
             return this.muteBrowserListeners(async () => {
                 for (let n of nodes) {
+                    this.markUIBookmarks(n.external_id, CATEGORY_MOVED);
                     await browser.bookmarks.move(n.external_id, {index: n.pos});
                 }
             });
     }
 
-    onBookmarkCreated(id, bookmark) {
-        (async () => {
-            if (!settings.show_firefox_bookmarks() || this.isUILocked())
-                return;
+    static async onBookmarkCreated(id, bookmark) {
+        if (!settings.show_firefox_bookmarks() || this.isLockedByUI(id, CATEGORY_ADDED))
+            return;
 
-            this.getListenerLock();
+        this.getListenerLock();
 
-            try {
-                let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
-                if (parent) {
-                    let node = browserBackend.convertBookmark(bookmark, parent);
+        try {
+            let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
+            if (parent) {
+                let node = browserBackend.convertBookmark(bookmark, parent);
 
-                    let icon = null;
+                let icon = null;
 
-                    if (node.type === NODE_TYPE_BOOKMARK && node.uri) {
-                        icon = await getFavicon(node.uri);
-                        if (icon && typeof icon === "string")
-                            node.icon = icon;
-                        else if (icon)
-                            node.icon = icon.url;
-                    }
-
-                    node = await backend.addNode(node);
-
+                if (node.type === NODE_TYPE_BOOKMARK && node.uri) {
+                    icon = await getFavicon(node.uri);
                     if (icon && typeof icon === "string")
-                        await backend.storeIcon(node);
+                        node.icon = icon;
                     else if (icon)
-                        await backend.storeIcon(node, icon.response, icon.type);
-
-                    if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
-                        send.bookmarkCreated({node: node});
+                        node.icon = icon.url;
                 }
+
+                node = await backend.addNode(node);
+
+                if (icon && typeof icon === "string")
+                    await backend.storeIcon(node);
+                else if (icon)
+                    await backend.storeIcon(node, icon.response, icon.type);
+
+                if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
+                    send.bookmarkCreated({node: node});
             }
-            catch (e) {console.error(e)}
+        }
+        catch (e) {console.error(e)}
 
-            this.releaseListenerLock();
+        this.releaseListenerLock();
+    }
 
-        })();
-    };
+    static async onBookmarkRemoved(id, bookmark) {
+        if (!settings.show_firefox_bookmarks() || this.isLockedByUI(id, CATEGORY_REMOVED))
+            return;
 
-    onBookmarkRemoved(id, bookmark) {
-        (async () => {
-            if (!settings.show_firefox_bookmarks() || this.isUILocked())
-                return;
+        this.getListenerLock();
 
-            this.getListenerLock();
-
-            try {
-                let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
-                if (node) {
-                    await backend.deleteNodes([node.id], FIREFOX_SHELF_NAME);
-                    send.externalNodeRemoved({node: node});
-                }
+        try {
+            let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
+            if (node) {
+                await backend.deleteNodes([node.id], FIREFOX_SHELF_NAME);
+                send.externalNodeRemoved({node: node});
             }
-            catch (e) {console.error(e)}
+        }
+        catch (e) {console.error(e)}
 
-            this.releaseListenerLock();
-        })();
-    };
+        this.releaseListenerLock();
+    }
 
-    onBookmarkChanged(id, bookmark) {
-        (async () => {
-            if (!settings.show_firefox_bookmarks() || this.isUILocked())
-                return;
+    static async onBookmarkChanged(id, bookmark) {
+        if (!settings.show_firefox_bookmarks() || this.isLockedByUI(id, CATEGORY_CHANGED))
+            return;
 
-            this.getListenerLock();
+        this.getListenerLock();
 
-            try {
-                let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
-                if (node) {
-                    node.uri = bookmark.url;
-                    node.name = bookmark.title;
-                    node = await backend.updateNode(node);
-                    send.externalNodeUpdated({node: node});
-                }
+        try {
+            let node = await backend.getExternalNode(id, FIREFOX_SHELF_NAME);
+            if (node) {
+                node.uri = bookmark.url;
+                node.name = bookmark.title;
+                node = await backend.updateNode(node);
+                send.externalNodeUpdated({node: node});
             }
-            catch (e) {console.error(e)}
+        }
+        catch (e) {console.error(e)}
 
-            this.releaseListenerLock();
-        })();
-    };
+        this.releaseListenerLock();
+    }
 
-    onBookmarkMoved(id, bookmark) {
-        (async () => {
-            if (!settings.show_firefox_bookmarks() || this.isUILocked())
-                return;
+    static async onBookmarkMoved(id, bookmark) {
+        if (!settings.show_firefox_bookmarks() || this.isLockedByUI(id, CATEGORY_MOVED))
+            return;
 
-            this.getListenerLock();
+        this.getListenerLock();
 
-            try {
-                let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
+        try {
+            let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
 
-                if (parent) {
-                    let browser_children = await browser.bookmarks.getChildren(bookmark.parentId);
-                    let db_children = [];
-                    let updated_node;
+            if (parent) {
+                let browser_children = await browser.bookmarks.getChildren(bookmark.parentId);
+                let db_children = [];
+                let updated_node;
 
-                    for (let c of browser_children) {
-                        let db_child = await backend.getExternalNode(c.id, FIREFOX_SHELF_NAME);
+                for (let c of browser_children) {
+                    let db_child = await backend.getExternalNode(c.id, FIREFOX_SHELF_NAME);
 
-                        if (db_child) {
-                            if (c.id === id) {
-                                updated_node = db_child;
-                                db_child.parent_id = parent.id;
-                            }
-
-                            db_child.pos = c.index;
-                            db_children.push(db_child);
+                    if (db_child) {
+                        if (c.id === id) {
+                            updated_node = db_child;
+                            db_child.parent_id = parent.id;
                         }
+
+                        db_child.pos = c.index;
+                        db_children.push(db_child);
                     }
-
-                    await backend.reorderNodes(db_children);
-
-                    if (updated_node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
-                        send.bookmarkCreated({node: updated_node});
-                    //send.externalNodeUpdated({node: updated_node});
                 }
-            }
-            catch (e) {console.error(e)}
 
-            this.releaseListenerLock();
-        })();
-    };
+                await backend.reorderNodes(db_children);
+
+                if (updated_node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
+                    send.bookmarkCreated({node: updated_node});
+                //send.externalNodeUpdated({node: updated_node});
+            }
+        }
+        catch (e) {console.error(e)}
+
+        this.releaseListenerLock();
+    }
 
     getUILock() {
         this._uiSemaphore += 1;
@@ -395,8 +432,8 @@ export class BrowserBackend {
     }
 
     // checks if UI operation wants to to mute browser bookmark listeners to avoid bookmark doubling
-    isUILocked() {
-        return !!this._uiSemaphore;
+    isLockedByUI(bookmark_id, category) {
+        return !!this._uiSemaphore || this._uiBookmarks[category].some(id => id === bookmark_id);
     }
 
     getListenerLock() {
@@ -407,18 +444,16 @@ export class BrowserBackend {
         this._listenerSemaphore -= 1;
     }
 
-    async isListenerLocked() {
-        let ui_context = window !== browser.extension.getBackgroundPage();
-
-        if (ui_context)
-            return await send.getListenerLockState();
+    // used to mute the calls of this class methods that may be invoked by backend methods used in listeners
+    async isLockedByListeners() {
+        if (this._isUIContext())
+            return send.getListenerLockState();
 
         return !!this._listenerSemaphore;
     }
 
     async muteBrowserListeners(f) {
-        let ui_context = window !== browser.extension.getBackgroundPage();
-        //console.log(new Error().stack);
+        let ui_context = this._isUIContext();
 
         if (ui_context)
             await send.uiLockGet();

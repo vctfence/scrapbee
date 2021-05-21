@@ -12,8 +12,12 @@ receive.uiLockRelease = message => {
     browserBackend.releaseUILock();
 };
 
+receive.memorizeUIBookmarks = message => {
+    browserBackend.markUIBookmarks(message.bookmarks, message.category);
+}
+
 receive.getListenerLockState = message => {
-    return browserBackend.isListenerLocked();
+    return browserBackend.isLockedByListeners();
 };
 
 receive.reconcileBrowserBookmarkDb = async message => {
