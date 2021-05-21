@@ -3439,13 +3439,18 @@
 		 * @return {Object}
 		 */
 		get_state : function () {
+            var scroll_element =
+                this.settings.state._scrollable
+                    ? this.element
+                    : this.element.parent();
+
 			var state	= {
 				'core' : {
 					'open' : [],
 					'loaded' : [],
 					'scroll' : {
-						'left' : this.element.parent().scrollLeft(),
-						'top' : this.element.parent().scrollTop()
+						'left' : scroll_element.scrollLeft(),
+						'top' : scroll_element.scrollTop()
 					},
 					/*!
 					'themes' : {
@@ -3517,11 +3522,16 @@
 						return false;
 					}
 					if(state.core.scroll) {
+                        var scroll_element =
+                            this.settings.state._scrollable
+                                ? this.element
+                                : this.element.parent();
+
 						if(state.core.scroll && state.core.scroll.left !== undefined) {
-							this.element.parent().scrollLeft(state.core.scroll.left);
+                            scroll_element.scrollLeft(state.core.scroll.left);
 						}
 						if(state.core.scroll && state.core.scroll.top !== undefined) {
-							this.element.parent().scrollTop(state.core.scroll.top);
+                            scroll_element.scrollTop(state.core.scroll.top);
 						}
 						delete state.core.scroll;
 						this.set_state(state, callback);

@@ -111,7 +111,8 @@ class BookmarkTree {
                 }
             },
             state: {
-                key: inline? TREE_STATE_PREFIX + EVERYTHING: undefined
+                key: inline? TREE_STATE_PREFIX + EVERYTHING: undefined,
+                _scrollable: inline
             },
             dnd: {
                 inside_pos: "last"
@@ -119,6 +120,8 @@ class BookmarkTree {
         }).on("move_node.jstree", BookmarkTree.moveNode.bind(this));
 
         this._jstree = $(element).jstree(true);
+
+        log(this._jstree)
 
         this.iconCache = new Map();
 
