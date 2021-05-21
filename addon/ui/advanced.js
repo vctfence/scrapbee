@@ -1,6 +1,8 @@
 import {send} from "../proxy.js";
 import {settings} from "../settings.js";
 import {showNotification} from "../utils_browser.js";
+import {alert, confirm} from "./dialog.js";
+import {formatBytes} from "../utils.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){
@@ -61,16 +63,17 @@ function configureBackupCompressionPanel() {
     });
 }
 
-function configureRepairPanel() {
+function configureMaintenancePanel() {
     $("#option-repair-icons").prop("checked", settings.repair_icons());
     $("#option-repair-icons").on("change", async e => {
         await settings.load();
         settings.repair_icons(e.target.checked);
     });
 
-    $("#optimize-database-link").on("click", e => {
+    $("#optimize-database-link").on("click", async e => {
         e.preventDefault();
-        if (confirm("It is recommended to make a full backup before the optimization. Continue?")) {
+
+        if (await confirm("{Warning}", "It is recommended to make a full backup before the optimization. Continue?")) {
 
             let progressListener = message => {
                 if (message.type === "DATABASE_OPTIMIZATION_PROGRESS") {
@@ -112,12 +115,29 @@ function configureRepairPanel() {
 
     $("#reset-cloud-link").on("click", async e => {
         e.preventDefault();
-        if (confirm("This will remove all Cloud shelf content. Continue?")) {
+
+        if (await confirm("{Warning}", "This will remove all cloud shelf content. Continue?")) {
             let success = await send.resetCloud();
 
             if (!success)
                 showNotification("Error accessing cloud.")
         }
+    });
+
+    $("#statistics-link").on("click", async e => {
+        e.preventDefault();
+
+        const statistics = await send.computeStatistics();
+
+        let html = `<table class="stats-table">
+                    <tr><td>Items:</td><td>${statistics.items}</td></tr>
+                    <tr><td>Bookmarks:</td><td>${statistics.bookmarks}</td></tr>
+                    <tr><td>Archives:</td><td>${statistics.archives}</td></tr>
+                    <tr><td>Notes:</td><td>${statistics.notes}</td></tr>
+                    <tr><td>Archived content:</td><td>${formatBytes(statistics.size)}</td></tr>
+                    </table>`
+
+        alert("Statistics", html);
     });
 }
 
@@ -216,7 +236,7 @@ window.onload = async function() {
     configureAutomationPanel();
     configureDBPath();
     configureBackupCompressionPanel();
-    configureRepairPanel();
+    configureMaintenancePanel();
     configureImpExpPanel();
 
 }

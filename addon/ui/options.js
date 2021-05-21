@@ -225,8 +225,20 @@ function loadHelperAppLinks() {
     xhr.send();
 }
 
+async function configureHelpPage() {
+    if (!$("#div-help").html()) {
+        let help = await fetchText("locales/en/help.html");
+        help = help.replaceAll(`src="images/`, `src="locales/en/images/`);
+        $("#div-help").html(help);
+    }
+}
+
 async function configureAboutPage() {
-    $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);
+    log($("#about-changes").html())
+    if (!$("#about-changes").html()) {
+        $("#about-changes").html(await fetchText("changes.html"));
+        $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);
+    }
 }
 
 function configureDiagnosticsPage() {
@@ -263,6 +275,8 @@ function switchPane() {
             loadHelperAppLinks();
         else if (m[1] === "diagnostics")
             configureDiagnosticsPage();
+        else if (m[1] === "help")
+            configureHelpPage();
         else if (m[1] === "about")
             configureAboutPage();
 
@@ -314,12 +328,6 @@ window.onload = async function() {
         else
             storeSavePageSettings();
     }
-
-    let help = await fetchText("locales/en/help.html");
-    help = help.replaceAll(`src="images/`, `src="locales/en/images/`);
-    $("#div-help").html(help);
-
-    $("#about-changes").html(await fetchText("changes.html"));
 
     // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
 

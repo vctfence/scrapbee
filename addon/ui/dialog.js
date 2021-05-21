@@ -6,7 +6,7 @@ const DEFAULT_CONTAINER = "--default-container";
 function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
         return
-    let $dlg = $(".dlg-cover.dlg-" + name).clone().appendTo(document.body);
+    let $dlg = $(".dlg-cover.dlg-" + name).clone().prependTo(document.body);
     $dlg.show();
 
     if (name === "prompt")

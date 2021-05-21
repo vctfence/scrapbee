@@ -283,7 +283,10 @@ export async function exportJSON(file, nodes, shelf, uuid, _, comment, progress)
     if (comment)
         meta.comment = comment;
 
-    await file.append(JSON.stringify(meta) + (nodes.length ? "\n" : ""));
+    await file.append(JSON.stringify(meta));
+
+    if (nodes.length)
+        await file.append("\n");
 
     if (nodes.length) {
         const last = nodes.length;
@@ -291,9 +294,10 @@ export async function exportJSON(file, nodes, shelf, uuid, _, comment, progress)
         let ctr = 0;
 
         for (let node of nodes) {
-            let json = await objectToJSON(node);
-            ctr += 1;
-            await file.append(json + (ctr === last ? "" : "\n"));
+            await file.append(await objectToJSON(node));
+
+            if (++ctr !== last)
+                 await file.append("\n");
 
             if (progress) {
                 const newProgress = Math.round((ctr / nodes.length) * 100);

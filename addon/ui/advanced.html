@@ -10,10 +10,46 @@
 
     <script type="text/javascript" src="../lib/jquery.js"></script>
     <script type="text/javascript" src="../global.js"></script>
+    <script type="text/javascript" src="../proto.js"></script>
     <script type="module" src="advanced.js"></script>
 </head>
 <body>
-<div id="div-settings" class="div-area">
+<div class="dlg-cover dlg-confirm" style="display:none;">
+    <div class="dlg">
+        <div class="dlg-box">
+            <div class="dlg-title">[title]</div>
+            <div class="dlg-table" style="overflow:hidden;">
+                <div class="row">
+                    <div class="cell">[message]</div>
+                </div>
+                <div class="row">
+                    <div class="cell" style="text-align:center;">
+                        <input type="button" class="button-ok" value="OK" />
+                        <input type="button" class="button-cancel" value="Cancel" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="dlg-cover dlg-alert" style="display:none;">
+    <div class="dlg">
+        <div class="dlg-box">
+            <div class="dlg-title">[title]</div>
+            <div class="dlg-table" style="overflow:hidden;">
+                <div class="row">
+                    <div class="cell">[message]</div>
+                </div>
+                <div class="row">
+                    <div class="cell" style="text-align:center;">
+                        <input type="button" class="button-ok" value="OK"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="div-settings" style="padding: 15px;">
     <div id="advanced-title">
         <h1>Advanced Settings</h1>
     </div>
@@ -82,23 +118,24 @@
             </div>
         </div>
     </div>
-    <div class="panel" id="repair-panel">
-        <p class="panel-title">Repair</p>
+    <div class="panel" id="maintenance-panel">
+        <p class="panel-title">Maintenance
+            <a id="statistics-link" href="#">Statistics</a></p>
         <form>
         <fieldset style="border: none;">
             <input id="option-repair-icons" type="checkbox"/> <label for="option-repair-icons">Repair icons when checking links with context menu</label>
-            <div id="optimize-database">
+            <div id="optimize-database" class="action-link">
                 <a id="optimize-database-link" href="#">Optimize database</a>
                 <i class="help-mark"></i>
                 <span class="tips hide">Database optimization may improve Scrapyard performance if the add-on was installed before version 0.12.</span>
                 &nbsp;<span id="optimize-database-progress"></span>
             </div>
-            <div id="reindex-content">
+            <div id="reindex-content" class="action-link">
                 <a id="reindex-content-link" href="#">Rebuild search index</a>
                 &nbsp;<span id="reindex-content-progress"></span>
             </div>
 
-            <div id="reset-cloud">
+            <div id="reset-cloud" class="action-link">
                 <a id="reset-cloud-link" href="#">Reset cloud</a>
             </div>
         </fieldset>
@@ -108,10 +145,10 @@
         <p class="panel-title">Import/Export Scrapyard Settings</p>
         <form>
             <fieldset style="border: none;">
-                <div id="export-settings">
+                <div id="export-settings" class="action-link">
                     <a id="export-settings-link" href="#">Export Scrapyard settings</a>
                 </div>
-                <div id="import-settings">
+                <div id="import-settings" class="action-link">
                     <a id="import-settings-link" href="#">Import Scrapyard settings</a>
                     <input type="file" id="import-settings-file-picker"/>
                 </div>

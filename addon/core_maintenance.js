@@ -1,6 +1,6 @@
 import {backend} from "./backend.js";
 import {send, receive} from "./proxy.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
+import {isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
 import {cleanObject, computeSHA1, formatBytes} from "./utils.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud.js";
@@ -205,4 +205,37 @@ receive.resetCloud = async message => {
     send.stopProcessingIndication();
 
     return true;
+}
+
+receive.computeStatistics = async message => {
+    let items = 0;
+    let bookmarks = 0;
+    let archives = 0;
+    let notes = 0
+    let size = 0;
+
+    send.startProcessingIndication();
+
+    await backend.iterateNodes(node => {
+        if (isEndpoint(node))
+            items += 1;
+
+        if (node.type === NODE_TYPE_BOOKMARK)
+            bookmarks += 1;
+
+        if (node.type === NODE_TYPE_ARCHIVE) {
+            archives += 1;
+            size += node.size || 0;
+        }
+
+        if (node.type === NODE_TYPE_NOTES) {
+            notes += 1;
+            size += node.size || 0;
+        }
+    });
+
+    send.stopProcessingIndication();
+
+    return {items, bookmarks, archives, notes, size};
+
 }
