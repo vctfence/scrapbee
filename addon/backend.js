@@ -3,7 +3,7 @@ import IDBStorage from "./storage_idb.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {browserBackend} from "./backend_browser.js";
-import {computeSHA1, getMimetypeExt} from "./utils.js";
+import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
@@ -11,7 +11,7 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
     EVERYTHING,
-    EVERYTHING_SHELF_ID,
+    EVERYTHING_SHELF_ID, FIREFOX_BOOKMARK_MOBILE,
     FIREFOX_SHELF_ID,
     isContainer,
     isEndpoint,
@@ -338,6 +338,52 @@ export class Backend extends ExternalEventProvider {
         result.forEach(n => n.__filtering = true);
 
         return result;
+    }
+
+    async listExportedNodes(shelf, computeLevel) {
+        let nodes;
+
+        if (shelf.toUpperCase() === TODO_SHELF_NAME) {
+            nodes = await this.listTODO();
+            if (computeLevel)
+                nodes.forEach(n => n.__level = 1)
+            return nodes;
+        }
+        else if (shelf.toUpperCase() === DONE_SHELF_NAME) {
+            nodes = await this.listDONE();
+            if (computeLevel)
+                nodes.forEach(n => n.__level = 1)
+            return nodes;
+        }
+
+        const everything = typeof shelf === "string" && shelf === EVERYTHING;
+
+        if (!everything && typeof shelf === "string")
+            shelf = await this.queryShelf(shelf);
+
+        let level = computeLevel? (everything? 1: 0): undefined;
+
+        if (everything) {
+            const shelves = await this.queryShelf();
+            const cloud = shelves.find(s => s.id === CLOUD_SHELF_ID);
+            if (cloud)
+                shelves.splice(shelves.indexOf(cloud), 1);
+            nodes = await this.queryFullSubtree(shelves.map(s => s.id), false, true, level);
+        }
+        else {
+            nodes = await this.queryFullSubtree(shelf.id, false, true, level);
+            nodes.shift();
+        }
+
+        const mobileBookmarks = nodes.find(n => n.external_id === FIREFOX_BOOKMARK_MOBILE);
+        if (mobileBookmarks) {
+            const mobileSubtree = nodes.filter(n => n.parent_id === mobileBookmarks.id);
+            for (const n of mobileSubtree)
+                nodes.splice(nodes.indexOf(n), 1);
+            nodes.splice(nodes.indexOf(mobileBookmarks), 1);
+        }
+
+        return nodes;
     }
 
     async reorderNodes(positions) {
@@ -829,6 +875,13 @@ export class Backend extends ExternalEventProvider {
         await this.updateExternalBookmark(update);
 
         return this.updateNode(update);
+    }
+
+    cleanBookmark(bookmark) {
+        cleanObject(bookmark, true);
+
+        if (!bookmark.name)
+            bookmark.name = "";
     }
 
     async storeBlob(node_id, data, content_type) {

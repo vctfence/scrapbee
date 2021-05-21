@@ -234,7 +234,6 @@ async function configureHelpPage() {
 }
 
 async function configureAboutPage() {
-    log($("#about-changes").html())
     if (!$("#about-changes").html()) {
         $("#about-changes").html(await fetchText("changes.html"));
         $("#about-version").text(`Version: ${browser.runtime.getManifest().version}`);

@@ -18,7 +18,7 @@ receive.backupShelf = async message => {
     let shelf, shelfName, shelfUUID;
 
     if (everything) {
-        shelfUUID = shelfName = EVERYTHING;
+        shelf = shelfUUID = shelfName = EVERYTHING;
     }
     else {
         shelf = await backend.queryShelf(message.shelf);
@@ -26,27 +26,7 @@ receive.backupShelf = async message => {
         shelfName = shelf.name;
     }
 
-    let nodes;
-
-    if (everything) {
-        const shelves = await backend.queryShelf();
-        const cloud = shelves.find(s => s.id === CLOUD_SHELF_ID);
-        if (cloud)
-            shelves.splice(shelves.indexOf(cloud), 1);
-        nodes = await backend.queryFullSubtree(shelves.map(s => s.id), false, true);
-    }
-    else {
-        nodes = await backend.queryFullSubtree(shelf.id, false, true);
-        nodes.shift();
-    }
-
-    const mobileBookmarks = nodes.find(n => n.external_id === FIREFOX_BOOKMARK_MOBILE);
-    if (mobileBookmarks) {
-        const mobileSubtree = nodes.filter(n => n.parent_id === mobileBookmarks.id);
-        for (const n of mobileSubtree)
-            nodes.splice(nodes.indexOf(n), 1);
-        nodes.splice(nodes.indexOf(mobileBookmarks), 1);
-    }
+    let nodes = await backend.listExportedNodes(shelf);
 
     let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
 

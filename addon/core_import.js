@@ -33,7 +33,7 @@ receive.importFile = message => {
 receive.exportFile = async message => {
     const shelf = isSpecialShelf(message.shelf) ? message.shelf.toLocaleLowerCase() : message.shelf;
 
-    let format = settings.export_format() ? settings.export_format() : "json";
+    let format = settings.export_format()? settings.export_format(): "json";
 
     let shallowExport = false;
     if (format === "org_shallow") {
@@ -41,20 +41,11 @@ receive.exportFile = async message => {
         format = "org";
     }
 
-    let exportf = format === "json" ? exportJSON : exportOrg;
+    let exportf = format === "json"? exportJSON: exportOrg;
     let file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_")
         + `.${format == "json" ? "jsonl" : format}`;
 
-    let nodesRandom = await backend.getNodes(message.nodes.map(n => n.id));
-    const nodes = [];
-
-    for (const n of message.nodes) {
-        const node = nodesRandom.find(nr => nr.id === n.id);
-        Object.assign(node, n);
-        nodes.push(node);
-    }
-
-    nodesRandom = null;
+    let nodes = await backend.listExportedNodes(shelf, format === "org");
 
     if (settings.use_helper_app_for_export() && await nativeBackend.probe()) {
         // write to a temp file (much faster than IDB)
@@ -109,7 +100,7 @@ receive.exportFile = async message => {
     else {
         // store intermediate export results to IDB
 
-        const MAX_BLOB_SIZE = 1024 * 1024 * 20; // ~40 mb of UTF-16
+        const MAX_BLOB_SIZE = 1024 * 1024 * 10; // ~20 mb of UTF-16
         const processId = UUID.numeric();
 
         let file = {

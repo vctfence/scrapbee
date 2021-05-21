@@ -229,7 +229,7 @@ class IDBStorage {
         }
     }
 
-    async _selectAllChildrenOf(node, children, preorder = false) {
+    async _selectAllChildrenOf(node, children, preorder, level) {
         let group_children = await dexie.nodes.where("parent_id").equals(node.id).toArray();
 
         if (group_children && group_children.length) {
@@ -237,24 +237,36 @@ class IDBStorage {
                 group_children.sort((a, b) => a.pos - b.pos);
 
             for (let child of group_children) {
+                if (level !== undefined)
+                    child.__level = level;
+
                 children.push(child);
+
                 if (isContainer(child))
-                    await this._selectAllChildrenOf(child, children, preorder);
+                    await this._selectAllChildrenOf(child, children, preorder, level !== undefined? level + 1: undefined);
             }
         }
     }
 
-    async queryFullSubtree(ids, return_ids = false, preorder = false) {
+    async queryFullSubtree(ids, return_ids, preorder, level) {
         if (!Array.isArray(ids))
             ids = [ids];
 
+        let nodes = await this.getNodes(ids);
         let children = [];
-        for (let id of ids) {
-            let node = await this.getNode(id);
+
+        if (preorder)
+            nodes.sort((a, b) => a.pos - b.pos);
+
+        for (let node of nodes) {
             if (node) {
+                if (level !== undefined)
+                    node.__level = level;
+
                 children.push(node);
+
                 if (isContainer(node))
-                    await this._selectAllChildrenOf(node, children, preorder);
+                    await this._selectAllChildrenOf(node, children, preorder, level !== undefined? level + 1: undefined);
             }
         }
 

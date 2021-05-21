@@ -1,7 +1,7 @@
 import {backend} from "./backend.js";
 import {send, receive} from "./proxy.js";
 import {isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
-import {cleanObject, computeSHA1, formatBytes} from "./utils.js";
+import {computeSHA1} from "./utils.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
@@ -88,10 +88,7 @@ receive.optimizeDatabase = async message => {
             fixDate(node,"date_added");
             fixDate(node,"date_modified");
 
-            cleanObject(node, true);
-
-            if (!node.name)
-                node.name = "";
+            backend.cleanBookmark(node);
 
             if (node.type === NODE_TYPE_ARCHIVE) {
                 const blob = await backend.fetchBlob(node.id);

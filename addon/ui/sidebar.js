@@ -20,7 +20,7 @@ import {
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
     NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
-    isSpecialShelf, isEndpoint, DEFAULT_POSITION
+    isSpecialShelf, isEndpoint, DEFAULT_POSITION, CLOUD_SHELF_UUID, FIREFOX_SHELF_UUID
 } from "../storage_constants.js";
 import {openPage, showNotification} from "../utils_browser.js";
 
@@ -241,12 +241,13 @@ async function loadShelves(synchronize = true, clearSelection = false) {
         let shelves = await backend.listShelves();
 
         shelf_list.html(`
-        <option class="option-builtin" value="${TODO_SHELF_ID}">${TODO_SHELF_NAME}</option>
-        <option class="option-builtin" value="${DONE_SHELF_ID}">${DONE_SHELF_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}">${formatShelfName(EVERYTHING)}</option>`);
+        <option class="option-builtin" value="${TODO_SHELF_ID}" data-uuid="${TODO_SHELF_NAME}">${TODO_SHELF_NAME}</option>
+        <option class="option-builtin" value="${DONE_SHELF_ID}" data-uuid="${DONE_SHELF_NAME}">${DONE_SHELF_NAME}</option>
+        <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
+                data-uuid="${EVERYTHING}">${formatShelfName(EVERYTHING)}</option>`);
 
         if (settings.cloud_enabled())
-            shelf_list.append(`<option class=\"option-builtin\"
+            shelf_list.append(`<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
                                        value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`);
 
         let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
@@ -254,7 +255,7 @@ async function loadShelves(synchronize = true, clearSelection = false) {
             shelves.splice(shelves.indexOf(cloud_shelf), 1);
 
         if (settings.show_firefox_bookmarks())
-            shelf_list.append(`<option class=\"option-builtin\"
+            shelf_list.append(`<option class=\"option-builtin\" data-uuid="${FIREFOX_SHELF_UUID}"
                                        value=\"${FIREFOX_SHELF_ID}\">${formatShelfName(FIREFOX_SHELF_NAME)}</option>`);
 
         let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
@@ -269,7 +270,9 @@ async function loadShelves(synchronize = true, clearSelection = false) {
         shelves = [default_shelf, ...shelves];
 
         for (let shelf of shelves) {
-            let option = $("<option></option>").appendTo(shelf_list).html(shelf.name).attr("value", shelf.id);
+            let option = $("<option></option>").appendTo(shelf_list).html(shelf.name)
+                .attr("value", shelf.id)
+                .attr("data-uuid", shelf.uuid);
 
             if (shelf.name.toLowerCase() === DEFAULT_SHELF_NAME)
                 option.addClass("option-builtin");
@@ -461,6 +464,7 @@ function getCurrentShelf() {
     return {
         id: parseInt(selectedOption.val()),
         name: selectedOption.text(),
+        uuid: selectedOption.attr("data-uuid"),
         option: selectedOption
     };
 }
@@ -486,7 +490,7 @@ async function performSearch() {
 }
 
 async function performImport(file, file_name, file_ext) {
-    startProcessingIndication();
+    startProcessingIndication(true);
 
     try {
         await send.importFile({file: file, file_name: file_name, file_ext: file_ext});
@@ -510,21 +514,12 @@ async function performImport(file, file_name, file_ext) {
 }
 
 async function performExport() {
-    let {id: shelf_id, name: shelf} = getCurrentShelf();
+    let {name: shelf, uuid} = getCurrentShelf();
 
-    if (shelf === FIREFOX_SHELF_NAME) {
-        showNotification({message: "Please use Firefox builtin tools to export browser bookmarks."});
-        return;
-    }
-
-    let nodes = tree.getExportedNodes(shelf_id);
-    let uuid = nodes[0].uuid;
-    nodes.shift(); // shelf
-
-    startProcessingIndication();
+    startProcessingIndication(true);
 
     try {
-        await send.exportFile({nodes: nodes.map(n => ({id: n.id, level: n.level})), shelf: shelf, uuid: uuid});
+        await send.exportFile({shelf, uuid});
         stopProcessingIndication();
     }
     catch (e) {

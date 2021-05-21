@@ -116,8 +116,8 @@ export async function importOrg(shelf, text) {
         if (subnodes.length && subnodes[0].type === "header" && subnodes.some(n => n.type === "link")) {
             await importLastObject();
 
-            if (level >= subnodes[0].level) {
-                while (level >= subnodes[0].level) {
+            if (level >= subnodes[0].__level) {
+                while (level >= subnodes[0].__level) {
                     path.pop();
                     level -= 1;
                 }
@@ -161,12 +161,12 @@ export async function importOrg(shelf, text) {
                     || name.toLocaleLowerCase() === CLOUD_SHELF_NAME))
                 name = `${formatShelfName(name)} (imported)`;
 
-            if (level < subnodes[0].level) {
+            if (level < subnodes[0].__level) {
                 level += 1;
                 path.push(name);
             }
             else {
-                while (level >= subnodes[0].level) {
+                while (level >= subnodes[0].__level) {
                     path.pop();
                     level -= 1;
                 }
@@ -333,7 +333,7 @@ async function objectToProperties(object) {
         lines.push(`:icon_data: ${icon}`);
     }
 
-    return lines.map(l => " ".repeat(object.level + 3) + l).join(`\n`);
+    return lines.map(l => " ".repeat(object.__level + 3) + l).join(`\n`);
 }
 
 export async function exportOrg(file, nodes, shelf, uuid, shallow) {
@@ -356,11 +356,11 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow) {
 
     for (let node of nodes) {
         if (node.type === NODE_TYPE_SHELF || node.type === NODE_TYPE_GROUP) {
-            let line = "\n" + "*".repeat(node.level) + " " + (node.name || "");
+            let line = "\n" + "*".repeat(node.__level) + " " + (node.name || "");
             await file.append(line);
         }
         else {
-            let line = "\n" + "*".repeat(node.level);
+            let line = "\n" + "*".repeat(node.__level);
 
             if (node.todo_state)
                 line += " " + TODO_NAMES[node.todo_state];
@@ -386,9 +386,9 @@ export async function exportOrg(file, nodes, shelf, uuid, shallow) {
 
         if (!shallow) {
             let props = `
-${" ".repeat(node.level + 1)}:PROPERTIES:
+${" ".repeat(node.__level + 1)}:PROPERTIES:
 ${await objectToProperties(node)}
-${" ".repeat(node.level + 1)}:END:`;
+${" ".repeat(node.__level + 1)}:END:`;
             await file.append(props);
         }
     }

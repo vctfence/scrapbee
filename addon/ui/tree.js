@@ -289,41 +289,6 @@ class BookmarkTree {
         doTraverse(root);
     }
 
-    getExportedNodes(shelf_id) {
-        let special_shelf = shelf_id == EVERYTHING_SHELF_ID || shelf_id == TODO_SHELF_ID || shelf_id == DONE_SHELF_ID;
-        let root = special_shelf
-            ? this._jstree.get_node("#")
-            : this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF).id);
-
-        let skip_level = root.parents.length;
-
-        let nodes = [];
-        this.traverse(root, jnode => {
-            let data = o(jnode) || {};
-
-            data.level = jnode.parents.length - skip_level;
-            nodes.push(data);
-        });
-
-        return nodes;
-    }
-
-    // static _todoColor(todo_state) {
-    //     switch (todo_state) {
-    //         case TODO_STATE_TODO:
-    //             return "#fc6dac";
-    //         case TODO_STATE_WAITING:
-    //             return"#ff8a00";
-    //         case TODO_STATE_POSTPONED:
-    //             return "#00b7ee";
-    //         case TODO_STATE_CANCELLED:
-    //             return "#ff4d26";
-    //         case TODO_STATE_DONE:
-    //             return "#00b60e";
-    //     }
-    //     return "";
-    // }
-
     static _formatNodeTooltip(node) {
         return `${node.name}${node.uri? "\x0A" + node.uri: ""}`;
     }
@@ -1271,10 +1236,7 @@ class BookmarkTree {
 
                             delete properties.comments;
 
-                            cleanObject(properties, true);
-
-                            if (!properties.name)
-                                properties.name = "";
+                            backend.cleanBookmark(properties);
 
                             properties = await backend.updateBookmark(properties);
 
