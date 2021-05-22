@@ -18,6 +18,24 @@
     <script type="module" src="options.js"></script>
 </head>
 <body>
+<div class="dlg-cover dlg-confirm" style="display:none;">
+    <div class="dlg">
+        <div class="dlg-box">
+            <div class="dlg-title">[title]</div>
+            <div class="dlg-table" style="overflow:hidden;">
+                <div class="row">
+                    <div class="cell">[message]</div>
+                </div>
+                <div class="row">
+                    <div class="cell" style="text-align:center;">
+                        <input type="button" class="button-ok" value="OK" />
+                        <input type="button" class="button-cancel" value="Cancel" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div id="div-page">
     <div id="div-form-left">
         <a class="left-index" href="#settings">{Setting}</a>

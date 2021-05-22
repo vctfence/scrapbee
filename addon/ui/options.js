@@ -3,6 +3,7 @@ import {backend, loadShelfListOptions} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
 import {dropboxBackend} from "../backend_dropbox.js"
 import {settings} from "../settings.js"
+import {confirm} from "./dialog.js";
 import {formatBytes, toHHMMSS} from "../utils.js";
 import {
     isSpecialShelf,
@@ -853,7 +854,7 @@ async function restoreShelf(jnode, newShelf) {
     shelves.push({name: EVERYTHING});
 
     if (shelves.find(s => s.name.toLowerCase() === backupName.toLowerCase())) {
-        if (!confirm(`This will replace "${backupName}". Continue?`))
+        if (!await confirm("Warning", `This will replace "${backupName}". Continue?`))
             return;
     }
 
@@ -896,7 +897,7 @@ async function restoreShelf(jnode, newShelf) {
 }
 
 async function deleteBackups() {
-    if (!confirm(`Delete the selected backups?`))
+    if (!await confirm("Warning", "Delete the selected backups?"))
         return;
 
     const selected = backupTree.get_selected(true);
