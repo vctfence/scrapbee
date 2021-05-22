@@ -5,6 +5,7 @@ import {backend} from "./backend.js";
 import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";
 import {exportJSON, importJSON} from "./import_json.js";
+import {sleep} from "./utils.js";
 
 receive.listBackups = message => {
     let form = new FormData();
@@ -49,7 +50,7 @@ receive.backupShelf = async message => {
         }
     };
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await sleep(50);
 
     try {
         await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);

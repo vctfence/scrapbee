@@ -1,3 +1,8 @@
+
+export function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve,  ms))
+}
+
 export function partition(items, size) {
     var result = []
     var n = Math.round(items.length / size);
@@ -126,6 +131,20 @@ export const IMAGE_FORMATS = [
     "image/webp",
     "image/svg+xml"
 ];
+
+export const CONTENT_TYPE_TO_EXT = {
+    "text/html": "html",
+    "application/pdf": "pdf",
+    "text/plain": "txt",
+    "image/png": "png",
+    "image/bmp": "bmp",
+    "image/gif": "gif",
+    "image/tiff": "tiff",
+    "image/jpeg": "jpg",
+    "image/x-icon": "ico",
+    "image/webp": "webp",
+    "image/svg+xml": "svg"
+};
 
 // https://stackoverflow.com/a/34920444/1689848
 export function stringByteLengthUTF8(s) {

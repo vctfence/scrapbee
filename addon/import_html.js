@@ -1,4 +1,4 @@
-import {backend} from "./backend.js";
+import {backend, storeFaviconFromURI} from "./backend.js";
 import {DEFAULT_POSITION, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
 import {getFavicon} from "./favicon.js";
 import {prepareNewImport} from "./import.js";
@@ -38,20 +38,7 @@ export async function importHtml(shelf, text) {
                         path: path.join("/")
                     });
 
-                    try {
-                        const icon = await getFavicon(node.uri);
-                        if (icon && typeof icon === "string") {
-                            node.icon = icon;
-                            await backend.storeIcon(node);
-                        }
-                        else if (icon) {
-                            node.icon = icon.url;
-                            await backend.storeIcon(node, icon.response, icon.type);
-                        }
-                        await backend.updateNode(node);
-                    } catch (e) {
-                        console.error(e);
-                    }
+                    await storeFaviconFromURI(node)
                 }
             }
             else if (child.localName === "dl") {

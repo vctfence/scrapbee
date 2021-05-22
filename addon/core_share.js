@@ -6,6 +6,7 @@ import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_
 import {backend} from "./backend.js";
 import {notes2html} from "./notes_render.js";
 import {dropboxBackend} from "./backend_dropbox.js";
+import {CONTENT_TYPE_TO_EXT} from "./utils.js";
 
 receive.shareToPocket = async message => {
     const auth_handler = auth_url => new Promise(async (resolve, reject) => {
@@ -52,8 +53,8 @@ receive.shareToDropbox = async message => {
             if (blob) {
                 let type = blob.type ? blob.type : "text/html";
                 filename = node.name
-                if (!(filename.endsWith("pdf") || filename.endsWith("html")))
-                    filename = node.name + (type.endsWith("pdf") ? ".pdf" : ".html");
+                if (!/\.[a-z]{2,8}$/.test(node.name?.toLowerCase()))
+                    filename = node.name + `.${CONTENT_TYPE_TO_EXT[blob.type]}`;
 
                 if (blob.object)
                     content = blob.object

@@ -27,6 +27,7 @@ import {
 } from "./storage_constants.js";
 import {readBlob} from "./utils_io.js";
 import {settings} from "./settings.js";
+import {getFavicon} from "./favicon.js";
 
 class ExternalEventProvider {
     constructor() {
@@ -341,24 +342,25 @@ export class Backend extends ExternalEventProvider {
     }
 
     async listExportedNodes(shelf, computeLevel) {
+        const isShelfName = typeof shelf === "string";
         let nodes;
 
-        if (shelf.toUpperCase() === TODO_SHELF_NAME) {
+        if (isShelfName && shelf.toUpperCase() === TODO_SHELF_NAME) {
             nodes = await this.listTODO();
             if (computeLevel)
                 nodes.forEach(n => n.__level = 1)
             return nodes;
         }
-        else if (shelf.toUpperCase() === DONE_SHELF_NAME) {
+        else if (isShelfName && shelf.toUpperCase() === DONE_SHELF_NAME) {
             nodes = await this.listDONE();
             if (computeLevel)
                 nodes.forEach(n => n.__level = 1)
             return nodes;
         }
 
-        const everything = typeof shelf === "string" && shelf === EVERYTHING;
+        const everything = isShelfName && shelf === EVERYTHING;
 
-        if (!everything && typeof shelf === "string")
+        if (!everything && isShelfName)
             shelf = await this.queryShelf(shelf);
 
         let level = computeLevel? (everything? 1: 0): undefined;
@@ -967,5 +969,21 @@ export async function loadShelfListOptions(element) {
     for (let shelf of shelves) {
         let name = isSpecialShelf(shelf.name) ? formatShelfName(shelf.name) : shelf.name;
         $("<option></option>").appendTo($(element)).html(name).attr("value", shelf.id);
+    }
+}
+
+export async function storeFaviconFromURI(node) {
+    try {
+        const icon = await getFavicon(node.uri);
+        if (icon && typeof icon === "string") {
+            node.icon = icon;
+            await backend.storeIcon(node);
+        }
+        else if (icon) {
+            node.icon = icon.url;
+            await backend.storeIcon(node, icon.response, icon.type);
+        }
+    } catch (e) {
+        console.error(e);
     }
 }

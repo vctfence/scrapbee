@@ -35,10 +35,9 @@ import {
     DONE_SHELF_ID,
     DEFAULT_SHELF_NAME
 } from "../storage_constants.js";
-import {notes2html} from "../notes_render.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
-import {cleanObject, IMAGE_FORMATS} from "../utils.js";
+import {IMAGE_FORMATS} from "../utils.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 

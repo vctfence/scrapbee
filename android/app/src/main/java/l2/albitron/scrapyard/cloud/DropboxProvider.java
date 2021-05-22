@@ -143,7 +143,7 @@ public class DropboxProvider implements CloudProvider {
 
     public void persistDB(CloudDB db) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString(((DropboxDB)db).bookmarks);
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(((DropboxDB)db).bookmarks);
 
         try (InputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
             FileMetadata metadata = client.files().uploadBuilder(DROPBOX_INDEX_PATH)

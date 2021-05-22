@@ -1,7 +1,7 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {dropboxBackend} from "./backend_dropbox.js";
-import {backend} from "./backend.js";
+import {backend, storeFaviconFromURI} from "./backend.js";
 
 import {
     CLOUD_EXTERNAL_NAME,
@@ -25,7 +25,6 @@ export class CloudBackend {
         switch (provider) {
             default:
                 this._provider = dropboxBackend;
-                this.getLastModified = () => this._provider.getLastModified();
         }
     }
 
@@ -66,6 +65,10 @@ export class CloudBackend {
         };
 
         return traverse(root, list);
+    }
+
+    getLastModified() {
+        return this._provider.getLastModified();
     }
 
     async withCloudDB(f, fe) {
@@ -343,9 +346,10 @@ export class CloudBackend {
         return (await this._provider.getDB(true)).fetchData(node);
     }
 
-    async fetchCloudIcon(node) {
-        return (await this._provider.getDB(true)).fetchIcon(node);
-    }
+    // icon now is stored in the index.js
+    // async fetchCloudIcon(node) {
+    //     return (await this._provider.getDB(true)).fetchIcon(node);
+    // }
 
     async createBookmark(node, parent) {
         if (!settings.cloud_enabled())
@@ -500,7 +504,7 @@ export class CloudBackend {
         }
 
         let cloud_ids = [];
-        let begin_time = new Date().getTime();
+        let begin_time = Date.now();
         let db_pool = new Map();
         let download_icons = [];
         let download_notes = [];
@@ -508,13 +512,13 @@ export class CloudBackend {
         let download_data = [];
 
         let reconcile = async (d, c) => { // node, cloud bookmark
-            for (let cc of c.children) {
-                cloud_ids.push(cc.uuid);
+            for (let cloud_node of c.children) {
+                cloud_ids.push(cloud_node.uuid);
 
-                let node = db_pool.get(cc.uuid);
+                let node = db_pool.get(cloud_node.uuid);
                 if (node) {
                     let node_date = node.date_modified;
-                    let cloud_date = cc.date_modified;
+                    let cloud_date = cloud_node.date_modified;
                     try {
                         if (!(node_date instanceof Date))
                             node_date = new Date(node_date);
@@ -523,19 +527,18 @@ export class CloudBackend {
                             cloud_date = new Date(cloud_date);
 
                         if (node_date.getTime() < cloud_date.getTime()) {
-                            let id = node.id;
-                            node = Object.assign(node, cc);
-                            node.id = id;
-                            node.parent_id = d.id;
+                            delete cloud_node.id;
+                            delete cloud_node.parent_id;
+                            delete cloud_node.icon;
+                            delete cloud_node.icon_data;
+                            delete cloud_node.date_added
+                            node = Object.assign(node, cloud_node);
 
-                            if (cc.has_notes)
+                            if (cloud_node.has_notes)
                                 download_notes.push(node);
 
-                            if (cc.has_comments)
+                            if (cloud_node.has_comments)
                                 download_comments.push(node);
-
-                            if (!node.icon || node.icon && node.stored_icon)
-                                download_icons.push(node);
 
                             await backend.updateNode(node);
                         }
@@ -545,38 +548,37 @@ export class CloudBackend {
                     }
                 }
                 else {
-                    delete cc.id;
-                    cc.parent_id = d.id;
-                    cc.external = CLOUD_EXTERNAL_NAME;
-                    cc.external_id = cc.uuid;
-                    node = await backend.addNode(cc, false, true, false);
+                    delete cloud_node.id;
+                    cloud_node.parent_id = d.id;
+                    cloud_node.external = CLOUD_EXTERNAL_NAME;
+                    cloud_node.external_id = cloud_node.uuid;
+                    node = await backend.addNode(cloud_node, false, false, false);
 
-                    if (cc.has_notes) {
-                        node.notes_format = cc.notes_format;
-                        node.notes_align = cc.notes_align;
+                    if (cloud_node.has_notes) {
+                        node.notes_format = cloud_node.notes_format;
+                        node.notes_align = cloud_node.notes_align;
                         download_notes.push(node);
                     }
 
-                    if (cc.has_comments)
+                    if (cloud_node.has_comments)
                         download_comments.push(node);
 
-                    if (cc.type === NODE_TYPE_ARCHIVE) {
-                        node.content_type = cc.content_type;
-                        node.byte_length = cc.byte_length;
+                    if (cloud_node.type === NODE_TYPE_ARCHIVE) {
+                        node.content_type = cloud_node.content_type;
+                        node.byte_length = cloud_node.byte_length;
                         download_data.push(node);
                     }
 
-                    if (!node.icon || node.icon && node.stored_icon) {
-                        node.icon_data = cc.icon_data;
-                        download_icons.push(node);
-                    }
-                    else if ((node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK) && node.icon) {
+                    if (!node.icon && node.uri)
+                        await storeFaviconFromURI(node);
+                    else if (node.icon && !node.stored_icon)
                         await backend.storeIcon(node);
-                    }
+                    else if (node.icon && node.stored_icon)
+                        await backend.storeIconLowLevel(node.id, cloud_node.icon_data);
                 }
 
-                if (cc.type === NODE_TYPE_GROUP)
-                    await reconcile(node, cc);
+                if (cloud_node.type === NODE_TYPE_GROUP)
+                    await reconcile(node, cloud_node);
             }
         };
 
@@ -637,29 +639,6 @@ export class CloudBackend {
 
                     if (data) {
                         await backend.storeBlobLowLevel(archive.id, data, archive.content_type, archive.byte_length);
-                    }
-                }
-
-                for (let node of download_icons) {
-                    if (!node.icon && node.uri) {
-                        try {
-                            const icon = await getFavicon(node.uri);
-                            if (icon && typeof icon === "string") {
-                                node.icon = icon;
-                                await backend.storeIcon(node);
-                            } else if (icon) {
-                                node.icon = icon.url;
-                                await backend.storeIcon(node, icon.response, icon.type);
-                            }
-                            // if (icon)
-                            //     await backend.updateNode(node);
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    }
-                    else if (node.icon && node.stored_icon) {
-                        //const icon = await this.fetchCloudIcon(node);
-                        await backend.storeIconLowLevel(node.id, node.icon_data);
                     }
                 }
 

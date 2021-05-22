@@ -10,6 +10,7 @@ import {exportOrg, importOrg} from "./import_org.js";
 import {exportJSON, importJSON} from "./import_json.js";
 import {importHtml} from "./import_html.js";
 import {importRDF} from "./import_rdf.js";
+import {sleep} from "./utils.js";
 
 receive.importFile = message => {
     const shelf = isSpecialShelf(message.file_name) ? message.file_name.toLocaleLowerCase() : message.file_name;
@@ -41,9 +42,9 @@ receive.exportFile = async message => {
         format = "org";
     }
 
-    let exportf = format === "json"? exportJSON: exportOrg;
-    let file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_")
-        + `.${format == "json" ? "jsonl" : format}`;
+    const exportf = format === "json"? exportJSON: exportOrg;
+    const file_ext = `.${format === "json" ? "jsonl" : format}`;
+    const file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_") + file_ext;
 
     let nodes = await backend.listExportedNodes(shelf, format === "org");
 
@@ -67,7 +68,7 @@ receive.exportFile = async message => {
             }
         };
 
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await sleep(50);
 
         await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
 

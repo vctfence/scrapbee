@@ -1,6 +1,6 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {backend} from "./backend.js";
+import {backend, storeFaviconFromURI} from "./backend.js";
 import {
     FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
@@ -318,23 +318,8 @@ export class BrowserBackend {
             let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
             if (parent) {
                 let node = this.convertBookmark(bookmark, parent);
-
-                let icon = null;
-
-                if (node.type === NODE_TYPE_BOOKMARK && node.uri) {
-                    icon = await getFavicon(node.uri);
-                    if (icon && typeof icon === "string")
-                        node.icon = icon;
-                    else if (icon)
-                        node.icon = icon.url;
-                }
-
                 node = await backend.addNode(node);
-
-                if (icon && typeof icon === "string")
-                    await backend.storeIcon(node);
-                else if (icon)
-                    await backend.storeIcon(node, icon.response, icon.type);
+                await storeFaviconFromURI(node);
 
                 if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                     send.bookmarkCreated({node: node});
@@ -550,23 +535,7 @@ export class BrowserBackend {
 
                 for (let item of get_icons) {
                     let node = await backend.getNode(item[0]);
-                    if (node) {
-                        try {
-                            const icon = await getFavicon(node.uri);
-                            if (icon && typeof icon === "string") {
-                                node.icon = icon;
-                                await backend.storeIcon(node);
-                            }
-                            else if (icon) {
-                                node.icon = icon.url;
-                                await backend.storeIcon(node, icon.response, icon.type);
-                            }
-                            await backend.updateNode(node);
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    }
-                    //console.log(node.icon + " (" + item[1] + ")");
+                    await storeFaviconFromURI(node);
                 }
 
                 backend.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
