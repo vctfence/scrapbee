@@ -13,6 +13,12 @@ import {getActiveTab, openContainerTab, openPage, showNotification, updateTab} f
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
 
+receive.createGroup = message => backend.createGroup(message.parent_id, message.name);
+
+receive.renameGroup = message => backend.renameGroup(message.id, message.name);
+
+receive.addSeparator = message => backend.addSeparator(message.parent_id);
+
 receive.createBookmark = message => {
     const options = message.data;
 
@@ -32,6 +38,8 @@ receive.createBookmark = message => {
         .then(addBookmark)
         .catch(addBookmark);
 };
+
+receive.updateBookmark = message => backend.updateBookmark(message.node);
 
 receive.createArchive = message => {
     const options = message.data;
@@ -56,9 +64,9 @@ receive.createArchive = message => {
         .catch(addBookmark);
 };
 
-receive.updateArchive = message => {
-    return backend.updateBlob(message.id, message.data);
-};
+receive.updateArchive = message => backend.updateBlob(message.id, message.data);
+
+receive.setTODOState = message => backend.setTODOState(message.nodes);
 
 receive.getBookmarkInfo = async message => {
     let node = await backend.getNode(message.id);
@@ -317,9 +325,9 @@ receive.storePageHtml = message => {
         });
 };
 
-receive.storeNotes = message => {
-    backend.storeNotes(message.options);
-};
+receive.addNotes = message => backend.addNotes(message.parent_id, message.name);
+
+receive.storeNotes = message => backend.storeNotes(message.options);
 
 receive.uploadFiles = async message => {
     send.startProcessingIndication();

@@ -176,8 +176,10 @@ window.onload = async function () {
         shelfList.selectric('refresh');
     };
 
-    tree.onDeleteShelf = node => {
-        $(`#shelfList option[value="${node.id}"]`).remove();
+    tree.onDeleteShelf = node_ids => {
+        for (const id of node_ids)
+            $(`#shelfList option[value="${id}"]`).remove();
+
         shelfList.selectric('refresh');
 
         if (!tree._everything) {

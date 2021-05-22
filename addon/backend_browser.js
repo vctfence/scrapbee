@@ -317,7 +317,7 @@ export class BrowserBackend {
         try {
             let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
             if (parent) {
-                let node = browserBackend.convertBookmark(bookmark, parent);
+                let node = this.convertBookmark(bookmark, parent);
 
                 let icon = null;
 
