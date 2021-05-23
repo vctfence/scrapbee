@@ -11,6 +11,7 @@ import {exportJSON, importJSON} from "./import_json.js";
 import {importHtml} from "./import_html.js";
 import {importRDF} from "./import_rdf.js";
 import {sleep} from "./utils.js";
+import {importTransaction} from "./import.js";
 
 receive.importFile = message => {
     const shelf = isSpecialShelf(message.file_name) ? message.file_name.toLocaleLowerCase() : message.file_name;
@@ -23,12 +24,14 @@ receive.importFile = message => {
         "RDF": async () => importRDF(shelf, message.file, message.threads, message.quick)
     })[message.file_ext.toUpperCase()];
 
-    let invalidation_state = ishellBackend.isInvalidationEnabled();
-    ishellBackend.enableInvalidation(false);
-    return backend.importTransaction(importf).finally(() => {
-        ishellBackend.enableInvalidation(invalidation_state);
-        ishellBackend.invalidateCompletion();
-    });
+    if (importf) {
+        let invalidation_state = ishellBackend.isInvalidationEnabled();
+        ishellBackend.enableInvalidation(false);
+        return importTransaction(shelf, importf).finally(() => {
+            ishellBackend.enableInvalidation(invalidation_state);
+            ishellBackend.invalidateCompletion();
+        });
+    }
 };
 
 receive.exportFile = async message => {
@@ -112,22 +115,22 @@ receive.exportFile = async message => {
                 this.size += text.length;
 
                 if (this.size >= MAX_BLOB_SIZE) {
-                    await backend.exportPutBlob(processId, new Blob(this.content, {type: "text/plain"}));
+                    await backend.putExportBlob(processId, new Blob(this.content, {type: "text/plain"}));
                     this.content = [];
                     this.size = 0;
                 }
             },
             flush: async function () {
                 if (this.size && this.content.length)
-                    await backend.exportPutBlob(processId, new Blob(this.content, {type: "text/plain"}));
+                    await backend.putExportBlob(processId, new Blob(this.content, {type: "text/plain"}));
             }
         };
 
-        await backend.exportCleanStorage();
+        await backend.cleanExportStorage();
         await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
         await file.flush();
 
-        let blob = new Blob(await backend.exportGetBlobs(processId), {type: "text/plain"});
+        let blob = new Blob(await backend.getExportBlobs(processId), {type: "text/plain"});
         let url = URL.createObjectURL(blob);
         let download;
 
@@ -135,7 +138,7 @@ receive.exportFile = async message => {
             download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
         } catch (e) {
             console.error(e);
-            backend.exportCleanBlobs(processId);
+            backend.cleanExportBlobs(processId);
         }
 
         if (download) {
@@ -144,7 +147,7 @@ receive.exportFile = async message => {
                     if (delta.state && delta.state.current === "complete" || delta.error) {
                         browser.downloads.onChanged.removeListener(download_listener);
                         URL.revokeObjectURL(url);
-                        backend.exportCleanBlobs(processId);
+                        backend.cleanExportBlobs(processId);
                     }
                 }
             };

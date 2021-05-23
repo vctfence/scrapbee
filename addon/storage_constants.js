@@ -4,6 +4,7 @@ export const NODE_TYPE_BOOKMARK = 3;
 export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
 export const NODE_TYPE_NOTES = 6;
+export const NODE_TYPE_UNLISTED = 7;
 
 export const NODE_TYPE_NAMES = {
     [NODE_TYPE_SHELF]: "shelf",
@@ -15,7 +16,7 @@ export const NODE_TYPE_NAMES = {
 };
 
 export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
-export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP];
+export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_UNLISTED];
 
 export const TODO_STATE_TODO = 1;
 export const TODO_STATE_DONE = 4;
@@ -94,7 +95,9 @@ export const NODE_PROPERTIES =
      "external",
      "external_id",
      "container",
-     "content_type"
+     "content_type",
+     "_uuid",
+     "_unlisted"
     ];
 
 export function isContainer(node) {

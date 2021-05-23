@@ -283,10 +283,10 @@ async function loadShelves(synchronize = true, clearSelection = false) {
         let last_shelf_id = settings.last_shelf() || DEFAULT_SHELF_ID;
 
         if (last_shelf_id === "null")
-            last_shelf_id = 1;
+            last_shelf_id = DEFAULT_SHELF_ID;
 
         let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
-        last_shelf = last_shelf && last_shelf.length? last_shelf: $(`#shelfList option[value="1"]`);
+        last_shelf = last_shelf && last_shelf.length? last_shelf: $(`#shelfList option[value="${DEFAULT_SHELF_ID}"]`);
         shelf_list.val(parseInt(last_shelf.val()));
 
         styleBuiltinShelf();
@@ -356,7 +356,6 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
                 }
             }
             tree.update(nodes, false, clearSelection);
-
         }
         else if (path) {
             const nodes = await backend.listShelfNodes(path);

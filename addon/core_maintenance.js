@@ -125,14 +125,17 @@ receive.optimizeDatabase = async message => {
             const newProgress = Math.round((ctr / nodeIDs.length) * 100);
             if (newProgress !== currentProgress) {
                 currentProgress = newProgress;
-                send.databaseOptimizationProgress({progress: currentProgress});
+                try {
+                    send.databaseOptimizationProgress({progress: currentProgress});
+                }
+                catch {}
             }
         }
     }
 
-    send.databaseOptimizationFinished();
-
     send.stopProcessingIndication();
+
+    send.databaseOptimizationFinished();
 };
 
 receive.reindexArchiveContent = async message => {
@@ -181,14 +184,17 @@ receive.reindexArchiveContent = async message => {
             const newProgress = Math.round((ctr / nodes.length) * 100);
             if (newProgress !== currentProgress) {
                 currentProgress = newProgress;
-                send.indexUpdateProgress({progress: currentProgress});
+                try {
+                    send.indexUpdateProgress({progress: currentProgress});
+                }
+                catch {}
             }
         }
     }
 
-    send.indexUpdateFinished();
-
     send.stopProcessingIndication();
+
+    send.indexUpdateFinished();
 };
 
 receive.resetCloud = async message => {

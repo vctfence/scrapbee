@@ -11,7 +11,7 @@ import {
     NODE_TYPE_SHELF,
     TODO_SHELF_NAME,
     TODO_STATE_DONE,
-    isContainer, DONE_SHELF_ID, TODO_SHELF_ID
+    isContainer, DONE_SHELF_ID, TODO_SHELF_ID, NODE_TYPE_UNLISTED
 } from "./storage_constants.js";
 
 import UUID from "./lib/uuid.js"
@@ -227,6 +227,20 @@ class IDBStorage {
                     await this._selectAllChildrenIdsOf(child[0], children);
             }
         }
+    }
+
+    async queryFullSubtreeIds(ids) {
+        if (!Array.isArray(ids))
+            ids = [ids];
+
+        let children = [];
+
+        for (let id of ids) {
+            children.push(id);
+            await this._selectAllChildrenIdsOf(id, children);
+        }
+
+        return children;
     }
 
     async _selectAllChildrenOf(node, children, preorder, level) {
@@ -492,11 +506,19 @@ class IDBStorage {
     }
 
     async queryShelf(name) {
-        let where = dexie.nodes.where("type").equals(NODE_TYPE_SHELF);
+        let where = dexie.nodes.where("type").equals(NODE_TYPE_SHELF).and(n => !n.parent_id);
 
         if (name)
-            return await where.and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase())
-                .first();
+            return await where.and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase()).first();
+        else
+            return await where.toArray();
+    }
+
+    async queryUnlisted(name) {
+        let where = dexie.nodes.where("type").equals(NODE_TYPE_UNLISTED);
+
+        if (name)
+            return await where.and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase()).first();
         else
             return await where.toArray();
     }
@@ -832,28 +854,23 @@ class IDBStorage {
         return null;
     }
 
-    importTransaction(handler) {
-        //return dexie.transaction("rw", dexie.nodes, dexie.notes, dexie.blobs, dexie.index, dexie.tags, handler);
-        return handler();
-    }
-
-    exportCleanStorage() {
+    cleanExportStorage() {
         return dexie.export_storage.clear();
     }
 
-    exportPutBlob(process_id, blob) {
+    putExportBlob(process_id, blob) {
         return dexie.export_storage.add({
             process_id,
             blob
         });
     }
 
-    async exportGetBlobs(process_id) {
+    async getExportBlobs(process_id) {
         const blobs = await dexie.export_storage.where("process_id").equals(process_id).sortBy("id")
         return blobs.map(b => b.blob);
     }
 
-    exportCleanBlobs(process_id) {
+    cleanExportBlobs(process_id) {
         return dexie.export_storage.where("process_id").equals(process_id).delete();
     }
 

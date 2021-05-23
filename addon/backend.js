@@ -8,7 +8,7 @@ import {ishellBackend} from "./backend_ishell.js";
 
 import {
     CLOUD_SHELF_ID, DEFAULT_POSITION,
-    DEFAULT_SHELF_NAME,
+    DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
     EVERYTHING,
     EVERYTHING_SHELF_ID, FIREFOX_BOOKMARK_MOBILE,
@@ -21,7 +21,7 @@ import {
     NODE_TYPE_GROUP,
     NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
-    NODE_TYPE_SHELF,
+    NODE_TYPE_SHELF, NODE_TYPE_UNLISTED,
     SPECIAL_UUIDS,
     TODO_SHELF_NAME
 } from "./storage_constants.js";
@@ -257,8 +257,11 @@ export class Backend extends ExternalEventProvider {
     async listShelfNodes(shelf) {
         let nodes = [];
 
-        if (shelf === EVERYTHING)
+        if (shelf === EVERYTHING) {
             nodes = await this.getNodes();
+            nodes = nodes.filter(n => !(n._unlisted || n.type === NODE_TYPE_UNLISTED));
+            return nodes;
+        }
         else {
             let shelf_node = await this.queryShelf(shelf);
             nodes = await this.queryFullSubtree(shelf_node.id);
@@ -839,7 +842,7 @@ export class Backend extends ExternalEventProvider {
     }
 
     async importBookmark(data) {
-        if (data.uuid === "1")
+        if (data.uuid === DEFAULT_SHELF_UUID)
             return;
 
         if (data.type !== NODE_TYPE_SHELF)

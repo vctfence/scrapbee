@@ -100,7 +100,7 @@
                                 <form>
                                     <fieldset style="border: none;">
                                         <input id="option-show-firefox-bookmarks" type="checkbox"/>
-                                        <label for="option-show-firefox-bookmarks">Enable Firefox bookmark integration</label>
+                                        <label for="option-show-firefox-bookmarks">Enable Firefox bookmarks integration</label>
                                         <div style="margin: 0; margin-left: 20px; width: max-content;">
                                             <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
                                             <label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
@@ -144,7 +144,7 @@
                                     <input id="option-open-bookmark-in-active-tab" type="checkbox"/><label for="option-open-bookmark-in-active-tab"
                                 >Left click opens bookmarks in the active tab</label>
                                 <i class="help-mark"></i>
-                                <span class="tips hide">Do not create new tabs for the opened bookmarks.</span><br>
+                                <span class="tips hide">Do not create new tabs for the opened bookmarks.</span>
                                 </fieldset>
                             </form>
                         </div>
@@ -152,7 +152,7 @@
                 </td>
             </tr>
             <tr>
-                <td>Export</td>
+                <td>Import/Export</td>
                 <td>
                     <div class="panel double-container" id="export">
                         <div class="double-first">
@@ -171,7 +171,12 @@
                             <form>
                                 <fieldset style="border: none;">
                                     <input id="option-use-helper-app-for-export" type="checkbox"/><label for="option-use-helper-app-for-export"
-                                        >Use helper application to accelerate export</label>
+                                        >Use helper application to accelerate export</label><br>
+                                    <input id="option-undo-failed-imports" type="checkbox"/><label for="option-undo-failed-imports"
+                                >Undo failed imports</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">Restore database at the state before a failed import.<br>
+                                        May require twice as much time and disk space.</span>
                                 </fieldset>
                             </form>
                         </div>

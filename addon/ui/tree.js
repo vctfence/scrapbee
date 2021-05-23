@@ -1120,8 +1120,7 @@ class BookmarkTree {
                             return;
                         }
 
-                        if (await confirm("{Warning}", "Do you really want to delete '"
-                                                                        + o(ctxNode).name + "'?")) {
+                        if (await confirm("{Warning}", "{ConfirmDeleteItem}")) {
                             this.startProcessingIndication();
 
                             let selectedIds = selectedNodes.map(n => o(n).id);

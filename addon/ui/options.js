@@ -115,6 +115,7 @@ function loadScrapyardSettings() {
     document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
     document.getElementById("option-export-format").value = _(settings.export_format(), "json");
     document.getElementById("option-use-helper-app-for-export").checked = settings.use_helper_app_for_export();
+    document.getElementById("option-undo-failed-imports").checked = settings.undo_failed_imports();
     document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
     document.getElementById("option-helper-port").value = _(settings.helper_port_number(), 20202);
 
@@ -174,6 +175,7 @@ async function storeScrapyardSettings() {
     settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
     settings.export_format(document.getElementById("option-export-format").value);
     settings.use_helper_app_for_export(document.getElementById("option-use-helper-app-for-export").checked);
+    settings.undo_failed_imports(document.getElementById("option-undo-failed-imports").checked);
     settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
     settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
 
@@ -871,20 +873,42 @@ async function restoreShelf(jnode, newShelf) {
             return;
     }
 
+    const PROGRESS_BAR_HTML = `Progress: <progress id=\"backup-progress-bar\" max=\"100\"
+                                               value=\"0\" style=\"margin-left: 10px; flex-grow: 1;\"/>`;
+
+    let progressIndication = false;
     let importListener = message => {
-        if (message.type === "IMPORT_PROGRESS") {
-            let bar = $("#backup-progress-bar");
+        if (message.type === "IMPORT_INITIALIZING_TRANSACTION") {
+            $("#backup-progress-container").html("Saving database state...");
+        }
+        else if (message.type === "IMPORT_FINALIZING_TRANSACTION") {
+            $("#backup-progress-container").html("Cleaning up...");
+        }
+        else if (message.type === "IMPORT_ROLLING_BACK") {
+            $("#backup-progress-container").html("Rolling back...");
+        }
+        else if (message.type === "IMPORT_PROGRESS") {
+            if (!progressIndication) {
+                $("#backup-progress-container").html(PROGRESS_BAR_HTML);
+                progressIndication = true;
+            }
+            const bar = $("#backup-progress-bar");
             bar.val(message.progress);
         }
     };
 
     browser.runtime.onMessage.addListener(importListener);
 
-    backupSetStatus(`Progress: <progress id="backup-progress-bar" max="100" value="0" style="flex-grow: 1;"/>
-                            <div id="backup-processing-time" style="margin-right: 15px">00:00</div>`)
-
     processingInterval = setInterval(backupUpdateTime, 1000);
     processingTime = Date.now();
+
+    const statusHTML =
+        settings.undo_failed_imports()
+            ? "Initializing..."
+            : PROGRESS_BAR_HTML;
+
+    backupSetStatus(`<div id="backup-progress-container">${statusHTML}</div>
+                          <div id="backup-processing-time" style="margin-right: 15px">00:00</div>`);
 
     try {
         restoreIsInProcess = true;

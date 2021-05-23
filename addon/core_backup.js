@@ -6,6 +6,7 @@ import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";
 import {exportJSON, importJSON} from "./import_json.js";
 import {sleep} from "./utils.js";
+import {importTransaction} from "./import.js";
 
 receive.listBackups = message => {
     let form = new FormData();
@@ -94,7 +95,7 @@ receive.restoreShelf = async message => {
         };
 
         const shelfName = message.new_shelf? message.meta.alt_name: message.meta.name;
-        shelf = await importJSON(shelfName, new Reader(), true);
+        shelf = await importTransaction(shelfName, () => importJSON(shelfName, new Reader(), true));
     } catch (e) {
         error = e;
     }
