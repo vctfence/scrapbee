@@ -436,8 +436,9 @@ async function onStartRDFImport(e) {
 
 // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let abort_check_links = false;
+const DEFAULT_LINK_CHECK_TIMEOUT = 10;
 
+let abortCheckLinks;
 let autoStartCheckLinks;
 let autoLinkCheckScope;
 async function doAutoStartCheckLinks() {
@@ -457,6 +458,14 @@ function initializeLinkChecker() {
     $("#start-check-links").on("click", startCheckLinks);
     $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
+
+    $("#link-check-timeout").val(settings.link_check_timeout() || DEFAULT_LINK_CHECK_TIMEOUT)
+    $("#link-check-timeout").on("input", async e => {
+       await settings.load();
+       let timeout = parseInt(e.target.value);
+       settings.link_check_timeout(isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout);
+    });
+
     loadShelfListOptions("#link-scope");
 }
 
@@ -465,7 +474,7 @@ function stopCheckLinks() {
     $("#current-link-title").text("");
     $("#current-link-url").text("");
     $("#current-link").css("visibility", "hidden");
-    abort_check_links = false;
+    abortCheckLinks = false;
 
     if ($("#update-icons").is(":checked")) {
         setTimeout(() => send.nodesUpdated(), 500);
@@ -494,14 +503,18 @@ function startCheckLinks() {
 
         let checkNodes = function (nodes) {
             let node = nodes.shift();
-            if (node && !abort_check_links) {
+            if (node && !abortCheckLinks) {
                 if (node.uri) {
                     $("#current-link-title").text(node.name);
                     $("#current-link-url").text(node.uri);
 
                     let xhr = new XMLHttpRequest();
                     xhr.open("GET", node.uri);
-                    xhr.timeout = parseInt($("#link-check-timeout").val()) * 1000;
+
+                    let timeout = parseInt($("#link-check-timeout").val());
+                    timeout = isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout;
+
+                    xhr.timeout = timeout * 1000;
                     xhr.ontimeout = function () {this._timedout = true};
                     xhr.onerror = function (e) {console.error(e)};
                     xhr.onloadend = async function (e) {
@@ -572,8 +585,8 @@ function startCheckLinks() {
                 } else
                     checkNodes(nodes);
             }
-            else if (abort_check_links)
-                abort_check_links = false;
+            else if (abortCheckLinks)
+                abortCheckLinks = false;
             else
                 stopCheckLinks();
         };
@@ -584,7 +597,7 @@ function startCheckLinks() {
     }
     else {
         stopCheckLinks();
-        abort_check_links = true;
+        abortCheckLinks = true;
     }
 }
 

@@ -1,3 +1,5 @@
+import {settings} from "./settings.js";
+
 export async function testFavicon(url) {
     try {
         // get a nice favicon for wikipedia
@@ -48,7 +50,7 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
 }
 
 export function getFavicon(url, tryRootFirst, usePageOnly, doc) {
-    let load_url = (url, type, timeout = 10000) => {
+    let load_url = (url, type, timeout = settings.link_check_timeout()) => {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
             xhr.open("GET", url);

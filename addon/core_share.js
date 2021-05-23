@@ -51,10 +51,12 @@ receive.shareToDropbox = async message => {
         if (node.type === NODE_TYPE_ARCHIVE) {
             let blob = await backend.fetchBlob(node.id);
             if (blob) {
-                let type = blob.type ? blob.type : "text/html";
+                const type = blob.type ? blob.type : "text/html";
                 filename = node.name
-                if (!/\.[a-z]{2,8}$/.test(node.name?.toLowerCase()))
-                    filename = node.name + `.${CONTENT_TYPE_TO_EXT[blob.type]}`;
+                if (!/\.[a-z]{2,8}$/.test(node.name?.toLowerCase())) {
+                    const ext = CONTENT_TYPE_TO_EXT[type] || "bin";
+                    filename = node.name + `.${ext}`;
+                }
 
                 if (blob.object)
                     content = blob.object
