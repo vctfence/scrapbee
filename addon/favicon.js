@@ -50,7 +50,7 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
 }
 
 export function getFavicon(url, tryRootFirst, usePageOnly, doc) {
-    let load_url = (url, type, timeout = settings.link_check_timeout()) => {
+    let load_url = (url, type, timeout = settings.link_check_timeout() * 1000) => {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
             xhr.open("GET", url);

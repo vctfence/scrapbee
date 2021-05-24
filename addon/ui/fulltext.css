@@ -16,6 +16,15 @@ html, body {
     box-sizing: border-box;
 }
 
+input {
+    outline: none;
+    border: 1px solid #007799;
+}
+
+input[type="text"] {
+    border-radius: 3px;
+}
+
 #search-container {
     display: flex;
     flex-direction: column;

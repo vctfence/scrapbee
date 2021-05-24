@@ -58,10 +58,11 @@ select,
     color: var(--in-content-page-color) !important;
 }
 
-.dlg input, .dlg select, .selectric {
+.dlg input, .dlg input:focus, .dlg textarea, .dlg select, .selectric {
     border: 1px solid var(--in-content-box-border-color) !important;
     border-radius: 3px !important;
     -moz-appearance: none !important;
+    outline: none !important;
 }
 
 
@@ -306,3 +307,9 @@ select#link-scope, select#option-export-format, select#notes-format {
 .node-pending {
     color: #909090 !important;
 }
+
+.jstree-rename-input:focus {
+    outline: none !important;
+    border: 1px solid #b0b0b0 !important;
+}
+

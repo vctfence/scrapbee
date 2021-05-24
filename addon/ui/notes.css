@@ -2,6 +2,14 @@
     font-family: "Helvetica", "Arial", sans-serif;
 }
 
+input, textarea {
+    outline: none !important;
+}
+
+textarea:focus {
+    border: 1px solid #007799;
+}
+
 #root-container {
     display: flex;
     flex-direction: column;

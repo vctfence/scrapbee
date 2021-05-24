@@ -52,7 +52,7 @@
     <div id="div-placeholder" class="div-area div-area-placeholder"></div>
     <div id="div-settings" class="div-area" style="display:none;">
 
-        <table width="max-content" cellspacing="" cellpadding="" border="0" class="form-table">
+        <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td>Appearance</td>
                 <td>
@@ -78,12 +78,14 @@
                             <div class="double-last">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <input id="option-capitalize-builtin-shelf-names" type="checkbox"/>
-                                        <label for="option-capitalize-builtin-shelf-names">Capitalize builtin shelf names</label><br>
-                                        <input id="option-do-not-show-archive-toolbar" type="checkbox"/>
-                                        <label for="option-do-not-show-archive-toolbar">Do not show toolbar in archived pages</label>
+                                        <input id="option-capitalize-builtin-shelf-names" type="checkbox"
+                                        /><label for="option-capitalize-builtin-shelf-names">Capitalize builtin shelf names</label>
+                                        <div class="align-checkbox">
+                                            <input id="option-do-not-show-archive-toolbar" type="checkbox"
+                                            /><label for="option-do-not-show-archive-toolbar">Do not show toolbar in archived pages</label>
                                         <i class="help-mark"></i>
                                         <span class="tips hide">The edit toolbar could be toggled with the <code>Ctrl+Alt+T</code> key combination.</span>
+                                        </div>
                                     </fieldset>
                                 </form>
                             </div>
@@ -99,13 +101,13 @@
                             <div class="double-first">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <input id="option-show-firefox-bookmarks" type="checkbox"/>
-                                        <label for="option-show-firefox-bookmarks">Enable Firefox bookmarks integration</label>
+                                        <input id="option-show-firefox-bookmarks" type="checkbox"
+                                        /><label for="option-show-firefox-bookmarks">Enable Firefox bookmarks integration</label>
                                         <div style="margin: 0; margin-left: 20px; width: max-content;">
-                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"/>
-                                            <label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
-                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"/>
-                                            <label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
+                                            <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"
+                                            /><label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
+                                            <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"
+                                            /><label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
                                         </div>
                                     </fieldset>
                                 </form>
@@ -113,8 +115,8 @@
                             <div class="double-last">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"/>
-                                        <label for="option-do-not-switch-to-ff-bookmark">Do not switch to new Firefox bookmarks</label>
+                                        <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"
+                                        /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to new Firefox bookmarks</label>
                                     </fieldset>
                                 </form>
                             </div>
@@ -129,22 +131,26 @@
                         <div class="double-first">
                             <form>
                                 <fieldset style="border: none;">
-                                    <input id="option-switch-to-bookmark" type="checkbox"/>
-                                    <label for="option-switch-to-bookmark">Automatically switch to newly created bookmarks</label><br>
-                                    <input id="option-display-random-bookmark" type="checkbox"/><label for="option-display-random-bookmark"
-                                >Display random bookmarks in the sidebar</label>
-                                    <i class="help-mark"></i>
-                                    <span class="tips hide">Display random bookmarks from your collection at the bottom of sidebar.</span>
+                                    <input id="option-switch-to-bookmark" type="checkbox"/
+                                    ><label for="option-switch-to-bookmark">Automatically switch to newly created bookmarks</label>
+                                    <div class="align-checkbox">
+                                        <input id="option-display-random-bookmark" type="checkbox"/><label for="option-display-random-bookmark"
+                                        >Display random bookmarks in the sidebar</label>
+                                        <i class="help-mark"></i>
+                                        <span class="tips hide">Display random bookmarks from your collection at the bottom of sidebar.</span>
+                                    </div>
                                 </fieldset>
                             </form>
                         </div>
                         <div class="double-last">
                             <form>
                                 <fieldset style="border: none;">
-                                    <input id="option-open-bookmark-in-active-tab" type="checkbox"/><label for="option-open-bookmark-in-active-tab"
-                                >Left click opens bookmarks in the active tab</label>
-                                <i class="help-mark"></i>
-                                <span class="tips hide">Do not create new tabs for the opened bookmarks.</span>
+                                    <div class="align-checkbox">
+                                        <input id="option-open-bookmark-in-active-tab" type="checkbox"/><label for="option-open-bookmark-in-active-tab"
+                                        >Left click opens bookmarks in the active tab</label>
+                                        <i class="help-mark"></i>
+                                        <span class="tips hide">Do not create new tabs for the opened bookmarks.</span>
+                                    </div>
                                 </fieldset>
                             </form>
                         </div>
@@ -198,11 +204,13 @@
                         <div class="double-last">
                             <form>
                                 <fieldset style="border: none;">
-                                    <input id="option-browse-with-helper" type="checkbox"/>
-                                    <label for="option-browse-with-helper">Use helper application to browse archives</label>
-                                    <i class="help-mark"></i>
-                                    <div class="tips hide">Check this only if you need to execute saved scripts and embedded content.<br>
-                                    Note that scripts are not saved by default (see the page capture settings).</div>
+                                    <div class="align-checkbox">
+                                        <input id="option-browse-with-helper" type="checkbox"
+                                        /><label for="option-browse-with-helper">Use helper application to browse archives</label>
+                                        <i class="help-mark"></i>
+                                        <div class="tips hide">Check this only if you need to execute saved scripts and embedded content.<br>
+                                        Note that scripts are not saved by default (see the page capture settings).</div>
+                                    </div>
                                 </fieldset>
                             </form>
                         </div>
@@ -219,8 +227,7 @@
 
     </div>
     <div id="div-savesettings" class="div-area" style="display:none;">
-
-        <table width="800px" cellspacing="" cellpadding="" border="0" class="form-table">
+        <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td>Capture Options</td>
                 <td>
@@ -244,8 +251,8 @@
                                         for="options-removeunsavedurls">Remove URLs of all unsaved resources</label>
                                     </div>
                                     <div>
-                                        <input id="options-mergecssimages" type="checkbox"/>
-                                        <label for="options-mergecssimages">Merge duplicate CSS images</label>
+                                        <input id="options-mergecssimages" type="checkbox"/><label
+                                        for="options-mergecssimages">Merge duplicate CSS images</label>
                                     </div>
                                 </fieldset>
                             </form>
@@ -328,15 +335,15 @@
                                     <div>
                                         <label>When requesting a resource:</label>
                                     </div>
-                                    <div>
+                                    <div style="display: flex; align-content: center; align-items: center; flex-wrap: nowrap">
                                         <input id="options-noreferer" type="radio" name="header" value="0"/><label
                                         for="options-noreferer">Do not send referer header</label>
                                     </div>
-                                    <div>
+                                    <div style="display: flex; align-content: center; align-items: center; flex-wrap: nowrap">
                                         <input id="options-originonly" type="radio" name="header" value="1"/><label
                                         for="options-originonly">Send referer header with origin only</label>
                                     </div>
-                                    <div>
+                                    <div style="display: flex; align-content: center; align-items: center; flex-wrap: nowrap">
                                         <input id="options-originpath" type="radio" name="header" value="2"/><label
                                         for="options-originpath">Send referer header with origin and path</label>
                                     </div>
@@ -365,7 +372,6 @@
         </table>
     </div>
     <div id="div-cloud" class="div-area" style="display:none;">
-
         <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td style="width: 98px">Status</td>

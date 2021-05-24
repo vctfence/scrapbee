@@ -885,7 +885,7 @@ async function restoreShelf(jnode, newShelf) {
             $("#backup-progress-container").html("Cleaning up...");
         }
         else if (message.type === "IMPORT_ROLLING_BACK") {
-            $("#backup-progress-container").html("Rolling back...");
+            $("#backup-progress-container").html("Restoring database...");
         }
         else if (message.type === "IMPORT_PROGRESS") {
             if (!progressIndication) {

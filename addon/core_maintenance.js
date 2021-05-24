@@ -116,20 +116,16 @@ receive.optimizeDatabase = async message => {
                 if (DEBUG)
                     console.log("Processed: %s", node.name);
             }
-        }
-        catch (e) {
-            console.error(e);
-        }
-        finally {
+
             ctr += 1;
             const newProgress = Math.round((ctr / nodeIDs.length) * 100);
             if (newProgress !== currentProgress) {
                 currentProgress = newProgress;
-                try {
-                    send.databaseOptimizationProgress({progress: currentProgress});
-                }
-                catch {}
+                send.databaseOptimizationProgress({progress: currentProgress});
             }
+        }
+        catch (e) {
+            console.error(e);
         }
     }
 
@@ -176,19 +172,15 @@ receive.reindexArchiveContent = async message => {
                     await backend.updateCommentIndex(node.id, words);
                 }
             }
-        } catch (e) {
-            console.error(e);
-        }
-        finally {
+
             ctr += 1;
             const newProgress = Math.round((ctr / nodes.length) * 100);
             if (newProgress !== currentProgress) {
                 currentProgress = newProgress;
-                try {
-                    send.indexUpdateProgress({progress: currentProgress});
-                }
-                catch {}
+                send.indexUpdateProgress({progress: currentProgress});
             }
+        } catch (e) {
+            console.error(e);
         }
     }
 

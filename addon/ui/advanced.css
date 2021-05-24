@@ -1,3 +1,8 @@
+input[type="text"]:focus {
+    outline: none;
+    border: 1px solid #007799;
+}
+
 .dlg-title {
     font-weight: bold;
     border-bottom: 1px solid #999;

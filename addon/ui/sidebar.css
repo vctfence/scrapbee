@@ -25,6 +25,10 @@ html,body {
     overflow-x: hidden;
 }
 
+input:focus {
+    outline: none !important;
+}
+
 #main-container {
     display: flex;
     flex-direction: column;
@@ -153,14 +157,19 @@ html,body {
     color:#000;
 }
 
-.dlg input, .dlg select, .selectric {
-    border: 1px solid #777 !important;
-    border-radius: 3px !important;
-    -moz-appearance: none !important;
+.dlg input, .dlg select, .dlg textarea, .selectric {
+    border: 1px solid #777;
+    border-radius: 3px;
+    -moz-appearance: none;
 }
 
 .dlg input.dialog-input, .dlg textarea {
-    outline: none !important;
+    outline: none;
+}
+
+.dlg input.dialog-input:focus, .dlg textarea:focus {
+    outline: none;
+    border: 1px solid #007799;
 }
 
 .dlg-table {

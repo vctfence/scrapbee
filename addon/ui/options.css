@@ -25,6 +25,24 @@ body{
     width:100%;
 }
 
+input[type="number"]:focus {
+    outline: none;
+    border: 1px solid #007799;
+    padding: 1px;
+}
+
+input[type="number"] {
+    outline: none;
+    border-radius: 3px;
+    border: 1px solid #777;
+    padding: 1px;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border: 1px solid #007799;
+}
+
 .dlg-title {
     font-weight: bold;
     border-bottom: 1px solid #999;
@@ -86,7 +104,7 @@ body{
 }
 
 input[type='text'] {
-    border: 1px solid #777 !important;
+    border: 1px solid #777;
     border-radius: 3px !important;
     -moz-appearance: none !important;
 }
@@ -283,10 +301,56 @@ fieldset > div:last-child
     margin-bottom: 0px;
 }
 
-fieldset input[type="checkbox"]
-{
-    margin-right: 7px;
-    vertical-align: middle;
+/*fieldset input[type="checkbox"]*/
+/*{*/
+/*    margin-right: 7px;*/
+/*    vertical-align: middle;*/
+/*    !*appearance: none;*!*/
+/*    border: 1px solid #777;*/
+/*}*/
+
+input[type=checkbox] {
+    padding: 0;
+    margin-right: 5px;
+    border: 0;
+    height: 15px;
+    width: 15px;
+    appearance: none;
+    display: inline-block;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    cursor: pointer;
+    background-image: url("../images/checkbox.png");
+}
+
+input[type=checkbox]:checked {
+    background-position: 0 -15px;
+}
+
+.align-checkbox {
+    display: flex;
+    align-content: center;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+input[type=radio] {
+    padding: 0;
+    margin-right: 5px;
+    margin-top: 0;
+    border: 0;
+    height: 12px;
+    width: 12px;
+    appearance: none;
+    display: inline-block;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    cursor: pointer;
+    background-image: url("../images/radiobutton.png");
+}
+
+input[type=radio]:checked {
+    background-position: 0 -12px;
 }
 
 fieldset input[type="radio"]
@@ -308,7 +372,7 @@ fieldset input[type="number"]
     width: 4em;
     margin-left: 4px;
     margin-right: 8px;
-    padding: 1px 0px 1px 0px;
+    /*padding: 1px 0px 1px 0px;*/
     text-align: center;
     /*vertical-align: 2px;*/
 }
@@ -423,6 +487,8 @@ a.left-index, a:visited.left-index {
 #backup-shelves-container {
     display: flex;
     flex-wrap: nowrap;
+    align-content: center;
+    align-items: center;
 }
 
 .backup-comment {
