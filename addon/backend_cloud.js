@@ -652,7 +652,7 @@ export class CloudBackend {
             }).catch(e => console.error(e));
         }
         else {
-            await backend.deleteExternalNodes(null, CLOUD_EXTERNAL_NAME);
+            await backend.deleteExternalNodes(CLOUD_EXTERNAL_NAME);
             send.shelvesChanged();
         }
     }

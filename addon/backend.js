@@ -7,15 +7,15 @@ import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
+    isContainer,
+    isEndpoint,
+    isSpecialShelf,
     CLOUD_SHELF_ID, DEFAULT_POSITION,
     DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
     EVERYTHING,
     EVERYTHING_SHELF_ID, FIREFOX_BOOKMARK_MOBILE,
     FIREFOX_SHELF_ID,
-    isContainer,
-    isEndpoint,
-    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -398,7 +398,9 @@ export class Backend extends ExternalEventProvider {
         catch (e) {
             console.error(e);
         }
-        return this.updateNodes(positions);
+
+        const id2pos = new Map(positions.map(n => [n.id, n.pos]));
+        await this.updateNodes(n => n.pos = id2pos.get(n.id), Array.from(id2pos.keys()));
     }
 
     async setTODOState(states) {
@@ -410,7 +412,6 @@ export class Backend extends ExternalEventProvider {
         let todo = await this.queryTODO();
         todo.reverse();
         todo.sort((a, b) => a.todo_state - b.todo_state);
-
 
         let now = new Date();
         now.setUTCHours(0, 0, 0, 0);
@@ -559,13 +560,13 @@ export class Backend extends ExternalEventProvider {
     }
 
     async createGroup(parent_id, name, node_type = NODE_TYPE_GROUP) {
-        let {id} = await this.addNode({
+        let node = await this.addNode({
             name: await this._ensureUnique(parent_id, name),
             type: node_type,
             parent_id: parent_id
         });
 
-        let node = await this.getNode(id);
+        node = this._sanitizeNode(node);
 
         this.invalidateExternalCompletion();
 
@@ -809,8 +810,7 @@ export class Backend extends ExternalEventProvider {
     }
 
     setTentativeId(node) {
-        const id = "tentative_" + Math.floor(Math.random() * 1000);
-        node.__tentative_id = id;
+        node.__tentative_id = "tentative_" + Math.floor(Math.random() * 1000);
     }
 
     async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {

@@ -483,30 +483,30 @@ export class BrowserBackend {
         let begin_time = new Date().getTime();
         let db_pool = new Map();
 
-        let reconcile = async (d, b) => { // node, bookmark
-            for (let bc of b.children) {
-                browser_ids.push(bc.id);
+        let reconcile = async (database_node, bookmark) => { // node, bookmark
+            for (let browser_node of bookmark.children) {
+                browser_ids.push(browser_node.id);
 
-                let node = db_pool.get(bc.id);
+                let node = db_pool.get(browser_node.id);
                 if (node) {
-                    if (node.name !== bc.title || node.uri !== bc.url
-                        || node.pos !== bc.index || node.parent_id !== d.id) {
-                        node.name = bc.title;
-                        node.uri = bc.url;
-                        node.pos = bc.index;
-                        node.parent_id = d.id;
+                    if (node.name !== browser_node.title || node.uri !== browser_node.url
+                        || node.pos !== browser_node.index || node.parent_id !== database_node.id) {
+                        node.name = browser_node.title;
+                        node.uri = browser_node.url;
+                        node.pos = browser_node.index;
+                        node.parent_id = database_node.id;
                         await backend.updateNode(node);
                     }
                 }
                 else {
-                    node = await backend.addNode(this.convertBookmark(bc, d), false);
+                    node = await backend.addNode(this.convertBookmark(browser_node, database_node), false);
 
                     if (node.type === NODE_TYPE_BOOKMARK && node.uri)
                         get_icons.push([node.id, node.uri])
                 }
 
-                if (bc.type === "folder")
-                    await reconcile(node, bc);
+                if (browser_node.type === "folder")
+                    await reconcile(node, browser_node);
             }
         };
 
@@ -556,7 +556,7 @@ export class BrowserBackend {
         }
         else {
             this.removeBrowserListeners();
-            await backend.deleteExternalNodes(null, FIREFOX_SHELF_NAME);
+            await backend.deleteExternalNodes(FIREFOX_SHELF_NAME);
             send.shelvesChanged();
         }
     }

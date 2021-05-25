@@ -46,21 +46,23 @@ async function relocateNodes(nodes, dest) {
 }
 
 async function maskUUIDs(rollbackNode) {
-    const rollbackItems = await backend.queryFullSubtree(rollbackNode.id);
+    const rollbackItemIds = await backend.queryFullSubtreeIds(rollbackNode.id);
 
-    for (const node of rollbackItems) {
-        const update = {id: node.id, _unlisted: true, uuid: undefined, _uuid: node.uuid};
-        await backend.updateNode(update);
-    }
+    await backend.updateNodes(node => {
+        node._unlisted = true;
+        node._uuid = node.uuid;
+        node.uuid = undefined;
+    }, rollbackItemIds)
 }
 
 async function unmaskUUIDs(rollbackNode) {
-    const rollbackItems = await backend.queryFullSubtree(rollbackNode.id);
+    const rollbackItemIds = await backend.queryFullSubtreeIds(rollbackNode.id);
 
-    for (const node of rollbackItems) {
-        const update = {id: node.id, _unlisted: undefined, uuid: node._uuid, _uuid: undefined};
-        await backend.updateNode(update);
-    }
+    await backend.updateNodes(node => {
+        node._unlisted = undefined;
+        node.uuid = node._uuid;
+        node._uuid = undefined;
+    }, rollbackItemIds)
 }
 
 export async function createRollback(shelf) {
@@ -152,13 +154,12 @@ export async function importTransaction(shelf, importf) {
     const undo = settings.undo_failed_imports();
 
     if (exists && undo) {
-        try {
-            send.importInitializingTransaction();
-        }
-        catch {}
+        try { send.importInitializingTransaction(); } catch {}
 
         await cleanRollback();
+        _tm()
         await createRollback(shelf);
+        _te()
     }
 
     let result;
@@ -167,10 +168,7 @@ export async function importTransaction(shelf, importf) {
     }
     catch (e) {
         if (undo) {
-            try {
-                send.importRollingBack();
-            }
-            catch {}
+            try { send.importRollingBack(); } catch {}
 
             await rollbackImport(shelf, exists);
         }
@@ -178,10 +176,7 @@ export async function importTransaction(shelf, importf) {
     }
 
     if (exists && undo) {
-        try {
-            send.importFinalizingTransaction();
-        }
-        catch {}
+        try { send.importFinalizingTransaction(); } catch {}
 
         await cleanRollback(shelf);
     }

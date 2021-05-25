@@ -145,11 +145,7 @@ class EditToolbar {
         let scrapyardHideToolbar = false;
 
         /** toolbar */
-        const rootContainer = this.rootContainer =
-            $(`<div id="scrapyard-edit-bar-container"
-                    style="display: none; position: fixed; left: 0; right: 0; bottom: 0;
-                    z-index: 2147483647; width: 100%; height: ${CONTAINER_HEIGHT}px;
-                    margin: 0; padding: 0;"></div>`)
+        const rootContainer = this.rootContainer = $(`<div id="scrapyard-edit-bar-container"></div>`)
             .appendTo(document.body)[0];
 
         const shadowRoot = this.shadowRoot = rootContainer.attachShadow({mode: 'open'});

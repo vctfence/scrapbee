@@ -652,18 +652,18 @@ class BookmarkTree {
         return jnode;
     }
 
-    static checkOperation(operation, node, parent, position, more) {
+    static checkOperation(operation, jnode, jparent, position, more) {
         // disable dnd copy
         if (operation === "copy_node") {
             return false;
         } else if (operation === "move_node") {
             if (more.ref && more.ref.id == FIREFOX_SHELF_ID
-                || parent.id == FIREFOX_SHELF_ID || node.parent == FIREFOX_SHELF_ID)
+                    || jparent.id == FIREFOX_SHELF_ID || jnode.parent == FIREFOX_SHELF_ID)
                 return false;
 
-            if (o(node)?.external !== RDF_EXTERNAL_NAME && o(parent)?.external === RDF_EXTERNAL_NAME
-                    || o(node)?.external === RDF_EXTERNAL_NAME
-                    && more.ref && o(more.ref)?.external !== RDF_EXTERNAL_NAME)
+            if (o(jnode)?.external !== RDF_EXTERNAL_NAME && o(jparent)?.external === RDF_EXTERNAL_NAME
+                    || o(jnode)?.external === RDF_EXTERNAL_NAME
+                        && more.ref && o(more.ref)?.external !== RDF_EXTERNAL_NAME)
                 return false;
         }
 
@@ -706,11 +706,12 @@ class BookmarkTree {
 
         let positions = [];
         for (let i = 0; i < siblings.length; ++i) {
-            let node = {};
-            node.id = o(siblings[i]).id;
-            node.uuid = o(siblings[i]).uuid;
-            node.external = o(siblings[i]).external;
-            node.external_id = o(siblings[i]).external_id;
+            const node = {};
+            const sibling = o(siblings[i]);
+            node.id = sibling.id;
+            node.uuid = sibling.uuid;
+            node.external = sibling.external;
+            node.external_id = sibling.external_id;
             node.pos = i;
             positions.push(node);
         }
@@ -859,7 +860,6 @@ class BookmarkTree {
 
                     tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
                         this.startProcessingIndication();
-
                         if (success && !cancelled && jnode.text) {
                             group = await send.renameGroup({id: group.id, name: jnode.text});
                             await this.reorderNodes(ctxNode);
@@ -1210,21 +1210,22 @@ class BookmarkTree {
             renameItem: {
                 label: "Rename",
                 action: async () => {
-                    switch (o(ctxNode).type) {
+                    const node = o(ctxNode);
+                    switch (node.type) {
                         case NODE_TYPE_SHELF:
-                            if (isSpecialShelf(o(ctxNode).name)) {
+                            if (isSpecialShelf(node.name)) {
                                 showNotification({message: "A built-in shelf could not be renamed."});
                                 return;
                             }
 
-                            tree.edit(o(ctxNode).id, null, async (jnode, success, cancelled) => {
+                            tree.edit(node.id, null, async (jnode, success, cancelled) => {
                                 if (success && !cancelled) {
                                     this.startProcessingIndication();
-                                    await send.renameGroup({id: o(ctxNode).id, name: jnode.text})
+                                    await send.renameGroup({id: node.id, name: jnode.text})
                                     this.stopProcessingIndication();
-                                    o(ctxNode).name = ctxNode.original.text = jnode.text;
+                                    node.name = ctxNode.original.text = jnode.text;
                                     tree.rename_node(jnode.id, jnode.text);
-                                    this.onRenameShelf(o(ctxNode));
+                                    this.onRenameShelf(node);
                                 }
                             });
                             break;
@@ -1232,9 +1233,9 @@ class BookmarkTree {
                             tree.edit(ctxNode, null, async (jnode, success, cancelled) => {
                                 if (success && !cancelled) {
                                     this.startProcessingIndication();
-                                    const group = await send.renameGroup({id: o(ctxNode).id, name: jnode.text});
+                                    const group = await send.renameGroup({id: node.id, name: jnode.text});
                                     this.stopProcessingIndication();
-                                    o(ctxNode).name = ctxNode.original.text = group.name;
+                                    node.name = ctxNode.original.text = group.name;
                                     tree.rename_node(ctxNode, group.name);
                                 }
                             });
