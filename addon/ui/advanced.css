@@ -138,3 +138,9 @@ input[type="text"]:focus {
 .stats-table td:nth-child(2) {
     padding-left: 10px;
 }
+
+.item-aligner {
+    display: flex;
+    align-items: center;
+    align-content: center;
+}

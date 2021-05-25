@@ -25,17 +25,17 @@ body{
     width:100%;
 }
 
-input[type="number"]:focus {
-    outline: none;
-    border: 1px solid #007799;
-    padding: 1px;
-}
-
 input[type="number"] {
+    padding: 1px;
     outline: none;
     border-radius: 3px;
     border: 1px solid #777;
+}
+
+input[type="number"]:focus {
     padding: 1px;
+    outline: none;
+    border-color: #007799;
 }
 
 input[type="text"]:focus {
@@ -588,6 +588,8 @@ a.left-index, a:visited.left-index {
     overflow: hidden;
     padding: 16px;
     min-height: 0;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .div-area > div > h2:first-child {
@@ -596,6 +598,10 @@ a.left-index, a:visited.left-index {
 
 #check-links > * {
     flex: 0 1 auto;
+}
+
+#check-timeout-label {
+    padding-left: 8px;
 }
 
 #link-check-options, #rdf-import-options {

@@ -7,27 +7,31 @@ import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
+    CLOUD_SHELF_ID,
+    DEFAULT_POSITION,
+    DEFAULT_SHELF_NAME,
+    DEFAULT_SHELF_UUID,
+    DONE_SHELF_NAME,
+    EVERYTHING,
+    EVERYTHING_SHELF_ID,
+    FIREFOX_BOOKMARK_MOBILE,
+    FIREFOX_SHELF_ID,
     isContainer,
     isEndpoint,
     isSpecialShelf,
-    CLOUD_SHELF_ID, DEFAULT_POSITION,
-    DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
-    DONE_SHELF_NAME,
-    EVERYTHING,
-    EVERYTHING_SHELF_ID, FIREFOX_BOOKMARK_MOBILE,
-    FIREFOX_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
     NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
-    NODE_TYPE_SHELF, NODE_TYPE_UNLISTED,
+    NODE_TYPE_SHELF,
+    NODE_TYPE_UNLISTED,
     SPECIAL_UUIDS,
     TODO_SHELF_NAME
 } from "./storage_constants.js";
 import {readBlob} from "./utils_io.js";
-import {settings} from "./settings.js";
 import {getFavicon} from "./favicon.js";
+import {settings} from "./settings.js";
 
 class ExternalEventProvider {
     constructor() {
@@ -935,46 +939,6 @@ export function formatShelfName(name) {
     return settings.capitalize_builtin_shelf_names() ? name?.capitalize() : name;
 }
 
-export async function loadShelfListOptions(element) {
-    $(element).html(`<option value="${EVERYTHING_SHELF_ID}">${formatShelfName(EVERYTHING)}</option>`);
-
-    let shelves = await backend.listShelves();
-    shelves.sort((a, b) => {
-        if (a.name < b.name)
-            return -1;
-        if (a.name > b.name)
-            return 1;
-
-        return 0;
-    });
-
-    let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
-    if (cloud_shelf)
-        shelves.splice(shelves.indexOf(cloud_shelf), 1);
-
-    let browser_bookmarks_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
-    if (browser_bookmarks_shelf)
-        shelves.splice(shelves.indexOf(browser_bookmarks_shelf), 1);
-
-    const builtin_shelves = [];
-
-    if (cloud_shelf)
-        builtin_shelves.push(cloud_shelf);
-
-    if (browser_bookmarks_shelf)
-        builtin_shelves.push(browser_bookmarks_shelf);
-
-    let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
-    shelves.splice(shelves.indexOf(default_shelf), 1);
-
-    shelves = [...builtin_shelves, default_shelf, ...shelves];
-
-    for (let shelf of shelves) {
-        let name = isSpecialShelf(shelf.name) ? formatShelfName(shelf.name) : shelf.name;
-        $("<option></option>").appendTo($(element)).html(name).attr("value", shelf.id);
-    }
-}
-
 export async function storeFaviconFromURI(node) {
     try {
         const icon = await getFavicon(node.uri);
@@ -990,3 +954,4 @@ export async function storeFaviconFromURI(node) {
         console.error(e);
     }
 }
+

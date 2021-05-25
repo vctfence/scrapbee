@@ -48,7 +48,9 @@ export const FIREFOX_SHELF_ID = -4;
 export const CLOUD_SHELF_ID = -5;
 
 export const TODO_SHELF_NAME = "TODO";
+export const TODO_SHELF_UUID = TODO_SHELF_NAME;
 export const DONE_SHELF_NAME = "DONE";
+export const DONE_SHELF_UUID = DONE_SHELF_NAME;
 
 export const EVERYTHING = "everything";
 

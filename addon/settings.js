@@ -1,7 +1,17 @@
+const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
+const DEFAULT_SETTINGS = {
+    shelf_list_height: 600,
+    show_firefox_bookmarks: true,
+    switch_to_new_bookmark: true,
+    enable_backup_compression: true
+};
+
 let BinHandler = {
     get(target, key) {
         if (key === "load")
             return target.__load__;
+        else if (key === "default")
+            return DEFAULT_SETTINGS;
 
         return (val, callback) => {
             let bin = target.__bin__;
@@ -21,14 +31,6 @@ let BinHandler = {
     * enumerate(target) {
         for (let key in target.__bin__) yield key;
     },
-};
-
-const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
-const DEFAULT_SETTINGS = {
-    shelf_list_height: 600,
-    show_firefox_bookmarks: true,
-    switch_to_new_bookmark: true,
-    enable_backup_compression: true
 };
 
 export let settings = new Proxy({

@@ -1,0 +1,33 @@
+.selectric {
+    border: 1px solid #777;
+    border-radius: 3px;
+    appearance: none;
+}
+
+.selectric-wrapper {
+    min-width: unset;
+}
+
+.selectric-scroll li.highlighted, .selectric-scroll li.selected {
+    background: transparent;
+}
+
+.selectric-scroll li.highlighted:hover, .selectric-scroll li.selected:hover {
+    background: #ddd;
+}
+
+.selectric, .selectric-focus .selectric {
+    border-color: #777;
+}
+
+.selectric:hover {
+    border-color: #777;
+}
+
+.option-builtin {
+    font-weight: bold;
+}
+
+.divide {
+    border-bottom: 1px solid black;
+}

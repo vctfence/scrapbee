@@ -1,6 +1,12 @@
 import {send} from "./proxy.js";
 import {nativeBackend} from "./backend_native.js";
-import {CLOUD_SHELF_ID, EVERYTHING, FIREFOX_BOOKMARK_MOBILE} from "./storage_constants.js";
+import {
+    CLOUD_SHELF_ID,
+    DONE_SHELF_NAME,
+    EVERYTHING,
+    FIREFOX_BOOKMARK_MOBILE,
+    TODO_SHELF_NAME
+} from "./storage_constants.js";
 import {backend} from "./backend.js";
 import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";
@@ -16,11 +22,11 @@ receive.listBackups = message => {
 };
 
 receive.backupShelf = async message => {
-    const everything = message.shelf.toLowerCase() === EVERYTHING;
+    const ushelf = message.shelf.toUpperCase();
     let shelf, shelfName, shelfUUID;
 
-    if (everything) {
-        shelf = shelfUUID = shelfName = EVERYTHING;
+    if (ushelf === TODO_SHELF_NAME || ushelf === DONE_SHELF_NAME || ushelf === EVERYTHING.toUpperCase()) {
+        shelf = shelfUUID = shelfName = message.shelf;
     }
     else {
         shelf = await backend.queryShelf(message.shelf);

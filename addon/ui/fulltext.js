@@ -1,12 +1,20 @@
 import {send} from "../proxy.js"
-import {backend, loadShelfListOptions} from "../backend.js";
+import {backend} from "../backend.js";
 import {settings} from "../settings.js";
 import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
 import {getActiveTab} from "../utils_browser.js";
+import {ShelfList} from "./shelf_list.js";
+
+let shelfList;
 
 window.onload = async function() {
     await settings.load();
-    await loadShelfListOptions("#search-scope");
+
+    shelfList = new ShelfList("#search-scope", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
+    });
+
+    shelfList.initDefault();
 
     $("#search-button").on("click", e => performSearch());
     $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});
@@ -149,7 +157,7 @@ async function performSearch() {
             search: searchQuery,
             content: true,
             index: "content",
-            path: $("#search-scope option:selected").text()
+            path: shelfList.selectedShelfName
         });
 
         $("#found-items").empty();

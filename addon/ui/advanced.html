@@ -5,10 +5,13 @@
     <title>Scrapyard Advanced Settings</title>
     <link rel="icon" href="../icons/scrapyard.svg" type="image/png"/>
 
+    <link rel="stylesheet" type="text/css" href="../lib/selectric/selectric.css"/>
     <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="shelf_list.css"/>
     <link rel="stylesheet" type="text/css" href="advanced.css" media="all"/>
 
     <script type="text/javascript" src="../lib/jquery.js"></script>
+    <script type="text/javascript" src="../lib/selectric/jquery.selectric.js"></script>
     <script type="text/javascript" src="../global.js"></script>
     <script type="text/javascript" src="../proto.js"></script>
     <script type="module" src="advanced.js"></script>
@@ -85,7 +88,7 @@
             <div class="double-first">
                 <form>
                     <fieldset style="border: none;">
-                        <div style="">
+                        <div class="item-aligner">
                             <label for="option-compression-method">Compression method:&nbsp;&nbsp;&nbsp;</label>
                             <select id="option-compression-method" type="select" style="color: black">
                                 <option value="EMPTY"></option>
@@ -96,20 +99,22 @@
                         </div>
                     </fieldset>
                     <fieldset style="border: none;">
-                        <label for="option-compression-level">Compression level:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                        <select id="option-compression-level" type="select" style="color: black; margin-left: 2px;">
-                            <option value="EMPTY"></option>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                        </select>
+                        <div class="item-aligner">
+                            <label for="option-compression-level" style="margin-right: 2px">Compression level:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                            <select id="option-compression-level" type="select" style="color: black;">
+                                <option value="EMPTY"></option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
                     </fieldset>
                 </form>
             </div>

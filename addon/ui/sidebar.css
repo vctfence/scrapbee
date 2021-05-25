@@ -457,29 +457,14 @@ select {
     cursor: pointer;
     display: none;
 }
+
 #search-input {
-	border-radius: 4px;
-	height: 18px;
-	width: 100%;
-	font-size: 12px;
-	border: 1px solid black;
-	padding-left: 16px;
-}
-
-.selectric-scroll li.highlighted, .selectric-scroll li.selected {
-    background: transparent;
-}
-
-.selectric-scroll li.highlighted:hover, .selectric-scroll li.selected:hover {
-    background: #ddd;
-}
-
-.option-builtin {
-    font-weight: bold;
-}
-
-.divide {
-    border-bottom: 1px solid black;
+    border-radius: 4px;
+    height: 18px;
+    width: 100%;
+    font-size: 12px;
+    border: 1px solid black;
+    padding-left: 16px;
 }
 
 #busy-indicator {
@@ -595,7 +580,6 @@ a#set-default-icon, a#copy-reference-url {
 #containers-menu div:last-child {
     padding-bottom: 4px;
 }
-
 
 .container-icon {
     display: inline-block;

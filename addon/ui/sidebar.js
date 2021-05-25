@@ -1,6 +1,6 @@
 import {send, receive, receiveExternal} from "../proxy.js";
 import {settings} from "../settings.js"
-import {backend, formatShelfName} from "../backend.js"
+import {backend} from "../backend.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
@@ -13,16 +13,17 @@ import {
 
 import {pathToNameExt} from "../utils.js";
 import {
-    CLOUD_SHELF_ID, CLOUD_SHELF_NAME,
+    CLOUD_SHELF_ID,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME, DONE_SHELF_ID,
     EVERYTHING, EVERYTHING_SHELF_ID,
-    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME,
+    FIREFOX_SHELF_ID,
     NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
-    isSpecialShelf, isEndpoint, DEFAULT_POSITION, CLOUD_SHELF_UUID, FIREFOX_SHELF_UUID
+    isSpecialShelf, isEndpoint
 } from "../storage_constants.js";
 import {openPage, showNotification} from "../utils_browser.js";
+import {ShelfList} from "./shelf_list.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -40,21 +41,19 @@ window.onload = async function () {
 
     await settings.load();
 
+    shelfList = new ShelfList("#shelfList", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
+    });
+
     tree = new BookmarkTree("#treeview");
     context = new SearchContext(tree);
-
-    shelfList = $("#shelfList");
-    shelfList.selectric({maxHeight: settings.shelf_list_height() || 600, inheritOriginalWidth: true});
 
     $("#btnLoad").on("click", () => loadShelves());
     $("#btnSearch").on("click", () => openPage("fulltext.html"));
     $("#btnSettings").on("click", () => openPage("options.html"));
     $("#btnHelp").on("click", () => openPage("options.html#help"));
 
-    shelfList.change(function () {
-        styleBuiltinShelf();
-        switchShelf(this.value, true, true);
-    });
+    shelfList.change(function () { switchShelf(this.value, true, true) });
 
     $("#shelf-menu-button").click(() => {
         $("#search-mode-menu").hide();
@@ -79,42 +78,42 @@ window.onload = async function () {
     $("#shelf-menu-search-title").click(() => {
         $("#search-mode-switch").prop("src", "/icons/bookmark.svg");
         $("#search-input").attr("placeholder", "");
-        context.setMode(SEARCH_MODE_TITLE, getCurrentShelf().name);
+        context.setMode(SEARCH_MODE_TITLE, shelfList.selectedShelfName);
         performSearch();
     });
 
     $("#shelf-menu-search-tags").click(() => {
         $("#search-mode-switch").prop("src", "/icons/tags.svg");
         $("#search-input").attr("placeholder", "");
-        context.setMode(SEARCH_MODE_TAGS, getCurrentShelf().name);
+        context.setMode(SEARCH_MODE_TAGS, shelfList.selectedShelfName);
         performSearch();
     });
 
     $("#shelf-menu-search-content").click(() => {
         $("#search-mode-switch").prop("src", "/icons/content-web.svg");
         $("#search-input").attr("placeholder", "");
-        context.setMode(SEARCH_MODE_CONTENT, getCurrentShelf().name);
+        context.setMode(SEARCH_MODE_CONTENT, shelfList.selectedShelfName);
         performSearch();
     });
 
     $("#shelf-menu-search-notes").click(() => {
         $("#search-mode-switch").prop("src", "/icons/content-notes.svg");
         $("#search-input").attr("placeholder", "");
-        context.setMode(SEARCH_MODE_NOTES, getCurrentShelf().name);
+        context.setMode(SEARCH_MODE_NOTES, shelfList.selectedShelfName);
         performSearch();
     });
 
     $("#shelf-menu-search-comments").click(() => {
         $("#search-mode-switch").prop("src", "/icons/content-comments.svg");
         $("#search-input").attr("placeholder", "");
-        context.setMode(SEARCH_MODE_COMMENTS, getCurrentShelf().name);
+        context.setMode(SEARCH_MODE_COMMENTS, shelfList.selectedShelfName);
         performSearch();
     });
 
     $("#shelf-menu-search-date").click(() => {
         $("#search-mode-switch").prop("src", "/icons/calendar.svg");
         $("#search-input").attr("placeholder", "examples: 2021-02-24, before 2021-02-24, after 2021-02-24")
-        context.setMode(SEARCH_MODE_DATE, getCurrentShelf().name);
+        context.setMode(SEARCH_MODE_DATE, shelfList.selectedShelfName);
         performSearch();
     });
 
@@ -171,22 +170,13 @@ window.onload = async function () {
         $("#btnAnnouncement").hide();
     })
 
-    tree.onRenameShelf = node => {
-        $(`#shelfList option[value="${node.id}"]`).text(node.name);
-        shelfList.selectric('refresh');
-    };
+    tree.onRenameShelf = node => shelfList.renameShelf(node.id, node.name);
 
     tree.onDeleteShelf = node_ids => {
-        for (const id of node_ids)
-            $(`#shelfList option[value="${id}"]`).remove();
+        shelfList.removeShelves(node_ids);
 
-        shelfList.selectric('refresh');
-
-        if (!tree._everything) {
-            shelfList.val(DEFAULT_SHELF_ID);
-            shelfList.selectric('refresh');
+        if (!tree._everything)
             switchShelf(DEFAULT_SHELF_ID);
-        }
     };
 
     tree.startProcessingIndication = startProcessingIndication;
@@ -197,8 +187,12 @@ window.onload = async function () {
     receive.startListener();
     receiveExternal.startListener();
 
+    setTimeout(loadSidebar);
+};
+
+async function loadSidebar() {
     try {
-        await loadShelves(true, true);
+        await loadShelves(settings.last_shelf(), true, true);
     }
     catch (e) {
         console.error(e);
@@ -218,7 +212,7 @@ window.onload = async function () {
 
     if (settings.display_random_bookmark())
         displayRandomBookmark();
-};
+}
 
 let processingTimeout;
 function startProcessingIndication(no_wait) {
@@ -236,67 +230,13 @@ function stopProcessingIndication() {
     clearTimeout(processingTimeout);
 }
 
-async function loadShelves(synchronize = true, clearSelection = false) {
-    let shelf_list = $("#shelfList");
-
+async function loadShelves(selected, synchronize = true, clearSelection = false) {
     try {
-        let shelves = await backend.listShelves();
-
-        shelf_list.html(`
-        <option class="option-builtin" value="${TODO_SHELF_ID}" data-uuid="${TODO_SHELF_NAME}">${TODO_SHELF_NAME}</option>
-        <option class="option-builtin" value="${DONE_SHELF_ID}" data-uuid="${DONE_SHELF_NAME}">${DONE_SHELF_NAME}</option>
-        <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
-                data-uuid="${EVERYTHING}">${formatShelfName(EVERYTHING)}</option>`);
-
-        if (settings.cloud_enabled())
-            shelf_list.append(`<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
-                                       value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`);
-
-        let cloud_shelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
-        if (cloud_shelf)
-            shelves.splice(shelves.indexOf(cloud_shelf), 1);
-
-        if (settings.show_firefox_bookmarks())
-            shelf_list.append(`<option class=\"option-builtin\" data-uuid="${FIREFOX_SHELF_UUID}"
-                                       value=\"${FIREFOX_SHELF_ID}\">${formatShelfName(FIREFOX_SHELF_NAME)}</option>`);
-
-        let firefox_shelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
-        if (firefox_shelf)
-            shelves.splice(shelves.indexOf(firefox_shelf), 1);
-
-        shelves.sort((a, b) => a.name.localeCompare(b.name));
-
-        let default_shelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
-        shelves.splice(shelves.indexOf(default_shelf), 1);
-        default_shelf.name = formatShelfName(default_shelf.name);
-        shelves = [default_shelf, ...shelves];
-
-        for (let shelf of shelves) {
-            let option = $("<option></option>").appendTo(shelf_list).html(shelf.name)
-                .attr("value", shelf.id)
-                .attr("data-uuid", shelf.uuid);
-
-            if (shelf.name.toLowerCase() === DEFAULT_SHELF_NAME)
-                option.addClass("option-builtin");
-        }
-
-        let last_shelf_id = settings.last_shelf() || DEFAULT_SHELF_ID;
-
-        if (last_shelf_id === "null")
-            last_shelf_id = DEFAULT_SHELF_ID;
-
-        let last_shelf = $(`#shelfList option[value="${last_shelf_id}"]`);
-        last_shelf = last_shelf && last_shelf.length? last_shelf: $(`#shelfList option[value="${DEFAULT_SHELF_ID}"]`);
-        shelf_list.val(parseInt(last_shelf.val()));
-
-        styleBuiltinShelf();
-        shelf_list.selectric('refresh');
-        return switchShelf(shelf_list.val(), synchronize, clearSelection);
+        await shelfList.reload();
+        return switchShelf(selected || settings.last_shelf() || DEFAULT_SHELF_ID, synchronize, clearSelection);
     }
     catch (e) {
         console.error(e);
-        shelf_list.val(DEFAULT_SHELF_ID);
-        shelf_list.selectric('refresh');
         return switchShelf(DEFAULT_SHELF_ID, synchronize, clearSelection);
     }
 }
@@ -306,7 +246,8 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
     if (settings.last_shelf() != shelf_id)
         tree.clearIconCache();
 
-    let path = $(`#shelfList option[value="${shelf_id}"]`).text();
+    shelfList.selectShelf(shelf_id);
+    let path = shelfList.selectedShelfName;
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
 
     await settings.load();
@@ -371,10 +312,8 @@ async function createShelf() {
     if (options?.title) {
         if (!isSpecialShelf(options.title)) {
             const shelf = await backend.createGroup(null, options.title, NODE_TYPE_SHELF);
-            if (shelf) {
-                settings.last_shelf(shelf.id);
-                loadShelves();
-            }
+            if (shelf)
+                loadShelves(shelf.id);
         }
         else
             showNotification({message: "Can not create shelf with this name."})
@@ -382,26 +321,24 @@ async function createShelf() {
 }
 
 async function renameShelf() {
-    let {id, name, option} = getCurrentShelf();
+    let {id, name} = shelfList.getCurrentShelf();
 
     if (name && !isSpecialShelf(name)) {
         const options = await showDlg("prompt", {caption: "Rename", label: "Name", title: name});
         let newName = options?.title;
         if (newName && !isSpecialShelf(newName)) {
             await backend.renameGroup(id, newName)
-
-            option.text(newName);
             tree.renameRoot(newName);
-
-            shelfList.selectric('refresh');
+            shelfList.renameShelf(id, newName);
         }
     }
     else
         showNotification({message: "A built-in shelf could not be renamed."});
 }
 
+
 async function deleteShelf() {
-    let {id, name} = getCurrentShelf();
+    let {id, name} = shelfList.getCurrentShelf();
 
     if (isSpecialShelf(name)) {
         showNotification({message: "A built-in shelf could not be deleted."})
@@ -412,11 +349,8 @@ async function deleteShelf() {
 
     if (proceed && name) {
         await send.deleteNodes({node_ids: id})
-        $(`#shelfList option[value="${id}"]`).remove();
-
-        shelfList.val(DEFAULT_SHELF_ID);
-        shelfList.selectric('refresh');
-        switchShelf(1);
+        shelfList.removeShelves(id);
+        switchShelf(DEFAULT_SHELF_ID);
     }
 }
 
@@ -431,7 +365,7 @@ async function sortShelves() {
         positions.push({id: sorted[i].id, pos: i});
 
     await send.reorderNodes({positions: positions});
-    loadShelves(false);
+    loadShelves(settings.last_shelf(),false);
 }
 
 async function importShelf(e) {
@@ -440,11 +374,7 @@ async function importShelf(e) {
         let lname = name.toLocaleLowerCase();
 
         if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isSpecialShelf(lname)) {
-            let existingOption = $(`#shelfList option`).filter(function(i, e) {
-                return e.textContent.toLocaleLowerCase() === lname;
-            });
-
-            if (existingOption.length) {
+            if (shelfList.hasShelf(name)) {
                 if (await confirm("{Warning}", "This will replace '" + name + "'.")) {
                     await performImport(e.target.files[0], name, ext);
                     $("#file-picker").val("");
@@ -460,16 +390,6 @@ async function importShelf(e) {
     }
 }
 
-function getCurrentShelf() {
-    let selectedOption = $(`#shelfList option[value='${$("#shelfList").val()}']`);
-    return {
-        id: parseInt(selectedOption.val()),
-        name: selectedOption.text(),
-        uuid: selectedOption.attr("data-uuid"),
-        option: selectedOption
-    };
-}
-
 function canSearch() {
     return context.isInputValid($("#search-input").val());
 }
@@ -481,9 +401,8 @@ async function performSearch() {
         context.inSearch();
     }
     else if (!context.isInputValid(input) && context.isInSearch) {
-        const {id} = getCurrentShelf();
         context.outOfSearch();
-        switchShelf(id, false);
+        switchShelf(shelfList.selectedShelfId, false);
     }
 
     if (context.isInputValid(input))
@@ -497,14 +416,11 @@ async function performImport(file, file_name, file_ext) {
         await send.importFile({file: file, file_name: file_name, file_ext: file_ext});
         stopProcessingIndication();
 
-        if (file_name.toLocaleLowerCase() === EVERYTHING) {
-            settings.last_shelf(EVERYTHING_SHELF_ID);
-            loadShelves();
-        }
+        if (file_name.toLocaleLowerCase() === EVERYTHING)
+            loadShelves(EVERYTHING_SHELF_ID);
         else {
             const shelf = await backend.queryShelf(file_name);
-            settings.last_shelf(shelf.id);
-            await loadShelves();
+            await loadShelves(shelf.id);
         }
     }
     catch (e) {
@@ -515,7 +431,7 @@ async function performImport(file, file_name, file_ext) {
 }
 
 async function performExport() {
-    let {name: shelf, uuid} = getCurrentShelf();
+    let {name: shelf, uuid} = shelfList.getCurrentShelf();
 
     startProcessingIndication(true);
 
@@ -536,30 +452,19 @@ async function selectNode(node) {
     $("#search-input-clear").hide();
 
     const path = await backend.computePath(node.id)
-    settings.last_shelf(path[0].id);
-    await loadShelves(false);
+    await loadShelves(path[0].id, false);
     tree.selectNode(node.id);
 }
 
 function sidebarRefresh() {
-    let last_shelf = settings.last_shelf();
-    switchShelf(last_shelf, false);
+    switchShelf(settings.last_shelf(), false);
 }
 
 function sidebarRefreshExternal() {
     let last_shelf = settings.last_shelf();
 
     if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID)
-        settings.load().then(() => loadShelves(false));
-}
-
-function styleBuiltinShelf() {
-    let {name} = getCurrentShelf();
-
-    if (isSpecialShelf(name))
-        $("div.selectric span.label").addClass("option-builtin");
-    else
-        $("div.selectric span.label").removeClass("option-builtin");
+        settings.load().then(() => loadShelves(last_shelf, false));
 }
 
 async function getRandomBookmark() {
@@ -645,8 +550,7 @@ receive.beforeBookmarkAdded = async message => {
             tree.selectNode(node.id);
         }
         else {
-            settings.last_shelf(path[0].id);
-            await loadShelves(false)
+            await loadShelves(path[0].id, false)
             tree.createTentativeNode(node, select);
             tree.selectNode(node.id);
         }
@@ -677,19 +581,13 @@ receive.nodesReady = message => {
     let last_shelf = settings.last_shelf();
 
     if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == message.shelf.id)
-        loadShelves(false);
+        loadShelves(last_shelf, false);
 };
 
 receive.nodesImported = message => {
     const shelfId = message.shelf? message.shelf.id: EVERYTHING_SHELF_ID;
 
-    settings.last_shelf(shelfId, async () => {
-        try {
-            await loadShelves(false);
-        } catch (e) {
-            console.error(e);
-        }
-    });
+    return  loadShelves(shelfId, false);
 };
 
 receive.externalNodesReady = sidebarRefreshExternal;
@@ -705,7 +603,7 @@ receive.cloudSyncEnd = message => {
 };
 
 receive.shelvesChanged = message => {
-    return settings.load().then(() => loadShelves(false));
+    return settings.load().then(() => loadShelves(settings.last_shelf(), false));
 };
 
 receive.sidebarThemeChanged = message => {
@@ -741,8 +639,6 @@ receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
 
         if (shelfNode) {
             const group = await backend.getGroupByPath(external_path);
-            shelfList.val(shelfNode.id);
-            shelfList.selectric("refresh");
             await switchShelf(shelfNode.id);
             tree.selectNode(group.id, true);
         }
@@ -751,10 +647,7 @@ receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
                 const shelfNode = await backend.createGroup(null, shelf, NODE_TYPE_SHELF);
                 if (shelfNode) {
                     let group = await backend.getGroupByPath(external_path);
-
-                    settings.last_shelf(shelfNode.id);
-                    await loadShelves();
-
+                    await loadShelves(shelfNode.id);
                     tree.selectNode(group.id, true);
                 }
             }
@@ -769,8 +662,7 @@ async function switchAfterCopy(message, external_path, group, topNodes) {
         const [shelf, ...path] = external_path.split("/");
         const shelfNode = await backend.queryShelf(shelf);
 
-        settings.last_shelf(shelfNode.id);
-        await loadShelves();
+        await loadShelves(shelfNode.id);
 
         tree.openNode(group.id)
         tree.selectNode(topNodes);

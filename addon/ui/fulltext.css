@@ -25,6 +25,9 @@ input[type="text"] {
     border-radius: 3px;
 }
 
+#search-tools {
+}
+
 #search-container {
     display: flex;
     flex-direction: column;
@@ -38,19 +41,25 @@ input[type="text"] {
     border-bottom: 1px solid #999;
     white-space: nowrap;
     flex: 0;
+    display: flex;
+    align-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
 }
 
 #search-title {
-    float: right;
     margin: 0;
     padding: 0;
+    flex-grow: 1;
+    flex-shrink: 0;
+    text-align: right;
 }
 
 #shelves-icon {
     width: 16px;
     height: 16px;
     display: inline-block;
-    margin-bottom: -3px;
+    margin-right: 4px;
 }
 
 #search-scope {
@@ -59,6 +68,7 @@ input[type="text"] {
 
 #search-query {
     margin-right: 8px;
+    margin-left: 8px;
     width: 300px;
 }
 
@@ -74,6 +84,7 @@ input[type=button] {
 
 #search-result-count {
     font-size: 10pt;
+    margin-left: 8px;
 }
 
 #search-results {

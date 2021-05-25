@@ -46,12 +46,25 @@ async function configureDBPath() {
     });
 }
 
+function selectricRefresh(element, widthInc = 5) {
+    element.selectric("refresh");
+    if (widthInc) {
+        let wrapper = element.closest(".selectric-wrapper");
+        wrapper.width(wrapper.width() + widthInc);
+    }
+}
+
 function configureBackupCompressionPanel() {
-    $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
-    $("#option-compression-level").val(settings.backup_compression_level() || "5");
+    const compMethod = $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
+    const compLevel = $("#option-compression-level").val(settings.backup_compression_level() || "5");
 
     $("#option-compression-method option[value='EMPTY']").remove();
     $("#option-compression-level option[value='EMPTY']").remove();
+
+    compMethod.selectric({inheritOriginalWidth: true});
+    selectricRefresh(compMethod);
+    compLevel.selectric({inheritOriginalWidth: true});
+    selectricRefresh(compLevel);
 
     $("#option-compression-method").on("change", async e => {
         await settings.load();

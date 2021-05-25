@@ -2,7 +2,7 @@ import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_ID,
-    DEFAULT_SHELF_NAME,
+    DEFAULT_SHELF_NAME, DONE_SHELF_UUID,
     EVERYTHING,
     FIREFOX_SHELF_ID,
     FIREFOX_SHELF_NAME,
@@ -10,7 +10,7 @@ import {
     NODE_PROPERTIES,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_GROUP,
-    NODE_TYPE_SHELF,
+    NODE_TYPE_SHELF, TODO_SHELF_UUID,
 } from "./storage_constants.js";
 import {importJSONObject_v1, parseJSONObject_v1} from "./import_json_v1.js"
 import {backend, formatShelfName} from "./backend.js";
@@ -96,6 +96,8 @@ export async function importJSON(shelf, reader, progress) {
     if (meta.version > FORMAT_VERSION)
         return Promise.reject(new Error("export format is not supported"));
 
+    const todo = meta.uuid === TODO_SHELF_UUID || meta.uuid === DONE_SHELF_UUID;
+
     let parseJSONObjectImpl = JSON.parse;
     let importJSONObjectImpl = importJSONObject;
 
@@ -171,8 +173,12 @@ export async function importJSON(shelf, reader, progress) {
 
             let old_object_id = object.id;
 
-            if (object.parent_id)
-                object.parent_id = id_map.get(object.parent_id);
+            if (object.parent_id) {
+                if (todo)
+                    object.parent_id = shelf_node.id
+                else
+                    object.parent_id = id_map.get(object.parent_id);
+            }
             else if (object.type === NODE_TYPE_SHELF && aliased_everything) {
                 object.type = NODE_TYPE_GROUP;
                 object.parent_id = shelf_node.id;

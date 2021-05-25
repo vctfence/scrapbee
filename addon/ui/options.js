@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend, loadShelfListOptions} from "../backend.js"
+import {backend} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
 import {dropboxBackend} from "../backend_dropbox.js"
 import {settings} from "../settings.js"
@@ -11,12 +11,13 @@ import {
     EVERYTHING,
     FIREFOX_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK
+    NODE_TYPE_BOOKMARK, TODO_SHELF_NAME, DONE_SHELF_NAME
 } from "../storage_constants.js";
 import {testFavicon} from "../favicon.js";
 import {parseHtml} from "../utils_html.js";
 import {showNotification} from "../utils_browser.js";
 import {fetchText} from "../utils_io.js";
+import {ShelfList} from "./shelf_list.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -114,6 +115,7 @@ function loadScrapyardSettings() {
     document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
     document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
     document.getElementById("option-export-format").value = _(settings.export_format(), "json");
+    selectricRefresh($("#option-export-format"));
     document.getElementById("option-use-helper-app-for-export").checked = settings.use_helper_app_for_export();
     document.getElementById("option-undo-failed-imports").checked = settings.undo_failed_imports();
     document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
@@ -152,7 +154,8 @@ function loadScrapyardSettings() {
         $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
     });
 
-    document.getElementById("option-sidebar-theme").value = localStorage.getItem("scrapyard-sidebar-theme") || "light";
+    $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
+    selectricRefresh($("#option-sidebar-theme"));
 }
 
 async function storeScrapyardSettings() {
@@ -190,6 +193,19 @@ async function storeScrapyardSettings() {
 
     if (currentSidebarTheme !== newSidebarTheme)
         send.sidebarThemeChanged({theme: newSidebarTheme});
+}
+
+function selectricRefresh(element, widthInc = 5) {
+    element.selectric("refresh");
+    if (widthInc) {
+        let wrapper = element.closest(".selectric-wrapper");
+        wrapper.width(wrapper.width() + widthInc);
+    }
+}
+
+function configureScrapyardSettingsPage() {
+    $("#option-sidebar-theme").selectric({inheritOriginalWidth: true});
+    $("#option-export-format").selectric({inheritOriginalWidth: true});
 }
 
 let helperAppLinksLoaded = false;
@@ -309,10 +325,12 @@ window.onload = async function() {
     window.onhashchange = switchPane;
     switchPane();
 
+    configureScrapyardSettingsPage();
+
     $("#div-page").css("display", "table-row");
 
-    document.getElementById("options-save-button").addEventListener("click", onClickSave,false);
-    document.getElementById("options-save2-button").addEventListener("click", onClickSave,false);
+    $("#options-save-button").on("click", onClickSave);
+    $("#options-save2-button").on("click", onClickSave);
 
     loadSavePageSettings();
     loadScrapyardSettings();
@@ -450,7 +468,8 @@ async function doAutoStartCheckLinks() {
     if (autoStartCheckLinks) {
         $("#update-icons").prop("checked", urlParams.get("repairIcons") === "true");
         let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
-        $("#link-scope").replaceWith(scopePath[scopePath.length - 1].name + "&nbsp;&nbsp;");
+        $(".selectric", $("#check-links"))
+            .replaceWith(`<span style="white-space: nowrap">${scopePath[scopePath.length - 1].name}&nbsp;&nbsp;</span>`);
         autoLinkCheckScope = scopePath.map(g => g.name).join("/");
         startCheckLinks();
     }
@@ -460,7 +479,6 @@ function initializeLinkChecker() {
     $("#start-check-links").on("click", startCheckLinks);
     $("#invalid-links-container").on("click", ".invalid-link", selectNode);
 
-
     $("#link-check-timeout").val(settings.link_check_timeout() || DEFAULT_LINK_CHECK_TIMEOUT)
     $("#link-check-timeout").on("input", async e => {
        await settings.load();
@@ -468,7 +486,11 @@ function initializeLinkChecker() {
        settings.link_check_timeout(isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout);
     });
 
-    loadShelfListOptions("#link-scope");
+    const shelfList = new ShelfList("#link-scope", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
+    });
+
+    shelfList.initDefault();
 }
 
 function stopCheckLinks() {
@@ -642,7 +664,11 @@ function initializeBackup() {
     $("#compress-backup").prop("checked", settings.enable_backup_compression());
     $("#compress-backup").on("change", e => settings.enable_backup_compression(e.target.checked))
 
-    loadShelfListOptions("#backup-shelf");
+    const shelfList = new ShelfList("#backup-shelf", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
+    });
+
+    shelfList.initDefault();
 
     $("#backup-tree").jstree({
         plugins: ["wholerow", "contextmenu"],
@@ -673,7 +699,9 @@ function backupTreeContextMenu(jnode) {
     let notRestorable = () => {
         const selected = backupTree.get_selected(true);
         const name = jnode.data.name.toLowerCase();
-        return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME || selected?.length > 1;
+        return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME
+            || name === TODO_SHELF_NAME.toLowerCase() || name === DONE_SHELF_NAME.toLowerCase()
+            || selected?.length > 1;
     };
 
     return {
@@ -859,6 +887,7 @@ async function backupShelf() {
         send.stopProcessingIndication();
         clearInterval(processingInterval);
         backupIsInProcess = false;
+        backupSetStatus("Ready");
     }
 }
 
