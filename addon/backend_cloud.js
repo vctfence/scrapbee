@@ -9,9 +9,8 @@ import {
     CLOUD_SHELF_NAME,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
     isContainer, CLOUD_SHELF_UUID
-} from "./storage_constants.js";
+} from "./storage.js";
 import {notes2html} from "./notes_render.js";
-import {getFavicon} from "./favicon.js";
 import {showNotification} from "./utils_browser.js";
 
 export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
@@ -155,8 +154,8 @@ export class CloudBackend {
         }
     }
 
-    async _createBookmarkInternal(db, node, parent_id) {
-        let parent = await db.getNode(parent_id, true);
+    async _createBookmarkInternal(db, node, parentId) {
+        let parent = await db.getNode(parentId, true);
 
         let cloud_node = Object.assign({}, node);
 
@@ -201,27 +200,27 @@ export class CloudBackend {
     }
 
     async _storeNotesInternal(db, node, options) {
-        let cloud_node = await db.getNode(node.uuid, true);
+        let cloudNode = await db.getNode(node.uuid, true);
 
         if (options.hasOwnProperty("content"))
-            cloud_node.has_notes = !!options.content;
+            cloudNode.has_notes = !!options.content;
         if (options.hasOwnProperty("format"))
-            cloud_node.notes_format = options.format;
+            cloudNode.notes_format = options.format;
         if (options.hasOwnProperty("align"))
-            cloud_node.notes_align = options.align;
+            cloudNode.notes_align = options.align;
         if (options.hasOwnProperty("width"))
-            cloud_node.notes_width = options.width;
+            cloudNode.notes_width = options.width;
 
-        cloud_node = await db.updateNode(cloud_node);
+        cloudNode = await db.updateNode(cloudNode);
 
         if (options.hasOwnProperty("content")) {
-            let is_html = options.format === "html" || options.format === "delta";
+            let isHtml = options.format === "html" || options.format === "delta";
 
-            let view = `<html><head></head><body class="${is_html ? "format-html" : ""}">${notes2html(options)}</body></html>`;
+            let view = `<html><head></head><body class="${isHtml ? "format-html" : ""}">${notes2html(options)}</body></html>`;
 
-            await db.storeView(cloud_node, view);
+            await db.storeView(cloudNode, view);
 
-            return db.storeNotes(cloud_node, options.content);
+            return db.storeNotes(cloudNode, options.content);
         }
     }
 
@@ -265,13 +264,13 @@ export class CloudBackend {
     }
 
     _fixUTF8Encoding(html) {
-        const meta_rx = /<meta\s*charset=['"]?([^'"\/>]+)['"]?\s*\/?>/ig
-        const content_type_rx =
+        const metaRx = /<meta\s*charset=['"]?([^'"\/>]+)['"]?\s*\/?>/ig
+        const contentTypeRx =
             /<meta\s*http-equiv=["']?content-type["']?\s*content=["']text\/html;\s*charset=([^'"/>]+)['"]\s*\/?>/ig
 
         let proceed = null;
 
-        let m = html.match(meta_rx);
+        let m = html.match(metaRx);
 
         if (m && m[1] && m[1].toUpperCase() === "UTF-8")
             proceed = "utf-8";
@@ -279,7 +278,7 @@ export class CloudBackend {
             proceed = "meta";
 
         if (!proceed) {
-            m = html.match(content_type_rx);
+            m = html.match(contentTypeRx);
 
             if (m && m[1] && m[1].toUpperCase() === "UTF-8")
                 proceed = "utf-8";
@@ -287,12 +286,12 @@ export class CloudBackend {
                 proceed = "content-type";
         }
 
-        if (proceed == "meta") {
-            html = html.replace(meta_rx, "");
+        if (proceed === "meta") {
+            html = html.replace(metaRx, "");
             html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
         }
-        else if (proceed == "content-type") {
-            html = html.replace(content_type_rx, "");
+        else if (proceed === "content-type") {
+            html = html.replace(contentTypeRx, "");
             html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
         }
         else if (proceed === null) {
@@ -303,18 +302,18 @@ export class CloudBackend {
     }
 
     async _storeDataInternal(db, node, data, content_type) {
-        let cloud_node = await db.getNode(node.uuid, true);
+        let cloudNode = await db.getNode(node.uuid, true);
 
         if (typeof data === "string")
             data = new TextEncoder().encode(this._fixUTF8Encoding(data));
         else
-            cloud_node.byte_length = data.byteLength;
+            cloudNode.byte_length = data.byteLength;
 
         if (content_type)
-            cloud_node.content_type = content_type;
-        cloud_node = await db.updateNode(cloud_node);
+            cloudNode.content_type = content_type;
+        cloudNode = await db.updateNode(cloudNode);
 
-        return db.storeData(cloud_node, new Blob([data], {type: content_type}));
+        return db.storeData(cloudNode, new Blob([data], {type: content_type}));
     }
 
     async storeBookmarkData(node_id, data, content_type) {
@@ -379,17 +378,17 @@ export class CloudBackend {
             return;
 
         let dest = await backend.getNode(dest_id);
-        let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
-        let other_nodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_NAME);
 
-        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloud_nodes.length)
+        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloudNodes.length)
             return;
 
         return this.withCloudDB(async db => {
             if (dest.external === CLOUD_EXTERNAL_NAME) {
-                await Promise.all(cloud_nodes.map(n => db.moveNode(n, dest, this.newCloudRootNode())));
+                await Promise.all(cloudNodes.map(n => db.moveNode(n, dest, this.newCloudRootNode())));
 
-                return Promise.all(other_nodes.map(n => {
+                return Promise.all(otherNodes.map(n => {
                     if (isContainer(n)) {
                         return backend.traverse(n, (parent, node) =>
                             this._createBookmarkInternal(db, node, parent? parent.uuid: dest.uuid));
@@ -398,7 +397,7 @@ export class CloudBackend {
                         return this._createBookmarkInternal(db, n, dest.uuid)
                 }));
             } else {
-                return Promise.all(cloud_nodes.map(async n => {
+                return Promise.all(cloudNodes.map(async n => {
                     n.external = undefined;
                     n.external_id = undefined;
                     await backend.updateNode(n);
@@ -435,9 +434,9 @@ export class CloudBackend {
             return;
 
         let dest = await backend.getNode(dest_id);
-        let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloud_nodes.length)
+        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloudNodes.length)
             return;
 
         if (dest.external === CLOUD_EXTERNAL_NAME) {
@@ -452,7 +451,7 @@ export class CloudBackend {
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
         else {
-            return Promise.all(cloud_nodes.map(async n => {
+            return Promise.all(cloudNodes.map(async n => {
                 n.external = undefined;
                 n.external_id = undefined;
                 await backend.updateNode(n);
@@ -503,42 +502,42 @@ export class CloudBackend {
             }
         }
 
-        let cloud_ids = [];
-        let begin_time = Date.now();
-        let db_pool = new Map();
-        let download_icons = [];
-        let download_notes = [];
-        let download_comments = [];
-        let download_data = [];
+        let cloudIds = [];
+        let beginTime = Date.now();
+        let dbPool = new Map();
+        let downloadIcons = [];
+        let downloadNotes = [];
+        let downloadComments = [];
+        let downloadData = [];
 
         let reconcile = async (d, c) => { // node, cloud bookmark
-            for (let cloud_node of c.children) {
-                cloud_ids.push(cloud_node.uuid);
+            for (let cloudNode of c.children) {
+                cloudIds.push(cloudNode.uuid);
 
-                let node = db_pool.get(cloud_node.uuid);
+                let node = dbPool.get(cloudNode.uuid);
                 if (node) {
-                    let node_date = node.date_modified;
-                    let cloud_date = cloud_node.date_modified;
+                    let nodeDate = node.date_modified;
+                    let cloudDate = cloudNode.date_modified;
                     try {
-                        if (!(node_date instanceof Date))
-                            node_date = new Date(node_date);
+                        if (!(nodeDate instanceof Date))
+                            nodeDate = new Date(nodeDate);
 
-                        if (!(cloud_date instanceof Date))
-                            cloud_date = new Date(cloud_date);
+                        if (!(cloudDate instanceof Date))
+                            cloudDate = new Date(cloudDate);
 
-                        if (node_date.getTime() < cloud_date.getTime()) {
-                            delete cloud_node.id;
-                            delete cloud_node.parent_id;
-                            delete cloud_node.icon;
-                            delete cloud_node.icon_data;
-                            delete cloud_node.date_added
-                            node = Object.assign(node, cloud_node);
+                        if (nodeDate.getTime() < cloudDate.getTime()) {
+                            delete cloudNode.id;
+                            delete cloudNode.parent_id;
+                            delete cloudNode.icon;
+                            delete cloudNode.icon_data;
+                            delete cloudNode.date_added
+                            node = Object.assign(node, cloudNode);
 
-                            if (cloud_node.has_notes)
-                                download_notes.push(node);
+                            if (cloudNode.has_notes)
+                                downloadNotes.push(node);
 
-                            if (cloud_node.has_comments)
-                                download_comments.push(node);
+                            if (cloudNode.has_comments)
+                                downloadComments.push(node);
 
                             await backend.updateNode(node);
                         }
@@ -548,25 +547,25 @@ export class CloudBackend {
                     }
                 }
                 else {
-                    delete cloud_node.id;
-                    cloud_node.parent_id = d.id;
-                    cloud_node.external = CLOUD_EXTERNAL_NAME;
-                    cloud_node.external_id = cloud_node.uuid;
-                    node = await backend.addNode(cloud_node, false, false, false);
+                    delete cloudNode.id;
+                    cloudNode.parent_id = d.id;
+                    cloudNode.external = CLOUD_EXTERNAL_NAME;
+                    cloudNode.external_id = cloudNode.uuid;
+                    node = await backend.addNode(cloudNode, false, false, false);
 
-                    if (cloud_node.has_notes) {
-                        node.notes_format = cloud_node.notes_format;
-                        node.notes_align = cloud_node.notes_align;
-                        download_notes.push(node);
+                    if (cloudNode.has_notes) {
+                        node.notes_format = cloudNode.notes_format;
+                        node.notes_align = cloudNode.notes_align;
+                        downloadNotes.push(node);
                     }
 
-                    if (cloud_node.has_comments)
-                        download_comments.push(node);
+                    if (cloudNode.has_comments)
+                        downloadComments.push(node);
 
-                    if (cloud_node.type === NODE_TYPE_ARCHIVE) {
-                        node.content_type = cloud_node.content_type;
-                        node.byte_length = cloud_node.byte_length;
-                        download_data.push(node);
+                    if (cloudNode.type === NODE_TYPE_ARCHIVE) {
+                        node.content_type = cloudNode.content_type;
+                        node.byte_length = cloudNode.byte_length;
+                        downloadData.push(node);
                     }
 
                     if (!node.icon && node.uri)
@@ -574,67 +573,67 @@ export class CloudBackend {
                     else if (node.icon && !node.stored_icon)
                         await backend.storeIcon(node);
                     else if (node.icon && node.stored_icon)
-                        await backend.storeIconLowLevel(node.id, cloud_node.icon_data);
+                        await backend.storeIconLowLevel(node.id, cloudNode.icon_data);
                 }
 
-                if (cloud_node.type === NODE_TYPE_GROUP)
-                    await reconcile(node, cloud_node);
+                if (cloudNode.type === NODE_TYPE_GROUP)
+                    await reconcile(node, cloudNode);
             }
         };
 
         if (settings.cloud_enabled()) {
-            let db_root = await backend.getNode(CLOUD_SHELF_ID);
-            if (!db_root) {
-                db_root = await backend.addNode(this.newCloudRootNode(), false, true, false);
+            let dbRoot = await backend.getNode(CLOUD_SHELF_ID);
+            if (!dbRoot) {
+                dbRoot = await backend.addNode(this.newCloudRootNode(), false, true, false);
                 try {await send.shelvesChanged()} catch (e) {console.error(e)}
             }
 
-            let cloud_last_modified = await this.getLastModified();
+            let cloudLastModified = await this.getLastModified();
 
-            if (db_root.date_modified && cloud_last_modified
-                && db_root.date_modified.getTime() === cloud_last_modified.getTime())
+            if (dbRoot.date_modified && cloudLastModified
+                && dbRoot.date_modified.getTime() === cloudLastModified.getTime())
                 return;
 
-            let cloud_root = await this.getTree();
+            let cloudRoot = await this.getTree();
 
-            if (!cloud_root)
+            if (!cloudRoot)
                 return;
 
             send.cloudSyncStart();
 
-            db_pool = new Map((await backend.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
+            dbPool = new Map((await backend.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
 
-            await reconcile(db_root, cloud_root).then(async () => {
-                cloud_root = null;
-                db_pool = null;
+            await reconcile(dbRoot, cloudRoot).then(async () => {
+                cloudRoot = null;
+                dbPool = null;
 
-                await backend.deleteMissingExternalNodes(cloud_ids, CLOUD_EXTERNAL_NAME);
+                await backend.deleteMissingExternalNodes(cloudIds, CLOUD_EXTERNAL_NAME);
 
-                for (let notes_node of download_notes) {
-                    let notes = await this.fetchCloudNotes(notes_node);
+                for (let notesNode of downloadNotes) {
+                    let notes = await this.fetchCloudNotes(notesNode);
                     if (notes) {
                         let options = {
-                            node_id: notes_node.id,
+                            node_id: notesNode.id,
                             content: notes,
-                            format: notes_node.notes_format,
-                            align: notes_node.notes_align,
-                            width: notes_node.notes_width
+                            format: notesNode.notes_format,
+                            align: notesNode.notes_align,
+                            width: notesNode.notes_width
                         };
 
-                        if (notes_node.notes_format === "delta")
-                            options.html = await this.fetchCloudView(notes_node);
+                        if (notesNode.notes_format === "delta")
+                            options.html = await this.fetchCloudView(notesNode);
 
                         await backend.storeNotesLowLevel(options);
                     }
                 }
 
-                for (let comments_node of download_comments) {
-                    let comments = await this.fetchCloudComments(comments_node);
+                for (let commentsNode of downloadComments) {
+                    let comments = await this.fetchCloudComments(commentsNode);
                     if (comments)
-                        await backend.storeCommentsLowLevel(comments_node.id, comments);
+                        await backend.storeCommentsLowLevel(commentsNode.id, comments);
                 }
 
-                for (let archive of download_data) {
+                for (let archive of downloadData) {
                     let data = await this.fetchCloudData(archive);
 
                     if (data) {
@@ -642,10 +641,10 @@ export class CloudBackend {
                     }
                 }
 
-                db_root.date_modified = cloud_last_modified;
-                await backend.updateNode(db_root, false);
+                dbRoot.date_modified = cloudLastModified;
+                await backend.updateNode(dbRoot, false);
 
-                console.log("cloud reconciliation time: " + ((new Date().getTime() - begin_time) / 1000) + "s");
+                console.log("cloud reconciliation time: " + ((new Date().getTime() - beginTime) / 1000) + "s");
 
                 send.cloudSyncEnd();
                 send.externalNodesReady();

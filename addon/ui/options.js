@@ -6,16 +6,18 @@ import {settings} from "../settings.js"
 import {confirm} from "./dialog.js";
 import {formatBytes, toHHMMSS} from "../utils.js";
 import {
-    isSpecialShelf,
     CLOUD_SHELF_NAME,
+    DONE_SHELF_NAME,
     EVERYTHING,
     FIREFOX_SHELF_NAME,
+    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK, TODO_SHELF_NAME, DONE_SHELF_NAME
-} from "../storage_constants.js";
+    NODE_TYPE_BOOKMARK,
+    TODO_SHELF_NAME
+} from "../storage.js";
 import {testFavicon} from "../favicon.js";
 import {parseHtml} from "../utils_html.js";
-import {showNotification} from "../utils_browser.js";
+import {selectricRefresh, showNotification} from "../utils_browser.js";
 import {fetchText} from "../utils_io.js";
 import {ShelfList} from "./shelf_list.js";
 
@@ -193,14 +195,6 @@ async function storeScrapyardSettings() {
 
     if (currentSidebarTheme !== newSidebarTheme)
         send.sidebarThemeChanged({theme: newSidebarTheme});
-}
-
-function selectricRefresh(element, widthInc = 5) {
-    element.selectric("refresh");
-    if (widthInc) {
-        let wrapper = element.closest(".selectric-wrapper");
-        wrapper.width(wrapper.width() + widthInc);
-    }
 }
 
 function configureScrapyardSettingsPage() {

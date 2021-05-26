@@ -75,7 +75,12 @@ class IShellBackend {
 
     invalidateCompletion() {
         if (this.isInvalidationEnabled()) {
-            browser.runtime.sendMessage(this.ISHELL_ID, {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
+            try {
+                browser.runtime.sendMessage(this.ISHELL_ID, {type: "SCRAPYARD_INVALIDATE_COMPLETION"});
+            }
+            catch (e) {
+                console.error(e);
+            }
         }
     }
 

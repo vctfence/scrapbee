@@ -34,7 +34,7 @@ import {
     TODO_SHELF_ID,
     DONE_SHELF_ID,
     DEFAULT_SHELF_NAME
-} from "../storage_constants.js";
+} from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
@@ -50,8 +50,8 @@ let c = n => {
     if (n.data?.tag_list)
         delete n.data.tag_list;
 
-    if (n.data?._path)
-        delete n.data._path;
+    if (n.data?.__path)
+        delete n.data.__path;
 
     return n.data;
 };
@@ -292,7 +292,7 @@ class BookmarkTree {
 
     static _styleTODO(node) {
         if (node.todo_state)
-            return " todo-state-" + (node._overdue
+            return " todo-state-" + (node.__overdue
                 ? "overdue"
                 : TODO_NAMES[node.todo_state].toLowerCase());
 
@@ -302,10 +302,10 @@ class BookmarkTree {
     static _formatTODO(node) {
         let text = "<div><span class='todo-path'>";
 
-        for (let i = 0; i < node._path.length; ++i) {
-            text += node._path[i];
+        for (let i = 0; i < node.__path.length; ++i) {
+            text += node.__path[i];
 
-            if (i !== node._path.length - 1)
+            if (i !== node.__path.length - 1)
                 text += " &#187; "
         }
 
@@ -416,7 +416,7 @@ class BookmarkTree {
             if (node.todo_state) {
                 jnode.a_attr.class += BookmarkTree._styleTODO(node);
 
-                if (node._extended_todo) {
+                if (node.__extended_todo) {
                     jnode.li_attr.class += " extended-todo";
                     jnode.text = BookmarkTree._formatTODO(node);
                 }
@@ -1195,7 +1195,7 @@ class BookmarkTree {
                             Object.assign(o(ctxNode), properties);
                             Object.assign(live_data, BookmarkTree.toJsTreeNode(o(ctxNode)));
 
-                            if (!o(ctxNode)._extended_todo)
+                            if (!o(ctxNode).__extended_todo)
                                 tree.rename_node(ctxNode, properties.name);
                             else
                                 tree.rename_node(ctxNode, BookmarkTree._formatTODO(o(ctxNode)));
@@ -1337,7 +1337,7 @@ class BookmarkTree {
             delete items.viewNotesItem;
         }
 
-        if (o(ctxNode)._extended_todo) {
+        if (o(ctxNode).__extended_todo) {
             delete items.newSeparatorItem;
             delete items.newFolderAfterItem;
         }

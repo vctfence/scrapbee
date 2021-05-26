@@ -1,7 +1,7 @@
 import UUID from "./lib/uuid.js";
 import {backend} from "./backend.js";
 import {nativeBackend} from "./backend_native.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage_constants.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 
 class RDFDoc {
 
@@ -215,7 +215,7 @@ export class RDFBackend {
         }
     }
 
-    async storeBookmarkData(node_id, data, content_type) {
+    async storeBookmarkData(node_id, data) {
         let node = await backend.getNode(node_id);
 
         if (node.external === RDF_EXTERNAL_NAME) {
@@ -234,12 +234,12 @@ export class RDFBackend {
         if (nodes.some(n => n.external === RDF_EXTERNAL_NAME && !n.external_id))
             return; // do not delete all from root
 
-        let rdf_nodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
 
-        if (rdf_nodes.length) {
-            const rdf_doc = await RDFDoc.fromNode(rdf_nodes[0]);
+        if (rdfNodes.length) {
+            const rdf_doc = await RDFDoc.fromNode(rdfNodes[0]);
             if (rdf_doc) {
-                for (let node of rdf_nodes) {
+                for (let node of rdfNodes) {
                     rdf_doc.deleteBookmarkNode(node);
 
                     if (node.type === NODE_TYPE_ARCHIVE) {
@@ -257,20 +257,20 @@ export class RDFBackend {
 
     async renameBookmark(node) {
         if (node.external === RDF_EXTERNAL_NAME) {
-            const rdf_doc = await RDFDoc.fromNode(node);
-            if (rdf_doc) {
-                rdf_doc.renameBookmark(node)
-                await rdf_doc.write();
+            const rdfDoc = await RDFDoc.fromNode(node);
+            if (rdfDoc) {
+                rdfDoc.renameBookmark(node)
+                await rdfDoc.write();
             }
         }
     }
 
     async updateBookmark(node) {
         if (node.external === RDF_EXTERNAL_NAME) {
-            const rdf_doc = await RDFDoc.fromNode(node);
-            if (rdf_doc) {
-                rdf_doc.renameBookmark(node)
-                await rdf_doc.write();
+            const rdfDoc = await RDFDoc.fromNode(node);
+            if (rdfDoc) {
+                rdfDoc.renameBookmark(node)
+                await rdfDoc.write();
             }
         }
     }
@@ -284,36 +284,36 @@ export class RDFBackend {
             node.external_id = UUID.date();
             await backend.updateNode(node);
 
-            const rdf_doc = await RDFDoc.fromNode(node);
-            if (rdf_doc) {
-                rdf_doc.createBookmarkFolder(node, parent);
-                await rdf_doc.write();
+            const rdfDoc = await RDFDoc.fromNode(node);
+            if (rdfDoc) {
+                rdfDoc.createBookmarkFolder(node, parent);
+                await rdfDoc.write();
             }
         }
     }
 
     async moveBookmarks(nodes, dest_id) {
-        let rdf_nodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
 
-        if (rdf_nodes.length) {
+        if (rdfNodes.length) {
             let dest = await backend.getNode(dest_id);
             if (dest.external === RDF_EXTERNAL_NAME) {
-                const rdf_doc = await RDFDoc.fromNode(dest);
-                if (rdf_doc) {
-                    rdf_doc.moveNodes(nodes, dest);
-                    await rdf_doc.write();
+                const rdfDoc = await RDFDoc.fromNode(dest);
+                if (rdfDoc) {
+                    rdfDoc.moveNodes(nodes, dest);
+                    await rdfDoc.write();
                 }
             }
         }
     }
 
     async reorderBookmarks(nodes) {
-        let rdf_nodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
-        if (rdf_nodes.length) {
-            const rdf_doc = await RDFDoc.fromNode(nodes[0]);
-            if (rdf_doc) {
-                rdf_doc.reorderNodes(nodes);
-                await rdf_doc.write();
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
+        if (rdfNodes.length) {
+            const rdfDoc = await RDFDoc.fromNode(nodes[0]);
+            if (rdfDoc) {
+                rdfDoc.reorderNodes(nodes);
+                await rdfDoc.write();
             }
         }
     }

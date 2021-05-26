@@ -11,7 +11,7 @@ import {
     NODE_TYPE_SHELF,
     TODO_NAMES,
     TODO_STATES
-} from "./storage_constants.js";
+} from "./storage.js";
 import * as org from "./lib/org/org.js";
 import {prepareNewImport} from "./import.js";
 

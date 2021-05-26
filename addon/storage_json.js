@@ -1,5 +1,5 @@
 import UUID from "./lib/uuid.js";
-import {DEFAULT_POSITION, NODE_PROPERTIES} from "./storage_constants.js";
+import {DEFAULT_POSITION, NODE_PROPERTIES} from "./storage.js";
 
 const JSON_PROPERTIES = ["notes_format",
                          "notes_align",
@@ -67,10 +67,10 @@ export class JSONStorage {
         return new Date().getTime();
     }
 
-    async addNode(datum, reset_order = true) {
+    async addNode(datum, resetOrder = true) {
         datum = this._sanitizeNode(datum);
 
-        if (reset_order)
+        if (resetOrder)
             datum.pos = DEFAULT_POSITION;
 
         datum.uuid = UUID.numeric();
@@ -93,8 +93,8 @@ export class JSONStorage {
         return datum;
     }
 
-    async getNode(id, is_uuid = false) {
-        if (is_uuid)
+    async getNode(id, isUUID = false) {
+        if (isUUID)
             return this.objects.find(n => n.uuid === id);
 
         return this.objects.find(n => n.id == id);
@@ -104,7 +104,7 @@ export class JSONStorage {
         return this.objects.filter(n => ids.some(id => id == n.id));
     }
 
-    async updateNode(node, update_pos = false) {
+    async updateNode(node, updatePos = false) {
         if (node) {
             node = Object.assign({}, node);
 
@@ -113,7 +113,7 @@ export class JSONStorage {
             delete node.external;
             delete node.external_id;
 
-            if (!update_pos)
+            if (!updatePos)
                 delete node.pos;
 
             let existing = this.objects.find(n => n.uuid === node.uuid);

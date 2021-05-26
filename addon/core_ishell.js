@@ -1,7 +1,7 @@
 import {backend} from "./backend.js";
 import {receiveExternal} from "./proxy.js";
 import {renderPath} from "./core_automation.js";
-import {NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./storage_constants.js";
+import {NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./storage.js";
 import {browseNode} from "./core_bookmarking.js";
 import {ishellBackend} from "./backend_ishell.js";
 

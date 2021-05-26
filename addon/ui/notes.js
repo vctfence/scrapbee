@@ -1,7 +1,7 @@
 import {send} from "../proxy.js";
 import {backend} from "../backend.js"
 import * as org from "../lib/org/org.js"
-import {NODE_TYPE_NOTES} from "../storage_constants.js";
+import {NODE_TYPE_NOTES} from "../storage.js";
 import {markdown2html, org2html, text2html} from "../notes_render.js";
 import {applyInlineStyles} from "../utils_html.js";
 

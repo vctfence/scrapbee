@@ -1,6 +1,6 @@
 import {send} from "../proxy.js";
 import {settings} from "../settings.js";
-import {showNotification} from "../utils_browser.js";
+import {showNotification, selectricRefresh} from "../utils_browser.js";
 import {alert, confirm} from "./dialog.js";
 import {formatBytes} from "../utils.js";
 
@@ -44,14 +44,6 @@ async function configureDBPath() {
     $("#db-path-copy-button").on("click", e => {
         navigator.clipboard.writeText($("#addon-db-path-input").val());
     });
-}
-
-function selectricRefresh(element, widthInc = 5) {
-    element.selectric("refresh");
-    if (widthInc) {
-        let wrapper = element.closest(".selectric-wrapper");
-        wrapper.width(wrapper.width() + widthInc);
-    }
 }
 
 function configureBackupCompressionPanel() {

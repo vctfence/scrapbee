@@ -1,6 +1,6 @@
 import {backend} from "./backend.js"
 import {TREE_STATE_PREFIX} from "./ui/tree.js";
-import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
+import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {openContainerTab} from "./utils_browser.js";
 
 

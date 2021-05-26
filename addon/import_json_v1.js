@@ -1,4 +1,4 @@
-import {NODE_TYPE_ARCHIVE} from "./storage_constants.js";
+import {NODE_TYPE_ARCHIVE} from "./storage.js";
 import {backend} from "./backend.js";
 
 export function parseJSONObject_v1(line) {

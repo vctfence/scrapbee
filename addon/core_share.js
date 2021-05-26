@@ -2,7 +2,7 @@ import {receive} from "./proxy.js";
 import {GetPocket} from "./lib/pocket.js";
 import {settings} from "./settings.js";
 import {showNotification} from "./utils_browser.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage.js";
 import {backend} from "./backend.js";
 import {notes2html} from "./notes_render.js";
 import {dropboxBackend} from "./backend_dropbox.js";

@@ -1,6 +1,6 @@
 import {backend} from "./backend.js";
 import {send, receive} from "./proxy.js";
-import {isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage_constants.js";
+import {isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage.js";
 import {computeSHA1} from "./utils.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud.js";

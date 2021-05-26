@@ -8,7 +8,7 @@ import {
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES,
     RDF_EXTERNAL_NAME
-} from "./storage_constants.js";
+} from "./storage.js";
 import {getActiveTab, openContainerTab, openPage, showNotification, updateTab} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";

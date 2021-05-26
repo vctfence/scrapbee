@@ -1,4 +1,4 @@
-import {NODE_TYPE_NOTES} from "../storage_constants.js";
+import {NODE_TYPE_NOTES} from "../storage.js";
 import {formatBytes} from "../utils.js";
 
 const DEFAULT_CONTAINER = "--default-container";

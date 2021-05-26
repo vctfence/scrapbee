@@ -11,7 +11,7 @@ import {
     SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE
 } from "../search.js";
 
-import {pathToNameExt} from "../utils.js";
+import {pathToNameExt, sleep} from "../utils.js";
 import {
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
@@ -21,7 +21,7 @@ import {
     NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
     isSpecialShelf, isEndpoint
-} from "../storage_constants.js";
+} from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 
@@ -187,7 +187,7 @@ window.onload = async function () {
     receive.startListener();
     receiveExternal.startListener();
 
-    setTimeout(loadSidebar);
+    loadSidebar();
 };
 
 async function loadSidebar() {

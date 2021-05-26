@@ -7,18 +7,15 @@ import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
+    isContainer,
+    isEndpoint,
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
     DEFAULT_SHELF_NAME,
     DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
     EVERYTHING,
-    EVERYTHING_SHELF_ID,
     FIREFOX_BOOKMARK_MOBILE,
-    FIREFOX_SHELF_ID,
-    isContainer,
-    isEndpoint,
-    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -28,7 +25,7 @@ import {
     NODE_TYPE_UNLISTED,
     SPECIAL_UUIDS,
     TODO_SHELF_NAME
-} from "./storage_constants.js";
+} from "./storage.js";
 import {readBlob} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
 import {settings} from "./settings.js";
@@ -67,17 +64,17 @@ class ExternalEventProvider {
         }
     }
 
-    async moveExternalBookmarks(nodes, dest_id) {
+    async moveExternalBookmarks(nodes, destId) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.moveBookmarks)
-                await backend.moveBookmarks(nodes, dest_id);
+                await backend.moveBookmarks(nodes, destId);
         }
     }
 
-    async copyExternalBookmarks(nodes, dest_id) {
+    async copyExternalBookmarks(nodes, destId) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.copyBookmarks)
-                await backend.copyBookmarks(nodes, dest_id);
+                await backend.copyBookmarks(nodes, destId);
         }
     }
 
@@ -109,17 +106,17 @@ class ExternalEventProvider {
         }
     }
 
-    async storeExternalData(node_id, data, content_type) {
+    async storeExternalData(nodeId, data, contentType) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.storeBookmarkData)
-                await backend.storeBookmarkData(node_id, data, content_type);
+                await backend.storeBookmarkData(nodeId, data, contentType);
         }
     }
 
-    async updateExternalData(node_id, data) {
+    async updateExternalData(nodeId, data) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.updateBookmarkData)
-                await backend.updateBookmarkData(node_id, data);
+                await backend.updateBookmarkData(nodeId, data);
         }
     }
 
@@ -130,10 +127,10 @@ class ExternalEventProvider {
         }
     }
 
-    async storeExternalComments(node_id, comments) {
+    async storeExternalComments(nodeId, comments) {
         for (let backend of Object.values(this.externalBackends)) {
             if (backend.storeBookmarkComments)
-                await backend.storeBookmarkComments(node_id, comments);
+                await backend.storeBookmarkComments(nodeId, comments);
         }
     }
 
@@ -164,7 +161,7 @@ export class Backend extends ExternalEventProvider {
         if (path && path.startsWith("~"))
             return path.replace("~", DEFAULT_SHELF_NAME);
         // the following values are got during reconciliation in browser backend and may vary
-        // depending on browser UI language
+        // depending on the browser UI language
         else if (path && path.startsWith("@@") && background._unfiledBookmarkPath)
             return path.replace("@@", background._unfiledBookmarkPath);
         else if (path && path.startsWith("@") && background._browserBookmarkPath)
@@ -192,9 +189,9 @@ export class Backend extends ExternalEventProvider {
         return this._normalizePath(path).split("/").filter(n => !!n);
     }
 
-    async computePath(id, is_uuid = false) {
+    async computePath(id, isUUID = false) {
         let path = [];
-        let node = await this.getNode(id, is_uuid);
+        let node = await this.getNode(id, isUUID);
 
         while (node) {
             path.push(node);
@@ -282,18 +279,18 @@ export class Backend extends ExternalEventProvider {
     }
 
     async listNodes(options //{search, // filter by node name or URL
-                      // path,   // filter by hierarchical node group path (string), the first item in the path is a name of a shelf
-                      // tags,   // filter for node tags (string, containing comma separated list)
-                      // date,   // filter nodes by date
-                      // date2,  // the second date in query
-                      // period, // chronological period: "" (exact date), "before", "after"
-                      // types,  // filter for node types (array of integers)
-                      // limit,  // limit for the returned record number
-                      // depth,  // specify depth of search: "group", "subtree" or "root+subtree"
-                      // order   // order mode to sort the output if specified: "custom", "todo"
-                      // content // search in content instead of node name (boolean)
-                      // index   // index to use: "content", "comments", "notes"
-                      //}
+                            // path,   // filter by hierarchical node group path (string), the first item in the path is a name of a shelf
+                            // tags,   // filter for node tags (string, containing comma separated list)
+                            // date,   // filter nodes by date
+                            // date2,  // the second date in query
+                            // period, // chronological period: "" (exact date), "before", "after"
+                            // types,  // filter for node types (array of integers)
+                            // limit,  // limit for the returned record number
+                            // depth,  // specify depth of search: "group", "subtree" or "root+subtree"
+                            // order   // order mode to sort the output if specified: "custom", "todo"
+                            // content // search in content instead of node name (boolean)
+                            // index   // index to use: "content", "comments", "notes"
+                            //}
               ) {
         let group = options.path && options.path !== TODO_SHELF_NAME && options.path !== DONE_SHELF_NAME
             ? await this._queryGroup(options.path)
@@ -331,14 +328,14 @@ export class Backend extends ExternalEventProvider {
         }
 
         if (options.path && (options.path.toUpperCase() === TODO_SHELF_NAME
-            || options.path.toUpperCase() === DONE_SHELF_NAME)) {
+                || options.path.toUpperCase() === DONE_SHELF_NAME)) {
             for (let node of result) {
-                node._extended_todo = true;
+                node.__extended_todo = true;
                 let path = await this.computePath(node.id);
 
-                node._path = [];
+                node.__path = [];
                 for (let i = 0; i < path.length - 1; ++i) {
-                    node._path.push(path[i].name)
+                    node.__path.push(path[i].name)
                 }
             }
         }
@@ -431,19 +428,19 @@ export class Backend extends ExternalEventProvider {
             }
 
             if (todo_date && now >= todo_date)
-                node._overdue = true;
+                node.__overdue = true;
 
             let path = await this.computePath(node.id);
 
-            node._path = [];
+            node.__path = [];
             for (let i = 0; i < path.length - 1; ++i) {
-                node._path.push(path[i].name)
+                node.__path.push(path[i].name)
             }
 
-            node._extended_todo = true;
+            node.__extended_todo = true;
         }
 
-        return todo.filter(n => n._overdue).concat(todo.filter(n => !n._overdue));
+        return todo.filter(n => n.__overdue).concat(todo.filter(n => !n.__overdue));
     }
 
     async listDONE() {
@@ -452,24 +449,24 @@ export class Backend extends ExternalEventProvider {
         for (let node of done) {
             let path = await this.computePath(node.id);
 
-            node._path = [];
+            node.__path = [];
             for (let i = 0; i < path.length - 1; ++i) {
-                node._path.push(path[i].name)
+                node.__path.push(path[i].name)
             }
 
-            node._extended_todo = true;
+            node.__extended_todo = true;
         }
 
         return done;
     }
 
     // returns map of groups the function was able to find in the path
-    async _queryGroups(path_list) {
-        path_list = path_list.slice(0);
+    async _queryGroups(pathList) {
+        pathList = pathList.slice(0);
 
         let groups = {};
-        let shelf_name = path_list.shift();
-        let shelf = await this.queryShelf(shelf_name);
+        let shelfName = pathList.shift();
+        let shelf = await this.queryShelf(shelfName);
 
         if (shelf)
             groups[shelf.name.toLocaleLowerCase()] = shelf;
@@ -477,7 +474,7 @@ export class Backend extends ExternalEventProvider {
             return {};
 
         let parent = shelf;
-        for (let name of path_list) {
+        for (let name of pathList) {
             if (parent) {
                 let group = await this.queryGroup(parent.id, name);
                 groups[name.toLocaleLowerCase()] = group;
@@ -492,28 +489,28 @@ export class Backend extends ExternalEventProvider {
 
     // returns the last group in path if it exists
     async _queryGroup(path) {
-        let path_list = this._splitPath(path);
-        let groups = await this._queryGroups(path_list);
+        let pathList = this._splitPath(path);
+        let groups = await this._queryGroups(pathList);
 
-        return groups[path_list[path_list.length - 1].toLocaleLowerCase()];
+        return groups[pathList[pathList.length - 1].toLocaleLowerCase()];
     }
 
     // creates all non-existent groups
     async getGroupByPath(path) {
-        let path_list = this._splitPath(path);
-        let groups = await this._queryGroups(path_list);
-        let shelf_name = path_list.shift();
-        let parent = groups[shelf_name.toLowerCase()];
+        let pathList = this._splitPath(path);
+        let groups = await this._queryGroups(pathList);
+        let shelfName = pathList.shift();
+        let parent = groups[shelfName.toLowerCase()];
 
         if (!parent) {
             parent = await this.addNode({
-                name: shelf_name,
+                name: shelfName,
                 type: NODE_TYPE_SHELF
             });
             this.invalidateExternalCompletion();
         }
 
-        for (let name of path_list) {
+        for (let name of pathList) {
             let group = groups[name.toLowerCase()];
 
             if (group) {
@@ -526,8 +523,13 @@ export class Backend extends ExternalEventProvider {
                     type: NODE_TYPE_GROUP
                 });
 
-                await this.createExternalBookmarkFolder(node, parent);
-                this.invalidateExternalCompletion();
+                try {
+                    await this.createExternalBookmarkFolder(node, parent);
+                    this.invalidateExternalCompletion();
+                }
+                catch (e) {
+                    console.error(e);
+                }
 
                 parent = node;
             }
@@ -536,90 +538,108 @@ export class Backend extends ExternalEventProvider {
         return parent;
     }
 
-    async _ensureUnique(parent_id, name) {
+    async _ensureUnique(parentId, name) {
         if (!name)
             return "";
 
         let children;
 
-        if (parent_id)
-            children = (await this.getChildNodes(parent_id)).map(c => c.name);
+        if (parentId)
+            children = (await this.getChildNodes(parentId)).map(c => c.name);
         else
             children = (await this.queryShelf()).map(c => c.name);
 
+        children = children.filter(c => !!c);
+
+        let uname = name.toLocaleUpperCase();
         let original = name;
         let n = 1;
 
-        while (children.filter(c => !!c).some(c => c.toLocaleUpperCase() === name.toLocaleUpperCase())) {
-            let m = original.match(/.*( \(\d+\))$/);
+        let m = original.match(/.*( \(\d+\))$/);
 
-            if (m)
-                original = original.replace(m[1], "");
+        if (m)
+            original = original.replace(m[1], "");
 
+        while (children.some(c => c.toLocaleUpperCase() === uname)) {
             name = original + " (" + n + ")";
+            uname = name.toLocaleUpperCase();
             n += 1
         }
 
         return name;
     }
 
-    async createGroup(parent_id, name, node_type = NODE_TYPE_GROUP) {
+    async createGroup(parentId, name, nodeType = NODE_TYPE_GROUP) {
         let node = await this.addNode({
-            name: await this._ensureUnique(parent_id, name),
-            type: node_type,
-            parent_id: parent_id
+            name: await this._ensureUnique(parentId, name),
+            type: nodeType,
+            parent_id: parentId
         });
 
         node = this._sanitizeNode(node);
 
-        this.invalidateExternalCompletion();
+        try {
+            this.invalidateExternalCompletion();
 
-        if (parent_id) {
-            let parent = await this.getNode(parent_id);
-            await this.createExternalBookmarkFolder(node, parent);
+            if (parentId) {
+                let parent = await this.getNode(parentId);
+                await this.createExternalBookmarkFolder(node, parent);
+            }
+        }
+        catch (e) {
+            console.error(e);
         }
 
         return node;
     }
 
-    async renameGroup(id, new_name) {
+    async renameGroup(id, newName) {
         let group = await this.getNode(id);
 
-        if (group.name !== new_name) {
-            if (group.name.toLocaleUpperCase() !== new_name.toLocaleUpperCase())
-                group.name = await this._ensureUnique(group.parent_id, new_name);
+        if (group.name !== newName) {
+            if (group.name.toLocaleUpperCase() !== newName.toLocaleUpperCase())
+                group.name = await this._ensureUnique(group.parent_id, newName);
             else
-                group.name = new_name;
+                group.name = newName;
 
-            await this.renameExternalBookmark(group);
-
-            this.invalidateExternalCompletion();
+            try {
+                await this.renameExternalBookmark(group);
+                this.invalidateExternalCompletion();
+            }
+            catch (e) {
+                console.error(e);
+            }
 
             await this.updateNode(group);
         }
         return group;
     }
 
-    async addSeparator(parent_id) {
+    async addSeparator(parentId) {
         let {id} = await this.addNode({
             name: "-",
             type: NODE_TYPE_SEPARATOR,
-            parent_id: parent_id
+            parent_id: parentId
         });
 
         return this.getNode(id);
     }
 
-    async moveNodes(ids, dest_id, move_last) {
+    async moveNodes(ids, destId, moveLast) {
         let nodes = await this.getNodes(ids);
 
-        await this.moveExternalBookmarks(nodes, dest_id);
+        try {
+            await this.moveExternalBookmarks(nodes, destId);
+        }
+        catch (e) {
+            console.error(e);
+        }
 
         for (let n of nodes) {
-            n.parent_id = dest_id;
-            n.name = await this._ensureUnique(dest_id, n.name);
+            n.parent_id = destId;
+            n.name = await this._ensureUnique(destId, n.name);
 
-            if (move_last)
+            if (moveLast)
                 n.pos = DEFAULT_POSITION;
 
             await this.updateNode(n);
@@ -631,7 +651,7 @@ export class Backend extends ExternalEventProvider {
         return this.queryFullSubtree(ids, false, true);
     }
 
-    async copyNodes(ids, dest_id, move_last) {
+    async copyNodes(ids, destId, moveLast) {
         let all_nodes = await this.queryFullSubtree(ids, false, true);
         let new_nodes = [];
 
@@ -639,8 +659,8 @@ export class Backend extends ExternalEventProvider {
             let old_id = n.old_id = n.id;
 
             if (ids.some(id => id === old_id)) {
-                n.parent_id = dest_id;
-                n.name = await this._ensureUnique(dest_id, n.name);
+                n.parent_id = destId;
+                n.name = await this._ensureUnique(destId, n.name);
             }
             else {
                 let new_parent = new_nodes.find(nn => nn.old_id === n.parent_id);
@@ -651,7 +671,7 @@ export class Backend extends ExternalEventProvider {
             delete n.id;
             delete n.date_modified;
 
-            if (move_last && ids.some(id => id === n.old_id))
+            if (moveLast && ids.some(id => id === n.old_id))
                 n.pos = DEFAULT_POSITION;
 
             new_nodes.push(Object.assign(n, await this.addNode(n, false)));
@@ -695,10 +715,15 @@ export class Backend extends ExternalEventProvider {
 
         let top_nodes = new_nodes.filter(n => ids.some(id => id === n.old_id));
 
-        await this.copyExternalBookmarks(top_nodes, dest_id);
+        try {
+            await this.copyExternalBookmarks(top_nodes, destId);
 
-        if (top_nodes.some(n => n.type === NODE_TYPE_GROUP))
-            this.invalidateExternalCompletion();
+            if (top_nodes.some(n => n.type === NODE_TYPE_GROUP))
+                this.invalidateExternalCompletion();
+        }
+        catch (e) {
+            console.error(e);
+        }
 
         return new_nodes;
     }
@@ -706,7 +731,12 @@ export class Backend extends ExternalEventProvider {
     async deleteNodes(ids) {
         let all_nodes = await this.queryFullSubtree(ids);
 
-        await this.deleteExternalBookmarks(all_nodes);
+        try {
+            await this.deleteExternalBookmarks(all_nodes);
+        }
+        catch (e) {
+            console.error(e);
+        }
 
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id));
 
@@ -817,7 +847,7 @@ export class Backend extends ExternalEventProvider {
         node.__tentative_id = "tentative_" + Math.floor(Math.random() * 1000);
     }
 
-    async addBookmark(data, node_type = NODE_TYPE_BOOKMARK) {
+    async addBookmark(data, nodeType = NODE_TYPE_BOOKMARK) {
         let group, parent_id;
 
         if (data.parent_id)
@@ -830,7 +860,7 @@ export class Backend extends ExternalEventProvider {
 
         data.name = await this._ensureUnique(data.parent_id, data.name);
 
-        data.type = node_type;
+        data.type = nodeType;
         data.tag_list = this._splitTags(data.tags);
         await this.addTags(data.tag_list);
 
@@ -915,7 +945,12 @@ export class Backend extends ExternalEventProvider {
 
         let group = await this.getNode(parent_id);
 
-        await this.createExternalBookmark(node, group);
+        try {
+            await this.createExternalBookmark(node, group);
+        }
+        catch (e) {
+            console.error(e);
+        }
 
         return node;
     }
@@ -936,7 +971,7 @@ export class Backend extends ExternalEventProvider {
 export let backend = new Backend(new IDBStorage());
 
 export function formatShelfName(name) {
-    return settings.capitalize_builtin_shelf_names() ? name?.capitalize() : name;
+    return settings.capitalize_builtin_shelf_names()? name?.capitalize(): name;
 }
 
 export async function storeFaviconFromURI(node) {

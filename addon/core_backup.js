@@ -6,7 +6,7 @@ import {
     EVERYTHING,
     FIREFOX_BOOKMARK_MOBILE,
     TODO_SHELF_NAME
-} from "./storage_constants.js";
+} from "./storage.js";
 import {backend} from "./backend.js";
 import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";

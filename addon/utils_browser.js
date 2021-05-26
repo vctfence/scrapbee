@@ -45,3 +45,11 @@ export async function openContainerTab(url, container) {
         return browser.tabs.create({"url": url});
     }
 }
+
+export function selectricRefresh(element, widthInc = 5) {
+    element.selectric("refresh");
+    if (widthInc) {
+        let wrapper = element.closest(".selectric-wrapper");
+        wrapper.width(wrapper.width() + widthInc);
+    }
+}

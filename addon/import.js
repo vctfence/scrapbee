@@ -7,7 +7,7 @@ import {
     EVERYTHING,
     FIREFOX_SHELF_UUID,
     NODE_TYPE_UNLISTED
-} from "./storage_constants.js";
+} from "./storage.js";
 import {send} from "./proxy.js";
 
 const RESERVED_SHELVES = [CLOUD_SHELF_UUID, FIREFOX_SHELF_UUID, DEFAULT_SHELF_UUID];

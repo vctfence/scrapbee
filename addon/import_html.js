@@ -1,5 +1,5 @@
 import {backend, storeFaviconFromURI} from "./backend.js";
-import {DEFAULT_POSITION, NODE_TYPE_BOOKMARK} from "./storage_constants.js";
+import {DEFAULT_POSITION, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {getFavicon} from "./favicon.js";
 import {prepareNewImport} from "./import.js";
 

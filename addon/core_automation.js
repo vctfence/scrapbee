@@ -8,7 +8,7 @@ import {
     FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
     FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES, NODE_PROPERTIES
-} from "./storage_constants.js";
+} from "./storage.js";
 import {settings} from "./settings.js";
 import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./core_bookmarking.js";
 import {getFavicon, getFaviconFromTab} from "./favicon.js";

@@ -1,17 +1,16 @@
 import {
-    CLOUD_EXTERNAL_NAME,
+    isContainer,
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_ID,
     DEFAULT_SHELF_NAME, DONE_SHELF_UUID,
     EVERYTHING,
     FIREFOX_SHELF_ID,
     FIREFOX_SHELF_NAME,
-    isContainer,
     NODE_PROPERTIES,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF, TODO_SHELF_UUID,
-} from "./storage_constants.js";
+} from "./storage.js";
 import {importJSONObject_v1, parseJSONObject_v1} from "./import_json_v1.js"
 import {backend, formatShelfName} from "./backend.js";
 import UUID from "./lib/uuid.js";
@@ -81,14 +80,14 @@ function renameSpecialShelves(node) {
 
 export async function importJSON(shelf, reader, progress) {
     let lines = reader.lines();
-    let meta_line = (await lines.next()).value;
+    let metaLine = (await lines.next()).value;
 
-    if (!meta_line)
+    if (!metaLine)
         return Promise.reject(new Error("invalid file format"));
 
-    meta_line = meta_line.replace(/^\[/, "");
-    meta_line = meta_line.replace(/,$/, "");
-    const meta = JSON.parse(meta_line);
+    metaLine = metaLine.replace(/^\[/, "");
+    metaLine = metaLine.replace(/,$/, "");
+    const meta = JSON.parse(metaLine);
 
     if (!meta)
         return Promise.reject(new Error("invalid file format"));
@@ -108,46 +107,46 @@ export async function importJSON(shelf, reader, progress) {
             break;
     }
 
-    let id_map = new Map();
-    let first_object = (await lines.next()).value;
+    let idMap = new Map();
+    let firstObject = (await lines.next()).value;
 
-    if (!first_object)
+    if (!firstObject)
         return Promise.reject(new Error("invalid file format"));
 
-    first_object = parseJSONObjectImpl(first_object);
+    firstObject = parseJSONObjectImpl(firstObject);
 
-    if (!first_object)
+    if (!firstObject)
         return Promise.reject(new Error("invalid file format"));
 
     await prepareNewImport(shelf);
 
-    let aliased_everything = !first_object.parent_id && shelf !== EVERYTHING;
+    let aliasedEverything = !firstObject.parent_id && shelf !== EVERYTHING;
 
-    if (aliased_everything) {
-        first_object.parent_id = null;
-        first_object.type = NODE_TYPE_GROUP;
+    if (aliasedEverything) {
+        firstObject.parent_id = null;
+        firstObject.type = NODE_TYPE_GROUP;
     }
     else
-        id_map.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
+        idMap.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
 
-    let shelf_node = shelf !== EVERYTHING ? await backend.getGroupByPath(shelf) : null;
-    if (shelf_node) {
-        id_map.set(first_object.parent_id, shelf_node.id); // root id
-        first_object.parent_id = shelf_node.id;
+    let shelfNode = shelf !== EVERYTHING ? await backend.getGroupByPath(shelf) : null;
+    if (shelfNode) {
+        idMap.set(firstObject.parent_id, shelfNode.id); // root id
+        firstObject.parent_id = shelfNode.id;
     }
 
-    let first_object_id = first_object.id;
+    let firstObjectId = firstObject.id;
 
-    renameSpecialShelves(first_object);
+    renameSpecialShelves(firstObject);
 
     // Do not import "default" shelf, because it is always there, but import as group if aliased
-    if (first_object.name?.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliased_everything) {
-        if (aliased_everything && first_object.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME)
-            first_object.uuid = UUID.numeric();
+    if (firstObject.name?.toLocaleLowerCase() !== DEFAULT_SHELF_NAME || aliasedEverything) {
+        if (aliasedEverything && firstObject.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME)
+            firstObject.uuid = UUID.numeric();
 
-        first_object = await importJSONObjectImpl(first_object);
-        if (first_object_id && isContainer(first_object))
-            id_map.set(first_object_id, first_object.id);
+        firstObject = await importJSONObjectImpl(firstObject);
+        if (firstObjectId && isContainer(firstObject))
+            idMap.set(firstObjectId, firstObject.id);
     }
 
     let currentProgress = 0;
@@ -163,31 +162,31 @@ export async function importJSON(shelf, reader, progress) {
 
             // Do not import "default" shelf, because it is always there (non-aliased import)
             if (object.type === NODE_TYPE_SHELF && object.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME
-                && !aliased_everything) {
+                && !aliasedEverything) {
                 ctr += 1;
                 continue;
             }
             else if (object.type === NODE_TYPE_SHELF && object.name?.toLocaleLowerCase() === DEFAULT_SHELF_NAME
-                && aliased_everything)
+                && aliasedEverything)
                 object.uuid = UUID.numeric();
 
-            let old_object_id = object.id;
+            let oldObjectId = object.id;
 
             if (object.parent_id) {
                 if (todo)
-                    object.parent_id = shelf_node.id
+                    object.parent_id = shelfNode.id
                 else
-                    object.parent_id = id_map.get(object.parent_id);
+                    object.parent_id = idMap.get(object.parent_id);
             }
-            else if (object.type === NODE_TYPE_SHELF && aliased_everything) {
+            else if (object.type === NODE_TYPE_SHELF && aliasedEverything) {
                 object.type = NODE_TYPE_GROUP;
-                object.parent_id = shelf_node.id;
+                object.parent_id = shelfNode.id;
             }
 
             object = await importJSONObjectImpl(object);
 
-            if (old_object_id && isContainer(object))
-                id_map.set(old_object_id, object.id);
+            if (oldObjectId && isContainer(object))
+                idMap.set(oldObjectId, object.id);
 
             if (progress) {
                 ctr += 1;
@@ -205,7 +204,7 @@ export async function importJSON(shelf, reader, progress) {
             throw new Error("some records are missing")
     }
 
-    return shelf_node;
+    return shelfNode;
 }
 
 async function objectToJSON(object) {

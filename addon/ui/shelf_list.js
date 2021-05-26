@@ -15,7 +15,7 @@ import {
     isSpecialShelf,
     TODO_SHELF_ID,
     TODO_SHELF_NAME
-} from "../storage_constants.js";
+} from "../storage.js";
 import {backend, formatShelfName} from "../backend.js";
 
 const WIDTH_INCREMENT = 5;

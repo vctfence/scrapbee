@@ -1,18 +1,19 @@
 import {
+    isContainer,
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
     DEFAULT_SHELF_ID,
     DEFAULT_SHELF_NAME,
+    DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
     FIREFOX_SHELF_ID,
     NODE_PROPERTIES,
     NODE_TYPE_GROUP,
-    NODE_TYPE_NOTES,
     NODE_TYPE_SHELF,
     TODO_SHELF_NAME,
     TODO_STATE_DONE,
-    isContainer, DONE_SHELF_ID, TODO_SHELF_ID, NODE_TYPE_UNLISTED
-} from "./storage_constants.js";
+    NODE_TYPE_UNLISTED
+} from "./storage.js";
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
@@ -79,7 +80,7 @@ dexie.version(6).stores({
 
 
 dexie.on('populate', () => {
-    dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: "1", date_added: new Date(), pos: 1});
+    dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: DEFAULT_SHELF_UUID, date_added: new Date(), pos: 1});
 });
 
 class IDBStorage {
@@ -98,19 +99,19 @@ class IDBStorage {
         return node;
     }
 
-    async _fromUUID(uuid) {
+    async _IdFromUUID(uuid) {
         let node = await dexie.nodes.where("uuid").equals(uuid).first();
         return node?.id;
     }
 
-    async addNode(datum, reset_order = true, reset_dates = true, new_uuid = true) {
-        if (reset_order)
+    async addNode(datum, resetOrder = true, resetDates = true, newUUID = true) {
+        if (resetOrder)
             datum.pos = DEFAULT_POSITION;
 
-        if (new_uuid)
+        if (newUUID)
             datum.uuid = UUID.numeric();
 
-        if (reset_dates) {
+        if (resetDates) {
             datum.date_added = new Date();
             datum.date_modified = datum.date_added;
         }
@@ -126,9 +127,11 @@ class IDBStorage {
         return dexie.nodes.where("uuid").equals(uuid).count();
     }
 
-    async getNode(id, is_uuid = false) {
-        id = is_uuid? await this._fromUUID(id): id;
-        return dexie.nodes.where("id").equals(id).first();
+    async getNode(id, isUUID = false) {
+        if (isUUID)
+            return dexie.nodes.where("uuid").equals(id).first();
+        else
+            return dexie.nodes.where("id").equals(id).first();
     }
 
     getNodes(ids) {
@@ -196,9 +199,9 @@ class IDBStorage {
         }
     }
 
-    async updateNode(node, reset_date = true) {
+    async updateNode(node, resetDate = true) {
         if (node?.id) {
-            if (reset_date)
+            if (resetDate)
                 node.date_modified = new Date();
             await dexie.nodes.update(node.id, this._sanitizeNode(node));
         }
@@ -216,17 +219,17 @@ class IDBStorage {
         return dexie.nodes.filter(filter).toArray();
     }
 
-    async _selectDirectChildrenIdsOf(node_id, children) {
-        await dexie.nodes.where("parent_id").equals(node_id).each(n => children.push(n.id));
+    async _selectDirectChildrenIdsOf(id, children) {
+        await dexie.nodes.where("parent_id").equals(id).each(n => children.push(n.id));
     }
 
-    async _selectAllChildrenIdsOf(node_id, children) {
-        let group_children = [];
-        await dexie.nodes.where("parent_id").equals(node_id)
-            .each(n => group_children.push([n.id, isContainer(n)]));
+    async _selectAllChildrenIdsOf(id, children) {
+        let directChildren = [];
+        await dexie.nodes.where("parent_id").equals(id)
+            .each(n => directChildren.push([n.id, isContainer(n)]));
 
-        if (group_children.length) {
-            for (let child of group_children) {
+        if (directChildren.length) {
+            for (let child of directChildren) {
                 children.push(child[0]);
                 if (child[1])
                     await this._selectAllChildrenIdsOf(child[0], children);
@@ -249,13 +252,13 @@ class IDBStorage {
     }
 
     async _selectAllChildrenOf(node, children, preorder, level) {
-        let group_children = await dexie.nodes.where("parent_id").equals(node.id).toArray();
+        let directChildren = await dexie.nodes.where("parent_id").equals(node.id).toArray();
 
-        if (group_children && group_children.length) {
+        if (directChildren.length) {
             if (preorder)
-                group_children.sort((a, b) => a.pos - b.pos);
+                directChildren.sort((a, b) => a.pos - b.pos);
 
-            for (let child of group_children) {
+            for (let child of directChildren) {
                 if (level !== undefined)
                     child.__level = level;
 
@@ -300,8 +303,8 @@ class IDBStorage {
         let searchrx = search? new RegExp(search, "i"): null;
         let query = dexie.nodes;
 
-        const todo_shelf = path?.toUpperCase() === TODO_SHELF_NAME;
-        const done_shelf = path?.toUpperCase() === DONE_SHELF_NAME;
+        const todoShelf = path?.toUpperCase() === TODO_SHELF_NAME;
+        const doneShelf = path?.toUpperCase() === DONE_SHELF_NAME;
 
         if (group) {
             let subtree = [];
@@ -334,14 +337,14 @@ class IDBStorage {
         }
 
         let filterf = node => {
-            let result = path && !todo_shelf && !done_shelf? !!group: true;
+            let result = path && !todoShelf && !doneShelf? !!group: true;
 
             if (types)
                 result = result && types.some(t => t == node.type);
 
-            if (todo_shelf)
+            if (todoShelf)
                 result = result && node.todo_state && node.todo_state < TODO_STATE_DONE;
-            else if (done_shelf)
+            else if (doneShelf)
                 result = result && node.todo_state && node.todo_state >= TODO_STATE_DONE;
 
             if (search)
@@ -402,8 +405,8 @@ class IDBStorage {
     // returns nodes containing only the all given words
     async filterByContent(ids, words, index) {
         let matches = {};
-        let all_matched_nodes = [];
-        let word_count = {};
+        let allMatchedNodes = [];
+        let wordCount = {};
 
         const selectIndex = index => {
             switch (index) {
@@ -423,30 +426,30 @@ class IDBStorage {
         for (let word of words) {
             let matched_nodes = matches[word] = [];
             await query(word).each(w => matched_nodes.push(w.node_id));
-            all_matched_nodes = [...all_matched_nodes, ...matched_nodes]
+            allMatchedNodes = [...allMatchedNodes, ...matched_nodes]
                                     .filter((w, i, a) => a.indexOf(w) === i); // distinct
         }
 
-        for (let n of all_matched_nodes) {
-            word_count[n] = 0;
+        for (let n of allMatchedNodes) {
+            wordCount[n] = 0;
 
             for (let word of words) {
                 if (matches[word].some(i => i === n))
-                    word_count[n] += 1;
+                    wordCount[n] += 1;
             }
         }
 
         if (ids)
-            return this.getNodes(ids.filter(id => word_count[id] === words.length));
+            return this.getNodes(ids.filter(id => wordCount[id] === words.length));
         else {
-            let nodes_with_all_words = [];
+            let nodesWithAllWords = [];
 
-            for (const [id, count] of Object.entries(word_count)) {
+            for (const [id, count] of Object.entries(wordCount)) {
                 if (count === words.length)
-                    nodes_with_all_words.push(parseInt(id));
+                    nodesWithAllWords.push(parseInt(id));
             }
 
-            return this.getNodes(nodes_with_all_words);
+            return this.getNodes(nodesWithAllWords);
         }
     }
 
@@ -513,8 +516,10 @@ class IDBStorage {
     async queryShelf(name) {
         let where = dexie.nodes.where("type").equals(NODE_TYPE_SHELF).and(n => !n.parent_id);
 
-        if (name)
-            return await where.and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase()).first();
+        if (name) {
+            name = name.toLocaleUpperCase();
+            return await where.and(n => name === n.name.toLocaleUpperCase()).first();
+        }
         else
             return await where.toArray();
     }
@@ -522,15 +527,18 @@ class IDBStorage {
     async queryUnlisted(name) {
         let where = dexie.nodes.where("type").equals(NODE_TYPE_UNLISTED);
 
-        if (name)
-            return await where.and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase()).first();
+        if (name) {
+            name = name.toLocaleUpperCase();
+            return await where.and(n => name === n.name.toLocaleUpperCase()).first();
+        }
         else
             return await where.toArray();
     }
 
-    queryGroup(parent_id, name) {
-        return dexie.nodes.where("parent_id").equals(parent_id)
-           .and(n => name.toLocaleUpperCase() === n.name.toLocaleUpperCase())
+    queryGroup(parentId, name) {
+        name = name.toLocaleUpperCase();
+        return dexie.nodes.where("parent_id").equals(parentId)
+           .and(n => name === n.name.toLocaleUpperCase())
            .first();
     }
 
@@ -583,89 +591,89 @@ class IDBStorage {
     // }
 
     // modern implementation stores objects in blobs
-    async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
+    async storeBlobLowLevel(nodeId, data, contentType, byteLength, index) {
         if (typeof data !== "string" && data.byteLength)
-            byte_length = data.byteLength;
-        else if (typeof data === "string" && byte_length) {
-            let byteArray = new Uint8Array(byte_length);
+            byteLength = data.byteLength;
+        else if (typeof data === "string" && byteLength) {
+            let byteArray = new Uint8Array(byteLength);
             for (let i = 0; i < data.length; ++i)
                 byteArray[i] = data.charCodeAt(i);
             data = byteArray;
         }
 
-        let object = data instanceof Blob? data: new Blob([data], {type: content_type});
+        let object = data instanceof Blob? data: new Blob([data], {type: contentType});
 
         let options = {
-            node_id: node_id,
+            node_id: nodeId,
             // data, // legacy string content, may present in existing records
             object, // new blob content
-            byte_length: byte_length, // presence of this field indicates that the the object is binary
-            type: content_type || "text/html"
+            byte_length: byteLength, // presence of this field indicates that the the object is binary
+            type: contentType || "text/html"
         };
 
         await dexie.blobs.add(options);
 
-        const node = {id: node_id, size: object.size, content_type};
+        const node = {id: nodeId, size: object.size, content_type: contentType};
         await this.updateNode(node);
 
         if (index?.words)
             await this.storeIndex(node.id, index.words);
-        else if (!byte_length && typeof data === "string") {
+        else if (!byteLength && typeof data === "string") {
             let words = data.indexWords();
             await this.storeIndex(node.id, words);
         }
     }
 
     // used only for text/html edited content
-    async updateBlobLowLevel(node_id, data) {
+    async updateBlobLowLevel(nodeId, data) {
         const object = new Blob([data], {type: "text/html"});
 
-        await dexie.blobs.where("node_id").equals(node_id).modify({
+        await dexie.blobs.where("node_id").equals(nodeId).modify({
             object,
             data: undefined // undefined removes fields from IDB
         });
 
-        const node = {id: node_id, size: object.size};
+        const node = {id: nodeId, size: object.size};
         await this.updateNode(node);
 
         let words = data.indexWords();
-        await this.updateIndex(node_id, words);
+        await this.updateIndex(nodeId, words);
     }
 
-    async deleteBlob(node_id) {
+    async deleteBlob(nodeId) {
         if (dexie.tables.some(t => t.name === "blobs"))
-            await dexie.blobs.where("node_id").equals(node_id).delete();
+            await dexie.blobs.where("node_id").equals(nodeId).delete();
 
         if (dexie.tables.some(t => t.name === "index"))
-            await dexie.index.where("node_id").equals(node_id).delete();
+            await dexie.index.where("node_id").equals(nodeId).delete();
     }
 
-    async fetchBlob(node_id, is_uuid = false) {
-        node_id = is_uuid? await this._fromUUID(node_id): node_id;
-        return dexie.blobs.where("node_id").equals(node_id).first();
+    async fetchBlob(nodeId, isUUID = false) {
+        nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
+        return dexie.blobs.where("node_id").equals(nodeId).first();
     }
 
-    async storeIndex(node_id, words) {
+    async storeIndex(nodeId, words) {
         return dexie.index.add({
-            node_id: node_id,
+            node_id: nodeId,
             words: words
         });
     }
 
-    async updateIndex(node_id, words) {
-        const exists = await dexie.index.where("node_id").equals(node_id).count();
+    async updateIndex(nodeId, words) {
+        const exists = await dexie.index.where("node_id").equals(nodeId).count();
 
         if (exists)
-            return dexie.index.where("node_id").equals(node_id).modify({
+            return dexie.index.where("node_id").equals(nodeId).modify({
                 words: words
             });
         else
-            return this.storeIndex(node_id, words);
+            return this.storeIndex(nodeId, words);
     }
 
-    async fetchIndex(node_id, is_uuid = false) {
-        node_id = is_uuid? await this._fromUUID(node_id): node_id;
-        return dexie.index.where("node_id").equals(node_id).first();
+    async fetchIndex(nodeId, isUUID = false) {
+        nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
+        return dexie.index.where("node_id").equals(nodeId).first();
     }
 
     async storeNotesLowLevel(options) {
@@ -711,44 +719,44 @@ class IDBStorage {
         await this.updateNode(node);
     }
 
-    async fetchNotes(node_id, is_uuid = false) {
-        node_id = is_uuid? await this._fromUUID(node_id): node_id;
-        return dexie.notes.where("node_id").equals(node_id).first();
+    async fetchNotes(nodeId, isUUID = false) {
+        nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
+        return dexie.notes.where("node_id").equals(nodeId).first();
     }
 
-    async updateNoteIndex(node_id, words) {
-        const exists = await dexie.index_notes.where("node_id").equals(node_id).count();
+    async updateNoteIndex(nodeId, words) {
+        const exists = await dexie.index_notes.where("node_id").equals(nodeId).count();
 
         if (exists)
-            return dexie.index_notes.where("node_id").equals(node_id).modify({
+            return dexie.index_notes.where("node_id").equals(nodeId).modify({
                 words: words
             });
         else
             return dexie.index_notes.add({
-                node_id: node_id,
+                node_id: nodeId,
                 words: words
             });
     }
 
-    async storeCommentsLowLevel(node_id, comments) {
-        const exists = await dexie.comments.where("node_id").equals(node_id).count();
+    async storeCommentsLowLevel(nodeId, comments) {
+        const exists = await dexie.comments.where("node_id").equals(nodeId).count();
 
         if (!comments)
             comments = undefined;
 
         if (exists) {
-            await dexie.comments.where("node_id").equals(node_id).modify({
+            await dexie.comments.where("node_id").equals(nodeId).modify({
                 comments: comments
             });
         }
         else {
             await dexie.comments.add({
-                node_id: node_id,
+                node_id: nodeId,
                 comments: comments
             });
         }
 
-        const node = {id: node_id, has_comments: !!comments};
+        const node = {id: nodeId, has_comments: !!comments};
         await this.updateNode(node);
 
         if (node.has_comments) {
@@ -759,24 +767,24 @@ class IDBStorage {
             await this.updateCommentIndex(node.id, []);
     }
 
-    async fetchComments(node_id, is_uuid = false) {
-        node_id = is_uuid? await this._fromUUID(node_id): node_id;
+    async fetchComments(nodeId, isUUID = false) {
+        nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
 
-        let record = await dexie.comments.where("node_id").equals(node_id).first();
+        let record = await dexie.comments.where("node_id").equals(nodeId).first();
 
         return record?.comments;
     }
 
-    async updateCommentIndex(node_id, words) {
-        let exists = await dexie.index_comments.where("node_id").equals(node_id).count();
+    async updateCommentIndex(nodeId, words) {
+        let exists = await dexie.index_comments.where("node_id").equals(nodeId).count();
 
         if (exists)
-            return dexie.index_comments.where("node_id").equals(node_id).modify({
+            return dexie.index_comments.where("node_id").equals(nodeId).modify({
                 words: words
             });
         else
             return dexie.index_comments.add({
-                node_id: node_id,
+                node_id: nodeId,
                 words: words
             });
     }
@@ -795,28 +803,28 @@ class IDBStorage {
         return dexie.tags.toArray();
     }
 
-    async storeIconLowLevel(node_id, data_url) {
-        const exists = node_id? await dexie.icons.where("node_id").equals(node_id).count(): false;
+    async storeIconLowLevel(nodeId, dataUrl) {
+        const exists = nodeId? await dexie.icons.where("node_id").equals(nodeId).count(): false;
 
         if (exists) {
-            await dexie.icons.where("node_id").equals(node_id).modify({
-                data_url: data_url
+            await dexie.icons.where("node_id").equals(nodeId).modify({
+                data_url: dataUrl
             });
         }
         else {
             return await dexie.icons.add({
-                node_id: node_id,
-                data_url: data_url
+                node_id: nodeId,
+                data_url: dataUrl
             });
         }
     }
 
-    async updateIcon(icon_id, options) {
-        await dexie.icons.update(icon_id, options);
+    async updateIcon(iconId, options) {
+        await dexie.icons.update(iconId, options);
     }
 
-    async fetchIcon(node_id) {
-        const icon = await dexie.icons.where("node_id").equals(node_id).first();
+    async fetchIcon(nodeId) {
+        const icon = await dexie.icons.where("node_id").equals(nodeId).first();
 
         if (icon)
             return icon.data_url;
@@ -828,20 +836,20 @@ class IDBStorage {
         return dexie.export_storage.clear();
     }
 
-    putExportBlob(process_id, blob) {
+    putExportBlob(processId, blob) {
         return dexie.export_storage.add({
-            process_id,
+            process_id: processId,
             blob
         });
     }
 
-    async getExportBlobs(process_id) {
-        const blobs = await dexie.export_storage.where("process_id").equals(process_id).sortBy("id")
+    async getExportBlobs(processId) {
+        const blobs = await dexie.export_storage.where("process_id").equals(processId).sortBy("id")
         return blobs.map(b => b.blob);
     }
 
-    cleanExportBlobs(process_id) {
-        return dexie.export_storage.where("process_id").equals(process_id).delete();
+    cleanExportBlobs(processId) {
+        return dexie.export_storage.where("process_id").equals(processId).delete();
     }
 
 }

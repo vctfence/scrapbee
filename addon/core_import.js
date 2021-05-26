@@ -1,4 +1,4 @@
-import {isSpecialShelf} from "./storage_constants.js";
+import {isSpecialShelf} from "./storage.js";
 import {readFile, ReadLine} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {backend} from "./backend.js";
