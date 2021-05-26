@@ -144,3 +144,7 @@ input[type="text"]:focus {
     align-items: center;
     align-content: center;
 }
+
+#option-compression-method, #option-compression-level {
+    visibility: hidden;
+}

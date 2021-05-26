@@ -1,4 +1,4 @@
-import {backend, formatShelfName} from "./backend.js";
+import {backend} from "./backend.js";
 import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_NAME,
@@ -14,6 +14,7 @@ import {
 } from "./storage.js";
 import * as org from "./lib/org/org.js";
 import {prepareNewImport} from "./import.js";
+import {formatShelfName} from "./bookmarking.js";
 
 const FORMAT_VERSION = 2;
 

@@ -63,7 +63,9 @@ input[type="text"] {
 }
 
 #search-scope {
-    margin-right: 8px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: none;
 }
 
 #search-query {

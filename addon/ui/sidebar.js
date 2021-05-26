@@ -25,6 +25,7 @@ import {
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 
+const DEFAULT_SHELF_LIST_WIDTH = 101;
 const INPUT_TIMEOUT = 1000;
 
 let tree;
@@ -35,25 +36,30 @@ let randomBookmark;
 let randomBookmarkTimeout;
 
 window.onload = async function () {
+
+    const shelfListWidth = localStorage.getItem("shelf-list-width") || DEFAULT_SHELF_LIST_WIDTH;
+    $("#shelfList-placeholder").width(shelfListWidth);
+    $("#shelf-selector-container").css("display", "flex");
+
     /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
     await settings.load();
 
-    shelfList = new ShelfList("#shelfList", {
-        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
-    });
-
     tree = new BookmarkTree("#treeview");
     context = new SearchContext(tree);
+    shelfList = new ShelfList("#shelfList", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
+        _sidebar: true
+    });
+
+    shelfList.change(function () { switchShelf(this.value, true, true) });
 
     $("#btnLoad").on("click", () => loadShelves());
     $("#btnSearch").on("click", () => openPage("fulltext.html"));
     $("#btnSettings").on("click", () => openPage("options.html"));
     $("#btnHelp").on("click", () => openPage("options.html#help"));
-
-    shelfList.change(function () { switchShelf(this.value, true, true) });
 
     $("#shelf-menu-button").click(() => {
         $("#search-mode-menu").hide();
@@ -192,10 +198,20 @@ window.onload = async function () {
 
 async function loadSidebar() {
     try {
-        await loadShelves(settings.last_shelf(), true, true);
+        await shelfList.load();
+        await switchShelf(settings.last_shelf() || DEFAULT_SHELF_ID, true, true);
+        stopProcessingIndication();
+
+        $("#shelfList-placeholder").remove();
+        shelfList.show();
     }
     catch (e) {
         console.error(e);
+
+        stopProcessingIndication();
+
+        $("#shelfList-placeholder").remove();
+        shelfList.show();
 
         if (await confirm("{Error}", "Scrapyard has encountered a critical error.<br>Show diagnostic page?")) {
             localStorage.setItem("scrapyard-diagnostics-error",
@@ -215,9 +231,9 @@ async function loadSidebar() {
 }
 
 let processingTimeout;
-function startProcessingIndication(no_wait) {
+function startProcessingIndication(noWait) {
     const startIndication = () => $("#shelf-menu-button").attr("src", "/icons/grid.svg");
-    if (no_wait) {
+    if (noWait) {
         startIndication();
         clearTimeout(processingTimeout);
     }
@@ -272,14 +288,14 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            const nodes = await backend.listShelfNodes(EVERYTHING);
+            const nodes = await backend.listShelfContent(EVERYTHING);
             tree.update(nodes, true, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
             }
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
-            const nodes = await backend.listShelfNodes(path);
+            const nodes = await backend.listShelfContent(path);
             tree.update(nodes, false, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
@@ -287,7 +303,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.openRoot();
         }
         else if (shelf_id == FIREFOX_SHELF_ID) {
-            const nodes = await backend.listShelfNodes(path);
+            const nodes = await backend.listShelfContent(path);
             nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
 
             for (let node of nodes) {
@@ -299,7 +315,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.update(nodes, false, clearSelection);
         }
         else if (path) {
-            const nodes = await backend.listShelfNodes(path);
+            const nodes = await backend.listShelfContent(path);
             tree.update(nodes, false, clearSelection);
             tree.openRoot();
         }
@@ -311,7 +327,7 @@ async function createShelf() {
 
     if (options?.title) {
         if (!isSpecialShelf(options.title)) {
-            const shelf = await backend.createGroup(null, options.title, NODE_TYPE_SHELF);
+            const shelf = await send.createShelf({name: options.title});
             if (shelf)
                 loadShelves(shelf.id);
         }
@@ -327,7 +343,7 @@ async function renameShelf() {
         const options = await showDlg("prompt", {caption: "Rename", label: "Name", title: name});
         let newName = options?.title;
         if (newName && !isSpecialShelf(newName)) {
-            await backend.renameGroup(id, newName)
+            await send.renameGroup({id, name: newName});
             tree.renameRoot(newName);
             shelfList.renameShelf(id, newName);
         }
@@ -529,7 +545,7 @@ async function displayRandomBookmark() {
 }
 
 receive.startProcessingIndication = message => {
-    startProcessingIndication(message.no_wait);
+    startProcessingIndication(message.noWait);
 };
 
 receive.stopProcessingIndication = message => {

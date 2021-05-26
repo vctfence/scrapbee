@@ -12,11 +12,12 @@ import {
     NODE_TYPE_SHELF, TODO_SHELF_UUID,
 } from "./storage.js";
 import {importJSONObject_v1, parseJSONObject_v1} from "./import_json_v1.js"
-import {backend, formatShelfName} from "./backend.js";
+import {backend} from "./backend.js";
 import UUID from "./lib/uuid.js";
 import {send} from "./proxy.js";
 import {prepareNewImport} from "./import.js";
 import {cleanObject} from "./utils.js";
+import {formatShelfName} from "./bookmarking.js";
 
 const FORMAT_VERSION = 2;
 

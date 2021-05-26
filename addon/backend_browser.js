@@ -1,10 +1,11 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {backend, storeFaviconFromURI} from "./backend.js";
+import {backend} from "./backend.js";
 import {
-    FIREFOX_BOOKMARK_MENU,
-    FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
-    NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF,
+    FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
+    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF, NODE_TYPE_ARCHIVE,
+    NODE_TYPE_NOTES,
     isContainer, isEndpoint,
 } from "./storage.js";
 import {getFavicon} from "./favicon.js";
@@ -52,12 +53,12 @@ export class BrowserBackend {
     }
 
     _toBrowserType(node) {
-        return ({NODE_TYPE_GROUP: "folder",
-                 NODE_TYPE_SHELF: "folder",
-                 NODE_TYPE_ARCHIVE: "bookmark",
-                 NODE_TYPE_BOOKMARK: "bookmark",
-                 NODE_TYPE_NOTES: "separator",
-                 NODE_TYPE_SEPARATOR: "separator"})[node.type];
+        return ({[NODE_TYPE_GROUP]: "folder",
+                 [NODE_TYPE_SHELF]: "folder",
+                 [NODE_TYPE_ARCHIVE]: "bookmark",
+                 [NODE_TYPE_BOOKMARK]: "bookmark",
+                 [NODE_TYPE_NOTES]: "separator",
+                 [NODE_TYPE_SEPARATOR]: "separator"})[node.type];
     }
 
     _isUIContext() {
@@ -103,7 +104,7 @@ export class BrowserBackend {
         const type = this._toBrowserType(node);
         const bookmark = await browser.bookmarks.create({
                                             url: node.uri,
-                                            title: node.name,
+                                            title: node.type === NODE_TYPE_SEPARATOR? undefined: node.name,
                                             type: type,
                                             parentId: parentId,
                                             index: type === "folder"? undefined: node.pos
@@ -139,31 +140,33 @@ export class BrowserBackend {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME && isEndpoint(n));
+        let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
+                                                        && (isEndpoint(n) || n.type === NODE_TYPE_SEPARATOR));
 
         let externalGroups = nodes.filter(n => n.external === FIREFOX_SHELF_NAME &&  n.type === NODE_TYPE_GROUP);
 
-        return this.muteBrowserListeners(async () => {
-            await Promise.all(externalGroups.map(n => {
-                try {
-                    this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
-                    return browser.bookmarks.removeTree(n.external_id);
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            }));
+        if (externalEndpoints.length || externalGroups.length)
+            return this.muteBrowserListeners(async () => {
+                await Promise.all(externalGroups.map(n => {
+                    try {
+                        this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
+                        return browser.bookmarks.removeTree(n.external_id);
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
+                }));
 
-            return Promise.all(externalEndpoints.map(n => {
-                try {
-                    this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
-                    return browser.bookmarks.remove(n.external_id);
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            }));
-        });
+                return Promise.all(externalEndpoints.map(n => {
+                    try {
+                        this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
+                        return browser.bookmarks.remove(n.external_id);
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
+                }));
+            });
     }
 
     async renameBookmark(node) {
@@ -319,7 +322,7 @@ export class BrowserBackend {
             if (parent) {
                 let node = this.convertBookmark(bookmark, parent);
                 node = await backend.addNode(node);
-                await storeFaviconFromURI(node);
+                await backend.storeIconFromURI(node);
 
                 if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                     send.bookmarkCreated({node: node});
@@ -535,7 +538,7 @@ export class BrowserBackend {
 
                 for (let item of getIcons) {
                     let node = await backend.getNode(item[0]);
-                    await storeFaviconFromURI(node);
+                    await backend.storeIconFromURI(node);
                 }
 
                 backend.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {

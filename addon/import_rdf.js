@@ -1,11 +1,11 @@
 import {nativeBackend} from "./backend_native.js";
 import {getFaviconFromTab} from "./favicon.js";
 import {backend} from "./backend.js";
-import {packPage} from "./core_bookmarking.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {partition} from "./utils.js";
 import {send} from "./proxy.js";
 import {prepareNewImport} from "./import.js";
+import {packPage} from "./bookmarking.js";
 
 function traverseRDFTree(doc, visitor) {
     const namespaces = new Map(Object.values(doc.documentElement.attributes)

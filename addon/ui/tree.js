@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend, formatShelfName} from "../backend.js"
+import {backend} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
 
 import {showDlg, confirm} from "./dialog.js"
@@ -38,23 +38,13 @@ import {
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
+import {formatShelfName} from "../bookmarking.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
 
 // return the original Scrapyard node object stored in a jsTree node
 let o = n => n.data;
-
-let c = n => {
-    // by somewhat reason objects with arrays from jsTree are not structurally cloneable
-    if (n.data?.tag_list)
-        delete n.data.tag_list;
-
-    if (n.data?.__path)
-        delete n.data.__path;
-
-    return n.data;
-};
 
 class BookmarkTree {
     constructor(element, inline= false) {
@@ -250,7 +240,7 @@ class BookmarkTree {
             let clickable = element.getAttribute("data-clickable");
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                let node = c(this._jstree.get_node(element.id));
+                let node = o(this._jstree.get_node(element.id));
                 if (node) {
                     if (settings.open_bookmark_in_active_tab()) {
                         getActiveTab().then(active_tab => {
@@ -625,7 +615,7 @@ class BookmarkTree {
                     resolve(null);
                 }
                 else {
-                    const group = await backend.createGroup(parseInt(selectedJNode.id), jnode.text);
+                    const group = send.createGroup({parent: parseInt(selectedJNode.id), name: jnode.text});
                     if (group) {
                         this._jstree.set_id(jnode, group.id);
                         jnode.original = BookmarkTree.toJsTreeNode(group);
@@ -779,7 +769,7 @@ class BookmarkTree {
                     }
                     else {
                         for (let n of selectedNodes) {
-                            let node = c(n);
+                            let node = o(n);
                             if (!isEndpoint(node) || !node.uri)
                                 continue;
                             node.type = NODE_TYPE_BOOKMARK;
@@ -802,7 +792,7 @@ class BookmarkTree {
                 separator_before: o(ctxNode).__filtering,
                 action: async () => {
                     for (let jnode of selectedNodes)
-                        await send.browseNode({node: c(jnode)});
+                        await send.browseNode({node: o(jnode)});
                 }
             },
             openAllItem: {
@@ -848,9 +838,9 @@ class BookmarkTree {
             newFolderItem: {
                 label: "New Folder",
                 action: async () => {
-                    this.startProcessingIndication();
-                    let group = await send.createGroup({parent_id: o(ctxNode).id, name: "New Folder"});
-                    this.stopProcessingIndication();
+                    let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                                 parent_id: o(ctxNode).id};
+                    const groupPending = send.createGroup({parent: o(ctxNode), name: group.name});
 
                     let jgroup = BookmarkTree.toJsTreeNode(group);
                     tree.deselect_all(true);
@@ -860,15 +850,23 @@ class BookmarkTree {
 
                     tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
                         this.startProcessingIndication();
+                        group = await groupPending;
+                        tree.set_id(groupJNode.id, group.id);
+
                         if (success && !cancelled && jnode.text) {
                             group = await send.renameGroup({id: group.id, name: jnode.text});
-                            await this.reorderNodes(ctxNode);
 
-                            o(groupJNode).name = groupJNode.original.text = group.name;
-                            tree.rename_node(groupJNode, group.name);
-                        }
-                        else
+                            tree.rename_node(jnode, group.name);
+                            Object.assign(o(jnode), group);
+                            jnode.original = BookmarkTree.toJsTreeNode(group);
                             await this.reorderNodes(ctxNode);
+                        }
+                        else {
+                            tree.rename_node(jnode, group.name);
+                            Object.assign(o(jnode), group);
+                            jnode.original = BookmarkTree.toJsTreeNode(group);
+                            await this.reorderNodes(ctxNode);
+                        }
 
                         this.stopProcessingIndication();
                     });
@@ -880,28 +878,35 @@ class BookmarkTree {
                     let jparent = tree.get_node(ctxNode.parent);
                     let position = $.inArray(ctxNode.id, jparent.children);
 
-                    this.startProcessingIndication();
-                    let group = await send.createGroup({parent_id: o(jparent).id, name: "New Folder"});
-                    this.stopProcessingIndication();
+                    let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                        parent_id: o(jparent).id};
+                    const groupPending = send.createGroup({parent: o(jparent), name: group.name});
 
                     let jgroup = BookmarkTree.toJsTreeNode(group);
                     tree.deselect_all(true);
 
-                    let groupNode = tree.get_node(tree.create_node(jparent, jgroup, position + 1));
-                    tree.select_node(groupNode);
+                    let groupJNode = tree.get_node(tree.create_node(jparent, jgroup, position + 1));
+                    tree.select_node(groupJNode);
 
-                    tree.edit(groupNode, null, async (jnode, success, cancelled) => {
+                    tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
                         this.startProcessingIndication();
+                        group = await groupPending;
+                        tree.set_id(groupJNode.id, group.id);
 
                         if (success && !cancelled && jnode.text) {
                             group = await send.renameGroup({id: group.id, name: jnode.text});
-                            await this.reorderNodes(jparent);
 
-                            o(groupNode).name = groupNode.original.text = group.name;
-                            tree.rename_node(groupNode, group.name);
-                        }
-                        else
+                            tree.rename_node(jnode, group.name);
+                            Object.assign(o(jnode), group);
+                            jnode.original = BookmarkTree.toJsTreeNode(group);
                             await this.reorderNodes(jparent);
+                        }
+                        else {
+                            tree.rename_node(jnode, group.name);
+                            Object.assign(o(jnode), group);
+                            jnode.original = BookmarkTree.toJsTreeNode(group);
+                            await this.reorderNodes(jparent);
+                        }
 
                         this.stopProcessingIndication();
                     });
@@ -939,10 +944,11 @@ class BookmarkTree {
 
                         if (success && !cancelled && jnode.text) {
                             notes.name = jnode.text;
-                            await send.updateBookmark({node: notes});
+                            notes = await send.updateBookmark({node: notes});
                             await this.reorderNodes(ctxNode);
 
                             o(jnode).name = jnode.original.text = jnode.text;
+                            //tree.rename_node(notesNode, notes.name);
                         }
                         else
                             await this.reorderNodes(ctxNode);
@@ -975,7 +981,7 @@ class BookmarkTree {
                         icon: "/icons/pocket.svg",
                         action: async () => {
                             if (selectedNodes)
-                                await send.shareToPocket({nodes: selectedNodes.map(n => c(n))});
+                                await send.shareToPocket({nodes: selectedNodes.map(n => o(n))});
                         }
                     },
                     dropboxItem: {
@@ -983,7 +989,7 @@ class BookmarkTree {
                         icon: "/icons/dropbox.png",
                         action: async () => {
                             if (selectedNodes)
-                                await send.shareToDropbox({nodes: selectedNodes.map(n => c(n))});
+                                await send.shareToDropbox({nodes: selectedNodes.map(n => o(n))});
                         }
                     }
                 }

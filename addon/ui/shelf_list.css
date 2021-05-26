@@ -1,11 +1,25 @@
+/* 777: .selectric | .selectric, .selectric-focus .selectric { | .selectric:hover { */
+
 .selectric {
-    border: 1px solid #777;
+    border: 1px solid black;
     border-radius: 3px;
     appearance: none;
 }
 
 .selectric-wrapper {
     min-width: unset;
+}
+
+.selectric .button {
+    font: unset;
+}
+
+.selectric .button img {
+    margin-left: 4px;
+    margin-top: 7px;
+    display: block;
+    width: 9.3px;
+    height: 5.45px;
 }
 
 .selectric-scroll li.highlighted, .selectric-scroll li.selected {
@@ -17,11 +31,11 @@
 }
 
 .selectric, .selectric-focus .selectric {
-    border-color: #777;
+    border-color: black;
 }
 
 .selectric:hover {
-    border-color: #777;
+    border-color: black;
 }
 
 .option-builtin {

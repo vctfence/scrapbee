@@ -46,10 +46,3 @@ export async function openContainerTab(url, container) {
     }
 }
 
-export function selectricRefresh(element, widthInc = 5) {
-    element.selectric("refresh");
-    if (widthInc) {
-        let wrapper = element.closest(".selectric-wrapper");
-        wrapper.width(wrapper.width() + widthInc);
-    }
-}

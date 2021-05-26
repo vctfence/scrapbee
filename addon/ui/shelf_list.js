@@ -16,21 +16,31 @@ import {
     TODO_SHELF_ID,
     TODO_SHELF_NAME
 } from "../storage.js";
-import {backend, formatShelfName} from "../backend.js";
+import {backend} from "../backend.js";
+import {formatShelfName} from "../bookmarking.js";
 
-const WIDTH_INCREMENT = 5;
+const WIDTH_INCREMENT = 8;
 
 export class ShelfList {
     constructor(select, options) {
-        options = options || {};
-        options.inheritOriginalWidth = true;
-        this._select = $(select).selectric(options);
+        this._options = options || {};
+        this._options.inheritOriginalWidth = true;
+        this._options.arrowButtonMarkup =
+            `<b class="button"><img class="midnight-filter" src="../images/dropdown.svg"/></b>`;
+        this._select = $(select).selectric(this._options);
+        this._element = this._select.closest(".selectric-wrapper");
+        this._width_increment = WIDTH_INCREMENT;
+
+        if (options._sidebar || options._fulltext) {
+            this._element.hide();
+        }
     }
 
     _refresh() {
         this._select.selectric('refresh');
-        let wrapper = this._select.closest(".selectric-wrapper");
-        wrapper.width(wrapper.width() + WIDTH_INCREMENT);
+        const width = this._element.width() + this._width_increment;
+        this._element.width(width);
+        localStorage.setItem("shelf-list-width", width)
     }
 
     _styleBuiltinShelf() {
@@ -42,6 +52,10 @@ export class ShelfList {
             label.addClass("option-builtin");
         else
             label.removeClass("option-builtin");
+    }
+
+    show() {
+        this._element.show();
     }
 
     getCurrentShelf() {
@@ -159,4 +173,18 @@ export class ShelfList {
     }
 }
 
+export function simpleSelectric(element) {
+    return $(element).selectric({
+        inheritOriginalWidth: true,
+        arrowButtonMarkup:
+            `<b class="button"><img class="midnight-filter" src="../images/dropdown.svg"/></b>`
+    });
+}
 
+export function selectricRefresh(element, widthInc = WIDTH_INCREMENT) {
+    element.selectric("refresh");
+    if (widthInc) {
+        let wrapper = element.closest(".selectric-wrapper");
+        wrapper.width(wrapper.width() + widthInc);
+    }
+}

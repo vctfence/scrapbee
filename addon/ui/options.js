@@ -17,9 +17,9 @@ import {
 } from "../storage.js";
 import {testFavicon} from "../favicon.js";
 import {parseHtml} from "../utils_html.js";
-import {selectricRefresh, showNotification} from "../utils_browser.js";
+import {showNotification} from "../utils_browser.js";
 import {fetchText} from "../utils_io.js";
-import {ShelfList} from "./shelf_list.js";
+import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
 
@@ -198,8 +198,8 @@ async function storeScrapyardSettings() {
 }
 
 function configureScrapyardSettingsPage() {
-    $("#option-sidebar-theme").selectric({inheritOriginalWidth: true});
-    $("#option-export-format").selectric({inheritOriginalWidth: true});
+    simpleSelectric("#option-sidebar-theme");
+    simpleSelectric("#option-export-format");
 }
 
 let helperAppLinksLoaded = false;
@@ -835,7 +835,7 @@ async function backupShelf() {
                                style="margin-left: 10px; flex-grow: 1;"/></div>
                           <div id="backup-processing-time" style="margin-right: 15px">00:00</div>`);
 
-    send.startProcessingIndication({no_wait: true});
+    send.startProcessingIndication({noWait: true});
     processingInterval = setInterval(backupUpdateTime, 1000);
     processingTime = Date.now();
 

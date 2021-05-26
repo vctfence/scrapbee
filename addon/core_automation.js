@@ -10,7 +10,6 @@ import {
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES, NODE_PROPERTIES
 } from "./storage.js";
 import {settings} from "./settings.js";
-import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./core_bookmarking.js";
 import {getFavicon, getFaviconFromTab} from "./favicon.js";
 import {backend} from "./backend.js";
 import {send, receiveExternal} from "./proxy.js";
@@ -19,6 +18,7 @@ import {getMimetypeExt} from "./utils.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
+import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./bookmarking.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();

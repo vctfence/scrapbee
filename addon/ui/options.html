@@ -118,8 +118,10 @@
                             <div class="double-last">
                                 <form>
                                     <fieldset style="border: none;">
-                                        <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"
-                                        /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to new Firefox bookmarks</label>
+                                        <div class="align-checkbox">
+                                            <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"
+                                            /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to new Firefox bookmarks</label>
+                                        </div>
                                     </fieldset>
                                 </form>
                             </div>
@@ -183,11 +185,13 @@
                                 <fieldset style="border: none;">
                                     <input id="option-use-helper-app-for-export" type="checkbox"/><label for="option-use-helper-app-for-export"
                                         >Use helper application to accelerate export</label><br>
-                                    <input id="option-undo-failed-imports" type="checkbox"/><label for="option-undo-failed-imports"
-                                >Undo failed imports</label>
-                                    <i class="help-mark"></i>
-                                    <span class="tips hide">Restore database at the state before a failed import.<br>
-                                        May require twice as much time and disk space.</span>
+                                    <div class="align-checkbox">
+                                        <input id="option-undo-failed-imports" type="checkbox"/><label for="option-undo-failed-imports"
+                                            >Undo failed imports</label>
+                                        <i class="help-mark"></i>
+                                        <span class="tips hide">Restore database at the state before a failed import.<br>
+                                            May require twice as much time and disk space.</span>
+                                    </div>
                                 </fieldset>
                             </form>
                         </div>
@@ -459,9 +463,7 @@
                     <div id="create-backup-container">
                         <div id="backup-shelves-container">
                             <img class="shelves-icon" title="Shelf" src="../icons/books.svg"/>
-                            <select id="backup-shelf">
-                                <option value="everything">everything</option>
-                            </select>
+                            <select id="backup-shelf"><option value="-1" selected>everything</option></select>
                         </div>
                         <div id="backup-comment-container">
                             Comment:&nbsp;<input id="backup-comment" type="text"/>
@@ -485,9 +487,7 @@
             <h2>Automatic Link Validation</h2>
             <div id="link-check-options" class="link-info">
                 <img class="shelves-icon" title="Shelf" src="../icons/books.svg">
-                <select id="link-scope">
-                    <option>everything</option>
-                </select>
+                <select id="link-scope"><option value="-1" selected>everything</option></select>
                 <label id="check-timeout-label" for="link-check-timeout">Timeout (sec.):</label>
                 <input id="link-check-timeout" type="number" min="1" value="10"/>
                 <input type="checkbox" id="update-icons"><label for="update-icons">Update icons</label>

@@ -4,6 +4,7 @@ import {settings} from "../settings.js";
 import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
 import {getActiveTab} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
+import {EVERYTHING_SHELF_ID} from "../storage.js";
 
 let shelfList;
 
@@ -11,10 +12,16 @@ window.onload = async function() {
     await settings.load();
 
     shelfList = new ShelfList("#search-scope", {
-        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
+        _fulltext: true
     });
 
-    shelfList.initDefault();
+    await shelfList.load();
+    shelfList.selectShelf(EVERYTHING_SHELF_ID);
+    shelfList.change(() => null);
+
+    $("#search-scope-placeholder").remove();
+    shelfList.show();
 
     $("#search-button").on("click", e => performSearch());
     $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});
@@ -153,6 +160,8 @@ async function performSearch() {
 
         $("title").text("Full Text Search: " + searchQuery);
 
+        send.startProcessingIndication({noWait: true});
+
         const nodes = await backend.listNodes({
             search: searchQuery,
             content: true,
@@ -166,6 +175,7 @@ async function performSearch() {
         markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0, () => {
             searching = false;
             $("#search-button").val("Search");
+            send.stopProcessingIndication();
 
             if (resultsFound === 0)
                 $("#search-result-count").text(`not found`);

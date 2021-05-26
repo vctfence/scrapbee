@@ -7,8 +7,6 @@ import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
-    isContainer,
-    isEndpoint,
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
     DEFAULT_SHELF_NAME,
@@ -16,6 +14,8 @@ import {
     DONE_SHELF_NAME,
     EVERYTHING,
     FIREFOX_BOOKMARK_MOBILE,
+    isContainer,
+    isEndpoint,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -28,11 +28,25 @@ import {
 } from "./storage.js";
 import {readBlob} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
-import {settings} from "./settings.js";
 
 class ExternalEventProvider {
     constructor() {
         this.externalBackends = {};
+
+        this._addHandler("createBookmarkFolder");
+        this._addHandler("createBookmark");
+        this._addHandler("renameBookmark");
+        this._addHandler("moveBookmarks");
+        this._addHandler("copyBookmarks");
+        this._addHandler("deleteBookmarks");
+        this._addHandler("updateBookmark");
+        this._addHandler("updateBookmarks");
+        this._addHandler("reorderBookmarks");
+        this._addHandler("storeBookmarkData");
+        this._addHandler("updateBookmarkData");
+        this._addHandler("storeBookmarkNotes");
+        this._addHandler("storeBookmarkComments");
+        this._addHandler("invalidateCompletion");
     }
 
     registerExternalBackend(name, backend) {
@@ -43,102 +57,19 @@ class ExternalEventProvider {
         delete this.externalBackends[name];
     }
 
-    async createExternalBookmarkFolder(node, parent) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.createBookmarkFolder)
-                await backend.createBookmarkFolder(node, parent);
-        }
-    }
+    // Add external event handler
+    // For example "createBookmarkFolder" will add "createExternalBookmarkFolder" method to the backend
+    _addHandler(name) {
+        const methodName = name.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/, (m, b, a) => `${b}External${a}`);
+        const handler = async (...args) => {
+            for (let backend of Object.values(this.externalBackends)) {
+                if (backend[name])
+                    await backend[name].apply(backend, args);
+            }
+        };
 
-    async createExternalBookmark(node, parent) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.createBookmark)
-                await backend.createBookmark(node, parent);
-        }
-    }
-
-    async renameExternalBookmark(node) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (await backend.renameBookmark)
-                await backend.renameBookmark(node);
-        }
-    }
-
-    async moveExternalBookmarks(nodes, destId) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.moveBookmarks)
-                await backend.moveBookmarks(nodes, destId);
-        }
-    }
-
-    async copyExternalBookmarks(nodes, destId) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.copyBookmarks)
-                await backend.copyBookmarks(nodes, destId);
-        }
-    }
-
-    async deleteExternalBookmarks(nodes) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.deleteBookmarks)
-                await backend.deleteBookmarks(nodes);
-        }
-    }
-
-    async updateExternalBookmark(node) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.updateBookmark)
-                await backend.updateBookmark(node);
-        }
-    }
-
-    async updateExternalBookmarks(nodes) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.updateBookmarks)
-                await backend.updateBookmarks(nodes);
-        }
-    }
-
-    async reorderExternalBookmarks(positions) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.reorderBookmarks)
-                await backend.reorderBookmarks(positions);
-        }
-    }
-
-    async storeExternalData(nodeId, data, contentType) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.storeBookmarkData)
-                await backend.storeBookmarkData(nodeId, data, contentType);
-        }
-    }
-
-    async updateExternalData(nodeId, data) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.updateBookmarkData)
-                await backend.updateBookmarkData(nodeId, data);
-        }
-    }
-
-    async storeExternalNotes(options) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.storeBookmarkNotes)
-                await backend.storeBookmarkNotes(options);
-        }
-    }
-
-    async storeExternalComments(nodeId, comments) {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.storeBookmarkComments)
-                await backend.storeBookmarkComments(nodeId, comments);
-        }
-    }
-
-    invalidateExternalCompletion() {
-        for (let backend of Object.values(this.externalBackends)) {
-            if (backend.invalidateCompletion)
-                backend.invalidateCompletion();
-        }
+        const proto = Object.getPrototypeOf(this);
+        proto[methodName] = handler;
     }
 }
 
@@ -255,17 +186,16 @@ export class Backend extends ExternalEventProvider {
         return this.queryShelf()
     }
 
-    async listShelfNodes(shelf) {
+    async listShelfContent(shelf) {
         let nodes = [];
 
         if (shelf === EVERYTHING) {
             nodes = await this.getNodes();
             nodes = nodes.filter(n => !(n._unlisted || n.type === NODE_TYPE_UNLISTED));
-            return nodes;
         }
         else {
-            let shelf_node = await this.queryShelf(shelf);
-            nodes = await this.queryFullSubtree(shelf_node.id);
+            let shelfNode = await this.queryShelf(shelf);
+            nodes = await this.queryFullSubtree(shelfNode.id);
         }
 
         if (nodes)
@@ -538,7 +468,7 @@ export class Backend extends ExternalEventProvider {
         return parent;
     }
 
-    async _ensureUnique(parentId, name) {
+    async _ensureUnique(parentId, name, oldName) {
         if (!name)
             return "";
 
@@ -551,6 +481,11 @@ export class Backend extends ExternalEventProvider {
 
         children = children.filter(c => !!c);
 
+        if (oldName)
+            children = children.filter(c => c !== oldName);
+
+        children = children.map(c => c.toLocaleUpperCase());
+
         let uname = name.toLocaleUpperCase();
         let original = name;
         let n = 1;
@@ -560,7 +495,7 @@ export class Backend extends ExternalEventProvider {
         if (m)
             original = original.replace(m[1], "");
 
-        while (children.some(c => c.toLocaleUpperCase() === uname)) {
+        while (children.some(c => c === uname)) {
             name = original + " (" + n + ")";
             uname = name.toLocaleUpperCase();
             n += 1
@@ -569,22 +504,23 @@ export class Backend extends ExternalEventProvider {
         return name;
     }
 
-    async createGroup(parentId, name, nodeType = NODE_TYPE_GROUP) {
+    async createGroup(parent, name, nodeType = NODE_TYPE_GROUP) {
+        if (parent && typeof parent === "number")
+            parent = await this.getNode(parent);
+
         let node = await this.addNode({
-            name: await this._ensureUnique(parentId, name),
+            name: await this._ensureUnique(parent?.id, name),
             type: nodeType,
-            parent_id: parentId
+            parent_id: parent?.id
         });
 
-        node = this._sanitizeNode(node);
+        //node = this._sanitizeNode(node);
 
         try {
             this.invalidateExternalCompletion();
 
-            if (parentId) {
-                let parent = await this.getNode(parentId);
+            if (parent)
                 await this.createExternalBookmarkFolder(node, parent);
-            }
         }
         catch (e) {
             console.error(e);
@@ -598,7 +534,7 @@ export class Backend extends ExternalEventProvider {
 
         if (group.name !== newName) {
             if (group.name.toLocaleUpperCase() !== newName.toLocaleUpperCase())
-                group.name = await this._ensureUnique(group.parent_id, newName);
+                group.name = await this._ensureUnique(group.parent_id, newName, group.name);
             else
                 group.name = newName;
 
@@ -616,13 +552,22 @@ export class Backend extends ExternalEventProvider {
     }
 
     async addSeparator(parentId) {
-        let {id} = await this.addNode({
+        const options = {
             name: "-",
             type: NODE_TYPE_SEPARATOR,
             parent_id: parentId
-        });
+        };
 
-        return this.getNode(id);
+        let node = await this.addNode(options);
+
+        try {
+            await this.createExternalBookmark(node, await backend.getNode(parentId));
+        }
+        catch (e) {
+            console.log(e);
+        }
+
+        return node;
     }
 
     async moveNodes(ids, destId, moveLast) {
@@ -843,20 +788,37 @@ export class Backend extends ExternalEventProvider {
         }
     }
 
+    async storeIconFromURI(node) {
+        try {
+            const icon = await getFavicon(node.uri);
+            if (icon && typeof icon === "string") {
+                node.icon = icon;
+                await this.storeIcon(node);
+            }
+            else if (icon) {
+                node.icon = icon.url;
+                await this.storeIcon(node, icon.response, icon.type);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     setTentativeId(node) {
         node.__tentative_id = "tentative_" + Math.floor(Math.random() * 1000);
+        return node.__tentative_id;
     }
 
     async addBookmark(data, nodeType = NODE_TYPE_BOOKMARK) {
-        let group, parent_id;
+        let group, parentId;
 
         if (data.parent_id)
-            parent_id = data.parent_id = parseInt(data.parent_id);
+            parentId = data.parent_id = parseInt(data.parent_id);
         else
             throw new Error("No bookmark parent id");
 
         if (!group)
-            group = await this.getNode(parent_id);
+            group = await this.getNode(parentId);
 
         data.name = await this._ensureUnique(data.parent_id, data.name);
 
@@ -864,11 +826,11 @@ export class Backend extends ExternalEventProvider {
         data.tag_list = this._splitTags(data.tags);
         await this.addTags(data.tag_list);
 
-        const icon_id = await this.storeIcon(data);
+        const iconId = await this.storeIcon(data);
         const node = await this.addNode(data);
 
-        if (icon_id)
-            await this.updateIcon(icon_id, {node_id: node.id});
+        if (iconId)
+            await this.updateIcon(iconId, {node_id: node.id});
 
         await this.createExternalBookmark(node, group);
 
@@ -883,12 +845,11 @@ export class Backend extends ExternalEventProvider {
             data.parent_id = data.parent_id || (await this.getGroupByPath(data.path)).id;
 
         data = Object.assign({}, data);
-        data.name = await this._ensureUnique(data.parent_id, data.name);
 
         data.tag_list = this._splitTags(data.tags);
         this.addTags(data.tag_list);
 
-        let force_new_uuid = data.uuid
+        let forceNewUuid = data.uuid
             && ((await this.isNodeExists(data.uuid)) || SPECIAL_UUIDS.some(uuid => uuid === data.uuid));
 
         if (!data.date_added || !data.date_modified) {
@@ -901,12 +862,14 @@ export class Backend extends ExternalEventProvider {
                 data.date_modified = now;
         }
 
-        return this.addNode(data, false, false, !data.uuid || force_new_uuid);
+        return this.addNode(data, false, false, !data.uuid || forceNewUuid);
     }
 
     async updateBookmark(data) {
         let update = {};
         Object.assign(update, data);
+
+        //update.name = await this._ensureUnique(update.parent_id, update.name)
 
         update.tag_list = this._splitTags(update.tags);
         this.addTags(update.tag_list);
@@ -923,27 +886,27 @@ export class Backend extends ExternalEventProvider {
             bookmark.name = "";
     }
 
-    async storeBlob(node_id, data, content_type) {
-        await this.storeBlobLowLevel(node_id, data, content_type);
+    async storeBlob(nodeId, data, contentType) {
+        await this.storeBlobLowLevel(nodeId, data, contentType);
 
-        await this.storeExternalData(node_id, data, content_type);
+        await this.storeExternalBookmarkData(nodeId, data, contentType);
     }
 
-    async updateBlob(node_id, data) {
-        await this.updateBlobLowLevel(node_id, data);
+    async updateBlob(nodeId, data) {
+        await this.updateBlobLowLevel(nodeId, data);
 
-        await this.updateExternalData(node_id, data);
+        await this.updateExternalBookmarkData(nodeId, data);
     }
 
-    async addNotes(parent_id, name) {
+    async addNotes(parentId, name) {
         let node = await this.addNode({
-            parent_id: parent_id,
+            parent_id: parentId,
             name: name,
             //has_notes: true,
             type: NODE_TYPE_NOTES
         });
 
-        let group = await this.getNode(parent_id);
+        let group = await this.getNode(parentId);
 
         try {
             await this.createExternalBookmark(node, group);
@@ -958,35 +921,15 @@ export class Backend extends ExternalEventProvider {
     async storeNotes(options) {
         await this.storeNotesLowLevel(options);
 
-        await this.storeExternalNotes(options);
+        await this.storeExternalBookmarkNotes(options);
     }
 
-    async storeComments(node_id, comments) {
-        await this.storeCommentsLowLevel(node_id, comments);
+    async storeComments(nodeId, comments) {
+        await this.storeCommentsLowLevel(nodeId, comments);
 
-        await this.storeExternalComments(node_id, comments);
+        await this.storeExternalBookmarkComments(nodeId, comments);
     }
 }
 
 export let backend = new Backend(new IDBStorage());
-
-export function formatShelfName(name) {
-    return settings.capitalize_builtin_shelf_names()? name?.capitalize(): name;
-}
-
-export async function storeFaviconFromURI(node) {
-    try {
-        const icon = await getFavicon(node.uri);
-        if (icon && typeof icon === "string") {
-            node.icon = icon;
-            await backend.storeIcon(node);
-        }
-        else if (icon) {
-            node.icon = icon.url;
-            await backend.storeIcon(node, icon.response, icon.type);
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
 

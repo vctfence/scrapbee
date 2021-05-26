@@ -1,8 +1,9 @@
 import {send} from "../proxy.js";
 import {settings} from "../settings.js";
-import {showNotification, selectricRefresh} from "../utils_browser.js";
+import {showNotification} from "../utils_browser.js";
 import {alert, confirm} from "./dialog.js";
 import {formatBytes} from "../utils.js";
+import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){
@@ -53,9 +54,9 @@ function configureBackupCompressionPanel() {
     $("#option-compression-method option[value='EMPTY']").remove();
     $("#option-compression-level option[value='EMPTY']").remove();
 
-    compMethod.selectric({inheritOriginalWidth: true});
+    simpleSelectric(compMethod);
     selectricRefresh(compMethod);
-    compLevel.selectric({inheritOriginalWidth: true});
+    simpleSelectric(compLevel);
     selectricRefresh(compLevel);
 
     $("#option-compression-method").on("change", async e => {

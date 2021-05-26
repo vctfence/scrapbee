@@ -72,7 +72,7 @@ receive.backupShelf = async message => {
 };
 
 receive.restoreShelf = async message => {
-    send.startProcessingIndication({no_wait: true});
+    send.startProcessingIndication({noWait: true});
 
     let error;
     let shelf;
@@ -116,7 +116,7 @@ receive.restoreShelf = async message => {
 };
 
 receive.deleteBackup = async message => {
-    send.startProcessingIndication({no_wait: true});
+    send.startProcessingIndication({noWait: true});
 
     try {
         await nativeBackend.post("/backup/delete", {

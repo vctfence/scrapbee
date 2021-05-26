@@ -1,7 +1,7 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {dropboxBackend} from "./backend_dropbox.js";
-import {backend, storeFaviconFromURI} from "./backend.js";
+import {backend} from "./backend.js";
 
 import {
     CLOUD_EXTERNAL_NAME,
@@ -110,23 +110,23 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-        if (cloud_nodes.length)
+        if (cloudNodes.length)
             return this.withCloudDB(async db => {
-                for (let node of cloud_nodes)
+                for (let node of cloudNodes)
                     await this.cleanBookmarkAssets(db, node);
 
-                return db.deleteNodes(cloud_nodes);
+                return db.deleteNodes(cloudNodes);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }
 
     async renameBookmark(node) {
         if (settings.cloud_enabled() && node.external === CLOUD_EXTERNAL_NAME) {
             return this.withCloudDB(async db => {
-                let cloud_node = await db.getNode(node.uuid, true);
-                cloud_node.name = node.name;
-                await db.updateNode(cloud_node);
+                let cloudNode = await db.getNode(node.uuid, true);
+                cloudNode.name = node.name;
+                await db.updateNode(cloudNode);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
     }
@@ -143,11 +143,11 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let cloud_nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
-        if (cloud_nodes.length) {
+        if (cloudNodes.length) {
             return this.withCloudDB(async db => {
-                for (let node of cloud_nodes) {
+                for (let node of cloudNodes) {
                     await db.updateNode(node);
                 }
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
@@ -156,17 +156,16 @@ export class CloudBackend {
 
     async _createBookmarkInternal(db, node, parentId) {
         let parent = await db.getNode(parentId, true);
+        let cloudNode = Object.assign({}, node);
 
-        let cloud_node = Object.assign({}, node);
-
-        cloud_node.parent_id = parent? parent.id: CLOUD_SHELF_ID;
+        cloudNode.parent_id = parent? parent.id: CLOUD_SHELF_ID;
 
         if (node.stored_icon) {
-            cloud_node.icon_data = await backend.fetchIcon(node.id);
+            cloudNode.icon_data = await backend.fetchIcon(node.id);
             //await db.storeIcon(bookmark, icon);
         }
 
-        await db.addNode(cloud_node).then(async bookmark => {
+        await db.addNode(cloudNode).then(async bookmark => {
             node.external = CLOUD_EXTERNAL_NAME;
             node.external_id = bookmark.uuid;
             node.uuid = bookmark.uuid;
@@ -551,6 +550,8 @@ export class CloudBackend {
                     cloudNode.parent_id = d.id;
                     cloudNode.external = CLOUD_EXTERNAL_NAME;
                     cloudNode.external_id = cloudNode.uuid;
+                    cloudNode.date_added = new Date(cloudNode.date_added);
+                    cloudNode.date_modified = new Date(cloudNode.date_modified);
                     node = await backend.addNode(cloudNode, false, false, false);
 
                     if (cloudNode.has_notes) {
@@ -569,7 +570,7 @@ export class CloudBackend {
                     }
 
                     if (!node.icon && node.uri)
-                        await storeFaviconFromURI(node);
+                        await backend.storeIconFromURI(node);
                     else if (node.icon && !node.stored_icon)
                         await backend.storeIcon(node);
                     else if (node.icon && node.stored_icon)

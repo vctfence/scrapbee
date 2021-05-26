@@ -71,7 +71,7 @@ export let send = new Proxy({}, {
     get(target, key, receiver) {
         const type = makeMessageName(key);
 
-        return (val) => {
+        return val => {
             const payload = val || {};
             //console.log(payload)
             //console.trace()

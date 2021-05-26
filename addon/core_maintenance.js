@@ -35,7 +35,7 @@ receive.optimizeDatabase = async message => {
         }
     }
 
-    send.startProcessingIndication({no_wait: true});
+    send.startProcessingIndication({noWait: true});
 
     let currentProgress = 0;
     let ctr = 0;
@@ -135,7 +135,7 @@ receive.optimizeDatabase = async message => {
 };
 
 receive.reindexArchiveContent = async message => {
-    send.startProcessingIndication({no_wait: true});
+    send.startProcessingIndication({noWait: true});
 
     const nodes = await backend.filterNodes(n => n.type === NODE_TYPE_ARCHIVE || n.has_notes || n.has_comments);
 
@@ -193,7 +193,7 @@ receive.resetCloud = async message => {
     if (!cloudBackend.isAuthenticated())
         return false;
 
-    send.startProcessingIndication({no_wait: true});
+    send.startProcessingIndication({noWait: true});
 
     await cloudBackend.reset();
 

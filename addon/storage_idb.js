@@ -358,7 +358,7 @@ class IDBStorage {
                     result = false;
             }
             else if (date) {
-                const nodeMillis = node.date_added?.getTime? node.date_added.getTime(): null;
+                const nodeMillis = node.date_added?.getTime? node.date_added.getTime(): undefined;
 
                 if (nodeMillis) {
                     let nodeDate = new Date(nodeMillis);
