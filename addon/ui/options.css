@@ -613,6 +613,21 @@ a.left-index, a:visited.left-index {
     align-content: center;
 }
 
+.result-action-icon, .result-action-icon-last {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin-right: 2px;
+}
+
+.result-action-icon-last {
+    margin-right: 8px;
+}
+
+.link-check-error {
+    white-space: nowrap;
+}
+
 #rdf-import-options {
     width: max-content;
 }
@@ -656,6 +671,10 @@ a.left-index, a:visited.left-index {
     overflow-x: hidden;
     overflow-y: auto;
     display: none;
+}
+
+#invalid-links {
+    margin-left: 15px;
 }
 
 .link-info, .rdf-link-info {

@@ -16,8 +16,6 @@ export async function testFavicon(url) {
     } catch (e) {
         console.error(e);
     }
-
-    return undefined;
 }
 
 export async function getFaviconFromTab(tab, tabOnly = false) {

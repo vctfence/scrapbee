@@ -773,8 +773,8 @@ export class Backend extends ExternalEventProvider {
                             }
                         }
                         catch (e) {
-                            node.icon = null;
-                            node.stored_icon = false;
+                            node.icon = undefined;
+                            node.stored_icon = undefined;
                             if (node.id)
                                 await this.updateNode(node);
                             console.error(e);

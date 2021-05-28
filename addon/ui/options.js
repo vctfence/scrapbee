@@ -18,7 +18,7 @@ import {
 import {testFavicon} from "../favicon.js";
 import {parseHtml} from "../utils_html.js";
 import {showNotification} from "../utils_browser.js";
-import {fetchText} from "../utils_io.js";
+import {fetchText, fetchWithTimeout} from "../utils_io.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
 
 let _ = (v, d) => {return v !== undefined? v: d;};
@@ -450,11 +450,29 @@ async function onStartRDFImport(e) {
 
 // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
 
+function initializeLinkChecker() {
+    $("#start-check-links").on("click", startCheckLinks);
+
+    $("#link-check-timeout").val(settings.link_check_timeout() || DEFAULT_LINK_CHECK_TIMEOUT)
+    $("#link-check-timeout").on("input", async e => {
+        await settings.load();
+        let timeout = parseInt(e.target.value);
+        settings.link_check_timeout(isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout);
+    });
+
+    const shelfList = new ShelfList("#check-scope", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
+    });
+
+    shelfList.initDefault();
+}
+
 const DEFAULT_LINK_CHECK_TIMEOUT = 10;
 
 let abortCheckLinks;
 let autoStartCheckLinks;
 let autoLinkCheckScope;
+
 async function doAutoStartCheckLinks() {
     const urlParams = new URLSearchParams(window.location.search);
     autoStartCheckLinks = !!urlParams.get("menu");
@@ -462,29 +480,11 @@ async function doAutoStartCheckLinks() {
     if (autoStartCheckLinks) {
         $("#update-icons").prop("checked", urlParams.get("repairIcons") === "true");
         let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
-        $(".selectric", $("#check-links"))
+        $(".selectric-wrapper", $("#check-links"))
             .replaceWith(`<span style="white-space: nowrap">${scopePath[scopePath.length - 1].name}&nbsp;&nbsp;</span>`);
         autoLinkCheckScope = scopePath.map(g => g.name).join("/");
         startCheckLinks();
     }
-}
-
-function initializeLinkChecker() {
-    $("#start-check-links").on("click", startCheckLinks);
-    $("#invalid-links-container").on("click", ".invalid-link", selectNode);
-
-    $("#link-check-timeout").val(settings.link_check_timeout() || DEFAULT_LINK_CHECK_TIMEOUT)
-    $("#link-check-timeout").on("input", async e => {
-       await settings.load();
-       let timeout = parseInt(e.target.value);
-       settings.link_check_timeout(isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout);
-    });
-
-    const shelfList = new ShelfList("#link-scope", {
-        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height
-    });
-
-    shelfList.initDefault();
 }
 
 function stopCheckLinks() {
@@ -499,19 +499,18 @@ function stopCheckLinks() {
     }
 }
 
-function startCheckLinks() {
+async function startCheckLinks() {
     if ($("#start-check-links").val() === "Check") {
 
         $("#start-check-links").val("Stop");
 
-        let update_icons = $("#update-icons").is(":checked");
+        let updateIcons = $("#update-icons").is(":checked");
         let path;
 
-        if (autoStartCheckLinks) {
+        if (autoStartCheckLinks)
             path = autoLinkCheckScope;
-        }
         else {
-            let scope = $(`#link-scope option[value='${$("#link-scope").val()}']`).text();
+            let scope = $(`#check-scope option[value='${$("#check-scope").val()}']`).text();
             path = scope === EVERYTHING ? undefined : scope;
         }
 
@@ -519,99 +518,100 @@ function startCheckLinks() {
         $("#invalid-links-container").hide();
         $("#invalid-links").html("");
 
-        let checkNodes = function (nodes) {
-            let node = nodes.shift();
-            if (node && !abortCheckLinks) {
-                if (node.uri) {
-                    $("#current-link-title").text(node.name);
-                    $("#current-link-url").text(node.uri);
+        async function updateIcon(node, html) {
+            let favicon;
+            let origin = new URL(node.uri).origin;
 
-                    let xhr = new XMLHttpRequest();
-                    xhr.open("GET", node.uri);
+            let doc = parseHtml(html);
+            let faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
 
-                    let timeout = parseInt($("#link-check-timeout").val());
-                    timeout = isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout;
+            favicon = (faviconElt && await testFavicon(new URL(faviconElt.href, origin)))
+                        || await testFavicon(new URL("/favicon.ico", origin));
 
-                    xhr.timeout = timeout * 1000;
-                    xhr.ontimeout = function () {this._timedout = true};
-                    xhr.onerror = function (e) {console.error(e)};
-                    xhr.onloadend = async function (e) {
-                        if (!this.status || this.status >= 400) {
-                            $("#invalid-links-container").show();
-
-                            let error = this.status
-                                ? `[HTTP Error: ${this.status}]`
-                                : (this._timedout? "[Timeout]": "[Unavailable]");
-
-                            let invalid_link = `<a href="#" data-id="${node.id}" class="invalid-link">${node.name}</a>`
-                            $("#invalid-links").append(`<tr><td>${error}</td><td>${invalid_link}</td></tr>`);
-
-                            if (update_icons && !node.stored_icon && !this.status) {
-                                node.icon = null;
-                                await backend.updateNode(node);
-                            }
-                        }
-
-                        if (this.status && update_icons) {
-                            let favicon;
-                            let base = new URL(node.uri).origin;
-
-                            let type = this.getResponseHeader("Content-Type");
-
-                            if (type && type.toLowerCase().startsWith("text/html")) {
-                                let doc = parseHtml(this.responseText);
-                                let faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
-
-                                if (faviconElt)
-                                    favicon = await testFavicon(new URL(faviconElt.href, base));
-                            }
-
-                            if (favicon) {
-                                node.icon = favicon;
-                                await backend.updateNode(node);
-                                await backend.storeIcon(node);
-                            }
-                            else {
-                                try {
-                                    let url = base + "/favicon.ico";
-                                    let response = await fetch(url, {method: "GET"});
-                                    if (response.ok) {
-                                        let type = response.headers.get("content-type") || "image";
-                                        if (type.startsWith("image")) {
-                                            const buffer = await response.arrayBuffer();
-                                            if (buffer.byteLength) {
-                                                node.icon = favicon = url;
-                                                await backend.updateNode(node);
-                                                await backend.storeIcon(node, buffer, type);
-                                            }
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error(e)
-                                }
-                            }
-
-                            if (!favicon && !node.stored_icon) {
-                                node.icon = null;
-                                await backend.updateNode(node);
-                            }
-                        }
-
-                        checkNodes(nodes);
-                    };
-                    xhr.send();
-                } else
-                    checkNodes(nodes);
+            if (favicon) {
+                node.icon = favicon;
+                await backend.storeIcon(node);
             }
-            else if (abortCheckLinks)
-                abortCheckLinks = false;
-            else
-                stopCheckLinks();
-        };
+            else if (node.icon && !node.stored_icon) {
+                node.icon = undefined;
+                await backend.updateNode(node);
+            }
+        }
 
-        backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]}).then(nodes => {
-            checkNodes(nodes);
-        });
+        function displayLinkError(error, node) {
+            $("#invalid-links-container").show();
+            let invalidLink = `<a href="${node.uri}" target="_blank" class="invalid-link">${node.name}</a>`
+            $("#invalid-links").append(`<tr>
+                                            <td>
+                                                <img id="link-check-select-${node.id}" class="result-action-icon"
+                                                     src="../icons/tree-select.svg" title="Select"/>
+                                            </td>
+                                            <td>
+                                                <a href="http://web.archive.org/web/${encodeURIComponent(node.uri)}"
+                                                   target="_blank"><img class="result-action-icon-last"
+                                                     src="../icons/web-archive.svg" title="Web Archive"/></a>
+                                            </td>
+                                            <td class="link-check-error">${error}</td>
+                                            <td>${invalidLink}</td>
+                                        </tr>`);
+            $(`#link-check-select-${node.id}`).click(e => send.selectNode({node}));
+        }
+
+        const nodes = await backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
+
+        for (let node of nodes) {
+            if (abortCheckLinks)
+                break;
+
+            if (!node.uri)
+                continue;
+
+            $("#current-link-title").text(node.name);
+            $("#current-link-url").text(node.uri);
+
+            let error;
+            let networkError;
+            let contentType;
+            let response;
+
+            try {
+                let timeout = parseInt($("#link-check-timeout").val());
+                timeout = isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout;
+                response = await fetchWithTimeout(node.uri, {timeout: timeout * 1000});
+
+                if (!response.ok)
+                    error = `[HTTP Error: ${response.status}]`;
+                else
+                    contentType = response.headers.get("content-type");
+            }
+            catch (e) {
+                networkError = true;
+
+                if (e.name === "AbortError")
+                    error = `[Timeout]`;
+                else
+                    error = "[Unavailable]"
+            }
+
+            if (error) {
+                displayLinkError(error, node);
+
+                if (networkError && updateIcons && node.icon && !node.stored_icon) {
+                    node.icon = undefined;
+                    await backend.updateNode(node);
+                }
+            }
+            else if (updateIcons && contentType?.toLowerCase()?.startsWith("text/html")) {
+                try {
+                    await updateIcon(node, await response.text());
+                }
+                catch (e) {
+                    console.error(e)
+                }
+            }
+        }
+
+        stopCheckLinks();
     }
     else {
         stopCheckLinks();
