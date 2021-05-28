@@ -8,7 +8,6 @@ import {
     NODE_TYPE_NOTES,
     isContainer, isEndpoint,
 } from "./storage.js";
-import {getFavicon} from "./favicon.js";
 
 const CATEGORY_ADDED = 0;
 const CATEGORY_CHANGED = 1;

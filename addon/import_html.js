@@ -1,6 +1,5 @@
 import {backend} from "./backend.js";
 import {DEFAULT_POSITION, NODE_TYPE_BOOKMARK} from "./storage.js";
-import {getFavicon} from "./favicon.js";
 import {prepareNewImport} from "./import.js";
 
 export async function importHtml(shelf, text) {

@@ -1,4 +1,6 @@
 import {settings} from "./settings.js";
+import {fetchWithTimeout} from "./utils_io.js";
+import {parseHtml} from "./utils_html.js";
 
 export async function testFavicon(url) {
     try {
@@ -28,11 +30,11 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     if (tab.favIconUrl)
         return tab.favIconUrl;
     else if (tabOnly)
-        return null;
+        return undefined;
 
     try {
         let icon = await browser.tabs.executeScript(tab.id, {
-            code: `document.querySelector("head link[rel*='icon'], head link[rel*='shortcut']")?.href`
+            code: `document.querySelector("link[rel*='icon'], link[rel*='shortcut']")?.href`
         });
 
         if (icon && icon.length && icon[0])
@@ -47,66 +49,25 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     return favicon;
 }
 
-export function getFavicon(url, tryRootFirst, usePageOnly, doc) {
-    let load_url = (url, type, timeout = settings.link_check_timeout() * 1000) => {
-        return new Promise((resolve, reject) => {
-            let xhr = new XMLHttpRequest();
-            xhr.open("GET", url);
-
-            if (type)
-                xhr.responseType = type;
-
-            xhr.timeout = timeout;
-
-            xhr.ontimeout = function () {
-                reject();
-            };
-            xhr.onerror = function (e) {
-                reject(e);
-            };
-            xhr.onload = function () {
-                if (this.status === 200)
-                    resolve({url: url, response: this.response, type: this.getResponseHeader("content-type")});
-                else
-                    reject();
-            };
-            xhr.send();
-        });
-    };
-
-    let valid_favicon = r => {
-        let valid_type = r.type ? r.type.startsWith("image") : true;
-        return r && r.response.byteLength && valid_type;
-    };
-
-    let parsedUrl = new URL(url);
-
-    // get a nice favicon for wikipedia
-    if (parsedUrl.origin && parsedUrl.origin.endsWith("wikipedia.org"))
-        return "https://en.wikipedia.org/favicon.ico";
-
-    let extract_link = r => {
-        if (r.response && r.response.querySelector) {
-            let link = r.response.querySelector("head link[rel*='icon'], head link[rel*='shortcut']");
-            if (link)
-                return new URL(link.href, parsedUrl.origin).toString();
+export async function getFavicon(url, doc) {
+    if (!doc) {
+        let timeout = settings.link_check_timeout()? settings.link_check_timeout() * 1000: 10000;
+        try {
+            const response = await fetchWithTimeout(url, {timeout});
+            if (response.ok)
+                doc = parseHtml(await response.text());
         }
-        return undefined;
-    };
+        catch (e) {}
+    }
+    else if (typeof doc === "string") {
+        doc = parseHtml(doc);
+    }
 
-    if (doc)
-        return extract_link({response: doc});
+    if (doc) {
+        const origin = new URL(url).origin;
+        const faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
 
-    let default_icon = parsedUrl.origin + "/favicon.ico";
-    let get_html_icon = () => load_url(url, "document").then(extract_link).catch(e => undefined);
-
-    if (usePageOnly)
-        return get_html_icon();
-
-    if (tryRootFirst)
-        return load_url(default_icon, "arraybuffer")
-            .then(r => valid_favicon(r) ? r : get_html_icon())
-            .catch(get_html_icon);
-    else
-        return get_html_icon().then(r => r ? r : load_url(default_icon, "arraybuffer").catch(e => undefined));
+        return (faviconElt && await testFavicon(new URL(faviconElt.href, origin)))
+            || await testFavicon(new URL("/favicon.ico", origin));
+    }
 }

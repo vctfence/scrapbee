@@ -5,6 +5,7 @@ import {backend} from "./backend.js";
 import {send} from "./proxy.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
+import {fetchWithTimeout} from "./utils_io.js";
 
 export function formatShelfName(name) {
     return settings.capitalize_builtin_shelf_names()? name?.capitalize(): name;
@@ -58,10 +59,7 @@ export async function captureTab(tab, bookmark) {
             bookmark: bookmark
         });
 
-        try {
-            response = await initiateCapture();
-        } catch (e) {
-        }
+        try { response = await initiateCapture(); } catch (e) {}
 
         if (typeof response == "undefined") { /* no response received - content script not loaded in active tab */
             let onScriptInitialized = async (message, sender) => {
@@ -89,34 +87,33 @@ export async function captureTab(tab, bookmark) {
                 }
 
                 await browser.tabs.executeScript(tab.id, {file: "/savepage/content.js"});
-            } catch (e) {
-                // capture of binary files
+            }
+            catch (e) {
+                try {
+                    const settingsKey = "savepage-settings";
+                    const settings = (await browser.storage.local.get(settingsKey))[settingsKey];
 
-                let xhr = new XMLHttpRequest();
+                    let timeout = settings["options-maxresourcetime"];
+                    timeout = timeout? timeout * 1000: 30000;
 
-                xhr.open("GET", tab.url, true);
-                xhr.setRequestHeader("Cache-Control", "no-store");
+                    const headers = {"Cache-Control": "no-store"};
 
-                xhr.responseType = "arraybuffer";
-                xhr.timeout = maxResourceTime * 1000;
-                xhr.onerror = function (e) {
-                    console.error(e)
-                };
-                xhr.onloadend = function () {
-                    if (this.status === 200) {
-                        let contentType = this.getResponseHeader("Content-Type");
-                        if (contentType == null) {
-                            const url = new URL(tab.url);
-                            contentType = getMimetypeExt(url.pathname) || "application/pdf";
-                        }
+                    const response = await fetchWithTimeout(tab.url, {timeout, headers});
 
-                        backend.storeBlob(bookmark.id, this.response, contentType);
+                    if (response.ok) {
+                        let contentType = response.headers.get("content-type");
 
-                        send.bookmarkAdded({node: bookmark});
+                        if (!contentType)
+                            contentType = getMimetypeExt(new URL(tab.url).pathname) || "application/pdf";
+
+                        await backend.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
                     }
-                };
-
-                xhr.send()
+                    send.bookmarkAdded({node: bookmark});
+                }
+                catch (e) {
+                    console.error(e);
+                    send.bookmarkAdded({node: bookmark});
+                }
             }
         }
     }

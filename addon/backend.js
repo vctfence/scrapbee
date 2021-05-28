@@ -765,6 +765,7 @@ export class Backend extends ExternalEventProvider {
                                 if (type.startsWith("image")) {
                                     const buffer = await response.arrayBuffer();
                                     if (buffer.byteLength) {
+                                        log(buffer)
                                         const [id, iconUrl] = await convertAndStore(buffer, type);
                                         await updateNode(node, iconUrl);
                                         return id;
@@ -790,15 +791,8 @@ export class Backend extends ExternalEventProvider {
 
     async storeIconFromURI(node) {
         try {
-            const icon = await getFavicon(node.uri);
-            if (icon && typeof icon === "string") {
-                node.icon = icon;
-                await this.storeIcon(node);
-            }
-            else if (icon) {
-                node.icon = icon.url;
-                await this.storeIcon(node, icon.response, icon.type);
-            }
+            node.icon = await getFavicon(node.uri);
+            await this.storeIcon(node);
         } catch (e) {
             console.error(e);
         }

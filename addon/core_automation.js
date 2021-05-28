@@ -162,7 +162,7 @@ receiveExternal.scrapyardAddBookmark = async (message, sender) => {
             const doc = parseHtml(content);
 
             if (message.icon === true)
-                message.icon = await getFavicon(message.uri, false, false, doc);
+                message.icon = await getFavicon(message.uri, doc);
 
             if (message.title === true) {
                 const titleElement = doc.querySelector("title");

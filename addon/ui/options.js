@@ -15,7 +15,7 @@ import {
     NODE_TYPE_BOOKMARK,
     TODO_SHELF_NAME
 } from "../storage.js";
-import {testFavicon} from "../favicon.js";
+import {getFavicon, testFavicon} from "../favicon.js";
 import {parseHtml} from "../utils_html.js";
 import {showNotification} from "../utils_browser.js";
 import {fetchText, fetchWithTimeout} from "../utils_io.js";
@@ -203,39 +203,48 @@ function configureScrapyardSettingsPage() {
 }
 
 let helperAppLinksLoaded = false;
-function loadHelperAppLinks() {
+async function loadHelperAppLinks() {
     if (helperAppLinksLoaded)
         return;
 
-    // Load helper app links
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = async function () {
-        if (this.readyState == 4 && this.status == 200) {
-            let release = JSON.parse(this.responseText);
-            let link = document.getElementById("helper-windows-inst");
-            link.href = release.assets[0].browser_download_url;
-            link = document.getElementById("helper-manual-inst");
-            link.href = release.assets[1].browser_download_url;
-            helperAppLinksLoaded = true;
+    function setDownloadLinks(app, archive) {
+        $("#helper-windows-inst").attr("href", app);
+        $("#helper-manual-inst").attr("href", archive);
+    }
+
+    try {
+        const apiURL = "https://api.github.com/repos/gchristensen/scrapyard/releases/latest";
+        const response = await fetchWithTimeout(apiURL, {timeout: 30000});
+
+        if (response.ok) {
+            let release = JSON.parse(await response.text());
+            setDownloadLinks(release.assets[0].browser_download_url, release.assets[1].browser_download_url);
 
             let version = release.name.split(" ");
             version = version[version.length - 1];
 
             $("#helper-app-version").html(`<b>Latest version:</b> ${version}`);
 
-            const installedVersion = await send.helperAppGetVersion();
-            const INSTALLED_VERSION_TEXT = `<b>Installed version:</b> %%%`;
-
-            if (installedVersion)
-                $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT
-                    .replace("%%%", "v" + installedVersion));
-            else
-                $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT
-                    .replace("%%%", "not installed"));
+            helperAppLinksLoaded = true;
         }
-    };
-    xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
-    xhr.send();
+        else
+            throw new Error();
+    }
+    catch (e) {
+        console.error(e);
+        setDownloadLinks("#heperapp", "#heperapp");
+        $("#helper-app-version").html(`<b>Latest version:</b> error`);
+    }
+
+    const installedVersion = await send.helperAppGetVersion();
+    const INSTALLED_VERSION_TEXT = `<b>Installed version:</b> %%%`;
+
+    if (installedVersion)
+        $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT
+            .replace("%%%", "v" + installedVersion));
+    else
+        $("#helper-app-version-installed").html(INSTALLED_VERSION_TEXT
+            .replace("%%%", "not installed"));
 }
 
 async function configureHelpPage() {
@@ -519,14 +528,7 @@ async function startCheckLinks() {
         $("#invalid-links").html("");
 
         async function updateIcon(node, html) {
-            let favicon;
-            let origin = new URL(node.uri).origin;
-
-            let doc = parseHtml(html);
-            let faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
-
-            favicon = (faviconElt && await testFavicon(new URL(faviconElt.href, origin)))
-                        || await testFavicon(new URL("/favicon.ico", origin));
+            let favicon = await getFavicon(node.uri, html);
 
             if (favicon) {
                 node.icon = favicon;
