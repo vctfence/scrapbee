@@ -17,7 +17,6 @@
     <script type="text/javascript" src="../lib/selectric/jquery.selectric.js"></script>
     <script type="text/javascript" src="../lib/jstree/jstree.js"></script>
     <script type="text/javascript" src="../global.js"></script>
-    <script type="text/javascript" src="../proto.js"></script>
     <script type="module" src="sidebar.js"></script>
 
     <link rel="stylesheet" type="text/css" href="../fonts/fontawesome.css"/>
@@ -36,8 +35,8 @@
                             </div>
                             <div class="row">
                                 <div class="cell" style="text-align:center;">
-                                    <input type="button" class="button-ok" value="{DLG_OK}" />
-                                    <input type="button" class="button-cancel" value="{DLG_CANCEL}" />
+                                    <input type="button" class="button-ok" value="OK" />
+                                    <input type="button" class="button-cancel" value="Cancel" />
                                 </div>
                             </div>
                         </div>
@@ -76,41 +75,41 @@
                                 <textarea id="prop-comments" name="comments"></textarea>
                             </div>
                             <div class="prop-row">
-                                <label for="prop-name" class="cell">{Name}: </label>
+                                <label for="prop-name" class="cell">Title: </label>
                                 <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row">
-                                <label for="prop-uri" class="cell">{URL}: </label>
+                                <label for="prop-uri" class="cell">URL: </label>
                                 <input id="prop-uri" class="dialog-input" type="" name="uri" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row">
-                                <label for="prop-tags" class="cell">{Tags}: </label>
+                                <label for="prop-tags" class="cell">Tags: </label>
                                 <input id="prop-tags" class="dialog-input" type="" name="tags" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row">
-                                <label for="prop-details" class="cell">{Details}: </label>
+                                <label for="prop-details" class="cell">Details: </label>
                                 <input id="prop-details" class="dialog-input" type="" name="details" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row">
-                                <label for="prop-date" class="cell">{Date}: </label>
+                                <label for="prop-date" class="cell">Date: </label>
                                 <input id="prop-date" class="dialog-input" type="" name="todo_date" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row more-properties">
                                 <div>
-                                    <div><label for="prop-uuid" class="cell">{UUID}: </label></div>
+                                    <div><label for="prop-uuid" class="cell">UUID: </label></div>
                                     <div style="float: right;"><a id="copy-reference-url" href="#">copy reference</a></div>
                                 </div>
                                 <input id="prop-uuid" readonly="true" class="dialog-input" type="" name="uuid" value="" style="width:100%"/>
                             </div>
                             <div id="prop-row-icon" class="prop-row more-properties">
                                 <div>
-                                    <div><label for="prop-icon" class="cell">{Icon}: </label></div>
+                                    <div><label for="prop-icon" class="cell">Icon: </label></div>
                                     <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
                                 </div>
                                 <input id="prop-icon" type="" class="dialog-input" name="icon" value="" style="width:100%"/>
                             </div>
                             <div class="prop-row more-properties">
-                                <label for="prop-added" class="cell">{Added on}: </label>
+                                <label for="prop-added" class="cell">Added on: </label>
                                 <input id="prop-added" type="" class="dialog-input" name="date_added" value="" style="width:100%"
                                        readonly="true"/>
                             </div>
@@ -123,8 +122,8 @@
                         <div class="button-row">
                             <a id="more-properties" href="#">More</a>
                             <div class="cell" style="float:right; margin-top: 10px">
-                                <input type="button" class="button-ok" value="{DLG_OK}"/>
-                                <input type="button" class="button-cancel" value="{DLG_CANCEL}"/>
+                                <input type="button" class="button-ok" value="OK"/>
+                                <input type="button" class="button-cancel" value="Cancel"/>
                             </div>
                         </div>
                     </div>
@@ -144,8 +143,8 @@
                         <div class="row"
                              style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
                             <div class="cell" style="float:right">
-                                <input type="button" class="button-ok i18n i18n-value" value="{DLG_OK}"/>
-                                <input type="button" class="button-cancel i18n i18n-value" value="{DLG_CANCEL}"/>
+                                <input type="button" class="button-ok i18n i18n-value" value="OK"/>
+                                <input type="button" class="button-cancel i18n i18n-value" value="Cancel"/>
                             </div>
                         </div>
                     </div>
@@ -154,12 +153,11 @@
 
             <div id="main-controls">
                 <div id="main-buttons">
-                    <img class="tool-button midnight-filter" src="../icons/reload.svg" title="{Reload}" id="btnLoad"/>
-                    <img class="tool-button midnight-filter" src="../icons/search.svg" title="{Search}" id="btnSearch"/>
-                    <img class="tool-button midnight-filter" src="../icons/settings.svg" title="{Setting}" id="btnSettings"/>
-                    <img class="tool-button midnight-filter" src="../icons/help.svg" title="{Help}" id="btnHelp"/>
-                    <img class="tool-button midnight-filter" src="../icons/bell.svg" title="{Announcement}" id="btnAnnouncement"/>
-                    <!--a href="options.html#donate" style="color:blue;font-size:9px;text-transform:uppercase;" target="_blank">{DONATE}</a-->
+                    <img class="tool-button midnight-filter" src="../icons/reload.svg" title="Reload" id="btnLoad"/>
+                    <img class="tool-button midnight-filter" src="../icons/search.svg" title="Search" id="btnSearch"/>
+                    <img class="tool-button midnight-filter" src="../icons/settings.svg" title="Settings" id="btnSettings"/>
+                    <img class="tool-button midnight-filter" src="../icons/help.svg" title="Help" id="btnHelp"/>
+                    <img class="tool-button midnight-filter" src="../icons/bell.svg" title="Announcement" id="btnAnnouncement"/>
                 </div>
                 <div id="shelf-selector-container">
                     <img id="shelves-icon" title="Shelf" src="../icons/books.svg" class="midnight-filter">

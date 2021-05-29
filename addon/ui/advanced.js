@@ -80,7 +80,7 @@ function configureMaintenancePanel() {
     $("#optimize-database-link").on("click", async e => {
         e.preventDefault();
 
-        if (await confirm("{Warning}", "It is recommended to make a full backup before the optimization. Continue?")) {
+        if (await confirm("Warning", "It is recommended to make a full backup before the optimization. Continue?")) {
 
             let progressListener = message => {
                 if (message.type === "DATABASE_OPTIMIZATION_PROGRESS") {
@@ -123,7 +123,7 @@ function configureMaintenancePanel() {
     $("#reset-cloud-link").on("click", async e => {
         e.preventDefault();
 
-        if (await confirm("{Warning}", "This will remove all cloud shelf content. Continue?")) {
+        if (await confirm("Warning", "This will remove all cloud shelf content. Continue?")) {
             let success = await send.resetCloud();
 
             if (!success)

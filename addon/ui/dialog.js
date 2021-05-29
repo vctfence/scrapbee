@@ -208,11 +208,11 @@ function showDlg(name, data, callback) {
 }
 
 function alert(title, message) {
-    return showDlg("alert", {title: title.translate(), message: message.translate()});
+    return showDlg("alert", {title, message});
 }
 
 function confirm(title, message) {
-    return showDlg("confirm", {title: title.translate(), message: message.translate()});
+    return showDlg("confirm", {title, message});
 }
 
 

@@ -721,15 +721,15 @@ class BookmarkTree {
         let multiselect = selectedNodes.length > 1;
 
         const setTODOState = async state => {
-            let selected_ids = selectedNodes.map(n => o(n).type === NODE_TYPE_GROUP || o(n).type === NODE_TYPE_SHELF
+            let selectedIds = selectedNodes.map(n => o(n).type === NODE_TYPE_GROUP || o(n).type === NODE_TYPE_SHELF
                                                         ? n.children
                                                         : o(n).id);
             let nodes = [];
-            let marked_nodes = selected_ids.flat().map(id => tree.get_node(id));
+            let marked_nodes = selectedIds.flat().map(id => tree.get_node(id));
 
-            selected_ids = marked_nodes.filter(n => isEndpoint(o(n))).map(n => parseInt(n.id));
+            selectedIds = marked_nodes.filter(n => isEndpoint(o(n))).map(n => parseInt(n.id));
 
-            selectedNodes = marked_nodes.filter(n => selected_ids.some(id => id === o(n).id)).map(n => o(n));
+            selectedNodes = marked_nodes.filter(n => selectedIds.some(id => id === o(n).id)).map(n => o(n));
 
             selectedNodes.forEach(n => nodes.push({id: n.id, uuid: n.uuid, external: n.external, todo_state: state}));
 
@@ -739,7 +739,7 @@ class BookmarkTree {
 
             this.stopProcessingIndication();
 
-            selected_ids.forEach(id => {
+            selectedIds.forEach(id => {
                 let jnode = tree.get_node(id);
                 o(jnode).todo_state = state;
                 jnode.a_attr.class = jnode.a_attr.class.replace(/todo-state-[a-zA-Z]+/g, "");
@@ -1128,7 +1128,7 @@ class BookmarkTree {
                             return;
                         }
 
-                        if (await confirm("{Warning}", "{ConfirmDeleteItem}")) {
+                        if (await confirm("Warning", "Do you really want to delete selected items?")) {
                             this.startProcessingIndication();
 
                             let selectedIds = selectedNodes.map(n => o(n).id);
@@ -1145,7 +1145,7 @@ class BookmarkTree {
                         }
                     }
                     else {
-                        if (await confirm("{Warning}", "{ConfirmDeleteItem}")) {
+                        if (await confirm("Warning", "Do you really want to delete selected items?")) {
                             this.startProcessingIndication();
 
                             try {

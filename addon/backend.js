@@ -29,6 +29,7 @@ import {
 } from "./storage.js";
 import {readBlob} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
+import {indexWords} from "./utils_html.js";
 
 class ExternalEventProvider {
     constructor() {
@@ -238,7 +239,7 @@ export class Backend extends ExternalEventProvider {
         let result;
 
         if (options.content && options.search) {
-            const search = options.search.indexWords();
+            const search = indexWords(options.search, false);
 
             let subtree;
             if (options.path) {

@@ -1,4 +1,8 @@
 
+export function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 export function merge(to, from) {
     for (const [k, v] of Object.entries(from)) {
         if (!to.hasOwnProperty(k))

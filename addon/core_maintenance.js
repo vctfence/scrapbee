@@ -5,7 +5,7 @@ import {computeSHA1} from "./utils.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {nativeBackend} from "./backend_native.js";
-import {parseHtml, fixDocumentEncoding} from "./utils_html.js";
+import {parseHtml, fixDocumentEncoding, indexWords} from "./utils_html.js";
 
 receive.getAddonIdbPath = async message => {
     let helperApp = await nativeBackend.probe();
@@ -149,11 +149,12 @@ receive.reindexArchiveContent = async message => {
             if (node.type === NODE_TYPE_ARCHIVE) {
                 const blob = await backend.fetchBlob(node.id);
 
-                if (blob && !blob.byte_length && blob.data && blob.data.indexWords)
-                    await backend.updateIndex(node.id, blob.data.indexWords());
+                if (blob && !blob.byte_length && blob.data && typeof blob.data === "string")
+                    await backend.updateIndex(node.id, indexWords(blob.data));
                 else if (blob && !blob.byte_length && blob.object) {
                     let text = await backend.reifyBlob(blob);
-                    await backend.updateIndex(node.id, text?.indexWords());
+                    if (text)
+                        await backend.updateIndex(node.id, indexWords(text));
                 }
             }
 

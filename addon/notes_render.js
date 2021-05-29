@@ -1,3 +1,4 @@
+import {escapeCSS, escapeHtml} from "./utils_html.js";
 import * as org from "./lib/org/org.js";
 
 export function org2html(org_text) {
@@ -5,7 +6,7 @@ export function org2html(org_text) {
     let html = new org.ConverterHTML(doc).result;
 
     let output = doc.directiveValues["css:"]
-        ? `<style>${doc.directiveValues["css:"].htmlEncode(true, true)}</style>`
+        ? `<style>${escapeCSS(doc.directiveValues["css:"])}</style>`
         : "";
 
     if (doc.options.toc) {
@@ -33,7 +34,7 @@ export function markdown2html(md_text) {
     }
 
     let output = css
-        ? `<style>${css.htmlEncode(true, true)}</style>`
+        ? `<style>${escapeCSS(css)}</style>`
         : "";
 
     output += marked(md_text);
@@ -56,13 +57,13 @@ export function text2html(text) {
     }
 
     let output = css
-        ? `<style>${css.htmlEncode(true, true)}</style>`
+        ? `<style>${escapeCSS(css)}</style>`
         : "";
 
     if (css)
         text = text.replace(firstLine, "");
 
-    output += `<pre class="plaintext">${text.htmlEncode()}</pre>`
+    output += `<pre class="plaintext">${escapeHtml(text)}</pre>`
 
     return output;
 }

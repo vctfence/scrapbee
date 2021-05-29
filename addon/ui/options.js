@@ -6,11 +6,11 @@ import {settings} from "../settings.js"
 import {confirm} from "./dialog.js";
 import {formatBytes, toHHMMSS} from "../utils.js";
 import {
+    isSpecialShelf,
     CLOUD_SHELF_NAME,
     DONE_SHELF_NAME,
     EVERYTHING,
     FIREFOX_SHELF_NAME,
-    isSpecialShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     TODO_SHELF_NAME
@@ -321,9 +321,6 @@ function initHelpMarks() {
 
 window.onload = async function() {
     await backend;
-
-    document.title = document.title.translate();
-    document.body.innerHTML = document.body.innerHTML.translate();
 
     initHelpMarks();
 

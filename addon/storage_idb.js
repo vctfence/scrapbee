@@ -19,6 +19,7 @@ import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
 import {stringByteLengthUTF8} from "./utils.js";
 import {notes2html} from "./notes_render.js";
+import {indexWords} from "./utils_html.js";
 
 
 const dexie = new Dexie("scrapyard");
@@ -618,10 +619,8 @@ class IDBStorage {
 
         if (index?.words)
             await this.storeIndex(node.id, index.words);
-        else if (!byteLength && typeof data === "string") {
-            let words = data.indexWords();
-            await this.storeIndex(node.id, words);
-        }
+        else if (!byteLength && typeof data === "string")
+            await this.storeIndex(node.id, indexWords(data));
     }
 
     // used only for text/html edited content
@@ -635,9 +634,7 @@ class IDBStorage {
 
         const node = {id: nodeId, size: object.size};
         await this.updateNode(node);
-
-        let words = data.indexWords();
-        await this.updateIndex(nodeId, words);
+        await this.updateIndex(nodeId, indexWords(data));
     }
 
     async deleteBlob(nodeId) {
@@ -694,15 +691,15 @@ class IDBStorage {
 
             if (options.format === "delta" && options.html) {
                 node.size += stringByteLengthUTF8(options.html);
-                words = options.html.indexWords();
+                words = indexWords(options.html);
             }
             else {
                 if (options.format === "text")
-                    words = options.content.indexWords(false);
+                    words = indexWords(options.content, false);
                 else {
                     let html = notes2html(options);
                     if (html)
-                        words = html.indexWords();
+                        words = indexWords(html);
                 }
             }
 
@@ -760,7 +757,7 @@ class IDBStorage {
         await this.updateNode(node);
 
         if (node.has_comments) {
-            let words = comments.indexWords(false);
+            let words = indexWords(comments, false);
             await this.updateCommentIndex(node.id, words);
         }
         else

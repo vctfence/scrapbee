@@ -37,9 +37,6 @@ let randomBookmarkTimeout;
 window.onload = async function () {
     await backend;
 
-    document.title = document.title.translate();
-    document.body.innerHTML = document.body.innerHTML.translate();
-
     shelfList = new ShelfList("#shelfList", {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
         _prefix: "sidebar"
@@ -203,7 +200,7 @@ async function loadSidebar() {
 
         stopProcessingIndication();
 
-        if (await confirm("{Error}", "Scrapyard has encountered a critical error.<br>Show diagnostic page?")) {
+        if (await confirm("Error", "Scrapyard has encountered a critical error.<br>Show diagnostic page?")) {
             localStorage.setItem("scrapyard-diagnostics-error",
                 JSON.stringify({origin: "Sidebar initialization", name: e.name, message: e.message, stack: e.stack}));
             openPage("options.html#diagnostics");
@@ -363,7 +360,7 @@ async function deleteShelf() {
         return;
     }
 
-    const proceed = await confirm("{Warning}", "Do you really want to delete '" + name + "'?");
+    const proceed = await confirm("Warning", "Do you really want to delete '" + name + "'?");
 
     if (proceed && name) {
         await send.deleteNodes({node_ids: id})
@@ -393,7 +390,7 @@ async function importShelf(e) {
 
         if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isSpecialShelf(lname)) {
             if (shelfList.hasShelf(name)) {
-                if (await confirm("{Warning}", "This will replace '" + name + "'.")) {
+                if (await confirm("Warning", "This will replace '" + name + "'.")) {
                     await performImport(e.target.files[0], name, ext);
                     $("#file-picker").val("");
                 }

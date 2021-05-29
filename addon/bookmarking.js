@@ -1,6 +1,6 @@
 import {settings} from "./settings.js";
 import {openContainerTab, openPage, showNotification, updateTab} from "./utils_browser.js";
-import {getMimetypeExt} from "./utils.js";
+import {capitalize, getMimetypeExt} from "./utils.js";
 import {backend} from "./backend.js";
 import {send} from "./proxy.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
@@ -8,7 +8,10 @@ import {nativeBackend} from "./backend_native.js";
 import {fetchWithTimeout} from "./utils_io.js";
 
 export function formatShelfName(name) {
-    return settings.capitalize_builtin_shelf_names()? name?.capitalize(): name;
+    if (name && settings.capitalize_builtin_shelf_names())
+        return capitalize(name);
+
+    return name;
 }
 
 export function isSpecialPage(url) {

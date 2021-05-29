@@ -10,9 +10,20 @@ var entityMap = {
 };
 
 export function escapeHtml(string) {
-    return String(string).replace(/[&<>"'`=\/]/g, function (s) {
-        return entityMap[s];
-    });
+    return String(string).replace(/[&<>"'`=\/]/g, s => entityMap[s]);
+}
+
+export function escapeCSS(string) {
+    return String(string).replace(/[<>]/g, s => entityMap[s]);
+}
+
+export function unescapeHtml(string) {
+    return string.replace(/&amp;/g, '&')
+                 .replace(/&quot;/g, '\"')
+                 .replace(/&lt;/g, '<')
+                 .replace(/&gt;/g, '>')
+                 .replace(/&nbsp;/g, ' ')
+                 .replace(/&#39;/g, "'");
 }
 
 export function parseHtml(htmlText) {
@@ -104,5 +115,31 @@ export function applyInlineStyles(element, recursive = true) {
         Array.from(element.children).forEach(child => {
             applyInlineStyles(child, recursive);
         });
+    }
+}
+
+export function indexWords(string, html = true) {
+    try {
+        if (html)
+            string = string.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
+                           .replace(/<title.*?<\/title>/igs, "")
+                           .replace(/<style.*?<\/style>/igs, "")
+                           .replace(/<script.*?<\/script>/igs, "")
+                           .replace(/&[0-9#a-zA-Z]+;/igs, ' ')
+                           .replace(/<[^>]+>/gs, ' ');
+
+        string = string.replace(/\n/g, ' ')
+                       .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
+
+        let words = string.split(" ")
+                          .filter(s => s && s.length > 2)
+                          .map(s => s.toLocaleUpperCase())
+
+        return Array.from(new Set(words));
+    }
+    catch (e) {
+        console.error(e)
+        console.log("Index creation has failed.")
+        return [];
     }
 }
