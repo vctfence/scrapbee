@@ -1,9 +1,8 @@
 import {send} from "./proxy.js";
 import {backend} from "./backend.js";
-import {settings} from "./settings.js";
 
 async function openReference(tab) {
-    await settings.load();
+    await backend;
 
     let url = decodeURIComponent(new URL(tab.url).hash.substr(1));
 

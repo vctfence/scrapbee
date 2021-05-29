@@ -469,10 +469,9 @@ def backup_peek_meta(path):
 @requires_auth
 def backup_list():
     directory = request.form["directory"]
+    directory = os.path.expanduser(directory)
 
     if os.path.exists(directory):
-        directory = os.path.expanduser(directory)
-
         result = "{"
 
         files = [f for f in os.listdir(directory) if f.endswith(BACKUP_JSON_EXT) or f.endswith(BACKUP_COMPRESSED_EXT)]

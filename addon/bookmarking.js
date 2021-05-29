@@ -90,15 +90,8 @@ export async function captureTab(tab, bookmark) {
             }
             catch (e) {
                 try {
-                    const settingsKey = "savepage-settings";
-                    const settings = (await browser.storage.local.get(settingsKey))[settingsKey];
-
-                    let timeout = settings["options-maxresourcetime"];
-                    timeout = timeout? timeout * 1000: 30000;
-
                     const headers = {"Cache-Control": "no-store"};
-
-                    const response = await fetchWithTimeout(tab.url, {timeout, headers});
+                    const response = await fetchWithTimeout(tab.url, {timeout: 60000, headers});
 
                     if (response.ok) {
                         let contentType = response.headers.get("content-type");
@@ -106,8 +99,11 @@ export async function captureTab(tab, bookmark) {
                         if (!contentType)
                             contentType = getMimetypeExt(new URL(tab.url).pathname) || "application/pdf";
 
+                        bookmark.content_type = contentType;
+
                         await backend.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
                     }
+
                     send.bookmarkAdded({node: bookmark});
                 }
                 catch (e) {

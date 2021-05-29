@@ -1,3 +1,4 @@
+import {settings} from "./settings.js"
 import {delegateProxy} from "./proxy.js";
 import IDBStorage from "./storage_idb.js";
 import {rdfBackend} from "./backend_rdf.js";
@@ -7,6 +8,8 @@ import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {ishellBackend} from "./backend_ishell.js";
 
 import {
+    isContainer,
+    isEndpoint,
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
     DEFAULT_SHELF_NAME,
@@ -14,8 +17,6 @@ import {
     DONE_SHELF_NAME,
     EVERYTHING,
     FIREFOX_BOOKMARK_MOBILE,
-    isContainer,
-    isEndpoint,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -50,6 +51,8 @@ class ExternalEventProvider {
     }
 
     registerExternalBackend(name, backend) {
+        if (backend.initialize)
+            backend.initialize();
         this.externalBackends[name] = backend;
     }
 
@@ -765,7 +768,6 @@ export class Backend extends ExternalEventProvider {
                                 if (type.startsWith("image")) {
                                     const buffer = await response.arrayBuffer();
                                     if (buffer.byteLength) {
-                                        log(buffer)
                                         const [id, iconUrl] = await convertAndStore(buffer, type);
                                         await updateNode(node, iconUrl);
                                         return id;
@@ -925,5 +927,9 @@ export class Backend extends ExternalEventProvider {
     }
 }
 
-export let backend = new Backend(new IDBStorage());
+export let backend = new Promise(async resolve => {
+    await settings.load();
+    backend = new Backend(new IDBStorage());
+    resolve(backend);
+});
 

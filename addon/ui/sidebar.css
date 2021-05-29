@@ -303,6 +303,7 @@ select {
     width: 16px;
     height: 16px;
     margin-right: 4px;
+    display: none;
 }
 
 #shelf-menu-button {
@@ -404,7 +405,7 @@ select {
 
 #shelf-selector-container {
     flex: 0 1 auto;
-    display: none;
+    display: flex;
     align-content: center;
     align-items: center;
     flex-wrap: nowrap;

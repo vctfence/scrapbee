@@ -500,7 +500,8 @@ function setEditorContent(content) {
     }
 }
 
-window.onload = function() {
+window.onload = async function() {
+    await backend;
 
     if (inline)
         $("#tabbar").html(`<a id="notes-button" class="focus" href="#">Notes</a>

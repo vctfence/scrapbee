@@ -6,7 +6,7 @@ import {
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
     NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF, NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
-    isContainer, isEndpoint,
+    isContainer, isEndpoint, FIREFOX_SPECIAL_FOLDERS,
 } from "./storage.js";
 
 const CATEGORY_ADDED = 0;
@@ -380,25 +380,28 @@ export class BrowserBackend {
             let parent = await backend.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
 
             if (parent) {
-                let browserChildren = await browser.bookmarks.getChildren(bookmark.parentId);
-                let dbChildren = [];
+                let browserBookmarks = await browser.bookmarks.getChildren(bookmark.parentId);
+                let dbBookmarks = [];
                 let updatedNode;
 
-                for (let c of browserChildren) {
-                    let dbChild = await backend.getExternalNode(c.id, FIREFOX_SHELF_NAME);
+                for (let browserBookmark of browserBookmarks) {
+                    let dbBookmark = await backend.getExternalNode(browserBookmark.id, FIREFOX_SHELF_NAME);
 
-                    if (dbChild) {
-                        if (c.id === id) {
-                            updatedNode = dbChild;
-                            dbChild.parent_id = parent.id;
+                    if (dbBookmark) {
+                        if (browserBookmark.id === id) {
+                            updatedNode = dbBookmark;
+                            dbBookmark.parent_id = parent.id;
                         }
 
-                        dbChild.pos = c.index;
-                        dbChildren.push(dbChild);
+                        dbBookmark.pos = browserBookmark.index;
+                        dbBookmarks.push(dbBookmark);
                     }
                 }
 
-                await backend.reorderNodes(dbChildren);
+                await backend.reorderNodes(dbBookmarks);
+
+                if (updatedNode)
+                    await backend.updateNode(updatedNode);
 
                 if (updatedNode.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                     send.bookmarkCreated({node: updatedNode});

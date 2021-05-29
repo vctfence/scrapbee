@@ -15,8 +15,7 @@ import {
     NODE_TYPE_BOOKMARK,
     TODO_SHELF_NAME
 } from "../storage.js";
-import {getFavicon, testFavicon} from "../favicon.js";
-import {parseHtml} from "../utils_html.js";
+import {getFavicon} from "../favicon.js";
 import {showNotification} from "../utils_browser.js";
 import {fetchText, fetchWithTimeout} from "../utils_io.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
@@ -106,8 +105,10 @@ function storeSavePageSettings() {
 }
 
 function loadScrapyardSettings() {
-    document.getElementById("option-shelf-list-max-height").value = _(settings.shelf_list_height(), 600);
-    document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(), true);
+    document.getElementById("option-shelf-list-max-height").value = _(settings.shelf_list_height(),
+                                                                                settings.default.shelf_list_height);
+    document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(),
+                                                                                settings.default.show_firefox_bookmarks);
     document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
     document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
     document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
@@ -117,11 +118,11 @@ function loadScrapyardSettings() {
     document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
     document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
     document.getElementById("option-export-format").value = _(settings.export_format(), "json");
-    selectricRefresh($("#option-export-format"));
     document.getElementById("option-use-helper-app-for-export").checked = settings.use_helper_app_for_export();
     document.getElementById("option-undo-failed-imports").checked = settings.undo_failed_imports();
     document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
-    document.getElementById("option-helper-port").value = _(settings.helper_port_number(), 20202);
+    document.getElementById("option-helper-port").value = _(settings.helper_port_number(),
+                                                                            settings.default.helper_port_number);
 
     document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
 
@@ -158,6 +159,7 @@ function loadScrapyardSettings() {
 
     $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
     selectricRefresh($("#option-sidebar-theme"));
+    selectricRefresh($("#option-export-format"));
 }
 
 async function storeScrapyardSettings() {
@@ -318,10 +320,10 @@ function initHelpMarks() {
 }
 
 window.onload = async function() {
+    await backend;
+
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
-
-    await settings.load();
 
     initHelpMarks();
 

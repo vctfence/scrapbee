@@ -1,5 +1,4 @@
 import {backend} from "../backend.js";
-import {settings} from "../settings.js"
 import {BookmarkTree} from "./tree.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
 import {getFaviconFromTab, testFavicon} from "../favicon.js";
@@ -26,7 +25,8 @@ function saveHistory(nodeId, text, history) {
     }
 }
 
-window.onload = function () {
+window.onload = async function () {
+    await backend;
 
     let folderHistory;
 
@@ -56,9 +56,7 @@ window.onload = function () {
 
         $("#bookmark-folder").selectric("refresh");
 
-        settings.load(() => {
-            tree.update(nodes);
-        });
+        tree.update(nodes);
     });
 
 

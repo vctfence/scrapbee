@@ -9,11 +9,11 @@ import {EVERYTHING_SHELF_ID} from "../storage.js";
 let shelfList;
 
 window.onload = async function() {
-    await settings.load();
+    await backend;
 
     shelfList = new ShelfList("#search-scope", {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
-        _fulltext: true
+        _prefix: "fulltext"
     });
 
     await shelfList.load();

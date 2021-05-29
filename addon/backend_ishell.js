@@ -4,13 +4,16 @@ import {settings} from "./settings.js";
 class IShellBackend {
     constructor() {
         this.ISHELL_ID = `ishell${this._isExtensionLocal()? "": "-we"}@gchristensen.github.io`;
-        settings.load(settings => this.enableInvalidation(settings.ishell_presents()));
+    }
+
+    initialize() {
+        this.enableInvalidation(settings.ishell_presents());
 
         if (window.location.href.endsWith("background.html")) {
             let initListener = event => {
                 if (event.data.type === "SCRAPYARD_ID_REQUESTED") {
                     if (event.data.sender.id === this.ISHELL_ID) {
-                        this._initialize();
+                        this._listenIShell();
                         window.removeEventListener("message", initListener);
                     }
                 }
@@ -25,7 +28,7 @@ class IShellBackend {
         });
     }
 
-    _initialize() {
+    _listenIShell() {
         if (!this._initialized) {
             this._initialized = true;
             this.enableInvalidation(true);
@@ -51,7 +54,7 @@ class IShellBackend {
     }
 
     _notifyOtherInstances(enable) {
-        settings.load(settings => settings.ishell_presents(enable));
+        settings.load().then(() => settings.ishell_presents(enable));
         // notify instances of the class in the other pages that extension is installed
         send.ishellEnableInvalidation({enable: enable});
     }

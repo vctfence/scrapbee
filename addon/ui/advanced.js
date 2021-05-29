@@ -1,5 +1,6 @@
 import {send} from "../proxy.js";
 import {settings} from "../settings.js";
+import {backend} from "../backend.js";
 import {showNotification} from "../utils_browser.js";
 import {alert, confirm} from "./dialog.js";
 import {formatBytes} from "../utils.js";
@@ -161,8 +162,6 @@ function configureImpExpPanel() {
         delete settings["scrapyard-settings"]["dropbox_refresh_token"];
         delete settings["scrapyard-settings"]["pending_announcement"];
 
-        settings["scrapyard-settings"]["last_shelf"] = 1;
-
         settings["localstorage-settings"] = {
             "editor-font-size": localStorage.getItem("editor-font-size"),
             "notes-font-size": localStorage.getItem("notes-font-size"),
@@ -236,7 +235,7 @@ function configureImpExpPanel() {
 }
 
 window.onload = async function() {
-    await settings.load();
+    await backend;
 
     initHelpMarks();
     configureAutomationPanel();
@@ -244,5 +243,4 @@ window.onload = async function() {
     configureBackupCompressionPanel();
     configureMaintenancePanel();
     configureImpExpPanel();
-
 }

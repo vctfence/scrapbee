@@ -15,20 +15,13 @@ import {showNotification} from "./utils_browser.js";
 
 export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 
-
-export let cloudBackend;
-
-
 export class CloudBackend {
-    constructor(provider) {
-        switch (provider) {
-            default:
-                this._provider = dropboxBackend;
-        }
+    constructor() {
     }
 
-    static init() {
-        cloudBackend = new CloudBackend("dropbox");
+    initialize() {
+        this._provider = dropboxBackend;
+        this._provider.initialize();
     }
 
     async reset() {
@@ -82,7 +75,7 @@ export class CloudBackend {
         }
     }
 
-    async authenticate(signin = true) {
+    authenticate(signin = true) {
         return this._provider.authenticate(signin);
     }
 
@@ -592,7 +585,7 @@ export class CloudBackend {
             let cloudLastModified = await this.getLastModified();
 
             if (dbRoot.date_modified && cloudLastModified
-                && dbRoot.date_modified.getTime() === cloudLastModified.getTime())
+                    && dbRoot.date_modified.getTime() === cloudLastModified.getTime())
                 return;
 
             let cloudRoot = await this.getTree();
@@ -657,8 +650,8 @@ export class CloudBackend {
         }
     }
 
-    startBackgroundSync(enable) {
-        if (enable)
+    startBackgroundSync() {
+        if (settings.cloud_background_sync())
             this._backgroundSyncInterval = setInterval(
                 () => this.reconcileCloudBookmarksDB(),
                 15 * 60 * 1000);
@@ -667,4 +660,4 @@ export class CloudBackend {
     }
 }
 
-CloudBackend.init();
+export let cloudBackend = new CloudBackend();

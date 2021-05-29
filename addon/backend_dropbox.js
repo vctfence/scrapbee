@@ -16,20 +16,20 @@ export class DropboxBackend {
         this.dbxAuth = new DropboxAuth({clientId: APP_KEY});
         this.dbx = new Dropbox({auth: this.dbxAuth});
         this.assetManager = this.newAssetManager();
+    }
 
-        settings.load(async settings => {
-            let refreshToken = settings.dropbox_refresh_token();
-            if (refreshToken) {
-                this.dbxAuth.setRefreshToken(refreshToken);
-            }
-            else {
-                browser.runtime.onMessage.addListener((request) => {
-                    if (request.type === "DROPBOX_AUTHENTICATED") {
-                        this.dbxAuth.setRefreshToken(request.refreshToken);
-                    }
-                });
-            }
-        });
+    initialize() {
+        let refreshToken = settings.dropbox_refresh_token();
+        if (refreshToken) {
+            this.dbxAuth.setRefreshToken(refreshToken);
+        }
+        else {
+            browser.runtime.onMessage.addListener((request) => {
+                if (request.type === "DROPBOX_AUTHENTICATED") {
+                    this.dbxAuth.setRefreshToken(request.refreshToken);
+                }
+            });
+        }
     }
 
     isAuthenticated() {
@@ -57,10 +57,10 @@ export class DropboxBackend {
                                     if (changed.url.includes("code=")) {
                                         const code = changed.url.match(/.*code=(.*)$/i)[1];
                                         this.dbxAuth.getAccessTokenFromCode(REDIRECT_URL, code)
-                                            .then((response) => {
+                                            .then(async (response) => {
                                                 const refreshToken = response.result.refresh_token;
                                                 this.dbxAuth.setRefreshToken(refreshToken);
-                                                settings.dropbox_refresh_token(refreshToken);
+                                                await settings.dropbox_refresh_token(refreshToken);
                                                 send.dropboxAuthenticated({refreshToken});
 
                                                 if (settings.dropbox___dbat())

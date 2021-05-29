@@ -69,6 +69,7 @@ String.prototype.escape = function (chars, slashed) {
         return "&#" + b.charCodeAt(0) + ";"
     });
 }
+
 /* replace placeholders inside string whith given data */
 String.prototype.fillData = function (data) {
     /** value getter */
@@ -115,12 +116,14 @@ String.prototype.fillData = function (data) {
     }
     return s;
 }
+
 String.prototype.shorten = function storten(l) {
     if (this.length > l) {
         return this.substring(0, l) + "..."
     }
     return this;
 }
+
 Date.prototype.format = function (fmt) {
     var o = {
         "M+": this.getMonth() + 1,
@@ -141,10 +144,13 @@ Date.prototype.format = function (fmt) {
     }
     return fmt;
 }
+
 String.prototype.isHexColor = function () {
     return this.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}||[0-9a-f]{8})$/i);
 }
+
 NodeList.prototype.forEach = Array.prototype.forEach;
+
 NodeList.prototype.iterateAll = function (fn) {
     this.forEach(function (item) {
         fn(item);

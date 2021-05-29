@@ -19,28 +19,57 @@ import {
 import {backend} from "../backend.js";
 import {formatShelfName} from "../bookmarking.js";
 
-const WIDTH_INCREMENT = 8;
+const DEFAULT_SHELF_LIST_WIDTH = 91;
+
+function createSelectricMeter() {
+    let meter = $("#selectric-meter");
+    if (!meter.length)
+        meter = $(`<div id="selectric-meter" style="position: absolute; white-space: nowrap; font-size: 12px;`
+                     + `bottom: 0; left: 0; visibility: hidden"></div>`).appendTo(document.body);
+    return meter;
+}
+
+function measureSelectricWidth(options) {
+    const meter = createSelectricMeter();
+
+    let longestText = "";
+    options.each(function() {
+        const optionText = this.textContent;
+        if (optionText.length > longestText.length)
+            longestText = optionText;
+    });
+
+    meter.text(longestText);
+
+    if (longestText === EVERYTHING)
+        meter.addClass("option-builtin");
+    else
+        meter.removeClass("option-builtin");
+
+    return meter.width() + 32; // + selectric margins & 4 pixels
+}
 
 export class ShelfList {
     constructor(select, options) {
         this._options = options || {};
-        this._options.inheritOriginalWidth = true;
+        this._options.inheritOriginalWidth = !options._prefix;
         this._options.arrowButtonMarkup =
             `<b class="button"><img class="midnight-filter" src="../images/dropdown.svg"/></b>`;
+
         this._select = $(select).selectric(this._options);
         this._element = this._select.closest(".selectric-wrapper");
-        this._width_increment = WIDTH_INCREMENT;
 
-        if (options._sidebar || options._fulltext) {
-            this._element.hide();
-        }
+        const shelfListWidth = localStorage.getItem(`${options._prefix}-shelf-list-width`) || DEFAULT_SHELF_LIST_WIDTH;
+        this._element.css("width", shelfListWidth)
     }
 
     _refresh() {
         this._select.selectric('refresh');
-        const width = this._element.width() + this._width_increment;
-        this._element.width(width);
-        localStorage.setItem("shelf-list-width", width)
+        const width = measureSelectricWidth($("option", this._select));
+        this._element.css("width", width);
+
+        if (this._options._prefix)
+            localStorage.setItem(`${this._options._prefix}-shelf-list-width`, width)
     }
 
     _styleBuiltinShelf() {
@@ -175,16 +204,15 @@ export class ShelfList {
 
 export function simpleSelectric(element) {
     return $(element).selectric({
-        inheritOriginalWidth: true,
+        inheritOriginalWidth: false,
         arrowButtonMarkup:
             `<b class="button"><img class="midnight-filter" src="../images/dropdown.svg"/></b>`
     });
 }
 
-export function selectricRefresh(element, widthInc = WIDTH_INCREMENT) {
+export function selectricRefresh(element) {
     element.selectric("refresh");
-    if (widthInc) {
-        let wrapper = element.closest(".selectric-wrapper");
-        wrapper.width(wrapper.width() + widthInc);
-    }
+    let wrapper = element.closest(".selectric-wrapper");
+    let width = measureSelectricWidth($("option", element));
+    wrapper.css("width", width);
 }

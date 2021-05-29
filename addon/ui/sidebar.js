@@ -25,7 +25,6 @@ import {
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 
-const DEFAULT_SHELF_LIST_WIDTH = 101;
 const INPUT_TIMEOUT = 1000;
 
 let tree;
@@ -36,23 +35,20 @@ let randomBookmark;
 let randomBookmarkTimeout;
 
 window.onload = async function () {
+    await backend;
 
-    const shelfListWidth = localStorage.getItem("shelf-list-width") || DEFAULT_SHELF_LIST_WIDTH;
-    $("#shelfList-placeholder").width(shelfListWidth);
-    $("#shelf-selector-container").css("display", "flex");
-
-    /* i18n */
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    await settings.load();
+    shelfList = new ShelfList("#shelfList", {
+        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
+        _prefix: "sidebar"
+    });
+
+    $("#shelves-icon").show();
 
     tree = new BookmarkTree("#treeview");
     context = new SearchContext(tree);
-    shelfList = new ShelfList("#shelfList", {
-        maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
-        _sidebar: true
-    });
 
     shelfList.change(function () { switchShelf(this.value, true, true) });
 
@@ -199,19 +195,13 @@ window.onload = async function () {
 async function loadSidebar() {
     try {
         await shelfList.load();
-        await switchShelf(settings.last_shelf() || DEFAULT_SHELF_ID, true, true);
+        await switchShelf(getLastShelf() || DEFAULT_SHELF_ID, true, true);
         stopProcessingIndication();
-
-        $("#shelfList-placeholder").remove();
-        shelfList.show();
     }
     catch (e) {
         console.error(e);
 
         stopProcessingIndication();
-
-        $("#shelfList-placeholder").remove();
-        shelfList.show();
 
         if (await confirm("{Error}", "Scrapyard has encountered a critical error.<br>Show diagnostic page?")) {
             localStorage.setItem("scrapyard-diagnostics-error",
@@ -246,10 +236,23 @@ function stopProcessingIndication() {
     clearTimeout(processingTimeout);
 }
 
+function getLastShelf() {
+    const lastShelf = localStorage.getItem("scrapyard-last-shelf");
+
+    if (lastShelf)
+        return parseInt(lastShelf);
+
+    return DEFAULT_SHELF_ID;
+}
+
+function setLastShelf(id) {
+    localStorage.setItem("scrapyard-last-shelf", id);
+}
+
 async function loadShelves(selected, synchronize = true, clearSelection = false) {
     try {
         await shelfList.reload();
-        return switchShelf(selected || settings.last_shelf() || DEFAULT_SHELF_ID, synchronize, clearSelection);
+        return switchShelf(selected || getLastShelf() || DEFAULT_SHELF_ID, synchronize, clearSelection);
     }
     catch (e) {
         console.error(e);
@@ -259,15 +262,14 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
 
 async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
 
-    if (settings.last_shelf() != shelf_id)
+    if (getLastShelf() != shelf_id)
         tree.clearIconCache();
 
     shelfList.selectShelf(shelf_id);
     let path = shelfList.selectedShelfName;
     path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
 
-    await settings.load();
-    settings.last_shelf(shelf_id);
+    setLastShelf(shelf_id);
 
     if (shelf_id == EVERYTHING_SHELF_ID)
         $("#shelf-menu-sort").show();
@@ -381,7 +383,7 @@ async function sortShelves() {
         positions.push({id: sorted[i].id, pos: i});
 
     await send.reorderNodes({positions: positions});
-    loadShelves(settings.last_shelf(),false);
+    loadShelves(getLastShelf(), false);
 }
 
 async function importShelf(e) {
@@ -473,11 +475,11 @@ async function selectNode(node) {
 }
 
 function sidebarRefresh() {
-    switchShelf(settings.last_shelf(), false);
+    switchShelf(getLastShelf(), false);
 }
 
 function sidebarRefreshExternal() {
-    let last_shelf = settings.last_shelf();
+    let last_shelf = getLastShelf();
 
     if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID)
         settings.load().then(() => loadShelves(last_shelf, false));
@@ -562,7 +564,7 @@ receive.beforeBookmarkAdded = async message => {
 
     if (select) {
         const path = await backend.computePath(node.parent_id);
-        if (settings.last_shelf() == path[0].id) {
+        if (getLastShelf() == path[0].id) {
             tree.selectNode(node.id);
         }
         else {
@@ -594,7 +596,7 @@ receive.notesChanged = message => {
 receive.nodesUpdated = sidebarRefresh;
 
 receive.nodesReady = message => {
-    let last_shelf = settings.last_shelf();
+    let last_shelf = getLastShelf();
 
     if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == message.shelf.id)
         loadShelves(last_shelf, false);
@@ -619,7 +621,7 @@ receive.cloudSyncEnd = message => {
 };
 
 receive.shelvesChanged = message => {
-    return settings.load().then(() => loadShelves(settings.last_shelf(), false));
+    return settings.load().then(() => loadShelves(getLastShelf(), false));
 };
 
 receive.sidebarThemeChanged = message => {
@@ -684,7 +686,7 @@ async function switchAfterCopy(message, external_path, group, topNodes) {
         tree.selectNode(topNodes);
     }
     else
-        await switchShelf(settings.last_shelf());
+        await switchShelf(getLastShelf());
 }
 
 receiveExternal.scrapyardCopyAt = async (message, sender) => {

@@ -550,14 +550,16 @@ class BookmarkTree {
 
             node.__tentative = false;
 
+            Object.assign(o(jnode), node);
+            jnode.original = BookmarkTree.toJsTreeNode(node);
+            this.data.push(jnode.original);
+
             if (node.icon && node.stored_icon) {
                 this.iconCache.set(node.icon, jnode.icon);
                 jnode.icon = node.icon;
             }
-
-            Object.assign(o(jnode), node);
-            jnode.original = BookmarkTree.toJsTreeNode(node);
-            this.data.push(jnode.original);
+            else
+                jnode.icon = jnode.original.icon;
 
             this._jstree.redraw_node(jnode)
         }
@@ -670,9 +672,9 @@ class BookmarkTree {
             this.startProcessingIndication();
 
             try {
-                const new_nodes = await send.moveNodes({node_ids: [o(jnode).id], dest_id: o(jparent).id});
+                const newNodes = await send.moveNodes({node_ids: [o(jnode).id], dest_id: o(jparent).id});
                 // keep jstree nodes synchronized with the database
-                for (let node of new_nodes) {
+                for (let node of newNodes) {
                     jnode.original = BookmarkTree.toJsTreeNode(node);
 
                     let old_original = this.data.find(d => d.id == node.id);

@@ -1,4 +1,3 @@
-import {settings} from "./settings.js";
 
 export function delegateProxy (target, origin) {
     return new Proxy(target, {

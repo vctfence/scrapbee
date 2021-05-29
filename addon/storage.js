@@ -64,6 +64,8 @@ export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
 export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
 export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
+export const FIREFOX_SPECIAL_FOLDERS = [FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_TOOLBAR];
+
 export const CLOUD_SHELF_NAME = "cloud";
 export const CLOUD_SHELF_UUID = CLOUD_SHELF_NAME;
 export const CLOUD_EXTERNAL_NAME = "cloud";

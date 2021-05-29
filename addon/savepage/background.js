@@ -538,7 +538,6 @@ function initialize()
 
         if (!("options-maxresourcesize" in object)) object["options-maxresourcesize"] = 50;
 
-        // WARNING: used in captureTab
         if (!("options-maxresourcetime" in object)) object["options-maxresourcetime"] =
             ("options-resourcetimeout" in object) ? object["options-resourcetimeout"] : 30;  /* Version 9.0-9.1 */
 
@@ -575,7 +574,7 @@ function initialize()
 
         showSubmenu = object["options-showsubmenu"];
 
-        maxResourceTime = object["options-maxresourcetime"]; // WARNING: used in captureTab
+        maxResourceTime = object["options-maxresourcetime"];
 
         allowPassive = object["options-allowpassive"];
 
