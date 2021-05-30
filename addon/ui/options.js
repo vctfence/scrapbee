@@ -218,25 +218,22 @@ function configureCloudSettingsPage() {
 
     $("#option-enable-cloud").on("change", async e => {
         await settings.load();
+        await settings.cloud_enabled(e.target.checked);
 
-        settings.cloud_enabled(e.target.checked,
-            async () => {
-                if (e.target.checked) {
-                    const success = await cloudBackend.authenticate();
-                    if (success)
-                        $("#auth-dropbox").val("Sign out");
-                }
-                send.reconcileCloudBookmarkDb()
-            });
+        if (e.target.checked) {
+            const success = await cloudBackend.authenticate();
+            if (success)
+                $("#auth-dropbox").val("Sign out");
+        }
+        send.reconcileCloudBookmarkDb()
     });
 
     $("#option-cloud-background-sync").prop("checked", settings.cloud_background_sync());
 
     $("#option-cloud-background-sync").on("change", async e => {
         await settings.load();
-
-        settings.cloud_background_sync(e.target.checked,
-            () => send.enableCloudBackgroundSync());
+        await settings.cloud_background_sync(e.target.checked);
+        send.enableCloudBackgroundSync();
     });
 
     if (dropboxBackend.isAuthenticated())

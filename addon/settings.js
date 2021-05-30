@@ -44,7 +44,7 @@ class ScrapyardSettings {
         else if (key === "platform")
             return this._platform;
 
-        return (val, callback) => {
+        return (val) => {
             let bin = this._bin;
             if (val === undefined) return bin[key];
             if (val === null) {
@@ -53,12 +53,7 @@ class ScrapyardSettings {
             }
             else bin[key] = val;
             let result = key in bin? bin[key]: old;
-            return new Promise(resolve => chrome.storage.local.set({[this._key]: bin},
-                () => {
-                    if (callback)
-                        callback(result);
-                    resolve(result);
-                }));
+            return new Promise(resolve => browser.storage.local.set({[this._key]: bin}).then(resolve(result)));
         }
     }
 
