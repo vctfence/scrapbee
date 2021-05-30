@@ -4,7 +4,7 @@
 /*                                                                      */
 /*      Javascript for Saving Content Pages (main frame)                */
 /*                                                                      */
-/*      Last Edit - 20 Jan 2021                                         */
+/*      Last Edit - 25 May 2021                                         */
 /*                                                                      */
 /*      Copyright (C) 2016-2021 DW-dev                                  */
 /*                                                                      */
@@ -135,8 +135,10 @@
 /*  Tab Save States                                                     */
 /*                                                                      */
 /*   undefined = Tab does not exist or URL never committed              */
-/*          -2 = URL committed                                          */
-/*          -1 = Script loaded                                          */
+/*          -4 = URL committed (page loading or loaded)                 */
+/*          -3 = Script loading                                         */
+/*          -2 = Script loaded (page loaded)                            */
+/*          -1 = Operation started                                      */
 /*           0 = Lazy Loads                                             */
 /*           1 = First Pass                                             */
 /*           2 = Second Pass                                            */
@@ -219,6 +221,8 @@ var timeStart = new Array();
 var timeFinish = new Array();
 
 var shadowElements = new Array("audio","video","use");  /* HTML & SVG elements that have built-in Shadow DOM */
+var hrefSVGElements = new Array("a","altGlyph","animate","animateColor","animateMotion","animateTransform","cursor","discard","feImage","filter","font-face-uri","glyphRef","image",
+                                "linearGradient","mpath","pattern","radialGradient","script","set","textPath","tref","use");  /* SVG 1.1 & SVG 2 elements that can have xlink:href or href attribute */
 
 var lazyLoadData = "data:image/png;base64,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";
 
@@ -305,17 +309,11 @@ function(object)
     useNewSaveMethod = object["options-usenewsavemethod"];
 
     loadLazyContent = object["options-loadlazycontent"];
-    // Scrapyard //////////////////////////////////////////////////////////////////
-    //lazyLoadType = object["options-lazyloadtype"];
-    lazyLoadType = 1;
-    ////////////////////////////////////////////////////////////////// Scrapyard //
+    lazyLoadType = object["options-lazyloadtype"];
     loadLazyImages = object["options-loadlazyimages"];
     retainCrossFrames = object["options-retaincrossframes"];
     mergeCSSImages = object["options-mergecssimages"];
-    // Scrapyard //////////////////////////////////////////////////////////////////
-    //executeScripts = object["options-executescripts"];
-    executeScripts = true;
-    ////////////////////////////////////////////////////////////////// Scrapyard //
+    executeScripts = object["options-executescripts"];
     removeUnsavedURLs = object["options-removeunsavedurls"];
     removeElements = object["options-removeelements"];
     rehideElements = object["options-rehideelements"];
@@ -397,6 +395,10 @@ function addListeners()
     chrome.storage.onChanged.addListener(
     function(changes,areaName)
     {
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        changes = changes["savepage-settings"] || {};
+        ////////////////////////////////////////////////////////////////// Scrapyard //
+
         if ("options-showwarning" in changes) showWarning = changes["options-showwarning"].newValue;
         if ("options-showresources" in changes) showResources = changes["options-showresources"].newValue;
         if ("options-promptcomments" in changes) promptComments = changes["options-promptcomments"].newValue;
@@ -959,9 +961,7 @@ function initializeBeforeSave()
 
     /* Identify all frames */
 
-    // Scrapyard //////////////////////////////////////////////////////////////////
-    chrome.runtime.sendMessage({ type: "requestFramesRelay" });
-    ////////////////////////////////////////////////////////////////// Scrapyard //
+    chrome.runtime.sendMessage({ type: "requestFrames" });
 
     // Scrapyard //////////////////////////////////////////////////////////////////
     new Promise(resolve => setTimeout(() => resolve(), 200)).then( /* allow time for all frames to reply */
@@ -1331,15 +1331,18 @@ function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfont
         }
         else if ((element.rel.toLowerCase() == "icon" || element.rel.toLowerCase() == "shortcut icon") && element.getAttribute("href"))
         {
-            baseuri = element.ownerDocument.baseURI;
-
-            rememberURL(element.href,baseuri,"image/vnd.microsoft.icon","",false);
-
-            if (firstIconLocation == "")
+            if (replaceableResourceURL(element.href))
             {
-                location = resolveURL(element.href,baseuri);
+                baseuri = element.ownerDocument.baseURI;
 
-                if (location != null) firstIconLocation = location;
+                rememberURL(element.href,baseuri,"image/vnd.microsoft.icon","",false);
+
+                if (firstIconLocation == "")
+                {
+                    location = resolveURL(element.href,baseuri);
+
+                    if (location != null) firstIconLocation = location;
+                }
             }
         }
     }
@@ -1573,7 +1576,7 @@ function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfont
 
     /* SVG - External image referenced in <image> element */
 
-    else if (element.localName == "image")
+    else if (element.localName == "image" && element instanceof SVGElement)
     {
         if (element.getAttribute("href") || element.getAttribute("xlink:href"))
         {
@@ -1590,7 +1593,7 @@ function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfont
 
     /* SVG - External resource referenced in other SVG elements */
 
-    else if (element instanceof SVGElement)
+    else if (hrefSVGElements.indexOf(element.localName) >= 0 && element instanceof SVGElement)
     {
         if (element.getAttribute("href") || element.getAttribute("xlink:href"))
         {
@@ -2874,6 +2877,15 @@ function generateHTML()
         }
     }
 
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
+
+    let resultingHTML = htmlStrings.join("");
+    htmlStrings.length = 0;
+
+    chrome.runtime.sendMessage({type: "STORE_PAGE_HTML", data: resultingHTML, bookmark: addedBookmark});
+    ////////////////////////////////////////////////////////////////// Scrapyard //
+
     // if (cancelSave)
     // {
     //     htmlStrings.length = 0;
@@ -2946,21 +2958,11 @@ function generateHTML()
     //     {
     //         window.URL.revokeObjectURL(objectURL);
     //
-    //         chrome.runtime.sendMessage({ type: "setSaveState", savestate: -1 });
+    //         chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 });
     //
     //         chrome.runtime.sendMessage({ type: "saveDone" });
     //     });
     // }
-
-    // Scrapyard //////////////////////////////////////////////////////////////////
-    chrome.runtime.sendMessage({ type: "setSaveState", savestate: 0 });
-
-    let resultingHTML = htmlStrings.join("");
-    htmlStrings.length = 0;
-
-    chrome.runtime.sendMessage({type: "STORE_PAGE_HTML", data: resultingHTML, bookmark: addedBookmark});
-    ////////////////////////////////////////////////////////////////// Scrapyard //
-
 }
 
 function undoShrinkPage()
@@ -2995,11 +2997,12 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
 {
     var i,j,startTag,textContent,endTag,inline,preserve,style,display,position,whitespace,displayed,csstext,baseuri,separator,origurl,datauri,origstr,dupelem,dupsheet,location,newurl;
     var visible,width,height,currentsrc,parser,svgdoc,svgstr,subframekey,startindex,endindex,htmltext,origsrcdoc,origsandbox,framedoc,prefix,shadowroot;
-    var doctype,target,text,asciistring,date,pageurl,state;
+    var doctype,target,text,asciistring,date,datestr,pubelem,pubstr,pubzone,pubdate,pubdatestr,pageurl,state;
+    var pubmatches = new Array();
     var metadataElements = new Array("base","link","meta","noscript","script","style","template","title");  /* HTML Living Standard 3.2.5.2.1 Metadata Content */
     var voidElements = new Array("area","base","br","col","command","embed","frame","hr","img","input","keygen","link","menuitem","meta","param","source","track","wbr");  /* W3C HTML5 4.3 Elements + menuitem */
-    var hiddenElements = new Array("area","base","datalist","head","link","meta","param","rp","script","source","style","template","track","title");  /* W3C HTML5 10.3.1 Hidden Elements */
     var retainElements = new Array("html","head","body","base","command","link","meta","noscript","script","style","template","title");
+    var hiddenElements = new Array("area","base","datalist","head","link","meta","param","rp","script","source","style","template","track","title");  /* W3C HTML5 10.3.1 Hidden Elements */
     var htmlFrameStrings = new Array();
 
     /* Create element start and end tags */
@@ -3888,7 +3891,7 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
 
     /* SVG - External image referenced in <image> element */
 
-    else if (element.localName == "image")
+    else if (element.localName == "image" && element instanceof SVGElement)
     {
         if (element.getAttribute("href") || element.getAttribute("xlink:href"))
         {
@@ -3909,7 +3912,7 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
 
     /* SVG - External resource referenced in other SVG elements */
 
-    else if (element instanceof SVGElement)
+    else if (hrefSVGElements.indexOf(element.localName) >= 0 && element instanceof SVGElement)
     {
         if (element.getAttribute("href") || element.getAttribute("xlink:href"))
         {
@@ -4519,6 +4522,30 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                 /* Add saved page information */
 
                 date = new Date();
+                datestr = date.toString();
+
+                if ((pubelem = document.querySelector("meta[property='article:published_time'][content]")) != null) pubstr = pubelem.getAttribute("content");  /* Open Graph - ISO8601 */
+                else if ((pubelem = document.querySelector("meta[property='datePublished'][content]")) != null) pubstr = pubelem.getAttribute("content");  /* Generic RDFa - ISO8601 */
+                else if ((pubelem = document.querySelector("meta[itemprop='datePublished'][content]")) != null) pubstr = pubelem.getAttribute("content");  /* Microdata - ISO8601 */
+                else if ((pubelem = document.querySelector("script[type='application/ld+json']")) != null)  /* JSON-LD - ISO8601 */
+                {
+                    pubmatches = pubelem.textContent.match(/"datePublished"\s*:\s*"([^"]*)"/);
+                    pubstr = pubmatches ? pubmatches[1] : null;
+                }
+                else if ((pubelem = document.querySelector("time[datetime]")) != null) pubstr = pubelem.getAttribute("datetime");  /* HTML5 - ISO8601 and similar formats */
+                else pubstr = null;
+
+                try
+                {
+                    if (!pubstr) throw false;
+                    pubmatches = pubstr.match(/(Z|(-|\+)\d\d:?\d\d)$/);
+                    pubzone = pubmatches ? (pubmatches[1] == "Z" ? " GMT+0000" : " GMT" + pubmatches[1].replace(":","")) : "";  /* extract timezone */
+                    pubstr = pubstr.replace(/(Z|(-|\+)\d\d:?\d\d)$/,"");  /* remove timezone */
+                    pubdate = new Date(pubstr);
+                    pubdatestr = pubdate.toString();
+                    pubdatestr = pubdatestr.substr(0,24) + pubzone;
+                }
+                catch (e) { pubdatestr = "Unknown"; }
 
                 if (savedItems == 0)
                 {
@@ -4557,7 +4584,7 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                     else if (lazyLoadType == 2) state += "shrink checks = " + lazyLoadShrinkTime + "s;";
                 }
 
-                if (loadLazyImages) state += " Load lazy images in existing content;"
+                if (loadLazyImages) state += " Load lazy images in existing content;";
 
                 state += " Max frame depth = " + maxFrameDepth + ";";
                 state += " Max resource size = " + maxResourceSize + "MB;";
@@ -4567,11 +4594,14 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
 
                 htmltext = prefix + "<meta name=\"savepage-url\" content=\"" + decodeURIComponent(pageurl) + "\">";
                 htmltext += prefix + "<meta name=\"savepage-title\" content=\"" + document.title + "\">";
+                htmltext += prefix + "<meta name=\"savepage-pubdate\" content=\"" + pubdatestr + "\">";
                 htmltext += prefix + "<meta name=\"savepage-from\" content=\"" + decodeURIComponent(document.URL) + "\">";
-                htmltext += prefix + "<meta name=\"savepage-date\" content=\"" + date.toString() + "\">";
+                htmltext += prefix + "<meta name=\"savepage-date\" content=\"" + datestr + "\">";
                 htmltext += prefix + "<meta name=\"savepage-state\" content=\"" + state + "\">";
-                htmltext += prefix + "<meta name=\"savepage-version\" content=\"" + chrome.runtime.getManifest().version + "\">";
-                htmltext += prefix + "<meta name=\"savepage-comments\" content=\"" + enteredComments + "\">";
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                htmltext += prefix + "<meta name=\"savepage-scrapyard-version\" content=\"" + chrome.runtime.getManifest().version + "\">";
+                //htmltext += prefix + "<meta name=\"savepage-comments\" content=\"" + enteredComments + "\">";
+                ////////////////////////////////////////////////////////////////// Scrapyard //
 
                 htmlStrings[htmlStrings.length] = htmltext;
             }
@@ -4980,7 +5010,7 @@ function newlineIndent(indent)
 
 function viewSavedPageInfo()
 {
-    var i,xhr,parser,pageinfodoc,container,metaurl,metatitle,metafrom,metadate,metastate,metaversion,metacomments;
+    var i,xhr,parser,pageinfodoc,container,metaurl,metatitle,metapubdate,metafrom,metadate,metastate,metaversion,metacomments;
 
     /* Load page info panel */
 
@@ -5022,6 +5052,7 @@ function viewSavedPageInfo()
 
             metaurl = document.querySelector("meta[name='savepage-url']").content;
             metatitle = document.querySelector("meta[name='savepage-title']").content;
+            metapubdate = document.querySelector("meta[name='savepage-pubdate']").content;
             metafrom = document.querySelector("meta[name='savepage-from']").content;
             metadate = document.querySelector("meta[name='savepage-date']").content;
             metastate = document.querySelector("meta[name='savepage-state']").content;
@@ -5055,6 +5086,7 @@ function viewSavedPageInfo()
 
             document.getElementById("savepage-pageinfo-panel-url").textContent = metaurl;
             document.getElementById("savepage-pageinfo-panel-title").textContent = metatitle;
+            document.getElementById("savepage-pageinfo-panel-pubdate").textContent = metapubdate;
             document.getElementById("savepage-pageinfo-panel-from").textContent = metafrom;
             document.getElementById("savepage-pageinfo-panel-date").textContent = metadate;
             document.getElementById("savepage-pageinfo-panel-state").textContent = metastate;
@@ -5066,11 +5098,17 @@ function viewSavedPageInfo()
     function clickOpenURL()
     {
         window.open(metaurl);
+
+        document.documentElement.removeChild(document.getElementById("savepage-pageinfo-panel-container"));
+
+        window.setTimeout(function() { chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 }); },1000);
     }
 
     function clickOkay()
     {
         document.documentElement.removeChild(document.getElementById("savepage-pageinfo-panel-container"));
+
+        window.setTimeout(function() { chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 }); },1000);
     }
 }
 
@@ -5389,7 +5427,7 @@ function removeResourceLoader()
                         null,
                         function savecancel()
                         {
-                            chrome.runtime.sendMessage({ type: "setSaveState", savestate: -1 });
+                            chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 });
                         });
         }
         else if (showWarning)
@@ -5406,7 +5444,7 @@ function removeResourceLoader()
                             },
                             function removecancel()
                             {
-                                chrome.runtime.sendMessage({ type: "setSaveState", savestate: -1 });
+                                chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 });
                             });
             }
             else substituteBlobResources();
@@ -5443,7 +5481,7 @@ function removeResourceLoader()
 
         chrome.runtime.sendMessage({ type: "setPageType", pagetype: pageType });
 
-        window.setTimeout(function() { chrome.runtime.sendMessage({ type: "setSaveState", savestate: -1 }); },1000);
+        window.setTimeout(function() { chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 }); },1000);
     }
 
     function replaceBlobResources(depth,frame,element)
@@ -5623,13 +5661,11 @@ function extractSavedPageMedia()
         showMessage("Extract Image/Audio/Video failed","Extract","Image/Audio/Video element not found.",null,null);
     }
 
-    window.setTimeout(function() { chrome.runtime.sendMessage({ type: "setSaveState", savestate: -1 }); },1000);
+    window.setTimeout(function() { chrome.runtime.sendMessage({ type: "setSaveState", savestate: -2 }); },1000);
 
     function extract(depth,frame,element)
     {
         var i,baseuri,location,filename,link,shadowroot;
-        var pathsegments = new Array();
-        var date = new Date();
 
         if (element.localName == "img" || element.localName == "audio" || element.localName == "video" || element.localName == "source")
         {
@@ -5813,7 +5849,7 @@ function replaceableResourceURL(url)
     /* Exclude existing data:, blob: or moz-extension: url */
 
     if (url.substr(0,5).toLowerCase() == "data:" || url.substr(0,5).toLowerCase() == "blob:" ||
-        url.substr(0,14).toLowerCase() == "moz-extension:" || url == "") return false;
+        url.substr(0,14).toLowerCase() == "moz-extension:" || url.indexOf("#") >= 0 || url == "") return false;
 
     return true;
 }
@@ -5847,11 +5883,11 @@ function removeFragment(url)
 
 function getSavedFileName(url,title,extract)
 {
-    var i,documentURL,host,hostw,path,pathw,file,filew,query,fragment,datestr,filename,regex,minlength;
-    var dateobj = new Date();
-    var mediaextns = new Array( ".jpe",".jpg",".jpeg",".gif",".png",".bmp",".ico",".svg",".svgz",".tif",".tiff",".ai",".drw",".pct",".psp",".xcf",".psd",".raw",".webp",
-                                ".aac",".aif",".flac",".iff",".m4a",".m4b",".mid",".midi",".mp3",".mpa",".mpc",".oga",".ogg",".ra",".ram",".snd",".wav",".wma",
-                                ".avi",".divx",".flv",".m4v",".mkv",".mov",".mp4",".mpeg",".mpg",".ogm",".ogv",".ogx",".rm",".rmvb",".smil",".webm",".wmv",".xvid");
+    var i,documentURL,host,hostw,path,pathw,file,filew,query,fragment,date,datestr,pubelem,pubstr,pubdate,pubdatestr,filename,regex,minlength;
+    var pubmatches = new Array();
+    var mediaextns = new Array( ".jpe",".jpg",".jpeg",".gif",".png",".bmp",".ico",".svg",".svgz",".tif",".tiff",".ai",".drw",".pct",".psp",".xcf",".psd",".raw",".webp",  /* Firefox image extensions */
+                                ".aac",".aif",".flac",".iff",".m4a",".m4b",".mid",".midi",".mp3",".mpa",".mpc",".oga",".ogg",".ra",".ram",".snd",".wav",".wma",  /* Firefox audio extensions */
+                                ".avi",".divx",".flv",".m4v",".mkv",".mov",".mp4",".mpeg",".mpg",".ogm",".ogv",".ogx",".rm",".rmvb",".smil",".webm",".wmv",".xvid");  /* Firefox video extensions */
 
     documentURL = new URL(url);
 
@@ -5866,7 +5902,7 @@ function getSavedFileName(url,title,extract)
     path = sanitizeString(path);
     path = path.replace(/^\/|\/$/g,"");
 
-    pathw = path.replace(/\.[^.]+$/,"");
+    pathw = path.replace(/\.[^.\/]+$/,"");
 
     file = path.replace(/[^\/]*\//g,"");
 
@@ -5880,17 +5916,38 @@ function getSavedFileName(url,title,extract)
     title = title.trim();
     if (title == "") title = file;
 
-    datestr = new Date(dateobj.getTime()-(dateobj.getTimezoneOffset()*60000)).toISOString();
+    date = new Date();
+    datestr = new Date(date.getTime()-(date.getTimezoneOffset()*60000)).toISOString();
+
+    if ((pubelem = document.querySelector("meta[property='article:published_time'][content]")) != null) pubstr = pubelem.getAttribute("content");  /* Open Graph - ISO8601 */
+    else if ((pubelem = document.querySelector("meta[property='datePublished'][content]")) != null) pubstr = pubelem.getAttribute("content");  /* Generic RDFa - ISO8601 */
+    else if ((pubelem = document.querySelector("meta[itemprop='datePublished'][content]")) != null) pubstr = pubelem.getAttribute("content");  /* Microdata - ISO8601 */
+    else if ((pubelem = document.querySelector("script[type='application/ld+json']")) != null)  /* JSON-LD - ISO8601 */
+    {
+        pubmatches = pubelem.textContent.match(/"datePublished"\s*:\s*"([^"]*)"/);
+        pubstr = pubmatches ? pubmatches[1] : null;
+    }
+    else if ((pubelem = document.querySelector("time[datetime]")) != null) pubstr = pubelem.getAttribute("datetime");  /* HTML5 - ISO8601 and similar formats */
+    else pubstr = null;
+
+    try
+    {
+        if (!pubstr) throw false;
+        pubstr = pubstr.replace(/(Z|(-|\+)\d\d:?\d\d)$/,"");  /* remove timezone */
+        pubdate = new Date(pubstr);
+        pubdatestr = new Date(pubdate.getTime()-(pubdate.getTimezoneOffset()*60000)).toISOString();
+    }
+    catch (e) { pubdatestr = ""; }
 
     filename = savedFileName;
 
-    regex = /(%TITLE%|%DATE\((.?)\)%|%TIME\((.?)\)%|%HOST%|%HOSTW%|%PATH%|%PATHW%|%FILE%|%FILEW%|%QUERY\(([^)]*)\)%|%FRAGMENT%)/g;
+    regex = /(%TITLE%|%DATE\((.?)\)%|%TIME\((.?)\)%|%DATEP\((.?)\)%|%TIMEP\((.?)\)%|%DATEPF\((.?)\)%|%TIMEPF\((.?)\)%|%HOST%|%HOSTW%|%PATH%|%PATHW%|%FILE%|%FILEW%|%QUERY\(([^)]*)\)%|%FRAGMENT%)/g;
 
     minlength = filename.replace(regex,"").length;
 
     filename = filename.replace(regex,_replacePredefinedFields);
 
-    function _replacePredefinedFields(match,p1,p2,p3,p4,offset,string)
+    function _replacePredefinedFields(match,p1,p2,p3,p4,p5,p6,p7,p8,offset,string)
     {
         var date,time,value;
         var params = new Object();
@@ -5906,6 +5963,26 @@ function getSavedFileName(url,title,extract)
             time = datestr.substr(11,8).replace(/:/g,p3);
             return _truncateField(p1,time);
         }
+        else if (p1.substr(0,7) == "%DATEP(" && p1.substr(-2) == ")%")
+        {
+            date = pubdatestr.substr(0,10).replace(/-/g,p4);
+            return _truncateField(p1,date);
+        }
+        else if (p1.substr(0,7) == "%TIMEP(" && p1.substr(-2) == ")%")
+        {
+            time = pubdatestr.substr(11,8).replace(/:/g,p5);
+            return _truncateField(p1,time);
+        }
+        else if (p1.substr(0,8) == "%DATEPF(" && p1.substr(-2) == ")%")
+        {
+            date = (pubdatestr != "") ? pubdatestr.substr(0,10).replace(/-/g,p6) : datestr.substr(0,10).replace(/-/g,p6);
+            return _truncateField(p1,date);
+        }
+        else if (p1.substr(0,8) == "%TIMEPF(" && p1.substr(-2) == ")%")
+        {
+            time = (pubdatestr != "") ? pubdatestr.substr(11,8).replace(/:/g,p7) : datestr.substr(11,8).replace(/:/g,p7);
+            return _truncateField(p1,time);
+        }
         else if (p1 == "%HOST%") return _truncateField(p1,host);
         else if (p1 == "%HOSTW%") return _truncateField(p1,hostw);
         else if (p1 == "%FILE%") return _truncateField(p1,file);
@@ -5914,9 +5991,9 @@ function getSavedFileName(url,title,extract)
         else if (p1 == "%PATHW%") return _truncateField(p1,pathw);
         else if (p1.substr(0,7) == "%QUERY(" && p1.substr(-2) == ")%")
         {
-            if (p4 == "") return _truncateField(p1,query);
+            if (p8 == "") return _truncateField(p1,query);
             params = new URLSearchParams(query);
-            value = params.get(p4);
+            value = params.get(p8);
             if (value == null) value = "";
             return _truncateField(p1,value);
         }
@@ -5939,7 +6016,7 @@ function getSavedFileName(url,title,extract)
         if (filename == "") filename = "html";
 
         if (filename.substr(-4) != ".htm" && filename.substr(-5) != ".html" &&
-            filename.substr(-6) != ".shtml" && filename.substr(-6) != ".xhtml") filename += ".html";
+            filename.substr(-6) != ".shtml" && filename.substr(-6) != ".xhtml") filename += ".html";  /* Firefox HTML extensions */
     }
     else
     {

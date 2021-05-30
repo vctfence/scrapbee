@@ -95,8 +95,8 @@ async function loadSavePageSettings() {
     loadCheck("options-removeelements");
 }
 
-function storeSavePageSettings() {
-    browser.storage.local.set({"savepage-settings": {
+async function storeSavePageSettings() {
+    await browser.storage.local.set({"savepage-settings": {
         /* General options */
 
         "options-retaincrossframes": $("#options-retaincrossframes").is(":checked"),
@@ -123,6 +123,8 @@ function storeSavePageSettings() {
         "options-loadlazycontent": $("#options-loadlazycontent").is(":checked"),
         "options-removeelements": $("#options-removeelements").is(":checked")
     }});
+
+    send.savepageSettingsChanged();
 }
 
 function loadScrapyardSettings() {

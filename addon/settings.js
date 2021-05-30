@@ -21,6 +21,9 @@ class ScrapyardSettings {
         if (!this._platform) {
             const platformInfo = await browser.runtime.getPlatformInfo();
             this._platform = {[platformInfo.os]: true};
+            if (navigator.userAgent.indexOf("Firefox") >= 0) {
+                this._platform.firefox = true;
+            }
         }
     }
 

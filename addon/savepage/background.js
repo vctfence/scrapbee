@@ -4,9 +4,9 @@
 /*                                                                      */
 /*      Javascript for Background Page                                  */
 /*                                                                      */
-/*      Last Edit - 20 Mar 2019                                         */
+/*      Last Edit - 13 May 2021                                         */
 /*                                                                      */
-/*      Copyright (C) 2016-2019 DW-dev                                  */
+/*      Copyright (C) 2016-2021 DW-dev                                  */
 /*                                                                      */
 /*      Distributed under the GNU General Public License version 2      */
 /*      See LICENCE.txt file and http://www.gnu.org/licenses/           */
@@ -46,21 +46,16 @@
 /*                                                                      */
 /*  Notes on Save Page WE Operation                                     */
 /*                                                                      */
-/*  1. The basic approach is to traverse the DOM tree three times,      */
-/*     or four times if cross-origin frames are retained.               */
+/*  1. The basic approach is to identify all frames in the page and     */
+/*     then traverse the DOM tree in three passes.                      */
 /*                                                                      */
 /*  2. The current states of the HTML elements are extracted from       */
 /*     the DOM tree. External resources are downloaded and scanned.     */
 /*                                                                      */
-/*  3. The pre pass identifies and names all unnamed cross-origin       */
-/*     frame elements that are reachable from the content script        */
-/*     in the main frame.                                               */
+/*  3. A content script in each frame finds and sets keys on all        */
+/*     sub-frame elements that are reachable from that frame.           */
 /*                                                                      */
-/*  4. After the pre pass, content scripts in all frames identify       */
-/*     and name most unnamed cross-origin frame elements that are       */
-/*     not reachable from the content script in the main frame.         */
-/*                                                                      */
-/*  5. The first pass gathers external style sheet resources:           */
+/*  4. The first pass gathers external style sheet resources:           */
 /*                                                                      */
 /*     - <style> element: find style sheet url()'s in @import rules,    */
 /*       then remember locations.                                       */
@@ -68,10 +63,10 @@
 /*     - <link rel="stylesheet" href="..."> element: find style sheet   */
 /*       url()'s in @import rules, then remember locations.             */
 /*                                                                      */
-/*  6. After the first pass, the referenced external style sheets are   */
+/*  5. After the first pass, the referenced external style sheets are   */
 /*     downloaded from the remembered locations.                        */
 /*                                                                      */
-/*  7. The second pass gathers external script/font/image resources:    */
+/*  6. The second pass gathers external script/font/image resources:    */
 /*                                                                      */
 /*     - <script> element: remember location from src attribute.        */
 /*                                                                      */
@@ -97,10 +92,10 @@
 /*       rules, then find font and image url()'s in CSS rules and       */
 /*       remember locations.                                            */
 /*                                                                      */
-/*  8. After the second pass, the referenced external resources are     */
+/*  7. After the second pass, the referenced external resources are     */
 /*     downloaded from the remembered locations.                        */
 /*                                                                      */
-/*  9. The third pass generates HTML and data uri's:                    */
+/*  8. The third pass generates HTML and data uri's:                    */
 /*                                                                      */
 /*     - style attribute on any element: replace image url()'s in       */
 /*       CSS rules with data uri's.                                     */
@@ -133,7 +128,7 @@
 /*       data uri and use this to replace url in src attribute.         */
 /*                                                                      */
 /*     - <img srcset="..."> element: replace list of images in srcset   */
-/*       attribute by null string.                                      */
+/*       attribute by empty string.                                     */
 /*                                                                      */
 /*     - <input type="image" src="..."> element: convert image to       */
 /*       data uri and use this to replace url in src attribute.         */
@@ -147,6 +142,9 @@
 /*                                                                      */
 /*     - <input type="-other-"> element: add value attribute set to     */
 /*       element.value reflecting any user changes.                     */
+/*                                                                      */
+/*     - <canvas> element: convert graphics to data uri and use this    */
+/*       to define background image in style attribute.                 */
 /*                                                                      */
 /*     - <audio src="..."> element: if current source, convert audio    */
 /*       to data uri and use this to replace url in src attribute.      */
@@ -162,7 +160,7 @@
 /*       use this to replace url in src attribute.                      */
 /*                                                                      */
 /*     - <source srcset="..."> element in <picture> element: replace    */
-/*       list of images in srcset attribute by null string.             */
+/*       list of images in srcset attribute by empty string.            */
 /*                                                                      */
 /*     - <track src="..."> element: convert subtitles to data uri and   */
 /*       use this to replace url in src attribute.                      */
@@ -178,12 +176,12 @@
 /*       src attribute.                                                 */
 /*                                                                      */
 /*     - <iframe src="..."> or <iframe srcdoc="..."> element: process   */
-/*       sub-tree to extract HTML, then convert HTML to data uri and    */
-/*       use this to replace url in src attribute or to create new      */
-/*       src attribute.                                                 */
+/*       sub-tree to extract HTML, then convert HTML to text and use    */
+/*       this to replace text in srcdoc attribute or to create new      */
+/*       srcdoc attribute.                                              */
 /*                                                                      */
-/*     - <iframe srcdoc="..."> element: replace html text in srcdoc     */
-/*       attribute by null string.                                      */
+/*     - <iframe src="..."> element: replace url in srcdoc attribute    */
+/*       by empty string.                                               */
 /*                                                                      */
 /*     - other elements: process child nodes to extract HTML.           */
 /*                                                                      */
@@ -191,7 +189,7 @@
 /*                                                                      */
 /*     - comment nodes: enclose within <!-- and  -->                    */
 /*                                                                      */
-/* 10. Data URI syntax and defaults:                                    */
+/*  9. Data URI syntax and defaults:                                    */
 /*                                                                      */
 /*     - data:[<media type>][;base64],<encoded data>                    */
 /*                                                                      */
@@ -208,7 +206,7 @@
 /*  Potential Improvements                                              */
 /*                                                                      */
 /*  1. The main document and <frame> and <iframe> documents could be    */
-/*     downloaded and scanned to extract the original states of the     */
+/*     downloaded and parsed to extract the original states of the      */
 /*     HTML elements, as an alternative to the current states.          */
 /*                                                                      */
 /*  2. <script src="..."> element could be converted to <script>        */
@@ -221,43 +219,46 @@
 
 /************************************************************************/
 /*                                                                      */
-/*  Handling of frames and resources                                    */
+/*  General Handling of URLs                                            */
 /*                                                                      */
-/*                        No Page Loader    Use Page Loader             */
+/*  HTML                                                                */
 /*                                                                      */
-/*  Same-Origin Frames                                                  */
+/*  1. <a> and <area> elements:                                         */
 /*                                                                      */
-/*  - Frame src            utf-8 data uri    utf-8 data uri             */
-/*                                           converted to blob url (3)  */
+/*     - absolute and relative URLs with fragment identifiers that      */
+/*       point to the same page are converted to fragment-only URLs.    */
 /*                                                                      */
-/*  - Binary resources     base64 data uri   null base64 data uri with  */
-/*                                           resource reference number  */
-/*                                           converted to blob url (3)  */
+/*     - other relative URLs are converted to absolute URLs.            */
 /*                                                                      */
-/*  Cross-Origin Frames                                                 */
+/*  2. Other elements: the contents of absolute and relative URLs       */
+/*     are saved as data URIs.                                          */
 /*                                                                      */
-/*  - Frame src            utf-8 data uri    utf-8 data uri             */
+/*  3. Unsaved URLs are converted to absolute URLs.                     */
 /*                                                                      */
-/*  - Binary resources     base64 data uri   base64 data uri            */
+/*  SVG                                                                 */
 /*                                                                      */
-/*  Notes:                                                              */
+/*  1. <a> elements:                                                    */
 /*                                                                      */
-/*  1. A data uri has a unique opaque origin and so in effect is        */
-/*     always cross-origin.                                             */
+/*     - absolute and relative URLs with fragment identifiers that      */
+/*       point to the same page are converted to fragment-only URLs.    */
 /*                                                                      */
-/*  2. A blob url has the origin of its context and so in effect is     */
-/*     always same-origin.                                              */
+/*     - other relative URLs are converted to absolute URLs.            */
 /*                                                                      */
-/*  3. Converting the frame src to a blob url in same-origin frames     */
-/*     allows loading of resources with blob urls.                      */
+/*  2. <image> elements: the contents of absolute and relative URLs     */
+/*     are saved as data URIs.                                          */
+/*                                                                      */
+/*  4. Other elements: the contents of absolute and relative URLs       */
+/*     are saved as data URIs.                                          */
+/*                                                                      */
+/*  5. Unsaved URLs are converted to absolute URLs.                     */
 /*                                                                      */
 /************************************************************************/
 
 /************************************************************************/
 /*                                                                      */
-/*  Handling of URL's in HTML Attributes                                */
+/*  Specific Handling of URLs in HTML and SVG Attributes                */
 /*                                                                      */
-/*  Element         Attribute     HTML   Content        Handling        */
+/*  HTML Element    Attribute    HTML    Content        Handling        */
 /*                                                                      */
 /*  <a>             href          4 5    -              -               */
 /*  <applet>        codebase      4      java           -               */
@@ -267,23 +268,24 @@
 /*  <blockquote>    cite          4 5    info           -               */
 /*  <body>          background    4      image          data uri        */
 /*  <button>        formaction      5    -              -               */
+/*  <canvas>        -               5    graphics       data uri   (2)  */
 /*  <del>           cite          4 5    info           -               */
 /*  <embed>         src             5    data           data uri        */
 /*  <form>          action        4 5    -              -               */
 /*  <frame>         longdesc      4      info           -               */
-/*  <frame>         src           4      html           data uri   (2)  */
+/*  <frame>         src           4      html           data uri   (3)  */
 /*  <head>          profile       4      metadata       -               */
 /*  <html>          manifest        5    -              -               */
 /*  <iframe>        longdesc      4      info           -               */
-/*  <iframe>        src           4 5    html           data uri   (2)  */
-/*  <iframe>        srcdoc          5    html           -          (2)  */
+/*  <iframe>        src           4 5    html           html text  (4)  */
+/*  <iframe>        srcdoc          5    html           html text  (4)  */
 /*  <img>           longdesc      4      info           -               */
 /*  <img>           src           4 5    image          data uri        */
-/*  <img>           srcset          5    images         -          (3)  */
+/*  <img>           srcset          5    images         -          (5)  */
 /*  <input>         formaction      5    -              -               */
 /*  <input>         src           4 5    image          data uri        */
 /*  <ins>           cite          4 5    info           -               */
-/*  <link>          href          4 5    css            style      (4)  */
+/*  <link>          href          4 5    css            style      (6)  */
 /*  <link>          href          4 5    icon           data uri        */
 /*  <object>        archive       4      -              -               */
 /*  <object>        classid       4      -              -               */
@@ -292,10 +294,16 @@
 /*  <q>             cite          4 5    info           -               */
 /*  <script>        src           4 5    javscript      data uri        */
 /*  <source>        src             5    audio/video    data uri   (1)  */
-/*  <source>        srcset          5    image          -          (3)  */
+/*  <source>        srcset          5    image          -          (5)  */
 /*  <track>         src             5    audio/video    data uri        */
 /*  <video>         poster          5    image          data uri        */
 /*  <video>         src             5    video          data uri   (1)  */
+/*                                                                      */
+/*  SVG Element     Attribute    SVG     Content        Handling        */
+/*                                                                      */
+/*  <a>             href        1.1 2    -              -               */
+/*  <image>         href        1.1 2    image or svg   data uri        */
+/*  other           href        1.1 2    svg            data uri   (7)  */
 /*                                                                      */
 /*  Notes:                                                              */
 /*                                                                      */
@@ -303,18 +311,30 @@
 /*      is the same as the URL in element.currentSrc of the related     */
 /*      <audio> or <video> element.                                     */
 /*                                                                      */
-/*  (2) data uri is created by processing the frame's HTML sub-tree.    */
+/*  (2) data uri is created by calling element.toDataURL() and is       */
+/*      used to define background image in the 'style' attribute.       */
+/*                                                                      */
+/*  (3) data uri is created by processing the frame's HTML sub-tree.    */
+/*      Frame content is usually determined by URL in 'src' attribute,  */
+/*      but this is not used directly. Frame content may also have      */
+/*      been set programmatically.                                      */
+/*                                                                      */
+/*  (4) html text is created by processing the frame's HTML sub-tree.   */
 /*      URL in 'src' attribute and HTML text in 'srcdoc' attribute      */
-/*      determine frame's content, but are not used directly.           */
-/*      Or frame content may have been set programmatically.            */
+/*      determine frame content, but are not used directly; or frame    */
+/*      Frame content is usually determined by URL in 'src' attribute   */
+/*      and HTML text in 'srcdoc' attribute, but these are not used     */
+/*      directly. Frame content may also have been set programmatically.*/
 /*                                                                      */
-/*  (3) if the URL in element.currentSrc is not the same as the URL     */
-/*      in the 'src' attribute, it is assumed to be one of the URL's    */
+/*  (5) if the URL in element.currentSrc is not the same as the URL     */
+/*      in the 'src' attribute, it is assumed to be one of the URLs     */
 /*      in the 'srcset' attributes, and the 'src' attribute is set to   */
-/*      this URL and the 'srcset' attributes are set to null strings.   */
+/*      this URL and the 'srcset' attributes are set to empty strings.  */
 /*                                                                      */
-/*  (4) replace <link> element with <style> element containing the      */
+/*  (6) replace <link> element with <style> element containing the      */
 /*      style sheet referred to by the URL in the 'href' attribute.     */
+/*                                                                      */
+/*  (7) applies to URLs in 'href' or 'xlink:href' attributes.           */
 /*                                                                      */
 /************************************************************************/
 
@@ -332,21 +352,21 @@
 /*     (a binary string) which is sent to the content script.           */
 /*                                                                      */
 /*  3. A binary string containing binary data is copied directly        */
-/*     into the resourceContent store.                                  */
+/*     into the resourceContent array.                                  */
 /*                                                                      */
 /*  4. A binary string containing UTF-8 characters is converted to      */
 /*     a normal Javascript string (containing UTF-16 characters)        */
-/*     before being copied into the resourceContent store.              */
+/*     before being copied into the resourceContent array.              */
 /*                                                                      */
 /*  5. A binary string containing non-UTF-8 (ASCII, ANSI, ISO-8859-1)   */
-/*     characters is copied directly into the resourceContent store.    */
+/*     characters is copied directly into the resourceContent array.    */
 /*                                                                      */
 /*  6. When creating a Base64 data uri, the binary string from the      */
-/*     resourceContent store is converted to a Base64 ASCII string      */
+/*     resourceContent array is converted to a Base64 ASCII string      */
 /*     using btoa().                                                    */
 /*                                                                      */
 /*  7. When creating a UTF-8 data uri, the UTF-16 string from the       */
-/*     resourceContent store is converted to a UTF-8 %-escaped          */
+/*     resourceContent array is converted to a UTF-8 %-escaped          */
 /*     string using encodeURIComponent(). The following characters      */
 /*     are not %-escaped: alphabetic, digits, - _ . ! ~ * ' ( )         */
 /*                                                                      */
@@ -356,6 +376,33 @@
 /*     - @charset rule at the start of a style sheet                    */
 /*     - charset attribute on an element referencing a text file        */
 /*     - charset encoding of the parent document or style sheet         */
+/*                                                                      */
+/************************************************************************/
+
+/************************************************************************/
+/*                                                                      */
+/*  IFrames and Frames - Firefox and Chrome Test Results                */
+/*                                                                      */
+/*                                        Firefox           Chrome      */
+/*                                    Loads  cD   dE    Loads  cD   dE  */
+/*  <iframe>                                                            */
+/*                                                                      */
+/*  src="data:..."                     yes   no   no     yes*  no   no  */
+/*  src="blob:..."                     yes  yes  yes     yes*  no   no  */
+/*                                                                      */
+/*  srcdoc="html"                      yes  yes   no     yes  yes  yes  */
+/*  srcdoc="html" sandbox=""           yes   no   no     yes   no   no  */
+/*  srcdoc="html" sandbox="aso"        yes  yes   no     yes  yes  yes  */
+/*                                                                      */
+/*  <frame>                                                             */
+/*                                                                      */
+/*  src="data:..."                     yes   no   no     yes   no   no  */
+/*  src="blob:..."                     yes  yes  yes     yes   no   no  */
+/*                                                                      */
+/*  aso = allow-same-origin                                             */
+/*  cD = frame.contentDocument accessible                               */
+/*  dE = frame.contentDocument.documentElement accessible               */
+/*  yes* = loads but there are issues with <audio> elements             */
 /*                                                                      */
 /************************************************************************/
 
@@ -382,36 +429,60 @@
 /*                                                                      */
 /************************************************************************/
 
+/************************************************************************/
+/*                                                                      */
+/*  Tab Page Types                                                      */
+/*                                                                      */
+/*   undefined = Unknown                                                */
+/*           0 = Normal Page                                            */
+/*           1 = Saved Page                                             */
+/*           2 = Saved Page with Resource Loader                        */
+/*                                                                      */
+/************************************************************************/
+
+/************************************************************************/
+/*                                                                      */
+/*  Tab Save States                                                     */
+/*                                                                      */
+/*   undefined = Tab does not exist or URL never committed              */
+/*          -4 = URL committed (page loading or loaded)                 */
+/*          -3 = Script loading                                         */
+/*          -2 = Script loaded (page loaded)                            */
+/*          -1 = Operation started                                      */
+/*           0 = Lazy Loads                                             */
+/*           1 = First Pass                                             */
+/*           2 = Second Pass                                            */
+/*           3 = Third Pass                                             */
+/*           4 = Remove Resource Loader                                 */
+/*           5 = Extract Image/Audio/Video                              */
+/*                                                                      */
+/************************************************************************/
+
+"use strict";
+
+/************************************************************************/
+
 /* Global variables */
 
 var isFirefox;
 var ffVersion;
+var gcVersion;
 
 var platformOS;
 var platformArch;
 
-var ffPrintEditId = "";
-var gcPrintEditId = "";
+// Scrapyard //////////////////////////////////////////////////////////////////
+// <deleted>
+////////////////////////////////////////////////////////////////// Scrapyard //
 
-var mapActions = new Array(0,2,1);
-
-var buttonAction;
-var showSubmenu;
+var maxResourceSize;
 var maxResourceTime;
 var allowPassive;
 var refererHeader;
 
-var tabPageTypes = new Array();  /* undefined or 0 = normal, 1 = saved page, 2 = page loader, 3= saved page with page loader */
-var tabSaveStates = new Array();  /* undefined or 0 = idle, 1 = lazy loads, 2 = first pass, 3 = second pass, 4 = third pass, 5 = remove page loader, 6 = extract image/audio/video */
-
-var refererKeys = new Array();
-var refererValues = new Array();
-
-var originKeys = new Array();
-var originValues = new Array();
-
-var browserBookmarkPath = "firefox/Bookmarks Menu";
-var unfiledBookmarkPath = "firefox/Other Bookmarks";
+// Scrapyard //////////////////////////////////////////////////////////////////
+// <deleted>
+////////////////////////////////////////////////////////////////// Scrapyard //
 
 /************************************************************************/
 
@@ -422,6 +493,7 @@ function(PlatformInfo)
 {
     platformOS = PlatformInfo.os;
 
+    // Scrapyard //////////////////////////////////////////////////////////////////
     chrome.storage.local.get("savepage-settings",
         function(object) {
             object = object["savepage-settings"] || {};
@@ -436,56 +508,99 @@ function(PlatformInfo)
 
             object["environment-isfirefox"] = isFirefox;
 
+            if (!isFirefox)
+                gcVersion = navigator.userAgent.match(/Chrom(?:e|ium)\/([0-9]+)/)[1];
+
             chrome.runtime.getBrowserInfo(
                 function (info) {
                     ffVersion = info.version.substr(0, info.version.indexOf("."));
 
                     object["environment-ffversion"] = ffVersion;
 
-                    ffPrintEditId = "printedit-we@DW-dev";
-
-                    chrome.storage.local.set({"savepage-settings": object});
-
-                    initialize();
+                    chrome.storage.local.set({"savepage-settings": object}, initialize);
                 });
         });
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 });
 
-function initialize()
+// Scrapyard //////////////////////////////////////////////////////////////////
+function initialize(optionsOnly)
+////////////////////////////////////////////////////////////////// Scrapyard //
 {
+    // Scrapyard //////////////////////////////////////////////////////////////////
     chrome.storage.local.get("savepage-settings",
+    ////////////////////////////////////////////////////////////////// Scrapyard //
     function(object)
     {
+        // Scrapyard //////////////////////////////////////////////////////////////////
         object = object["savepage-settings"] || {};
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
-        var contexts = new Array();
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        // <deleted>
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         /* Initialize or migrate options */
 
         /* General options */
 
-        if (!("options-buttonaction" in object)) object["options-buttonaction"] =
-            ("options-savebuttonaction" in object) ? object["options-savebuttonaction"] : 1;  /* Version 2.0-2.1 */
+        if (!("options-buttonactiontype" in object)) object["options-buttonactiontype"] = 0;
 
-        if (!("options-newbuttonaction" in object)) object["options-newbuttonaction"] =
-            ("options-buttonaction" in object) ? mapActions[object["options-buttonaction"]] : 1;  /* Version 3.0-12.8 */
+        if (!("options-buttonaction" in object)) object["options-buttonaction"] =
+            ("options-savebuttonaction" in object) ? object["options-savebuttonaction"] : 2;  /* Version 2.0-2.1 */
+
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        //if (!("options-newbuttonaction" in object)) object["options-newbuttonaction"] =
+        //    ("options-buttonaction" in object) ? mapActions[object["options-buttonaction"]] : 1;  /* Version 3.0-12.8 */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
+
+        if (!("options-buttonactionitems" in object)) object["options-buttonactionitems"] =
+            ("options-newbuttonaction" in object) ? object["options-newbuttonaction"] : 1;  /* Version 13.0-17.3 */
 
         if (!("options-showsubmenu" in object)) object["options-showsubmenu"] =
             ("options-showmenuitem" in object) ? object["options-showmenuitem"] : true;  /* Version 3.0-5.0 */
 
         if (!("options-showwarning" in object)) object["options-showwarning"] = true;
 
-        if (!("options-showurllist" in object)) object["options-showurllist"] = false;
+        if (!("options-showresources" in object)) object["options-showresources"] =
+            ("options-showurllist" in object) ? object["options-showurllist"] : false;  /* Version 7.5-17.3 */
 
         if (!("options-promptcomments" in object)) object["options-promptcomments"] = false;
 
-        if (!("options-usepageloader" in object)) object["options-usepageloader"] = true;
+        if (!("options-skipwarningscomments" in object)) object["options-skipwarningscomments"] = true;
+
+        if (!("options-usenewsavemethod" in object)) object["options-usenewsavemethod"] = false;
+
+        if (!("options-showsaveasdialog" in object)) object["options-showsaveasdialog"] = false;
+
+        if (!("options-closetabafter" in object)) object["options-closetabafter"] = false;
+
+        if (!("options-loadlazycontent" in object)) object["options-loadlazycontent"] =
+            ("options-forcelazyloads" in object) ? object["options-forcelazyloads"] : false;  /* Version 13.0-24.2 */
+
+        if (!("options-lazyloadtype" in object)) object["options-lazyloadtype"] =
+            ("options-lazyloadstype" in object) ? +object["options-lazyloadstype"]+1 + "" : "1";  /* Version 24.0-24.2 */
+
+        if (object["options-lazyloadtype"] == "0") object["options-loadlazycontent"] = false;  /* Version 25.0 */
+
+        if (!("options-loadlazyimages" in object)) object["options-loadlazyimages"] = true;
 
         if (!("options-retaincrossframes" in object)) object["options-retaincrossframes"] = true;
 
         if (!("options-mergecssimages" in object)) object["options-mergecssimages"] = true;
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        if (!("options-executescripts" in object)) object["options-executescripts"] = true;
+        ////////////////////////////////////////////////////////////////// Scrapyard //
+
         if (!("options-removeunsavedurls" in object)) object["options-removeunsavedurls"] = true;
+
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        if (!("options-removeelements" in object)) object["options-removeelements"] =
+            ("options-purgeelements" in object) ? object["options-purgeelements"] : true;  /* Version 13.2-20.1 */
+
+        if (!("options-rehideelements" in object)) object["options-rehideelements"] = object["options-purgeelements"];
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         if (!("options-includeinfobar" in object)) object["options-includeinfobar"] =
             ("options-includenotification" in object) ? object["options-includenotification"] : false;  /* Version 7.4 */
@@ -494,32 +609,18 @@ function initialize()
 
         if (!("options-formathtml" in object)) object["options-formathtml"] = false;
 
-        if (!("options-savedfilename" in object))
-        {
-            object["options-savedfilename"] = "%TITLE%";
-
-            if ("options-prefixfilename" in object && "options-prefixtext" in object && object["options-prefixfilename"])
-                object["options-savedfilename"] = object["options-prefixtext"].replace(/%DOMAIN%/g,"%HOST%") + object["options-savedfilename"];
-
-            if ("options-suffixfilename" in object && "options-suffixtext" in object && object["options-suffixfilename"])
-                object["options-savedfilename"] = object["options-savedfilename"] + object["options-suffixtext"].replace(/%DOMAIN%/g,"%HOST%");
-        }
-
-        if (!("options-replacespaces" in object)) object["options-replacespaces"] = false;
-
-        if (!("options-replacechar" in object)) object["options-replacechar"] = "-";
-
-        if (!("options-maxfilenamelength" in object)) object["options-maxfilenamelength"] = 150;
-
         /* Saved Items options */
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
         if (!("options-savehtmlimagesall" in object)) object["options-savehtmlimagesall"] =
             ("options-saveallhtmlimages" in object) ? object["options-saveallhtmlimages"] : true;  /* Version 2.0-3.0 */
 
         if (!("options-savehtmlaudiovideo" in object)) object["options-savehtmlaudiovideo"] = true;
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = false;
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
         if (!("options-savecssimagesall" in object)) object["options-savecssimagesall"] =
             ("options-saveallcssimages" in object) ? object["options-saveallcssimages"] : true;  /* Version 2.0-3.0 */
 
@@ -527,36 +628,50 @@ function initialize()
             ("options-saveallcustomfonts" in object) ? object["options-saveallcustomfonts"] : true;  /* Version 2.0-3.0 */
 
         if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = true;
+        // Scrapyard //////////////////////////////////////////////////////////////////
 
         if (!("options-savescripts" in object)) object["options-savescripts"] =
             ("options-saveallscripts" in object) ? object["options-saveallscripts"] : false;  /* Version 2.0-3.0 */
 
+        /* File Info options */
+
+        if (!("options-urllisturls" in object)) object["options-urllisturls"] = new Array();
+
+        if (!("options-urllistname" in object)) object["options-urllistname"] = "";
+
+        if (!("options-savedfilename" in object)) object["options-savedfilename"] = "%TITLE%";
+
+        if (!("options-replacespaces" in object)) object["options-replacespaces"] = false;
+
+        if (!("options-replacechar" in object)) object["options-replacechar"] = "-";
+
+        if (!("options-maxfilenamelength" in object)) object["options-maxfilenamelength"] = 150;
+
         /* Advanced options */
+
+        if (!("options-urllisttime" in object)) object["options-urllisttime"] = 10;
+
+        if (!("options-lazyloadscrolltime" in object)) object["options-lazyloadscrolltime"] =
+            ("options-lazyloadsscrolltime" in object) ? object["options-lazyloadsscrolltime"] : 0.2;  /* Version 24.0-24.2 */
+
+        if (!("options-lazyloadshrinktime" in object)) object["options-lazyloadshrinktime"] =
+            ("options-lazyloadsshrinktime" in object) ? object["options-lazyloadsshrinktime"] : 0.5;  /* Version 24.0-24.2 */
 
         if (!("options-maxframedepth" in object)) object["options-maxframedepth"] =
             ("options-saveframedepth" in object) ? object["options-saveframedepth"] : 5;  /* Version 2.0-2.1 */
 
         if (!("options-maxresourcesize" in object)) object["options-maxresourcesize"] = 50;
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
         if (!("options-maxresourcetime" in object)) object["options-maxresourcetime"] =
             ("options-resourcetimeout" in object) ? object["options-resourcetimeout"] : 30;  /* Version 9.0-9.1 */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         if (!("options-allowpassive" in object)) object["options-allowpassive"] = false;
 
         if (!("options-refererheader" in object)) object["options-refererheader"] = 0;
 
-        if (!("options-loadlazycontent" in object)) object["options-loadlazycontent"] =
-            ("options-forcelazyloads" in object) ? object["options-forcelazyloads"] : false;  /* Version 13.0-24.2 */
-
-        if (!("options-loadlazyimages" in object)) object["options-loadlazyimages"] = true;
-
-        if (!("options-lazyloadscrolltime" in object)) object["options-lazyloadscrolltime"] = 1;
-
-        if (!("options-removeelements" in object)) object["options-removeelements"] =
-            ("options-purgeelements" in object) ? object["options-purgeelements"] : true;  /* Version 13.2-20.1 */
-
-        if (!("options-rehideelements" in object)) object["options-rehideelements"] = false;
-
+        if (!("options-useautomation" in object)) object["options-useautomation"] = false;
 
         if (!("options-maxframedepth-9.0" in object))
         {
@@ -564,23 +679,36 @@ function initialize()
             object["options-maxframedepth-9.0"] = true;
         }
 
-        /*if (!("options-executescripts" in object)) */ object["options-executescripts"] = true;
-
         /* Update stored options */
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
         chrome.storage.local.set({"savepage-settings": object});
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         /* Initialize local options */
 
-        buttonAction = 1; //object["options-newbuttonaction"];
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        // <deleted>
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
-        showSubmenu = object["options-showsubmenu"];
+        maxResourceSize = object["options-maxresourcesize"];
 
         maxResourceTime = object["options-maxresourcetime"];
 
         allowPassive = object["options-allowpassive"];
 
         refererHeader = object["options-refererheader"];
+
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        // <deleted>
+        ////////////////////////////////////////////////////////////////// Scrapyard //
+
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        if (optionsOnly)
+            return;
+        ////////////////////////////////////////////////////////////////// Scrapyard //
+
+        /* Add listeners */
 
         addListeners();
     });
@@ -592,7 +720,15 @@ function initialize()
 
 function addListeners()
 {
+    var extraInfo;
+
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    // <deleted>
+    ////////////////////////////////////////////////////////////////// Scrapyard //
+
     /* Web request listeners */
+
+    extraInfo = (isFirefox || gcVersion < 72) ? ["blocking","requestHeaders"] : ["blocking","requestHeaders","extraHeaders"];
 
     chrome.webRequest.onBeforeSendHeaders.addListener(
     function(details)
@@ -601,154 +737,50 @@ function addListeners()
 
         for (i = 0; i < details.requestHeaders.length; i++)
         {
-            if (details.requestHeaders[i].name == "savepage-referer")
-            {
-                for (j = 0; j < refererKeys.length; j++)
-                {
-                    if (details.requestHeaders[i].value == refererKeys[j])
-                    {
-                        details.requestHeaders.splice(i,1,{ name: "Referer", value: refererValues[j] });
-                    }
-                }
-            }
+            if (details.requestHeaders[i].name == "savepage-referer") details.requestHeaders[i].name = "Referer";
 
-            if (details.requestHeaders[i].name == "savepage-origin")
-            {
-                for (j = 0; j < originKeys.length; j++)
-                {
-                    if (details.requestHeaders[i].value == originKeys[j])
-                    {
-                        details.requestHeaders.splice(i,1,{ name: "Origin", value: originValues[j] });
-                    }
-                }
-            }
+            if (details.requestHeaders[i].name == "savepage-origin") details.requestHeaders[i].name = "Origin";
         }
 
         return { requestHeaders: details.requestHeaders };
     },
-    { urls: ["<all_urls>"], types: ["xmlhttprequest"] },["blocking","requestHeaders"]);
+    { urls: ["<all_urls>"], types: ["xmlhttprequest"] },extraInfo);
 
     /* Message received listener */
 
-    browser.runtime.onMessage.addListener(
+    chrome.runtime.onMessage.addListener(
     function(message,sender,sendResponse)
     {
-        var safeContent,mixedContent,refererURL,refererKey,originKey,receiverId;
+        var safeContent,mixedContent,refererURL,refererValue,htmlBlob,objectURL,receiverId;
         var xhr = new Object();
 
         switch (message.type)
         {
             /* Messages from content script */
 
-            case "requestFramesRelay":
-                chrome.tabs.sendMessage(sender.tab.id, { type: "requestFrames" });
+            // Scrapyard //////////////////////////////////////////////////////////////////
+            case "SAVEPAGE_SETTINGS_CHANGED":
+                initialize(true);
                 break;
+            ////////////////////////////////////////////////////////////////// Scrapyard //
 
-            case "replyFrameRelay":
-                message.type = "replyFrame";
-                chrome.tabs.sendMessage(sender.tab.id, message);
-                break;
+            // Scrapyard //////////////////////////////////////////////////////////////////
+            // <deleted>
+            ////////////////////////////////////////////////////////////////// Scrapyard //
 
-            case "setPageType":
+            case "requestFrames":
 
-                tabPageTypes[sender.tab.id] = message.pagetype;
-
-                updateBrowserAction(sender.tab.id,sender.tab.url);
-
-                updateContextMenus();
+                chrome.tabs.sendMessage(sender.tab.id,{ type: "requestFrames" },checkError);
 
                 break;
 
-            case "setSaveState":
+            case "replyFrame":
 
-                tabSaveStates[sender.tab.id] = message.savestate;
-
-                updateBrowserAction(sender.tab.id,sender.tab.url);
-
-                break;
-
-            case "requestCrossFrames":
-
-                chrome.tabs.sendMessage(sender.tab.id,{ type: "requestCrossFrames" },checkError);
-
-                break;
-
-            case "replyCrossFrame":
-
-                chrome.tabs.sendMessage(sender.tab.id,{ type: "replyCrossFrame", name: message.name, url: message.url, html: message.html, fonts: message.fonts },checkError);
+                chrome.tabs.sendMessage(sender.tab.id,{ type: "replyFrame", key: message.key, url: message.url, html: message.html, fonts: message.fonts },checkError);
 
                 break;
 
             case "loadResource":
-
-                let onloadResource = function()
-                {
-                    var i,binaryString,contentType,allowOrigin;
-                    var byteArray = new Uint8Array(this.response);
-
-                    if (this._refererkey) removeRefererKey(this._refererkey);
-                    if (this._originkey) removeOriginKey(this._originkey);
-
-                    if (this.status == 200)
-                    {
-                        binaryString = "";
-                        for (i = 0; i < byteArray.byteLength; i++) binaryString += String.fromCharCode(byteArray[i]);
-
-                        contentType = this.getResponseHeader("Content-Type");
-                        if (contentType == null) contentType = "";
-
-                        allowOrigin = this.getResponseHeader("Access-Control-Allow-Origin");
-                        if (allowOrigin == null) allowOrigin = "";
-
-                        chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index,
-                            content: binaryString, contenttype: contentType, alloworigin: allowOrigin },checkError);
-                    }
-                    else chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "load:" + this.status },checkError);
-                };
-
-                let onerrorResource = function()
-                {
-                    if (this._refererkey) removeRefererKey(this._refererkey);
-                    if (this._originkey) removeOriginKey(this._originkey);
-
-                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "network" },checkError);
-                };
-
-                let ontimeoutResource = function()
-                {
-                    if (this._refererkey) removeRefererKey(this._refererkey);
-                    if (this._originkey) removeOriginKey(this._originkey);
-
-                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "timeout" },checkError);
-                };
-
-                let removeRefererKey = function(refererkey)
-                {
-                    var j;
-
-                    for (j = 0; j < refererKeys.length; j++)
-                    {
-                        if (refererKeys[j] == refererkey)
-                        {
-                            refererKeys.splice(j,1);
-                            refererValues.splice(j,1);
-                        }
-                    }
-                };
-
-                let removeOriginKey = function (originkey)
-                {
-                    var j;
-
-                    for (j = 0; j < originKeys.length; j++)
-                    {
-                        if (originKeys[j] == originkey)
-                        {
-                            originKeys.splice(j,1);
-                            originValues.splice(j,1);
-                        }
-                    }
-                };
 
                 /* XMLHttpRequest must not be sent if http: resource in https: page or https: referer */
                 /* unless passive mixed content allowed by user option */
@@ -779,20 +811,14 @@ function addListeners()
                         {
                             if (refererHeader > 0)
                             {
-                                refererKey = Math.trunc(Math.random()*1000000000);
-
-                                refererKeys.push(refererKey);
-
-                                if (refererHeader == 1) refererValues.push(refererURL.origin);  /* referer URL restricted to origin */
+                                if (refererHeader == 1) refererValue = refererURL.origin;  /* referer URL restricted to origin */
                                 else if (refererHeader == 2)
                                 {
-                                    if (sender.tab.incognito) refererValues.push(refererURL.origin);  /* referer URL restricted to origin */
-                                    else refererValues.push(refererURL.origin + refererURL.pathname);  /* referer URL restricted to origin and path */
+                                    if (sender.tab.incognito) refererValue = refererURL.origin;  /* referer URL restricted to origin */
+                                    else refererValue = refererURL.origin + refererURL.pathname;  /* referer URL restricted to origin and path */
                                 }
 
-                                xhr.setRequestHeader("savepage-referer",refererKey);
-
-                                xhr._refererkey = refererKey;
+                                xhr.setRequestHeader("savepage-referer",refererValue);
                             }
                         }
 
@@ -800,24 +826,15 @@ function addListeners()
 
                         if (message.usecors)
                         {
-                            originKey = Math.trunc(Math.random()*1000000000);
-
-                            originKeys.push(originKey);
-
-                            originValues.push(refererURL.origin);
-
-                            xhr.setRequestHeader("savepage-origin",originKey);
-
-                            xhr._originkey = originKey;
+                            xhr.setRequestHeader("savepage-origin",refererURL.origin);
                         }
 
-                        xhr.setRequestHeader("Cache-Control","no-store");
-
                         xhr.responseType = "arraybuffer";
-                        xhr.timeout = maxResourceTime * 1000;
+                        xhr.timeout = maxResourceTime*1000;
                         xhr.onload = onloadResource;
                         xhr.onerror = onerrorResource;
                         xhr.ontimeout = ontimeoutResource;
+                        xhr.onprogress = onprogressResource;
 
                         xhr._tabId = sender.tab.id;
                         xhr._index = message.index;
@@ -826,30 +843,70 @@ function addListeners()
                     }
                     catch(e)
                     {
-                        if (xhr._refererkey) removeRefererKey(xhr._refererkey);
-                        if (xhr._originkey) removeOriginKey(xhr._originkey);
-
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "send" },checkError);
                     }
                 }
                 else chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
 
+                function onloadResource()
+                {
+                    var i,binaryString,contentType,allowOrigin;
+                    var byteArray = new Uint8Array(this.response);
+
+                    if (this.status == 200)
+                    {
+                        binaryString = "";
+                        for (i = 0; i < byteArray.byteLength; i++) binaryString += String.fromCharCode(byteArray[i]);
+
+                        contentType = this.getResponseHeader("Content-Type");
+                        if (contentType == null) contentType = "";
+
+                        allowOrigin = this.getResponseHeader("Access-Control-Allow-Origin");
+                        if (allowOrigin == null) allowOrigin = "";
+
+                        chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index,
+                                                              content: binaryString, contenttype: contentType, alloworigin: allowOrigin },checkError);
+                    }
+                    else chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "load:" + this.status },checkError);
+                }
+
+                function onerrorResource()
+                {
+                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "network" },checkError);
+                }
+
+                function ontimeoutResource()
+                {
+                    chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "maxtime" },checkError);
+                }
+
+                function onprogressResource(event)
+                {
+                    if (event.lengthComputable && event.total > maxResourceSize*1024*1024)
+                    {
+                        this.abort();
+
+                        chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "maxsize" },checkError);
+                    }
+                }
+
                 break;
 
-            case "saveDone":
+            // Scrapyard //////////////////////////////////////////////////////////////////
+            // <deleted>
+            ////////////////////////////////////////////////////////////////// Scrapyard //
 
-                break;
-
-            case "delay":
-
-                return new Promise(resolve => {
-                    setTimeout(() => resolve(), message.milliseconds);
-                });
         }
     });
+
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    // <deleted>
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 }
 
-/************************************************************************/
+// Scrapyard //////////////////////////////////////////////////////////////////
+// <deleted>
+////////////////////////////////////////////////////////////////// Scrapyard //
 
 /* Check for sendMessage errors */
 
@@ -859,35 +916,12 @@ function checkError()
     else if (chrome.runtime.lastError.message == "Could not establish connection. Receiving end does not exist.") ;  /* Chrome & Firefox - ignore */
     else if (chrome.runtime.lastError.message == "The message port closed before a response was received.") ;  /* Chrome - ignore */
     else if (chrome.runtime.lastError.message == "Message manager disconnected") ;  /* Firefox - ignore */
-    else console.log("Save Page - " + chrome.runtime.lastError.message);
+    else {
+        console.log("Save Page WE - " + chrome.runtime.lastError.message);
+        console.error(chrome.runtime.lastError)
+    }
 }
 
-/************************************************************************/
-
-/* Display alert notification */
-
-function alertNotify(message)
-{
-    chrome.notifications.create("alert",{ type: "basic", iconUrl: "/icons/scrapyard.svg", title: "Scrapyard", message: "" + message });
-}
-
-/************************************************************************/
-
-/* Display debug notification */
-
-function debugNotify(message)
-{
-    chrome.notifications.create("debug",{ type: "basic", iconUrl: "/icons/scrapyard.svg", title: "Scrapyard - DEBUG", message: "" + message });
-}
-
-/************************************************************************/
-
-function updateBrowserAction() {
-
-}
-
-function updateContextMenus() {
-
-}
-
-console.log("==> savepage/background.js loaded");
+// Scrapyard //////////////////////////////////////////////////////////////////
+// <deleted>
+////////////////////////////////////////////////////////////////// Scrapyard //
