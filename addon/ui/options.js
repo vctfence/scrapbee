@@ -20,111 +20,199 @@ import {showNotification} from "../utils_browser.js";
 import {fetchText, fetchWithTimeout} from "../utils_io.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
 
-let _ = (v, d) => {return v !== undefined? v: d;};
+window.onload = async function() {
+    await backend;
 
-function loadSavePageSettings() {
-    chrome.storage.local.get("savepage-settings",
-        function(object) {
-            object = object["savepage-settings"];
+    initHelpMarks();
 
-            /* General options */
+    window.onhashchange = switchPane;
+    switchPane();
 
-            // document.getElementById("options-usepageloader").checked = object["options-usepageloader"];
-            document.getElementById("options-retaincrossframes").checked = _(object["options-retaincrossframes"], true);
-            document.getElementById("options-removeunsavedurls").checked = _(object["options-removeunsavedurls"], true);
-            document.getElementById("options-mergecssimages").checked = _(object["options-mergecssimages"], true);
-            // document.getElementById("options-formathtml").checked = object["options-formathtml"];
-            // document.getElementById("options-savedfilename").value = object["options-savedfilename"];
-            // document.getElementById("options-replacespaces").checked = object["options-replacespaces"];
-            //
-            // /* Saved Items options */
-            //
-            document.getElementById("options-savehtmlaudiovideo").checked = _(object["options-savehtmlaudiovideo"], true);
-            document.getElementById("options-savehtmlobjectembed").checked = _(object["options-savehtmlobjectembed"], true);
-            document.getElementById("options-savehtmlimagesall").checked = _(object["options-savehtmlimagesall"], true);
-            document.getElementById("options-savecssimagesall").checked = _(object["options-savecssimagesall"], true);
-            document.getElementById("options-savecssfontswoff").checked = _(object["options-savecssfontswoff"], true);
-            document.getElementById("options-savecssfontsall").checked = _(object["options-savecssfontsall"], true);
-            document.getElementById("options-savescripts").checked = object["options-savescripts"];
-            document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
-            //
-            // /* Advanced options */
-            //
-            document.getElementById("options-maxframedepth").value = _(object["options-maxframedepth"], 5);
-            document.getElementById("options-maxresourcesize").value = _(object["options-maxresourcesize"], 5);
-            document.getElementById("options-maxresourcetime").value = _(object["options-maxresourcetime"], 30);
-            document.getElementById("options-allowpassive").checked = _(object["options-allowpassive"], false);
-            document.getElementById("options-refererheader").elements["header"].value = _(object["options-refererheader"], 0);
-            document.getElementById("options-forcelazyloads").checked = _(object["options-forcelazyloads"], false);
-            document.getElementById("options-purgeelements").checked = _(object["options-purgeelements"], true);
-        });
+    configureScrapyardSettingsPage();
+    configureSavePageSettingsPage();
+    configureCloudSettingsPage();
 
-    document.getElementById("options-savecssfontsall").addEventListener("click", function () {
-        document.getElementById("options-savecssfontswoff").disabled = document.getElementById("options-savecssfontsall").checked;
-    },false);
+    $("#div-page").css("display", "table-row");
+
+    loadSavePageSettings();
+    loadScrapyardSettings();
+
+    // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
+    $("#start-rdf-import").on("click", onStartRDFImport);
+
+    // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    initializeLinkChecker();
+    doAutoStartCheckLinks();
+
+    // Backup //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    initializeBackup();
+};
+
+async function loadSavePageSettings() {
+    let object = await browser.storage.local.get("savepage-settings");
+    object = object["savepage-settings"];
+
+    function loadCheck(id) {
+        $(`#${id}`).prop("checked", object[id]);
+    }
+
+    function loadValue(id) {
+        $(`#${id}`).val(object[id]);
+    }
+
+    /* General options */
+    loadCheck("options-retaincrossframes");
+    loadCheck("options-removeunsavedurls");
+    loadCheck("options-mergecssimages");
+
+    /* Saved Items options */
+    loadCheck("options-savehtmlaudiovideo");
+    loadCheck("options-savehtmlobjectembed");
+    loadCheck("options-savehtmlimagesall");
+    loadCheck("options-savecssimagesall");
+    loadCheck("options-savecssfontswoff");
+    loadCheck("options-savecssfontsall");
+    loadCheck("options-savescripts");
+
+    $("#options-savecssfontswoff").prop("disabled", $("#options-savecssfontsall").is(":checked"));
+    $("#options-savecssfontsall").on("click", e => {
+        $("#options-savecssfontswoff").prop("disabled", $("#options-savecssfontsall").is(":checked"));
+    });
+
+    /* Advanced options */
+    loadValue("options-maxframedepth");
+    loadValue("options-maxresourcesize");
+    loadValue("options-maxresourcetime");
+    loadCheck("options-allowpassive");
+
+    $(`#options-refererheader input[name="header"]`, "").val([object["options-refererheader"]]);
+
+    loadCheck("options-loadlazycontent");
+    loadCheck("options-removeelements");
 }
 
 function storeSavePageSettings() {
-    chrome.storage.local.set({"savepage-settings": {
+    browser.storage.local.set({"savepage-settings": {
         /* General options */
 
-        //"options-showwarning": document.getElementById("options-showwarning").checked,
-        //"options-showurllist": document.getElementById("options-showurllist").checked,
-        //"options-promptcomments": document.getElementById("options-promptcomments").checked,
-
-        //"options-usepageloader": document.getElementById("options-usepageloader").checked,
-        "options-retaincrossframes": document.getElementById("options-retaincrossframes").checked,
-        "options-removeunsavedurls": document.getElementById("options-removeunsavedurls").checked,
-        "options-mergecssimages": document.getElementById("options-mergecssimages").checked,
-        //"options-includeinfobar": document.getElementById("options-includeinfobar").checked,
-        //"options-includesummary": document.getElementById("options-includesummary").checked,
-        //"options-formathtml": document.getElementById("options-formathtml").checked,
+        "options-retaincrossframes": $("#options-retaincrossframes").is(":checked"),
+        "options-removeunsavedurls": $("#options-removeunsavedurls").is(":checked"),
+        "options-mergecssimages": $("#options-mergecssimages").is(":checked"),
 
         /* Saved Items options */
 
-        "options-savehtmlaudiovideo": document.getElementById("options-savehtmlaudiovideo").checked,
-        "options-savehtmlobjectembed": document.getElementById("options-savehtmlobjectembed").checked,
-        "options-savehtmlimagesall": document.getElementById("options-savehtmlimagesall").checked,
-        "options-savecssimagesall": document.getElementById("options-savecssimagesall").checked,
-        "options-savecssfontswoff": document.getElementById("options-savecssfontswoff").checked,
-        "options-savecssfontsall": document.getElementById("options-savecssfontsall").checked,
-        "options-savescripts": document.getElementById("options-savescripts").checked,
+        "options-savehtmlaudiovideo": $("#options-savehtmlaudiovideo").is(":checked"),
+        "options-savehtmlobjectembed": $("#options-savehtmlobjectembed").is(":checked"),
+        "options-savehtmlimagesall": $("#options-savehtmlimagesall").is(":checked"),
+        "options-savecssimagesall": $("#options-savecssimagesall").is(":checked"),
+        "options-savecssfontswoff": $("#options-savecssfontswoff").is(":checked"),
+        "options-savecssfontsall": $("#options-savecssfontsall").is(":checked"),
+        "options-savescripts": $("#options-savescripts").is(":checked"),
 
         /* Advanced options */
 
-        "options-maxframedepth": +document.getElementById("options-maxframedepth").value,
-        "options-maxresourcesize": +document.getElementById("options-maxresourcesize").value,
-        "options-maxresourcetime": +document.getElementById("options-maxresourcetime").value,
-        "options-allowpassive": document.getElementById("options-allowpassive").checked,
-        "options-refererheader": +document.getElementById("options-refererheader").elements["header"].value,
-        "options-forcelazyloads": document.getElementById("options-forcelazyloads").checked,
-        "options-loadlazycontent": document.getElementById("options-forcelazyloads").checked,
-        "options-purgeelements": document.getElementById("options-purgeelements").checked,
-        "options-removeelements": document.getElementById("options-purgeelements").checked
+        "options-maxframedepth": +$("#options-maxframedepth").val(),
+        "options-maxresourcesize": +$("#options-maxresourcesize").val(),
+        "options-maxresourcetime": +$("#options-maxresourcetime").val(),
+        "options-allowpassive": $("#options-allowpassive").is(":checked"),
+        "options-refererheader": +$(`#options-refererheader input[name="header"]:checked`).val(),
+        "options-loadlazycontent": $("#options-loadlazycontent").is(":checked"),
+        "options-removeelements": $("#options-removeelements").is(":checked")
     }});
 }
 
 function loadScrapyardSettings() {
-    document.getElementById("option-shelf-list-max-height").value = _(settings.shelf_list_height(),
-                                                                                settings.default.shelf_list_height);
-    document.getElementById("option-show-firefox-bookmarks").checked = _(settings.show_firefox_bookmarks(),
-                                                                                settings.default.show_firefox_bookmarks);
-    document.getElementById("option-show-firefox-bookmarks-toolbar").checked = settings.show_firefox_toolbar();
-    document.getElementById("option-show-firefox-bookmarks-mobile").checked = settings.show_firefox_mobile();
-    document.getElementById("option-switch-to-bookmark").checked = settings.switch_to_new_bookmark();
-    document.getElementById("option-do-not-show-archive-toolbar").checked = settings.do_not_show_archive_toolbar();
-    document.getElementById("option-do-not-switch-to-ff-bookmark").checked = settings.do_not_switch_to_ff_bookmark();
-    document.getElementById("option-display-random-bookmark").checked = settings.display_random_bookmark();
-    document.getElementById("option-open-bookmark-in-active-tab").checked = settings.open_bookmark_in_active_tab();
-    document.getElementById("option-capitalize-builtin-shelf-names").checked = settings.capitalize_builtin_shelf_names();
-    document.getElementById("option-export-format").value = _(settings.export_format(), "json");
-    document.getElementById("option-use-helper-app-for-export").checked = settings.use_helper_app_for_export();
-    document.getElementById("option-undo-failed-imports").checked = settings.undo_failed_imports();
-    document.getElementById("option-browse-with-helper").checked = _(settings.browse_with_helper(), false);
-    document.getElementById("option-helper-port").value = _(settings.helper_port_number(),
-                                                                            settings.default.helper_port_number);
+    $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
+    $("#option-shelf-list-max-height").val(settings.shelf_list_height());
+    $("#option-show-firefox-bookmarks").prop("checked", settings.show_firefox_bookmarks());
+    $("#option-show-firefox-bookmarks-toolbar").prop("checked", settings.show_firefox_toolbar());
+    $("#option-show-firefox-bookmarks-mobile").prop("checked", settings.show_firefox_mobile());
+    $("#option-switch-to-bookmark").prop("checked", settings.switch_to_new_bookmark());
+    $("#option-do-not-show-archive-toolbar").prop("checked", settings.do_not_show_archive_toolbar());
+    $("#option-do-not-switch-to-ff-bookmark").prop("checked", settings.do_not_switch_to_ff_bookmark());
+    $("#option-display-random-bookmark").prop("checked", settings.display_random_bookmark());
+    $("#option-open-bookmark-in-active-tab").prop("checked", settings.open_bookmark_in_active_tab());
+    $("#option-capitalize-builtin-shelf-names").prop("checked", settings.capitalize_builtin_shelf_names());
+    $("#option-export-format").val(settings.export_format());
+    $("#option-use-helper-app-for-export").prop("checked", settings.use_helper_app_for_export());
+    $("#option-undo-failed-imports").prop("checked", settings.undo_failed_imports());
+    $("#option-browse-with-helper").prop("checked", settings.browse_with_helper());
+    $("#option-helper-port").val(settings.helper_port_number());
 
-    document.getElementById("option-enable-cloud").checked = settings.cloud_enabled();
+    selectricRefresh($("#option-sidebar-theme"));
+    selectricRefresh($("#option-export-format"));
+}
+
+function configureScrapyardSettingsPage() {
+
+    function setSaveCheckHandler(id, setting) {
+        $(`#${id}`).on("click", e => settings[setting](e.target.checked));
+    }
+
+    function setSaveSelectHandler(id, setting) {
+        $(`#${id}`).on("change", e => settings[setting](e.target.value));
+    }
+
+    simpleSelectric("#option-sidebar-theme");
+    simpleSelectric("#option-export-format");
+
+    $("#option-sidebar-theme").on("change", e => {
+        localStorage.setItem("scrapyard-sidebar-theme", e.target.value);
+        send.sidebarThemeChanged({theme: e.target.value});
+    });
+
+    let inputTimeout;
+    $("#option-shelf-list-max-height").on("input", e => {
+        clearTimeout(inputTimeout);
+        inputTimeout = setTimeout(async () => {
+            await settings.shelf_list_height(+e.target.value);
+            send.reloadSidebar({height: +e.target.value});
+        }, 1000)
+    });
+
+    $(`#option-capitalize-builtin-shelf-names`).on("click", async e => {
+        await settings.capitalize_builtin_shelf_names(e.target.checked);
+        send.shelvesChanged();
+    });
+
+    $(`#option-show-firefox-bookmarks`).on("click", async e => {
+        await settings.show_firefox_bookmarks(e.target.checked);
+        send.reconcileBrowserBookmarkDb();
+    });
+
+    $(`#option-display-random-bookmark`).on("click", async e => {
+        await settings.display_random_bookmark(e.target.checked);
+        send.displayRandomBookmark({display: e.target.checked})
+    });
+
+    setSaveSelectHandler("option-export-format", "export_format");
+
+    setSaveCheckHandler("option-show-firefox-bookmarks-toolbar", "show_firefox_toolbar");
+    setSaveCheckHandler("option-show-firefox-bookmarks-mobile", "show_firefox_mobile");
+    setSaveCheckHandler("option-do-not-show-archive-toolbar", "do_not_show_archive_toolbar");
+    setSaveCheckHandler("option-switch-to-bookmark", "switch_to_new_bookmark");
+    setSaveCheckHandler("option-open-bookmark-in-active-tab", "open_bookmark_in_active_tab");
+    setSaveCheckHandler("option-do-not-switch-to-ff-bookmark", "do_not_switch_to_ff_bookmark");
+    setSaveCheckHandler("option-use-helper-app-for-export", "use_helper_app_for_export");
+    setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
+    setSaveCheckHandler("option-browse-with-helper", "browse_with_helper");
+    setSaveCheckHandler("option-helper-port", "helper_port_number");
+
+    $("#option-helper-port").on("input", e => settings.helper_port_number(+e.target.value));
+}
+
+function configureSavePageSettingsPage() {
+    $(`#div-savesettings input[type="checkbox"]`).on("click", storeSavePageSettings);
+    $(`#div-savesettings input[type="radio"]`).on("click", storeSavePageSettings);
+    $(`#div-savesettings input[type="number"]`).on("input", storeSavePageSettings);
+}
+
+function configureCloudSettingsPage() {
+    $("#option-enable-cloud").prop("checked", settings.cloud_enabled());
 
     $("#option-enable-cloud").on("change", async e => {
         await settings.load();
@@ -140,7 +228,7 @@ function loadScrapyardSettings() {
             });
     });
 
-    document.getElementById("option-cloud-background-sync").checked = settings.cloud_background_sync();
+    $("#option-cloud-background-sync").prop("checked", settings.cloud_background_sync());
 
     $("#option-cloud-background-sync").on("change", async e => {
         await settings.load();
@@ -156,52 +244,6 @@ function loadScrapyardSettings() {
         await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
         $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
     });
-
-    $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
-    selectricRefresh($("#option-sidebar-theme"));
-    selectricRefresh($("#option-export-format"));
-}
-
-async function storeScrapyardSettings() {
-    await settings.load();
-
-    const currentSidebarHeight = settings.shelf_list_height();
-    const newSidebarHeight = parseInt(document.getElementById("option-shelf-list-max-height").value);
-    if (currentSidebarHeight !== newSidebarHeight)
-        settings.shelf_list_height(newSidebarHeight, () => send.reloadSidebar({height: newSidebarHeight}));
-
-    settings.show_firefox_toolbar(document.getElementById("option-show-firefox-bookmarks-toolbar").checked);
-    settings.show_firefox_mobile(document.getElementById("option-show-firefox-bookmarks-mobile").checked);
-    settings.capitalize_builtin_shelf_names(document.getElementById("option-capitalize-builtin-shelf-names").checked,
-        () => send.shelvesChanged());
-    settings.show_firefox_bookmarks(document.getElementById("option-show-firefox-bookmarks").checked,
-        () => send.reconcileBrowserBookmarkDb());
-    settings.do_not_show_archive_toolbar(document.getElementById("option-do-not-show-archive-toolbar").checked);
-    settings.switch_to_new_bookmark(document.getElementById("option-switch-to-bookmark").checked);
-    settings.open_bookmark_in_active_tab(document.getElementById("option-open-bookmark-in-active-tab").checked);
-    settings.do_not_switch_to_ff_bookmark(document.getElementById("option-do-not-switch-to-ff-bookmark").checked);
-    settings.export_format(document.getElementById("option-export-format").value);
-    settings.use_helper_app_for_export(document.getElementById("option-use-helper-app-for-export").checked);
-    settings.undo_failed_imports(document.getElementById("option-undo-failed-imports").checked);
-    settings.browse_with_helper(document.getElementById("option-browse-with-helper").checked);
-    settings.helper_port_number(parseInt(document.getElementById("option-helper-port").value));
-
-    const displayRandomBookmark = document.getElementById("option-display-random-bookmark").checked;
-    if (displayRandomBookmark !== settings.display_random_bookmark())
-        settings.display_random_bookmark(displayRandomBookmark,
-            () => send.displayRandomBookmark({display: displayRandomBookmark}));
-
-    const currentSidebarTheme = localStorage.getItem("scrapyard-sidebar-theme");
-    const newSidebarTheme = document.getElementById("option-sidebar-theme").value;
-    localStorage.setItem("scrapyard-sidebar-theme", newSidebarTheme);
-
-    if (currentSidebarTheme !== newSidebarTheme)
-        send.sidebarThemeChanged({theme: newSidebarTheme});
-}
-
-function configureScrapyardSettingsPage() {
-    simpleSelectric("#option-sidebar-theme");
-    simpleSelectric("#option-export-format");
 }
 
 let helperAppLinksLoaded = false;
@@ -318,53 +360,6 @@ function initHelpMarks() {
         $(this).next(".tips.hide").hide();
     });
 }
-
-window.onload = async function() {
-    await backend;
-
-    initHelpMarks();
-
-    window.onhashchange = switchPane;
-    switchPane();
-
-    configureScrapyardSettingsPage();
-
-    $("#div-page").css("display", "table-row");
-
-    $("#options-save-button").on("click", onClickSave);
-    $("#options-save2-button").on("click", onClickSave);
-
-    loadSavePageSettings();
-    loadScrapyardSettings();
-
-    function onClickSave(event)
-    {
-        $(event.target).addClass("flash-button");
-
-        setTimeout(function() {
-                $(event.target).removeClass("flash-button");
-            },1000);
-
-        if (event.target.id === "options-save-button")
-            storeScrapyardSettings();
-        else
-            storeSavePageSettings();
-    }
-
-    // Import RDF //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
-    $("#start-rdf-import").on("click", onStartRDFImport);
-
-    // Link Checker/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    initializeLinkChecker();
-    doAutoStartCheckLinks();
-
-    // Backup //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    initializeBackup();
-};
 
 function selectNode(e) {
     e.preventDefault();
@@ -639,7 +634,6 @@ function initializeBackup() {
         filterTimeout = setTimeout(() => {
            filterBackups(e.target.value);
         }, 1000)
-
     });
 
     let pathTimeout;
@@ -649,7 +643,6 @@ function initializeBackup() {
             settings.backup_directory_path(e.target.value);
             backupListFiles();
         }, 1000)
-
     });
 
     $("#backup-directory-path-refresh").on("click", e => backupListFiles());

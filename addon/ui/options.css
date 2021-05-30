@@ -323,6 +323,10 @@ input[type=checkbox]:checked {
     background-position: 0 -15px;
 }
 
+input[type=checkbox][disabled]{
+    opacity: 60%;
+}
+
 .align-checkbox {
     display: flex;
     align-content: center;

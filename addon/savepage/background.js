@@ -548,6 +548,8 @@ function initialize()
         if (!("options-loadlazycontent" in object)) object["options-loadlazycontent"] =
             ("options-forcelazyloads" in object) ? object["options-forcelazyloads"] : false;  /* Version 13.0-24.2 */
 
+        if (!("options-loadlazyimages" in object)) object["options-loadlazyimages"] = true;
+
         if (!("options-lazyloadscrolltime" in object)) object["options-lazyloadscrolltime"] = 1;
 
         if (!("options-removeelements" in object)) object["options-removeelements"] =

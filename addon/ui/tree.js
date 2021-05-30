@@ -486,9 +486,9 @@ class BookmarkTree {
     }
 
     // Used to make a flat list in the tree-view (e.g. in search)
-    list(nodes, state_key, clearSelected = false) {
-        if (state_key)
-            this.stateKey = TREE_STATE_PREFIX + state_key;
+    list(nodes, stateKey, clearSelected = false) {
+        if (stateKey)
+            this.stateKey = TREE_STATE_PREFIX + stateKey;
 
         this.data = nodes.map(n => BookmarkTree.toJsTreeNode(n));
         this.data.forEach(n => n.parent = "#");
@@ -500,13 +500,13 @@ class BookmarkTree {
     }
 
     renameRoot(name) {
-        let root_node = this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF));
-        this._jstree.rename_node(root_node, name);
+        let rootNode = this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF));
+        this._jstree.rename_node(rootNode, name);
     }
 
     openRoot() {
-        let root_node = this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF));
-        this._jstree.open_node(root_node);
+        let rootNode = this._jstree.get_node(this.odata.find(n => n.type === NODE_TYPE_SHELF));
+        this._jstree.open_node(rootNode);
         this._jstree.deselect_all(true);
     }
 
@@ -525,10 +525,10 @@ class BookmarkTree {
     }
 
     setNodeIcon(nodeId, icon) {
-        let cloud_node = this._jstree.get_node(nodeId);
+        let cloudNode = this._jstree.get_node(nodeId);
 
-        if (cloud_node)
-            this._jstree.set_icon(cloud_node, icon);
+        if (cloudNode)
+            this._jstree.set_icon(cloudNode, icon);
     }
 
     createTentativeNode(node) {
@@ -677,9 +677,9 @@ class BookmarkTree {
                 for (let node of newNodes) {
                     jnode.original = BookmarkTree.toJsTreeNode(node);
 
-                    let old_original = this.data.find(d => d.id == node.id);
-                    if (old_original)
-                        this.data[this.data.indexOf(old_original)] = jnode.original;
+                    let oldOriginal = this.data.find(d => d.id == node.id);
+                    if (oldOriginal)
+                        this.data[this.data.indexOf(oldOriginal)] = jnode.original;
                     else
                         this.data.push(jnode.original);
                 }
