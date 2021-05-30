@@ -67,7 +67,7 @@ async function loadSavePageSettings() {
     /* General options */
     loadCheck("options-retaincrossframes");
     loadCheck("options-removeunsavedurls");
-    loadCheck("options-mergecssimages");
+    loadCheck("options-loadshadow");
 
     /* Saved Items options */
     loadCheck("options-savehtmlaudiovideo");
@@ -91,17 +91,33 @@ async function loadSavePageSettings() {
 
     $(`#options-refererheader input[name="header"]`, "").val([object["options-refererheader"]]);
 
-    loadCheck("options-loadlazycontent");
+    if (object["options-lazyloadtype"] == "1")
+        loadCheck("options-lazyloadtype-1", true);
+    else if (object["options-lazyloadtype"] == "2")
+        loadCheck("options-lazyloadtype-2", true);
+
     loadCheck("options-removeelements");
 }
 
-async function storeSavePageSettings() {
-    await browser.storage.local.set({"savepage-settings": {
+async function storeSavePageSettings(e) {
+
+    if (e.target.id === "options-lazyloadtype-1")
+        $("#options-lazyloadtype-2").prop("checked", false);
+    else if (e.target.id === "options-lazyloadtype-2")
+        $("#options-lazyloadtype-1").prop("checked", false);
+
+    let lazyLoadType = "0";
+    if ($("#options-lazyloadtype-1").is(":checked"))
+        lazyLoadType = "1";
+    else if ($("#options-lazyloadtype-2").is(":checked"))
+        lazyLoadType = "2";
+
+    let newSettings = {
         /* General options */
 
         "options-retaincrossframes": $("#options-retaincrossframes").is(":checked"),
         "options-removeunsavedurls": $("#options-removeunsavedurls").is(":checked"),
-        "options-mergecssimages": $("#options-mergecssimages").is(":checked"),
+        "options-loadshadow": $("#options-loadshadow").is(":checked"),
 
         /* Saved Items options */
 
@@ -120,9 +136,16 @@ async function storeSavePageSettings() {
         "options-maxresourcetime": +$("#options-maxresourcetime").val(),
         "options-allowpassive": $("#options-allowpassive").is(":checked"),
         "options-refererheader": +$(`#options-refererheader input[name="header"]:checked`).val(),
-        "options-loadlazycontent": $("#options-loadlazycontent").is(":checked"),
-        "options-removeelements": $("#options-removeelements").is(":checked")
-    }});
+        "options-removeelements": $("#options-removeelements").is(":checked"),
+        "options-lazyloadtype": lazyLoadType
+    };
+
+    let settings = await browser.storage.local.get("savepage-settings");
+    settings = settings["savepage-settings"] || {};
+
+    Object.assign(settings, newSettings);
+
+    await browser.storage.local.set({"savepage-settings": settings});
 
     send.savepageSettingsChanged();
 }
@@ -151,11 +174,17 @@ function loadScrapyardSettings() {
 
 function configureScrapyardSettingsPage() {
 
-    function setSaveCheckHandler(id, setting) {
-        $(`#${id}`).on("click", e => settings[setting](e.target.checked));
+    async function setSaveCheckHandler(id, setting, callback) {
+        await settings.load();
+        $(`#${id}`).on("click", async e => {
+            await settings[setting](e.target.checked);
+            if (callback)
+                callback(e);
+        });
     }
 
-    function setSaveSelectHandler(id, setting) {
+    async function setSaveSelectHandler(id, setting) {
+        await settings.load();
         $(`#${id}`).on("change", e => settings[setting](e.target.value));
     }
 
@@ -171,29 +200,27 @@ function configureScrapyardSettingsPage() {
     $("#option-shelf-list-max-height").on("input", e => {
         clearTimeout(inputTimeout);
         inputTimeout = setTimeout(async () => {
+            await settings.load();
             await settings.shelf_list_height(+e.target.value);
             send.reloadSidebar({height: +e.target.value});
         }, 1000)
     });
 
-    $(`#option-capitalize-builtin-shelf-names`).on("click", async e => {
-        await settings.capitalize_builtin_shelf_names(e.target.checked);
-        send.shelvesChanged();
-    });
-
-    $(`#option-show-firefox-bookmarks`).on("click", async e => {
-        await settings.show_firefox_bookmarks(e.target.checked);
-        send.reconcileBrowserBookmarkDb();
-    });
-
-    $(`#option-display-random-bookmark`).on("click", async e => {
-        await settings.display_random_bookmark(e.target.checked);
-        send.displayRandomBookmark({display: e.target.checked})
+    $("#option-helper-port").on("input", async e => {
+        await settings.load();
+        settings.helper_port_number(+e.target.value)
     });
 
     setSaveSelectHandler("option-export-format", "export_format");
 
-    setSaveCheckHandler("option-show-firefox-bookmarks-toolbar", "show_firefox_toolbar");
+    setSaveCheckHandler("option-capitalize-builtin-shelf-names", "capitalize_builtin_shelf_names",
+        () => send.shelvesChanged());
+    setSaveCheckHandler("option-show-firefox-bookmarks", "show_firefox_bookmarks",
+        () => send.reconcileBrowserBookmarkDb());
+    setSaveCheckHandler("option-show-firefox-bookmarks-toolbar", "show_firefox_toolbar",
+        () => send.externalNodesReady());
+    setSaveCheckHandler("option-display-random-bookmark", "display_random_bookmark",
+        e => send.displayRandomBookmark({display: e.target.checked}));
     setSaveCheckHandler("option-show-firefox-bookmarks-mobile", "show_firefox_mobile");
     setSaveCheckHandler("option-do-not-show-archive-toolbar", "do_not_show_archive_toolbar");
     setSaveCheckHandler("option-switch-to-bookmark", "switch_to_new_bookmark");
@@ -203,8 +230,6 @@ function configureScrapyardSettingsPage() {
     setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
     setSaveCheckHandler("option-browse-with-helper", "browse_with_helper");
     setSaveCheckHandler("option-helper-port", "helper_port_number");
-
-    $("#option-helper-port").on("input", e => settings.helper_port_number(+e.target.value));
 }
 
 function configureSavePageSettingsPage() {

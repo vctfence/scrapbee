@@ -216,7 +216,7 @@
                                         <input id="option-browse-with-helper" type="checkbox"
                                         /><label for="option-browse-with-helper">Use helper application to browse archives</label>
                                         <i class="help-mark"></i>
-                                        <div class="tips hide">Check this only if you need to execute saved scripts and embedded content.<br>
+                                        <div class="tips hide">Check this only if you need to execute saved scripts, load embedded content and shadow DOM.<br>
                                         Note that scripts are not saved by default (see the page capture settings).</div>
                                     </div>
                                 </fieldset>
@@ -259,14 +259,14 @@
                                         for="options-removeunsavedurls">Remove URLs of all unsaved resources</label>
                                     </div>
                                     <div>
-                                        <input id="options-mergecssimages" type="checkbox"/><label
-                                        for="options-mergecssimages">Merge duplicate CSS images</label>
+                                        <input id="options-loadshadow" type="checkbox"/><label
+                                        for="options-loadshadow">Load shadow DOM</label>
                                     </div>
                                 </fieldset>
                             </form>
 
                             <form>
-                                <fieldset>
+                                <fieldset style="padding-bottom: 12px">
                                     <legend>&nbsp;Saved Items&nbsp;</legend>
                                     <div>
                                         <input id="options-savehtmlimagesall" type="checkbox"/><label
@@ -362,9 +362,12 @@
                                 <fieldset>
                                     <legend>&nbsp;Lazy Loading&nbsp;</legend>
                                     <div>
-                                        <input id="options-loadlazycontent" type="checkbox"/><label
-                                        for="options-loadlazycontent">Scroll down page to force lazy loads before
-                                        saving</label>
+                                        <input id="options-lazyloadtype-1" type="checkbox"/><label
+                                        for="options-lazyloadtype-1">Scroll down page to force lazy loads before saving</label>
+                                    </div>
+                                    <div>
+                                        <input id="options-lazyloadtype-2" type="checkbox"/><label
+                                        for="options-lazyloadtype-2">Shrink page to force lazy loads before saving</label>
                                     </div>
                                 </fieldset>
                             </form>

@@ -279,7 +279,7 @@ export async function browseNode(node, external_tab, preserve_history, container
                             let configureTab = async tab => {
                                 browser.tabs.onUpdated.removeListener(listener)
 
-                                await browser.tabs.insertCSS(tab.id, {file: "ui/edit_toobar.css"});
+                                await browser.tabs.insertCSS(tab.id, {file: "ui/edit_toolbar.css"});
                                 await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"});
                                 await browser.tabs.executeScript(tab.id, {file: "ui/edit_toolbar.js"});
 

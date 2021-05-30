@@ -151,7 +151,7 @@ class EditToolbar {
         const shadowRoot = this.shadowRoot = rootContainer.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = `
             <style>
-                @import url('${browser.runtime.getURL("ui/edit_toobar.css")}')
+                @import url('${browser.runtime.getURL("ui/edit_toolbar.css")}')
             </style>
             <div id="scrapyard-edit-bar">`;
 

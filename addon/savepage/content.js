@@ -235,6 +235,8 @@ var addedBookmark;
 var selectionElement;
 var skipIfSelected;
 
+var loadShadowDom;
+
 function lockDocument() {
     if (document.body.firstChild && document.body.firstChild.id !== "scrapyard-waiting") {
         let lock = document.createElement("div");
@@ -328,6 +330,9 @@ function(object)
     saveCSSFontsWoff = object["options-savecssfontswoff"];
     saveCSSFontsAll = object["options-savecssfontsall"];
     saveScripts = object["options-savescripts"];
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    loadShadowDom = object["options-loadshadow"];
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 
     savedFileName = object["options-savedfilename"];
     replaceSpaces = object["options-replacespaces"];
@@ -397,6 +402,8 @@ function addListeners()
     {
         // Scrapyard //////////////////////////////////////////////////////////////////
         changes = changes["savepage-settings"] || {};
+        if (!changes)
+            return;
         ////////////////////////////////////////////////////////////////// Scrapyard //
 
         if ("options-showwarning" in changes) showWarning = changes["options-showwarning"].newValue;
@@ -976,7 +983,15 @@ function initializeBeforeSave()
                         // (frameURL[i] + "                                                            ").replace(/\:/g,"").substr(0,80));
         // }
 
-        gatherStyleSheets();
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        if (loadShadowDom && !shadowLoaderText)
+            fetch(browser.extension.getURL("savepage/shadowloader.js"))
+                .then(response => response.text())
+                .then(text => shadowLoaderText = text)
+                .then(gatherStyleSheets)
+        else
+            gatherStyleSheets();
+        ////////////////////////////////////////////////////////////////// Scrapyard //
     });
 }
 
@@ -4474,16 +4489,18 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
             {
                 /* Add shadow loader script */
                 // Scrapyard //////////////////////////////////////////////////////////////////
-                // htmltext = prefix + "<script id=\"savepage-shadowloader\" type=\"application/javascript\">";
-                // htmltext += prefix + "  \"use strict\";";
-                // htmltext += prefix + "  window.addEventListener(\"DOMContentLoaded\",";
-                // htmltext += prefix + "  function(event) {";
-                // htmltext += prefix + "    savepage_ShadowLoader(" + maxFrameDepth + ");";
-                // htmltext += prefix + "  },false);";
-                // htmltext += prefix + "  " + shadowLoaderText;
-                // htmltext += prefix + "</script>";
-                //
-                // htmlStrings[htmlStrings.length] = htmltext;
+                if (loadShadowDom) {
+                    htmltext = prefix + "<script id=\"savepage-shadowloader\" type=\"application/javascript\">";
+                    htmltext += prefix + "  \"use strict\";";
+                    htmltext += prefix + "  window.addEventListener(\"DOMContentLoaded\",";
+                    htmltext += prefix + "  function(event) {";
+                    htmltext += prefix + "    savepage_ShadowLoader(" + maxFrameDepth + ");";
+                    htmltext += prefix + "  },false);";
+                    htmltext += prefix + "  " + shadowLoaderText;
+                    htmltext += prefix + "</script>";
+
+                    htmlStrings[htmlStrings.length] = htmltext;
+                }
                 /////////////////////////////////////////////////////////////////// Scrapyard /
 
                 /* Add page info bar html, css and script */
@@ -4598,8 +4615,8 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                 htmltext += prefix + "<meta name=\"savepage-from\" content=\"" + decodeURIComponent(document.URL) + "\">";
                 htmltext += prefix + "<meta name=\"savepage-date\" content=\"" + datestr + "\">";
                 htmltext += prefix + "<meta name=\"savepage-state\" content=\"" + state + "\">";
+                htmltext += prefix + "<meta name=\"savepage-version\" content=\"" + chrome.runtime.getManifest().version + "\">";
                 // Scrapyard //////////////////////////////////////////////////////////////////
-                htmltext += prefix + "<meta name=\"savepage-scrapyard-version\" content=\"" + chrome.runtime.getManifest().version + "\">";
                 //htmltext += prefix + "<meta name=\"savepage-comments\" content=\"" + enteredComments + "\">";
                 ////////////////////////////////////////////////////////////////// Scrapyard //
 

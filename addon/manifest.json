@@ -71,7 +71,8 @@
         "icons/lock.svg",
         "icons/lock2.svg",
         "icons/scrapyard.svg",
-        "edit.css"
+        "ui/edit_toolbar.css",
+        "savepage/shadowloader.js"
     ],
     "protocol_handlers": [
         {

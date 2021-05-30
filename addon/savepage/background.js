@@ -578,10 +578,12 @@ function initialize(optionsOnly)
         if (!("options-loadlazycontent" in object)) object["options-loadlazycontent"] =
             ("options-forcelazyloads" in object) ? object["options-forcelazyloads"] : false;  /* Version 13.0-24.2 */
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
         if (!("options-lazyloadtype" in object)) object["options-lazyloadtype"] =
-            ("options-lazyloadstype" in object) ? +object["options-lazyloadstype"]+1 + "" : "1";  /* Version 24.0-24.2 */
+            ("options-lazyloadstype" in object) ? +object["options-lazyloadstype"]+1 + "" : "0";  /* Version 24.0-24.2 */
 
-        if (object["options-lazyloadtype"] == "0") object["options-loadlazycontent"] = false;  /* Version 25.0 */
+        object["options-loadlazycontent"] = object["options-lazyloadtype"] != "0";  /* Version 25.0 */
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         if (!("options-loadlazyimages" in object)) object["options-loadlazyimages"] = true;
 
@@ -599,7 +601,7 @@ function initialize(optionsOnly)
         if (!("options-removeelements" in object)) object["options-removeelements"] =
             ("options-purgeelements" in object) ? object["options-purgeelements"] : true;  /* Version 13.2-20.1 */
 
-        if (!("options-rehideelements" in object)) object["options-rehideelements"] = object["options-purgeelements"];
+        if (!("options-rehideelements" in object)) object["options-rehideelements"] = object["options-removeelements"];
         ////////////////////////////////////////////////////////////////// Scrapyard //
 
         if (!("options-includeinfobar" in object)) object["options-includeinfobar"] =
@@ -918,7 +920,6 @@ function checkError()
     else if (chrome.runtime.lastError.message == "Message manager disconnected") ;  /* Firefox - ignore */
     else {
         console.log("Save Page WE - " + chrome.runtime.lastError.message);
-        console.error(chrome.runtime.lastError)
     }
 }
 
