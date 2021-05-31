@@ -1,0 +1,97 @@
+#check-links > * {
+    flex: 0 1 auto;
+}
+
+#link-scope {
+    margin-right: 8px;
+}
+
+#link-check-timeout {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: 50px;
+}
+
+#check-scope {
+    display: none;
+}
+
+#check-timeout-label {
+    padding-left: 8px;
+}
+
+#link-check-options {
+    line-height: 22px;
+    vertical-align: middle;
+    margin-left: 16px;
+}
+
+#link-check-options {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    align-content: center;
+}
+
+.result-action-icon, .result-action-icon-last {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin-right: 2px;
+}
+
+.result-action-icon-last {
+    margin-right: 8px;
+}
+
+.link-info {
+    margin-left: 16px;
+}
+
+.link-check-error {
+    white-space: nowrap;
+}
+
+#start-check-links {
+    margin-left: 16px;
+    height: 22px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#invalid-links-container {
+    flex: 1 1 auto;
+    padding-top: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: none;
+}
+
+#invalid-links {
+    margin-left: 15px;
+}
+
+#current-link {
+    margin-top: 8px;
+    display: flex;
+    visibility: hidden;
+}
+
+#current-link > div:first-child {
+    margin-right: 8px;
+    line-height: 28px;
+    vertical-align: middle;
+}
+
+#current-link-title {
+    overflow: hidden;
+}
+
+#current-link-url {
+    font-size: 80%;
+    overflow: hidden;
+}
+
+.invalid-link {
+    padding-left: 8px;
+}

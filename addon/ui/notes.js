@@ -5,7 +5,7 @@ import {NODE_TYPE_NOTES} from "../storage.js";
 import {markdown2html, org2html, text2html} from "../notes_render.js";
 import {applyInlineStyles} from "../utils_html.js";
 
-let ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
+const ORG_EXAMPLE = `#+OPTIONS: toc:t num:nil
 #+CSS: p {text-align: justify;}
 
 Supported [[http://orgmode.org/][org-mode]] markup features:
@@ -113,9 +113,9 @@ From data URL:
 [[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC][Cat silhouette]]
 `;
 
-let ORG_DEFAULT_STYLE = `#+CSS: p {text-align: justify;}`;
+const ORG_DEFAULT_STYLE = `#+CSS: p {text-align: justify;}`;
 
-let MD_EXAMPLE = `[//]: # (p {text-align: justify;})
+const MD_EXAMPLE = `[//]: # (p {text-align: justify;})
 
 Supported [Markdown](https://daringfireball.net/projects/markdown/syntax#link) markup features:
 
@@ -200,20 +200,16 @@ From data URL:
 ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC)
 `;
 
-let MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
+const MD_DEFAULT_STYLE = `[//]: # (p {text-align: justify;})`;
 
 const INPUT_TIMEOUT = 3000;
 const DEFAULT_WIDTH = "790px";
 const DEFAULT_FONT_SIZE = 120;
 
-let examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
-let styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
+const examples = {"org": ORG_EXAMPLE, "markdown": MD_EXAMPLE};
+const styles = {"org": ORG_DEFAULT_STYLE, "markdown": MD_DEFAULT_STYLE};
 
-let node_ids = location.hash? location.hash.split(":"): [];
-let node_id = node_ids.length? parseInt(node_ids[node_ids.length - 1]): undefined;
-//let node_uuid = node_ids.length? node_ids[0].substring(1): undefined;
-let inline = location.href.split("?");
-inline = inline.length > 1 && inline[1].startsWith("i#");
+const NODE_ID = parseInt(location.hash?.split(":")?.pop());
 
 let format = "delta";
 let align;
@@ -221,31 +217,31 @@ let width;
 
 let quill;
 
-let editorChange;
+let editorChanged;
 let editorTimeout;
 
 function saveNotes() {
-    let options = {node_id, content: getEditorContent(), format, align, width};
+    let options = {node_id: NODE_ID, content: getEditorContent(), format, align, width};
     if (format === "delta")
         options.html = renderEditorContent();
 
     send.storeNotes({options});
-    send.notesChanged({node_id: node_id, removed: !options.content});
-    editorChange = false;
+    send.notesChanged({node_id: NODE_ID, removed: !options.content});
+    editorChanged = false;
 }
 
 function editorSaveOnChange(e) {
     clearTimeout(editorTimeout);
 
     editorTimeout = setTimeout(() => {
-        if (e && node_id) {
+        if (e && NODE_ID) {
             saveNotes();
         }
     }, INPUT_TIMEOUT);
 }
 
 function editorSaveOnBlur(e) {
-    if (e && node_id) {
+    if (e && NODE_ID) {
         clearTimeout(editorTimeout);
         saveNotes();
     }
@@ -424,7 +420,7 @@ function initWYSIWYGEditor() {
     });
 
     quill.on('text-change', function(delta, oldDelta, source) {
-        editorChange = true;
+        editorChanged = true;
         editorSaveOnChange(true);
     });
 
@@ -432,7 +428,7 @@ function initWYSIWYGEditor() {
     $(".ql-container").css("font-size", fontSize + "%");
 
     window.onbeforeunload = function() {
-        if (editorChange)
+        if (editorChanged)
             return true;
     };
 }
@@ -503,7 +499,9 @@ function setEditorContent(content) {
 window.onload = async function() {
     await backend;
 
-    if (inline)
+    const isInline = location.search.startsWith("?i");
+
+    if (isInline)
         $("#tabbar").html(`<a id="notes-button" class="focus" href="#">Notes</a>
                                  <a id="edit-button" href="#">Edit</a>`);
     else
@@ -516,7 +514,7 @@ window.onload = async function() {
                                  <a id="edit-button" href="#">Edit</a>`);
 
 
-    backend.getNode(node_id).then(n => {
+    backend.getNode(NODE_ID).then(n => {
         let node = n;
         let source_url = $("#source-url");
         source_url.text(node.name);
@@ -596,8 +594,8 @@ window.onload = async function() {
         }
     });
 
-    if (node_id)
-        backend.fetchNotes(node_id).then(notes => {
+    if (NODE_ID)
+        backend.fetchNotes(NODE_ID).then(notes => {
             if (notes) {
                 format = notes.format || "org";
                 $("#notes-format").val(format === "html"? "delta": format);
@@ -709,13 +707,13 @@ window.onload = async function() {
                 $("#editor-font-sizes").show();
         }
 
-        send.storeNotes({options: {node_id, format}});
+        send.storeNotes({options: {node_id: NODE_ID, format}});
     });
 
     $("#notes-align").on("change", e => {
         align = $("#notes-align").val();
         alignNotes();
-        send.storeNotes({options: {node_id, align}});
+        send.storeNotes({options: {node_id: NODE_ID, align}});
     });
 
     $("#notes-width").on("change", e => {
@@ -744,7 +742,7 @@ window.onload = async function() {
                 width = selectedWidth;
         }
 
-        send.storeNotes({options: {node_id, width}});
+        send.storeNotes({options: {node_id: NODE_ID, width}});
     });
 
     function changeWidth(op) {
@@ -766,7 +764,7 @@ window.onload = async function() {
             actualWidthElt.show();
             $("#notes-width").val("actual");
             $("#notes").css("width", newWidth);
-            send.storeNotes({options: {node_id, width: newWidth}});
+            send.storeNotes({options: {node_id: NODE_ID, width: newWidth}});
         }
     }
 
@@ -815,7 +813,7 @@ window.onload = async function() {
        }
     });
 
-    if (inline) {
+    if (isInline) {
         $("#close-button").show();
     }
 

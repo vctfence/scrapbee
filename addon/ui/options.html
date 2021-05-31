@@ -53,7 +53,6 @@
     </div>
     <div id="div-placeholder" class="div-area div-area-placeholder"></div>
     <div id="div-settings" class="div-area" style="display:none;">
-
         <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td>Appearance</td>
@@ -135,8 +134,8 @@
                         <div class="double-first">
                             <form>
                                 <fieldset style="border: none;">
-                                    <input id="option-switch-to-bookmark" type="checkbox"/
-                                    ><label for="option-switch-to-bookmark">Automatically switch to newly created bookmarks</label>
+                                    <input id="option-switch-to-bookmark" type="checkbox"
+                                    /><label for="option-switch-to-bookmark">Automatically switch to newly created bookmarks</label>
                                     <div class="align-checkbox">
                                         <input id="option-display-random-bookmark" type="checkbox"/><label for="option-display-random-bookmark"
                                         >Display random bookmarks in the sidebar</label>
@@ -227,9 +226,7 @@
             </tr>
             <tr>
                 <td></td>
-                <td><a href="advanced.html" target="_blank" style="float: right;">Advanced settings</a>
-                    <!--input id="options-save-button" type="button" name="save" value="Save" style="float: right;"/-->
-                </td>
+                <td><a href="advanced.html" target="_blank" style="float: right;">Advanced settings</a></td>
             </tr>
         </table>
 
@@ -375,11 +372,6 @@
                     </div>
                 </td>
             </tr>
-            <!--tr>
-                <td></td>
-                <td><input id="options-save2-button" type="button" name="save" value="Save" style="float: right;"/>
-                </td>
-            </tr-->
         </table>
     </div>
     <div id="div-cloud" class="div-area" style="display:none;">
@@ -438,120 +430,9 @@
             </tr>
         </table>
     </div>
-    <div id="div-backup" class="div-area" style="display:none;">
-        <div id="backup">
-            <h2>Backup</h2>
-            <div id="backup-container">
-                <div id="backup-list-container">
-                    <h3 id="backup-list-title">Available Backups</h3>
-                    <input id="backup-filter" type="text" placeholder="Filter"/>
-                    <div id="backup-tree-container">
-                        <div id="backup-tree"></div>
-                    </div>
-                    <div id="backup-overall-file-size">&nbsp;</div>
-                </div>
-                <div id="backup-controls-container">
-                    <div id="backup-dir-container">
-                        <h3 id="backup-dir-title">Backup Directory</h3>
-                        <div id="backup-directory-path-container">
-                            <i class="help-mark"></i>
-                            <span class="tips hide">For example: <b>d:\backups\scrapyard</b> or <b>~/backups/scrapyard</b><br>
-                            Choose a directory on the partition/cloud that is likely to survive system failure or reinstallation.</span>
-                            <input id="backup-directory-path" type="text"/>
-                            <i id="backup-directory-path-refresh" title="Refresh backup list">&#xF2F1;</i>
-                        </div>
-                    </div>
-                    <h3 id="create-backup-title">Create Backup</h3>
-                    <div id="create-backup-container">
-                        <div id="backup-shelves-container">
-                            <img class="shelves-icon" title="Shelf" src="../icons/books.svg"/>
-                            <select id="backup-shelf"><option value="-1" selected>everything</option></select>
-                        </div>
-                        <div id="backup-comment-container">
-                            Comment:&nbsp;<input id="backup-comment" type="text"/>
-                        </div>
-                        <input id="backup-button" type="button" class="blue-button" value="Backup" disabled="true"/>
-                        <div id="backup-compression-container">
-                            <input id="compress-backup" type="checkbox" />
-                            <label for="compress-backup"><img class="zip-icon" title="Compress" src="../icons/zip.svg"/></label>
-                        </div>
-                    </div>
-                    <div id="backup-status-container">
-                        <h3 id="backup-status-title">Status</h3>
-                        <div id="backup-status">Checking for the helper application...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="div-links" class="div-area" style="display:none;">
-        <div id="check-links">
-            <h2>Automatic Link Validation</h2>
-            <div id="link-check-options" class="link-info">
-                <img class="shelves-icon" title="Shelf" src="../icons/books.svg">
-                <select id="check-scope"><option value="-1" selected>everything</option></select>
-                <label id="check-timeout-label" for="link-check-timeout">Timeout (sec.):</label>
-                <input id="link-check-timeout" type="number" min="1" value="10"/>
-                <input type="checkbox" id="update-icons"><label for="update-icons">Update icons</label>
-                <input type="button" class="blue-button" id="start-check-links" value="Check">
-            </div>
-            <div id="current-link" class="link-info">
-                <div>Checking: </div>
-                <div><span id="current-link-title"></span><br><span id="current-link-url"></span></div>
-            </div>
-            <div id="invalid-links-container" class="link-info">
-                <b>Broken links:</b>
-                <table id="invalid-links">
-                </table>
-            </div>
-        </div>
-    </div>
-    <div id="div-importrdf" class="div-area" style="display:none;">
-        <div id="importrdf">
-            <h2>Import Scrapbook Files</h2>
-            <div id="rdf-import-options">
-                <div style="width: max-content">
-                    <table cellspacing="" cellpadding="" border="0" style="margin-bottom: 5px;">
-                        <tr>
-                            <td>Shelf name:</td>
-                            <td><input id="rdf-shelf-name" type="text" size="60" value="Imported RDF"/></td>
-                        </tr>
-                        <tr>
-                            <td>Path to the RDF file:&nbsp;&nbsp;</td>
-                            <td>
-                                <input id="rdf-import-path" type="text" size="60" value=""/>
-                                <i class="help-mark"></i>
-                                <span class="tips hide">For example: <b>d:/notes/scrapbook.rdf</b></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Processing threads:</td>
-                            <td style="display: flex"><input id="rdf-import-threads" type="number" min="1" value="5"/>
-                                <div id="rdf-import-quick-div"><input id="rdf-import-quick" type="checkbox" checked/><label for="rdf-import-quick"
-                                                            >Quick import</label>
-                                    <i class="help-mark"></i>
-                                    <span class="tips hide">Leave archived files on disk.</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Status:&nbsp;&nbsp;</td>
-                            <td id="rdf-progress-row">Ready</td>
-                        </tr>
-                    </table>
-                    <input type="button" class="blue-button" id="start-rdf-import" value="Import">
-                </div>
-                <br>
-                <p>Scrapyard <a href="#helperapp">helper application</a> is required for RDF import.</p>
-
-            </div>
-            <div id="invalid-imports-container" class="rdf-link-info">
-                Failed imports (try to copy links into the URL-bar and capture them manually):
-                <table id="invalid-imports">
-                </table>
-            </div>
-        </div>
-    </div>
+    <div id="div-backup" class="div-area" style="display:none;"></div>
+    <div id="div-links" class="div-area" style="display:none;"></div>
+    <div id="div-importrdf" class="div-area" style="display:none;"></div>
     <div id="div-helperapp" class="div-area" style="display:none;">
         <div style="max-width: 800px; font-size: 110%;">
         <h2>Scrapyard Helper Application</h2>
@@ -620,7 +501,6 @@
         </div>
         <div id="about-changes"></div>
     </div>
-
 </div>
 </body>
 </html>

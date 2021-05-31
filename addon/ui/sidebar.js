@@ -34,6 +34,13 @@ let shelfList;
 let randomBookmark;
 let randomBookmarkTimeout;
 
+window.addEventListener('DOMContentLoaded', () => {
+    const shelfListPlaceholderDiv = $("#shelfList-placeholder");
+    shelfListPlaceholderDiv.css("width", ShelfList.getStoredWidth("sidebar") || ShelfList.DEFAULT_WIDTH);
+    shelfListPlaceholderDiv.show();
+    $("#shelves-icon").show();
+});
+
 window.onload = async function () {
     await backend;
 
@@ -41,8 +48,6 @@ window.onload = async function () {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
         _prefix: "sidebar"
     });
-
-    $("#shelves-icon").show();
 
     tree = new BookmarkTree("#treeview");
     context = new SearchContext(tree);
@@ -555,6 +560,9 @@ receive.beforeBookmarkAdded = async message => {
     const node = message.node;
     const select = settings.switch_to_new_bookmark();
 
+    if (node.type === NODE_TYPE_ARCHIVE)
+        startProcessingIndication(true);
+
     const name = await backend._ensureUnique(node.parent_id, node.name);
     node.name = name;
     tree.createTentativeNode(node);
@@ -573,6 +581,9 @@ receive.beforeBookmarkAdded = async message => {
 };
 
 receive.bookmarkAdded = message => {
+    if (message.node.type === NODE_TYPE_ARCHIVE)
+        stopProcessingIndication();
+
     if (settings.switch_to_new_bookmark())
         tree.updateTentativeNode(message.node);
 };

@@ -1,0 +1,44 @@
+<div id="backup">
+    <h2>Backup</h2>
+    <div id="backup-container">
+        <div id="backup-list-container">
+            <h3 id="backup-list-title">Available Backups</h3>
+            <input id="backup-filter" type="text" placeholder="Filter"/>
+            <div id="backup-tree-container">
+                <div id="backup-tree"></div>
+            </div>
+            <div id="backup-overall-file-size">&nbsp;</div>
+        </div>
+        <div id="backup-controls-container">
+            <div id="backup-dir-container">
+                <h3 id="backup-dir-title">Backup Directory</h3>
+                <div id="backup-directory-path-container">
+                    <i class="help-mark"></i>
+                    <span class="tips hide">For example: <b>d:\backups\scrapyard</b> or <b>~/backups/scrapyard</b><br>
+                            Choose a directory on the partition/cloud that is likely to survive system failure or reinstallation.</span>
+                    <input id="backup-directory-path" type="text"/>
+                    <i id="backup-directory-path-refresh" title="Refresh backup list">&#xF2F1;</i>
+                </div>
+            </div>
+            <h3 id="create-backup-title">Create Backup</h3>
+            <div id="create-backup-container">
+                <div id="backup-shelves-container">
+                    <img class="shelves-icon" title="Shelf" src="../icons/books.svg"/>
+                    <select id="backup-shelf"><option value="-1">everything</option></select>
+                </div>
+                <div id="backup-comment-container">
+                    Comment:&nbsp;<input id="backup-comment" type="text"/>
+                </div>
+                <input id="backup-button" type="button" class="blue-button" value="Backup" disabled="true"/>
+                <div id="backup-compression-container">
+                    <input id="compress-backup" type="checkbox" />
+                    <label for="compress-backup"><img class="zip-icon" title="Compress" src="../icons/zip.svg"/></label>
+                </div>
+            </div>
+            <div id="backup-status-container">
+                <h3 id="backup-status-title">Status</h3>
+                <div id="backup-status">Checking for the helper application...</div>
+            </div>
+        </div>
+    </div>
+</div>

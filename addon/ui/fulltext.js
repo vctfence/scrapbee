@@ -8,6 +8,12 @@ import {EVERYTHING_SHELF_ID} from "../storage.js";
 
 let shelfList;
 
+window.addEventListener('DOMContentLoaded', () => {
+    const searchScopePlaceholderDiv = $("#search-scope-placeholder");
+    searchScopePlaceholderDiv.css("width", ShelfList.getStoredWidth("fulltext") || ShelfList.DEFAULT_WIDTH);
+    searchScopePlaceholderDiv.show();
+});
+
 window.onload = async function() {
     await backend;
 
@@ -16,12 +22,7 @@ window.onload = async function() {
         _prefix: "fulltext"
     });
 
-    await shelfList.load();
-    shelfList.selectShelf(EVERYTHING_SHELF_ID);
-    shelfList.change(() => null);
-
-    $("#search-scope-placeholder").remove();
-    shelfList.show();
+    await shelfList.initDefault()
 
     $("#search-button").on("click", e => performSearch());
     $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});

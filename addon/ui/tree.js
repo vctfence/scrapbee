@@ -617,10 +617,11 @@ class BookmarkTree {
                     resolve(null);
                 }
                 else {
-                    const group = send.createGroup({parent: parseInt(selectedJNode.id), name: jnode.text});
+                    const group = await send.createGroup({parent: parseInt(selectedJNode.id), name: jnode.text});
                     if (group) {
-                        this._jstree.set_id(jnode, group.id);
+                        this._jstree.set_id(jnode.id, group.id);
                         jnode.original = BookmarkTree.toJsTreeNode(group);
+                        this._jstree.rename_node(jnode, group.name);
                         //this.reorderNodes(selectedJNode);
                         resolve(group);
                     }

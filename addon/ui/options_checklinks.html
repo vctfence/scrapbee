@@ -1,0 +1,20 @@
+<div id="check-links">
+    <h2>Automatic Link Validation</h2>
+    <div id="link-check-options" class="link-info">
+        <img class="shelves-icon" title="Shelf" src="../icons/books.svg">
+        <select id="check-scope"><option value="-1">everything</option></select>
+        <label id="check-timeout-label" for="link-check-timeout">Timeout (sec.):</label>
+        <input id="link-check-timeout" type="number" min="1" value="10"/>
+        <input type="checkbox" id="update-icons"><label for="update-icons">Update icons</label>
+        <input type="button" class="blue-button" id="start-check-links" value="Check">
+    </div>
+    <div id="current-link" class="link-info">
+        <div>Checking: </div>
+        <div><span id="current-link-title"></span><br><span id="current-link-url"></span></div>
+    </div>
+    <div id="invalid-links-container" class="link-info">
+        <b>Broken links:</b>
+        <table id="invalid-links">
+        </table>
+    </div>
+</div>

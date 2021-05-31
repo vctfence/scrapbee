@@ -66,6 +66,18 @@ export function isElementInViewport(el) {
     );
 }
 
+export function injectCSS(file) {
+    let link = document.querySelector(`link[href="${file}]"`)
+    if (!link) {
+        link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.type = "text/css";
+        link.href = file;
+        link.media = "all";
+        document.head.appendChild(link);
+    }
+}
+
 export function getThemeVar(v) {
     let vars = document.querySelector(":root");
     if (vars) {

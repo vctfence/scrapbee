@@ -171,7 +171,7 @@ class EditToolbar {
             .on("click", e => {
                 contentEditing = !contentEditing;
                 e.target.className = contentEditing? "yellow-button": "blue-button";
-                e.target.value = chrome.i18n.getMessage(contentEditing ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
+                e.target.value = contentEditing ? "Finish editing" : "Edit document";
 
                 document.designMode = document.designMode === "on"? "off": "on";
 

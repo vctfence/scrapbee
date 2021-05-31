@@ -1,0 +1,44 @@
+<div id="importrdf">
+    <h2>Import Scrapbook Files</h2>
+    <div id="rdf-import-options">
+        <div style="width: max-content">
+            <table cellspacing="" cellpadding="" border="0" style="margin-bottom: 5px;">
+                <tr>
+                    <td>Shelf name:</td>
+                    <td><input id="rdf-shelf-name" type="text" size="60" value="Imported RDF"/></td>
+                </tr>
+                <tr>
+                    <td>Path to the RDF file:&nbsp;&nbsp;</td>
+                    <td>
+                        <input id="rdf-import-path" type="text" size="60" value=""/>
+                        <i class="help-mark"></i>
+                        <span class="tips hide">For example: <b>d:/notes/scrapbook.rdf</b></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Processing threads:</td>
+                    <td style="display: flex"><input id="rdf-import-threads" type="number" min="1" value="5"/>
+                        <div id="rdf-import-quick-div"><input id="rdf-import-quick" type="checkbox" checked/><label for="rdf-import-quick"
+                        >Quick import</label>
+                            <i class="help-mark"></i>
+                            <span class="tips hide">Leave archived files on disk.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Status:&nbsp;&nbsp;</td>
+                    <td id="rdf-progress-row">Ready</td>
+                </tr>
+            </table>
+            <input type="button" class="blue-button" id="start-rdf-import" value="Import">
+        </div>
+        <br>
+        <p>Scrapyard <a href="#helperapp">helper application</a> is required for RDF import.</p>
+
+    </div>
+    <div id="invalid-imports-container" class="rdf-link-info">
+        Failed imports (try to copy links into the URL-bar and capture them manually):
+        <table id="invalid-imports">
+        </table>
+    </div>
+</div>

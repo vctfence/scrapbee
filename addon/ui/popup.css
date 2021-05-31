@@ -37,6 +37,10 @@ input:focus {
 	width: 32px;
 }
 
+#bookmark-folder {
+    display: none;
+}
+
 #properties label {
 	width: 3em;
 	display: inline-block;

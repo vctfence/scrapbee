@@ -194,7 +194,7 @@ export async function importJSON(shelf, reader, progress) {
                 const newProgress = Math.round((ctr / meta.entities) * 100);
                 if (newProgress !== currentProgress) {
                     currentProgress = newProgress;
-                    try { send.importProgress({progress: currentProgress}); } catch {}
+                   send.importProgress({progress: currentProgress});
                 }
             }
         }

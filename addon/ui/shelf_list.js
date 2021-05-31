@@ -1,5 +1,6 @@
 import {settings} from "../settings.js";
 import {
+    isSpecialShelf,
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
     CLOUD_SHELF_UUID,
@@ -12,7 +13,6 @@ import {
     FIREFOX_SHELF_ID,
     FIREFOX_SHELF_NAME,
     FIREFOX_SHELF_UUID,
-    isSpecialShelf,
     TODO_SHELF_ID,
     TODO_SHELF_NAME
 } from "../storage.js";
@@ -56,6 +56,7 @@ export class ShelfList {
         this._options.arrowButtonMarkup =
             `<b class="button"><img class="midnight-filter" src="../images/dropdown.svg"/></b>`;
 
+        $(`${select}-placeholder`).remove();
         this._select = $(select).selectric(this._options);
         this._element = this._select.closest(".selectric-wrapper");
 
@@ -75,12 +76,16 @@ export class ShelfList {
     _styleBuiltinShelf() {
         let {name} = this.getCurrentShelf();
 
-        const label = $("span.label", this._select.closest(".selectric-wrapper"));
+        const label = $("span.label", this._element);
 
         if (isSpecialShelf(name))
             label.addClass("option-builtin");
         else
             label.removeClass("option-builtin");
+    }
+
+    static getStoredWidth(prefix) {
+        return localStorage.getItem(`${prefix}-shelf-list-width`)
     }
 
     show() {
@@ -143,12 +148,12 @@ export class ShelfList {
         return this.reload();
     }
 
-    initDefault() {
-        setTimeout(async () => {
-            await this.load();
-            this.selectShelf(EVERYTHING_SHELF_ID);
-            this.change(() => null);
-        });
+    async initDefault() {
+        const label = $("span.label", this._element);
+        label.addClass("option-builtin");
+        await this.load();
+        this.selectShelf(EVERYTHING_SHELF_ID);
+        this.change(() => null);
     }
 
     hasShelf(name) {
@@ -201,6 +206,8 @@ export class ShelfList {
         this._refresh();
     }
 }
+
+ShelfList.DEFAULT_WIDTH = DEFAULT_SHELF_LIST_WIDTH;
 
 export function simpleSelectric(element) {
     return $(element).selectric({
