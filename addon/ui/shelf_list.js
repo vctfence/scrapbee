@@ -46,7 +46,7 @@ function measureSelectricWidth(options) {
     else
         meter.removeClass("option-builtin");
 
-    return meter.width() + 32; // + selectric margins & 4 pixels
+    return meter.width() + 33; // + selectric margins & 5 pixels
 }
 
 export class ShelfList {

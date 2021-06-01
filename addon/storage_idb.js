@@ -105,6 +105,10 @@ class IDBStorage {
         return node?.id;
     }
 
+    nodeTransaction(mode, operation) {
+        return dexie.transaction(mode, dexie.nodes, operation);
+    }
+
     async addNode(datum, resetOrder = true, resetDates = true, newUUID = true) {
         if (resetOrder)
             datum.pos = DEFAULT_POSITION;

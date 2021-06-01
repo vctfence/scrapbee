@@ -75,13 +75,14 @@ input[type="text"] {
 }
 
 input[type=button] {
-    padding: 5px 20px;
+    padding: 2px 14px;
     appearance: none;
     border-radius: 5px;
     border: none;
     background: #079;
     color: #fff;
     cursor: pointer;
+    height: 22px;
 }
 
 #search-result-count {

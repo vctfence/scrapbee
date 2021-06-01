@@ -8,16 +8,27 @@
 
 #link-check-timeout {
     margin-left: 8px;
-    margin-right: 8px;
     width: 50px;
+}
+
+#update-icons {
+    margin-left: 12px;
 }
 
 #check-scope {
     display: none;
 }
 
-#check-timeout-label {
-    padding-left: 8px;
+#check-timeout-label, #link-check-mode-label {
+    padding-left: 12px;
+}
+
+#link-check-mode-label {
+    margin-right: 8px;
+}
+
+#link-check-mode {
+    display: none;
 }
 
 #link-check-options {
@@ -31,6 +42,19 @@
     flex-wrap: nowrap;
     align-items: center;
     align-content: center;
+}
+
+.header-validity {
+    padding-bottom: 8px;
+    display: block;
+}
+
+.header-duplicates {
+
+}
+
+.link-check-service-cell {
+    width: 0;
 }
 
 .result-action-icon, .result-action-icon-last {
@@ -52,14 +76,22 @@
     white-space: nowrap;
 }
 
-#start-check-links {
+#start-check-links, #delete-selected-links {
     margin-left: 16px;
     height: 22px;
     padding-top: 0;
     padding-bottom: 0;
 }
 
-#invalid-links-container {
+#start-check-links {
+    width: 63px;
+}
+
+#delete-selected-links {
+    display: none;
+}
+
+#check-results-container {
     flex: 1 1 auto;
     padding-top: 16px;
     overflow-x: hidden;
@@ -67,8 +99,9 @@
     display: none;
 }
 
-#invalid-links {
+#check-results {
     margin-left: 15px;
+    width: calc(100% - 15px);
 }
 
 #current-link {
@@ -92,6 +125,34 @@
     overflow: hidden;
 }
 
+#current-link-title, #current-link-url {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .invalid-link {
     padding-left: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    max-width: 1px;
+}
+
+.duplicate-link {
+    padding-top: 8px;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 0;
+    max-width: 0;
+}
+
+.link-check-breadcrumb {
+    color: #555;
+}
+
+.archive-link {
+    font-style: italic;
 }

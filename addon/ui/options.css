@@ -138,13 +138,18 @@ input[type='text'] {
 /*}*/
 
 input[type=button] {
-    padding: 5px 20px;
+    padding: 4px 14px;
     appearance: none;
     border-radius: 5px;
     border: none;
     background: #079;
     color: #fff;
     cursor: pointer;
+    height: 22px;
+}
+
+input[type=button].yellow-button {
+    background: #f70;
 }
 
 #txtBackendPath {

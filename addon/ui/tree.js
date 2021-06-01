@@ -1000,10 +1000,12 @@ class BookmarkTree {
             cutItem: {
                 separator_before: true,
                 label: "Cut",
+                _disabled: selectedNodes.some(n => o(n).type === NODE_TYPE_SHELF),
                 action: () => tree.cut(selectedNodes)
             },
             copyItem: {
                 label: "Copy",
+                _disabled: selectedNodes.some(n => o(n).type === NODE_TYPE_SHELF),
                 action: () => tree.copy(selectedNodes)
             },
             pasteItem: {
