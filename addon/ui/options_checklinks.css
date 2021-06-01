@@ -2,10 +2,6 @@
     flex: 0 1 auto;
 }
 
-#link-scope {
-    margin-right: 8px;
-}
-
 #link-check-timeout {
     margin-left: 8px;
     width: 50px;
@@ -15,7 +11,7 @@
     margin-left: 12px;
 }
 
-#check-scope {
+#link-check-scope {
     display: none;
 }
 
@@ -35,6 +31,7 @@
     line-height: 22px;
     vertical-align: middle;
     margin-left: 16px;
+    white-space: nowrap;
 }
 
 #link-check-options {
@@ -131,12 +128,13 @@
     overflow: hidden;
 }
 
-.invalid-link {
+.validated-link {
     padding-left: 8px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 100%;
-    max-width: 1px;
+}
+
+.validated-node {
+    color: #0074D9;
+    cursor: pointer;
 }
 
 .duplicate-link {
@@ -147,6 +145,11 @@
     white-space: nowrap;
     width: 0;
     max-width: 0;
+}
+
+.duplicate-node {
+    color: #0074D9;
+    cursor: pointer;
 }
 
 .link-check-breadcrumb {

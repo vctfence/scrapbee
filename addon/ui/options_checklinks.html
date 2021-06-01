@@ -2,7 +2,9 @@
     <h2>Automatic Link Validation</h2>
     <div id="link-check-options" class="link-info">
         <img class="shelves-icon" title="Shelf" src="../icons/books.svg">
-        <select id="link-check-scope"><option value="-1">everything</option></select>
+        <div id="link-check-scope-container">
+            <select id="link-check-scope"><option value="-1">everything</option></select>
+        </div>
         <label id="check-timeout-label" for="link-check-timeout">Timeout (sec.):</label>
         <input id="link-check-timeout" type="number" min="1" value="10"/>
         <label id="link-check-mode-label" for="link-check-mode">Check for:</label>

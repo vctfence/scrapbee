@@ -6,6 +6,9 @@ import {getActiveTab, showNotification} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
 import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
+import {parseHtml} from "./utils_html.js";
+import {fetchText} from "./utils_io.js";
+import {getFavicon} from "./favicon.js";
 
 receive.createShelf = message => backend.createGroup(null, message.name, NODE_TYPE_SHELF);
 
@@ -33,6 +36,40 @@ receive.createBookmark = message => {
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
+};
+
+receive.createBookmarkFromURL = async message => {
+    let options = {
+        parent_id: message.parent_id,
+        uri: message.url,
+        name: "Untitled"
+    };
+
+    send.startProcessingIndication();
+
+    try {
+        const html = await fetchText(message.url);
+        let doc;
+        if (html)
+            doc = parseHtml(html);
+
+        if (doc) {
+            const title = $("title", doc).text();
+            if (title)
+                options.name = title;
+
+            const icon = await getFavicon(message.url, doc);
+            if (icon)
+                options.icon = icon;
+        }
+    }
+    catch (e) {
+        console.log(e);
+    }
+
+    const bookmark = await backend.addBookmark(options, NODE_TYPE_BOOKMARK);
+    await send.stopProcessingIndication();
+    send.bookmarkCreated({node: bookmark});
 };
 
 receive.updateBookmark = message => backend.updateBookmark(message.node);

@@ -327,7 +327,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
 }
 
 async function createShelf() {
-    const options = await showDlg("prompt", {caption: "Create Shelf", label: "Name"});
+    const options = await showDlg("prompt", {caption: "Create Shelf", label: "Name:"});
 
     if (options?.title) {
         if (!isSpecialShelf(options.title)) {

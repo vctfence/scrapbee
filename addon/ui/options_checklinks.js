@@ -57,7 +57,7 @@ export class LinkChecker {
         if (this.autoStartCheckLinks) {
             $("#update-icons").prop("checked", urlParams.get("repairIcons") === "true");
             let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
-            $(".selectric-wrapper", $("#check-links"))
+            $("#link-check-scope-container", $("#check-links"))
                 .replaceWith(`<span style="white-space: nowrap">${scopePath.slice(-1)[0].name}&nbsp;&nbsp;</span>`);
             this.autoLinkCheckScope = scopePath.map(g => g.name).join("/");
             this.startCheckLinks();
@@ -137,38 +137,43 @@ export class LinkChecker {
 
             const breadcrumb = await this._makeBreadCrumb(node);
 
-            let invalidLink = `<a id="link-${node.id}" href="${node.uri}" target="_blank" title="${breadcrumb}"
-                                  class="invalid-link">${node.name}</a>`
-            checkResultTable.append(`<tr>
-                                        <td class="link-check-service-cell"><input class="check-result-selected"
-                                            id="${node.id}" type="checkbox"/></td>
-                                        <td class="link-check-service-cell">
-                                            <img id="link-check-select-${node.id}" class="result-action-icon"
-                                                 src="../icons/tree-select.svg" title="Select"/>
-                                        </td>
-                                        <td class="link-check-service-cell">
-                                            <img id="link-check-open-url-${node.id}" class="result-action-icon"
-                                                 src="../icons/open-link.svg" title="Open URL"/>
-                                        </td>
-                                        <td class="link-check-service-cell">
-                                            <a href="http://web.archive.org/web/${encodeURIComponent(node.uri)}"
-                                               target="_blank"><img class="result-action-icon-last"
-                                                                    src="../icons/web-archive.svg"
-                                                                    title="Web Archive"/></a>
-                                        </td>
-                                        <td class="link-check-error link-check-service-cell">${error}</td>
-                                        <td>${invalidLink} <span class="link-check-breadcrumb">${breadcrumb}</span></td>
-                                     </tr>`);
+            checkResultTable.append(
+                `<tr>
+                    <td class="link-check-service-cell">
+                        <input class="check-result-selected" id="${node.id}" type="checkbox"/>
+                    </td>
+                    <td class="link-check-service-cell">
+                        <img id="link-check-select-${node.id}" class="result-action-icon"
+                             src="../icons/tree-select.svg" title="Select"/>
+                    </td>
+                    <td class="link-check-service-cell">
+                        <a href="${node.uri}"
+                           target="_blank"><img id="link-check-open-url-${node.id}" class="result-action-icon"
+                                                src="../icons/url.svg" title="Open URL"/></a>
+                    </td>
+                    <td class="link-check-service-cell">
+                        <a href="http://web.archive.org/web/${encodeURIComponent(node.uri)}"
+                           target="_blank"><img class="result-action-icon-last"
+                                                src="../icons/web-archive.svg"
+                                                title="Web Archive"/></a>
+                    </td>
+                    <td class="link-check-error link-check-service-cell">${error}</td>
+                    <td class="validated-link">
+                        <span id="checked-link-${node.id}" title="${breadcrumb}"
+                              class="validated-node">${node.name}</span>
+                        <span class="link-check-breadcrumb">${breadcrumb}</span>
+                    </td>
+                 </tr>`
+            );
 
-            const openURLAnchor = $(`#link-check-open-url-${node.id}`);
-            openURLAnchor.click(e => openPage(node.uri));
             $(`#link-check-select-${node.id}`).click(e => send.selectNode({node}));
 
+            const link = $(`#checked-link-${node.id}`);
+            link.click(e => send.browseNode({node}));
+
             if (node.type === NODE_TYPE_ARCHIVE) {
-                const link = $(`#link-${node.id}`);
                 link.addClass("archive-link");
-                link.prop("href", `ext+scrapyard://${node.uuid}`);
-                openURLAnchor.prop("title", "Open Original URL")
+                $(`#link-check-open-url-${node.id}`).prop("title", "Open Original URL")
             }
         }
 
@@ -280,9 +285,11 @@ export class LinkChecker {
         }
 
         function displayLink(link) {
-            checkResultTable.append(`<tr>
-                                        <td colspan="3" class="duplicate-link">${decodeURIComponent(link)}</td>
-                                     </tr>`);
+            checkResultTable.append(
+                `<tr>
+                    <td colspan="3" class="duplicate-link">${decodeURIComponent(link)}</td>
+                 </tr>`
+            );
         }
 
         const displayLinkDuplicate = async node => {
@@ -290,21 +297,29 @@ export class LinkChecker {
 
             const breadcrumb = await this._makeBreadCrumb(node);
 
-            let linkHtml = `<a id="link-${node.id}" href="${node.uri}" target="_blank"
-                               class="duplicate-node" title="${breadcrumb}">${node.name}</a>`
-            checkResultTable.append(`<tr>
-                                        <td class="link-check-service-cell"><input class="check-result-selected"
-                                            id="${node.id}" type="checkbox"/></td>
-                                        <td class="link-check-service-cell">
-                                            <img id="link-check-select-${node.id}" class="result-action-icon"
-                                                 src="../icons/tree-select.svg" title="Select"/>
-                                        </td>
-                                        <td>${linkHtml} <span class="link-check-breadcrumb">${breadcrumb}</span></td>
-                                     </tr>`);
+            checkResultTable.append(
+                `<tr>
+                    <td class="link-check-service-cell">
+                        <input class="check-result-selected" id="${node.id}" type="checkbox"/>
+                    </td>
+                    <td class="link-check-service-cell">
+                        <img id="link-check-select-${node.id}" class="result-action-icon"
+                             src="../icons/tree-select.svg" title="Select"/>
+                    </td>
+                    <td>
+                        <span id="checked-link-${node.id}" class="duplicate-node"
+                              title="${breadcrumb}">${node.name}</span>
+                        <span class="link-check-breadcrumb">${breadcrumb}</span>
+                    </td>
+                 </tr>`
+            );
+
             $(`#link-check-select-${node.id}`).click(e => send.selectNode({node}));
 
+            const link = $(`#checked-link-${node.id}`);
+            link.click(e => send.browseNode({node}));
+
             if (node.type === NODE_TYPE_ARCHIVE) {
-                const link = $(`#link-${node.id}`);
                 link.addClass("archive-link");
                 link.prop("href", `ext+scrapyard://${node.uuid}`);
             }

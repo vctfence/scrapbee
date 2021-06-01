@@ -752,8 +752,8 @@ class BookmarkTree {
             });
         }
 
-        let containers = [{cookieStoreId: undefined, name: "Default", iconUrl: "../icons/containers.svg",
-                           colorCode: (lightTheme? "#666666": "#8C8C90") },
+        let containers = [/*{cookieStoreId: undefined, name: "Default", iconUrl: "../icons/containers.svg",
+                           colorCode: (lightTheme? "#666666": "#8C8C90") },*/
             ...this._containers];
 
         let containersSubmenu = {};
@@ -799,6 +799,12 @@ class BookmarkTree {
                 label: "Copy Link",
                 action: () => navigator.clipboard.writeText(o(ctxNode).uri)
             },
+            openNotesItem: {
+                label: "Open Notes",
+                action: () => {
+                    send.browseNotes({id: o(ctxNode).id, uuid: o(ctxNode).uuid});
+                }
+            },
             openOriginalItem: {
                 label: "Open Original URL",
                 action: async () => {
@@ -807,6 +813,22 @@ class BookmarkTree {
                     if (url)
                         openContainerTab(url, o(ctxNode).container);
                 }
+            },
+            openAllItem: {
+                label: "Open All",
+                action: async () => {
+                    let children = this.odata.filter(n => ctxNode.children.some(id => id == n.id) && isEndpoint(n));
+                    children.sort((a, b) => a.pos - b.pos);
+
+                    for (let node of children) {
+                        delete node.tag_list;
+                        await send.browseNode({node: node});
+                    }
+                }
+            },
+            openInContainerItem: {
+                label: "Open in Container",
+                submenu: containersSubmenu
             },
             sortItem: {
                 label: "Sort by Name",
@@ -819,167 +841,145 @@ class BookmarkTree {
                     this.reorderNodes(ctxNode);
                 }
             },
-            openInContainerItem: {
-                label: "Open in Container",
-                submenu: containersSubmenu
-            },
-            newFolderItem: {
-                label: "New Folder",
-                action: async () => {
-                    let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
-                                 parent_id: o(ctxNode).id};
-                    const groupPending = send.createGroup({parent: o(ctxNode), name: group.name});
-
-                    let jgroup = BookmarkTree.toJsTreeNode(group);
-                    tree.deselect_all(true);
-
-                    let groupJNode = tree.get_node(tree.create_node(ctxNode, jgroup, 0));
-                    tree.select_node(groupJNode);
-
-                    tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
-                        this.startProcessingIndication();
-                        group = await groupPending;
-                        tree.set_id(groupJNode.id, group.id);
-
-                        if (success && !cancelled && jnode.text) {
-                            group = await send.renameGroup({id: group.id, name: jnode.text});
-
-                            tree.rename_node(jnode, group.name);
-                            Object.assign(o(jnode), group);
-                            jnode.original = BookmarkTree.toJsTreeNode(group);
-                            await this.reorderNodes(ctxNode);
-                        }
-                        else {
-                            tree.rename_node(jnode, group.name);
-                            Object.assign(o(jnode), group);
-                            jnode.original = BookmarkTree.toJsTreeNode(group);
-                            await this.reorderNodes(ctxNode);
-                        }
-
-                        this.stopProcessingIndication();
-                    });
-                }
-            },
-            newFolderAfterItem: {
-                label: "New Folder After",
-                action: async () => {
-                    let jparent = tree.get_node(ctxNode.parent);
-                    let position = $.inArray(ctxNode.id, jparent.children);
-
-                    let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
-                        parent_id: o(jparent).id};
-                    const groupPending = send.createGroup({parent: o(jparent), name: group.name});
-
-                    let jgroup = BookmarkTree.toJsTreeNode(group);
-                    tree.deselect_all(true);
-
-                    let groupJNode = tree.get_node(tree.create_node(jparent, jgroup, position + 1));
-                    tree.select_node(groupJNode);
-
-                    tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
-                        this.startProcessingIndication();
-                        group = await groupPending;
-                        tree.set_id(groupJNode.id, group.id);
-
-                        if (success && !cancelled && jnode.text) {
-                            group = await send.renameGroup({id: group.id, name: jnode.text});
-
-                            tree.rename_node(jnode, group.name);
-                            Object.assign(o(jnode), group);
-                            jnode.original = BookmarkTree.toJsTreeNode(group);
-                            await this.reorderNodes(jparent);
-                        }
-                        else {
-                            tree.rename_node(jnode, group.name);
-                            Object.assign(o(jnode), group);
-                            jnode.original = BookmarkTree.toJsTreeNode(group);
-                            await this.reorderNodes(jparent);
-                        }
-
-                        this.stopProcessingIndication();
-                    });
-                }
-            },
-            newSeparatorItem: {
-                label: "New Separator",
-                action: async () => {
-                    let jparent = tree.get_node(ctxNode.parent);
-
-                    const separator = await send.addSeparator({parent_id: o(jparent).id});
-
-                    let position = $.inArray(ctxNode.id, jparent.children);
-                    tree.create_node(jparent, BookmarkTree.toJsTreeNode(separator), position + 1);
-                    this.reorderNodes(jparent);
-                }
-            },
-            newNotesItem: {
-                label: "New Notes",
-                action: async () => {
-                    this.startProcessingIndication();
-                    let notes = await send.addNotes({parent_id: o(ctxNode).id, name: "New Notes"});
-                    this.stopProcessingIndication();
-
-                    let jnotes = BookmarkTree.toJsTreeNode(notes);
-
-                    this.data.push(jnotes);
-                    tree.deselect_all(true);
-
-                    let notesNode = tree.get_node(tree.create_node(ctxNode, jnotes));
-                    tree.select_node(notesNode);
-
-                    tree.edit(notesNode, null, async (jnode, success, cancelled) => {
-                        this.startProcessingIndication();
-
-                        if (success && !cancelled && jnode.text) {
-                            notes.name = jnode.text;
-                            notes = await send.updateBookmark({node: notes});
-                            await this.reorderNodes(ctxNode);
-
-                            o(jnode).name = jnode.original.text = jnode.text;
-                            //tree.rename_node(notesNode, notes.name);
-                        }
-                        else
-                            await this.reorderNodes(ctxNode);
-
-                        this.stopProcessingIndication();
-                    });
-                }
-            },
-            shareItem: {
+            newItem: {
+                label: "New",
                 separator_before: true,
-                label: "Share",
                 submenu: {
-                    cloudItem: {
-                        label: "Cloud",
-                        icon: (lightTheme? "/icons/cloud.png": "/icons/cloud2.png"),
-                        _disabled: !settings.cloud_enabled() || !cloudBackend.isAuthenticated(),
+                    newFolderItem: {
+                        label: "Folder",
+                        icon: `/icons/group${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            this.startProcessingIndication(true);
-                            let selectedIds = selectedNodes.map(n => o(n).id);
-                            try {
-                                await send.shareToCloud({node_ids: selectedIds})
-                            }
-                            finally {
+                            let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                                parent_id: o(ctxNode).id};
+                            const groupPending = send.createGroup({parent: o(ctxNode), name: group.name});
+
+                            let jgroup = BookmarkTree.toJsTreeNode(group);
+                            tree.deselect_all(true);
+
+                            let groupJNode = tree.get_node(tree.create_node(ctxNode, jgroup, 0));
+                            tree.select_node(groupJNode);
+
+                            tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
+                                this.startProcessingIndication();
+                                group = await groupPending;
+                                tree.set_id(groupJNode.id, group.id);
+
+                                if (success && !cancelled && jnode.text) {
+                                    group = await send.renameGroup({id: group.id, name: jnode.text});
+
+                                    tree.rename_node(jnode, group.name);
+                                    Object.assign(o(jnode), group);
+                                    jnode.original = BookmarkTree.toJsTreeNode(group);
+                                    await this.reorderNodes(ctxNode);
+                                }
+                                else {
+                                    tree.rename_node(jnode, group.name);
+                                    Object.assign(o(jnode), group);
+                                    jnode.original = BookmarkTree.toJsTreeNode(group);
+                                    await this.reorderNodes(ctxNode);
+                                }
+
                                 this.stopProcessingIndication();
-                            }
+                            });
                         }
                     },
-                    pocketItem: {
-                        label: "Pocket",
-                        icon: "/icons/pocket.svg",
+                    newFolderAfterItem: {
+                        label: "Sibling Folder",
+                        icon: `/icons/group${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            if (selectedNodes)
-                                await send.shareToPocket({nodes: selectedNodes.map(n => o(n))});
+                            let jparent = tree.get_node(ctxNode.parent);
+                            let position = $.inArray(ctxNode.id, jparent.children);
+
+                            let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                                parent_id: o(jparent).id};
+                            const groupPending = send.createGroup({parent: o(jparent), name: group.name});
+
+                            let jgroup = BookmarkTree.toJsTreeNode(group);
+                            tree.deselect_all(true);
+
+                            let groupJNode = tree.get_node(tree.create_node(jparent, jgroup, position + 1));
+                            tree.select_node(groupJNode);
+
+                            tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
+                                this.startProcessingIndication();
+                                group = await groupPending;
+                                tree.set_id(groupJNode.id, group.id);
+
+                                if (success && !cancelled && jnode.text) {
+                                    group = await send.renameGroup({id: group.id, name: jnode.text});
+
+                                    tree.rename_node(jnode, group.name);
+                                    Object.assign(o(jnode), group);
+                                    jnode.original = BookmarkTree.toJsTreeNode(group);
+                                    await this.reorderNodes(jparent);
+                                }
+                                else {
+                                    tree.rename_node(jnode, group.name);
+                                    Object.assign(o(jnode), group);
+                                    jnode.original = BookmarkTree.toJsTreeNode(group);
+                                    await this.reorderNodes(jparent);
+                                }
+
+                                this.stopProcessingIndication();
+                            });
                         }
                     },
-                    dropboxItem: {
-                        label: "Dropbox",
-                        icon: "/icons/dropbox.png",
+                    newBookmarkItem: {
+                        label: "Bookmark",
+                        icon: `/icons/globe${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            if (selectedNodes)
-                                await send.shareToDropbox({nodes: selectedNodes.map(n => o(n))});
+                            const options = await showDlg("prompt", {caption: "New Bookmark", label: "URL:"});
+                            if (options && options.title)
+                                send.createBookmarkFromURL({url: options.title, parent_id: o(ctxNode).id});
                         }
-                    }
+                    },
+                    newNotesItem: {
+                        label: "Notes",
+                        icon: `/icons/notes${lightTheme? "": "2"}.svg`,
+                        action: async () => {
+                            this.startProcessingIndication();
+                            let notes = await send.addNotes({parent_id: o(ctxNode).id, name: "New Notes"});
+                            this.stopProcessingIndication();
+
+                            let jnotes = BookmarkTree.toJsTreeNode(notes);
+
+                            this.data.push(jnotes);
+                            tree.deselect_all(true);
+
+                            let notesNode = tree.get_node(tree.create_node(ctxNode, jnotes));
+                            tree.select_node(notesNode);
+
+                            tree.edit(notesNode, null, async (jnode, success, cancelled) => {
+                                this.startProcessingIndication();
+
+                                if (success && !cancelled && jnode.text) {
+                                    notes.name = jnode.text;
+                                    notes = await send.updateBookmark({node: notes});
+                                    await this.reorderNodes(ctxNode);
+
+                                    o(jnode).name = jnode.original.text = jnode.text;
+                                    //tree.rename_node(notesNode, notes.name);
+                                }
+                                else
+                                    await this.reorderNodes(ctxNode);
+
+                                this.stopProcessingIndication();
+                            });
+                        }
+                    },
+                    newSeparatorItem: {
+                        label: "Separator",
+                        icon: `/icons/separator${lightTheme? "": "2"}.svg`,
+                        action: async () => {
+                            let jparent = tree.get_node(ctxNode.parent);
+
+                            const separator = await send.addSeparator({parent_id: o(jparent).id});
+
+                            let position = $.inArray(ctxNode.id, jparent.children);
+                            tree.create_node(jparent, BookmarkTree.toJsTreeNode(separator), position + 1);
+                            this.reorderNodes(jparent);
+                        }
+                    },
                 }
             },
             cutItem: {
@@ -1035,11 +1035,41 @@ class BookmarkTree {
                     }
                 }
             },
-            viewNotesItem: {
+            shareItem: {
+                label: "Share",
                 separator_before: true,
-                label: "Open Notes",
-                action: () => {
-                    send.browseNotes({id: o(ctxNode).id, uuid: o(ctxNode).uuid});
+                submenu: {
+                    cloudItem: {
+                        label: "Cloud",
+                        icon: (lightTheme? "/icons/cloud.png": "/icons/cloud2.png"),
+                        _disabled: !settings.cloud_enabled() || !cloudBackend.isAuthenticated(),
+                        action: async () => {
+                            this.startProcessingIndication(true);
+                            let selectedIds = selectedNodes.map(n => o(n).id);
+                            try {
+                                await send.shareToCloud({node_ids: selectedIds})
+                            }
+                            finally {
+                                this.stopProcessingIndication();
+                            }
+                        }
+                    },
+                    pocketItem: {
+                        label: "Pocket",
+                        icon: "/icons/pocket.svg",
+                        action: async () => {
+                            if (selectedNodes)
+                                await send.shareToPocket({nodes: selectedNodes.map(n => o(n))});
+                        }
+                    },
+                    dropboxItem: {
+                        label: "Dropbox",
+                        icon: "/icons/dropbox.png",
+                        action: async () => {
+                            if (selectedNodes)
+                                await send.shareToDropbox({nodes: selectedNodes.map(n => o(n))});
+                        }
+                    }
                 }
             },
             todoItem: {
@@ -1243,7 +1273,7 @@ class BookmarkTree {
                 separator_before: true,
                 label: "RDF Directory...",
                 action: async () => {
-                    const options = await showDlg("prompt", {caption: "RDF Directory", label: "Path",
+                    const options = await showDlg("prompt", {caption: "RDF Directory", label: "Path:",
                                                                         title: o(ctxNode).uri});
                     if (options) {
                         let node = await backend.getNode(o(ctxNode).id);
@@ -1260,8 +1290,8 @@ class BookmarkTree {
                 delete items.cutItem;
                 delete items.copyItem;
                 delete items.shareItem;
-                delete items.newSeparatorItem;
-                delete items.newFolderAfterItem;
+                delete items.newItem.submenu.newSeparatorItem;
+                delete items.newItem.submenu.newFolderAfterItem;
                 if (o(ctxNode).id === FIREFOX_SHELF_ID) {
                     items = {};
                 }
@@ -1281,14 +1311,14 @@ class BookmarkTree {
                 if (o(ctxNode).type === NODE_TYPE_GROUP)
                     delete items.rdfPathItem;
                 if (o(ctxNode).external && o(ctxNode).external !== CLOUD_EXTERNAL_NAME)
-                    delete items.newNotesItem;
+                    delete items.newItem.submenu.newNotesItem;
                 if (o(ctxNode).special_browser_folder) {
                     delete items.cutItem;
                     delete items.copyItem;
                     delete items.renameItem;
                     delete items.deleteItem;
-                    delete items.newSeparatorItem;
-                    delete items.newFolderAfterItem;
+                    delete items.newItem.submenu.newSeparatorItem;
+                    delete items.newItem.submenu.newFolderAfterItem;
                 }
                 if (o(ctxNode).external === RDF_EXTERNAL_NAME) {
                     delete items.cutItem;
@@ -1301,9 +1331,10 @@ class BookmarkTree {
             case NODE_TYPE_BOOKMARK:
                 delete items.openOriginalItem;
             case NODE_TYPE_ARCHIVE:
-                delete items.newNotesItem;
                 delete items.sortItem;
-                delete items.newFolderItem;
+                delete items.openAllItem;
+                delete items.newItem.submenu.newNotesItem;
+                delete items.newItem.submenu.newFolderItem;
                 delete items.renameItem;
                 delete items.rdfPathItem;
                 delete items.checkLinksItem;
@@ -1318,22 +1349,34 @@ class BookmarkTree {
         }
 
         if (o(ctxNode).type === NODE_TYPE_SEPARATOR) {
+            const deleteItem = items.deleteItem;
+
+            items.newFolderAfterItem = items.newItem.submenu.newFolderAfterItem;
+            items.newFolderAfterItem.icon = undefined;
+            items.newFolderAfterItem.label = "New Sibling Folder";
+
             for (let k in items)
-                if (!["deleteItem", "newFolderAfterItem"].find(s => s === k))
+                if (!["newFolderAfterItem"].find(s => s === k))
                     delete items[k];
+
+            items.deleteItem = deleteItem;
         }
 
         if (o(ctxNode).type === NODE_TYPE_NOTES) {
             delete items.openInContainerItem;
+            delete items.copyLinkItem;
         }
 
-        if (!isEndpoint(o(ctxNode))) {
-            delete items.viewNotesItem;
+        if (isEndpoint(o(ctxNode))) {
+            delete items.newItem.submenu.newBookmarkItem;
+        }
+        else {
+            delete items.openNotesItem;
         }
 
         if (o(ctxNode).__extended_todo) {
-            delete items.newSeparatorItem;
-            delete items.newFolderAfterItem;
+            delete items.newItem.submenu.newSeparatorItem;
+            delete items.newItem.submenu.newFolderAfterItem;
         }
 
         if (!o(ctxNode).__filtering) {
@@ -1341,14 +1384,14 @@ class BookmarkTree {
         }
 
         if (multiselect) {
+            items["newItem"] && (items["newItem"]._disabled = true);
             items["sortItem"] && (items["sortItem"]._disabled = true);
+            items["uploadItem"] && (items["uploadItem"]._disabled = true);
             items["renameItem"] && (items["renameItem"]._disabled = true);
             items["copyLinkItem"] && (items["copyLinkItem"]._disabled = true);
-            items["newFolderItem"] && (items["newFolderItem"]._disabled = true);
-            items["viewNotesItem"] && (items["viewNotesItem"]._disabled = true);
+            items["openNotesItem"] && (items["openNotesItem"]._disabled = true);
             items["propertiesItem"] && (items["propertiesItem"]._disabled = true);
-            items["newSeparatorItem"] && (items["newSeparatorItem"]._disabled = true);
-            items["newFolderAfterItem"] && (items["newFolderAfterItem"]._disabled = true);
+            items["checkLinksItem"] && (items["checkLinksItem"]._disabled = true);
             items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
         }
 
