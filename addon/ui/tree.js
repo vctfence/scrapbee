@@ -717,9 +717,11 @@ class BookmarkTree {
         if (o(ctxNode).__tentative)
             return null;
 
-        let tree = this._jstree;
+        const tree = this._jstree;
+        const lightTheme = getThemeVar("--theme-background").trim() === "white";
+
         let selectedNodes = tree.get_selected(true) || [];
-        let multiselect = selectedNodes.length > 1;
+        const multiselect = selectedNodes.length > 1;
 
         const setTODOState = async state => {
             let selectedIds = selectedNodes.map(n => o(n).type === NODE_TYPE_GROUP || o(n).type === NODE_TYPE_SHELF
@@ -750,9 +752,13 @@ class BookmarkTree {
             });
         }
 
+        let containers = [{cookieStoreId: undefined, name: "Default", iconUrl: "../icons/containers.svg",
+                           colorCode: (lightTheme? "#666666": "#8C8C90") },
+            ...this._containers];
+
         let containersSubmenu = {};
 
-        for (let container of this._containers) {
+        for (let container of containers) {
             containersSubmenu[container.cookieStoreId] = {
                 label: container.name,
                 __container_id: container.cookieStoreId,
@@ -766,7 +772,6 @@ class BookmarkTree {
                         children.sort((a, b) => a.pos - b.pos);
 
                         for (let node of children) {
-                            delete node.tag_list;
                             await send.browseNode({node, container: obj.item.__container_id});
                         }
                     }
@@ -790,25 +795,9 @@ class BookmarkTree {
                     this.sidebarSelectNode(o(ctxNode));
                 }
             },
-            openItem: {
-                label: "Open",
-                separator_before: o(ctxNode).__filtering,
-                action: async () => {
-                    for (let jnode of selectedNodes)
-                        await send.browseNode({node: o(jnode)});
-                }
-            },
-            openAllItem: {
-                label: "Open All",
-                action: async () => {
-                    let children = this.odata.filter(n => ctxNode.children.some(id => id == n.id) && isEndpoint(n));
-                    children.sort((a, b) => a.pos - b.pos);
-
-                    for (let node of children) {
-                        delete node.tag_list;
-                        await send.browseNode({node: node});
-                    }
-                }
+            copyLinkItem: {
+                label: "Copy Link",
+                action: () => navigator.clipboard.writeText(o(ctxNode).uri)
             },
             openOriginalItem: {
                 label: "Open Original URL",
@@ -818,10 +807,6 @@ class BookmarkTree {
                     if (url)
                         openContainerTab(url, o(ctxNode).container);
                 }
-            },
-            openInContainerItem: {
-                label: "Open in Container",
-                submenu: containersSubmenu
             },
             sortItem: {
                 label: "Sort by Name",
@@ -834,9 +819,9 @@ class BookmarkTree {
                     this.reorderNodes(ctxNode);
                 }
             },
-            copyLinkItem: {
-                label: "Copy Link",
-                action: () => navigator.clipboard.writeText(o(ctxNode).uri)
+            openInContainerItem: {
+                label: "Open in Container",
+                submenu: containersSubmenu
             },
             newFolderItem: {
                 label: "New Folder",
@@ -966,7 +951,7 @@ class BookmarkTree {
                 submenu: {
                     cloudItem: {
                         label: "Cloud",
-                        icon: (getThemeVar("--theme-background").trim() === "white"? "/icons/cloud.png": "/icons/cloud2.png"),
+                        icon: (lightTheme? "/icons/cloud.png": "/icons/cloud2.png"),
                         _disabled: !settings.cloud_enabled() || !cloudBackend.isAuthenticated(),
                         action: async () => {
                             this.startProcessingIndication(true);
@@ -1285,7 +1270,6 @@ class BookmarkTree {
                 }
             case NODE_TYPE_GROUP:
                 //delete items.newSeparatorItem;
-                delete items.openItem;
                 delete items.openOriginalItem;
                 delete items.propertiesItem;
                 delete items.copyLinkItem;
@@ -1318,7 +1302,6 @@ class BookmarkTree {
                 delete items.openOriginalItem;
             case NODE_TYPE_ARCHIVE:
                 delete items.newNotesItem;
-                delete items.openAllItem;
                 delete items.sortItem;
                 delete items.newFolderItem;
                 delete items.renameItem;
@@ -1360,7 +1343,6 @@ class BookmarkTree {
         if (multiselect) {
             items["sortItem"] && (items["sortItem"]._disabled = true);
             items["renameItem"] && (items["renameItem"]._disabled = true);
-            items["openAllItem"] && (items["openAllItem"]._disabled = true);
             items["copyLinkItem"] && (items["copyLinkItem"]._disabled = true);
             items["newFolderItem"] && (items["newFolderItem"]._disabled = true);
             items["viewNotesItem"] && (items["viewNotesItem"]._disabled = true);
