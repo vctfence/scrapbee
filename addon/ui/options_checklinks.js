@@ -6,7 +6,7 @@ import {EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
 import {getFavicon} from "../favicon.js";
 import {fetchWithTimeout} from "../utils_io.js";
 import {confirm} from "./dialog.js";
-import {showNotification} from "../utils_browser.js";
+import {openPage, showNotification} from "../utils_browser.js";
 import {sleep} from "../utils.js";
 
 const DEFAULT_LINK_CHECK_TIMEOUT = 10;
@@ -147,6 +147,10 @@ export class LinkChecker {
                                                  src="../icons/tree-select.svg" title="Select"/>
                                         </td>
                                         <td class="link-check-service-cell">
+                                            <img id="link-check-open-url-${node.id}" class="result-action-icon"
+                                                 src="../icons/open-link.svg" title="Open URL"/>
+                                        </td>
+                                        <td class="link-check-service-cell">
                                             <a href="http://web.archive.org/web/${encodeURIComponent(node.uri)}"
                                                target="_blank"><img class="result-action-icon-last"
                                                                     src="../icons/web-archive.svg"
@@ -156,10 +160,16 @@ export class LinkChecker {
                                         <td>${invalidLink} <span class="link-check-breadcrumb">${breadcrumb}</span></td>
                                      </tr>`);
 
+            const openURLAnchor = $(`#link-check-open-url-${node.id}`);
+            openURLAnchor.click(e => openPage(node.uri));
             $(`#link-check-select-${node.id}`).click(e => send.selectNode({node}));
 
-            if (node.type === NODE_TYPE_ARCHIVE)
-                $(`#link-${node.id}`).addClass("archive-link");
+            if (node.type === NODE_TYPE_ARCHIVE) {
+                const link = $(`#link-${node.id}`);
+                link.addClass("archive-link");
+                link.prop("href", `ext+scrapyard://${node.uuid}`);
+                openURLAnchor.prop("title", "Open Original URL")
+            }
         }
 
         const nodes = await backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
@@ -293,8 +303,11 @@ export class LinkChecker {
                                      </tr>`);
             $(`#link-check-select-${node.id}`).click(e => send.selectNode({node}));
 
-            if (node.type === NODE_TYPE_ARCHIVE)
-                $(`#link-${node.id}`).addClass("archive-link");
+            if (node.type === NODE_TYPE_ARCHIVE) {
+                const link = $(`#link-${node.id}`);
+                link.addClass("archive-link");
+                link.prop("href", `ext+scrapyard://${node.uuid}`);
+            }
         }
 
         if (this.resultCount) {

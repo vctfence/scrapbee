@@ -1,10 +1,20 @@
 <style>
+    #help-container {
+        display: flex;
+    }
+
     #help-content * {
         font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
     }
 
+    #help-spacer-left, #help-spacer-right {
+        flex-grow: 1;
+    }
+
     #help-content {
-        padding: 0 20%;
+        max-width: 710px;
+        flex-grow: 0;
+        /*flex-shrink: 0;*/
     }
 
     #help-content p, #help-content li {
@@ -70,6 +80,8 @@
 
 </style>
 
+<div id="help-container">
+    <div id="help-spacer-left"></div>
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
     <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page
@@ -88,7 +100,8 @@
         target="_blank">Firefox sidebar</a> as shown in the image below. The sidebar
         itself could be opened with the corresponding toolbar button: <img
             style="display: inline-block" src="images/sidebar-button.png">. In the more recent
-        versions of Firefox it may be necessary to add this button to the toolbar manually.</p>
+        versions of Firefox it may be necessary to add this button to the toolbar manually by right-clicking
+        on the main Firefox menu button and choosing "Customize Toolbar...".</p>
 
     <p style="text-align: center">
         <img src="images/find-sidebar.png">
@@ -129,9 +142,11 @@
     <h3 id="search">Search</h3>
     <p>The search input field at the Scrapyard sidebar allows to filter bookmarks of the current shelf
         by title/URL, tags, date, content of archived web-pages, content of attached notes or comments.
-        Use the "Everything" shelf to search through all bookmarks. Although this filter is
-        reasonably fast, it matches all items that contain all the entered words longer than 2 characters
-        in any order and distance. Filtering by date supports simple queries:</p>
+        Use the "Everything" shelf to search through all bookmarks. Although the Sidebar filter is
+        reasonably fast, it matches all items that contain every entered word longer than 2 characters
+        in any order and distance. Use full-text search if you need exact results.<p>
+
+    <p>Filtering by date supports simple queries:</p>
 
     <ul>
         <li><span class="query">2021-02-24</span> - the exact date.</li>
@@ -164,7 +179,7 @@
                                 target="_blank">iShell</a> commands to open specific bookmarks, you
         may access them even more quickly. A few examples could be found in the <a
             href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
-            target="_blank">Scrapyard automation documentation</a>.</p>
+            target="_blank">Scrapyard automation API documentation</a>.</p>
 
     <p>Full-text search is accessible with the corresponding sidebar button:
         <img src="../../../icons/search.svg" style="margin-bottom: -4px"/>
@@ -185,7 +200,7 @@
     <p><a
         href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
         Android</a> allows to save links and text into the Cloud shelf from mobile devices,
-        and browse the contents of this shelf. See the corresponding section below for more details.
+        and browse contents of this shelf. See the corresponding section below for more details.
     </p>
 
 
@@ -211,7 +226,7 @@
     <p>
         Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the built-in bookmark
         manager. It is possible to attach comments and TODO states to Firefox bookmarks displayed in Scrapyard, although
-        they will be lost if the bookmarks are deleted from the Firefox UI, or after the "Show Firefox bookmarks shelf"
+        they will be lost if the bookmarks are deleted from the Firefox UI, or after the "Enable Firefox bookmarks integration"
         option in settings is unchecked. Firefox bookmarks are included in the export as a separate shelf,
         so import will leave the current Firefox bookmark state intact.
     </p>
@@ -250,7 +265,7 @@
         <img src="images/todo.png">
     </p>
 
-    <p>If the path of a bookmark parent folder above its title provides not enough context, it is
+    <p>If the path of the bookmark folder above its title provides not enough context, it is
         possible to fill the "Details" and "Date" fields at the bookmark property dialog. Only ISO
         (YYYY-MM-DD) date format is supported. Expired TODO items will be displayed first regardless
         of the assigned state.</p>
@@ -376,6 +391,16 @@
 
     <p style="text-align: center">
         <img src="images/backup.png">
+    </p>
+
+
+    <h3 id="link-checker">Link Checker</h3>
+    <p>The automatic link checker allows to find broken links or URL duplicates. Since different
+    archived page fragments may share the same original URL, link checker results may not always mean
+    the duplication of content. Please check the items before deleting.</p>
+
+    <p style="text-align: center">
+        <img src="images/link-checker.png">
     </p>
 
     <h3>Displaying Random Bookmarks</h3>
@@ -517,4 +542,6 @@
         modify, and delete bookmarks or page archives from iShell commands and your own extensions.
         See the <a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
                    target="_blank">automation API documentation</a> for more details.</p>
+</div>
+    <div id="help-spacer-right"></div>
 </div>
