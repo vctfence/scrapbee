@@ -22,12 +22,12 @@ window.onload = async function() {
     loadScrapyardSettings();
 
     // show settings
-    $("#div-page").css("display", "table-row");
+    $("#settings-container").css("display", "flex");
 };
 
 async function switchPane() {
-    $(".div-area").hide();
-    $("a.left-index").removeClass("focus")
+    $(".settings-content").hide();
+    $("a.settings-menu-item").removeClass("focus")
 
     let hash = location.hash?.substr(1);
     if(hash) {
@@ -41,10 +41,10 @@ async function switchPane() {
         })[hash]?.();
 
         $("#div-" + hash).show();
-        $("a.left-index[href='#" + hash + "']").addClass("focus");
+        $("a.settings-menu-item[href='#" + hash + "']").addClass("focus");
     } else{
         $("#div-settings").show();
-        $("a.left-index[href='#settings']").addClass("focus")
+        $("a.settings-menu-item[href='#settings']").addClass("focus")
     }
 }
 
@@ -235,9 +235,9 @@ function configureScrapyardSettingsPage() {
 }
 
 function configureSavePageSettingsPage() {
-    $(`#div-savesettings input[type="checkbox"]`).on("click", storeSavePageSettings);
-    $(`#div-savesettings input[type="radio"]`).on("click", storeSavePageSettings);
-    $(`#div-savesettings input[type="number"]`).on("input", storeSavePageSettings);
+    $(`#div-capturesettings input[type="checkbox"]`).on("click", storeSavePageSettings);
+    $(`#div-capturesettings input[type="radio"]`).on("click", storeSavePageSettings);
+    $(`#div-capturesettings input[type="number"]`).on("input", storeSavePageSettings);
 }
 
 function configureCloudSettingsPage() {
@@ -318,7 +318,7 @@ async function configureRDFImportPage() {
 }
 
 function configureDiagnosticsPage() {
-    $("a.left-index[href='#diagnostics']").show();
+    $("a.settings-menu-item[href='#diagnostics']").show();
     let error = localStorage.getItem("scrapyard-diagnostics-error");
     if (error) {
         error = JSON.parse(error);

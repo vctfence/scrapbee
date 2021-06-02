@@ -31,10 +31,8 @@
     line-height: 22px;
     vertical-align: middle;
     margin-left: 16px;
+    margin-bottom: 16px;
     white-space: nowrap;
-}
-
-#link-check-options {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -90,7 +88,6 @@
 
 #check-results-container {
     flex: 1 1 auto;
-    padding-top: 16px;
     overflow-x: hidden;
     overflow-y: auto;
     display: none;
@@ -102,7 +99,7 @@
 }
 
 #current-link {
-    margin-top: 8px;
+    margin-bottom: 16px;
     display: flex;
     visibility: hidden;
 }

@@ -55,21 +55,21 @@
         </div>
     </div>
 </div>
-<div id="div-page">
-    <div id="div-form-left">
-        <a class="left-index" href="#settings">Settings</a>
-        <a class="left-index" href="#savesettings">Page Capture</a>
-        <a class="left-index" href="#cloud">Cloud</a>
-        <a class="left-index" href="#backup">Backup</a>
-        <a class="left-index" href="#links">Check Links</a>
-        <a class="left-index" href="#importrdf">Import RDF</a>
-        <a class="left-index" href="#diagnostics" style="display: none">Diagnostics</a>
-        <a class="left-index" href="#helperapp">Helper App</a>
-        <a class="left-index" href="#help">User Manual</a>
-        <a class="left-index" href="#about">About</a>
+<div id="settings-container">
+    <div id="settings-menu">
+        <a class="settings-menu-item" href="#settings">Settings</a>
+        <a class="settings-menu-item" href="#capturesettings">Page Capture</a>
+        <a class="settings-menu-item" href="#cloud">Cloud</a>
+        <a class="settings-menu-item" href="#backup">Backup</a>
+        <a class="settings-menu-item" href="#links">Check Links</a>
+        <a class="settings-menu-item" href="#importrdf">Import RDF</a>
+        <a class="settings-menu-item" href="#diagnostics" style="display: none">Diagnostics</a>
+        <a class="settings-menu-item" href="#helperapp">Helper App</a>
+        <a class="settings-menu-item" href="#help">User Manual</a>
+        <a class="settings-menu-item" href="#about">About</a>
     </div>
-    <div id="div-placeholder" class="div-area div-area-placeholder"></div>
-    <div id="div-settings" class="div-area" style="display:none;">
+    <div id="div-placeholder" class="settings-content settings-content-placeholder"></div>
+    <div id="div-settings" class="settings-content" style="display:none;">
         <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td>Appearance</td>
@@ -248,7 +248,7 @@
         </table>
 
     </div>
-    <div id="div-savesettings" class="div-area" style="display:none;">
+    <div id="div-capturesettings" class="settings-content" style="display:none;">
         <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td>Capture Options</td>
@@ -391,7 +391,7 @@
             </tr>
         </table>
     </div>
-    <div id="div-cloud" class="div-area" style="display:none;">
+    <div id="div-cloud" class="settings-content" style="display:none;">
         <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
             <tr>
                 <td style="width: 98px">Status</td>
@@ -447,10 +447,10 @@
             </tr>
         </table>
     </div>
-    <div id="div-backup" class="div-area" style="display:none;"></div>
-    <div id="div-links" class="div-area" style="display:none;"></div>
-    <div id="div-importrdf" class="div-area" style="display:none;"></div>
-    <div id="div-helperapp" class="div-area" style="display:none;">
+    <div id="div-backup" class="settings-content" style="display:none;"></div>
+    <div id="div-links" class="settings-content" style="display:none;"></div>
+    <div id="div-importrdf" class="settings-content" style="display:none;"></div>
+    <div id="div-helperapp" class="settings-content" style="display:none;">
         <div style="max-width: 800px; font-size: 110%;">
         <h2>Scrapyard Helper Application</h2>
             <p>Scrapyard helper application allows to transcend the limits of Firefox WebExtensions
@@ -482,8 +482,8 @@
                 completely close the browser before updating to a new version.</p>
         </div>
     </div>
-    <div id="div-help" class="div-area" style="display:none;"></div>
-    <div id="div-diagnostics" class="div-area" style="display:none;">
+    <div id="div-help" class="settings-content" style="display:none;"></div>
+    <div id="div-diagnostics" class="settings-content" style="display:none;">
         <div id="diagnostics-container">
             <h2>Scrapyard Diagnostics</h2>
             <p>Please do not try to reinstall the add-on. Create an issue at the Scrapyard
@@ -493,7 +493,7 @@
             <pre id="diagnostics-error-info"></pre>
         </div>
     </div>
-    <div id="div-about" class="div-area" style="display:none;">
+    <div id="div-about" class="settings-content" style="display:none;">
         <div id="about-version-panel">
             <div style="text-align: center">
                 <img src="../icons/scrapyard.svg" width="150px" height="150px"/>

@@ -44,7 +44,7 @@
     --themed-pdf-icon: url("../icons/format-pdf2.svg");
 }
 
-html, body, .toolbar, .footer, .black-button, .simple-menu, .dlg, .dlg *, #div-form-left, .div-area, .div-area * {
+html, body, .toolbar, .footer, .black-button, .simple-menu, .dlg, .dlg *, #settings-menu, .settings-content, .settings-content * {
     background-color: var(--in-content-page-background) !important;
     border-color: var(--tone-5) !important;
     color: var(--in-content-page-color) !important;
@@ -244,11 +244,11 @@ input[type=text], .selectric, .selectric .button, .selectric-items, .selectric-s
     color: #00b60e !important;
 }
 
-a.left-index {
+a.settings-menu-item {
     color: var(--in-content-page-color) !important;
 }
 
-a.left-index.focus{
+a.settings-menu-item.focus{
     border-right:3px solid var(--tone-5) !important;
     background-color:#ddd !important;
     color: black !important;
@@ -256,19 +256,19 @@ a.left-index.focus{
     z-index: 10000;
 }
 
-.div-area input[type=number] {
+.settings-content input[type=number] {
     color: black !important;
 }
 
 
-.div-area input[type=button] {
+.settings-content input[type=button] {
     border: 1px solid var(--in-content-box-border-color) !important;
     border-radius: 3px  !important;
     -moz-appearance: none !important;
     cursor: pointer  !important;
 }
 
-.div-area input[type=button]:hover {
+.settings-content input[type=button]:hover {
     background-color: var(--in-content-box-background-hover) !important;
 }
 
