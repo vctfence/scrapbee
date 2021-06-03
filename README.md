@@ -40,13 +40,11 @@ to obtain the desired features.
 
 Currently, the project is considered as a permanent alpha: be prepared for breaking changes, devastating bugs and
 groundbreaking experiments. Please, backup your Firefox profile often. Scrapyard also could be incredibly buggy at the
-times of major internal refactorings, since I have not enough resources for the proper QA, so users are the last
-frontier of it. Nevertheless, do not forget to donate if you have a good use of the software.
+times of major internal refactorings, since I have not enough resources for the proper QA.
+Nevertheless, do not forget to donate if you have a good use of the software.
 
 ### The current status of cloud support
 
-Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API, which is by definition a mock
-implementation - since there is no real database, the speed of operations is inversely proportional to
-the amount of bookmarks you have there. When the author will get enough donations to buy a brand-new laptop
-for comfortable development (probably never, but you may change this), there will be a dedicated cloud
-backend with a real DB, ability to backup all bookmark there, bookmark browsing on mobile platforms, et cetera, et cetera.
+Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API. 
+Since there is no real database, the speed of operations is inversely proportional to
+the amount of bookmarks you have there.
