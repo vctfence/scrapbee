@@ -275,7 +275,7 @@ function initWYSIWYGEditor() {
     Quill.prototype.getHTML = function() {
         if (!this.isEmpty()) {
             let root = $("#quill")[0].cloneNode(true);
-            applyInlineStyles(root);
+            applyInlineStyles(root, true, ["org.css"]);
 
             return root.firstChild.innerHTML;
         }

@@ -199,6 +199,10 @@ span.task-status.done {
     background-image: url("../icons/inc.svg");
 }
 
+pre {
+    -moz-tab-size: 4;
+}
+
 pre.plaintext {
     padding: 0;
     -moz-border-radius: 0;
@@ -262,8 +266,13 @@ pre.plaintext {
     white-space: normal;
 }
 
-.ql-editor p {
+.ql-editor p, .ql-editor ol, .ql-editor ul, .ql-editor pre, .ql-editor blockquote, .ql-editor h1, .ql-editor h2,
+.ql-editor h3, .ql-editor h4, .ql-editor h5, .ql-editor h6 {
     margin-top: 10px;
+}
+
+.ql-editor *:first-child {
+    margin-top: 0;
 }
 
 p.linebreak-true {
@@ -285,8 +294,9 @@ button.ql-hr {
     background-repeat: no-repeat !important;
 }
 
-.ql-snow .ql-editor code, .ql-snow .ql-editor pre {
-    background-color: unset;
+
+.ql-snow .ql-editor pre.ql-syntax {
+    font-size: 90%;
 }
 
 .quill-html-editor {

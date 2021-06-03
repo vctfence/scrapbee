@@ -87,20 +87,23 @@ export function getThemeVar(v) {
     }
 }
 
-export function applyInlineStyles(element, recursive = true) {
+export function applyInlineStyles(element, recursive = true, exclude) {
 
-    let matchRules = function (el, sheets) {
-        sheets = sheets || document.styleSheets;
+    let matchRules = function (el) {
+        let sheets = Array.from(document.styleSheets);
+        if (exclude)
+            sheets = sheets.filter(s => !exclude.some(e => s.href?.endsWith(e)));
         let ret = [];
-        for (let i in sheets) {
-            if (sheets.hasOwnProperty(i)) {
-                let rules = sheets[i].rules || sheets[i].cssRules;
-                for (let r in rules) {
-                    if (rules[r].selectorText?.includes("*"))
-                        continue;
-                    if (el.matches(rules[r].selectorText)) {
-                        ret.push(rules[r]);
-                    }
+        for (let sheet of sheets) {
+            let rules = sheet.rules || sheet.cssRules;
+            for (let r in rules) {
+                if (rules[r].selectorText?.includes("*"))
+                    continue;
+                if (el.localName === "pre" && el.matches(rules[r].selectorText)) {
+                    log(rules[r].selectorText)
+                }
+                if (el.matches(rules[r].selectorText)) {
+                    ret.push(rules[r]);
                 }
             }
         }
@@ -125,7 +128,7 @@ export function applyInlineStyles(element, recursive = true) {
 
     if (recursive) {
         Array.from(element.children).forEach(child => {
-            applyInlineStyles(child, recursive);
+            applyInlineStyles(child, recursive, exclude);
         });
     }
 }
