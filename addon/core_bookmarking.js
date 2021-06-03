@@ -5,7 +5,7 @@ import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} 
 import {getActiveTab, showNotification} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
-import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
+import {browseNode, captureTab, finalizeCapture, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
@@ -144,10 +144,7 @@ receive.storePageHtml = message => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
 
-                if (message.bookmark?.__automation && message.bookmark?.select)
-                    send.bookmarkCreated({node: message.bookmark});
-                else if (message.bookmark && !message.bookmark.__automation)
-                    send.bookmarkAdded({node: message.bookmark});
+                finalizeCapture(message.bookmark);
             }
         })
         .catch(e => {

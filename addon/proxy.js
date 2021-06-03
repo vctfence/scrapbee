@@ -52,8 +52,8 @@ class ReceiveHandler {
 
     _dispatch() {
         const [message] = arguments;
-
         const method = this.methods.get(message.type);
+
         if (method)
             return Reflect.apply(method, null, arguments);
         else

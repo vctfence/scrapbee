@@ -1,5 +1,5 @@
 import {settings} from "./settings.js";
-import {openContainerTab, openPage, showNotification, updateTab} from "./utils_browser.js";
+import {openContainerTab, openPage, scriptsAllowed, showNotification, updateTab} from "./utils_browser.js";
 import {capitalize, getMimetypeExt} from "./utils.js";
 import {backend} from "./backend.js";
 import {send} from "./proxy.js";
@@ -15,10 +15,10 @@ export function formatShelfName(name) {
 }
 
 export function isSpecialPage(url) {
-    return (url.substr(0, 6) === "about:" /*|| url.substr(0, 7) === "chrome:"*/
-        || url.substr(0, 12) === "view-source:" || url.substr(0, 14) === "moz-extension:"
-        || url.substr(0, 26) === "https://addons.mozilla.org" /*|| url.substr(0, 17) === "chrome-extension:"
-        || url.substr(0, 34) === "https://chrome.google.com/webstore"*/);
+    return (url.startsWith("about:")
+        || url.startsWith("view-source:") || url.startsWith("moz-extension:")
+        || url.startsWith("https://addons.mozilla.org") || url.startsWith("https://support.mozilla.org")
+        /*|| url.substr(0, 17) === "chrome-extension:" || url.substr(0, 34) === "https://chrome.google.com/webstore"*/);
 }
 
 export function notifySpecialPage() {
@@ -35,87 +35,103 @@ export async function captureTab(tab, bookmark) {
         notifySpecialPage();
     }
     else {
-        // Acquire selection html, if presents
+        if (await scriptsAllowed(tab.id))
+            await captureHTMLTab(tab, bookmark)
+        else
+            await captureNonHTMLTab(tab, bookmark);
+    }
+}
 
-        let selection;
-        let frames = await browser.webNavigation.getAllFrames({tabId: tab.id});
+async function captureHTMLTab(tab, bookmark) {
+    // Acquire selection html, if presents
+    let selection;
+    let frames = await browser.webNavigation.getAllFrames({tabId: tab.id});
 
-        for (let frame of frames) {
+    for (let frame of frames) {
+        try {
+            await browser.tabs.executeScript(tab.id, {file: "/selection.js", frameId: frame.frameId});
+
+            selection = await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: bookmark});
+
+            if (selection)
+                break;
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    let response;
+    let initiateCapture = () => browser.tabs.sendMessage(tab.id, {
+        type: "performAction",
+        menuaction: 1,
+        saveditems: 2,
+        selection: selection,
+        bookmark: bookmark
+    });
+
+    try { response = await initiateCapture(); } catch (e) {}
+
+    if (typeof response == "undefined") { /* no response received - content script not loaded in active tab */
+        let onScriptInitialized = async (message, sender) => {
+            if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && tab.id === sender.tab.id) {
+                browser.runtime.onMessage.removeListener(onScriptInitialized);
+
+                try {
+                    response = await initiateCapture();
+                } catch (e) {
+                    console.error(e)
+                }
+
+                if (typeof response == "undefined")
+                    alertNotify("Cannot initialize capture script, please retry.");
+
+            }
+        };
+        browser.runtime.onMessage.addListener(onScriptInitialized);
+
+        try {
             try {
-                await browser.tabs.executeScript(tab.id, {file: "/selection.js", frameId: frame.frameId});
-
-                selection = await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: bookmark});
-
-                if (selection)
-                    break;
+                await browser.tabs.executeScript(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
             } catch (e) {
                 console.error(e);
             }
+
+            await browser.tabs.executeScript(tab.id, {file: "/savepage/content.js"});
         }
-
-        let response;
-        let initiateCapture = () => browser.tabs.sendMessage(tab.id, {
-            type: "performAction",
-            menuaction: 1,
-            saveditems: 2,
-            selection: selection,
-            bookmark: bookmark
-        });
-
-        try { response = await initiateCapture(); } catch (e) {}
-
-        if (typeof response == "undefined") { /* no response received - content script not loaded in active tab */
-            let onScriptInitialized = async (message, sender) => {
-                if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && tab.id === sender.tab.id) {
-                    browser.runtime.onMessage.removeListener(onScriptInitialized);
-
-                    try {
-                        response = await initiateCapture();
-                    } catch (e) {
-                        console.error(e)
-                    }
-
-                    if (typeof response == "undefined")
-                        alertNotify("Cannot initialize capture script, please retry.");
-
-                }
-            };
-            browser.runtime.onMessage.addListener(onScriptInitialized);
-
-            try {
-                try {
-                    await browser.tabs.executeScript(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
-                } catch (e) {
-                    console.error(e);
-                }
-
-                await browser.tabs.executeScript(tab.id, {file: "/savepage/content.js"});
-            }
-            catch (e) {
-                try {
-                    const headers = {"Cache-Control": "no-store"};
-                    const response = await fetchWithTimeout(tab.url, {timeout: 60000, headers});
-
-                    if (response.ok) {
-                        let contentType = response.headers.get("content-type");
-
-                        if (!contentType)
-                            contentType = getMimetypeExt(new URL(tab.url).pathname) || "application/pdf";
-
-                        bookmark.content_type = contentType;
-
-                        await backend.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
-                    }
-
-                    send.bookmarkAdded({node: bookmark});
-                }
-                catch (e) {
-                    console.error(e);
-                    send.bookmarkAdded({node: bookmark});
-                }
-            }
+        catch (e) {
+            console.error(e);
         }
     }
+}
+
+async function captureNonHTMLTab(tab, bookmark) {
+    try {
+        const headers = {"Cache-Control": "no-store"};
+        const response = await fetchWithTimeout(tab.url, {timeout: 60000, headers});
+
+        if (response.ok) {
+            let contentType = response.headers.get("content-type");
+
+            if (!contentType)
+                contentType = getMimetypeExt(new URL(tab.url).pathname) || "application/pdf";
+
+            bookmark.content_type = contentType;
+
+            await backend.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
+        }
+    }
+    catch (e) {
+        console.error(e);
+    }
+
+    finalizeCapture(bookmark);
+}
+
+export function finalizeCapture(bookmark) {
+    if (bookmark.__automation && bookmark.select)
+        send.bookmarkCreated({node: bookmark});
+    else if (bookmark && !bookmark.__automation)
+        send.bookmarkAdded({node: bookmark});
 }
 
 export async function packPage(url, bookmark, initializer, resolver, hide_tab) {

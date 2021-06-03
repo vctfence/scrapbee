@@ -850,7 +850,7 @@ class BookmarkTree {
                         icon: `/icons/group${lightTheme? "": "2"}.svg`,
                         action: async () => {
                             let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
-                                parent_id: o(ctxNode).id};
+                                         parent_id: o(ctxNode).id};
                             const groupPending = send.createGroup({parent: o(ctxNode), name: group.name});
 
                             let jgroup = BookmarkTree.toJsTreeNode(group);
@@ -937,13 +937,11 @@ class BookmarkTree {
                         label: "Notes",
                         icon: `/icons/notes${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            this.startProcessingIndication();
-                            let notes = await send.addNotes({parent_id: o(ctxNode).id, name: "New Notes"});
-                            this.stopProcessingIndication();
+                            let notes = {id: backend.setTentativeId({}), parent_id: o(ctxNode).id, name: "New Notes",
+                                         type: NODE_TYPE_NOTES};
+                            const notesPending = send.addNotes({name: notes.name, parent_id: notes.parent_id});
 
                             let jnotes = BookmarkTree.toJsTreeNode(notes);
-
-                            this.data.push(jnotes);
                             tree.deselect_all(true);
 
                             let notesNode = tree.get_node(tree.create_node(ctxNode, jnotes));
@@ -951,17 +949,23 @@ class BookmarkTree {
 
                             tree.edit(notesNode, null, async (jnode, success, cancelled) => {
                                 this.startProcessingIndication();
+                                notes = await notesPending;
+                                tree.set_id(notesNode.id, notes.id);
 
                                 if (success && !cancelled && jnode.text) {
                                     notes.name = jnode.text;
                                     notes = await send.updateBookmark({node: notes});
+                                    Object.assign(o(jnode), notes);
+                                    jnode.original = BookmarkTree.toJsTreeNode(notes);
+                                    this.data.push(jnode.original);
                                     await this.reorderNodes(ctxNode);
-
-                                    o(jnode).name = jnode.original.text = jnode.text;
-                                    //tree.rename_node(notesNode, notes.name);
                                 }
-                                else
+                                else {
+                                    Object.assign(o(jnode), notes);
+                                    jnode.original = BookmarkTree.toJsTreeNode(notes);
+                                    this.data.push(jnode.original);
                                     await this.reorderNodes(ctxNode);
+                                }
 
                                 this.stopProcessingIndication();
                             });
@@ -971,12 +975,17 @@ class BookmarkTree {
                         label: "Separator",
                         icon: `/icons/separator${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            let jparent = tree.get_node(ctxNode.parent);
+                            const jparent = tree.get_node(ctxNode.parent);
+                            const position = $.inArray(ctxNode.id, jparent.children);
+                            let separator = {id: backend.setTentativeId({}), type: NODE_TYPE_SEPARATOR,
+                                             parent_id: o(jparent).id};
 
-                            const separator = await send.addSeparator({parent_id: o(jparent).id});
+                            const jnode = BookmarkTree.toJsTreeNode(separator);
+                            const separatorJNode = tree.get_node(tree.create_node(jparent, jnode, position + 1));
 
-                            let position = $.inArray(ctxNode.id, jparent.children);
-                            tree.create_node(jparent, BookmarkTree.toJsTreeNode(separator), position + 1);
+                            separator = await send.addSeparator({parent_id: o(jparent).id});
+                            tree.set_id(separatorJNode.id, separator.id);
+                            Object.assign(o(separatorJNode), separator);
                             this.reorderNodes(jparent);
                         }
                     },
