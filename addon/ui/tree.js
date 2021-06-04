@@ -1398,8 +1398,11 @@ class BookmarkTree {
         if (isEndpoint(ctxNode)) {
             delete items.newItem.submenu.newBookmarkItem;
 
-            if (!ctxNode.has_notes || ctxNode.type === NODE_TYPE_NOTES)
+            if (!ctxNode.has_notes || ctxNode.type === NODE_TYPE_NOTES) {
                 delete items.openNotesItem;
+                if (items.newItem.submenu.newNotesItem)
+                    items.newItem.submenu.newNotesItem.label = "Attached Notes";
+            }
             else if (ctxNode.has_notes) {
                 delete items.newItem.submenu.newNotesItem;
             }

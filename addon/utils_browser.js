@@ -3,11 +3,10 @@ export async function scriptsAllowed(tabId, frameId = 0) {
         await browser.tabs.executeScript(tabId, {
             frameId: frameId,
             runAt: 'document_start',
-            code: 'true;'
+            file: '/true.js'
         });
         return true;
-    } catch (e) {
-    }
+    } catch (e) {}
 }
 
 export function showNotification(args) {
