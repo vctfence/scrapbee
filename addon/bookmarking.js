@@ -83,7 +83,7 @@ async function captureHTMLTab(tab, bookmark) {
                 }
 
                 if (typeof response == "undefined")
-                    alertNotify("Cannot initialize capture script, please retry.");
+                    showNotification("Cannot initialize capture script, please retry.");
 
             }
         };

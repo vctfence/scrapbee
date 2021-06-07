@@ -53,7 +53,7 @@ async function importJSONObject(object) {
         if (blob) {
             if (blob.byte_length)
                 blob.object = atob(blob.object);
-            await backend.storeBlobLowLevel(node.id, blob.object, blob.type, blob.byte_length);
+            await backend.storeIndexedBlob(node.id, blob.object, blob.type, blob.byte_length);
         }
     }
     else {
@@ -62,11 +62,11 @@ async function importJSONObject(object) {
 
     if (notes) {
         notes.node_id = node.id;
-        await backend.storeNotesLowLevel(notes);
+        await backend.storeIndexedNotes(notes);
     }
 
     if (comments)
-        await backend.storeCommentsLowLevel(node.id, comments);
+        await backend.storeIndexedComments(node.id, comments);
 
     if (icon_data)
         await backend.storeIconLowLevel(node.id, icon_data);

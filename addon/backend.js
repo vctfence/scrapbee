@@ -30,6 +30,7 @@ import {
 import {readBlob} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
 import {indexWords} from "./utils_html.js";
+import {notes2html} from "./notes_render.js";
 
 // a proxy class that calls methods of registered external backends if they do exist
 // an external backend may have an "initialize" method which is called after the settings are loaded
@@ -630,13 +631,13 @@ export class Backend extends IDBStorage {
                     if (notes) {
                         delete notes.id;
                         notes.node_id = n.id;
-                        await this.storeNotesLowLevel(notes);
+                        await this.storeIndexedNotes(notes);
                         notes = null;
                     }
 
                     let comments = await this.fetchComments(old_id);
                     if (comments) {
-                        await this.storeCommentsLowLevel(n.id, comments);
+                        await this.storeIndexedComments(n.id, comments);
                         comments = null;
                     }
 
@@ -652,7 +653,7 @@ export class Backend extends IDBStorage {
                     let blob = await this.fetchBlob(old_id);
                     if (blob) {
                         let index = await this.fetchIndex(old_id);
-                        await this.storeBlobLowLevel(n.id, blob.data || blob.object, blob.type, blob.byte_length, index);
+                        await this.storeIndexedBlob(n.id, blob.data || blob.object, blob.type, blob.byte_length, index);
                         blob = null;
                     }
                 }
@@ -820,7 +821,7 @@ export class Backend extends IDBStorage {
 
         data.type = nodeType;
         data.tag_list = this._splitTags(data.tags);
-        await this.addTags(data.tag_list);
+        //await this.addTags(data.tag_list);
 
         const iconId = await this.storeIcon(data);
         const node = await this.addNode(data);
@@ -843,7 +844,7 @@ export class Backend extends IDBStorage {
         data = Object.assign({}, data);
 
         data.tag_list = this._splitTags(data.tags);
-        this.addTags(data.tag_list);
+        //this.addTags(data.tag_list);
 
         let forceNewUuid = data.uuid
             && ((await this.isNodeExists(data.uuid)) || SPECIAL_UUIDS.some(uuid => uuid === data.uuid));
@@ -882,15 +883,23 @@ export class Backend extends IDBStorage {
             bookmark.name = "";
     }
 
-    async storeBlob(nodeId, data, contentType) {
-        await this.storeBlobLowLevel(nodeId, data, contentType);
+    async storeIndexedBlob(nodeId, data, contentType, byteLength, index) {
+        await this.storeBlobLowLevel(nodeId, data, contentType, byteLength);
 
+        if (index?.words)
+            await this.storeIndex(nodeId, index.words);
+        else if (typeof data === "string" && !byteLength)
+            await this.storeIndex(nodeId, indexWords(data));
+    }
+
+    async storeBlob(nodeId, data, contentType) {
+        await this.storeIndexedBlob(nodeId, data, contentType);
         await this.externalEvents.storeBookmarkData(nodeId, data, contentType);
     }
 
     async updateBlob(nodeId, data) {
         await this.updateBlobLowLevel(nodeId, data);
-
+        await this.updateIndex(nodeId, indexWords(data));
         await this.externalEvents.updateBookmarkData(nodeId, data);
     }
 
@@ -914,15 +923,51 @@ export class Backend extends IDBStorage {
         return node;
     }
 
-    async storeNotes(options) {
+    async storeIndexedNotes(options) {
         await this.storeNotesLowLevel(options);
 
+        if (options.content) {
+            let words;
+
+            if (options.format === "delta" && options.html)
+                words = indexWords(options.html);
+            else {
+                if (options.format === "text")
+                    words = indexWords(options.content, false);
+                else {
+                    let html = notes2html(options);
+                    if (html)
+                        words = indexWords(html);
+                }
+            }
+
+            if (words)
+                await this.updateNoteIndex(options.node_id, words);
+            else
+                await this.updateNoteIndex(options.node_id, []);
+        }
+        else
+            await this.updateNoteIndex(options.node_id, []);
+    }
+
+    async storeNotes(options) {
+        await this.storeIndexedNotes(options);
         await this.externalEvents.storeBookmarkNotes(options);
     }
 
-    async storeComments(nodeId, comments) {
+    async storeIndexedComments(nodeId, comments) {
         await this.storeCommentsLowLevel(nodeId, comments);
 
+        if (comments) {
+            let words = indexWords(comments, false);
+            await this.updateCommentIndex(nodeId, words);
+        }
+        else
+            await this.updateCommentIndex(nodeId, []);
+    }
+
+    async storeComments(nodeId, comments) {
+        await this.storeIndexedComments(nodeId, comments);
         await this.externalEvents.storeBookmarkComments(nodeId, comments);
     }
 }

@@ -151,7 +151,7 @@ receive.storePageHtml = message => {
             console.error(e);
             if (!message.bookmark.__mute_ui) {
                 chrome.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
-                alertNotify("Error archiving page.");
+                showNotification("Error archiving page.");
             }
         });
 };

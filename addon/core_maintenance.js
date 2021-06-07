@@ -105,7 +105,7 @@ receive.optimizeDatabase = async message => {
                     }
 
                     await backend.deleteBlob(node.id);
-                    await backend.storeBlobLowLevel(node.id, content, blob.type, blob.byte_length);
+                    await backend.storeIndexedBlob(node.id, content, blob.type, blob.byte_length);
                     actionTaken = true;
                 }
             }
@@ -162,7 +162,7 @@ receive.reindexArchiveContent = async message => {
                 const notes = await backend.fetchNotes(node.id);
                 if (notes) {
                     delete notes.id;
-                    await backend.storeNotesLowLevel(notes);
+                    await backend.storeIndexedNotes(notes);
                 }
             }
 

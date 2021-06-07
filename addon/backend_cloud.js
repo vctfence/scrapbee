@@ -617,21 +617,21 @@ export class CloudBackend {
                         if (notesNode.notes_format === "delta")
                             options.html = await this.fetchCloudView(notesNode);
 
-                        await backend.storeNotesLowLevel(options);
+                        await backend.storeIndexedNotes(options);
                     }
                 }
 
                 for (let commentsNode of downloadComments) {
                     let comments = await this.fetchCloudComments(commentsNode);
                     if (comments)
-                        await backend.storeCommentsLowLevel(commentsNode.id, comments);
+                        await backend.storeIndexedComments(commentsNode.id, comments);
                 }
 
                 for (let archive of downloadData) {
                     let data = await this.fetchCloudData(archive);
 
                     if (data) {
-                        await backend.storeBlobLowLevel(archive.id, data, archive.content_type, archive.byte_length);
+                        await backend.storeIndexedBlob(archive.id, data, archive.content_type, archive.byte_length);
                     }
                 }
 

@@ -75,21 +75,21 @@ export async function importJSONObject_v1(object) {
         node = await backend.importBookmark(object);
 
         if (data)
-            await backend.storeBlobLowLevel(node.id, data, object.mime_type, byte_length);
+            await backend.storeIndexedBlob(node.id, data, object.mime_type, byte_length);
     }
     else {
         node = await backend.importBookmark(object);
     }
 
     if (notes) {
-        await backend.storeNotesLowLevel({
+        await backend.storeIndexedNotes({
             node_id: node.id, content: notes, html: notes_html,
             format: notes_format, align: notes_align, width: notes_width
         });
     }
 
     if (comments) {
-        await backend.storeCommentsLowLevel(node.id, comments);
+        await backend.storeIndexedComments(node.id, comments);
     }
 
     if (icon_data)

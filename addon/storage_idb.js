@@ -17,10 +17,6 @@ import {
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
-import {stringByteLengthUTF8} from "./utils.js";
-import {notes2html} from "./notes_render.js";
-import {indexWords} from "./utils_html.js";
-
 
 const dexie = new Dexie("scrapyard");
 
@@ -86,7 +82,7 @@ dexie.on('populate', () => {
 
 class IDBStorage {
     constructor() {
-        this._dexie = dexie;
+        this._db = dexie;
     }
 
     _sanitizeNode(node) {
@@ -105,8 +101,8 @@ class IDBStorage {
         return node?.id;
     }
 
-    nodeTransaction(mode, operation) {
-        return dexie.transaction(mode, dexie.nodes, operation);
+    transaction(mode, table, operation) {
+        return dexie.transaction(mode, dexie[table], operation);
     }
 
     async addNode(datum, resetOrder = true, resetDates = true, newUUID = true) {
@@ -583,20 +579,11 @@ class IDBStorage {
     //             byte_length: byte_length,
     //             type: content_type
     //         });
-    //
-    //         if (!byte_length && typeof data === "string") {
-    //             if (index?.words)
-    //                 await this.storeIndex(node.id, index.words);
-    //             else {
-    //                 let words = data.indexWords();
-    //                 await this.storeIndex(node.id, words);
-    //             }
-    //         }
     //     }
     // }
 
     // modern implementation stores objects in blobs
-    async storeBlobLowLevel(nodeId, data, contentType, byteLength, index) {
+    async storeBlobLowLevel(nodeId, data, contentType, byteLength) {
         if (typeof data !== "string" && data.byteLength)
             byteLength = data.byteLength;
         else if (typeof data === "string" && byteLength) {
@@ -620,11 +607,6 @@ class IDBStorage {
 
         const node = {id: nodeId, size: object.size, content_type: contentType};
         await this.updateNode(node);
-
-        if (index?.words)
-            await this.storeIndex(node.id, index.words);
-        else if (!byteLength && typeof data === "string")
-            await this.storeIndex(node.id, indexWords(data));
     }
 
     // used only for text/html edited content
@@ -638,7 +620,6 @@ class IDBStorage {
 
         const node = {id: nodeId, size: object.size};
         await this.updateNode(node);
-        await this.updateIndex(nodeId, indexWords(data));
     }
 
     async deleteBlob(nodeId) {
@@ -680,44 +661,12 @@ class IDBStorage {
     async storeNotesLowLevel(options) {
         const exists = await dexie.notes.where("node_id").equals(options.node_id).count();
 
-        if (exists) {
+        if (exists)
             await dexie.notes.where("node_id").equals(options.node_id).modify(options);
-        }
-        else {
+        else
             await dexie.notes.add(options);
-        }
 
-        const node = {id: options.node_id, has_notes: !!options.content};
-
-        if (node.has_notes) {
-            let words;
-            node.size = stringByteLengthUTF8(options.content);
-
-            if (options.format === "delta" && options.html) {
-                node.size += stringByteLengthUTF8(options.html);
-                words = indexWords(options.html);
-            }
-            else {
-                if (options.format === "text")
-                    words = indexWords(options.content, false);
-                else {
-                    let html = notes2html(options);
-                    if (html)
-                        words = indexWords(html);
-                }
-            }
-
-            if (words)
-                await this.updateNoteIndex(node.id, words);
-            else
-                await this.updateNoteIndex(node.id, []);
-        }
-        else {
-            node.size = undefined;
-            await this.updateNoteIndex(node.id, []);
-        }
-
-        await this.updateNode(node);
+        await this.updateNode({id: options.node_id, has_notes: !!options.content});
     }
 
     async fetchNotes(nodeId, isUUID = false) {
@@ -759,13 +708,6 @@ class IDBStorage {
 
         const node = {id: nodeId, has_comments: !!comments};
         await this.updateNode(node);
-
-        if (node.has_comments) {
-            let words = indexWords(comments, false);
-            await this.updateCommentIndex(node.id, words);
-        }
-        else
-            await this.updateCommentIndex(node.id, []);
     }
 
     async fetchComments(nodeId, isUUID = false) {

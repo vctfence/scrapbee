@@ -69,24 +69,24 @@ export async function importOrg(shelf, text) {
                 node = await backend.importBookmark(last_object);
 
                 if (data)
-                    await backend.storeBlobLowLevel(node.id, data, last_object.mime_type, byte_length);
+                    await backend.storeIndexedBlob(node.id, data, last_object.mime_type, byte_length);
             }
             else {
                 node = await backend.importBookmark(last_object);
             }
 
             if (notes) {
-                await backend.storeNotesLowLevel({
+                await backend.storeIndexedNotes({
                     node_id: node.id, content: notes, html: notes_html,
                     format: notes_format, align: notes_align, width: notes_width
                 });
             }
             else if (note_lines.length) {
-                await backend.storeNotesLowLevel({node_id: node.id, content: note_lines.join("\n"), format: "org"});
+                await backend.storeIndexedNotes({node_id: node.id, content: note_lines.join("\n"), format: "org"});
             }
 
             if (comments) {
-                await backend.storeCommentsLowLevel(node.id, JSON.parse(comments));
+                await backend.storeIndexedComments(node.id, JSON.parse(comments));
             }
 
             if (icon_data) {
