@@ -31,6 +31,8 @@ import {readBlob} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
 import {indexWords} from "./utils_html.js";
 
+// a proxy class that calls methods of registered external backends if they do exist
+// an external backend may have an "initialize" method which is called after the settings are loaded
 class ExternalEventProvider {
     constructor() {
         this.externalBackends = {};
@@ -61,14 +63,11 @@ class ExternalEventProvider {
         delete this.externalBackends[name];
     }
 
-    // Add external event handler
-    // For example "createBookmarkFolder" will add "createExternalBookmarkFolder" method to the backend
-    _addHandler(name) {
-        const methodName = name.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/, (m, b, a) => `${b}External${a}`);
+    _addHandler(methodName) {
         const handler = async (...args) => {
             for (let backend of Object.values(this.externalBackends)) {
-                if (backend[name])
-                    await backend[name].apply(backend, args);
+                if (backend[methodName])
+                    await backend[methodName].apply(backend, args);
             }
         };
 
@@ -77,17 +76,17 @@ class ExternalEventProvider {
     }
 }
 
-export class Backend extends ExternalEventProvider {
+export class Backend extends IDBStorage {
 
-    constructor(storageBackend) {
+    constructor() {
         super();
 
-        this.registerExternalBackend("browser", browserBackend);
-        this.registerExternalBackend("cloud", cloudBackend);
-        this.registerExternalBackend("rdf", rdfBackend);
-        this.registerExternalBackend("ishell", ishellBackend);
+        this.externalEvents = new ExternalEventProvider();
 
-        return delegateProxy(this, storageBackend);
+        this.externalEvents.registerExternalBackend("browser", browserBackend);
+        this.externalEvents.registerExternalBackend("cloud", cloudBackend);
+        this.externalEvents.registerExternalBackend("rdf", rdfBackend);
+        this.externalEvents.registerExternalBackend("ishell", ishellBackend);
     }
 
     expandPath(path) {
@@ -328,7 +327,7 @@ export class Backend extends ExternalEventProvider {
 
     async reorderNodes(positions) {
         try {
-            await this.reorderExternalBookmarks(positions);
+            await this.externalEvents.reorderBookmarks(positions);
         }
         catch (e) {
             console.error(e);
@@ -340,7 +339,7 @@ export class Backend extends ExternalEventProvider {
 
     async setTODOState(states) {
         await this.updateNodes(states);
-        return this.updateExternalBookmarks(states);
+        return this.externalEvents.updateBookmarks(states);
     }
 
     async listTODO() {
@@ -441,7 +440,7 @@ export class Backend extends ExternalEventProvider {
                 name: shelfName,
                 type: NODE_TYPE_SHELF
             });
-            this.invalidateExternalCompletion();
+            this.externalEvents.invalidateCompletion();
         }
 
         for (let name of pathList) {
@@ -458,8 +457,8 @@ export class Backend extends ExternalEventProvider {
                 });
 
                 try {
-                    await this.createExternalBookmarkFolder(node, parent);
-                    this.invalidateExternalCompletion();
+                    await this.externalEvents.createBookmarkFolder(node, parent);
+                    this.externalEvents.invalidateCompletion();
                 }
                 catch (e) {
                     console.error(e);
@@ -521,10 +520,10 @@ export class Backend extends ExternalEventProvider {
         //node = this._sanitizeNode(node);
 
         try {
-            this.invalidateExternalCompletion();
+            this.externalEvents.invalidateCompletion();
 
             if (parent)
-                await this.createExternalBookmarkFolder(node, parent);
+                await this.externalEvents.createBookmarkFolder(node, parent);
         }
         catch (e) {
             console.error(e);
@@ -543,8 +542,8 @@ export class Backend extends ExternalEventProvider {
                 group.name = newName;
 
             try {
-                await this.renameExternalBookmark(group);
-                this.invalidateExternalCompletion();
+                await this.externalEvents.renameBookmark(group);
+                this.externalEvents.invalidateCompletion();
             }
             catch (e) {
                 console.error(e);
@@ -565,7 +564,7 @@ export class Backend extends ExternalEventProvider {
         let node = await this.addNode(options);
 
         try {
-            await this.createExternalBookmark(node, await backend.getNode(parentId));
+            await this.externalEvents.createBookmark(node, await backend.getNode(parentId));
         }
         catch (e) {
             console.log(e);
@@ -578,7 +577,7 @@ export class Backend extends ExternalEventProvider {
         let nodes = await this.getNodes(ids);
 
         try {
-            await this.moveExternalBookmarks(nodes, destId);
+            await this.externalEvents.moveBookmarks(nodes, destId);
         }
         catch (e) {
             console.error(e);
@@ -595,7 +594,7 @@ export class Backend extends ExternalEventProvider {
         }
 
         if (nodes.some(n => n.type === NODE_TYPE_GROUP))
-            this.invalidateExternalCompletion();
+            this.externalEvents.invalidateCompletion();
 
         return this.queryFullSubtree(ids, false, true);
     }
@@ -665,10 +664,10 @@ export class Backend extends ExternalEventProvider {
         let top_nodes = new_nodes.filter(n => ids.some(id => id === n.old_id));
 
         try {
-            await this.copyExternalBookmarks(top_nodes, destId);
+            await this.externalEvents.copyBookmarks(top_nodes, destId);
 
             if (top_nodes.some(n => n.type === NODE_TYPE_GROUP))
-                this.invalidateExternalCompletion();
+                this.externalEvents.invalidateCompletion();
         }
         catch (e) {
             console.error(e);
@@ -681,7 +680,7 @@ export class Backend extends ExternalEventProvider {
         let all_nodes = await this.queryFullSubtree(ids);
 
         try {
-            await this.deleteExternalBookmarks(all_nodes);
+            await this.externalEvents.deleteBookmarks(all_nodes);
         }
         catch (e) {
             console.error(e);
@@ -690,7 +689,7 @@ export class Backend extends ExternalEventProvider {
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id));
 
         if (all_nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
-            this.invalidateExternalCompletion();
+            this.externalEvents.invalidateCompletion();
     }
 
     async deleteChildNodes(id) {
@@ -698,7 +697,7 @@ export class Backend extends ExternalEventProvider {
 
         await this.deleteNodesLowLevel(all_nodes.map(n => n.id).filter(i => i !== id));
 
-        this.invalidateExternalCompletion();
+        this.externalEvents.invalidateCompletion();
     }
 
     async traverse(root, visitor) {
@@ -829,7 +828,7 @@ export class Backend extends ExternalEventProvider {
         if (iconId)
             await this.updateIcon(iconId, {node_id: node.id});
 
-        await this.createExternalBookmark(node, group);
+        await this.externalEvents.createBookmark(node, group);
 
         return node;
     }
@@ -871,7 +870,7 @@ export class Backend extends ExternalEventProvider {
         update.tag_list = this._splitTags(update.tags);
         this.addTags(update.tag_list);
 
-        await this.updateExternalBookmark(update);
+        await this.externalEvents.updateBookmark(update);
 
         return this.updateNode(update);
     }
@@ -886,13 +885,13 @@ export class Backend extends ExternalEventProvider {
     async storeBlob(nodeId, data, contentType) {
         await this.storeBlobLowLevel(nodeId, data, contentType);
 
-        await this.storeExternalBookmarkData(nodeId, data, contentType);
+        await this.externalEvents.storeBookmarkData(nodeId, data, contentType);
     }
 
     async updateBlob(nodeId, data) {
         await this.updateBlobLowLevel(nodeId, data);
 
-        await this.updateExternalBookmarkData(nodeId, data);
+        await this.externalEvents.updateBookmarkData(nodeId, data);
     }
 
     async addNotes(parentId, name) {
@@ -906,7 +905,7 @@ export class Backend extends ExternalEventProvider {
         let group = await this.getNode(parentId);
 
         try {
-            await this.createExternalBookmark(node, group);
+            await this.externalEvents.createBookmark(node, group);
         }
         catch (e) {
             console.error(e);
@@ -918,19 +917,19 @@ export class Backend extends ExternalEventProvider {
     async storeNotes(options) {
         await this.storeNotesLowLevel(options);
 
-        await this.storeExternalBookmarkNotes(options);
+        await this.externalEvents.storeBookmarkNotes(options);
     }
 
     async storeComments(nodeId, comments) {
         await this.storeCommentsLowLevel(nodeId, comments);
 
-        await this.storeExternalBookmarkComments(nodeId, comments);
+        await this.externalEvents.storeBookmarkComments(nodeId, comments);
     }
 }
 
 export let backend = new Promise(async resolve => {
     await settings.load();
-    backend = new Backend(new IDBStorage());
+    backend = new Backend();
     resolve(backend);
 });
 
