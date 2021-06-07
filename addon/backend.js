@@ -32,8 +32,8 @@ import {getFavicon} from "./favicon.js";
 import {indexWords} from "./utils_html.js";
 import {notes2html} from "./notes_render.js";
 
-// a proxy class that calls methods of registered external backends if they do exist
-// an external backend may have an "initialize" method which is called after the settings are loaded
+// a proxy class that calls handlers of the registered external backends if they are implemented
+// an external backend may have the "initialize" method which is called after the settings are loaded
 class ExternalEventProvider {
     constructor() {
         this.externalBackends = {};
@@ -942,12 +942,12 @@ export class Backend extends IDBStorage {
             }
 
             if (words)
-                await this.updateNoteIndex(options.node_id, words);
+                await this.updateNotesIndex(options.node_id, words);
             else
-                await this.updateNoteIndex(options.node_id, []);
+                await this.updateNotesIndex(options.node_id, []);
         }
         else
-            await this.updateNoteIndex(options.node_id, []);
+            await this.updateNotesIndex(options.node_id, []);
     }
 
     async storeNotes(options) {

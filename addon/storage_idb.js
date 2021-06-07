@@ -674,7 +674,7 @@ class IDBStorage {
         return dexie.notes.where("node_id").equals(nodeId).first();
     }
 
-    async updateNoteIndex(nodeId, words) {
+    async updateNotesIndex(nodeId, words) {
         const exists = await dexie.index_notes.where("node_id").equals(nodeId).count();
 
         if (exists)
