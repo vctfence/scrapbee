@@ -69,7 +69,7 @@ var DialogWaiting = class extends Dialog {
         this.el.innerHTML = "";
         var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover waiting"})
         var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
-        this.newElement(dlg, "img", {className: "waiting-gif", src: "icons/loading.gif"})
+        this.newElement(dlg, "img", {className: "waiting-gif", src: "/icons/loading.gif"})
     }
 };
 var DialogProgress = class extends Dialog {
@@ -144,7 +144,7 @@ var DialogDownloadTable = class extends DialogIframe {
             self.hint = hint;
             if(onready)onready();
         };
-        this.iframe.src = browser.extension.getURL("empty.html");
+        this.iframe.src = browser.extension.getURL("/html/empty.html");
     }
     hideButton(){
         this.findChildInner("input[value=Close]").style.display = 'none';

@@ -1,0 +1,13 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html> <head>
+  <script type="text/javascript">
+    function createNewDoc() {
+      var newDoc = document.open("text/html","replace");
+      var txt="<!DOCTYPE html><html><body>Learning about the DOM is FUN!</body></html>";
+      newDoc.write(txt);
+      newDoc.close();
+    }
+  </script>
+
+</head>
+<body> <input type="button" value="Write to a new document" onclick="createNewDoc()"> </body> </html>

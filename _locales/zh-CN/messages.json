@@ -31,6 +31,9 @@
     "Search": {
         "message": "搜索"
     },
+    "Stop": {
+        "message": "停止"
+    },
     "Help": {
         "message": "帮助"
     },
@@ -67,6 +70,9 @@
     "MARK_PEN": {
         "message": "记号笔"
     },
+    "SOURCE_CODE": {
+        "message": "源码"
+    },
     "File": {
         "message": "文件"
     },
@@ -81,6 +87,9 @@
     },
     "New Separator": {
         "message": "新建分隔条"
+    },
+    "New Note": {
+        "message": "新建笔记"
     },
     "CapturePage": {
         "message": "保存页面"
@@ -278,7 +287,7 @@
         "message": "公告"
     },
     "announcement_version":{
-        "message": "2.2.12"
+        "message": "2.3.0"
     },
    "NODE_MOVER_TIP":{
         "message": "本工具可以实现两个RDF树之间的结点移动或复制，此处也允许单个RDF树内的结点拖动和删除"
@@ -298,6 +307,12 @@
     "Done": {
         "message": "完成"
     },
+    "EDIT_CONTENT": {
+        "message": "编辑"
+    },
+    "STOP_EDIT_CONTENT": {
+        "message": "停止编辑"
+    },    
     "STORAGE_WARN": {
         "message": "目前，ScrapBee需要开启本地存储来保存设置，请关闭存储清理功能来防止设置丢失"
     },
@@ -354,6 +369,9 @@
     },
     "Bookmark":{
         "message": "书签"
+    },
+    "Note":{
+        "message": "笔记"
     },
     "Selection":{
         "message": "选区"

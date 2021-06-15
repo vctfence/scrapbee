@@ -131,28 +131,28 @@ html,body{
     background:#fff;
 }
 .tool-button.set:before{
-    mask-image:url(icons/settings.svg);
+    mask-image:url(/icons/settings.svg);
 }
 .tool-button.help:before{
-    mask-image:url(icons/help.svg);
+    mask-image:url(/icons/help.svg);
 }
 .tool-button.tool:before{
-    mask-image:url(icons/tool.svg);
+    mask-image:url(/icons/tool.svg);
 }
 .tool-button.reload:before{
-    mask-image:url(icons/reload.svg);
+    mask-image:url(/icons/reload.svg);
 }
 .tool-button.search:before{
-    mask-image:url(icons/search.svg);
+    mask-image:url(/icons/search.svg);
 }
 .tool-button.open:before{
-    mask-image:url(icons/openfolder.svg);
+    mask-image:url(/icons/openfolder.svg);
 }
 .tool-button.donate:before{
-    mask-image:url(icons/donate.svg);
+    mask-image:url(/icons/donate.svg);
 }
 .tool-button.announcement:before{
-    mask-image:url(icons/bell.svg);
+    mask-image:url(/icons/bell.svg);
 }
 .blue-button{
     background:#09c;
@@ -214,7 +214,7 @@ select{
     width:20px;
     height:20px;
     pointer-events:none;
-    mask-image:url(icons/tool.svg);
+    mask-image:url(/icons/tool.svg);
     display:inline-block;
     margin-right:3px;
     vertical-align:middle;

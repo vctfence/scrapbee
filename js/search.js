@@ -1,6 +1,7 @@
 import {settings} from "./settings.js";
 import {BookTree} from "./tree.js";
 import {getUrlParams} from "./utils.js";
+import {History} from "./history.js"
 
 function Queue(maxWorkingTasks, workingFn){
     this.tasks = [];
@@ -9,31 +10,39 @@ function Queue(maxWorkingTasks, workingFn){
     this.workingFn = workingFn;
     this.taskCount=0;
     this.doneCount=0;
+    this.pause = false;
 }
 Queue.prototype.addTask=function(task){
     this.tasks.push(task);
     this.taskCount++;
 };
-Queue.prototype.start=function(task){
+Queue.prototype.stop=function(){
+    this.exit = true;
+}
+Queue.prototype.start=function(){
+    this.exit = false;
     this.popTask();
 };
 Queue.prototype.popTask=function(){
     var self = this;
-    // console.log(this.doneCount , this.taskCount)
-    if(this.doneCount == this.taskCount){
-    	if(this.onfinished)this.onfinished();
-    	return;
-    }
-    while(self.workingTasks < self.maxWorkingTasks){
-	if(!this.tasks.length)
-	    break;
-	self.workingTasks++;
-	var t = this.tasks.shift();
-	self.workingFn(t, function(){
-	    self.workingTasks--;
-	    self.doneCount++;
-	    self.popTask();
-	});
+    
+    if(this.doneCount == this.taskCount || (this.exit && self.workingTasks == 0)){
+    	if(this.onfinished)
+            this.onfinished();
+    }else if(!this.exit){
+        while(self.workingTasks < self.maxWorkingTasks){
+            if(this.pause)
+                break;
+	    if(!this.tasks.length)
+	        break;
+	    self.workingTasks++;
+	    var t = this.tasks.shift();
+	    self.workingFn(t, function(){
+	        self.workingTasks--;
+	        self.doneCount++;
+	        self.popTask();
+	    });
+        }
     }
 };
 // ===============================================
@@ -56,12 +65,13 @@ function loadXml(rdf){
             search_comment = true;
         }
     });
-
-    settings.set("searching_source", sources.join(","), true);
-    
+    new History().load().then((self)=>{
+        self.setItem("searching.source", sources.join(","), true);
+    });
     if(!(search_title || search_body || search_comment))
         return;
-    $("#btnSearch").prop("disabled", true);
+    $("#btnSearch").hide();
+    $("#btnStop").show();
     $("img.loading").show();
     var xmlhttp=new XMLHttpRequest();
     xmlhttp.onload = function(r) {
@@ -105,8 +115,8 @@ async function processTree(tree, search_title, search_body, search_comment){
     var match_count = 0;
     function seek(item, body){
 	var url;
-	if(item.type == "page"){
-	    url = tree.getItemIndexPage(item.id);
+	if(item.type == "page" || item.type == "note"){
+	    url = `/html/viewer.html?id=${item.id}&path=${tree.rdfPath}`
 	}else{
 	    url = item.source;
 	}
@@ -140,31 +150,31 @@ async function processTree(tree, search_title, search_body, search_comment){
         }
         /*** body */
         if(title_matched || comment_matched || content_matched){
+            var $mc;
             if(content_matched){
                 var pos1 = Math.max(0, m.index - 50);
 	        var pos2 = Math.min(text.length - 1, pos1 + 100);
 	        var s = text.substring(pos1, pos2).replace(re2, red);
 	        if(pos1 > 0) s = "..." + s;
 	        if(pos2 < text.length - 1) s = s + "...";
-	        $("<div class='match-content'>").appendTo($("#divResult")).html(s);
+	        $mc = $("<div class='match-content'>").appendTo($("#divResult")).html(s);
             }else{
                 var pos1 = 0;
 	        var pos2 = Math.min(text.length, 150);
 	        var s = text.substring(pos1, pos2).replace(re2, red);
 	        if(pos1 > 0) s = "..." + s;
 	        if(pos2 < text.length - 1) s = s + "...";
-	        $("<div class='match-content'>").appendTo($("#divResult")).html(s);
+	        $mc = $("<div class='match-content'>").appendTo($("#divResult")).html(s);
             }
-        }
-        /*** food link */
-	if(title_matched || content_matched || comment_matched){
-	    $(`<a target='_blank' class='match-source'>`).appendTo($("#divResult")).html(item.source).prop("href", item.source);
+            /*** food link */
+            if(item.type != "note")
+	        $(`<a target='_blank' class='match-source'>`).appendTo($mc).html(item.source).prop("href", item.source);
 	    match_count ++;
 	}
     }
     var q = new Queue(50, function(item, callback){
 	var url = tree.getItemIndexPage(item.id);
-	if(item.type=="page"){
+	if(item.type=="page" || item.type=="note"){
 	    $.get(url+"&time="+Math.random(),function(r){
 		seek(item, r);
 		callback();
@@ -176,14 +186,20 @@ async function processTree(tree, search_title, search_body, search_comment){
 	    callback();
 	}
     });
+
+    $("#btnStop").click(()=>{q.stop();});
+    
     q.onfinished=function(){
 	var i18n_result = browser.i18n.getMessage("RESULTS_FOUND");
 	$("<div>").appendTo($("#divResult")).html(match_count + i18n_result);
-	$("#btnSearch").prop("disabled", false);
+	// $("#btnSearch").prop("disabled", false);
+        $("#btnSearch").show();
+        $("#btnStop").hide();
         $("img.loading").hide();
     };
+    
     await tree.iterateLiNodes(async function(item){
-	if(item.nodeType == "bookmark" || item.nodeType == "page"){
+	if(item.nodeType == "bookmark" || item.nodeType == "page" || item.nodeType == "note"){
             try{
                 if(item.icon){
                     item.icon = tree.translateResource(item.icon, tree.rdfPath, item.id);
@@ -198,27 +214,29 @@ async function processTree(tree, search_title, search_body, search_comment){
 }
 $(document).ready(async function(){
     await settings.loadFromStorage();
-    var sources = (settings.searching_source || "").split(",");
-    $("input[type=checkbox][name=source]").each(function(){
-        if(sources.indexOf(this.value) > -1){
-            this.setAttribute("checked", "true");
-        }
-    });
-    document.title = document.title.fillData(function(s){
-	return browser.i18n.getMessage(s)  || s;
-    });    
-    document.body.innerHTML = document.body.innerHTML.fillData(function(s){
-	return browser.i18n.getMessage(s)  || s;
-    });    
-    $("#searchForm").submit(function(){
-	$("#divResult").html("");
-	var rdf = $("#lstRdfs").val();
-	if(rdf)loadXml(rdf);
-        return false;
-    });
-    var params = getUrlParams(location.href);
-    var paths = settings.getRdfPaths();
-    settings.getRdfPathNames().forEach(function(k, i){
-	$("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs")).prop("selected", paths[i] == params.rdf);
+    new History().load().then((self)=>{
+        var sources = (self.getItem("searching.source") || "").split(",");
+        $("input[type=checkbox][name=source]").each(function(){
+            if(sources.indexOf(this.value) > -1){
+                this.setAttribute("checked", "true");
+            }
+        });
+        document.title = document.title.fillData(function(s){
+	    return browser.i18n.getMessage(s)  || s;
+        });    
+        document.body.innerHTML = document.body.innerHTML.fillData(function(s){
+	    return browser.i18n.getMessage(s)  || s;
+        });
+        $("#searchForm").submit(function(){
+	    $("#divResult").html("");
+	    var rdf = $("#lstRdfs").val();
+	    if(rdf)loadXml(rdf);
+            return false;
+        });
+        var params = getUrlParams(location.href);
+        var paths = settings.getRdfPaths();
+        settings.getRdfPathNames().forEach(function(k, i){
+	    $("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs")).prop("selected", paths[i] == params.rdf);
+        });
     });
 });

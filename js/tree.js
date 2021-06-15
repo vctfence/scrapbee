@@ -56,6 +56,8 @@ class BookTree {
             type = "separator";
         }else if($item.hasClass("bookmark")){
             type = "bookmark";
+        }else if($item.hasClass("note")){
+            type = "note";
         }
         return type;
     }
@@ -115,18 +117,16 @@ class BookTree {
         var token = $container.prop("scrapbee_tree_token") || randRange(0, 99999999);
         $container.unbind('.BookTree' + token);
         $container.prop("scrapbee_tree_token", token);
-
         $container[0].onselectstart = (e) => {e.preventDefault()}
         
         /** mouse down (focus items) */
         $container.bind("mousedown.BookTree" + token, function (e) {
-            // $container.css("background", "#f99")
             if(!$(e.target).closest($container).length)
                 return;
             if(e.target.tagName != "INPUT"){
                 var $el = getItemNode(e.target);
                 if ($el) {
-                    if ($el.hasClass("separator") || $el.hasClass("folder") || $el.hasClass("page") || $el.hasClass("bookmark")) {
+                    if (["page", "bookmark", "note", "folder"].includes(self.getItemType($el))) {
                         if(self.onChooseItem)self.onChooseItem($el.attr("id"));
                     }            
                     if (e.button == 0) {
@@ -169,15 +169,12 @@ class BookTree {
                     self.toggleFolder($el);
                     if(self.onToggleFolder)self.onToggleFolder($el);
                 }
-            } else if ($el.hasClass("page") || $el.hasClass("bookmark")) {
+            } else if(["page", "bookmark", "note"].includes(self.getItemType($el))) {
                 if(e.target.tagName != "INPUT"){
                     if ($el.attr("disabled"))
                         return;
                     var url = $el.attr("source");
-                    var is_local = ($el.hasClass("page") && !$(e.target).hasClass("origin"));
-                    if (is_local) {
-                        url = self.getItemIndexPage($el.attr("id"));
-                    }
+                    var is_local = (($el.hasClass("page") || $el.hasClass("note")) && !$(e.target).hasClass("origin"));
                     if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
                         if(self.onOpenContent)self.onOpenContent($el.attr("id"), url, false, is_local);
                     } else {
@@ -347,7 +344,7 @@ class BookTree {
         return (this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/");
     }    
     getItemIndexPage(id) {
-        return (settings.getFileServiceAddress() + this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime();
+        return (settings.getFileServiceAddress() + this.rdfPath + "data/" + id + "/index.html").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime();
     }
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {
@@ -561,6 +558,7 @@ class BookTree {
                 case "seq":
                     bf = self.createFolder(self.$top_container, json.id, null, json.title);
                     break;
+                case "note":
                 case "bookmark":
                 case "page":
                     bf = self.createLink(self.$top_container, json);
@@ -786,7 +784,7 @@ class BookTree {
         if(!$container || !($container.length))
             throw Error("invalid container")
         title = $.trim(title);
-        if (wait) icon = "icons/loading.gif";
+        if (wait) icon = "/icons/loading.gif";
         /** create item element */
         var title_encode = title.htmlEncode(), style="";
         var label = title_encode || "-- UNTITLED --";
@@ -907,7 +905,7 @@ class BookTree {
                 $item.nextAll(".folder-content:first").remove();
             }
             $item.remove();
-            if ($item.hasClass("page") || $item.hasClass("bookmark")) {
+            if (["page", "bookmark", "note"].includes(self.getItemType($item))) {
                 if(self.onItemRemoving)
                     self.onItemRemoving(id);
             }
@@ -927,7 +925,7 @@ class BookTree {
         var r = this.getDescNode(resource);
         if (r) {
             var type = r.getAttributeNS(this.MAIN_NS, "type");
-            if (!(["page", "bookmark"].includes(type))) type = "page";
+            if (!(["page", "bookmark", "note"].includes(type))) type = "page";
             return [type, r];
         }
         return [null, null];
@@ -955,19 +953,16 @@ class BookTree {
         }
     }
     removeItemXml(id) {
-        var changed = false;
         var about = "urn:scrapbook:item" + id;
         var node = this.getLiNode(about);
         if(node){
             node.parentNode.removeChild(node);
-            changed = true;
         }
         [this.desc_node_cache ,this.separator_node_cache ,this.seq_node_cache].forEach(function(buf){
             var node = buf[about];
             if(node){
                 node.parentNode.removeChild(node);
                 delete buf[about];
-                changed = true;
             }
          });
     }
@@ -996,7 +991,7 @@ class BookTree {
             this.separator_node_cache["urn:scrapbook:item" + id] = node;
         }
     }
-    createScrapXml(folder_id, type, id, ref_id, title, source, icon, comment, tag, pos="bottom") {
+    createScrapXml(folder_id, type, id, ref_id, title="", source="", icon="", comment="", tag="", pos="bottom") {
         var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
         if (seq_node) {
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "li");

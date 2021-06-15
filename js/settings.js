@@ -17,13 +17,13 @@ settings.set=function(k, v, commit=false){
 };
 settings.getBackendAddress=function(){
     if(settings.backend_type == "port"){
-        return "http://localhost:" + settings.backend_port + "/";
+        return "http://localhost:" + settings.backend_port + "/".replace(/\/{2,}$/, "/");
     }else{
-        return settings.backend_address + "/";
+        return settings.backend_address + "/".replace(/\/{2,}$/, "/");
     }
 }
 settings.getFileServiceAddress=function(){
-    var b = settings.getBackendAddress() + "file-service/";;
+    var b = settings.getBackendAddress() + "file-service/";
     if(gtev(settings.backend_version, "1.7.3")){
         b += "pwd/" + (settings.backend_pwd || "empty") + "/";    
     }
@@ -46,11 +46,6 @@ settings.loadJson=function(json){
     });
 };
 settings.getJson=async function(){
-    // var json;
-    // await browser.storage.local.get().then(function(all){
-    //     json = all;
-    // });
-    // return json;
     return settings.fields;
 };
 settings.getRdfPaths=function(){
@@ -66,9 +61,6 @@ settings.getRdfPathNames=function(){
 settings.pathJoin=function(){
     var arr = Array.from(arguments);
     return arr.join(settings.fs_path_separator);
-};
-settings.getLastRdfPath=function(){
-    return settings.last_rdf.replace(/[^\/\\]*$/, "");
 };
 /* =================================================== */
 browser.storage.onChanged.addListener(function(changes, area){
@@ -110,21 +102,15 @@ settings.set('font_name', '');
 settings.set('line_spacing', '5');
 settings.set('open_in_current_tab', "off");
 settings.set('sidebar_show_root', "off");
-settings.set('lock_editbar', "off");
 settings.set('auto_close_saving_dialog', "off");
+settings.set('show_notification', "on");
 settings.set('saving_save_frames', "on");
 settings.set('saving_new_pos', "bottom");
-settings.set('searching_source', "title,body,comment");
-settings.set('announcement_showed', "");
-// settings.loadFromStorage().then(()=>{
-//     alert(settings.backend_version)
-// })
 /* =================================================== */
 var global = {};
 global.set=function(key, value, boardcast=false) {
     global[key] = value;
 };
-// global.set('debug', true, false);
 global.set('id', browser.runtime.id);
 global.set('extension_id', browser.i18n.getMessage("@@extension_id"));
 try{

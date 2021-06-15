@@ -1,21 +1,21 @@
-import {showNotification, sendTabContentMessage} from "../utils.js"
-import {settings, global} from "../settings.js";
-import {log} from "../message.js";
+import {showNotification, sendTabContentMessage} from "/js/utils.js"
+import {settings, global} from "/js/settings.js";
+import {log} from "/js/message.js";
 
 window.onload=async function(){
     await settings.loadFromStorage();
     
     document.body.innerHTML = document.body.innerHTML.translate();
     $("#btnHelp").click(function(){
-        browser.tabs.create({"url": "../options.html#area=help"});
+        browser.tabs.create({"url": "/html/options.html#area=help"});
         window.close();
     });
     $("#btnSetting").click(function(){
-        browser.tabs.create({"url": "../options.html"});
+        browser.tabs.create({"url": "/html/options.html"});
         window.close();
     });
     $("#btnTools").click(function(){
-        browser.tabs.create({"url": "../options.html#area=tools"});
+        browser.tabs.create({"url": "/html/options.html#area=tools"});
         window.close();
     });
     $("#btnOpenInSidebar").click(function(){

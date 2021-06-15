@@ -224,10 +224,10 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return ajaxFormPost(settings.getBackendAddress() + "fs/copy", {src, dest, pwd: settings.backend_pwd});
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type);
-    }else if(request.type == 'CALL_IFRAME'){
+    }else if(request.type == 'CALL_FRAME'){
         request.type = request.action;
-        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId, pwd: settings.backend_pwd});
-    }else if(request.type == 'GET_IFRAMES'){
+        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});
+    }else if(request.type == 'GET_FRAMES'){
         var tabId = sender.tab.id;
         return new Promise((resolve, reject) => {
             return browser.webNavigation.getAllFrames({tabId}).then((ar)=>{
@@ -237,18 +237,21 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 reject(e);
             });
         });
-    }else if(request.type == 'INJECT_IFRAME'){
+    }else if(request.type == 'INJECT_FRAME'){
         var tabId = sender.tab.id;
         return executeScriptsInTab(tabId, [
             "/libs/mime.types.js",
             "/libs/jquery-3.3.1.js",
             "/libs/md5.js",
-            "/proto.js",
-            "/dialog.js",
-            "/content_script.js"
+            "/js/proto.js",
+            "/js/dialog.js",
+            "/js/content_script.js"
         ], request.frameId);
     }else if(request.type == 'TAB_INNER_CALL'){
-        return browser.tabs.sendMessage(sender.tab.id, request);
+        // return browser.tabs.sendMessage(sender.tab.id, request);
+        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});
+    }else if(request.type == 'GET_TAB_ID'){
+        return Promise.resolve(sender.tab.id);
     }else if(request.type == 'IS_SIDEBAR_OPENED'){
         return browser.sidebarAction.isOpen({});
     }else if(request.type == 'GET_TAB_FAVICON'){
@@ -259,7 +262,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return new Promise((resolve, reject) => {
             settings.loadFromStorage().then(()=>{
                 resolve(settings);
-            })
+            });
         });
     }else if(request.type == "CAPTURE_TABS"){
         browser.tabs.query({currentWindow: true}).then(function(tabs){

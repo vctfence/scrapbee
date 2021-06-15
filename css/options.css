@@ -325,6 +325,9 @@ li.h3{
 #node-mover .item.bookmark{
     color:#6f0;
 }
+#node-mover .item.note{
+    color:#eee;
+}
 #node-mover .toolbar{
     left:0;
     height:30px;

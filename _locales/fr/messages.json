@@ -25,6 +25,9 @@
     "Search": {
         "message": "Recherche"
     },
+    "Stop": {
+        "message": "Arrêter"
+    },
     "Help": {
         "message": "Aide"
     },
@@ -61,6 +64,9 @@
     "MARK_PEN": {
         "message": "Type de surlignage"
     },
+    "SOURCE_CODE": {
+        "message": "Code source"
+    },    
     "File": {
         "message": "Fichier"
     },
@@ -76,6 +82,9 @@
     "New Separator": {
         "message": "Nouveau séparateur"
     },
+    "New Note": {
+        "message": "Nouvelle remarque"
+    },    
     "CapturePage": {
         "message": "Capture de la page"
     },
@@ -263,7 +272,7 @@
         "message": "Annonce"
     },
     "announcement_version":{
-        "message": "2.2.12"
+        "message": "2.3.0"
     },
     "NODE_MOVER_TIP":{
         "message": "Avec cet outil, vous pouvez déplacer ou copier des nœuds et leur contenu entre 2 RDF (arborescences de livre). Le dragage et la suppression de nœuds dans un RDF sont également disponibles ici."
@@ -283,6 +292,12 @@
     "Done": {
         "message": "Fait"
     },
+    "EDIT_CONTENT": {
+        "message": "Éditer"
+    },
+    "STOP_EDIT_CONTENT": {
+        "message": "Arrêter Modifier"
+    },    
     "STORAGE_WARN": {
         "message": "Pour l'instant, ScrapBee utilise le stockage local pour sauvegarder les préférences, déactivez le nettoyage automatique du stockage si vous l'avez positionné."
     },
@@ -337,6 +352,9 @@
     "Bookmark":{
         "message": "Signet"
     },
+    "Note":{
+        "message": "Noter"
+    },    
     "Selection":{
         "message": "Sélection"
     },

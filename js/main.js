@@ -64,11 +64,8 @@ function showDlg(name, data, onshowed){
     }
     $(document).unbind("keyup.dialog");
     /** return promise object */
-
     var menu = document.body.ctxMenu;
     document.body.ctxMenu = null;
-    // $(document.body).attr("contextmenu", "");
-    
     var p = new Promise(function(resolve, reject){
         $(document).bind("keyup.dialog", function(e) {
             if (e.key === "Escape") { // escape key maps to keycode `27`
@@ -96,22 +93,17 @@ function showDlg(name, data, onshowed){
             });
             $dlg.remove();
             document.body.ctxMenu = menu;
-            // $(document.body).attr("contextmenu", contextmenu);
             resolve(data);
         });
         $dlg.find("input.button-cancel").bind("click.dlg", function(){
             $dlg.remove();
             document.body.ctxMenu = menu;
-            // $(document.body).attr("contextmenu", contextmenu);
             reject(Error(""));
         });
     });
     if(onshowed)onshowed($dlg);
     return p;
 }
-// function alert(title, message){
-//     return showDlg("alert", {dlg_title:title.translate(), message:message.translate()});
-// }
 function confirm(title, message){
     return showDlg("confirm", {dlg_title:title.translate(), message:message.translate()});
 }
@@ -121,9 +113,8 @@ menulistener.onOpenAll = function(){
     var $foc = currTree.getFocusedItem();
     var liXmlNode = currTree.getItemXmlNode($foc.attr('id'));
     currTree.iterateLiNodes(function(item){
-        if(item.nodeType == "bookmark" || item.nodeType == "page"){
-            var url = item.nodeType == "page" ? currTree.getItemIndexPage(item.id) : item.source;
-            currTree.onOpenContent(item.id, url, true, item.nodeType == "page");
+        if(item.nodeType == "bookmark" || item.nodeType == "page" || item.nodeType == "note"){
+            currTree.onOpenContent(item.id, item.source, true, item.nodeType == "page" || item.nodeType == "note");
         }
     }, [liXmlNode]);
 };
@@ -172,6 +163,25 @@ menulistener.onCreateSeparator = function(){
     currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true, settings.saving_new_pos);
     currTree.onXmlChanged();
 };
+menulistener.onCreateNote = function(){
+    var id = genItemId();
+    var path = `${currTree.rdfPath}/data/${id}/index.html`;
+    browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE',
+                                 text: "<title>New Note</title>New Note",
+                                 path: path}).then((response) => {
+                                     currTree.createLink(currTree.getCurrContainer(), {
+                                         type: "note",
+                                         id: id,
+                                         ref_id: currTree.getCurrRefId(),
+                                         title: "New Note",
+                                     },{
+                                         wait: false,
+                                         is_new: true,
+                                         pos: settings.saving_new_pos
+                                     });
+                                     currTree.onXmlChanged();
+                                 });
+}
 menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
     var url = $foc.attr("source");
@@ -203,11 +213,10 @@ menulistener.onProperty = function(){
         }
         var t = type.replace(/^\w/, function(a){return a.toUpperCase();});
         t = `{${t}}`.translate();
-
-        var opt = {dlg_title:"{Properties}".translate(), title: (t0||""),
+        var opt = {dlg_title:"{Properties}".translate(), title: (t0 || ""),
                    url: s0, id, time, type:t,
-                   display_url: type == "folder" ? "none" : "",
-                   display_icon: type == "folder" ? "none" : "",
+                   display_url: type == "folder" || type == "note" ? "none" : "",
+                   display_icon: type == "folder" || type == "note" ? "none" : "",
                    comment: c0, tag: tag0, icon: icon0};
         showDlg("property", opt, function($dlg){
             $dlg.find("span[name=btnDefaultIcon]").click(function(){
@@ -242,7 +251,7 @@ menulistener.onProperty = function(){
             if(t1 != t0 || s1 != s0 || c1 != c0 || icon1 != icon0){ //  || tag1 != tag0
                 currTree.onXmlChanged();
             }
-        }).catch(()=>{});;
+        }).catch(()=>{});
     }
 };
 menulistener.onOpenFolder = function(){
@@ -255,39 +264,44 @@ menulistener.onOpenFolder = function(){
 var drop;
 function showRdfList(){
     log.info("show rdf list");
-    var lastRdf = settings.last_rdf;
-    var saw = false;
-    var paths = settings.getRdfPaths();
-    if(paths.length == 0)
-        $(".folder-content.toplevel").html("{NO_RDF_SETTED_HINT}".translate());
-    drop = drop || new SimpleDropdown($(".drop-button")[0], []);
-    drop.clear();
-    drop.onchange=(function(title, value){
-        $(".drop-button .label").text(title || "");
-        if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
-    });
-    if(paths){
-        var names = settings.getRdfPathNames(); 
-        names.forEach(function(name, i){
-            log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
-            if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
-                saw = true;
+
+    new History().load().then((self)=>{
+        var lastRdf = self.getItem("sidebar.tree.last");
+        var saw = false;
+        var paths = settings.getRdfPaths();
+        if(paths.length == 0)
+            $(".folder-content.toplevel").html("{NO_RDF_SETTED_HINT}".translate());
+        drop = drop || new SimpleDropdown($(".drop-button")[0], []);
+        drop.clear();
+        drop.onchange=(function(title, value){
+            $(".drop-button .label").text(title || "");
+            if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
+        });
+        if(paths){
+            var names = settings.getRdfPathNames(); 
+            names.forEach(function(name, i){
+                log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
+                if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
+                    saw = true;
+                    try{
+                        drop.select(name, paths[i]);
+                    }catch(e){
+                        log.error(e.message);
+                    }
+                }
                 try{
-                    drop.select(name, paths[i]);
+                    drop.addItem(name, paths[i]);
                 }catch(e){
                     log.error(e.message);
-                }
+                }            
+            });
+            if(!saw){
+                drop.select(names[0], paths[0]);
             }
-            try{
-                drop.addItem(name, paths[i]);
-            }catch(e){
-                log.error(e.message);
-            }            
-        });
-        if(!saw){
-            drop.select(names[0], paths[0]);
         }
-    }
+
+    });
+
 }
 function applyAppearance(){
     var id = "scrapbee_setting_style";
@@ -336,7 +350,7 @@ body{
 .item.page label,.item.bookmark  label,.item.folder label{
   font-size:${settings.font_size}px;
 }
-.item.page i,.item.bookmark i,.item.folder i{
+.item.page i,.item.bookmark i,.item.folder i,.item.note i{
   width:${icon_h}px;
   height:${icon_h}px;
 }
@@ -464,49 +478,44 @@ window.onload=async function(){
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
-        // window.open("options.html", "_scrapbee_option")
         browser.tabs.create({
             "url": "options.html"
         });
-        // runtime.openOptionsPage()
     };
     var btn = document.getElementById("btnTools");
     btn.onclick = function(){
-        // window.open("options.html#tool", "_scrapbee_option")
         browser.tabs.create({
             "url": "options.html#area=tools"
         });
     };    
     var btn = document.getElementById("btnHelp");
     btn.onclick = function(){
-        // window.open("options.html#help", "_scrapbee_option")
         browser.tabs.create({
             "url": "options.html#area=help"
         });
     };
     var btn = document.getElementById("btnSearch");
     btn.onclick = function(){
-        // window.open("search.html", "_scrapbee_search")
         browser.tabs.create({
             "url": "search.html?rdf=" + currTree.rdf
         });
     };
     /** context menu */
     var items = [
-        {value: "menuProperty", icon:"icons/property.svg", title: "{Properties}"},
-        {value: "menuOpenOriginLink", icon:"icons/open_origin.svg", title: "{OPEN_ORIGIN_LINK}"},
-        {value: "menuOpenFolder", icon:"icons/openfolderblack.svg", title: "{Open Folder}"},
-        {value: "menuOpenAll", icon:"icons/openall.svg", title: "{OPEN_ALL_ITEMS}"},
-        {value: "menuCreateFolder", icon:"icons/folder.svg", title: "{New Folder}"},
-        {value: "menuCreateSeparator", icon:"icons/separator.svg", title: "{New Separator}"},
-        {value: "menuDelete", icon:"icons/delete.svg", title: "{Delete}"},
-        {value: "menuSort1", icon:"icons/sort_a_z.svg", title: "{Sort}"},
+        {value: "menuProperty", icon:"/icons/property.svg", title: "{Properties}"},
+        {value: "menuOpenOriginLink", icon:"/icons/open_origin.svg", title: "{OPEN_ORIGIN_LINK}"},
+        {value: "menuOpenFolder", icon:"/icons/openfolderblack.svg", title: "{Open Folder}"},
+        {value: "menuOpenAll", icon:"/icons/openall.svg", title: "{OPEN_ALL_ITEMS}"},
+        {value: "menuCreateFolder", icon:"/icons/folder.svg", title: "{New Folder}"},
+        {value: "menuCreateSeparator", icon:"/icons/separator.svg", title: "{New Separator}"},
+        {value: "menuCreateNote", icon:"/icons/note.svg", title: "{New Note}"},
+        {value: "menuDelete", icon:"/icons/delete.svg", title: "{Delete}"},
+        {value: "menuSort1", icon:"/icons/sort_a_z.svg", title: "{Sort}"},
     ];
     items.forEach(function(v, i){
         items[i]["title"]= v.title.translate()
-    })
+    });
     document.body.ctxMenu = new ContextMenu(items);
-    // document.body.ctxMenu.show();
     document.body.ctxMenu.onselect = function(title, value){
         if(currTree){
             var listener = menulistener[value.replace(/^menu/, "on")];
@@ -522,21 +531,22 @@ window.onload=async function(){
         $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
     });
     /** announcement */
-    var ann = browser.i18n.getMessage("announcement_version");
-    if(ann){
-        if(gtv(ann, settings.announcement_showed)){
+    new History().load().then((self)=>{
+        var ann = browser.i18n.getMessage("announcement_version")
+        var showed = self.getItem("announce.version_showed") || "";
+        if(gtv(ann, showed)){
             $("#announcement-red-dot").show();
         }else{
             $("#announcement-red-dot").hide();
         }
         $("#announcement-red-dot").parent().click(function(){
-            settings.set('announcement_showed', ann, true);
+            self.setItem('announce.version_showed', ann);
             $("#announcement-red-dot").hide();
         });
-    }
+    });
     /** toggle root */
     $("#show-root").change(function(){
-        currTree.showRoot(this.checked)
+        currTree.showRoot(this.checked);
     });
 };
 function loadXml(rdf){
@@ -580,7 +590,10 @@ function loadXml(rdf){
                 if(/^file\:/.test(url)){
                     url = settings.getFileServiceAddress() + url.replace(/.{7}/,'');
                 }
-                browser.tabs[method]({ url: url }, function (tab) {});
+                if(isLocal)
+                    browser.tabs[method]({url: `/html/viewer.html?id=${itemId}&path=${rdfPath}`}, function (tab) {});
+                else
+                    browser.tabs[method]({url: url}, function (tab) {});
             };
             document.body.addEventListener("mousedown", function(e){
                 if(e.button == 2 && this.ctxMenu){
@@ -602,28 +615,23 @@ function loadXml(rdf){
                 var menu = document.body.ctxMenu;
                 menu.hideAllItems();
                 if ($f.hasClass("folder")) {
-                    // $(document.body).attr("menu", "popup-menu-folder");
-                    menu.showItems(["menuProperty", "menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuSort1", "menuOpenAll"])
+                    menu.showItems(["menuProperty", "menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1", "menuOpenAll"])
                 } else if ($f.hasClass("separator")) {
-                    // $(document.body).attr("menu", "popup-menu-separator");
-                    menu.showItems(["menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuSort1"])
+                    menu.showItems(["menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"])
                 } else if ($f.hasClass("item")) {
                     menu.showItems(["menuOpenOriginLink", "menuProperty", "menuDelete", "menuCreateFolder",
-                                    "menuCreateSeparator", "menuOpenFolder", "menuSort1", ])
-                    // $(document.body).attr("menu", "popup-menu-link");
+                                    "menuCreateSeparator", "menuCreateNote","menuOpenFolder", "menuSort1", ])                    
                     if($f.hasClass("bookmark")){
                         menu.hideItem("menuOpenOriginLink");
                     }
                 } else {
-                    menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuSort1"])
-                    // $(document.body).attr("contextmenu", "popup-menu-body");
+                    menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"])
                 }
                 new History().load().then((self)=>{
-                    var v = self.getItem("sidebar.focused") || {};
+                    var v = self.getItem("sidebar.nodes.focused") || {};
                     v[rdf] = id;
-                    self.setItem("sidebar.focused", v); 
+                    self.setItem("sidebar.nodes.focused", v); 
                 });
-                
             };
             currTree.onToggleFolder=function(){
                 var folderIds = currTree.getExpendedFolderIds().join(",");
@@ -643,7 +651,7 @@ function loadXml(rdf){
                             currTree.toggleFolder(currTree.getItemById(id), true);
                         });
                     }
-                    var v = self.getItem("sidebar.focused") || {};
+                    var v = self.getItem("sidebar.nodes.focused") || {};
                     var id = v[rdf];
                     if(id){
                         var $item = currTree.getItemById(id);
@@ -656,7 +664,9 @@ function loadXml(rdf){
             }
             currTree.restoreStatus();
             /** history */
-            settings.set('last_rdf', rdf, true);
+            new History().load().then((self)=>{
+                self.setItem("sidebar.tree.last", rdf); 
+            });
             resolve(currTree);
         };
         xmlhttp.onerror = function(err) {
@@ -692,9 +702,22 @@ function switchRdf(rdf){
 }
 function requestUrlSaving(itemId){
     withCurrTab(function(tab){
-       var icon = tab.favIconUrl;
-       var ref_id;
-       function Next(){
+        var icon = tab.favIconUrl;
+        var ref_id;
+        function saveIcon(){
+            return new Promise((resolve, reject)=>{
+                if(icon && icon.match(/^data:image/i)){
+                    var filename = `${currTree.rdfPath}/data/${itemId}/favicon.ico`;
+                    $.post(settings.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: settings.backend_pwd}, function(r){
+                        icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
+                        resolve();
+                    });
+                }else{
+                    resolve();
+                }
+            });
+        }
+        saveIcon().then(() => {
            var $container = null;
            var $f = $(".item.focus");
            if($f.length){
@@ -707,7 +730,6 @@ function requestUrlSaving(itemId){
            }else{
                $container = $(".folder-content.toplevel");
            }
-           
            currTree.createLink(currTree.getCurrContainer(), {
                type:"bookmark",
                title:tab.title,
@@ -721,19 +743,8 @@ function requestUrlSaving(itemId){
                pos: settings.saving_new_pos
            });
            currTree.onXmlChanged();
-           
            showNotification({message: `Save bookmark "${tab.title}" done`, title: "Info"});
-       }
-       if(icon && icon.match(/^data:image/i)){
-           var rdf_path = settings.getLastRdfPath();
-           var filename = `${rdf_path}/data/${itemId}/favicon.ico`;
-           $.post(settings.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: settings.backend_pwd}, function(r){
-               icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-               Next();
-           });
-       }else{
-           Next();
-       }
+        })
     });
 }
 /* receive message from background page */
@@ -822,7 +833,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             if($(".dlg-cover:visible").length){
                 return reject();
             }
-            // switchRdf()
             if(currTree && currTree.rendered && sender.tab.windowId == thisWindowId) {
                 var $item = currTree.getItemById(request.id);
                 if($item.length){
@@ -837,16 +847,11 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }
 });
-// document.addEventListener('contextmenu', function(event){
-//     if($(".dlg-cover:visible").length)
-//         // event.preventDefault();
-//         return false;
-// });
+browser.windows.getCurrent({populate: true}).then((windowInfo) => {
+    thisWindowId = windowInfo.id;
+});
 document.oncontextmenu = function (event){
     if($(".dlg-cover:visible").length == 0)
         return false
 }
-browser.windows.getCurrent({populate: true}).then((windowInfo) => {
-    thisWindowId = windowInfo.id;
-});
 console.log("==> main.js loaded");

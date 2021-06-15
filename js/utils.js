@@ -1,3 +1,6 @@
+import {log} from "./message.js";
+import {settings} from "./settings.js";
+
 function scriptsAllowed(tabId, frameId = 0) {
     return browser.tabs.executeScript(tabId, {
                 frameId: frameId,
@@ -5,7 +8,16 @@ function scriptsAllowed(tabId, frameId = 0) {
                 code: 'true;'
     });
 }
-function showNotification({message, title='', type = 'info'}) {
+async function showNotification({message, title=''}) {
+    try{
+        log[title.toLowerCase()](message);
+    }catch(e){}
+
+    await settings.loadFromStorage();
+    
+    if(settings.show_notification != "on")
+        return Promise.resolve();
+    
     return browser.notifications.create(`sbi-notification-${type}`, {
         type: 'basic',
         title: title,
@@ -341,23 +353,16 @@ function getUrlParams(url){
 }
 function executeScriptsInTab(tabId, files, frameId=0){
     return new Promise((resolve, reject) => {
-        // console.log("tabid " + tabId)
-        // console.log("frameid " + frameId)
         function sendone(){
             if(files.length){
                 var f = files.shift();
                 // injection into page -> about:debugging, about:addons causes an error
-                try{
-                    browser.tabs.executeScript(tabId, {file: f, frameId, runAt: "document_start"}).then(() => { // frameId, allFrames
-                        sendone();
-                    }).catch((e)=>{
-                        // console.log(e)
-                        reject(e)
-                    });
-                }catch(e){
-                    // console.log(e)
-                    reject(e)
-                }
+                browser.tabs.executeScript(tabId, {file: f, frameId, runAt: "document_start"}).then(() => { // frameId, allFrames
+                    console.log(`success inject file ${f}`)
+                    sendone();
+                }).catch((e)=>{
+                    reject(Error(`failed to inject file ${f}, ${e.message}, ${frameId}`))
+                });
             }else{
                 resolve();
             }
@@ -369,16 +374,15 @@ function sendTabContentMessage(tab, data, silent=false, frameId=0){
     return new Promise((resolve, reject) => {
         scriptsAllowed(tab.id).then(function(){
             if(tab.status == "loading"){
-                if(!silent)
-                    showNotification({message: `Waiting for page loading, please do not make any operations on this page before capturing finished`, title: "Info"});
+                showNotification({message: `Waiting for page loading, please do not make any operations on this page before capturing finished`, title: "Warning"});
             }
             executeScriptsInTab(tab.id, [
                 "/libs/mime.types.js",
                 "/libs/jquery-3.3.1.js",
                 "/libs/md5.js",
-                "/proto.js",
-                "/dialog.js",
-                "/content_script.js"
+                "/js/proto.js",
+                "/js/dialog.js",
+                "/js/content_script.js"
             ], frameId).then(function(){
                 browser.tabs.sendMessage(tab.id, data, {frameId}).then(function(haveIcon){
                     resolve(haveIcon);

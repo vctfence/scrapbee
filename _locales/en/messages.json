@@ -28,6 +28,9 @@
     "Search": {
         "message": "Search"
     },
+    "Stop": {
+        "message": "Stop"
+    },
     "Help": {
         "message": "Help"
     },
@@ -64,6 +67,9 @@
     "MARK_PEN": {
         "message": "Mark Pen"
     },
+    "SOURCE_CODE": {
+        "message": "Source Code"
+    },    
     "File": {
         "message": "File"
     },
@@ -78,6 +84,9 @@
     },
     "New Separator": {
         "message": "New Separator"
+    },
+    "New Note": {
+        "message": "New Note"
     },
     "CapturePage": {
         "message": "Save Page"
@@ -278,7 +287,7 @@
         "message": "Announcement"
     },
     "announcement_version":{
-        "message": "2.2.12"
+        "message": "2.3.0"
     },
     "NODE_MOVER_TIP":{
         "message": "With this tool, you can move or copy nodes and their contents between 2 RDFs (book trees), dragging and deleting nodes within one RDF are also available here."
@@ -294,9 +303,15 @@
     },
     "Exporter": {
         "message": "Exporter"
-    },    
+    },
     "Done": {
         "message": "Done"
+    },    
+    "EDIT_CONTENT": {
+        "message": "Edit"
+    },
+    "STOP_EDIT_CONTENT": {
+        "message": "Stop Edit"
     },
     "STORAGE_WARN": {
         "message": "For now, ScrapBee need local storage enabled to keep settings, please turn off storage cleaning to prevent settings losing if you'v turned it on"
@@ -354,6 +369,9 @@
     },
     "Bookmark":{
         "message": "Bookmark"
+    },
+    "Note":{
+        "message": "Note"
     },
     "Selection":{
         "message": "Selection"
@@ -424,6 +442,9 @@
     "AUTO_CLOSE_SAVING_DIALOG": {
         "message":"Auto Close Saving Dialog"
     },
+    "SHOW_NOTIFICATION": {
+        "message":"Show Notification"
+    },    
     "SAVING_SAVE_FRAMES" : {
         "message":"Save Frames"
     },

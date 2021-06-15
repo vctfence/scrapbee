@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="" type="image/x-icon" rel="shortcut icon"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style type="text/css" media="screen">
+     html, body {
+       margin:0;
+       width:100%;
+       height:100%;
+       overflow:hidden;
+     }
+     #contentFrame{
+       display: block; 
+       width:100vw;
+       height:100%;
+     }
+     #placeHolder{
+       display: block; 
+       width:100vw;
+       position:absolute;
+       bottom:40px;
+       top:0px;
+       left:0;
+       right:0;
+     }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/css/edit_markers.css" media="screen"/>
+    <link rel="stylesheet" type="text/css" href="/css/dialog.css" media="screen"/>
+    <link rel="stylesheet" type="text/css" href="/css/edit.css" media="screen"/>
+    <script type="text/javascript" src="/js/proto.js"></script>
+    <script type="text/javascript" src="/libs/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="/js/marker.js"></script>
+    <script type="text/javascript" src="/js/dialog.js"></script>
+    <script type="module" src="/js/viewer.js"></script>
+  </head>
+  <body>
+    <div id="placeHolder">
+      <iframe id="contentFrame" style="border:none"></iframe>
+    </div>
+  </body>
+</html>

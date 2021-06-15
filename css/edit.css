@@ -1,0 +1,118 @@
+body{
+    transform:none;
+}
+.scrapbee-edit-bar{
+    background: #aaa;
+    border-top: 1px solid #999;
+    width: 100%;
+    height: 40px;
+    position: fixed;
+    vertical-align: middle;
+    line-height: 40px;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index: 2147483647;
+    text-align:left;
+    color:#000;
+    padding:0;
+}
+.scrapbee-edit-lock{
+    position:absolute;
+    background-color:#aaa;
+    right:30px;
+    top:-20px;
+    height:20px;
+    line-height:20px;
+    cursor:pointer;
+    border-radius:5px 5px 0 0;
+    width:50px;
+    height:20px;
+    background-size:20px 15px;
+    background-position:center center;
+    background-repeat:no-repeat;
+}
+.scrapbee-icon{
+    border:none;
+    background:none;
+    vertical-align:middle;
+    margin-Left:10px;
+    width :20px;
+    height : 20px;
+    display:inline;
+}
+.scrapbee-edit-bar,  .scrapbee-edit-bar *{
+    font-family:"WenQuanYi Micro Hei",
+		"Open Sans",
+		"Fira Sans",
+		"Lucida Sans",
+		"Lucida Sans Unicode",
+		"Trebuchet MS",
+		"Liberation Sans",
+		"Nimbus Sans L",
+		sans-serif;
+    font-size:12px;
+    box-sizing: content-box;
+}
+.scrapbee-edit-bar input[type=button]{
+    display:inline-block;
+    color:#fff;
+    cursor:pointer;
+    border-radius:5px;
+    padding:3px 15px;
+    min-width:0px;
+    border:none;
+    line-height:20px;
+    margin: auto auto auto 5px;
+    width:auto;
+    height:20px;
+    font-weight:normal;
+    vertical-align:middle;
+    min-height:auto;
+    box-shadow:none;
+    text-transform:uppercase;
+}
+.scrapbee-edit-bar input[type=button].blue-button{
+    background-color:#09c;
+    background-image:none;
+}
+.scrapbee-edit-bar input[type=button].yellow-button{
+    background-color:#f50;
+    background-image:none;
+}
+.scrapbee-edit-bar input[type=button]:disabled{
+    background-color:#555;
+    background-image:none;
+}
+.scrapbee-edit-bar input[type=button].locater{
+    vertical-align:middle;
+    background-position:center center;
+    background-size:30%;
+    background-repeat:no-repeat;
+}
+.scrapbee-menu-item{
+    text-align:center;
+    height:14px;
+    line-height:14px;
+    min-width:200px;
+}
+.scrapbee-menu{
+    position: absolute;
+    z-index: 2147483647;
+    border: 1px solid #999;
+    background: #fff;
+    display: none;
+    box-shadow: 5px 5px 5px #888888;
+    border-width: 1px 1px 0px 1px;
+}
+.scrapbee-menu.show{
+    display: block;
+}
+.scrapbee-marker{
+    height:14px;
+    color:#333;
+    cursor:pointer;
+    border-bottom:1px solid #999;
+    padding:8px 20px;
+    vertical-align:middle;
+}

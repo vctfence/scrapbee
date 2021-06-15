@@ -143,7 +143,7 @@ function initMover(){
                 var $dest = parents[item.level];
                 var id = genItemId(item.id);
                 var rid = item.level == 0 ? ref_id : null;
-                if(item.nodeType == "bookmark" || item.nodeType == "page"){
+                if(item.nodeType == "bookmark" || item.nodeType == "page" || item.nodeType == "note"){
                     var src = srcTree.rdfPath + 'data/' + item.id;
                     var dest = destTree.rdfPath + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).catch((e) => {
@@ -271,15 +271,15 @@ function initMover(){
 function exportTree(rdf, name, includeSeparator, openInNewTab){
     return new Promise((resolve, reject)=>{
         httpRequest(settings.getFileServiceAddress() + rdf).then(async (response)=>{
-            var blob = await fetch("icons/item.gif").then(r => r.blob());
+            var blob = await fetch("/icons/item.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/item.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
 
-            var blob = await fetch("icons/folder.gif").then(r => r.blob());
+            var blob = await fetch("/icons/folder.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/folder.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
 
-            var blob = await fetch("icons/openfolder.gif").then(r => r.blob());
+            var blob = await fetch("/icons/openfolder.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/openfolder.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
 
@@ -300,7 +300,7 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
                     var nt = openInNewTab ? " target='_blank'" : "";
                     if(type == "bookmark"){
                         buffer.push(`<li class='bookmark'><img src='${icon}'/><a href='${item.source}'${nt}>${item.title}</a></li>`);    
-                    }else if(type == "page"){
+                    }else if(type == "page" || type == "note"){
                         buffer.push(`<li class='page' ><img src='${icon}'/><a href='data/${item.id}/index.html'${nt}>${item.title}</a></li>`);
                     }
                 }

@@ -1,7 +1,7 @@
 <head>
-  <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
-  <script type="text/javascript" src="proto.js"></script>
-  <link rel="stylesheet" type="text/css" href="tree.css" media="screen"/>
+  <script type="text/javascript" src="/libs/jquery-3.3.1.js"></script>
+  <script type="text/javascript" src="/js/proto.js"></script>
+  <link rel="stylesheet" type="text/css" href="/css/tree.css" media="screen"/>
   <style type="text/css" media="screen">
    *{
      font-family:"WenQuanYi Micro Hei",
@@ -98,9 +98,9 @@
      background:#bbb;
      color:#000;
    }
-   #tree1{
-     color:#fff;
-   }
+   /* #tree1{
+      color:#fff;
+      } */
    #main-table{
      border-collapse:collapse;
      height:100%;
@@ -132,6 +132,9 @@
    #tree1 .item.bookmark{
      color:#6f0;
    }
+   #tree1 .item.note{
+     color:#eee;
+   }   
    #lstRdfs{
      max-width:50%;
    }
@@ -183,5 +186,5 @@
     <input type='button' value='{CAPTURE}' id="btnCapture"/>
     <input type='button' value='{DLG_CANCEL}' id="btnCancel"/>
   </div>
-  <script type="module" src="advcap.js"></script>
+  <script type="module" src="/js/advcap.js"></script>
 </body>

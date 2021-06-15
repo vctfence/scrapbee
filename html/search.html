@@ -2,11 +2,11 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>ScrapBee -> {Search}</title>
-    <link rel="icon" href="icons/bee.svg" type="image/png" />
-    <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
-    <script type="module" src="proto.js"></script>
-    <script type="text/javascript" src="message.js"></script>
-    <script type="module" src="search.js"></script>
+    <link rel="icon" href="/icons/bee.svg" type="image/png" />
+    <script type="text/javascript" src="/libs/jquery-3.3.1.js"></script>
+    <script type="module" src="/js/proto.js"></script>
+    <script type="text/javascript" src="/js/message.js"></script>
+    <script type="module" src="/js/search.js"></script>
     <style type="text/css" media="screen">
      body{
        margin:0;
@@ -27,7 +27,7 @@
      .item{margin-bottom:1em;}
      .origin{color:green}
      .icon{height:1em}
-     input[type=submit]{
+     input[type=submit], input[type=button]{
        padding:5px 20px;
        appearance: none;
        -moz-appearance: none;
@@ -52,6 +52,7 @@
        width:-webkit-fit-content;
        width:-moz-fit-content;
        width:50em;
+       margin-bottom:2em;
      }
      .match-title{
        color:blue;display:inline-block;
@@ -66,7 +67,7 @@
        width:10px;
        height:15px;
        vertical-align:middle;
-       mask-image:url(icons/locate.svg);
+       mask-image:url(/icons/locate.svg);
        mask-size:100% 100%;
      }
      .match-comment{
@@ -84,7 +85,6 @@
      }
      .match-source{
        color:green;display:block;
-       margin-bottom:2em;
        text-decoration:none;
        width:fit-content;
        width:-webkit-fit-content;
@@ -104,6 +104,9 @@
        vertical-align:middle;
        display:none;
      }
+     #btnStop{
+       display:none;
+     }
     </style>
   </head>
   <body>
@@ -115,8 +118,9 @@
         <input type="checkbox" name="source" value="title"/> {Title}
         <input type="checkbox" name="source" value="body"/> {Content}
         <input type="checkbox" name="source" value="comment"/> {Comment}
-        <input type="submit" name="" value="{Search}" id="btnSearch"/>
-        <img src="icons/loading.gif" class="loading" alt="" />
+        <input type="submit" name="search" value="{Search}" id="btnSearch"/>
+        <input type="button" name="stop" value="{Stop}" id="btnStop"/>
+        <img src="/icons/loading.gif" class="loading" alt="" />
       </form>
     </div>
     <div id="divResult" class="some_class" style="margin-top:70px;position:relative;margin-bottom:50px;margin-left:30px;">

@@ -156,7 +156,7 @@ if(!window.scrapbee_injected){
         var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
         // injext all frames
         if(settings.saving_save_frames == "on"){
-            await browser.runtime.sendMessage({type: "GET_IFRAMES"}).then(async function(ar){
+            await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
                 for(var i=0;i<ar.length;i++){
                     var f = ar[i];
                     doc.querySelectorAll("iframe,frame").forEach((iframe, i) => {
@@ -165,7 +165,7 @@ if(!window.scrapbee_injected){
                         }
                     });
                     try{
-                        await browser.runtime.sendMessage({type: "INJECT_IFRAME", frameId: f.frameId});
+                        await browser.runtime.sendMessage({type: "INJECT_FRAME", frameId: f.frameId});
                     }catch(e){
                         console.log("invalid url: ", f.url) // about:debugging, about:addons causes an error
                     }
@@ -175,7 +175,6 @@ if(!window.scrapbee_injected){
         return new Promise(async (resolve, reject) => {
             /** html */
             var content = null;
-            
             /** set unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.setAttribute("scrapbee_unique_id", "el" + new NumberRange(0,999999999).random());
@@ -185,7 +184,6 @@ if(!window.scrapbee_injected){
             }catch(e){
                 reject(e)
             }
-            
             /** css */
             var css = [];
             function getRuleCss(r){
@@ -221,7 +219,6 @@ if(!window.scrapbee_injected){
                     }
                 }
             }
-            
             /** gather resources and inline styles */
             var distinct = {};
             var RESULT = [];
@@ -269,8 +266,8 @@ if(!window.scrapbee_injected){
                     try{
                         var name = "iframe" + (i + 1);
                         var [_res, a, b] = await browser.runtime.sendMessage({
-                            type: "CALL_IFRAME",
-                            action:"GATHER_CONTENT",
+                            type: "CALL_FRAME",
+                            action: "GATHER_CONTENT",
                             path: path + name + "/",
                             name: name,
                             saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
@@ -452,7 +449,7 @@ if(!window.scrapbee_injected){
                 reject(Error("a task already exists on this page"));
             if(lock()){   
                 return new Promise((resolve, reject) => {
-                    var url =  browser.extension.getURL("advcap.html");
+                    var url =  browser.extension.getURL("/html/advcap.html");
                     var w = new DialogIframe("{CAPTURE}".translate(), url, function(){
                         browser.runtime.sendMessage({type:'TAB_INNER_CALL',
                                                      dest: "CAPTURER_DLG",
@@ -547,7 +544,7 @@ if(!window.scrapbee_injected){
         head.appendChild(link);
     }
     var extension_id = browser.i18n.getMessage("@@extension_id");
-    loadCss("content_script", `moz-extension://${extension_id}/content_script.css`);
-    loadCss("content_script", `moz-extension://${extension_id}/dialog.css`);
+    loadCss("content_script", `moz-extension://${extension_id}/css/content_script.css`);
+    loadCss("content_script", `moz-extension://${extension_id}/css/dialog.css`);
 }
 console.log("[content_script.js] loaded");

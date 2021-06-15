@@ -30,7 +30,7 @@
     height:12px;
 }
 .item input[type='checkbox']{
-    mask-image:url(icons/checkbox.svg);
+    mask-image:url(/icons/checkbox.svg);
     -moz-appearance:none;
     border:1px sloid;
     margin:0;
@@ -43,9 +43,16 @@
     display:none;
 }
 .item input[type='checkbox']:checked{
-    mask-image:url(icons/checkbox-on.svg);
+    mask-image:url(/icons/checkbox-on.svg);
 }
 .item.page{
+    color:#000;
+    display:block;
+    background-repeat:no-repeat;
+    background-position:0px 0px;
+    margin:0 0 5px 0;
+}
+.item.note{
     color:#000;
     display:block;
     background-repeat:no-repeat;
@@ -68,17 +75,21 @@
     mask-size:10px 10px;
     width:10px;
     height:10px;
-    mask-image:url(icons/online.svg);
+    mask-image:url(/icons/online.svg);
     margin-top:-2px;
 }
 .item.bookmark.focus label,
+.item.note.focus label,
 .item.page.focus label,
 .item.folder.focus label{
     background-color:#368;
     color:#fff;
 }
 .item.page i, .item.bookmark i{
-    background:url(icons/item.gif);
+    background:url(/icons/item.gif);
+}
+.item.note i{
+    background:url(/icons/note.gif);
 }
 .item.folder{
     color:#000;
@@ -86,10 +97,10 @@
     margin:0 0 5px 0;
 }
 .item.folder i{
-    background:url(icons/folder.gif);
+    background:url(/icons/folder.gif);
 }
 .item.folder.expended i{
-    background:url(icons/openfolder.gif);
+    background:url(/icons/openfolder.gif);
 }
 .item.folder::before{
     content: "\200B";

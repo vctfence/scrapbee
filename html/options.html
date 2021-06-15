@@ -2,15 +2,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>ScrapBee -> {Setting}</title>
-    <link rel="icon" href="icons/bee.svg" type="image/png" />
-    <link rel="stylesheet" type="text/css" href="options.css" media="all"/>
-    <link rel="stylesheet" type="text/css" href="tree.css" media="screen"/>
-    <link rel="stylesheet" type="text/css" href="dialog.css" media="screen"/>
-    <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
-    <script type="text/javascript" src="libs/jscolor.js"></script>
-    <script type="text/javascript" src="proto.js"></script>
-    <script type="text/javascript" src="dialog.js"></script>
-    <script type="module" src="options.js"></script>
+    <link rel="icon" href="/icons/bee.svg" type="image/x-icon" rel="shortcut icon"/>
+    <link rel="stylesheet" type="text/css" href="/css/options.css" media="all"/>
+    <link rel="stylesheet" type="text/css" href="/css/tree.css" media="screen"/>
+    <link rel="stylesheet" type="text/css" href="/css/dialog.css" media="screen"/>
+    <script type="text/javascript" src="/libs/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="/libs/jscolor.js"></script>
+    <script type="text/javascript" src="/js/proto.js"></script>
+    <script type="text/javascript" src="/js/dialog.js"></script>
+    <script type="module" src="/js/options.js"></script>
 
   </head>
   <body>
@@ -204,15 +204,15 @@
                       <div class="tips hide">{OPEN_IN_CURRENT_TAB_TIP}</div>
                     </td>
                   </tr>
-                  <tr>
-                    <td width="100">{LOCK_EDITBAR}</td><td style="position:relative">
-                      <input type="checkbox" name="lock_editbar" value="" style="vertical-align:top"/>
-                    </td>
-                  </tr>
                   <tr><td colspan="2" style="padding:5px 0;"><hr/></td></tr>
                   <tr>
                     <td width="100">{AUTO_CLOSE_SAVING_DIALOG}</td><td style="position:relative">
                       <input type="checkbox" name="auto_close_saving_dialog" value="" style="vertical-align:top"/>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td width="100">{SHOW_NOTIFICATION}</td><td style="position:relative">
+                      <input type="checkbox" name="show_notification" value="" style="vertical-align:top"/>
                     </td>
                   </tr>
                   <tr>
@@ -256,7 +256,7 @@
       </div>
       <div id="div-donate" class="div-area" style="display:none;">
         <div style="font-size:15px;text-align:center;vertical-align:middle;">
-          <br /><br /><img src="icons/bee-logo.svg" class="" alt="" width="200"/>
+          <br /><br /><img src="/icons/bee-logo.svg" class="" alt="" width="200"/>
           <br /><br />
           {DONATE_WORDS}
           <br />
@@ -297,8 +297,8 @@
                 <div class="folder-content toplevel" id="tree0"></div> 
                 <div class="path-box"><bdi></bdi></div>
                 <div class="toolbar">
-                  <img src="icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
-                  <img src="icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
+                  <img src="/icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
+                  <img src="/icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
                 </div>
               </div>
             </div>
@@ -310,8 +310,8 @@
                 <div id="tree1" class="folder-content toplevel"></div>
                 <div class="path-box"><bdi></bdi></div>
                 <div class="toolbar">
-                  <img src="icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
-                  <img src="icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
+                  <img src="/icons/dustbin.svg" class="delete-button" width="16" title="{Delete}"/>
+                  <img src="/icons/uncheckall.svg" class="uncheckall-button" width="16" title="{UNCHECK_ALL}"/>
                 </div>
               </div>
             </div>
@@ -365,7 +365,7 @@
       <!-- waiting dialog -->
       <div class="dlg-cover dlg-wait" style="display:none;">
         <div class="dlg" style="width:200px;height:50px;display:flex">
-          <img src="icons/loading.gif" class="" alt="" style="margin:auto;width:30px" />
+          <img src="/icons/loading.gif" class="" alt="" style="margin:auto;width:30px" />
         </div>
       </div>
   </body>

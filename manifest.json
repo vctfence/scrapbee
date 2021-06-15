@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "ScrapBee",
-    "version": "2.2.12",
+    "version": "2.3.0",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -33,11 +33,11 @@
     },
     "sidebar_action": {
         "default_title": "ScrapBee",
-        "default_panel": "main.html",
+        "default_panel": "html/main.html",
         "default_icon": "icons/bee.png"
     },
     "background": {
-        "page": "background.html"
+        "page": "html/background.html"
     },
     "browser_action": {
 	"default_icon": {
@@ -47,26 +47,9 @@
         "default_title": "ScrapBee",
         "default_popup": "popup/browser_action.html"
     },
-    "content_scripts": [
-        {
-            "matches": [
-                "http://localhost/*",
-                "https://localhost/*"
-            ],
-            "css": [
-                "edit.css"
-            ],
-            "js": [
-                "libs/jquery-3.3.1.js",
-                "proto.js",
-                "marker.js",
-                "edit.js"
-            ]
-        }
-    ],
     "options_ui": {
         "open_in_tab": true,
-        "page": "options.html"
+        "page": "html/options.html"
     },
     "commands": {
         "_execute_sidebar_action": {

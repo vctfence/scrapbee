@@ -96,8 +96,8 @@ function showConfiguration(){
             // behavior
             settings.set('sidebar_show_root', $("input[name=sidebar_show_root]").is(":checked")?"on":"off", true);
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
-            settings.set('lock_editbar', $("input[name=lock_editbar]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
+            settings.set('show_notification', $("input[name=show_notification]").is(":checked")?"on":"off", true);
             
             settings.set('saving_save_frames', $("input[name=saving_save_frames]").is(":checked")?"on":"off", true);
             settings.set('saving_new_pos', $("input[name=saving_new_pos]:checked").val(), true);
@@ -141,8 +141,9 @@ function showConfiguration(){
     
     $("input[name=sidebar_show_root]").prop("checked", settings.sidebar_show_root=="on");
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
-    $("input[name=lock_editbar]").prop("checked", settings.lock_editbar=="on");
     $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
+    $("input[name=show_notification]").prop("checked", settings.show_notification=="on");
+
     $("input[name=saving_save_frames]").prop("checked", settings.saving_save_frames=="on");
     $(`input[name=saving_new_pos][value='${settings.saving_new_pos}']`).attr("checked", true);
     
@@ -158,14 +159,14 @@ window.onload=async function(){
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
 
-    getAsync("_locales/" + lang + "/announcement.html").then((content) => {
+    getAsync("/_locales/" + lang + "/announcement.html").then((content) => {
         $("#div-announcement").html(content.translate());
         // $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<h2>V$1</h2>"))
     }).catch(e => {
        alert(e.message)
     });
 
-    getAsync("_locales/" + lang + "/help.html").then((content) => {
+    getAsync("/_locales/" + lang + "/help.html").then((content) => {
         $("#div-help>div").html(content.translate());
         $(".download_exe").each(function(i, el){
             this.onclick=function(){
@@ -466,16 +467,4 @@ pause`;
             }
         });
     });
-};
-
-// var hh = new History()
-// hh.load().then((self)=>{
-//     hh.rmItem("opened");
-//     hh.setItem("sidebar", "");
-//     hh.setItem("sidebar.focused", {"aaaa":'111'});
-//     hh.setItem("sidebar.folders.opened", {"aaaa":'111'});
-// });
-// hh.load().then(()=>{
-//     var ss = hh.getItem("sidebar.folders.opened");
-//     // console.log(ss)
-// });
+}; // window.onload
