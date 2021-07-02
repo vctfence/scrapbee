@@ -239,7 +239,7 @@
         "message": "其它方式"
     },
     "MORE_DONATE_WAY":{
-        "message": "您也可以通过以下方式捐助: <br><br> <img src='image/donate/alipay.jpg' class='' alt='' width='300'/><br><br><img src='image/donate/wxpay.jpg' class='' alt='' width='300' />"
+        "message": "您也可以通过以下方式捐助: <br><br> <img src='/image/donate/alipay.jpg' class='' alt='' width='300'/><br><br><img src='/image/donate/wxpay.jpg' class='' alt='' width='300' />"
     },
     "RESULTS_FOUND": {
         "message": "个结果"
