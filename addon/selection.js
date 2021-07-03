@@ -1,6 +1,6 @@
 
 function captureSelection(options) {
-    const EXTRACTION_ID = "scrapyard-selection-extraction-id";
+    const EXTRACTION_ID_ATTR = "scrapyard-selection-extraction-id";
 
     let sel = window.getSelection();
     let root = null;
@@ -14,9 +14,9 @@ function captureSelection(options) {
 
         // mark all encountered parents including <html>
         while (parent && parent.localName !== "html") {
-            let parentId = parent.getAttribute(EXTRACTION_ID);
+            let parentId = parent.getAttribute(EXTRACTION_ID_ATTR);
             if (!parentId)
-                parent.setAttribute(EXTRACTION_ID, id++);
+                parent.setAttribute(EXTRACTION_ID_ATTR, id++);
 
             parents.push(parent.cloneNode(false));
             parent = parent.parentElement;
@@ -30,11 +30,11 @@ function captureSelection(options) {
 
             // traverse parents, drop ones that already attached to root
             while (parents.length
-            && root.querySelector(`*[${EXTRACTION_ID}='${parents[0].getAttribute(EXTRACTION_ID)}']`)) {
+                    && root.querySelector(`*[${EXTRACTION_ID_ATTR}='${parents[0].getAttribute(EXTRACTION_ID_ATTR)}']`)) {
                 next = parents.shift();
             }
 
-            let existing = root.querySelector(`*[${EXTRACTION_ID}='${next.getAttribute(EXTRACTION_ID)}']`);
+            let existing = root.querySelector(`*[${EXTRACTION_ID_ATTR}='${next.getAttribute(EXTRACTION_ID_ATTR)}']`);
 
             if (!existing)
                 root.appendChild(next)
@@ -86,12 +86,14 @@ function captureSelection(options) {
         }
     }
 
-    document.querySelectorAll(`*[${EXTRACTION_ID}]`)
-        .forEach(e => e.removeAttribute(EXTRACTION_ID));
+    document.querySelectorAll(`*[${EXTRACTION_ID_ATTR}]`)
+        .forEach(e => e.removeAttribute(EXTRACTION_ID_ATTR));
 
     let html;
 
     if (root) {
+        root.querySelectorAll(`*[${EXTRACTION_ID_ATTR}]`).forEach(e => e.removeAttribute(EXTRACTION_ID_ATTR));
+
         html = root.innerHTML;
 
         if (options._style) {
