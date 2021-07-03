@@ -1,5 +1,6 @@
 import {
     isContainer,
+    sanitizeNode,
     CLOUD_SHELF_ID,
     DEFAULT_POSITION,
     DEFAULT_SHELF_ID,
@@ -7,7 +8,6 @@ import {
     DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
     FIREFOX_SHELF_ID,
-    NODE_PROPERTIES,
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF,
     TODO_SHELF_NAME,
@@ -82,27 +82,17 @@ dexie.on('populate', () => {
 
 class IDBStorage {
     constructor() {
+        this.STORAGE_TYPE_ID = "IDB";
         this._db = dexie;
     }
 
-    _sanitizeNode(node) {
-        node = Object.assign({}, node);
-
-        for (let key of Object.keys(node)) {
-            if (!NODE_PROPERTIES.some(k => k === key))
-                delete node[key];
-        }
-
-        return node;
-    }
-
     async _IdFromUUID(uuid) {
-        let node = await dexie.nodes.where("uuid").equals(uuid).first();
+        let node = await this._db.nodes.where("uuid").equals(uuid).first();
         return node?.id;
     }
 
     transaction(mode, table, operation) {
-        return dexie.transaction(mode, dexie[table], operation);
+        return this._db.transaction(mode, this._db[table], operation);
     }
 
     async addNode(datum, resetOrder = true, resetDates = true, newUUID = true) {
@@ -117,7 +107,7 @@ class IDBStorage {
             datum.date_modified = datum.date_added;
         }
 
-        datum.id = await dexie.nodes.add(this._sanitizeNode(datum));
+        datum.id = await this._db.nodes.add(sanitizeNode(datum));
         return datum;
     }
 
@@ -125,42 +115,42 @@ class IDBStorage {
         if (!uuid)
             return false;
 
-        return dexie.nodes.where("uuid").equals(uuid).count();
+        return this._db.nodes.where("uuid").equals(uuid).count();
     }
 
     async getNode(id, isUUID = false) {
         if (isUUID)
-            return dexie.nodes.where("uuid").equals(id).first();
+            return this._db.nodes.where("uuid").equals(id).first();
         else
-            return dexie.nodes.where("id").equals(id).first();
+            return this._db.nodes.where("id").equals(id).first();
     }
 
     getNodes(ids) {
         if (!ids)
-            return dexie.nodes.toArray();
+            return this._db.nodes.toArray();
 
-        return dexie.nodes.where("id").anyOf(ids).toArray();
+        return this._db.nodes.where("id").anyOf(ids).toArray();
     }
 
     getNodeIds() {
-        return dexie.nodes.orderBy("id").keys();
+        return this._db.nodes.orderBy("id").keys();
     }
 
     getExternalNode(externalId, kind) {
-        return dexie.nodes.where("external_id").equals(externalId).and(n => n.external === kind).first();
+        return this._db.nodes.where("external_id").equals(externalId).and(n => n.external === kind).first();
     }
 
     getExternalNodes(kind) {
-        return dexie.nodes.where("external").equals(kind).toArray();
+        return this._db.nodes.where("external").equals(kind).toArray();
     }
 
     async isExternalNodeExists(externalId, kind) {
-        return !!(await dexie.nodes.where("external_id").equals(externalId).and(n => n.external === kind).count());
+        return !!(await this._db.nodes.where("external_id").equals(externalId).and(n => n.external === kind).count());
     }
 
     async deleteExternalNodes(kind) {
         const ids = [];
-        await dexie.nodes.where("external").equals(kind).each(n => ids.push(n.id));
+        await this._db.nodes.where("external").equals(kind).each(n => ids.push(n.id));
         return this.deleteNodesLowLevel(ids);
     }
 
@@ -168,7 +158,7 @@ class IDBStorage {
         const existing = new Set(externalIds);
 
         const ids = [];
-        await dexie.nodes.where("external").equals(kind)
+        await this._db.nodes.where("external").equals(kind)
             .and(n => n.external_id && !existing.has(n.external_id))
             .each(n => ids.push(n.id));
 
@@ -176,7 +166,7 @@ class IDBStorage {
     }
 
     getChildNodes(id) {
-        return dexie.nodes.where("parent_id").equals(id).toArray();
+        return this._db.nodes.where("parent_id").equals(id).toArray();
     }
 
     async updateNodes(nodes, ids) {
@@ -184,18 +174,18 @@ class IDBStorage {
             const postprocess = node => {
                 nodes(node)
                 node.date_modified = new Date();
-                this._sanitizeNode(node);
+                sanitizeNode(node);
             };
 
             if (ids)
-                dexie.nodes.where("id").anyOf(ids).modify(postprocess)
+                this._db.nodes.where("id").anyOf(ids).modify(postprocess)
             else
-                await dexie.nodes.toCollection().modify(postprocess);
+                await this._db.nodes.toCollection().modify(postprocess);
         }
         else {
             for (let node of nodes) {
                 node.date_modified = new Date();
-                await dexie.nodes.where("id").equals(node.id).modify(this._sanitizeNode(node));
+                await this._db.nodes.where("id").equals(node.id).modify(sanitizeNode(node));
             }
         }
     }
@@ -204,29 +194,29 @@ class IDBStorage {
         if (node?.id) {
             if (resetDate)
                 node.date_modified = new Date();
-            await dexie.nodes.update(node.id, this._sanitizeNode(node));
+            await this._db.nodes.update(node.id, sanitizeNode(node));
         }
         return node;
     }
 
     iterateNodes(iterator, filter) {
         if (filter)
-            return dexie.nodes.filter(filter).each(iterator);
+            return this._db.nodes.filter(filter).each(iterator);
         else
-            return dexie.nodes.each(iterator);
+            return this._db.nodes.each(iterator);
     }
 
     filterNodes(filter) {
-        return dexie.nodes.filter(filter).toArray();
+        return this._db.nodes.filter(filter).toArray();
     }
 
     async _selectDirectChildrenIdsOf(id, children) {
-        await dexie.nodes.where("parent_id").equals(id).each(n => children.push(n.id));
+        await this._db.nodes.where("parent_id").equals(id).each(n => children.push(n.id));
     }
 
     async _selectAllChildrenIdsOf(id, children) {
         let directChildren = [];
-        await dexie.nodes.where("parent_id").equals(id)
+        await this._db.nodes.where("parent_id").equals(id)
             .each(n => directChildren.push([n.id, isContainer(n)]));
 
         if (directChildren.length) {
@@ -253,7 +243,7 @@ class IDBStorage {
     }
 
     async _selectAllChildrenOf(node, children, preorder, level) {
-        let directChildren = await dexie.nodes.where("parent_id").equals(node.id).toArray();
+        let directChildren = await this._db.nodes.where("parent_id").equals(node.id).toArray();
 
         if (directChildren.length) {
             if (preorder)
@@ -302,7 +292,7 @@ class IDBStorage {
     async queryNodes(group, options) {
         let {search, tags, date, date2, period, types, path, limit, depth, order} = options;
         let searchrx = search? new RegExp(search, "i"): null;
-        let query = dexie.nodes;
+        let query = this._db.nodes;
 
         const todoShelf = path?.toUpperCase() === TODO_SHELF_NAME;
         const doneShelf = path?.toUpperCase() === DONE_SHELF_NAME;
@@ -396,11 +386,11 @@ class IDBStorage {
     }
 
     queryTODO() {
-        return dexie.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
+        return this._db.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
     }
 
     queryDONE() {
-        return dexie.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
+        return this._db.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
     }
 
     // returns nodes containing only the all given words
@@ -412,11 +402,11 @@ class IDBStorage {
         const selectIndex = index => {
             switch (index) {
                 case "notes":
-                    return dexie.index_notes;
+                    return this._db.index_notes;
                 case "comments":
-                    return dexie.index_comments;
+                    return this._db.index_comments;
                 default:
-                    return dexie.index;
+                    return this._db.index;
             }
         };
 
@@ -458,28 +448,28 @@ class IDBStorage {
         if (!Array.isArray(ids))
             ids = [ids];
 
-        if (dexie.tables.some(t => t.name === "blobs"))
-            await dexie.blobs.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "blobs"))
+            await this._db.blobs.where("node_id").anyOf(ids).delete();
 
-        if (dexie.tables.some(t => t.name === "index"))
-            await dexie.index.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "index"))
+            await this._db.index.where("node_id").anyOf(ids).delete();
 
-        if (dexie.tables.some(t => t.name === "notes"))
-            await dexie.notes.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "notes"))
+            await this._db.notes.where("node_id").anyOf(ids).delete();
 
-        if (dexie.tables.some(t => t.name === "icons"))
-            await dexie.icons.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "icons"))
+            await this._db.icons.where("node_id").anyOf(ids).delete();
 
-        if (dexie.tables.some(t => t.name === "comments"))
-            await dexie.comments.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "comments"))
+            await this._db.comments.where("node_id").anyOf(ids).delete();
 
-        if (dexie.tables.some(t => t.name === "index_notes"))
-            await dexie.index_notes.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "index_notes"))
+            await this._db.index_notes.where("node_id").anyOf(ids).delete();
 
-        if (dexie.tables.some(t => t.name === "index_comments"))
-            await dexie.index_comments.where("node_id").anyOf(ids).delete();
+        if (this._db.tables.some(t => t.name === "index_comments"))
+            await this._db.index_comments.where("node_id").anyOf(ids).delete();
 
-        return dexie.nodes.bulkDelete(ids);
+        return this._db.nodes.bulkDelete(ids);
     }
 
     async wipeEveritying() {
@@ -487,35 +477,35 @@ class IDBStorage {
             ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
             ...(await this.queryFullSubtree(CLOUD_SHELF_ID, true))];
 
-        if (dexie.tables.some(t => t.name === "blobs"))
-            await dexie.blobs.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "blobs"))
+            await this._db.blobs.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "index"))
-            await dexie.index.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "index"))
+            await this._db.index.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "notes"))
-            await dexie.notes.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "notes"))
+            await this._db.notes.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "icons"))
-            await dexie.icons.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "icons"))
+            await this._db.icons.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "comments"))
-            await dexie.comments.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "comments"))
+            await this._db.comments.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "index_notes"))
-            await dexie.index_notes.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "index_notes"))
+            await this._db.index_notes.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "index_comments"))
-            await dexie.index_comments.where("node_id").noneOf(retain).delete();
+        if (this._db.tables.some(t => t.name === "index_comments"))
+            await this._db.index_comments.where("node_id").noneOf(retain).delete();
 
-        if (dexie.tables.some(t => t.name === "tags"))
-            await dexie.tags.clear();
+        if (this._db.tables.some(t => t.name === "tags"))
+            await this._db.tags.clear();
 
-        return dexie.nodes.where("id").noneOf(retain).delete();
+        return this._db.nodes.where("id").noneOf(retain).delete();
     }
 
     async queryShelf(name) {
-        let where = dexie.nodes.where("type").equals(NODE_TYPE_SHELF).and(n => !n.parent_id);
+        let where = this._db.nodes.where("type").equals(NODE_TYPE_SHELF).and(n => !n.parent_id);
 
         if (name) {
             name = name.toLocaleUpperCase();
@@ -526,7 +516,7 @@ class IDBStorage {
     }
 
     async queryUnlisted(name) {
-        let where = dexie.nodes.where("type").equals(NODE_TYPE_UNLISTED);
+        let where = this._db.nodes.where("type").equals(NODE_TYPE_UNLISTED);
 
         if (name) {
             name = name.toLocaleUpperCase();
@@ -538,13 +528,13 @@ class IDBStorage {
 
     queryGroup(parentId, name) {
         name = name.toLocaleUpperCase();
-        return dexie.nodes.where("parent_id").equals(parentId)
+        return this._db.nodes.where("parent_id").equals(parentId)
            .and(n => name === n.name.toLocaleUpperCase())
            .first();
     }
 
     async queryGroups(sort = false) {
-        const nodes = await dexie.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
+        const nodes = await this._db.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
 
         if (sort)
             return nodes.sort((a, b) => a.pos - b.pos);
@@ -553,35 +543,6 @@ class IDBStorage {
     }
 
     // at first all objects were stored as plain strings
-    // legacy implementation for the reference
-    // async storeBlobLowLevel(node_id, data, content_type, byte_length, index) {
-    //     let node = await this.getNode(node_id);
-    //
-    //     if (node) {
-    //         if (typeof data !== "string") {
-    //             let binaryString = "";
-    //             let byteArray = new Uint8Array(data);
-    //
-    //             for (let i = 0; i < byteArray.byteLength; i++)
-    //                 binaryString += String.fromCharCode(byteArray[i]);
-    //
-    //             node.size = byte_length = byteArray.byteLength;
-    //             data = binaryString;
-    //         }
-    //         else
-    //             node.size = stringByteLengthUTF8(data);
-    //
-    //         await this.updateNode(node);
-    //
-    //         await dexie.blobs.add({
-    //             node_id: node.id,
-    //             data: data,
-    //             byte_length: byte_length,
-    //             type: content_type
-    //         });
-    //     }
-    // }
-
     // modern implementation stores objects in blobs
     async storeBlobLowLevel(nodeId, data, contentType, byteLength) {
         if (typeof data !== "string" && data.byteLength)
@@ -603,7 +564,7 @@ class IDBStorage {
             type: contentType || "text/html"
         };
 
-        await dexie.blobs.add(options);
+        await this._db.blobs.add(options);
 
         const node = {id: nodeId, size: object.size, content_type: contentType};
         await this.updateNode(node);
@@ -613,7 +574,7 @@ class IDBStorage {
     async updateBlobLowLevel(nodeId, data) {
         const object = new Blob([data], {type: "text/html"});
 
-        await dexie.blobs.where("node_id").equals(nodeId).modify({
+        await this._db.blobs.where("node_id").equals(nodeId).modify({
             object,
             data: undefined // undefined removes fields from IDB
         });
@@ -623,30 +584,30 @@ class IDBStorage {
     }
 
     async deleteBlob(nodeId) {
-        if (dexie.tables.some(t => t.name === "blobs"))
-            await dexie.blobs.where("node_id").equals(nodeId).delete();
+        if (this._db.tables.some(t => t.name === "blobs"))
+            await this._db.blobs.where("node_id").equals(nodeId).delete();
 
-        if (dexie.tables.some(t => t.name === "index"))
-            await dexie.index.where("node_id").equals(nodeId).delete();
+        if (this._db.tables.some(t => t.name === "index"))
+            await this._db.index.where("node_id").equals(nodeId).delete();
     }
 
     async fetchBlob(nodeId, isUUID = false) {
         nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
-        return dexie.blobs.where("node_id").equals(nodeId).first();
+        return this._db.blobs.where("node_id").equals(nodeId).first();
     }
 
     async storeIndex(nodeId, words) {
-        return dexie.index.add({
+        return this._db.index.add({
             node_id: nodeId,
             words: words
         });
     }
 
     async updateIndex(nodeId, words) {
-        const exists = await dexie.index.where("node_id").equals(nodeId).count();
+        const exists = await this._db.index.where("node_id").equals(nodeId).count();
 
         if (exists)
-            return dexie.index.where("node_id").equals(nodeId).modify({
+            return this._db.index.where("node_id").equals(nodeId).modify({
                 words: words
             });
         else
@@ -655,52 +616,52 @@ class IDBStorage {
 
     async fetchIndex(nodeId, isUUID = false) {
         nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
-        return dexie.index.where("node_id").equals(nodeId).first();
+        return this._db.index.where("node_id").equals(nodeId).first();
     }
 
     async storeNotesLowLevel(options) {
-        const exists = await dexie.notes.where("node_id").equals(options.node_id).count();
+        const exists = await this._db.notes.where("node_id").equals(options.node_id).count();
 
         if (exists)
-            await dexie.notes.where("node_id").equals(options.node_id).modify(options);
+            await this._db.notes.where("node_id").equals(options.node_id).modify(options);
         else
-            await dexie.notes.add(options);
+            await this._db.notes.add(options);
 
         await this.updateNode({id: options.node_id, has_notes: !!options.content});
     }
 
     async fetchNotes(nodeId, isUUID = false) {
         nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
-        return dexie.notes.where("node_id").equals(nodeId).first();
+        return this._db.notes.where("node_id").equals(nodeId).first();
     }
 
     async updateNotesIndex(nodeId, words) {
-        const exists = await dexie.index_notes.where("node_id").equals(nodeId).count();
+        const exists = await this._db.index_notes.where("node_id").equals(nodeId).count();
 
         if (exists)
-            return dexie.index_notes.where("node_id").equals(nodeId).modify({
+            return this._db.index_notes.where("node_id").equals(nodeId).modify({
                 words: words
             });
         else
-            return dexie.index_notes.add({
+            return this._db.index_notes.add({
                 node_id: nodeId,
                 words: words
             });
     }
 
     async storeCommentsLowLevel(nodeId, comments) {
-        const exists = await dexie.comments.where("node_id").equals(nodeId).count();
+        const exists = await this._db.comments.where("node_id").equals(nodeId).count();
 
         if (!comments)
             comments = undefined;
 
         if (exists) {
-            await dexie.comments.where("node_id").equals(nodeId).modify({
+            await this._db.comments.where("node_id").equals(nodeId).modify({
                 comments: comments
             });
         }
         else {
-            await dexie.comments.add({
+            await this._db.comments.add({
                 node_id: nodeId,
                 comments: comments
             });
@@ -713,20 +674,20 @@ class IDBStorage {
     async fetchComments(nodeId, isUUID = false) {
         nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
 
-        let record = await dexie.comments.where("node_id").equals(nodeId).first();
+        let record = await this._db.comments.where("node_id").equals(nodeId).first();
 
         return record?.comments;
     }
 
     async updateCommentIndex(nodeId, words) {
-        let exists = await dexie.index_comments.where("node_id").equals(nodeId).count();
+        let exists = await this._db.index_comments.where("node_id").equals(nodeId).count();
 
         if (exists)
-            return dexie.index_comments.where("node_id").equals(nodeId).modify({
+            return this._db.index_comments.where("node_id").equals(nodeId).modify({
                 words: words
             });
         else
-            return dexie.index_comments.add({
+            return this._db.index_comments.add({
                 node_id: nodeId,
                 words: words
             });
@@ -735,27 +696,27 @@ class IDBStorage {
     async addTags(tags) {
         if (tags)
             for (let tag of tags) {
-                let exists = await dexie.tags.where("name").equals(tag).count();
+                let exists = await this._db.tags.where("name").equals(tag).count();
 
                 if (!exists)
-                    return dexie.tags.add({name: tag});
+                    return this._db.tags.add({name: tag});
             }
     }
 
     async queryTags() {
-        return dexie.tags.toArray();
+        return this._db.tags.toArray();
     }
 
     async storeIconLowLevel(nodeId, dataUrl) {
-        const exists = nodeId? await dexie.icons.where("node_id").equals(nodeId).count(): false;
+        const exists = nodeId? await this._db.icons.where("node_id").equals(nodeId).count(): false;
 
         if (exists) {
-            await dexie.icons.where("node_id").equals(nodeId).modify({
+            await this._db.icons.where("node_id").equals(nodeId).modify({
                 data_url: dataUrl
             });
         }
         else {
-            return await dexie.icons.add({
+            return await this._db.icons.add({
                 node_id: nodeId,
                 data_url: dataUrl
             });
@@ -763,11 +724,11 @@ class IDBStorage {
     }
 
     async updateIcon(iconId, options) {
-        await dexie.icons.update(iconId, options);
+        await this._db.icons.update(iconId, options);
     }
 
     async fetchIcon(nodeId) {
-        const icon = await dexie.icons.where("node_id").equals(nodeId).first();
+        const icon = await this._db.icons.where("node_id").equals(nodeId).first();
 
         if (icon)
             return icon.data_url;
@@ -776,23 +737,23 @@ class IDBStorage {
     }
 
     cleanExportStorage() {
-        return dexie.export_storage.clear();
+        return this._db.export_storage.clear();
     }
 
     putExportBlob(processId, blob) {
-        return dexie.export_storage.add({
+        return this._db.export_storage.add({
             process_id: processId,
             blob
         });
     }
 
     async getExportBlobs(processId) {
-        const blobs = await dexie.export_storage.where("process_id").equals(processId).sortBy("id")
+        const blobs = await this._db.export_storage.where("process_id").equals(processId).sortBy("id")
         return blobs.map(b => b.blob);
     }
 
     cleanExportBlobs(processId) {
-        return dexie.export_storage.where("process_id").equals(processId).delete();
+        return this._db.export_storage.where("process_id").equals(processId).delete();
     }
 
 }

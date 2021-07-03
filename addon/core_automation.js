@@ -400,7 +400,7 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
     }
     else {
         const path = backend.expandPath(message.path);
-        const node = await backend._queryGroup(path);
+        const node = await backend.queryGroup(path);
         container = !!node;
         if (container)
             entries = await backend.getChildNodes(node.id);

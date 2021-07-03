@@ -1,6 +1,7 @@
 import {settings} from "./settings.js"
 import {delegateProxy} from "./proxy.js";
 import IDBStorage from "./storage_idb.js";
+import LocalStorage from "./storage_local.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {browserBackend} from "./backend_browser.js";
@@ -77,10 +78,10 @@ class ExternalEventProvider {
     }
 }
 
-export class Backend extends IDBStorage {
+export class Backend extends LocalStorage {
 
     constructor() {
-        super();
+        super(IDBStorage.STORAGE_TYPE_ID);
 
         this.externalEvents = new ExternalEventProvider();
 
@@ -227,7 +228,7 @@ export class Backend extends IDBStorage {
                             //}
               ) {
         let group = options.path && options.path !== TODO_SHELF_NAME && options.path !== DONE_SHELF_NAME
-            ? await this._queryGroup(options.path)
+            ? await this.queryGroup(options.path)
             : null;
 
         if (!options.depth)
@@ -422,7 +423,7 @@ export class Backend extends IDBStorage {
     }
 
     // returns the last group in path if it exists
-    async _queryGroup(path) {
+    async queryGroup(path) {
         let pathList = this._splitPath(path);
         let groups = await this._queryGroups(pathList);
 
@@ -472,7 +473,7 @@ export class Backend extends IDBStorage {
         return parent;
     }
 
-    async _ensureUnique(parentId, name, oldName) {
+    async ensureUnique(parentId, name, oldName) {
         if (!name)
             return "";
 
@@ -513,7 +514,7 @@ export class Backend extends IDBStorage {
             parent = await this.getNode(parent);
 
         let node = await this.addNode({
-            name: await this._ensureUnique(parent?.id, name),
+            name: await this.ensureUnique(parent?.id, name),
             type: nodeType,
             parent_id: parent?.id
         });
@@ -538,7 +539,7 @@ export class Backend extends IDBStorage {
 
         if (group.name !== newName) {
             if (group.name.toLocaleUpperCase() !== newName.toLocaleUpperCase())
-                group.name = await this._ensureUnique(group.parent_id, newName, group.name);
+                group.name = await this.ensureUnique(group.parent_id, newName, group.name);
             else
                 group.name = newName;
 
@@ -586,7 +587,7 @@ export class Backend extends IDBStorage {
 
         for (let n of nodes) {
             n.parent_id = destId;
-            n.name = await this._ensureUnique(destId, n.name);
+            n.name = await this.ensureUnique(destId, n.name);
 
             if (moveLast)
                 n.pos = DEFAULT_POSITION;
@@ -609,7 +610,7 @@ export class Backend extends IDBStorage {
 
             if (ids.some(id => id === old_id)) {
                 n.parent_id = destId;
-                n.name = await this._ensureUnique(destId, n.name);
+                n.name = await this.ensureUnique(destId, n.name);
             }
             else {
                 let new_parent = new_nodes.find(nn => nn.old_id === n.parent_id);
@@ -817,7 +818,7 @@ export class Backend extends IDBStorage {
         if (!group)
             group = await this.getNode(parentId);
 
-        data.name = await this._ensureUnique(data.parent_id, data.name);
+        data.name = await this.ensureUnique(data.parent_id, data.name);
 
         data.type = nodeType;
         data.tag_list = this._splitTags(data.tags);
@@ -866,7 +867,7 @@ export class Backend extends IDBStorage {
         let update = {};
         Object.assign(update, data);
 
-        //update.name = await this._ensureUnique(update.parent_id, update.name)
+        //update.name = await this.ensureUnique(update.parent_id, update.name)
 
         update.tag_list = this._splitTags(update.tags);
         this.addTags(update.tag_list);
@@ -881,15 +882,6 @@ export class Backend extends IDBStorage {
 
         if (!bookmark.name)
             bookmark.name = "";
-    }
-
-    async storeIndexedBlob(nodeId, data, contentType, byteLength, index) {
-        await this.storeBlobLowLevel(nodeId, data, contentType, byteLength);
-
-        if (index?.words)
-            await this.storeIndex(nodeId, index.words);
-        else if (typeof data === "string" && !byteLength)
-            await this.storeIndex(nodeId, indexWords(data));
     }
 
     async storeBlob(nodeId, data, contentType) {
@@ -923,47 +915,9 @@ export class Backend extends IDBStorage {
         return node;
     }
 
-    async storeIndexedNotes(options) {
-        await this.storeNotesLowLevel(options);
-
-        if (options.content) {
-            let words;
-
-            if (options.format === "delta" && options.html)
-                words = indexWords(options.html);
-            else {
-                if (options.format === "text")
-                    words = indexWords(options.content, false);
-                else {
-                    let html = notes2html(options);
-                    if (html)
-                        words = indexWords(html);
-                }
-            }
-
-            if (words)
-                await this.updateNotesIndex(options.node_id, words);
-            else
-                await this.updateNotesIndex(options.node_id, []);
-        }
-        else
-            await this.updateNotesIndex(options.node_id, []);
-    }
-
     async storeNotes(options) {
         await this.storeIndexedNotes(options);
         await this.externalEvents.storeBookmarkNotes(options);
-    }
-
-    async storeIndexedComments(nodeId, comments) {
-        await this.storeCommentsLowLevel(nodeId, comments);
-
-        if (comments) {
-            let words = indexWords(comments, false);
-            await this.updateCommentIndex(nodeId, words);
-        }
-        else
-            await this.updateCommentIndex(nodeId, []);
     }
 
     async storeComments(nodeId, comments) {

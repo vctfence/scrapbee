@@ -121,3 +121,15 @@ export function isSpecialShelf(name) {
         || name === TODO_SHELF_NAME.toLocaleUpperCase()
         || name === DONE_SHELF_NAME.toLocaleUpperCase();
 }
+
+export function sanitizeNode(node) {
+    node = Object.assign({}, node);
+
+    for (let key of Object.keys(node)) {
+        if (!NODE_PROPERTIES.some(k => k === key))
+            delete node[key];
+    }
+
+    return node;
+}
+

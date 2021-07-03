@@ -563,7 +563,7 @@ receive.beforeBookmarkAdded = async message => {
     if (node.type === NODE_TYPE_ARCHIVE)
         startProcessingIndication(true);
 
-    const name = await backend._ensureUnique(node.parent_id, node.name);
+    const name = await backend.ensureUnique(node.parent_id, node.name);
     node.name = name;
     tree.createTentativeNode(node);
 
