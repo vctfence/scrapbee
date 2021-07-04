@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend} from "../backend.js"
+import {bookmarkManager} from "../backend.js"
 import * as org from "../lib/org/org.js"
 import {NODE_TYPE_NOTES} from "../storage.js";
 import {markdown2html, org2html, text2html} from "../notes_render.js";
@@ -497,7 +497,7 @@ function setEditorContent(content) {
 }
 
 window.onload = async function() {
-    await backend;
+    await bookmarkManager;
 
     const isInline = location.search.startsWith("?i");
 
@@ -514,7 +514,7 @@ window.onload = async function() {
                                  <a id="edit-button" href="#">Edit</a>`);
 
 
-    backend.getNode(NODE_ID).then(n => {
+    bookmarkManager.getNode(NODE_ID).then(n => {
         let node = n;
         let source_url = $("#source-url");
         source_url.text(node.name);
@@ -595,7 +595,7 @@ window.onload = async function() {
     });
 
     if (NODE_ID)
-        backend.fetchNotes(NODE_ID).then(notes => {
+        bookmarkManager.fetchNotes(NODE_ID).then(notes => {
             if (notes) {
                 format = notes.format || "org";
                 $("#notes-format").val(format === "html"? "delta": format);

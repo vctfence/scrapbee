@@ -1,5 +1,5 @@
 import {NODE_TYPE_ARCHIVE} from "./storage.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 
 export function parseJSONObject_v1(line) {
     let object;
@@ -72,28 +72,28 @@ export async function importJSONObject_v1(object) {
         delete object.data;
         delete object.byte_length;
 
-        node = await backend.importBookmark(object);
+        node = await bookmarkManager.importBookmark(object);
 
         if (data)
-            await backend.storeIndexedBlob(node.id, data, object.mime_type, byte_length);
+            await bookmarkManager.storeIndexedBlob(node.id, data, object.mime_type, byte_length);
     }
     else {
-        node = await backend.importBookmark(object);
+        node = await bookmarkManager.importBookmark(object);
     }
 
     if (notes) {
-        await backend.storeIndexedNotes({
+        await bookmarkManager.storeIndexedNotes({
             node_id: node.id, content: notes, html: notes_html,
             format: notes_format, align: notes_align, width: notes_width
         });
     }
 
     if (comments) {
-        await backend.storeIndexedComments(node.id, comments);
+        await bookmarkManager.storeIndexedComments(node.id, comments);
     }
 
     if (icon_data)
-        await backend.storeIconLowLevel(node.id, icon_data);
+        await bookmarkManager.storeIconLowLevel(node.id, icon_data);
 
     return node;
 }

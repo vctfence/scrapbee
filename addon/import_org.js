@@ -1,4 +1,4 @@
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_NAME,
@@ -66,31 +66,31 @@ export async function importOrg(shelf, text) {
                 delete last_object.data;
                 delete last_object.byte_length;
 
-                node = await backend.importBookmark(last_object);
+                node = await bookmarkManager.importBookmark(last_object);
 
                 if (data)
-                    await backend.storeIndexedBlob(node.id, data, last_object.mime_type, byte_length);
+                    await bookmarkManager.storeIndexedBlob(node.id, data, last_object.mime_type, byte_length);
             }
             else {
-                node = await backend.importBookmark(last_object);
+                node = await bookmarkManager.importBookmark(last_object);
             }
 
             if (notes) {
-                await backend.storeIndexedNotes({
+                await bookmarkManager.storeIndexedNotes({
                     node_id: node.id, content: notes, html: notes_html,
                     format: notes_format, align: notes_align, width: notes_width
                 });
             }
             else if (note_lines.length) {
-                await backend.storeIndexedNotes({node_id: node.id, content: note_lines.join("\n"), format: "org"});
+                await bookmarkManager.storeIndexedNotes({node_id: node.id, content: note_lines.join("\n"), format: "org"});
             }
 
             if (comments) {
-                await backend.storeIndexedComments(node.id, JSON.parse(comments));
+                await bookmarkManager.storeIndexedComments(node.id, JSON.parse(comments));
             }
 
             if (icon_data) {
-                await backend.storeIconLowLevel(node.id, icon_data);
+                await bookmarkManager.storeIconLowLevel(node.id, icon_data);
             }
 
             last_object = null;
@@ -263,7 +263,7 @@ const ORG_EXPORTED_KEYS = ["uuid", "icon", "stored_icon", "type", "size", "detai
 
 async function objectToProperties(object) {
     let lines = [];
-    let node = await backend.getNode(object.id);
+    let node = await bookmarkManager.getNode(object.id);
 
     if (node.external === FIREFOX_SHELF_NAME || node.external === CLOUD_EXTERNAL_NAME) {
         delete node.external;
@@ -287,7 +287,7 @@ async function objectToProperties(object) {
     }
 
     if (node.type === NODE_TYPE_ARCHIVE) {
-        let blob = await backend.fetchBlob(node.id);
+        let blob = await bookmarkManager.fetchBlob(node.id);
         if (blob) {
             if (blob.type)
                 lines.push(`:mime_type: ${blob.type}`);
@@ -295,7 +295,7 @@ async function objectToProperties(object) {
             if (blob.byte_length)
                 lines.push(`:byte_length: ${blob.byte_length}`);
 
-            let content = await backend.reifyBlob(blob, true);
+            let content = await bookmarkManager.reifyBlob(blob, true);
             if (blob.byte_length)
                 content = btoa(content);
             else
@@ -306,7 +306,7 @@ async function objectToProperties(object) {
     }
 
     if (node.has_notes) {
-        let notes = await backend.fetchNotes(node.id);
+        let notes = await bookmarkManager.fetchNotes(node.id);
         if (notes && notes.content) {
             lines.push(`:notes: ${JSON.stringify(notes.content)}`);
 
@@ -325,11 +325,11 @@ async function objectToProperties(object) {
     }
 
     if (node.has_comments) {
-        let comments = await backend.fetchComments(node.id);
+        let comments = await bookmarkManager.fetchComments(node.id);
         lines.push(`:comments: ${JSON.stringify(comments)}`);
     }
 
-    let icon = await backend.fetchIcon(node.id);
+    let icon = await bookmarkManager.fetchIcon(node.id);
     if (icon) {
         lines.push(`:icon_data: ${icon}`);
     }

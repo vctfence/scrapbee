@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {isSpecialShelf} from "../storage.js";
 import {showNotification} from "../utils_browser.js";
 
@@ -35,7 +35,7 @@ async function onStartRDFImport(e) {
         return;
     }
 
-    let shelf_node = await backend.queryShelf(shelf);
+    let shelf_node = await bookmarkManager.queryShelf(shelf);
     if (isSpecialShelf(shelf) || shelf_node) {
         showNotification({message: "The specified shelf already exists."});
         return;

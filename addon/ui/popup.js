@@ -1,4 +1,4 @@
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {BookmarkTree} from "./tree.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
 import {getFaviconFromTab, testFavicon} from "../favicon.js";
@@ -27,7 +27,7 @@ function saveHistory(nodeId, text, history) {
 }
 
 window.onload = async function () {
-    await backend;
+    await bookmarkManager;
 
     let folderHistory;
     const bookmarkFolderSelect = $("#bookmark-folder");
@@ -35,7 +35,7 @@ window.onload = async function () {
 
     tree = new BookmarkTree("#treeview", true);
 
-    backend.listGroups().then(nodes => {
+    bookmarkManager.listGroups().then(nodes => {
         bookmarkFolderSelect.empty();
 
         folderHistory = localStorage.getItem("popup-folder-history");

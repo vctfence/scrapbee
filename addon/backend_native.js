@@ -1,6 +1,6 @@
 import UUID from "./lib/uuid.js"
 import {settings} from "./settings.js"
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {showNotification} from "./utils_browser.js";
 
 
@@ -98,9 +98,9 @@ class NativeBackend {
         msg = JSON.parse(msg);
         switch (msg.type) {
             case "REQUEST_PUSH_BLOB": {
-                    const node = await backend.getNode(msg.uuid, true);
-                    const blob = await backend.fetchBlob(node.id);
-                    const data = await backend.reifyBlob(blob, true);
+                    const node = await bookmarkManager.getNode(msg.uuid, true);
+                    const blob = await bookmarkManager.fetchBlob(node.id);
+                    const data = await bookmarkManager.reifyBlob(blob, true);
                     const port = await this.getPort();
 
                     port.postMessage({
@@ -113,9 +113,9 @@ class NativeBackend {
                 }
                 break;
             case "REQUEST_RDF_PATH": {
-                    const node = await backend.getNode(msg.uuid, true);
+                    const node = await bookmarkManager.getNode(msg.uuid, true);
                     const port = await this.getPort();
-                    let path = await backend.computePath(node.id);
+                    let path = await bookmarkManager.computePath(node.id);
                     let rdf_directory = path[0].uri;
 
                     port.postMessage({
@@ -126,10 +126,10 @@ class NativeBackend {
                 }
                 break;
             case "REQUEST_RDF_ROOT": {
-                const node = await backend.getNode(msg.uuid, true);
+                const node = await bookmarkManager.getNode(msg.uuid, true);
                 const port = await this.getPort();
 
-                let path = await backend.computePath(node.id);
+                let path = await bookmarkManager.computePath(node.id);
                 let rdf_directory = path[0].uri;
 
                 port.postMessage({

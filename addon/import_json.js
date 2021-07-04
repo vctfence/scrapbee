@@ -12,7 +12,7 @@ import {
     NODE_TYPE_SHELF, TODO_SHELF_UUID,
 } from "./storage.js";
 import {importJSONObject_v1, parseJSONObject_v1} from "./import_json_v1.js"
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import UUID from "./lib/uuid.js";
 import {send} from "./proxy.js";
 import {prepareNewImport} from "./import.js";
@@ -48,28 +48,28 @@ async function importJSONObject(object) {
         let blob = object.blob;
         delete object.blob;
 
-        node = await backend.importBookmark(object);
+        node = await bookmarkManager.importBookmark(object);
 
         if (blob) {
             if (blob.byte_length)
                 blob.object = atob(blob.object);
-            await backend.storeIndexedBlob(node.id, blob.object, blob.type, blob.byte_length);
+            await bookmarkManager.storeIndexedBlob(node.id, blob.object, blob.type, blob.byte_length);
         }
     }
     else {
-        node = await backend.importBookmark(object);
+        node = await bookmarkManager.importBookmark(object);
     }
 
     if (notes) {
         notes.node_id = node.id;
-        await backend.storeIndexedNotes(notes);
+        await bookmarkManager.storeIndexedNotes(notes);
     }
 
     if (comments)
-        await backend.storeIndexedComments(node.id, comments);
+        await bookmarkManager.storeIndexedComments(node.id, comments);
 
     if (icon_data)
-        await backend.storeIconLowLevel(node.id, icon_data);
+        await bookmarkManager.storeIconLowLevel(node.id, icon_data);
 
     return node;
 }
@@ -130,7 +130,7 @@ export async function importJSON(shelf, reader, progress) {
     else
         idMap.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
 
-    let shelfNode = shelf !== EVERYTHING ? await backend.getGroupByPath(shelf) : null;
+    let shelfNode = shelf !== EVERYTHING ? await bookmarkManager.getGroupByPath(shelf) : null;
     if (shelfNode) {
         idMap.set(firstObject.parent_id, shelfNode.id); // root id
         firstObject.parent_id = shelfNode.id;
@@ -237,9 +237,9 @@ async function objectToJSON(object) {
     }
 
     if (node.type === NODE_TYPE_ARCHIVE) {
-        let blob = await backend.fetchBlob(node.id);
+        let blob = await bookmarkManager.fetchBlob(node.id);
         if (blob) {
-            let content = await backend.reifyBlob(blob, true);
+            let content = await bookmarkManager.reifyBlob(blob, true);
 
             delete blob.id;
             delete blob.data;
@@ -254,7 +254,7 @@ async function objectToJSON(object) {
     }
 
     if (node.has_notes) {
-        let notes = await backend.fetchNotes(node.id);
+        let notes = await bookmarkManager.fetchNotes(node.id);
         if (notes) {
             delete notes.id;
             delete notes.node_id;
@@ -263,10 +263,10 @@ async function objectToJSON(object) {
     }
 
     if (node.has_comments)
-        node.comments = await backend.fetchComments(node.id);
+        node.comments = await bookmarkManager.fetchComments(node.id);
 
     if (node.icon && node.stored_icon) {
-        let icon = await backend.fetchIcon(node.id);
+        let icon = await bookmarkManager.fetchIcon(node.id);
         node.icon_data = icon;
     }
 

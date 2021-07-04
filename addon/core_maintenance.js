@@ -1,4 +1,4 @@
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {send, receive} from "./proxy.js";
 import {isEndpoint, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage.js";
 import {computeSHA1} from "./utils.js";
@@ -20,8 +20,8 @@ receive.getAddonIdbPath = async message => {
 
 receive.optimizeDatabase = async message => {
     const DEBUG = false;
-    const nodeIDs = await backend.getNodeIds();
-    //const nodeIDs = await backend.queryFullSubtree(1, true);
+    const nodeIDs = await bookmarkManager.getNodeIds();
+    //const nodeIDs = await bookmarkManager.queryFullSubtree(1, true);
 
     let fixDate = (node, key) => {
         if (!(node[key] instanceof Date)) {
@@ -42,12 +42,12 @@ receive.optimizeDatabase = async message => {
 
     for (let id of nodeIDs) {
         try {
-            const node = await backend.getNode(id);
+            const node = await bookmarkManager.getNode(id);
             let actionTaken = false;
 
             const bookmarkNode = node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK;
             if (bookmarkNode && node.icon && !node.stored_icon) {
-                await backend.storeIcon(node);
+                await bookmarkManager.storeIcon(node);
 
                 if (DEBUG)
                     console.log("storing icon");
@@ -62,7 +62,7 @@ receive.optimizeDatabase = async message => {
                 actionTaken = true;
             }
             else if (bookmarkNode && node.icon && node.stored_icon && !node.icon.startsWith("hash:")) {
-                const icon = await backend.fetchIcon(node.id);
+                const icon = await bookmarkManager.fetchIcon(node.id);
                 if (icon)
                     node.icon = "hash:" + (await computeSHA1(icon));
                 else {
@@ -88,13 +88,13 @@ receive.optimizeDatabase = async message => {
             fixDate(node,"date_added");
             fixDate(node,"date_modified");
 
-            backend.cleanBookmark(node);
+            bookmarkManager.cleanBookmark(node);
 
             if (node.type === NODE_TYPE_ARCHIVE) {
-                const blob = await backend.fetchBlob(node.id);
+                const blob = await bookmarkManager.fetchBlob(node.id);
 
                 if (blob) {
-                    let content = await backend.reifyBlob(blob);
+                    let content = await bookmarkManager.reifyBlob(blob);
 
                     if (!blob.type && typeof content === "string" && !blob.byte_length
                             || blob.type && blob.type.startsWith("text/html")) {
@@ -104,13 +104,13 @@ receive.optimizeDatabase = async message => {
                         content = doc.documentElement.outerHTML;
                     }
 
-                    await backend.deleteBlob(node.id);
-                    await backend.storeIndexedBlob(node.id, content, blob.type, blob.byte_length);
+                    await bookmarkManager.deleteBlob(node.id);
+                    await bookmarkManager.storeIndexedBlob(node.id, content, blob.type, blob.byte_length);
                     actionTaken = true;
                 }
             }
 
-            await backend.updateNode(node);
+            await bookmarkManager.updateNode(node);
 
             if (actionTaken) {
                 if (DEBUG)
@@ -137,7 +137,7 @@ receive.optimizeDatabase = async message => {
 receive.reindexArchiveContent = async message => {
     send.startProcessingIndication({noWait: true});
 
-    const nodes = await backend.filterNodes(n => n.type === NODE_TYPE_ARCHIVE || n.has_notes || n.has_comments);
+    const nodes = await bookmarkManager.filterNodes(n => n.type === NODE_TYPE_ARCHIVE || n.has_notes || n.has_comments);
 
     let currentProgress = 0;
     let ctr = 0;
@@ -147,30 +147,30 @@ receive.reindexArchiveContent = async message => {
 
         try {
             if (node.type === NODE_TYPE_ARCHIVE) {
-                const blob = await backend.fetchBlob(node.id);
+                const blob = await bookmarkManager.fetchBlob(node.id);
 
                 if (blob && !blob.byte_length && blob.data && typeof blob.data === "string")
-                    await backend.updateIndex(node.id, indexWords(blob.data));
+                    await bookmarkManager.updateIndex(node.id, indexWords(blob.data));
                 else if (blob && !blob.byte_length && blob.object) {
-                    let text = await backend.reifyBlob(blob);
+                    let text = await bookmarkManager.reifyBlob(blob);
                     if (text)
-                        await backend.updateIndex(node.id, indexWords(text));
+                        await bookmarkManager.updateIndex(node.id, indexWords(text));
                 }
             }
 
             if (node.has_notes) {
-                const notes = await backend.fetchNotes(node.id);
+                const notes = await bookmarkManager.fetchNotes(node.id);
                 if (notes) {
                     delete notes.id;
-                    await backend.storeIndexedNotes(notes);
+                    await bookmarkManager.storeIndexedNotes(notes);
                 }
             }
 
             if (node.has_comments) {
-                const comments = await backend.fetchComments(node.id);
+                const comments = await bookmarkManager.fetchComments(node.id);
                 if (comments) {
                     const words = comments.indexWords(false);
-                    await backend.updateCommentIndex(node.id, words);
+                    await bookmarkManager.updateCommentIndex(node.id, words);
                 }
             }
 
@@ -212,7 +212,7 @@ receive.computeStatistics = async message => {
 
     send.startProcessingIndication();
 
-    await backend.iterateNodes(node => {
+    await bookmarkManager.iterateNodes(node => {
         if (isEndpoint(node))
             items += 1;
 

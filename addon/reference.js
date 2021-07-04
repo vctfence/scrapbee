@@ -1,8 +1,8 @@
 import {send} from "./proxy.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 
 async function openReference(tab) {
-    await backend;
+    await bookmarkManager;
 
     let url = decodeURIComponent(new URL(tab.url).hash.substr(1));
 
@@ -16,7 +16,7 @@ async function openReference(tab) {
         }
 
         let [prefix, uuid] = id.includes(":")? id.split(":"): [null, id];
-        let node = await backend.getNode(uuid, true);
+        let node = await bookmarkManager.getNode(uuid, true);
 
         if (!prefix)
             send.browseNode({node: node, tab: tab});

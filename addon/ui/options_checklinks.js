@@ -1,6 +1,6 @@
 import {settings} from "../settings.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {send} from "../proxy.js";
 import {EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
 import {getFavicon} from "../favicon.js";
@@ -56,7 +56,7 @@ export class LinkChecker {
 
         if (this.autoStartCheckLinks) {
             $("#update-icons").prop("checked", urlParams.get("repairIcons") === "true");
-            let scopePath = await backend.computePath(parseInt(urlParams.get("scope")));
+            let scopePath = await bookmarkManager.computePath(parseInt(urlParams.get("scope")));
             $("#link-check-scope-container", $("#check-links"))
                 .replaceWith(`<span style="white-space: nowrap">${scopePath.slice(-1)[0].name}&nbsp;&nbsp;</span>`);
             this.autoLinkCheckScope = scopePath.map(g => g.name).join("/");
@@ -82,7 +82,7 @@ export class LinkChecker {
     }
 
     async _makeBreadCrumb(node) {
-        const path = await backend.computePath(node.id);
+        const path = await bookmarkManager.computePath(node.id);
         path.length = path.length - 1;
 
         let breadcrumb = " &#187; ";
@@ -124,11 +124,11 @@ export class LinkChecker {
 
             if (favicon) {
                 node.icon = favicon;
-                await backend.storeIcon(node);
+                await bookmarkManager.storeIcon(node);
             }
             else if (node.icon && !node.stored_icon) {
                 node.icon = undefined;
-                await backend.updateNode(node);
+                await bookmarkManager.updateNode(node);
             }
         }
 
@@ -177,7 +177,7 @@ export class LinkChecker {
             }
         }
 
-        const nodes = await backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
+        const nodes = await bookmarkManager.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
 
         for (let node of nodes) {
             if (this.abortCheckLinks)
@@ -222,7 +222,7 @@ export class LinkChecker {
 
                 if (networkError && updateIcons && node.icon && !node.stored_icon) {
                     node.icon = undefined;
-                    await backend.updateNode(node);
+                    await bookmarkManager.updateNode(node);
                 }
             }
             else if (updateIcons && contentType?.toLowerCase()?.startsWith("text/html")) {
@@ -252,7 +252,7 @@ export class LinkChecker {
 
         send.startProcessingIndication({noWait: true})
 
-        const nodes = await backend.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
+        const nodes = await bookmarkManager.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
         const links = new Map();
 
         for (let node of nodes) {

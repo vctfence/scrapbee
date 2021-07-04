@@ -1,5 +1,5 @@
 import {send} from "../proxy.js"
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {settings} from "../settings.js";
 import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
 import {getActiveTab} from "../utils_browser.js";
@@ -15,7 +15,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.onload = async function() {
-    await backend;
+    await bookmarkManager;
 
     shelfList = new ShelfList("#search-scope", {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
@@ -34,8 +34,8 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
-    const blob = await backend.fetchBlob(node.id);
-    const text = await backend.reifyBlob(blob);
+    const blob = await bookmarkManager.fetchBlob(node.id);
+    const text = await bookmarkManager.reifyBlob(blob);
     const doc = parseHtml(text);
     const mark = new Mark(doc.body);
 
@@ -68,7 +68,7 @@ async function appendSearchResult(query, node, occurrences) {
 
     let icon = node.icon;
     if (node.stored_icon)
-        icon = await backend.fetchIcon(node.id);
+        icon = await bookmarkManager.fetchIcon(node.id);
 
     if (!icon)
         icon = fallbackIcon;
@@ -119,9 +119,9 @@ function markSearch(query, nodes, across, callback) {
 
     let node = nodes.shift();
 
-    backend.fetchBlob(node.id)
+    bookmarkManager.fetchBlob(node.id)
         .then(blob => {
-            backend.reifyBlob(blob)
+            bookmarkManager.reifyBlob(blob)
                 .then(text => {
                     let doc = parseHtml(text);
                     let mark = new Mark(doc);
@@ -163,7 +163,7 @@ async function performSearch() {
 
         send.startProcessingIndication({noWait: true});
 
-        const nodes = await backend.listNodes({
+        const nodes = await bookmarkManager.listNodes({
             search: searchQuery,
             content: true,
             index: "content",

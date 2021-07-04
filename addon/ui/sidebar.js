@@ -1,6 +1,6 @@
 import {send, receive, receiveExternal} from "../proxy.js";
 import {settings} from "../settings.js"
-import {backend} from "../backend.js"
+import {bookmarkManager} from "../backend.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
@@ -42,7 +42,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.onload = async function () {
-    await backend;
+    await bookmarkManager;
 
     shelfList = new ShelfList("#shelfList", {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
@@ -284,22 +284,22 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
         return performSearch();
     else {
         if (shelf_id == TODO_SHELF_ID) {
-            const nodes = await backend.listTODO();
+            const nodes = await bookmarkManager.listTODO();
             tree.list(nodes, TODO_SHELF_NAME, true);
         }
         else if (shelf_id == DONE_SHELF_ID) {
-            const nodes = await backend.listDONE();
+            const nodes = await bookmarkManager.listDONE();
             tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            const nodes = await backend.listShelfContent(EVERYTHING);
+            const nodes = await bookmarkManager.listShelfContent(EVERYTHING);
             tree.update(nodes, true, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
             }
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
-            const nodes = await backend.listShelfContent(path);
+            const nodes = await bookmarkManager.listShelfContent(path);
             tree.update(nodes, false, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
@@ -307,7 +307,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.openRoot();
         }
         else if (shelf_id == FIREFOX_SHELF_ID) {
-            const nodes = await backend.listShelfContent(path);
+            const nodes = await bookmarkManager.listShelfContent(path);
             nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
 
             for (let node of nodes) {
@@ -319,7 +319,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.update(nodes, false, clearSelection);
         }
         else if (path) {
-            const nodes = await backend.listShelfContent(path);
+            const nodes = await bookmarkManager.listShelfContent(path);
             tree.update(nodes, false, clearSelection);
             tree.openRoot();
         }
@@ -375,7 +375,7 @@ async function deleteShelf() {
 }
 
 async function sortShelves() {
-    let nodes = await backend.queryShelf();
+    let nodes = await bookmarkManager.queryShelf();
     let special = nodes.filter(n => isSpecialShelf(n.name)).sort((a, b) => a.id - b.id);
     let regular = nodes.filter(n => !isSpecialShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
     let sorted = [...special, ...regular];
@@ -439,7 +439,7 @@ async function performImport(file, file_name, file_ext) {
         if (file_name.toLocaleLowerCase() === EVERYTHING)
             loadShelves(EVERYTHING_SHELF_ID);
         else {
-            const shelf = await backend.queryShelf(file_name);
+            const shelf = await bookmarkManager.queryShelf(file_name);
             await loadShelves(shelf.id);
         }
     }
@@ -471,7 +471,7 @@ async function selectNode(node) {
     $("#search-input").val("");
     $("#search-input-clear").hide();
 
-    const path = await backend.computePath(node.id)
+    const path = await bookmarkManager.computePath(node.id)
     await loadShelves(path[0].id, false);
     tree.selectNode(node.id);
 }
@@ -488,7 +488,7 @@ function sidebarRefreshExternal() {
 }
 
 async function getRandomBookmark() {
-    const ids = await backend.getNodeIds();
+    const ids = await bookmarkManager.getNodeIds();
 
     if (!ids?.length)
         return null;
@@ -496,7 +496,7 @@ async function getRandomBookmark() {
     let ctr = 20;
     do {
         const id = Math.floor(Math.random() * (ids.length - 1));
-        const node = await backend.getNode(ids[id]);
+        const node = await bookmarkManager.getNode(ids[id]);
 
         if (isEndpoint(node))
             return node;
@@ -528,7 +528,7 @@ async function displayRandomBookmark() {
         }
 
         if (bookmark.stored_icon) {
-            icon = `url("${await backend.fetchIcon(bookmark.id)}")`;
+            icon = `url("${await bookmarkManager.fetchIcon(bookmark.id)}")`;
         }
         else if (bookmark.icon) {
             let image = new Image();
@@ -563,12 +563,12 @@ receive.beforeBookmarkAdded = async message => {
     if (node.type === NODE_TYPE_ARCHIVE)
         startProcessingIndication(true);
 
-    const name = await backend.ensureUnique(node.parent_id, node.name);
+    const name = await bookmarkManager.ensureUnique(node.parent_id, node.name);
     node.name = name;
     tree.createTentativeNode(node);
 
     if (select) {
-        const path = await backend.computePath(node.parent_id);
+        const path = await bookmarkManager.computePath(node.parent_id);
         if (getLastShelf() == path[0].id) {
             tree.selectNode(node.id);
         }
@@ -658,21 +658,21 @@ receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
         throw new Error();
 
     if (message.name) {
-        let external_path = backend.expandPath(message.name);
+        let external_path = bookmarkManager.expandPath(message.name);
         let [shelf, ...path] = external_path.split("/");
 
-        const shelfNode = await backend.queryShelf(shelf);
+        const shelfNode = await bookmarkManager.queryShelf(shelf);
 
         if (shelfNode) {
-            const group = await backend.getGroupByPath(external_path);
+            const group = await bookmarkManager.getGroupByPath(external_path);
             await switchShelf(shelfNode.id);
             tree.selectNode(group.id, true);
         }
         else {
             if (!isSpecialShelf(shelf)) {
-                const shelfNode = await backend.createGroup(null, shelf, NODE_TYPE_SHELF);
+                const shelfNode = await bookmarkManager.createGroup(null, shelf, NODE_TYPE_SHELF);
                 if (shelfNode) {
-                    let group = await backend.getGroupByPath(external_path);
+                    let group = await bookmarkManager.getGroupByPath(external_path);
                     await loadShelves(shelfNode.id);
                     tree.selectNode(group.id, true);
                 }
@@ -686,7 +686,7 @@ receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
 async function switchAfterCopy(message, external_path, group, topNodes) {
     if (message.action === "switching") {
         const [shelf, ...path] = external_path.split("/");
-        const shelfNode = await backend.queryShelf(shelf);
+        const shelfNode = await bookmarkManager.queryShelf(shelf);
 
         await loadShelves(shelfNode.id);
 
@@ -701,7 +701,7 @@ receiveExternal.scrapyardCopyAt = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let external_path = backend.expandPath(message.path);
+    let external_path = bookmarkManager.expandPath(message.path);
     let selection = tree.getSelectedNodes();
 
     if (selection.some(n => n.type === NODE_TYPE_SHELF)) {
@@ -711,7 +711,7 @@ receiveExternal.scrapyardCopyAt = async (message, sender) => {
         selection.sort((a, b) => a.pos - b.pos);
         selection = selection.map(n => n.id);
 
-        const group = await backend.getGroupByPath(external_path);
+        const group = await bookmarkManager.getGroupByPath(external_path);
         let newNodes = await send.copyNodes({node_ids: selection, dest_id: group.id, move_last: true});
         let topNodes = newNodes.filter(n => selection.some(id => id === n.old_id)).map(n => n.id);
 
@@ -723,7 +723,7 @@ receiveExternal.scrapyardMoveAt = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let external_path = backend.expandPath(message.path);
+    let external_path = bookmarkManager.expandPath(message.path);
     let selection = tree.getSelectedNodes();
     if (selection.some(n => n.type === NODE_TYPE_SHELF)) {
         showNotification("Can not move shelves.")
@@ -732,7 +732,7 @@ receiveExternal.scrapyardMoveAt = async (message, sender) => {
         selection.sort((a, b) => a.pos - b.pos);
         selection = selection.map(n => n.id);
 
-        const group = await backend.getGroupByPath(external_path);
+        const group = await bookmarkManager.getGroupByPath(external_path);
         await send.moveNodes({node_ids: selection, dest_id: group.id, move_last: true});
         await switchAfterCopy(message, external_path, group, selection);
     }

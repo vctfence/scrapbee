@@ -1,7 +1,7 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {dropboxBackend} from "./backend_dropbox.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 
 import {
     CLOUD_EXTERNAL_NAME,
@@ -154,7 +154,7 @@ export class CloudBackend {
         cloudNode.parent_id = parent? parent.id: CLOUD_SHELF_ID;
 
         if (node.stored_icon) {
-            cloudNode.icon_data = await backend.fetchIcon(node.id);
+            cloudNode.icon_data = await bookmarkManager.fetchIcon(node.id);
             //await db.storeIcon(bookmark, icon);
         }
 
@@ -162,25 +162,25 @@ export class CloudBackend {
             node.external = CLOUD_EXTERNAL_NAME;
             node.external_id = bookmark.uuid;
             node.uuid = bookmark.uuid;
-            await backend.updateNode(node);
+            await bookmarkManager.updateNode(node);
 
             try {
                 if (node.has_notes) {
-                    let notes = await backend.fetchNotes(node.id);
+                    let notes = await bookmarkManager.fetchNotes(node.id);
                     if (notes)
                         await this._storeNotesInternal(db, bookmark, notes);
                 }
 
                 if (node.has_comments) {
-                    let comments = await backend.fetchComments(node.id);
+                    let comments = await bookmarkManager.fetchComments(node.id);
                     if (comments)
                         await this._storeCommentsInternal(bookmark, comments);
                 }
 
                 if (node.type === NODE_TYPE_ARCHIVE) {
-                    let blob = await backend.fetchBlob(node.id);
+                    let blob = await bookmarkManager.fetchBlob(node.id);
                     if (blob) {
-                        const data = await backend.reifyBlob(blob);
+                        const data = await bookmarkManager.reifyBlob(blob);
                         await this._storeDataInternal(db, bookmark, data, blob.type);
                     }
                 }
@@ -225,7 +225,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let node = await backend.getNode(options.node_id);
+        let node = await bookmarkManager.getNode(options.node_id);
 
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
@@ -237,7 +237,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let node = await backend.getNode(node_id);
+        let node = await bookmarkManager.getNode(node_id);
 
         if (node.external === CLOUD_EXTERNAL_NAME)
             return this._storeCommentsInternal(node, comments);
@@ -312,7 +312,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let node = await backend.getNode(node_id);
+        let node = await bookmarkManager.getNode(node_id);
 
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
@@ -324,11 +324,11 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let node = await backend.getNode(node_id);
+        let node = await bookmarkManager.getNode(node_id);
 
         if (node.external === CLOUD_EXTERNAL_NAME)
             await this.withCloudDB(async db => {
-                let node = await backend.getNode(node_id);
+                let node = await bookmarkManager.getNode(node_id);
                 return this._storeDataInternal(db, node, data, null);
             });
     }
@@ -358,7 +358,7 @@ export class CloudBackend {
             return;
 
         if (typeof parent !== "object")
-            parent = await backend.getNode(parent);
+            parent = await bookmarkManager.getNode(parent);
 
         if (parent && parent.external === CLOUD_EXTERNAL_NAME) {
             return this.createBookmark(node, parent);
@@ -369,7 +369,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let dest = await backend.getNode(dest_id);
+        let dest = await bookmarkManager.getNode(dest_id);
         let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
         let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_NAME);
 
@@ -382,7 +382,7 @@ export class CloudBackend {
 
                 return Promise.all(otherNodes.map(n => {
                     if (isContainer(n)) {
-                        return backend.traverse(n, (parent, node) =>
+                        return bookmarkManager.traverse(n, (parent, node) =>
                             this._createBookmarkInternal(db, node, parent? parent.uuid: dest.uuid));
                     }
                     else
@@ -392,15 +392,15 @@ export class CloudBackend {
                 return Promise.all(cloudNodes.map(async n => {
                     n.external = undefined;
                     n.external_id = undefined;
-                    await backend.updateNode(n);
+                    await bookmarkManager.updateNode(n);
 
                     try {
                         if (isContainer(n)) {
-                            await backend.traverse(n, async (parent, node) => {
+                            await bookmarkManager.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = undefined;
                                     node.external_id = undefined;
-                                    await backend.updateNode(node);
+                                    await bookmarkManager.updateNode(node);
 
                                     await this.cleanBookmarkAssets(db, node);
                                 }
@@ -425,7 +425,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let dest = await backend.getNode(dest_id);
+        let dest = await bookmarkManager.getNode(dest_id);
         let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
 
         if (dest.external !== CLOUD_EXTERNAL_NAME && !cloudNodes.length)
@@ -435,7 +435,7 @@ export class CloudBackend {
             return this.withCloudDB(async db => {
                 for (let n of nodes) {
                     if (isContainer(n)) {
-                        await backend.traverse(n, (parent, node) =>
+                        await bookmarkManager.traverse(n, (parent, node) =>
                             this._createBookmarkInternal(db, node, parent ? parent.uuid : dest.uuid));
                     } else
                         await this._createBookmarkInternal(db, n, dest.uuid)
@@ -446,15 +446,15 @@ export class CloudBackend {
             return Promise.all(cloudNodes.map(async n => {
                 n.external = undefined;
                 n.external_id = undefined;
-                await backend.updateNode(n);
+                await bookmarkManager.updateNode(n);
 
                 try {
                     if (isContainer(n)) {
-                        await backend.traverse(n, async (parent, node) => {
+                        await bookmarkManager.traverse(n, async (parent, node) => {
                             if (parent) {
                                 node.external = undefined;
                                 node.external_id = undefined;
-                                await backend.updateNode(node);
+                                await bookmarkManager.updateNode(node);
                             }
                         });
                     }
@@ -531,7 +531,7 @@ export class CloudBackend {
                             if (cloudNode.has_comments)
                                 downloadComments.push(node);
 
-                            await backend.updateNode(node);
+                            await bookmarkManager.updateNode(node);
                         }
                     }
                     catch (e) {
@@ -545,7 +545,7 @@ export class CloudBackend {
                     cloudNode.external_id = cloudNode.uuid;
                     cloudNode.date_added = new Date(cloudNode.date_added);
                     cloudNode.date_modified = new Date(cloudNode.date_modified);
-                    node = await backend.addNode(cloudNode, false, false, false);
+                    node = await bookmarkManager.addNode(cloudNode, false, false, false);
 
                     if (cloudNode.has_notes) {
                         node.notes_format = cloudNode.notes_format;
@@ -563,11 +563,11 @@ export class CloudBackend {
                     }
 
                     if (!node.icon && node.uri)
-                        await backend.storeIconFromURI(node);
+                        await bookmarkManager.storeIconFromURI(node);
                     else if (node.icon && !node.stored_icon)
-                        await backend.storeIcon(node);
+                        await bookmarkManager.storeIcon(node);
                     else if (node.icon && node.stored_icon)
-                        await backend.storeIconLowLevel(node.id, cloudNode.icon_data);
+                        await bookmarkManager.storeIconLowLevel(node.id, cloudNode.icon_data);
                 }
 
                 if (cloudNode.type === NODE_TYPE_GROUP)
@@ -576,9 +576,9 @@ export class CloudBackend {
         };
 
         if (settings.cloud_enabled()) {
-            let dbRoot = await backend.getNode(CLOUD_SHELF_ID);
+            let dbRoot = await bookmarkManager.getNode(CLOUD_SHELF_ID);
             if (!dbRoot) {
-                dbRoot = await backend.addNode(this.newCloudRootNode(), false, true, false);
+                dbRoot = await bookmarkManager.addNode(this.newCloudRootNode(), false, true, false);
                 try {await send.shelvesChanged()} catch (e) {console.error(e)}
             }
 
@@ -595,13 +595,13 @@ export class CloudBackend {
 
             send.cloudSyncStart();
 
-            dbPool = new Map((await backend.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
+            dbPool = new Map((await bookmarkManager.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
 
             await reconcile(dbRoot, cloudRoot).then(async () => {
                 cloudRoot = null;
                 dbPool = null;
 
-                await backend.deleteMissingExternalNodes(cloudIds, CLOUD_EXTERNAL_NAME);
+                await bookmarkManager.deleteMissingExternalNodes(cloudIds, CLOUD_EXTERNAL_NAME);
 
                 for (let notesNode of downloadNotes) {
                     let notes = await this.fetchCloudNotes(notesNode);
@@ -617,26 +617,26 @@ export class CloudBackend {
                         if (notesNode.notes_format === "delta")
                             options.html = await this.fetchCloudView(notesNode);
 
-                        await backend.storeIndexedNotes(options);
+                        await bookmarkManager.storeIndexedNotes(options);
                     }
                 }
 
                 for (let commentsNode of downloadComments) {
                     let comments = await this.fetchCloudComments(commentsNode);
                     if (comments)
-                        await backend.storeIndexedComments(commentsNode.id, comments);
+                        await bookmarkManager.storeIndexedComments(commentsNode.id, comments);
                 }
 
                 for (let archive of downloadData) {
                     let data = await this.fetchCloudData(archive);
 
                     if (data) {
-                        await backend.storeIndexedBlob(archive.id, data, archive.content_type, archive.byte_length);
+                        await bookmarkManager.storeIndexedBlob(archive.id, data, archive.content_type, archive.byte_length);
                     }
                 }
 
                 dbRoot.date_modified = cloudLastModified;
-                await backend.updateNode(dbRoot, false);
+                await bookmarkManager.updateNode(dbRoot, false);
 
                 console.log("cloud reconciliation time: " + ((new Date().getTime() - beginTime) / 1000) + "s");
 
@@ -645,7 +645,7 @@ export class CloudBackend {
             }).catch(e => console.error(e));
         }
         else {
-            await backend.deleteExternalNodes(CLOUD_EXTERNAL_NAME);
+            await bookmarkManager.deleteExternalNodes(CLOUD_EXTERNAL_NAME);
             send.shelvesChanged();
         }
     }

@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend} from "../backend.js"
+import {bookmarkManager} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
 
 import {showDlg, confirm} from "./dialog.js"
@@ -157,7 +157,7 @@ class BookmarkTree {
 
                 if (o(jnode)?.stored_icon) {
                     const cached = this.iconCache.get(jnode.icon);
-                    const base64Url = cached || (await backend.fetchIcon(o(jnode).id));
+                    const base64Url = cached || (await bookmarkManager.fetchIcon(o(jnode).id));
 
                     if (base64Url) {
                         if (!cached)
@@ -861,7 +861,7 @@ class BookmarkTree {
                         label: "Folder",
                         icon: `/icons/group${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                            let group = {id: bookmarkManager.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
                                          parent_id: ctxNode.id};
                             const groupPending = send.createGroup({parent: ctxNode, name: group.name});
 
@@ -902,7 +902,7 @@ class BookmarkTree {
                             let jparent = tree.get_node(ctxJNode.parent);
                             let position = $.inArray(ctxJNode.id, jparent.children);
 
-                            let group = {id: backend.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                            let group = {id: bookmarkManager.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
                                 parent_id: o(jparent).id};
                             const groupPending = send.createGroup({parent: o(jparent), name: group.name});
 
@@ -954,7 +954,7 @@ class BookmarkTree {
                                 return;
                             }
 
-                            let notes = {id: backend.setTentativeId({}), parent_id: ctxNode.id, name: "New Notes",
+                            let notes = {id: bookmarkManager.setTentativeId({}), parent_id: ctxNode.id, name: "New Notes",
                                          type: NODE_TYPE_NOTES};
                             const notesPending = send.addNotes({name: notes.name, parent_id: notes.parent_id});
 
@@ -994,7 +994,7 @@ class BookmarkTree {
                         action: async () => {
                             const jparent = tree.get_node(ctxJNode.parent);
                             const position = $.inArray(ctxJNode.id, jparent.children);
-                            let separator = {id: backend.setTentativeId({}), type: NODE_TYPE_SEPARATOR,
+                            let separator = {id: bookmarkManager.setTentativeId({}), type: NODE_TYPE_SEPARATOR,
                                              parent_id: o(jparent).id};
 
                             const jnode = BookmarkTree.toJsTreeNode(separator);
@@ -1208,9 +1208,9 @@ class BookmarkTree {
                 label: "Properties...",
                 action: async () => {
                     if (isEndpoint(ctxNode)) {
-                        let properties = await backend.getNode(ctxNode.id);
+                        let properties = await bookmarkManager.getNode(ctxNode.id);
 
-                        properties.comments = await backend.fetchComments(properties.id);
+                        properties.comments = await bookmarkManager.fetchComments(properties.id);
                         let commentsPresent = !!properties.comments;
 
                         properties.containers = this._containers;
@@ -1233,11 +1233,11 @@ class BookmarkTree {
                             properties.has_comments = !!properties.comments;
 
                             if (commentsPresent || properties.has_comments)
-                                await backend.storeComments(properties.id, properties.comments);
+                                await bookmarkManager.storeComments(properties.id, properties.comments);
 
                             delete properties.comments;
 
-                            backend.cleanBookmark(properties);
+                            bookmarkManager.cleanBookmark(properties);
 
                             properties = await send.updateBookmark({node: properties});
 
@@ -1302,9 +1302,9 @@ class BookmarkTree {
                     const options = await showDlg("prompt", {caption: "RDF Directory", label: "Path:",
                                                                         title: ctxNode.uri});
                     if (options) {
-                        let node = await backend.getNode(ctxNode.id);
+                        let node = await bookmarkManager.getNode(ctxNode.id);
                         ctxNode.uri = node.uri = options.title;
-                        backend.updateNode(node);
+                        bookmarkManager.updateNode(node);
                     }
                 }
             }

@@ -1,7 +1,7 @@
 import {isSpecialShelf} from "./storage.js";
 import {readFile, ReadLine} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
 import {receive} from "./proxy.js";
@@ -49,7 +49,7 @@ receive.exportFile = async message => {
     const file_ext = `.${format === "json" ? "jsonl" : format}`;
     const file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_") + file_ext;
 
-    let nodes = await backend.listExportedNodes(shelf, format === "org");
+    let nodes = await bookmarkManager.listExportedNodes(shelf, format === "org");
 
     if (settings.use_helper_app_for_export() && await nativeBackend.probe()) {
         // write to a temp file (much faster than IDB)
@@ -115,22 +115,22 @@ receive.exportFile = async message => {
                 this.size += text.length;
 
                 if (this.size >= MAX_BLOB_SIZE) {
-                    await backend.putExportBlob(processId, new Blob(this.content, {type: "text/plain"}));
+                    await bookmarkManager.putExportBlob(processId, new Blob(this.content, {type: "text/plain"}));
                     this.content = [];
                     this.size = 0;
                 }
             },
             flush: async function () {
                 if (this.size && this.content.length)
-                    await backend.putExportBlob(processId, new Blob(this.content, {type: "text/plain"}));
+                    await bookmarkManager.putExportBlob(processId, new Blob(this.content, {type: "text/plain"}));
             }
         };
 
-        await backend.cleanExportStorage();
+        await bookmarkManager.cleanExportStorage();
         await exportf(file, nodes, message.shelf, message.uuid, shallowExport);
         await file.flush();
 
-        let blob = new Blob(await backend.getExportBlobs(processId), {type: "text/plain"});
+        let blob = new Blob(await bookmarkManager.getExportBlobs(processId), {type: "text/plain"});
         let url = URL.createObjectURL(blob);
         let download;
 
@@ -138,7 +138,7 @@ receive.exportFile = async message => {
             download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
         } catch (e) {
             console.error(e);
-            backend.cleanExportBlobs(processId);
+            bookmarkManager.cleanExportBlobs(processId);
         }
 
         if (download) {
@@ -147,7 +147,7 @@ receive.exportFile = async message => {
                     if (delta.state && delta.state.current === "complete" || delta.error) {
                         browser.downloads.onChanged.removeListener(download_listener);
                         URL.revokeObjectURL(url);
-                        backend.cleanExportBlobs(processId);
+                        bookmarkManager.cleanExportBlobs(processId);
                     }
                 }
             };

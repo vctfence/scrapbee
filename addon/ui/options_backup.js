@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {settings} from "../settings.js";
 import {confirm} from "./dialog.js";
 import {ShelfList} from "./shelf_list.js";
@@ -268,7 +268,7 @@ export class BackupManager {
     }
 
     async restoreSelectedShelf(jnode, newShelf) {
-        const shelves = await backend.queryShelf();
+        const shelves = await bookmarkManager.queryShelf();
         const backupName = newShelf? jnode.data.alt_name: jnode.data.name;
 
         shelves.push({name: EVERYTHING});

@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {backend} from "../backend.js"
+import {bookmarkManager} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
 import {dropboxBackend} from "../backend_dropbox.js"
 import {settings} from "../settings.js"
@@ -8,7 +8,7 @@ import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {injectCSS} from "../utils_html.js";
 
 window.onload = async function() {
-    await backend;
+    await bookmarkManager;
 
     window.onhashchange = switchPane;
     switchPane();

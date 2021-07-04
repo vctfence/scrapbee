@@ -1,4 +1,4 @@
-import {backend} from "./backend.js"
+import {bookmarkManager} from "./backend.js"
 import {settings} from "./settings.js"
 
 import {
@@ -17,15 +17,15 @@ export async function prepareNewImport(shelf) {
         return;
 
     if (shelf === EVERYTHING) {
-        return backend.wipeEveritying();
+        return bookmarkManager.wipeEverything();
     }
     else {
-        shelf = await backend.queryShelf(shelf);
+        shelf = await bookmarkManager.queryShelf(shelf);
 
         if (shelf && shelf.name === DEFAULT_SHELF_NAME) {
-            return backend.deleteChildNodes(shelf.id);
+            return bookmarkManager.deleteChildNodes(shelf.id);
         } else if (shelf) {
-            return backend.deleteNodes(shelf.id);
+            return bookmarkManager.deleteNodes(shelf.id);
         }
     }
 }
@@ -36,19 +36,19 @@ async function createRollbackNode(shelf) {
         type: NODE_TYPE_UNLISTED
     };
 
-    return backend.addNode(rollbackNode);
+    return bookmarkManager.addNode(rollbackNode);
 }
 
 async function relocateNodes(nodes, dest) {
     for (let node of nodes) {
-        await backend.updateNode({id: node.id, parent_id: dest?.id || undefined}, false);
+        await bookmarkManager.updateNode({id: node.id, parent_id: dest?.id || undefined}, false);
     }
 }
 
 async function maskUUIDs(rollbackNode) {
-    const rollbackItemIds = await backend.queryFullSubtreeIds(rollbackNode.id);
+    const rollbackItemIds = await bookmarkManager.queryFullSubtreeIds(rollbackNode.id);
 
-    await backend.updateNodes(node => {
+    await bookmarkManager.updateNodes(node => {
         node._unlisted = true;
         node._uuid = node.uuid;
         node.uuid = undefined;
@@ -56,9 +56,9 @@ async function maskUUIDs(rollbackNode) {
 }
 
 async function unmaskUUIDs(rollbackNode) {
-    const rollbackItemIds = await backend.queryFullSubtreeIds(rollbackNode.id);
+    const rollbackItemIds = await bookmarkManager.queryFullSubtreeIds(rollbackNode.id);
 
-    await backend.updateNodes(node => {
+    await bookmarkManager.updateNodes(node => {
         node._unlisted = undefined;
         node.uuid = node._uuid;
         node._uuid = undefined;
@@ -68,7 +68,7 @@ async function unmaskUUIDs(rollbackNode) {
 export async function createRollback(shelf) {
     if (shelf === EVERYTHING) {
         const rollbackNode = await createRollbackNode(EVERYTHING);
-        let shelves = await backend.queryShelf();
+        let shelves = await bookmarkManager.queryShelf();
         shelves = shelves.filter(n => !RESERVED_SHELVES.some(uuid => uuid === n.uuid));
         await relocateNodes(shelves, rollbackNode);
         await maskUUIDs(rollbackNode);
@@ -76,10 +76,10 @@ export async function createRollback(shelf) {
         await createRollback(DEFAULT_SHELF_NAME);
     }
     else {
-        shelf = await backend.queryShelf(shelf);
+        shelf = await bookmarkManager.queryShelf(shelf);
         if (shelf) {
             const rollbackNode = await createRollbackNode(shelf.name);
-            const nodes = await backend.getChildNodes(shelf.id);
+            const nodes = await bookmarkManager.getChildNodes(shelf.id);
             await relocateNodes(nodes, rollbackNode);
             await maskUUIDs(rollbackNode);
         }
@@ -87,37 +87,37 @@ export async function createRollback(shelf) {
 }
 
 async function cleanRollback() {
-    const unlisted = await backend.queryUnlisted();
+    const unlisted = await bookmarkManager.queryUnlisted();
     let rollbackItems = [];
 
     for (const node of unlisted) {
-        rollbackItems = [...await backend.queryFullSubtreeIds(node.id), ...rollbackItems];
+        rollbackItems = [...await bookmarkManager.queryFullSubtreeIds(node.id), ...rollbackItems];
     }
 
-    await backend.deleteNodesLowLevel(rollbackItems);
+    await bookmarkManager.deleteNodesLowLevel(rollbackItems);
 }
 
 async function cleanFailedImport(shelf, exists) {
     if (shelf === EVERYTHING) {
-        let shelves = await backend.queryShelf();
+        let shelves = await bookmarkManager.queryShelf();
         shelves = shelves.filter(n => !RESERVED_SHELVES.some(uuid => uuid === n.uuid));
 
         let failedItems = [];
 
         for (const node of shelves) {
-            failedItems = [...await backend.queryFullSubtreeIds(node.id), ...failedItems];
+            failedItems = [...await bookmarkManager.queryFullSubtreeIds(node.id), ...failedItems];
         }
 
-        await backend.deleteNodesLowLevel(failedItems);
+        await bookmarkManager.deleteNodesLowLevel(failedItems);
     }
     else {
-        shelf = await backend.queryShelf(shelf);
+        shelf = await bookmarkManager.queryShelf(shelf);
 
         if (shelf) {
-            const failedItems = await backend.queryFullSubtreeIds(shelf.id);
+            const failedItems = await bookmarkManager.queryFullSubtreeIds(shelf.id);
             if (exists)
                 failedItems.shift();
-            await backend.deleteNodesLowLevel(failedItems);
+            await bookmarkManager.deleteNodesLowLevel(failedItems);
         }
     }
 }
@@ -126,31 +126,31 @@ export async function rollbackImport(shelf, exists) {
     if (shelf === EVERYTHING) {
         await cleanFailedImport(EVERYTHING, true);
 
-        const rollbackNode = await backend.queryUnlisted("_" + EVERYTHING);
+        const rollbackNode = await bookmarkManager.queryUnlisted("_" + EVERYTHING);
         await unmaskUUIDs(rollbackNode);
-        const shelves = await backend.getChildNodes(rollbackNode.id);
+        const shelves = await bookmarkManager.getChildNodes(rollbackNode.id);
         await relocateNodes(shelves, null);
 
-        await backend.deleteNodesLowLevel(rollbackNode.id);
+        await bookmarkManager.deleteNodesLowLevel(rollbackNode.id);
 
         await rollbackImport(DEFAULT_SHELF_NAME, true);
     }
     else {
         await cleanFailedImport(shelf, exists);
 
-        const rollbackNode = await backend.queryUnlisted("_" + shelf);
-        shelf = await backend.queryShelf(shelf);
+        const rollbackNode = await bookmarkManager.queryUnlisted("_" + shelf);
+        shelf = await bookmarkManager.queryShelf(shelf);
         if (rollbackNode && shelf) {
             await unmaskUUIDs(rollbackNode);
-            const nodes = await backend.getChildNodes(rollbackNode.id);
+            const nodes = await bookmarkManager.getChildNodes(rollbackNode.id);
             await relocateNodes(nodes, shelf);
-            await backend.deleteNodesLowLevel(rollbackNode.id);
+            await bookmarkManager.deleteNodesLowLevel(rollbackNode.id);
         }
     }
 }
 
 export async function importTransaction(shelf, importf) {
-    const exists = shelf === EVERYTHING || !!await backend.queryShelf(shelf);
+    const exists = shelf === EVERYTHING || !!await bookmarkManager.queryShelf(shelf);
     const undo = settings.undo_failed_imports();
 
     if (exists && undo) {

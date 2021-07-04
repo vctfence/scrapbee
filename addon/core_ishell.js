@@ -1,4 +1,4 @@
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {receiveExternal} from "./proxy.js";
 import {renderPath} from "./core_automation.js";
 import {NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./storage.js";
@@ -9,7 +9,7 @@ receiveExternal.scrapyardListShelves = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let shelves = await backend.listShelves();
+    let shelves = await bookmarkManager.listShelves();
     return shelves.map(n => ({name: n.name}));
 };
 
@@ -17,10 +17,10 @@ receiveExternal.scrapyardListGroups = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let shelves = await backend.listShelves();
+    let shelves = await bookmarkManager.listShelves();
     shelves = shelves.map(n => ({name: n.name}));
 
-    let groups = await backend.listGroups();
+    let groups = await bookmarkManager.listGroups();
     groups.forEach(n => renderPath(n, groups));
     groups = groups.map(n => ({name: n.name, path: n.path}));
 
@@ -31,7 +31,7 @@ receiveExternal.scrapyardListTags = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let tags = await backend.queryTags();
+    let tags = await bookmarkManager.queryTags();
     return tags.map(t => ({name: t.name.toLocaleLowerCase()}));
 };
 
@@ -46,9 +46,9 @@ receiveExternal.scrapyardListNodes = async (message, sender) => {
     if (message.types)
         message.types = message.types.concat([NODE_TYPE_SHELF]);
 
-    message.path = backend.expandPath(message.path);
+    message.path = bookmarkManager.expandPath(message.path);
 
-    let nodes = await backend.listNodes(message);
+    let nodes = await bookmarkManager.listNodes(message);
 
     for (let node of nodes) {
         if (node.type === NODE_TYPE_GROUP) {
@@ -56,7 +56,7 @@ receiveExternal.scrapyardListNodes = async (message, sender) => {
         }
 
         if (node.stored_icon)
-            node.icon = await backend.fetchIcon(node.id);
+            node.icon = await bookmarkManager.fetchIcon(node.id);
     }
     if (no_shelves)
         return nodes.filter(n => n.type !== NODE_TYPE_SHELF);
@@ -69,7 +69,7 @@ receiveExternal.scrapyardBrowseNode = async (message, sender) => {
         throw new Error();
 
     if (message.node.uuid)
-        backend.getNode(message.node.uuid, true).then(node => browseNode(node));
+        bookmarkManager.getNode(message.node.uuid, true).then(node => browseNode(node));
     else
         browseNode(message.node);
 };

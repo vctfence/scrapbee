@@ -7,7 +7,7 @@ import {
     FIREFOX_BOOKMARK_MOBILE,
     TODO_SHELF_NAME
 } from "./storage.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";
 import {exportJSON, importJSON} from "./import_json.js";
@@ -29,12 +29,12 @@ receive.backupShelf = async message => {
         shelf = shelfUUID = shelfName = message.shelf;
     }
     else {
-        shelf = await backend.queryShelf(message.shelf);
+        shelf = await bookmarkManager.queryShelf(message.shelf);
         shelfUUID = shelf.uuid;
         shelfName = shelf.name;
     }
 
-    let nodes = await backend.listExportedNodes(shelf);
+    let nodes = await bookmarkManager.listExportedNodes(shelf);
 
     let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
 

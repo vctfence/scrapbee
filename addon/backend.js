@@ -1,7 +1,5 @@
 import {settings} from "./settings.js"
-import {delegateProxy} from "./proxy.js";
-import IDBStorage from "./storage_idb.js";
-import LocalStorage from "./storage_local.js";
+import BookmarkStorage from "./storage_idb.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {browserBackend} from "./backend_browser.js";
@@ -78,10 +76,10 @@ class ExternalEventProvider {
     }
 }
 
-export class Backend extends LocalStorage {
+export class BookmarkManager extends BookmarkStorage {
 
     constructor() {
-        super(IDBStorage.STORAGE_TYPE_ID);
+        super();
 
         this.externalEvents = new ExternalEventProvider();
 
@@ -210,7 +208,7 @@ export class Backend extends LocalStorage {
     }
 
     listGroups() {
-        return backend.queryGroups(true);
+        return bookmarkManager.queryGroups(true);
     }
 
     async listNodes(options //{search, // filter by node name or URL
@@ -566,7 +564,7 @@ export class Backend extends LocalStorage {
         let node = await this.addNode(options);
 
         try {
-            await this.externalEvents.createBookmark(node, await backend.getNode(parentId));
+            await this.externalEvents.createBookmark(node, await bookmarkManager.getNode(parentId));
         }
         catch (e) {
             console.log(e);
@@ -926,9 +924,9 @@ export class Backend extends LocalStorage {
     }
 }
 
-export let backend = new Promise(async resolve => {
+export let bookmarkManager = new Promise(async resolve => {
     await settings.load();
-    backend = new Backend();
-    resolve(backend);
+    bookmarkManager = new BookmarkManager();
+    resolve(bookmarkManager);
 });
 

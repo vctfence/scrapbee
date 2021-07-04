@@ -1,4 +1,4 @@
-import {backend} from "./backend.js"
+import {bookmarkManager} from "./backend.js"
 import {TREE_STATE_PREFIX} from "./ui/tree.js";
 import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {openContainerTab} from "./utils_browser.js";
@@ -33,7 +33,7 @@ export class TitleSearchProvider extends SearchProvider {
             path = this.shelf;
 
         if (text)
-            return backend.listNodes({
+            return bookmarkManager.listNodes({
                 search: text,
                 depth: "subtree",
                 path: path,
@@ -56,7 +56,7 @@ export class TagSearchProvider extends SearchProvider {
             path = this.shelf;
 
         if (text) {
-            return backend.listNodes({
+            return bookmarkManager.listNodes({
                 depth: "subtree",
                 path: path,
                 tags: text,
@@ -79,7 +79,7 @@ export class ContentSearchProvider extends SearchProvider {
             path = this.shelf;
 
         if (text) {
-            return backend.listNodes({
+            return bookmarkManager.listNodes({
                 search: text,
                 content: true,
                 index: this.index,
@@ -111,7 +111,7 @@ export class DateSearchProvider extends SearchProvider {
 
             const period = /(.*?)\d{4}-\d{2}-\d{2}/.exec(text.trim().toLowerCase())[1];
 
-            return backend.listNodes({
+            return bookmarkManager.listNodes({
                 depth: "subtree",
                 path: path,
                 date: dates[0],

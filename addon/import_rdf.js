@@ -1,6 +1,6 @@
 import {nativeBackend} from "./backend_native.js";
 import {getFaviconFromTab} from "./favicon.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {partition} from "./utils.js";
 import {send} from "./proxy.js";
@@ -76,7 +76,7 @@ async function importRDFArchive(node, scrapbook_id, _) {
 
         if (icon) {
             bookmark.icon = icon;
-            await backend.storeIcon(bookmark);
+            await bookmarkManager.storeIcon(bookmark);
         }
 
         node.__mute_ui = true;
@@ -117,12 +117,12 @@ export async function importRDF(shelf, path, threads, quick) {
     let id_map = new Map();
     let reverse_id_map = new Map();
 
-    let shelf_node = await backend.getGroupByPath(shelf);
+    let shelf_node = await bookmarkManager.getGroupByPath(shelf);
     if (shelf_node) {
         if (quick) {
             shelf_node.external = RDF_EXTERNAL_NAME;
             shelf_node.uri = rdf_directory;
-            await backend.updateNode(shelf_node);
+            await bookmarkManager.updateNode(shelf_node);
         }
         id_map.set(null, shelf_node.id);
     }
@@ -156,7 +156,7 @@ export async function importRDF(shelf, path, threads, quick) {
             data.external_id = node.__sb_id;
         }
 
-        let bookmark = await backend.importBookmark(data);
+        let bookmark = await bookmarkManager.importBookmark(data);
 
         id_map.set(node.__sb_id, bookmark.id);
 
@@ -230,7 +230,7 @@ export async function importRDF(shelf, path, threads, quick) {
         if (node.icon && node.icon.startsWith("resource://scrapbook/")) {
             node.icon = node.icon.replace("resource://scrapbook/", "");
             node.icon = nativeBackend.url(`/rdf/import/files/${node.icon}`);
-            await backend.storeIcon(node);
+            await bookmarkManager.storeIcon(node);
         }
     }
 

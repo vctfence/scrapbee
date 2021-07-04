@@ -1,5 +1,5 @@
 import UUID from "./lib/uuid.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {nativeBackend} from "./backend_native.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 
@@ -205,7 +205,7 @@ export class RDFBackend {
         if (parent.external === RDF_EXTERNAL_NAME) {
             node.external = RDF_EXTERNAL_NAME;
             node.external_id = UUID.date();
-            await backend.updateNode(node);
+            await bookmarkManager.updateNode(node);
 
             const rdf_doc = await RDFDoc.fromNode(node);
             if (rdf_doc) {
@@ -216,10 +216,10 @@ export class RDFBackend {
     }
 
     async storeBookmarkData(node_id, data) {
-        let node = await backend.getNode(node_id);
+        let node = await bookmarkManager.getNode(node_id);
 
         if (node.external === RDF_EXTERNAL_NAME) {
-            await backend.deleteBlob(node_id);
+            await bookmarkManager.deleteBlob(node_id);
 
             try {
                 await nativeBackend.post(`/rdf/save_item/${node.uuid}`, {item_content: data});
@@ -277,12 +277,12 @@ export class RDFBackend {
 
     async createBookmarkFolder(node, parent) {
         if (typeof parent !== "object")
-            parent = await backend.getNode(parent);
+            parent = await bookmarkManager.getNode(parent);
 
         if (parent && parent.external === RDF_EXTERNAL_NAME) {
             node.external = RDF_EXTERNAL_NAME;
             node.external_id = UUID.date();
-            await backend.updateNode(node);
+            await bookmarkManager.updateNode(node);
 
             const rdfDoc = await RDFDoc.fromNode(node);
             if (rdfDoc) {
@@ -296,7 +296,7 @@ export class RDFBackend {
         let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
 
         if (rdfNodes.length) {
-            let dest = await backend.getNode(dest_id);
+            let dest = await bookmarkManager.getNode(dest_id);
             if (dest.external === RDF_EXTERNAL_NAME) {
                 const rdfDoc = await RDFDoc.fromNode(dest);
                 if (rdfDoc) {

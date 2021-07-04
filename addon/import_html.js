@@ -1,4 +1,4 @@
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {DEFAULT_POSITION, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {prepareNewImport} from "./import.js";
 
@@ -29,7 +29,7 @@ export async function importHtml(shelf, text) {
                     path.pop();
                 }
                 else if (type === "link") {
-                    node = await backend.importBookmark({
+                    node = await bookmarkManager.importBookmark({
                         uri: node.href,
                         name: node.textContent,
                         type: NODE_TYPE_BOOKMARK,
@@ -37,7 +37,7 @@ export async function importHtml(shelf, text) {
                         path: path.join("/")
                     });
 
-                    await backend.storeIconFromURI(node)
+                    await bookmarkManager.storeIconFromURI(node)
                 }
             }
             else if (child.localName === "dl") {

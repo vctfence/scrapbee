@@ -1,4 +1,4 @@
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud.js";
 import {receive, receiveExternal} from "./proxy.js";
@@ -16,7 +16,7 @@ receive.startListener(true);
 receiveExternal.startListener(true);
 
 (async () => {
-    await backend;
+    await bookmarkManager;
 
     if (await navigator.storage.persist()) {
         search.initializeOmnibox();

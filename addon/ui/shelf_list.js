@@ -16,7 +16,7 @@ import {
     TODO_SHELF_ID,
     TODO_SHELF_NAME
 } from "../storage.js";
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {formatShelfName} from "../bookmarking.js";
 
 const DEFAULT_SHELF_LIST_WIDTH = 91;
@@ -113,7 +113,7 @@ export class ShelfList {
             this._select.append(`<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
                                          value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`);
 
-        let shelves = await backend.listShelves();
+        let shelves = await bookmarkManager.listShelves();
 
         let cloudShelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
         if (cloudShelf)

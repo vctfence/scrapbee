@@ -1,6 +1,6 @@
 import {send} from "../proxy.js";
 import {settings} from "../settings.js";
-import {backend} from "../backend.js";
+import {bookmarkManager} from "../backend.js";
 import {showNotification} from "../utils_browser.js";
 import {alert, confirm} from "./dialog.js";
 import {formatBytes} from "../utils.js";
@@ -235,7 +235,7 @@ function configureImpExpPanel() {
 }
 
 window.onload = async function() {
-    await backend;
+    await bookmarkManager;
 
     initHelpMarks();
     configureAutomationPanel();

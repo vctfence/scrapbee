@@ -1,5 +1,5 @@
 import {formatBytes, getMimetypeExt} from "./utils.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "./storage.js";
 import {getActiveTab, showNotification} from "./utils_browser.js";
@@ -10,13 +10,13 @@ import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
 
-receive.createShelf = message => backend.createGroup(null, message.name, NODE_TYPE_SHELF);
+receive.createShelf = message => bookmarkManager.createGroup(null, message.name, NODE_TYPE_SHELF);
 
-receive.createGroup = message => backend.createGroup(message.parent, message.name);
+receive.createGroup = message => bookmarkManager.createGroup(message.parent, message.name);
 
-receive.renameGroup = message => backend.renameGroup(message.id, message.name);
+receive.renameGroup = message => bookmarkManager.renameGroup(message.id, message.name);
 
-receive.addSeparator = message => backend.addSeparator(message.parent_id);
+receive.addSeparator = message => bookmarkManager.addSeparator(message.parent_id);
 
 receive.createBookmark = message => {
     const options = message.data;
@@ -27,12 +27,12 @@ receive.createBookmark = message => {
     }
 
     const addBookmark = () =>
-        backend.addBookmark(options, NODE_TYPE_BOOKMARK)
+        bookmarkManager.addBookmark(options, NODE_TYPE_BOOKMARK)
             .then(bookmark => {
                 send.bookmarkAdded({node: bookmark});
             });
 
-    backend.setTentativeId(options);
+    bookmarkManager.setTentativeId(options);
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
@@ -67,12 +67,12 @@ receive.createBookmarkFromURL = async message => {
         console.log(e);
     }
 
-    const bookmark = await backend.addBookmark(options, NODE_TYPE_BOOKMARK);
+    const bookmark = await bookmarkManager.addBookmark(options, NODE_TYPE_BOOKMARK);
     await send.stopProcessingIndication();
     send.bookmarkCreated({node: bookmark});
 };
 
-receive.updateBookmark = message => backend.updateBookmark(message.node);
+receive.updateBookmark = message => bookmarkManager.updateBookmark(message.node);
 
 receive.createArchive = message => {
     const options = message.data;
@@ -83,7 +83,7 @@ receive.createArchive = message => {
     }
 
     let addBookmark = () =>
-        backend.addBookmark(options, NODE_TYPE_ARCHIVE)
+        bookmarkManager.addBookmark(options, NODE_TYPE_ARCHIVE)
             .then(bookmark => {
                 getActiveTab().then(tab => {
                     bookmark.__tab_id = tab.id;
@@ -91,18 +91,18 @@ receive.createArchive = message => {
                 });
             });
 
-    backend.setTentativeId(options);
+    bookmarkManager.setTentativeId(options);
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
 };
 
-receive.updateArchive = message => backend.updateBlob(message.id, message.data);
+receive.updateArchive = message => bookmarkManager.updateBlob(message.id, message.data);
 
-receive.setTODOState = message => backend.setTODOState(message.nodes);
+receive.setTODOState = message => bookmarkManager.setTODOState(message.nodes);
 
 receive.getBookmarkInfo = async message => {
-    let node = await backend.getNode(message.id);
+    let node = await bookmarkManager.getNode(message.id);
     node.__formatted_size = node.size ? formatBytes(node.size) : null;
     node.__formatted_date = node.date_added
         ? node.date_added.toString().replace(/:[^:]*$/, "")
@@ -116,30 +116,30 @@ receive.getHideToolbarSetting = async message => {
 };
 
 receive.copyNodes = message => {
-    return backend.copyNodes(message.node_ids, message.dest_id, message.move_last);
+    return bookmarkManager.copyNodes(message.node_ids, message.dest_id, message.move_last);
 };
 
 receive.shareToCloud = message => {
-    return backend.copyNodes(message.node_ids, CLOUD_SHELF_ID, true);
+    return bookmarkManager.copyNodes(message.node_ids, CLOUD_SHELF_ID, true);
 }
 
 receive.moveNodes = message => {
-    return backend.moveNodes(message.node_ids, message.dest_id, message.move_last);
+    return bookmarkManager.moveNodes(message.node_ids, message.dest_id, message.move_last);
 };
 
 receive.deleteNodes = message => {
-    return backend.deleteNodes(message.node_ids);
+    return bookmarkManager.deleteNodes(message.node_ids);
 };
 
 receive.reorderNodes = message => {
-    return backend.reorderNodes(message.positions);
+    return bookmarkManager.reorderNodes(message.positions);
 };
 
 receive.storePageHtml = message => {
     if (message.bookmark.__page_packing)
         return;
 
-    backend.storeBlob(message.bookmark.id, message.data, "text/html")
+    bookmarkManager.storeBlob(message.bookmark.id, message.data, "text/html")
         .then(() => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
@@ -156,9 +156,9 @@ receive.storePageHtml = message => {
         });
 };
 
-receive.addNotes = message => backend.addNotes(message.parent_id, message.name);
+receive.addNotes = message => bookmarkManager.addNotes(message.parent_id, message.name);
 
-receive.storeNotes = message => backend.storeNotes(message.options);
+receive.storeNotes = message => bookmarkManager.storeNotes(message.options);
 
 receive.uploadFiles = async message => {
     send.startProcessingIndication();
@@ -194,9 +194,9 @@ receive.uploadFiles = async message => {
                         }
                     }
 
-                    bookmark = await backend.addBookmark(bookmark, NODE_TYPE_ARCHIVE);
+                    bookmark = await bookmarkManager.addBookmark(bookmark, NODE_TYPE_ARCHIVE);
                     if (content)
-                        await backend.storeBlob(bookmark.id, content, contentType);
+                        await bookmarkManager.storeBlob(bookmark.id, content, contentType);
                     else
                         throw new Error();
                 } catch (e) {

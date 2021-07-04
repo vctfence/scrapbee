@@ -11,7 +11,7 @@ import {
 } from "./storage.js";
 import {settings} from "./settings.js";
 import {getFavicon, getFaviconFromTab} from "./favicon.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {send, receiveExternal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
@@ -105,15 +105,15 @@ export async function setUpBookmarkMessage(message, sender, activeTab) {
     else if (!message.icon && !message.local)
         message.icon = await getFaviconFromTab(activeTab);
 
-    const path = backend.expandPath(message.path);
-    const group = await backend.getGroupByPath(path);
+    const path = bookmarkManager.expandPath(message.path);
+    const group = await bookmarkManager.getGroupByPath(path);
     message.parent_id = group.id;
     delete message.path;
 
     // adding bookmark from ishell, take preparations in UI
     if (!automation) {
         try {
-            backend.setTentativeId(message);
+            bookmarkManager.setTentativeId(message);
             await send.beforeBookmarkAdded({node: message});
         } catch (e) {
             console.error(e);
@@ -183,11 +183,11 @@ receiveExternal.scrapyardAddBookmark = async (message, sender) => {
         }
     }
 
-    return backend.addBookmark(message, NODE_TYPE_BOOKMARK)
+    return bookmarkManager.addBookmark(message, NODE_TYPE_BOOKMARK)
         .then(async bookmark => {
 
             if (message.comments)
-                await backend.storeComments(bookmark.id, message.comments);
+                await bookmarkManager.storeComments(bookmark.id, message.comments);
 
             if (message.__automation && message.select)
                 send.bookmarkCreated({node: bookmark});
@@ -213,7 +213,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
         message.content_type = getMimetypeExt(message.uri);
 
     let saveContent = (bookmark, content) => {
-        return backend.storeBlob(bookmark.id, content, message.pack ? "text/html" : message.content_type)
+        return bookmarkManager.storeBlob(bookmark.id, content, message.pack ? "text/html" : message.content_type)
             .then(() => {
                 if (message.__automation && message.select)
                     send.bookmarkCreated({node: bookmark});
@@ -224,11 +224,11 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
             })
     };
 
-    return backend.addBookmark(message, NODE_TYPE_ARCHIVE)
+    return bookmarkManager.addBookmark(message, NODE_TYPE_ARCHIVE)
         .then(async bookmark => {
 
             if (message.comments)
-                await backend.storeComments(bookmark.id, message.comments);
+                await bookmarkManager.storeComments(bookmark.id, message.comments);
 
             if (message.local) {
                 const local_uri = await setUpLocalFileCapture(message);
@@ -238,7 +238,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
                     const page = await packUrlExt(local_uri, message.hide_tab);
                     if (page.icon && (message.icon === null || message.icon === undefined)) {
                         bookmark.icon = page.icon
-                        await backend.storeIcon(bookmark);
+                        await bookmarkManager.storeIcon(bookmark);
                     }
 
                     if (page.title)
@@ -257,7 +257,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
                 await cleanUpLocalFileCapture(message);
 
                 bookmark.uri = "";
-                await backend.updateBookmark(bookmark);
+                await bookmarkManager.updateBookmark(bookmark);
 
                 return saveContent(bookmark, content);
             }
@@ -265,12 +265,12 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
                 const page = await packUrlExt(message.url, message.hide_tab);
                 if (page.icon) {
                     bookmark.icon = page.icon
-                    await backend.storeIcon(bookmark);
+                    await bookmarkManager.storeIcon(bookmark);
                 }
 
                 bookmark.name = page.title;
 
-                await backend.updateBookmark(bookmark);
+                await bookmarkManager.updateBookmark(bookmark);
 
                 return saveContent(bookmark, page.html);
             }
@@ -291,12 +291,12 @@ async function nodeToAPIObject(node) {
     if (node) {
         const comments =
             node.has_comments
-                ? await backend.fetchComments(node.id)
+                ? await bookmarkManager.fetchComments(node.id)
                 : undefined;
 
         const icon =
             node.stored_icon
-                ? await backend.fetchIcon(node.id)
+                ? await bookmarkManager.fetchIcon(node.id)
                 : node.icon;
 
         const uuid =
@@ -342,7 +342,7 @@ receiveExternal.scrapyardGetUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
-    const node = await backend.getNode(message.uuid, true);
+    const node = await bookmarkManager.getNode(message.uuid, true);
 
     return nodeToAPIObject(node);
 };
@@ -354,7 +354,7 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
     let entries;
     let container;
     if (message.uuid === null) {
-        entries = await backend.queryShelf();
+        entries = await bookmarkManager.queryShelf();
         container = true;
     }
     else {
@@ -369,10 +369,10 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
                 ? API_UUID_TO_DB[message.uuid]
                 : message.uuid;
 
-        const node = await backend.getNode(uuid, true);
+        const node = await bookmarkManager.getNode(uuid, true);
         container = node && isContainer(node);
         if (container)
-            entries = await backend.getChildNodes(node.id);
+            entries = await bookmarkManager.getChildNodes(node.id);
         else
             entries = [];
     }
@@ -395,15 +395,15 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
     let entries;
     let container;
     if (message.path === "/") {
-        entries = await backend.queryShelf();
+        entries = await bookmarkManager.queryShelf();
         container = true;
     }
     else {
-        const path = backend.expandPath(message.path);
-        const node = await backend.queryGroup(path);
+        const path = bookmarkManager.expandPath(message.path);
+        const node = await bookmarkManager.queryGroup(path);
         container = !!node;
         if (container)
-            entries = await backend.getChildNodes(node.id);
+            entries = await bookmarkManager.getChildNodes(node.id);
         else
             entries = [];
     }
@@ -449,7 +449,7 @@ receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
             message.todo_state = TODO_STATES[message.todo_state.toUpperCase()];
     }
 
-    const node = await backend.getNode(message.uuid, true);
+    const node = await bookmarkManager.getNode(message.uuid, true);
 
     Object.assign(node, message);
 
@@ -458,14 +458,14 @@ receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
         message.stored_icon = undefined;
     }
     else if (message.icon)
-        await backend.storeIcon(node);
+        await bookmarkManager.storeIcon(node);
 
     if (message.hasOwnProperty("comments")) {
-        await backend.storeComments(node.id, message.comments);
+        await bookmarkManager.storeComments(node.id, message.comments);
         delete node.comments;
     }
 
-    await backend.updateBookmark(node);
+    await bookmarkManager.updateBookmark(node);
 
     if (refresh)
         send.nodesUpdated();
@@ -475,10 +475,10 @@ receiveExternal.scrapyardRemoveUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
-    const node = await backend.getNode(message.uuid, true);
+    const node = await bookmarkManager.getNode(message.uuid, true);
 
     if (node)
-        await backend.deleteNodes(node.id);
+        await bookmarkManager.deleteNodes(node.id);
 
     if (message.refresh)
         send.nodesUpdated();
@@ -508,7 +508,7 @@ receiveExternal.scrapyardBrowseUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
-    const node = await backend.getNode(message.uuid, true);
+    const node = await bookmarkManager.getNode(message.uuid, true);
     if (node)
         browseNode(node);
 };

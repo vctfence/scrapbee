@@ -1,7 +1,7 @@
 import {settings} from "./settings.js";
 import {openContainerTab, openPage, scriptsAllowed, showNotification, updateTab} from "./utils_browser.js";
 import {capitalize, getMimetypeExt} from "./utils.js";
-import {backend} from "./backend.js";
+import {bookmarkManager} from "./backend.js";
 import {send} from "./proxy.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
@@ -117,7 +117,7 @@ async function captureNonHTMLTab(tab, bookmark) {
 
             bookmark.content_type = contentType;
 
-            await backend.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
+            await bookmarkManager.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
         }
     }
     catch (e) {
@@ -260,7 +260,7 @@ export async function browseNode(node, external_tab, preserve_history, container
                 }
             }
 
-            return backend.fetchBlob(node.id).then(async blob => {
+            return bookmarkManager.fetchBlob(node.id).then(async blob => {
                 if (blob) {
                     let objectURL = null;
                     let helperApp = false;
@@ -273,7 +273,7 @@ export async function browseNode(node, external_tab, preserve_history, container
 
                     if (!objectURL) {
                         if (blob.data) { // legacy string content
-                            let object = new Blob([await backend.reifyBlob(blob)],
+                            let object = new Blob([await bookmarkManager.reifyBlob(blob)],
                                 {type: blob.type? blob.type: "text/html"});
                             objectURL = URL.createObjectURL(object);
                         }

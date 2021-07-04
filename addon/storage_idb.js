@@ -17,6 +17,8 @@ import {
 
 import UUID from "./lib/uuid.js"
 import Dexie from "./lib/dexie.js"
+import {indexWords} from "./utils_html.js";
+import {notes2html} from "./notes_render.js";
 
 const dexie = new Dexie("scrapyard");
 
@@ -80,9 +82,8 @@ dexie.on('populate', () => {
     dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: DEFAULT_SHELF_UUID, date_added: new Date(), pos: 1});
 });
 
-class IDBStorage {
+class BookmarkStorage {
     constructor() {
-        this.STORAGE_TYPE_ID = "IDB";
         this._db = dexie;
     }
 
@@ -385,14 +386,6 @@ class IDBStorage {
         return nodes;
     }
 
-    queryTODO() {
-        return this._db.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
-    }
-
-    queryDONE() {
-        return this._db.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
-    }
-
     // returns nodes containing only the all given words
     async filterByContent(ids, words, index) {
         let matches = {};
@@ -472,7 +465,7 @@ class IDBStorage {
         return this._db.nodes.bulkDelete(ids);
     }
 
-    async wipeEveritying() {
+    async wipeEverything() {
         const retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
             ...(await this.queryFullSubtree(FIREFOX_SHELF_ID, true)),
             ...(await this.queryFullSubtree(CLOUD_SHELF_ID, true))];
@@ -533,6 +526,14 @@ class IDBStorage {
            .first();
     }
 
+    queryTODO() {
+        return this._db.nodes.where("todo_state").below(TODO_STATE_DONE).toArray();
+    }
+
+    queryDONE() {
+        return this._db.nodes.where("todo_state").aboveOrEqual(TODO_STATE_DONE).toArray();
+    }
+
     async queryGroups(sort = false) {
         const nodes = await this._db.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
 
@@ -541,6 +542,30 @@ class IDBStorage {
 
         return nodes;
     }
+
+    async storeIndex(nodeId, words) {
+        return this._db.index.add({
+            node_id: nodeId,
+            words: words
+        });
+    }
+
+    async updateIndex(nodeId, words) {
+        const exists = await this._db.index.where("node_id").equals(nodeId).count();
+
+        if (exists)
+            return this._db.index.where("node_id").equals(nodeId).modify({
+                words: words
+            });
+        else
+            return this.storeIndex(nodeId, words);
+    }
+
+    async fetchIndex(nodeId, isUUID = false) {
+        nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
+        return this._db.index.where("node_id").equals(nodeId).first();
+    }
+
 
     // at first all objects were stored as plain strings
     // modern implementation stores objects in blobs
@@ -583,12 +608,13 @@ class IDBStorage {
         await this.updateNode(node);
     }
 
-    async deleteBlob(nodeId) {
-        if (this._db.tables.some(t => t.name === "blobs"))
-            await this._db.blobs.where("node_id").equals(nodeId).delete();
+    async storeIndexedBlob(nodeId, data, contentType, byteLength, index) {
+        await this.storeBlobLowLevel(nodeId, data, contentType, byteLength);
 
-        if (this._db.tables.some(t => t.name === "index"))
-            await this._db.index.where("node_id").equals(nodeId).delete();
+        if (index?.words)
+            await this.storeIndex(nodeId, index.words);
+        else if (typeof data === "string" && !byteLength)
+            await this.storeIndex(nodeId, indexWords(data));
     }
 
     async fetchBlob(nodeId, isUUID = false) {
@@ -596,27 +622,12 @@ class IDBStorage {
         return this._db.blobs.where("node_id").equals(nodeId).first();
     }
 
-    async storeIndex(nodeId, words) {
-        return this._db.index.add({
-            node_id: nodeId,
-            words: words
-        });
-    }
+    async deleteBlob(nodeId) {
+        if (this._db.tables.some(t => t.name === "blobs"))
+            await this._db.blobs.where("node_id").equals(nodeId).delete();
 
-    async updateIndex(nodeId, words) {
-        const exists = await this._db.index.where("node_id").equals(nodeId).count();
-
-        if (exists)
-            return this._db.index.where("node_id").equals(nodeId).modify({
-                words: words
-            });
-        else
-            return this.storeIndex(nodeId, words);
-    }
-
-    async fetchIndex(nodeId, isUUID = false) {
-        nodeId = isUUID? await this._IdFromUUID(nodeId): nodeId;
-        return this._db.index.where("node_id").equals(nodeId).first();
+        if (this._db.tables.some(t => t.name === "index"))
+            await this._db.index.where("node_id").equals(nodeId).delete();
     }
 
     async storeNotesLowLevel(options) {
@@ -628,6 +639,33 @@ class IDBStorage {
             await this._db.notes.add(options);
 
         await this.updateNode({id: options.node_id, has_notes: !!options.content});
+    }
+
+    async storeIndexedNotes(options) {
+        await this.storeNotesLowLevel(options);
+
+        if (options.content) {
+            let words;
+
+            if (options.format === "delta" && options.html)
+                words = indexWords(options.html);
+            else {
+                if (options.format === "text")
+                    words = indexWords(options.content, false);
+                else {
+                    let html = notes2html(options);
+                    if (html)
+                        words = indexWords(html);
+                }
+            }
+
+            if (words)
+                await this.updateNotesIndex(options.node_id, words);
+            else
+                await this.updateNotesIndex(options.node_id, []);
+        }
+        else
+            await this.updateNotesIndex(options.node_id, []);
     }
 
     async fetchNotes(nodeId, isUUID = false) {
@@ -669,6 +707,17 @@ class IDBStorage {
 
         const node = {id: nodeId, has_comments: !!comments};
         await this.updateNode(node);
+    }
+
+    async storeIndexedComments(nodeId, comments) {
+        await this.storeCommentsLowLevel(nodeId, comments);
+
+        if (comments) {
+            let words = indexWords(comments, false);
+            await this.updateCommentIndex(nodeId, words);
+        }
+        else
+            await this.updateCommentIndex(nodeId, []);
     }
 
     async fetchComments(nodeId, isUUID = false) {
@@ -758,4 +807,4 @@ class IDBStorage {
 
 }
 
-export default IDBStorage;
+export default BookmarkStorage;
