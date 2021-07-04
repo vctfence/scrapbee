@@ -247,6 +247,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             "/js/dialog.js",
             "/js/content_script.js"
         ], request.frameId);
+    }else if(request.type == 'TAB_INNER_CALL0'){
+        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: 0});
     }else if(request.type == 'TAB_INNER_CALL'){
         // return browser.tabs.sendMessage(sender.tab.id, request);
         return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});

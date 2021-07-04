@@ -784,14 +784,17 @@ class BookTree {
         if(!$container || !($container.length))
             throw Error("invalid container")
         title = $.trim(title);
-        if (wait) icon = "/icons/loading.gif";
+        
         /** create item element */
         var title_encode = title.htmlEncode(), style="";
         var label = title_encode || "-- UNTITLED --";
         /** show icon */
-        if (icon) {
+        if (wait){
+            style = "background-image:url(/icons/loading.gif);";
+        }else if (icon) {
             style = "background-image:url(" + this.translateResource(icon, this.rdfPath, id) + ");";
         }
+
         var bf = new NodeHTMLBuffer(
             `<div id='${id}' class='item ${type}' title='${title_encode}' source='${source}'><input type='checkbox'/><i style='${style}'/><label>${label}</label>`,
             (type == "page" ? "<div class='origin'></div>" : "") + "</div>");

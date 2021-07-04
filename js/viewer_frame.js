@@ -2,16 +2,16 @@ function loadCssInline(id, href){
     $(`*[id='${id}']`).remove();
     $.get(href, null, null, "text").done(function(data, textStatus, jqXHR) {
         var el = document.createElement("style");
-        el.innerHTML = data;
+        el.textContent = data;
         el.id = id;
-        var head  = document.getElementsByTagName('body')[0];
+        var head  = document.querySelector('body');
         head.appendChild(el);
     });
 }
 
 function loadCss(id, href){
     $(`*[id='${id}']`).remove();
-    var head  = document.getElementsByTagName('head')[0];
+    var head  = document.querySelector('head');
     var link  = document.createElement('link');
     link.id = id;
     link.rel = 'stylesheet';
@@ -35,6 +35,10 @@ function isDescendant(parent, child) {
 class Editor{
     constructor(){
         var self = this;
+
+        var extension_id = browser.i18n.getMessage("@@extension_id");
+        loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/css/edit_markers.css`);
+
         browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             if(request.type == "INIT"){
                 self.tabId = sender.tab.id;
@@ -82,13 +86,16 @@ class Editor{
                 location.reload();
                 return Promise.resolve();
             }
-        });
+        });   
         window.addEventListener("keydown", function(e){
             if(e.key == "Escape"){
                 browser.runtime.sendMessage({type: "TAB_CALL", tabId:self.tabId, key:e.key, message: "onkeydown", frameId:0})
             }
         });
         window.addEventListener("mousedown", function(e){
+            var dom = document.elementFromPoint(e.pageX - window.scrollX, e.pageY - window.scrollY);
+            console.log(dom)
+            
             if(e.button == 0) {
                 browser.runtime.sendMessage({type: "TAB_CALL", tabId:self.tabId, message: "onmousedown", frameId:0})
                 /** remove dom node by cleaner */
@@ -184,9 +191,6 @@ class Editor{
         document.documentElement.innerHTML = request.html;
     }
 }
-
-var extension_id = browser.i18n.getMessage("@@extension_id");
-loadCssInline("scrapbee_editing_markers_css", `moz-extension://${extension_id}/css/edit_markers.css`);
 
 new Editor();
 true;

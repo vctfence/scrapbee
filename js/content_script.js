@@ -152,8 +152,16 @@ if(!window.scrapbee_injected){
     }
     /* capture content */
     async function gatherContent(isForSelection, name="index", path=""){
+
+        var nnn = name;
+
         var doc = document;
         var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+
+        function appendResource(resource){
+            browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "APPEND_RESOURCE", resource});
+        }
+        
         // injext all frames
         if(settings.saving_save_frames == "on"){
             await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
@@ -231,11 +239,13 @@ if(!window.scrapbee_injected){
                     for(let r of resources){
                         if(!distinct[r.url]){
                             distinct[r.url] = 1;
+                            r.path = path;
                             RESULT.push(r);
+                            appendResource(r)
                             if(r.saveas == "favicon.ico"){
                                 haveIcon = true;
                             }
-                            r.path = path;
+                            
                         }
                     }
                 }
@@ -244,6 +254,7 @@ if(!window.scrapbee_injected){
             var icon_url = await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
             if(icon_url && !RESULT.find(item => {return item.type == "image" && item.saveas == `favicon.ico`;})){
                 RESULT.push({type: "image", url: location.origin + "/favicon.ico", saveas: `favicon.ico`, path});
+                appendResource({type: "image", url: location.origin + "/favicon.ico", saveas: `favicon.ico`, path})
                 haveIcon = true;
             }
             /*** add main css tag */
@@ -264,17 +275,17 @@ if(!window.scrapbee_injected){
                     var iframe = frames[i];
                     var frameId = parseInt(iframe.getAttribute("scrapbee_frame_id"));
                     try{
-                        var name = "iframe" + (i + 1);
-                        var [_res, a, b] = await browser.runtime.sendMessage({
+                        var _name = "iframe" + (i + 1);
+                        var _res = await browser.runtime.sendMessage({
                             type: "CALL_FRAME",
                             action: "GATHER_CONTENT",
-                            path: path + name + "/",
-                            name: name,
+                            path: path + _name + "/",
+                            name: _name,
                             saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
                             frameId: frameId
                         });
                         RESULT = RESULT.concat(_res);
-                        iframe.setAttribute("src", name + "/index.html");
+                        iframe.setAttribute("src", _name + "/index.html");
                     }catch(e){
                         // consele.log(e) // can not log?
                     }
@@ -283,11 +294,16 @@ if(!window.scrapbee_injected){
             /*** html page and css */
             RESULT.push({type: "text", mime:"text/css", saveas: `${path}index.css`, content: css.join("\n")});
             RESULT.push({type: "text", mime:"text/html", url: doc.location.href, saveas: `${path}index.html`, content: segment.html().trim()});
+            
+            appendResource({type: "text", mime:"text/css", saveas: `${path}index.css`, content: css.join("\n")})
+            appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${path}index.html`, content: segment.html().trim(), path,
+                            isLast: name == "index", title: doc.title, haveIcon})
+            
             /** remove unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.removeAttribute("scrapbee_unique_id");
-            });       
-            resolve([RESULT, doc.title, haveIcon]);
+            });
+            resolve(RESULT);
         });
     };
     function startBookmark(rdf, rdfPath, itemId){
@@ -306,137 +322,142 @@ if(!window.scrapbee_injected){
         dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
             var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
             var res = [];
+            var title = ""
+            var haveIcon = false
+            var blobfile = {};
+            var remain = 0;
+
             // toplevel page
             autoClose = settings.auto_close_saving_dialog == "on" || autoClose;
             dlgDownload.hideButton()
             dlgDownload.addHeader("type", "source", "destination", "status");
-            dlgDownload.hint = "Gathering resources...";            
+            dlgDownload.hint = "Fetch resources...";            
             dlgDownload.show();
-            try{
-                var [r, title, haveIcon] = await gatherContent(saveType == "SAVE_SELECTION");
-            }catch(e){
-                browser.runtime.sendMessage({type:'REMOVE_FAILED_NODE', haveIcon, rdf, itemId});
-                dlgDownload.remove();
-                unlock();
-                return alert(e);
-            }
-            res = res.concat(r);
-            dlgDownload.hint = "Downloading...";
-            var blobfile = {};
-            function download(){
-                return new Promise((resolve, reject)=>{
+
+            function gather(){
+                return new Promise(async (resolve, reject) => {
+                    try{
+                        gatherContent(saveType == "SAVE_SELECTION");
+                    }catch(e){
+                        browser.runtime.sendMessage({type:'REMOVE_FAILED_NODE', haveIcon, rdf, itemId});
+                        dlgDownload.remove();
+                        unlock();
+                        reject(e);
+                    }
                     var downloaded = 0;
-                    res.forEach(function(r, i){
-                        var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
-                        var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
-                        if(r.type == "image"){
-                            dlgDownload.addRow("", sourceLink, "",
-                                               `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignore</span>`);
-                            var span = dlgDownload.getCell(i, 3).querySelector("span");
-                            span.onclick = function(e){ // ignore this resource (cancel downloading)
-                                downloaded ++;
-                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>canceled</font>");
-                                r.failed = 1;
-                                if(downloaded == res.length){
-                                    resolve();
-                                }
-                            };
-                            downloadFile(r.url, function(b){
-                                var ext = getMainMimeExt(b.type) || "";
-                                r.filename = r.path + (r.saveas || (r.hex + ext));
-                                blobfile[r.hex] = (r.saveas || (r.hex + ext));
-                                if(b){
-                                    r.blob = b;
-                                    dlgDownload.updateCell(i, 0, b.type);
-                                    if(b.type)
-                                        dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
-                                }else{
-                                    if(r.saveas == "favicon.ico")
-                                        haveIcon = false;
-                                    dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                    var added = 0;
+                    var all = "";
+                    function inc(n, r){
+                        downloaded ++;
+                        if(!r.failed)
+                            dlgDownload.updateCell(n, 2, r.filename);
+                        if(downloaded == res.length && all == "loaded"){
+                            resolve();
+                        }
+                    }
+                    browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+                        if(request.type == "TAB_INNER_CALL" && request.action == "APPEND_RESOURCE"){
+                            var i = added++;
+                            var r = request.resource;
+                            res.push(r);
+                            if(r.isLast){
+                                title = r.title;
+                                haveIcon = r.haveIcon;
+                                all = "loaded"
+                            }
+                            var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
+                            var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
+                            if(r.type == "image"){
+                                dlgDownload.addRow("", sourceLink, "", `<font style='color:#005500'>waiting</font>`);
+                                dlgDownload.updateCell(i, 3, `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignore</span>`);
+                                var span = dlgDownload.getCell(i, 3).querySelector("span");
+                                span.onclick = function(e){ // ignore this resource (cancel downloading)
+                                    dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>canceled</font>");
                                     r.failed = 1;
-                                }
-                                downloaded ++;
-                                dlgDownload.updateCell(i, 2, r.filename);
-                                if(downloaded == res.length){
-                                    resolve();
-                                }
-                            });
-                        }else{
-                            r.filename = r.saveas;
-                            dlgDownload.addRow(r.mime, sourceLink, r.filename, "<font style='color:#005500'>buffered</font>");
-                            downloaded++;
-                            if(downloaded == res.length){
-                                resolve();
-                            }                                
+                                    inc(i, r);
+                                };
+                                // download
+                                downloadFile(r.url, function(b){
+                                    var ext = getMainMimeExt(b.type) || "";
+                                    r.filename = r.path + (r.saveas || (r.hex + ext));
+                                    blobfile[r.hex] = (r.saveas || (r.hex + ext));
+                                    if(b){
+                                        r.blob = b;
+                                        dlgDownload.updateCell(i, 0, b.type);
+                                        if(b.type)
+                                            dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
+                                        // save
+                                        r.path = `${rdfPath}/data/${itemId}/${r.filename}`;
+                                        browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: r}).then((response) => {
+                                            dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
+                                            inc(i, r);
+                                        }).catch(e => {
+                                            dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                            log.error(e.message);
+                                            r.failed = 1;
+                                            inc(i, r);
+                                        });
+                                    }else{ // download failed
+                                        if(r.saveas == "favicon.ico")
+                                            haveIcon = false;
+                                        dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                        r.failed = 1;
+                                        inc(i, r);
+                                    }
+                                });
+                            }else{
+                                r.filename = r.saveas
+                                dlgDownload.addRow(r.mime, sourceLink, "", "<font style='color:#005500'>waiting</font>");
+                                remain ++;
+                                inc(i, r)
+                            }
                         }
                     });
                 });
             }
-            await download();
-            dlgDownload.hint = "Saving data...";
-
-            function save(){
-                return new Promise((resolve, reject)=>{
-                    var saved = 0;
-                    function inc(){
-                        if(++saved == res.length)
-                            resolve();
-                    }
-                    res.forEach(function(item, i){
-                        if(item.failed){
-                            inc();
-                        }else if(item.blob){
-                            item.path = `${rdfPath}/data/${itemId}/${item.filename}`;
-                            browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item}).then((response) => {
-                                dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
-                                inc();
-                            }).catch(e => {
-                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
-                                log.error(e.message);
-                                inc();
-                            });
+            await gather();
+            res.forEach(function(r, i){
+                if(r.type != "image"){
+                    if(r.mime == "text/html"){
+                        var node = document.doctype;
+                        if(node){
+                            var doctype = "<!DOCTYPE "
+                                + node.name
+                                + (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '')
+                                + (!node.publicId && node.systemId ? ' SYSTEM' : '') 
+                                + (node.systemId ? ' "' + node.systemId + '"' : '')
+                                + '>';
+                            content = [doctype, content].join("\n");
                         }else{
-                            var path = `${rdfPath}/data/${itemId}/${item.filename}`;
-                            var content = item.content;
-                            for(hex in blobfile){
-                                var reg = new RegExp(hex, "g" );
-                                if(hex) content = content.replace(reg, blobfile[hex]);
-                            }                            
-                            if(item.mime == "text/html"){
-                                var node = document.doctype;
-                                if(node){
-                                    var doctype = "<!DOCTYPE "
-                                        + node.name
-                                        + (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '')
-                                        + (!node.publicId && node.systemId ? ' SYSTEM' : '') 
-                                        + (node.systemId ? ' "' + node.systemId + '"' : '')
-                                        + '>';
-                                    content = [doctype, content].join("\n");
-                                }else{
-                                    content = ['<!Doctype html>', content,].join("\n");
-                                }
+                            content = ['<!Doctype html>', content,].join("\n");
+                        }
+                    }
+                    var path = `${rdfPath}/data/${itemId}/${r.saveas}`;
+                    var content = r.content;
+                    for(hex in blobfile){
+                        if(hex){
+                            var reg = new RegExp(hex, "g" );
+                            content = content.replace(reg, blobfile[hex]);
+                        }
+                    }
+                    browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, rdf, itemId});
+                        dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
+                    }).catch(e=>{
+                        dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                        log.error(e.message);
+                    }).finally(()=>{
+                        if(!(--remain)){
+                            dlgDownload.hint = "Finished";
+                            dlgDownload.showButton();
+                            if(autoClose){
+                                unlock();
+                                dlgDownload.remove();
                             }
-                            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
-                                dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
-                                inc();
-                            }).catch(e=>{
-                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
-                                log.error(e.message);
-                                inc();
-                            });
                         }
                     });
-                })
-            };
-            await save();
-            dlgDownload.hint = "All done";
-            dlgDownload.showButton();
-            browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, rdf, itemId});
-            if(autoClose){
-                unlock();
-                dlgDownload.remove();
-            }
+                }
+            });
         }, function(r){ // click ok
             unlock();
             dlgDownload.remove();
