@@ -358,7 +358,7 @@ function executeScriptsInTab(tabId, files, frameId=0){
                 var f = files.shift();
                 // injection into page -> about:debugging, about:addons causes an error
                 browser.tabs.executeScript(tabId, {file: f, frameId, runAt: "document_start"}).then(() => { // frameId, allFrames
-                    console.log(`success inject file ${f}`)
+                    // console.log(`success inject file ${f}`)
                     sendone();
                 }).catch((e)=>{
                     reject(Error(`failed to inject file ${f}, ${e.message}, ${frameId}`))
@@ -477,7 +477,7 @@ function downloadFile(url){
             // };
             xmlhttp.onreadystatechange=function(){
                 if(request.readyState == 4 && request.status == 200){
-                    console.log(xmlhttp.response)
+                    // console.log(xmlhttp.response)
                     resolve(xmlhttp.response);
                 }else if(request.status == 500){
                     reject(Error(request.responseText));

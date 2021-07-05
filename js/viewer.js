@@ -231,6 +231,11 @@ class EditToolBar{
                 browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: self.frameId}).then(function(){})
                 self.btnEditing.value = chrome.i18n.getMessage(mode == "edit" ? "STOP_EDIT_CONTENT" : "EDIT_CONTENT");
                 self.btnEditing.disabled = false;
+                browser.webNavigation.getAllFrames({tabId: self.tabId}).then((frames)=>{
+                    for(var i=2; i<frames.length-1;i++){
+                        browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: frames[i].frameId}).then(function(){})
+                    }
+                });
             } else if(mode == "source" || self.mode == "source"){
                 if(mode == "source"){
                     self.dlgSource = self.showSourceDlg();
@@ -255,7 +260,7 @@ document.addEventListener('DOMContentLoaded',async function(){
     document.querySelector("link[rel='shortcut icon']").href= `${rootAddress}/favicon.ico`;
     browser.runtime.sendMessage({type:'GET_TAB_ID'}).then((tabId) => {
         browser.webNavigation.getAllFrames({tabId}).then((frames)=>{
-            var frameId = frames[1].frameId
+            var frameId = frames[1].frameId;
             var url = `${rootAddress}/index.html?scrapbee_refresh=` + new Date().getTime();
             browser.webNavigation.onDOMContentLoaded.addListener((details) => {
                 try{

@@ -474,7 +474,8 @@ window.onload=async function(){
     /** */
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
-        if(drop && drop.value)loadXml(drop.value);
+        showRdfList();
+        // if(drop && drop.value)loadXml(drop.value);
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
