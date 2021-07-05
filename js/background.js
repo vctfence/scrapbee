@@ -23,16 +23,16 @@ function loadBrowserInfo(){
         if(browser_info_status == "loaded"){
             resolve();
         } else if(browser_info_status == "loading"){
-            function wait(){
-                setTimeout(function(){
+            new (function (){
+                var self = this;
+                setTimeout(()=>{
                     if(browser_info_status == "loaded"){
                         resolve();
                     }else{
-                        wait();
+                        self.constructor();
                     }
-                }, 1000);
-            }
-            wait();
+                }, 1000)
+            })();
         } else {
             browser_info_status = "loading";
             browser.runtime.getBrowserInfo().then(function(info) {
@@ -50,9 +50,9 @@ function loadBrowserInfo(){
                     browser.runtime.getPlatformInfo().then((p)=>{
                         var os = p.os.capitalize();
                         log.info(`platform = ${os} ${p.arch}`);
+                        browser_info_status = "loaded";
+                        resolve();
                     });
-                    browser_info_status = "loaded";
-                    resolve();
                 }
             });
         }
@@ -60,7 +60,7 @@ function loadBrowserInfo(){
 }
 loadBrowserInfo().then(async () => {
     await settings.loadFromStorage();
-    startWebServer(5, "background");
+    startWebServer(20, "background");
 })
 /* backend*/
 var backend_inst_port;
@@ -73,11 +73,11 @@ function communicate(command, body, callback){
             backend_inst_port.onDisconnect.addListener((p) => {
                 if (p.error) {
                     var em = `backend disconnected due to an error: ${p.error.message}`
-                    // log.error(em);
+                    log.error(em);
                     reject(Error(em));
                 }else{
                     var em = `backend disconnected`;
-                    // log.error(em);
+                    log.error(em);
                     reject(Error(em));
                 }
             });
@@ -86,12 +86,12 @@ function communicate(command, body, callback){
             reject(backend_inst_port.error);
         }else{
             body.command = command;
-            backend_inst_port.postMessage(JSON.stringify(body));
             var listener = (response) => {
                 resolve(response)
                 backend_inst_port.onMessage.removeListener(listener);
             };
             backend_inst_port.onMessage.addListener(listener);
+            backend_inst_port.postMessage(JSON.stringify(body));
         }
     });
 }
@@ -128,7 +128,7 @@ function startWebServer(try_times){
                         return startWebServer(try_times - 1);
                     }
                 }).fail(function(e){
-                    if(e.status > 0){ // old backend
+                    if(e.status > 0){ // old version backend
                         web_status == "launched"
                         showInfo({});
                         resolve();
@@ -138,22 +138,22 @@ function startWebServer(try_times){
                     }
                 });
             } else if(web_status == "launching"){
-                function wait(){
-                    setTimeout(function(){
-                        if(web_status == "launched"){
+                new (function (){
+                    var self = this;
+                    setTimeout(()=>{
+                        if(browser_info_status == "launched"){
                             resolve();
                         }else{
-                            wait();
+                            self.constructor();
                         }
-                    }, 1000);
-                }
-                wait();
+                    }, 1000)
+                })();
             } else {
                 web_status = "launching";
                 loadBrowserInfo().then(() => {
                     log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
                     communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
-                        if(r.Serverstate != "ok"){ 
+                        if(r.Serverstate != "ok"){
                             log.error(`failed to start backend service: ${r.Error}`);
                             web_status = "error";
                             if(try_times > 0){
@@ -164,9 +164,12 @@ function startWebServer(try_times){
                                 return reject(Error(ms));
                             }
                         }else{
+                            web_status == "launched"
                             showInfo(r);
                             resolve();
                         }
+                    }).catch((e) => {
+                        log.error(e)
                     })
                 })
             }
@@ -179,7 +182,7 @@ function startWebServer(try_times){
 settings.onchange=function(key, value){
     if(key == "backend"){
         web_status = ""
-        startWebServer(5);
+        startWebServer(20);
     }
 };
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -247,8 +250,6 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             "/js/dialog.js",
             "/js/content_script.js"
         ], request.frameId);
-    }else if(request.type == 'TAB_INNER_CALL0'){
-        return browser.tabs.sendMessage(sender.tab.id, request, {frameId: 0});
     }else if(request.type == 'TAB_INNER_CALL'){
         // return browser.tabs.sendMessage(sender.tab.id, request);
         return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});
@@ -291,10 +292,10 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             function check(){
                 times --;
                 // log.info(web_status)
-                if(times < 1){
-                    reject(Error("max times tried"));
-                }else if(web_status == "launched"){
+                if(web_status == "launched"){
                     resolve()
+                }else if(times < 1){
+                    reject(Error("max times tried"));
                 }else if(web_status == "failed"){
                     reject(Error("backend failed"));
                 }else{

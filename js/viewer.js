@@ -41,7 +41,7 @@ class EditToolBar{
         return false;
     }
     saveDoc(){
-        var self=this;
+        var self = this;
         browser.tabs.sendMessage(self.tabId, {type: "GET_HTML"}, {frameId: self.frameId}).then(function(code){
             browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text:code, path: self.scrapPath + "index.html"}).then((response) => {
                 alert("Content saved");
@@ -94,48 +94,23 @@ class EditToolBar{
     async buildTools(){
         var self = this;
         /** toolbar */
-        $(".scrapbee-edit-bar").remove();
-        var div = document.createElement("div");
-        div.className = "scrapbee-edit-bar";
-        document.body.appendChild(div);
-        this.divToolbar = div;
-        /** icon */
-        var img = document.createElement("img");
-        img.className = "scrapbee-icon";
-        img.src = `/icons/bee.png`;
-        div.appendChild(img);
-        div.innerHTML +=" &nbsp;&nbsp;";
-        /** body */
-        document.body.style.marginBottom = "100px";
-        document.body.style.paddingLeft = "0px";
-        document.body.style.marginLeft = "0px";
+        var div = this.divToolbar = document.body.querySelector(".scrapbee-edit-bar");
+        var buttons = this.divToolbar.querySelectorAll("input[type=button]");
         /** save button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.className = "yellow-button";
-        btn.value = chrome.i18n.getMessage("save");
-        div.appendChild(btn);
-        btn.addEventListener("click", function(){
+        buttons[0].value = chrome.i18n.getMessage("save");
+        buttons[0].addEventListener("click", function(){
             self.saveDoc();
         });
         /** modify dom button (cleaning) */
-        var btn = document.createElement("input");
-        self.btnDomClean =  btn;
-        btn.type = "button";
-        btn.className = "blue-button";
-        btn.value = chrome.i18n.getMessage("MODIFY_DOM_ON");
-        div.appendChild(btn);
-        btn.addEventListener("click", function(){
+        self.btnDomClean =  buttons[1];
+        buttons[1].value = chrome.i18n.getMessage("MODIFY_DOM_ON");
+        buttons[1].addEventListener("click", function(){
             self.toggleStatus(self.mode == "clean" ? "unlock" : "clean");
         });
         /** mark pen button */
-        var btn = document.createElement("input");
-        self.btnMarkPen = btn;
-        btn.type = "button";
-        btn.className = "blue-button mark-pen-btn";
-        btn.value = chrome.i18n.getMessage("MARK_PEN");
-        div.appendChild(btn);
-        btn.addEventListener("click", function(e){
+        self.btnMarkPen = buttons[2];
+        buttons[2].value = chrome.i18n.getMessage("MARK_PEN");
+        buttons[2].addEventListener("click", function(e){
             self.toggleStatus(self.mode == "mark" ? "unlock" : "mark");
         });
         /** mark pen menu */
@@ -148,58 +123,42 @@ class EditToolBar{
         });
         $(`<div class='scrapbee-menu-item'>Clear Marks</div>`).appendTo($item);
         /** markers */
-        for (let child of ["scrapbee-marker-a1", "scrapbee-marker-a2", "scrapbee-marker-a3",
-                           "scrapbee-marker-a4", "scrapbee-marker-a5", "scrapbee-marker-a6",
-                           "scrapbee-marker-b1", "scrapbee-marker-b2", "scrapbee-marker-b3", "scrapbee-marker-b4"]){
+        for (let child of ["a1", "a2", "a3", "a4", "a5", "a6", "b1", "b2", "b3", "b4", "b5", "c1", "c2"]){
             var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
                 e.preventDefault();
                 self.toggleStatus("unlock");
-                browser.tabs.sendMessage(self.tabId, {type: "MARK_PEN", marker: child}, {frameId: self.frameId}).then(function(){})
+                browser.tabs.sendMessage(self.tabId, {type: "MARK_PEN", marker: `scrapbee-marker-${child}`}, {frameId: self.frameId}).then(function(){})
             });
-            $(`<div class='scrapbee-menu-item ${child}'>Example Text</div>`).appendTo($item);
+            $(`<div class='scrapbee-menu-item scrapbee-marker-${child}'>Example Text</div>`).appendTo($item);
         }
         this.menu = $m[0];
         /** editing button */
-        var btn = document.createElement("input");
+        var btn = buttons[3];
         self.btnEditing = btn;
-        btn.type = "button";
-        btn.className = "blue-button";
         btn.value = chrome.i18n.getMessage("EDIT_CONTENT");
-        div.appendChild(btn);
         btn.addEventListener("click", function(){
             self.toggleStatus(self.mode == "edit" ? "unlock" : "edit");
         });
         /** source code button */
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.className = "blue-button";
+        var btn = buttons[4];
         btn.value = chrome.i18n.getMessage("SOURCE_CODE");
-        div.appendChild(btn);
         btn.addEventListener("click", function(){
             self.toggleStatus("source")
         });
         /** reload button */
-        var btn = document.createElement("input");
-        btn.type="button";
-        btn.className="blue-button";
+        var btn = buttons[5];
         btn.value=chrome.i18n.getMessage("Reload");
-        div.appendChild(btn);
         btn.addEventListener("click", function(){
             self.toggleStatus("lock");
             browser.tabs.sendMessage(self.tabId, {type: "RELOAD"}, {frameId: self.frameId}).then(function(){});
         });
         /** locate button */
-        var btn = document.createElement("input");;
-        btn.type = "button";
-        btn.className = "blue-button locater";
-        btn.value = ""
-        btn.style.backgroundImage=`url('/icons/locate.svg')`;
+        var btn = buttons[6];
         btn.title = "{LOCATE_NODE}".translate();
-        div.appendChild(btn);
         btn.addEventListener("click", function(e){
             browser.runtime.sendMessage({type: 'LOCATE_ITEM', id:self.scrapId });
         });
-        /** press esc to cancel cleaning for marking */
+        /** press esc to cancel actions */
         document.addEventListener("keydown", function(e){
             if(e.key == "Escape"){
                 self.toggleStatus("unlock");
@@ -231,6 +190,11 @@ class EditToolBar{
                 browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: self.frameId}).then(function(){})
                 self.btnEditing.value = chrome.i18n.getMessage(mode == "edit" ? "STOP_EDIT_CONTENT" : "EDIT_CONTENT");
                 self.btnEditing.disabled = false;
+                browser.webNavigation.getAllFrames({tabId: self.tabId}).then((frames)=>{
+                    for(var i=2; i<frames.length-1;i++){
+                        browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: frames[i].frameId}).then(function(){})
+                    }
+                });
             } else if(mode == "source" || self.mode == "source"){
                 if(mode == "source"){
                     self.dlgSource = self.showSourceDlg();
@@ -245,7 +209,7 @@ class EditToolBar{
         }
     }
 }
-document.addEventListener('DOMContentLoaded',async function(){
+document.addEventListener('DOMContentLoaded', async function(){
     await settings.loadFromStorage();
     var editbar;
     var params = getUrlParams(location.search)
@@ -255,7 +219,7 @@ document.addEventListener('DOMContentLoaded',async function(){
     document.querySelector("link[rel='shortcut icon']").href= `${rootAddress}/favicon.ico`;
     browser.runtime.sendMessage({type:'GET_TAB_ID'}).then((tabId) => {
         browser.webNavigation.getAllFrames({tabId}).then((frames)=>{
-            var frameId = frames[1].frameId
+            var frameId = frames[1].frameId;
             var url = `${rootAddress}/index.html?scrapbee_refresh=` + new Date().getTime();
             browser.webNavigation.onDOMContentLoaded.addListener((details) => {
                 try{
@@ -265,6 +229,7 @@ document.addEventListener('DOMContentLoaded',async function(){
                         ], frameId).then(function(){
                             browser.tabs.sendMessage(tabId, {type: "INIT", frameId}, {frameId}).then((status)=>{
                                 if(status == "ok"){
+
                                     if(!editbar){
                                         editbar = new EditToolBar(`${params.path}/data/${params.id}/`, params.id, tabId, frameId);
                                         editbar.toggleStatus("lock");

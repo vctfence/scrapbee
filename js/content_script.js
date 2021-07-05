@@ -7,7 +7,6 @@ if(!window.scrapbee_injected){
     ///////////////////////////////
     window.scrapbee_injected = true;
     var currDialog;
-    var dlgDownload;
     ///////////////////////////////
     function stringifyArgs(args){
         var ar = Array.from(args); 
@@ -33,7 +32,7 @@ if(!window.scrapbee_injected){
             log.sendLog("warning", stringifyArgs(arguments));
         },
         debug: function(){
-            // log.sendLog("debug", stringifyArgs(arguments))
+            log.sendLog("debug", stringifyArgs(arguments))
         },
         clear: function(){
             browser.runtime.sendMessage({type:'CLEAR_LOG'});
@@ -151,10 +150,7 @@ if(!window.scrapbee_injected){
         });
     }
     /* capture content */
-    async function gatherContent(isForSelection, name="index", path=""){
-
-        var nnn = name;
-
+    async function gatherContent(isForSelection, name="index", subPath=""){
         var doc = document;
         var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
 
@@ -229,18 +225,16 @@ if(!window.scrapbee_injected){
             }
             /** gather resources and inline styles */
             var distinct = {};
-            var RESULT = [];
             var haveIcon = false;
             segment.childNodes.iterateAll(function(item){
                 if(item.nodeType == 1){
                     var el = new ScrapbeeElement(item)
                     var resources = el.processResources();
-                    // el.processInlineStyle();
+                    el.processInlineStyle();
                     for(let r of resources){
                         if(!distinct[r.url]){
                             distinct[r.url] = 1;
-                            r.path = path;
-                            RESULT.push(r);
+                            r.subPath = subPath;
                             appendResource(r)
                             if(r.saveas == "favicon.ico"){
                                 haveIcon = true;
@@ -250,13 +244,6 @@ if(!window.scrapbee_injected){
                     }
                 }
             });
-            /*** fav icon */
-            var icon_url = await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
-            if(icon_url && !RESULT.find(item => {return item.type == "image" && item.saveas == `favicon.ico`;})){
-                RESULT.push({type: "image", url: location.origin + "/favicon.ico", saveas: `favicon.ico`, path});
-                appendResource({type: "image", url: location.origin + "/favicon.ico", saveas: `favicon.ico`, path})
-                haveIcon = true;
-            }
             /*** add main css tag */
             var mc = doc.createElement("link");
             mc.rel="stylesheet";
@@ -264,7 +251,7 @@ if(!window.scrapbee_injected){
             mc.media="screen";
             var head = segment.querySelectorAll("head");
             if(head.length){
-                head[0].appendChild(mc);
+                head[0].insertBefore(mc, head[0].firstChild)
             }
             /*** remove tags not wanted */
             segment.querySelectorAll("*[mark_remove='1']").forEach(el => el.remove());
@@ -279,61 +266,61 @@ if(!window.scrapbee_injected){
                         var _res = await browser.runtime.sendMessage({
                             type: "CALL_FRAME",
                             action: "GATHER_CONTENT",
-                            path: path + _name + "/",
+                            subPath: subPath + _name + "/",
                             name: _name,
                             saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
                             frameId: frameId
                         });
-                        RESULT = RESULT.concat(_res);
                         iframe.setAttribute("src", _name + "/index.html");
                     }catch(e){
-                        // consele.log(e) // can not log?
+                        consele.log(e)
                     }
                 }
             }
             /*** html page and css */
-            RESULT.push({type: "text", mime:"text/css", saveas: `${path}index.css`, content: css.join("\n")});
-            RESULT.push({type: "text", mime:"text/html", url: doc.location.href, saveas: `${path}index.html`, content: segment.html().trim()});
-            
-            appendResource({type: "text", mime:"text/css", saveas: `${path}index.css`, content: css.join("\n")})
-            appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${path}index.html`, content: segment.html().trim(), path,
+            appendResource({type: "text", mime:"text/css", saveas: `${subPath}index.css`, content: css.join("\n")})
+            appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
                             isLast: name == "index", title: doc.title, haveIcon})
-            
             /** remove unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.removeAttribute("scrapbee_unique_id");
             });
-            resolve(RESULT);
+            resolve();
         });
     };
-    function startBookmark(rdf, rdfPath, itemId){
-        browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((url) => {
-            // if(icon.match(/^data:image/i)) // base64
-            var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
-            browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
-                // var icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: !!url, rdf, itemId});
-                // todo: showNotification({message: `Capture url "${document.title}" done`, title: "Info"});
-            });
+    function saveBookmarkIcon(rdf, rdfPath, itemId){
+        var icon = "";
+        Array.forEach.call(document.querySelectorAll("link"), function(item){
+            var el = new ScrapbeeElement(item)
+            var resources = el.processResources();
+            if(resources.length)
+                if(resources[0].saveas == "favicon.ico")
+                    icon = resources[0].url;
         });
+        if(icon){
+            var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
+            browser.runtime.sendMessage({type: "DOWNLOAD_FILE", icon, filename, itemId}).then(() => {
+                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: true, rdf, itemId});
+            });
+        }else{
+            browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: false, rdf, itemId});
+        }
     }
     async function startCapture(saveType, rdf, rdfPath, itemId, autoClose=false){
         if(!lock()) return;
-        dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
+        var dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
             var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
             var res = [];
             var title = ""
             var haveIcon = false
             var blobfile = {};
             var remain = 0;
-
             // toplevel page
             autoClose = settings.auto_close_saving_dialog == "on" || autoClose;
-            dlgDownload.hideButton()
+            dlgDownload.hideButton();
             dlgDownload.addHeader("type", "source", "destination", "status");
-            dlgDownload.hint = "Fetch resources...";            
+            dlgDownload.hint = "Fetch resources...";
             dlgDownload.show();
-
             function gather(){
                 return new Promise(async (resolve, reject) => {
                     try{
@@ -352,18 +339,19 @@ if(!window.scrapbee_injected){
                         if(!r.failed)
                             dlgDownload.updateCell(n, 2, r.filename);
                         if(downloaded == res.length && all == "loaded"){
+                            browser.runtime.onMessage.removeListener(receive);
                             resolve();
                         }
                     }
-                    browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+                    function receive(request, sender, sendResponse) {
                         if(request.type == "TAB_INNER_CALL" && request.action == "APPEND_RESOURCE"){
-                            var i = added++;
+                            var i = added ++;
                             var r = request.resource;
                             res.push(r);
                             if(r.isLast){
                                 title = r.title;
                                 haveIcon = r.haveIcon;
-                                all = "loaded"
+                                all = "loaded";
                             }
                             var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
                             var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
@@ -379,7 +367,7 @@ if(!window.scrapbee_injected){
                                 // download
                                 downloadFile(r.url, function(b){
                                     var ext = getMainMimeExt(b.type) || "";
-                                    r.filename = r.path + (r.saveas || (r.hex + ext));
+                                    r.filename = r.subPath + (r.saveas || (r.hex + ext));
                                     blobfile[r.hex] = (r.saveas || (r.hex + ext));
                                     if(b){
                                         r.blob = b;
@@ -412,7 +400,8 @@ if(!window.scrapbee_injected){
                                 inc(i, r)
                             }
                         }
-                    });
+                    };
+                    browser.runtime.onMessage.addListener(receive);
                 });
             }
             await gather();
@@ -484,7 +473,7 @@ if(!window.scrapbee_injected){
                 });
             }
         }else if(request.type == "GATHER_CONTENT") {
-            return gatherContent(request.saveType == "SAVE_SELECTION", request.name, request.path);
+            return gatherContent(request.saveType == "SAVE_SELECTION", request.name, request.subPath);
         }else if(request.type == 'SAVE_PAGE_REQUEST' || request.type == 'SAVE_SELECTION_REQUEST'){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));
@@ -495,7 +484,7 @@ if(!window.scrapbee_injected){
             });
         }else if(request.type == 'SAVE_URL_REQUEST'){
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
-                startBookmark(r.rdf, r.rdfPath, r.itemId);
+                saveBookmarkIcon(r.rdf, r.rdfPath, r.itemId);
             });
         }else if(request.type == "TAB_INNER_CALL" && request.dest == "CONTENT_PAGE"){
             if(request.action == "CANCEL_CAPTURE"){
@@ -513,7 +502,7 @@ if(!window.scrapbee_injected){
                         browser.runtime.sendMessage(request_new);
                     }
                     if(request.saveType == "SAVE_URL"){
-                        startBookmark(request.rdf, request.rdfPath, request.itemId);
+                        saveBookmarkIcon(request.rdf, request.rdfPath, request.itemId);
                     }else{
                         startCapture(request.saveType, request.rdf, request.rdfPath, request.itemId);
                     }

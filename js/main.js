@@ -299,9 +299,7 @@ function showRdfList(){
                 drop.select(names[0], paths[0]);
             }
         }
-
     });
-
 }
 function applyAppearance(){
     var id = "scrapbee_setting_style";
@@ -474,7 +472,8 @@ window.onload=async function(){
     /** */
     var btn = document.getElementById("btnLoad");
     btn.onclick = function(){
-        if(drop && drop.value)loadXml(drop.value);
+        showRdfList();
+        // if(drop && drop.value)loadXml(drop.value);
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
@@ -524,7 +523,7 @@ window.onload=async function(){
     }
     /**  */
     applyAppearance();
-    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 20}).then((response) => {
         loadAll();
     }).catch((e) => {
         log.error("failed to start backend, please check installation and settings");

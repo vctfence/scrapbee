@@ -2,7 +2,7 @@ function loadCssInline(id, href){
     $(`*[id='${id}']`).remove();
     $.get(href, null, null, "text").done(function(data, textStatus, jqXHR) {
         var el = document.createElement("style");
-        el.textContent = data;
+        el.textContent = "\n"+data;
         el.id = id;
         var head  = document.querySelector('body');
         head.appendChild(el);

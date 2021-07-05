@@ -1,37 +1,13 @@
-.scrapbee-marker-a1{
-    color:#fff !important;
-    background:#00f !important;
-}
-.scrapbee-marker-a2{
-    color:#f00 !important;
-    background:#f00  !important;
-    color:#fff !important;
-}
-.scrapbee-marker-a3{
-    color:#fff !important;
-    background:#90f  !important;
-}
-.scrapbee-marker-a4{
-    color:#000 !important;
-    background:#0f0  !important;
-}
-.scrapbee-marker-a5{
-    color:#000 !important;
-    background:#0ff  !important;
-}
-.scrapbee-marker-a6{
-    color:#000 !important;
-    background:#fd0  !important;
-}
-.scrapbee-marker-b1{
-    border-bottom:2px solid #00f !important;
-}
-.scrapbee-marker-b2{
-    border-bottom:2px solid #f00 !important;
-}
-.scrapbee-marker-b3{
-    border-bottom:2px dotted #00f !important;
-}
-.scrapbee-marker-b4{
-    border-bottom:2px dotted #f00 !important;
-}
+.scrapbee-marker-a1{color:#fff !important; background:#03f !important;}
+.scrapbee-marker-a2{color:#fff !important; background:#f00 !important;}
+.scrapbee-marker-a3{color:#fff !important; background:#90f !important;}
+.scrapbee-marker-a4{color:#000 !important; background:#0f0 !important;}
+.scrapbee-marker-a5{color:#000 !important; background:#0ff !important;}
+.scrapbee-marker-a6{color:#000 !important; background:#fd0 !important;}
+.scrapbee-marker-b1{border-bottom:2px solid #03f !important;}
+.scrapbee-marker-b2{border-bottom:2px solid #f00 !important;}
+.scrapbee-marker-b3{border-bottom:2px solid #90f !important;}
+.scrapbee-marker-b4{border-bottom:2px solid #0f0 !important;}
+.scrapbee-marker-b5{border-bottom:2px solid #0ff !important;}
+.scrapbee-marker-c1{border-bottom:2px dotted #03f !important;}
+.scrapbee-marker-c2{border-bottom:2px dotted #f00 !important;}

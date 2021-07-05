@@ -469,5 +469,3 @@ pause`;
     });
 }; // window.onload
 
-
-
