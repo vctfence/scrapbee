@@ -453,7 +453,7 @@ if(!window.scrapbee_injected){
         });
     }
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        log.debug("content script recv msg:", request.type)
+        // log.debug("content script recv msg:", request.type)
         if(request.type == "SAVE_ADVANCE_REQUEST"){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));
