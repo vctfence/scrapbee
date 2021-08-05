@@ -127,7 +127,7 @@ var DialogDownloadTable = class extends DialogIframe {
         var self = this;
         this.iframe.onload = function(){
             self.bodyInner.style.margin="0px";
-            var dlgcss = browser.extension.getURL("dialog.css");
+            var dlgcss = browser.extension.getURL("/css/dialog.css");
             self.contentInner = `
 <link rel="stylesheet" type="text/css" href="${dlgcss}" media="screen"/>
 <div class='scrapbee-dlg-table-outer'><table class='scrapbee-dlg-table'><thead></thead><tbody></tbody></table></div>
