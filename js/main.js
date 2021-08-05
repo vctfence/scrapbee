@@ -758,15 +758,15 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 // loadXml(currTree.rdf);
             }
         }
-    }else if(request.type == 'SAVE_URL_REQUEST'){
-       if(currTree && currTree.rendered) {
-           browser.windows.getLastFocused().then(function(win){
-               if(win.id == thisWindowId)
-                   requestUrlSaving(genItemId());
-           });
-       }else{
-           log.error("rdf have not been loaded");
-       }
+    // }else if(request.type == 'SAVE_URL_REQUEST'){
+    //    if(currTree && currTree.rendered) {
+    //        browser.windows.getLastFocused().then(function(win){
+    //            if(win.id == thisWindowId)
+    //                requestUrlSaving(genItemId());
+    //        });
+    //    }else{
+    //        log.error("rdf have not been loaded");
+    //    }
     }else if(request.type == 'CREATE_MIRROR_NODE'){
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
             /** do not trigger rdf saving */
