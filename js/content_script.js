@@ -273,7 +273,7 @@ if(!window.scrapbee_injected){
                         });
                         iframe.setAttribute("src", _name + "/index.html");
                     }catch(e){
-                        consele.log(e)
+                        console.log(e)
                     }
                 }
             }
@@ -405,8 +405,10 @@ if(!window.scrapbee_injected){
                 });
             }
             await gather();
+            dlgDownload.hint = "Save pages ...";
             res.forEach(function(r, i){
                 if(r.type != "image"){
+                    var content = r.content;
                     if(r.mime == "text/html"){
                         var node = document.doctype;
                         if(node){
@@ -422,7 +424,6 @@ if(!window.scrapbee_injected){
                         }
                     }
                     var path = `${rdfPath}/data/${itemId}/${r.saveas}`;
-                    var content = r.content;
                     for(hex in blobfile){
                         if(hex){
                             var reg = new RegExp(hex, "g" );
