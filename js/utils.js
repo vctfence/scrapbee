@@ -18,7 +18,7 @@ async function showNotification({message, title=''}) {
     if(settings.show_notification != "on")
         return Promise.resolve();
     
-    return browser.notifications.create(`sbi-notification-${type}`, {
+    return browser.notifications.create(`sbi-notification-${title}`, {
         type: 'basic',
         title: title,
         message: message,
@@ -512,7 +512,20 @@ function touchRdf(backendAddress, path, pwd){
         });
     });
 }
-
+function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(',');
+    var _arr = arr[1].substring(0,arr[1].length-2);
+    var mime = arr[0].match(/:(.*?);/)[1],
+        bstr =atob(_arr),
+        n = bstr.length,
+        u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {
+        type: mime
+    });
+}
 export{gtv,
        gtev,
        showNotification,
@@ -527,4 +540,5 @@ export{gtv,
        httpRequest,
        ajaxFormPost,
        downloadFile,
+       dataURLtoBlob,
        touchRdf};

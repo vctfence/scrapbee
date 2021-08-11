@@ -244,32 +244,21 @@ if(!window.scrapbee_injected){
                     }
                 }
             });
-
-  //    function dataURLtoBlob(dataurl) {
-  //        var arr = dataurl.split(',');
-  //         //注意base64的最后面中括号和引号是不转译的   
-  //         var _arr = arr[1].substring(0,arr[1].length-2);
-  //         var mime = arr[0].match(/:(.*?);/)[1],
-  //       	  bstr =atob(_arr),
-  //       	  n = bstr.length,
-  //       	  u8arr = new Uint8Array(n);
-  //         while (n--) {
-  //       	  u8arr[n] = bstr.charCodeAt(n);
-  //         }
-  //         return new Blob([u8arr], {
-  //       	  type: mime
-  //         });
-  // }
-    
-            if(!haveIcon){
+            if(!haveIcon && name=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
-
-                if(url)
-                    appendResource({tag:"link", type:"image", url, saveas:"favicon.ico"})
-                    
+                if(url){
+                    appendResource({tag:"link", type:"image", url, saveas:"favicon.ico", subPath})
+                    var mc = doc.createElement("link");
+                    mc.rel="shortcut icon";
+                    mc.href=`favicon.ico`;
+                    mc.media="screen";
+                    var head = segment.querySelectorAll("head");
+                    if(head.length){
+                        head[0].appendChild(mc);
+                        haveIcon = true
+                    }
+                }
             }
-
-            
             /*** add main css tag */
             var mc = doc.createElement("link");
             mc.rel="stylesheet";
@@ -510,7 +499,7 @@ if(!window.scrapbee_injected){
             }).catch(function (error) {
                 alert("capture failed: " + error)
             });
-        }else if(request.type == 'SAVE_URL_REQUEST'){
+        }else if(request.type == 'SAVE_URL_REQUEST_INJECTED'){
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
                 saveBookmarkIcon(r.rdf, r.rdfPath, r.itemId);
             });
