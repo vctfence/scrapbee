@@ -1,5 +1,4 @@
 import {BookTree} from "./tree.js";;
-import {settings} from "./settings.js";
 import {SimpleDropdown} from "./control.js";
 import {ajaxFormPost, genItemId, refreshTree, httpRequest} from "./utils.js";
 import {log} from "./message.js";
@@ -118,7 +117,7 @@ function initMover(){
         dialog.show();
         
         var count = 0, done = 0;
-        var pos = settings.saving_new_pos;
+        var pos = CONF.getItem("capture.behavior.item.new.pos");
         await srcTree.iterateLiNodes(function(item){
             return new Promise((resolve, reject) => {
                 count++;
@@ -189,14 +188,14 @@ function initMover(){
     $(".drop-box").each(function(i){
         var $label = $(this).find(".label");
         var drop = new SimpleDropdown(this, [], false);
-        var paths = settings.getRdfPaths();
+        var paths = CONF.getRdfPaths();
         drop.clear();
         drop.onchange=function(title, value){
             selected_rdfs[i] = value;
             var $box = $("#tree" + i);
             $label.html(title || "");
             $box.html("");
-            $.post(settings.getBackendAddress() + "isfile/", {path: value, pwd: settings.backend_pwd}, function(r){
+            $.post(CONF.getBackendAddress() + "isfile/", {path: value, pwd: CONF.getItem("backend.pwd")}, function(r){
                 if(r == "yes"){
                     loadXml(value, $box, i);
                     $("#node-mover .tool-button").prop("disabled", !selected_rdfs[1]);
@@ -206,7 +205,7 @@ function initMover(){
             $("#node-mover .tool-button").prop("disabled", true);
         };
         if(paths){
-            var names = settings.getRdfPathNames(); 
+            var names = CONF.getRdfNames(); 
 	    names.forEach(function(n, i){
                 drop.addItem(n, paths[i]);
 	    });
@@ -249,8 +248,8 @@ function initMover(){
                     });
 	        };
                 currTree.onItemRemoving=function(id){
-                    return ajaxFormPost(settings.getBackendAddress() + "deletedir/",
-                                        {path: rdfPath + "data/" + id, pwd:settings.backend_pwd});
+                    return ajaxFormPost(CONF.getBackendAddress() + "deletedir/",
+                                        {path: rdfPath + "data/" + id, pwd:CONF.getItem("backend.pwd")});
                 };
                 resolve(currTree);
             };
@@ -258,7 +257,7 @@ function initMover(){
                 log.info(`load ${rdf} failed, ${err}`);
                 reject(err);
             };
-            xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
+            xmlhttp.open("GET", CONF.getFileServiceAddress() + rdf, false);
             xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
             xmlhttp.setRequestHeader('cache-control', 'max-age=0');
             xmlhttp.setRequestHeader('expires', '0');
@@ -270,7 +269,7 @@ function initMover(){
 }
 function exportTree(rdf, name, includeSeparator, openInNewTab){
     return new Promise((resolve, reject)=>{
-        httpRequest(settings.getFileServiceAddress() + rdf).then(async (response)=>{
+        httpRequest(CONF.getFileServiceAddress() + rdf).then(async (response)=>{
             var blob = await fetch("/icons/item.gif").then(r => r.blob());
             var path = rdf.replace(/\w+\.rdf\s*$/i, "data/resources/item.gif");
             browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path, blob}});
@@ -356,12 +355,12 @@ function exportTree(rdf, name, includeSeparator, openInNewTab){
         });
     });
 }
-function initExporter(){
-    var paths = settings.getRdfPaths();
+async function initExporter(){
+    var paths = CONF.getRdfPaths();
     var $drop = $("#exporter #select-rdf");
-    var paths = settings.getRdfPaths();
+    var paths = CONF.getRdfPaths();
     if(paths){
-        var names = settings.getRdfPathNames();
+        var names = CONF.getRdfNames();
 	names.forEach(function(n, i){
             var $opt = $("<option>").appendTo($drop);
             $opt.html(names[i]);
@@ -369,11 +368,13 @@ function initExporter(){
 	});
     }
     $drop.change(function(e){
-        var path = $(this).find("option:selected").attr("value").replace(/\.rdf\s*$/i, ".html");
+        var path = $(this).find("option:selected").attr("value");
+        if(!path)
+            return;
+        path = path.replace(/\.rdf\s*$/i, ".html");
         $(this).parent().next("div").find("span.path").html(path).click(() => {
-            window.open(settings.getFileServiceAddress() + path, "_blank");
+            window.open(CONF.getFileServiceAddress() + path, "_blank");
         });
-        
     });
     $drop.change();
     $("#btnExport").click(function(){

@@ -1,7 +1,9 @@
-import {settings, global} from "./settings.js";
 import {log} from "./message.js";
 import {showNotification} from "./utils.js";
 import {sendTabContentMessage, executeScriptsInTab, ajaxFormPost, gtev, downloadFile} from "./utils.js";
+import {Configuration} from "./storage.js"
+
+window.CONF = new Configuration();
 
 /* logging */
 var log_pool = [];
@@ -59,7 +61,7 @@ function loadBrowserInfo(){
     });
 }
 loadBrowserInfo().then(async () => {
-    await settings.loadFromStorage();
+    await CONF.load()
     startWebServer(20, "background");
 })
 /* backend*/
@@ -102,7 +104,6 @@ function startWebServer(try_times){
     function showInfo(r){
         var version = r.Version || 'unknown';
         backend_version = version;
-        settings.set("backend_version", version, true)
         log.info(`connect web server: connected, version = ${version}`);
         if(!gtev(version, '1.7.3')){
             log.warning(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version.`)
@@ -111,78 +112,78 @@ function startWebServer(try_times){
         browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
     }
     return new Promise((resolve, reject) => {
-        settings.loadFromStorage().then(()=>{
-            var port = settings.backend_port;
-            var pwd = settings.backend_pwd;
-            if(web_status == "launched"){
-                resolve();
-            }else if(settings.backend_type == "address"){
-                var address = settings.getBackendAddress();
-                log.info(`connect web server: address = ${address}`);
-                $.get(address + `serverinfo/?pwd=${settings.backend_pwd}`, function(r){
-                    if(r.Serverstate == "ok"){
+        var port = CONF.getItem("backend.port")
+        var pwd = CONF.getItem("backend.pwd")
+        if(web_status == "launched"){
+            resolve();
+        }else if(CONF.getItem("backend.type") == "address"){
+            var address = CONF.getBackendAddress();
+            log.info(`connect web server: address = ${address}`);
+            $.get(address + `serverinfo/?pwd=${pwd}`, function(r){
+                if(r.Serverstate == "ok"){
+                    web_status == "launched"
+                    showInfo(r);
+                    resolve();
+                }else{
+                    return startWebServer(try_times - 1);
+                }
+            }).fail(function(e){
+                if(e.status > 0){ // old version backend
+                    web_status == "launched"
+                    showInfo({});
+                    resolve();
+                }else{
+                    var em = "connect web server: failed to connect backend";
+                    reject(Error(em));
+                }
+            });
+        } else if(web_status == "launching"){
+            new (function (){
+                var self = this;
+                setTimeout(()=>{
+                    if(browser_info_status == "launched"){
+                        resolve();
+                    }else{
+                        self.constructor();
+                    }
+                }, 1000)
+            })();
+        } else {
+            web_status = "launching";
+            loadBrowserInfo().then(() => {
+                log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
+                communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
+                    if(r.Serverstate != "ok"){
+                        log.error(`failed to start backend service: ${r.Error}`);
+                        web_status = "error";
+                        if(try_times > 0){
+                            return startWebServer(try_times - 1);
+                        }else{
+                            web_status = "failed";
+                            var ms = "connect web server: too many times tried";
+                            return reject(Error(ms));
+                        }
+                    }else{
                         web_status == "launched"
                         showInfo(r);
                         resolve();
-                    }else{
-                        return startWebServer(try_times - 1);
                     }
-                }).fail(function(e){
-                    if(e.status > 0){ // old version backend
-                        web_status == "launched"
-                        showInfo({});
-                        resolve();
-                    }else{
-                        var em = "connect web server: failed to connect backend";
-                        reject(Error(em));
-                    }
-                });
-            } else if(web_status == "launching"){
-                new (function (){
-                    var self = this;
-                    setTimeout(()=>{
-                        if(browser_info_status == "launched"){
-                            resolve();
-                        }else{
-                            self.constructor();
-                        }
-                    }, 1000)
-                })();
-            } else {
-                web_status = "launching";
-                loadBrowserInfo().then(() => {
-                    log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
-                    communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
-                        if(r.Serverstate != "ok"){
-                            log.error(`failed to start backend service: ${r.Error}`);
-                            web_status = "error";
-                            if(try_times > 0){
-                                return startWebServer(try_times - 1);
-                            }else{
-                                web_status = "failed";
-                                var ms = "connect web server: too many times tried";
-                                return reject(Error(ms));
-                            }
-                        }else{
-                            web_status == "launched"
-                            showInfo(r);
-                            resolve();
-                        }
-                    }).catch((e) => {
-                        log.error(e)
-                    })
+                }).catch((e) => {
+                    log.error(e)
                 })
-            }
-        });
+            })
+        }
     }).catch((e)=>{
         log.error(e.message);
         web_status = "failed";
     });
 };
-settings.onchange=function(key, value){
-    if(key == "backend"){
+CONF.onchange=function(key, value){
+    if(key == "__backend__"){
         web_status = ""
-        startWebServer(20);
+        CONF.load().then(()=>{
+            startWebServer(20);
+        });
     }
 };
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -200,11 +201,11 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if(!file){
             return Promise.reject(Error('empty blob'));
         }else{
-            return ajaxFormPost(settings.getBackendAddress() + "savebinfile", {filename, file, pwd: settings.backend_pwd});
+            return ajaxFormPost(CONF.getBackendAddress() + "savebinfile", {filename, file, pwd: CONF.getItem("backend.pwd")});
         }
     }else if(request.type == 'DOWNLOAD_FILE'){
         var {url, itemId, filename} = request;
-        return ajaxFormPost(settings.getBackendAddress() + "download", {url, itemId, filename, pwd: settings.backend_pwd});
+        return ajaxFormPost(CONF.getBackendAddress() + "download", {url, itemId, filename, pwd: CONF.getItem("backend.pwd")});
     }else if(request.type == 'SAVE_TEXT_FILE'){
         if(request.backup){
             return new Promise((resolve, reject)=>{
@@ -221,10 +222,10 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }
     }else if(request.type == 'FS_MOVE'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.getBackendAddress() + "fs/move", {src, dest, pwd: settings.backend_pwd});
+        return ajaxFormPost(CONF.getBackendAddress() + "fs/move", {src, dest, pwd: CONF.getItem("backend.pwd")});
     }else if(request.type == 'FS_COPY'){
         var src = request.src, dest = request.dest;
-        return ajaxFormPost(settings.getBackendAddress() + "fs/copy", {src, dest, pwd: settings.backend_pwd});
+        return ajaxFormPost(CONF.getBackendAddress() + "fs/copy", {src, dest, pwd: CONF.getItem("backend.pwd")});
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type);
     }else if(request.type == 'CALL_FRAME'){
@@ -262,11 +263,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             resolve(sender.tab.favIconUrl);
         });
     }else if(request.type == 'GET_SETTINGS'){
-        return new Promise((resolve, reject) => {
-            settings.loadFromStorage().then(()=>{
-                resolve(settings);
-            });
-        });
+        return Promise.resolve(CONF.getJson());
     }else if(request.type == "CAPTURE_TABS"){
         browser.tabs.query({currentWindow: true}).then(function(tabs){
             for(let tab of tabs){
@@ -280,7 +277,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return backupFile(request.path);
     }else if(request.type == "IS_FILE"){
         return new Promise((resolve, reject) => {
-            $.post(settings.getBackendAddress() + "isfile/", {path: file, pwd: settings.backend_pwd}, function(r){
+            $.post(CONF.getBackendAddress() + "isfile/", {path: file, pwd: CONF.getItem("backend.pwd")}, function(r){
                 resolve(r != "no");
             });
         });
@@ -310,7 +307,7 @@ function saveTextFile(request){
     var filename = request.path;
     var content = request.text;
     return new Promise((resolve, reject) => {
-        ajaxFormPost(settings.getBackendAddress() + "savefile", {filename, content, pwd: settings.backend_pwd}).then(response => {
+        ajaxFormPost(CONF.getBackendAddress() + "savefile", {filename, content, pwd: CONF.getItem("backend.pwd")}).then(response => {
             if(request.boardcast){
                 browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
             }
@@ -329,9 +326,9 @@ function backupFile(src){
         }catch(e){
             log.error(e.message);
         }
-        $.post(settings.getBackendAddress() + "isfile/", {path: dest, pwd: settings.backend_pwd}, function(r){
+        $.post(CONF.getBackendAddress() + "isfile/", {path: dest, pwd: CONF.getItem("backend.pwd")}, function(r){
             if(r == "no"){
-                ajaxFormPost(settings.getBackendAddress() + "fs/copy", {src, dest, pwd: settings.backend_pwd}).then((response) => {
+                ajaxFormPost(CONF.getBackendAddress() + "fs/copy", {src, dest, pwd: CONF.getItem("backend.pwd")}).then((response) => {
                     if(response == "ok"){
                         log.info(`backup success: ${dest}`);
                         resolve();
@@ -423,7 +420,8 @@ browser.browserAction.onClicked.addListener(function(){
 // browser.browserAction.onClicked.hasListener(listener)
 /* update menu */
 function updateMenu(url) {
-    var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
+    // var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
+    var enabled = !(new RegExp(browser.i18n.getMessage("@@extension_id")).test(url)) && /^http/.test(url);
     browser.menus.update("scrapbee-capture-selection", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-page", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-url", {enabled: enabled, visible: enabled});

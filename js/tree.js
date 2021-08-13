@@ -1,6 +1,6 @@
-import {settings} from "./settings.js";
 import {log} from "./message.js";
 import {randRange, comp} from "./utils.js";
+import {Configuration} from "./storage.js"
 
 class NodeHTMLBuffer {
     constructor(start="", end="") {
@@ -31,6 +31,7 @@ class NodeHTMLBuffer {
 class BookTree {
     constructor(xmlString, rdf_full_file, options={}) {
         var self = this;
+        
         this.unique_id = randRange(0, 99999999); 
         this.options = options;
         this.rdf = rdf_full_file;
@@ -86,11 +87,11 @@ class BookTree {
         /** scrap data */
         r = r.replace(
             /^resource\:\/\/scrapbook/,
-            settings.getFileServiceAddress() + rdfPath
+            CONF.getFileServiceAddress() + rdfPath
         );
         /** local file */
         if((/^(\/|(\[a-z]\:))/).test(r)){
-            r =  settings.getFileServiceAddress() + r;
+            r =  CONF.getFileServiceAddress() + r;
         }
         r = r.replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
             return b + "/";
@@ -175,7 +176,7 @@ class BookTree {
                         return;
                     var url = $el.attr("source");
                     var is_local = (($el.hasClass("page") || $el.hasClass("note")) && !$(e.target).hasClass("origin"));
-                    if ((settings.open_in_current_tab == "on") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
+                    if ((CONF.getItem("sidebar.behavior.open.dest") == "curr-tab") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
                         if(self.onOpenContent)self.onOpenContent($el.attr("id"), url, false, is_local);
                     } else {
                         if(self.onOpenContent)self.onOpenContent($el.attr("id"), url, true, is_local);
@@ -343,9 +344,6 @@ class BookTree {
     getItemFilePath(id) {
         return (this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/");
     }    
-    getItemIndexPage(id) {
-        return (settings.getFileServiceAddress() + this.rdfPath + "data/" + id + "/index.html").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime();
-    }
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {
             if (!$item.hasClass("expended") || on) {
@@ -398,7 +396,7 @@ class BookTree {
             return;
         var $c = $item.clone();
         if (move_type == 3){
-            if(settings.saving_new_pos == "bottom"){
+            if(CONF.getItem("capture.behavior.item.new.pos") == "bottom"){
                 $ref_item.nextAll(".folder-content:first").append($c);
             }else{
                 $ref_item.nextAll(".folder-content:first").prepend($c);
@@ -459,7 +457,6 @@ class BookTree {
         }
         return buf;
     }
-    
     async sortTree(sortBy="title", $targetNode=null, asc=true, case_sensitive=false) {
         var self = this;
         var items = [];
@@ -484,7 +481,10 @@ class BookTree {
             var parentId = json.parentId || "urn:scrapbook:root";
             sects[parentId] = sects[parentId] || 0;
             sects[parentId] += inc;
-            items.push({id: json.id, title, parentId, sect: sects[parentId], node, type: json.nodeType});
+            var type = json.nodeType;
+            if(["bookmark", "page", "note"].indexOf(type) > -1)
+                type = "normal"
+            items.push({id: json.id, title, parentId, sect: sects[parentId], node, type});
             sects[parentId] += inc;
         }, nodes);
         log.debug("sorting, language = {0}, case sensitive = {1}".fillData(
@@ -528,7 +528,7 @@ class BookTree {
     }
     showRoot(visiable){
         var $node = this.$top_container.find(".item.folder#root");
-        $node[visiable?"show":"hide"]();
+        $node[visiable ? "show" : "hide"]();
         $node.next(".folder-content")[(visiable && !($node.hasClass("expended"))) ? "hide" : "show"]();
         if(visiable)
             $node.next(".folder-content").removeClass("top-level");

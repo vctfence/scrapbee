@@ -153,14 +153,14 @@ if(!window.scrapbee_injected){
     /* capture content */
     async function gatherContent(isForSelection, name="index", subPath=""){
         var doc = document;
-        var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+        var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
 
         function appendResource(resource){
             browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "APPEND_RESOURCE", resource});
         }
         
         // injext all frames
-        if(settings.saving_save_frames == "on"){
+        if(conf.capture.behavior.frames.save == "on"){
             await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
                 for(var i=0;i<ar.length;i++){
                     var f = ar[i];
@@ -271,7 +271,7 @@ if(!window.scrapbee_injected){
             /*** remove tags not wanted */
             segment.querySelectorAll("*[mark_remove='1']").forEach(el => el.remove());
             /*** frames */
-            if(settings.saving_save_frames == "on"){
+            if(conf.capture.behavior.frames.save == "on"){
                 var frames = segment.querySelectorAll("iframe, frame");
                 for(var i=0;i<frames.length;i++){
                     var iframe = frames[i];
@@ -325,14 +325,14 @@ if(!window.scrapbee_injected){
     async function startCapture(saveType, rdf, rdfPath, itemId, autoClose=false){
         if(!lock()) return;
         var dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
-            var settings = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+            var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
             var res = [];
             var title = ""
             var haveIcon = false
             var blobfile = {};
             var remain = 0;
             // toplevel page
-            autoClose = settings.auto_close_saving_dialog == "on" || autoClose;
+            autoClose = conf.capture.behavior.saving.dialog.close == "auto" || autoClose;
             dlgDownload.hideButton();
             dlgDownload.addHeader("type", "source", "destination", "status");
             dlgDownload.hint = "Fetch resources...";
