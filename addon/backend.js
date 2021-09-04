@@ -108,6 +108,7 @@ export class BookmarkManager extends BookmarkStorage {
         if (path) {
             path = path.trim();
             path = path.replace("\\", "/");
+
             if (path.startsWith("/"))
                 path = path.replace(/^\//, "");
             else if (!path)
@@ -409,7 +410,7 @@ export class BookmarkManager extends BookmarkStorage {
         let parent = shelf;
         for (let name of pathList) {
             if (parent) {
-                let group = await this.queryGroup(parent.id, name);
+                let group = await this.querySubgroup(parent.id, name);
                 groups[name.toLocaleLowerCase()] = group;
                 parent = group;
             }
@@ -420,7 +421,7 @@ export class BookmarkManager extends BookmarkStorage {
         return groups;
     }
 
-    // returns the last group in path if it exists
+    // returns the last group in the path if it exists
     async queryGroup(path) {
         let pathList = this._splitPath(path);
         let groups = await this._queryGroups(pathList);

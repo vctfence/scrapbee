@@ -519,7 +519,7 @@ class BookmarkStorage {
             return await where.toArray();
     }
 
-    queryGroup(parentId, name) {
+    querySubgroup(parentId, name) {
         name = name.toLocaleUpperCase();
         return this._db.nodes.where("parent_id").equals(parentId)
            .and(n => name === n.name.toLocaleUpperCase())
