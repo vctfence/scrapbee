@@ -3,8 +3,8 @@ import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
 import {gtev, touchRdf} from "./utils.js";
 import {ContextMenu} from "./control.js";
-
 import {History} from "./history.js"
+import {Configuration} from "./storage.js"
 
 function getAsync(url) {
     return new Promise((resolve, reject) => {
@@ -98,11 +98,10 @@ function showConfiguration(){
             settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
             settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
             settings.set('show_notification', $("input[name=show_notification]").is(":checked")?"on":"off", true);
-            
             settings.set('saving_save_frames', $("input[name=saving_save_frames]").is(":checked")?"on":"off", true);
             settings.set('saving_new_pos', $("input[name=saving_new_pos]:checked").val(), true);
-            
             settings.set('debug', $("input[name=debug]").is(":checked")?"on":"off", true);
+
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed: " + e);
@@ -142,7 +141,7 @@ function showConfiguration(){
     $("input[name=sidebar_show_root]").prop("checked", settings.sidebar_show_root=="on");
     $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
     $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
-    $("input[name=show_notification]").prop("checked", settings.show_notification=="on");
+    // $("input[name=show_notification]").prop("checked", settings.show_notification=="on");
 
     $("input[name=saving_save_frames]").prop("checked", settings.saving_save_frames=="on");
     $(`input[name=saving_new_pos][value='${settings.saving_new_pos}']`).attr("checked", true);
@@ -468,4 +467,3 @@ pause`;
         });
     });
 }; // window.onload
-

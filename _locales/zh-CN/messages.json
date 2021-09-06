@@ -442,6 +442,9 @@
     "AUTO_CLOSE_SAVING_DIALOG": {
         "message": "自动关闭保存对话框"
     },
+    "SHOW_NOTIFICATION": {
+        "message":"显示通知"
+    },
     "SAVING_SAVE_FRAMES" : {
         "message": "保存框架"
     },

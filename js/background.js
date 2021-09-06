@@ -284,7 +284,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 resolve(r != "no");
             });
         });
-    }else if(request.type == "DOWNLOAD_FILE"){
+    }else if(request.type == "DOWNLOAD_FILE_BLOB"){
         return downloadFile(rquest.url);
     }else if(request.type == "WAIT_WEB_SERVER"){
         var times = request.try_times;
@@ -398,7 +398,8 @@ browser.menus.create({
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
-                browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'});
+                browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'}).then((response) => {});
+                // sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST_INJECTED'});
             }
         });
     }

@@ -424,6 +424,9 @@
     "AUTO_CLOSE_SAVING_DIALOG": {
         "message":"Boîte de dialogue d'enregistrement à fermeture automatique"
     },
+    "SHOW_NOTIFICATION": {
+        "message":"Afficher les notifications"
+    },
     "SAVING_SAVE_FRAMES" : {
         "message":"Enregistrer les cadres"
     },

@@ -149,6 +149,7 @@ if(!window.scrapbee_injected){
             resolve(segment);
         });
     }
+
     /* capture content */
     async function gatherContent(isForSelection, name="index", subPath=""){
         var doc = document;
@@ -239,11 +240,25 @@ if(!window.scrapbee_injected){
                             if(r.saveas == "favicon.ico"){
                                 haveIcon = true;
                             }
-                            
                         }
                     }
                 }
             });
+            if(!haveIcon && name=="index"){
+                var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
+                if(url){
+                    appendResource({tag:"link", type:"image", url, saveas:"favicon.ico", subPath})
+                    var mc = doc.createElement("link");
+                    mc.rel="shortcut icon";
+                    mc.href=`favicon.ico`;
+                    mc.media="screen";
+                    var head = segment.querySelectorAll("head");
+                    if(head.length){
+                        head[0].appendChild(mc);
+                        haveIcon = true
+                    }
+                }
+            }
             /*** add main css tag */
             var mc = doc.createElement("link");
             mc.rel="stylesheet";
@@ -289,22 +304,23 @@ if(!window.scrapbee_injected){
         });
     };
     function saveBookmarkIcon(rdf, rdfPath, itemId){
-        var icon = "";
-        Array.forEach.call(document.querySelectorAll("link"), function(item){
-            var el = new ScrapbeeElement(item)
-            var resources = el.processResources();
-            if(resources.length)
-                if(resources[0].saveas == "favicon.ico")
-                    icon = resources[0].url;
-        });
-        if(icon){
-            var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
-            browser.runtime.sendMessage({type: "DOWNLOAD_FILE", icon, filename, itemId}).then(() => {
-                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: true, rdf, itemId});
-            });
-        }else{
-            browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: false, rdf, itemId});
-        }
+        browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((url) => {
+            if(!url){
+                Array.prototype.forEach.call(document.querySelectorAll("link"), function(item){
+                    if(item.rel && /shortcut/.test(item.rel)){
+                        url = item.href;
+                    }
+                });
+            }
+            if(url){
+                var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
+                browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
+                    browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: true, rdf, itemId});
+                });
+            }else{
+                browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: false, rdf, itemId});
+            }
+        })
     }
     async function startCapture(saveType, rdf, rdfPath, itemId, autoClose=false){
         if(!lock()) return;
@@ -483,7 +499,7 @@ if(!window.scrapbee_injected){
             }).catch(function (error) {
                 alert("capture failed: " + error)
             });
-        }else if(request.type == 'SAVE_URL_REQUEST'){
+        }else if(request.type == 'SAVE_URL_REQUEST_INJECTED'){
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
                 saveBookmarkIcon(r.rdf, r.rdfPath, r.itemId);
             });
