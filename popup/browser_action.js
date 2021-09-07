@@ -1,10 +1,6 @@
 import {showNotification, sendTabContentMessage} from "/js/utils.js"
-import {settings, global} from "/js/settings.js";
-import {log} from "/js/message.js";
 
 window.onload=async function(){
-    await settings.loadFromStorage();
-    
     document.body.innerHTML = document.body.innerHTML.translate();
     $("#btnHelp").click(function(){
         browser.tabs.create({"url": "/html/options.html#area=help"});
@@ -89,10 +85,11 @@ window.onload=async function(){
     });
     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
         var url = tabs[0].url;
-        var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
-        $("#btnCapturePage").prop("disabled", !enabled);
-        $("#btnCaptureSelection").prop("disabled", !enabled);
-        $("#btnCaptureUrl").prop("disabled", !enabled);
-        $("#btnCaptureAdv").prop("disabled", !enabled)
+        // var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
+        var disabled = new RegExp(browser.i18n.getMessage("@@extension_id")).test(url) || !(/^http/.test(url));
+        $("#btnCapturePage").prop("disabled", disabled);
+        $("#btnCaptureSelection").prop("disabled", disabled);
+        $("#btnCaptureUrl").prop("disabled", disabled);
+        $("#btnCaptureAdv").prop("disabled", disabled)
     });
 }

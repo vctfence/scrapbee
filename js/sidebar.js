@@ -1,13 +1,17 @@
 import {BookTree} from "./tree.js";
-import {settings, global} from "./settings.js";
+import {global} from "./global.js";
 import {showNotification, getColorFilter, genItemId, gtv, ajaxFormPost} from "./utils.js";
-import {refreshTree, touchRdf} from "./utils.js";
+import {refreshTree, touchRdf, dataURLtoBlob} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown, ContextMenu} from "./control.js";
-import {History} from "./history.js"
+import {Configuration, History} from "./storage.js"
 
 var currTree;
 var thisWindowId;
+
+window.GLOBAL = global;
+window.CONF = new Configuration();
+window.HISTORY = new History();
 
 /* show members of an object */
 function dir(o, delimiter){
@@ -128,7 +132,7 @@ menulistener.onSort1 = function(){
         }
         await currTree.sortTree(d.sort_by, $target, d.order == "asc", d.case_sensitive=="on");
         currTree.onXmlChanged();
-        await currTree.renderTree($(".folder-content.toplevel"), settings.sidebar_show_root == "on");
+        await currTree.renderTree($(".folder-content.toplevel"), CONF.getItem("sidebar.behavior.root.show") == "on");
         currTree.restoreStatus();
     }).catch(()=>{});
 };
@@ -154,13 +158,12 @@ menulistener.onCreateFolder = function(){
                 rid = $foc.attr("id");
             }
         }
-        log.debug(settings.saving_new_pos)
-        currTree.createFolder(p, genItemId(), rid, d.title, true, settings.saving_new_pos);
+        currTree.createFolder(p, genItemId(), rid, d.title, true, CONF.getItem("capture.behavior.item.new.pos"));
         currTree.onXmlChanged();
     }).catch(()=>{});
 };
 menulistener.onCreateSeparator = function(){
-    currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true, settings.saving_new_pos);
+    currTree.createSeparator(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), true, CONF.getItem("capture.behavior.item.new.pos"));
     currTree.onXmlChanged();
 };
 menulistener.onCreateNote = function(){
@@ -177,7 +180,7 @@ menulistener.onCreateNote = function(){
                                      },{
                                          wait: false,
                                          is_new: true,
-                                         pos: settings.saving_new_pos
+                                         pos: CONF.getItem("capture.behavior.item.new.pos")
                                      });
                                      currTree.onXmlChanged();
                                  });
@@ -185,7 +188,7 @@ menulistener.onCreateNote = function(){
 menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
     var url = $foc.attr("source");
-    var method = settings.open_in_current_tab == "on" ? "update" : "create";
+    var method = conf.getItem("sidebar.behavior.open.dest") == "curr-tab" ? "update" : "create";
     browser.tabs[method]({ url: url }, function(tab){});
 };
 menulistener.onDebug = function(){};
@@ -258,17 +261,16 @@ menulistener.onOpenFolder = function(){
     if($(".item.focus").length){
         var id = $(".item.focus").attr("id");
         var path = currTree.getItemFilePath(id);        
-        $.post(settings.getBackendAddress() + "filemanager/", {path, pwd:settings.backend_pwd}, function(r){});
+        $.post(CONF.getBackendAddress() + "filemanager/", {path, pwd: CONF.getItem("backend.pwd")}, function(r){});
     }
 };
 var drop;
-function showRdfList(){
-    log.info("show rdf list");
-
-    new History().load().then((self)=>{
-        var lastRdf = self.getItem("sidebar.tree.last");
+function loadRdfList(){
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
+        log.info("show rdf list");
+        var lastRdf = HISTORY.getItem("sidebar.tree.last");
         var saw = false;
-        var paths = settings.getRdfPaths();
+        var paths = CONF.getRdfPaths();
         if(paths.length == 0)
             $(".folder-content.toplevel").html("{NO_RDF_SETTED_HINT}".translate());
         drop = drop || new SimpleDropdown($(".drop-button")[0], []);
@@ -278,7 +280,7 @@ function showRdfList(){
             if(value !== null)switchRdf(value);  // switch rdf and notify other side bar.
         });
         if(paths){
-            var names = settings.getRdfPathNames(); 
+            var names = CONF.getRdfNames();
             names.forEach(function(name, i){
                 log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
                 if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
@@ -299,6 +301,9 @@ function showRdfList(){
                 drop.select(names[0], paths[0]);
             }
         }
+    }).catch((e) => {
+        log.error("failed to start backend, please check installation and settings");
+        $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
     });
 }
 function applyAppearance(){
@@ -306,47 +311,47 @@ function applyAppearance(){
     $("#"+id).remove();
     var sheet = document.createElement('style');
     sheet.id=id;
-    var item_h = parseInt(settings.font_size);
-    var line_spacing = parseInt(settings.line_spacing);
-    var icon_h = parseInt(settings.font_size) * 1.2;
+    var item_h = parseInt(CONF.getItem("tree.font.size"));
+    var line_spacing = parseInt(CONF.getItem("tree.line.spacing"));
+    var icon_h = item_h * 1.2;
     var icon_space = icon_h + 2;
-    var origin_h = parseInt(settings.font_size) * 0.80;
-    var bg_color = settings.bg_color;
+    var origin_h = item_h * 0.80;
+    var bg_color = CONF.getItem("tree.color.bg");
     // var filter = getColorFilter("#"+settings.font_color).filter;
+
+    var appearance = CONF.getJson().tree;
     sheet.innerHTML = `
 *{
-  color:${settings.font_color};
-  font-family:${settings.font_name};
+  color:${appearance.color.fg};
+  font-family:${appearance.font.name};
 }
 .item.local,.item.folder{
-  color:#${settings.font_color};
+  color:#${appearance.color.fg};
 }
 .item.bookmark label{
-  color:#${settings.bookmark_color};
-}
-.toolbar{
-  backgroud-color:#${bg_color};
+  color:#${appearance.color.bookmark};
 }
 body{
-  background:#${bg_color};
+  background:#${appearance.color.bg};
 }
 .dlg-cover{
-  background:#${bg_color}99;
+  background:#${appearance.color.bg}99;
 }
 .toolbar{
-  border-color:#${settings.font_color};
-  background:#${bg_color};
+  backgroud-color:#${appearance.color.bg};
+  border-color:#${appearance.color.fg};
+  background:#${appearance.color.bg};
 }
 .item.separator.focus > .stroke{
-  background:#${settings.focused_fg_color};
-  border-color:#${settings.focused_bg_color};
+  background:#${appearance.color.focused.fg};
+  border-color:#${appearance.color.focused.bg};
 }
 .item.page,.item.bookmark,.item.folder{
   000padding-left:${icon_space}px;
   background-size:${icon_h}px ${icon_h}px;
 }
 .item.page label,.item.bookmark  label,.item.folder label{
-  font-size:${settings.font_size}px;
+  font-size:${appearance.font.size}px;
 }
 .item.page i,.item.bookmark i,.item.folder i,.item.note i{
   width:${icon_h}px;
@@ -360,7 +365,7 @@ body{
   height:${icon_h}px;
 }
 .item input[type='checkbox']{
-  background-color:#${settings.font_color};
+  background-color:#${appearance.color.fg};
 }
 .folder-content{
   margin-left:${item_h}px;
@@ -369,75 +374,59 @@ body{
   width:${origin_h}px;
   height:${origin_h}px;
   mask-size:${origin_h}px ${origin_h}px;
-  background:#${settings.font_color}
+  background:#${appearance.font_color}
 }
 .item{
   margin-top:0 !important;
   margin-bottom:${line_spacing}px !important
 }
 .simple-menu-item{
-  border-color:#${settings.font_color};
-  color:#${settings.font_color}
+  border-color:#${appearance.color.fg};
+  color:#${appearance.font_color}
 }
 .simple-dropdown, .simple-menu{
   background:#${bg_color};
-  border-color:#${settings.font_color}
+  border-color:#${appearance.color.fg}
 }
 .drop-button{
-  border-color:#${settings.font_color}
+  border-color:#${appearance.color.fg}
 }
 .drop-button .label{
-  color:#${settings.font_color}
+  color:#${appearance.color.fg}
 }
 .drop-button .button{
-  border-color:#${settings.font_color};
-  color:#${settings.font_color}
+  border-color:#${appearance.color.fg};
+  color:#${appearance.color.fg}
 }
 .item.bookmark.focus label,
 .item.page.focus label,
 .item.folder.focus label,
 .simple-menu-item:hover,
 .tool-button:hover{
-  background-color:#${settings.focused_bg_color};
-  color:#${settings.focused_fg_color};
+  background-color:#${appearance.color.focused.bg};
+  color:#${appearance.color.focused.fg};
 }
 .tool-button:hover:before,.simple-menu-item:hover .icon{
-  background-color:#${settings.focused_fg_color};
+  background-color:#${appearance.color.focused.fg};
 }
 .tool-button:before,.simple-menu-item .icon{
-  background-color:#${settings.font_color};
+  background-color:#${appearance.color.fg};
 }`;
     document.body.appendChild(sheet);
 }
-settings.onchange=function(key, value){
-    if(key == "rdf_path_names" || key == "rdf_paths"){
-        showRdfList();
-    }else if(key == "sidebar_show_root"){
+
+CONF.onchange=function(key, value){
+    if(key == "tree.paths" || key == "tree.names"){
+        loadRdfList();
+    }else if(key == "sidebar.behavior.root.show"){
         currTree.showRoot(value == "on");
-    }else if(key == "font_size" || key == "line_spacing" || key == "font_name" || key.match(/\w+_color/)){
+    }else if(key.match(/tree\.(color|font|line)\.\w+/)){
         applyAppearance();
-    }else if(key == "backend"){
+    }else if(key == "__backend__"){
         $(".folder-content.toplevel").empty().text("{Loading...}".translate());
-        browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
-            loadAll();
-        }).catch((e) => {
-            log.error("failed to start backend, please check installation and settings");
-            $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
-        });
+        loadRdfList();
     }
 };
-/* on page loaded */
-function loadAll(){    
-    /** rdf list */
-    showRdfList(); /** this will trigger loading a rdf initially */
-    /** open file manager */
-    $("#btnFileManager").click(function(){
-        var rdfPath = currTree.rdfPath;
-        $.post(settings.getBackendAddress() + "filemanager/", {path:rdfPath, pwd:settings.backend_pwd}, function(r){
-            // 
-        });
-    });
-}
 function initTabs($tabbars){
     $tabbars.each(function(){
         var $pages = $(this).nextAll(".tab-page");
@@ -451,8 +440,11 @@ function initTabs($tabbars){
         $tabs.eq(0).click();
     });
 }
-window.onload=async function(){
-    await settings.loadFromStorage();
+$(document).ready(async function(){
+    await GLOBAL.load();
+    await CONF.load();
+    await HISTORY.load();
+
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     /** init tab frames */
@@ -470,10 +462,9 @@ window.onload=async function(){
     const observer = new MutationObserver(callback);
     observer.observe(targetNode, config);
     /** */
-    var btn = document.getElementById("btnLoad");
+    var btn = document.getElementById("btnReload");
     btn.onclick = function(){
-        showRdfList();
-        // if(drop && drop.value)loadXml(drop.value);
+        loadRdfList();
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
@@ -523,31 +514,25 @@ window.onload=async function(){
     }
     /**  */
     applyAppearance();
-    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 20}).then((response) => {
-        loadAll();
-    }).catch((e) => {
-        log.error("failed to start backend, please check installation and settings");
-        $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
-    });
+    loadRdfList();
     /** announcement */
-    new History().load().then((self)=>{
-        var ann = browser.i18n.getMessage("announcement_version")
-        var showed = self.getItem("announce.version_showed") || "";
-        if(gtv(ann, showed)){
-            $("#announcement-red-dot").show();
-        }else{
-            $("#announcement-red-dot").hide();
-        }
-        $("#announcement-red-dot").parent().click(function(){
-            self.setItem('announce.version_showed', ann);
-            $("#announcement-red-dot").hide();
-        });
+    var ann = browser.i18n.getMessage("announcement_version")
+    var showed = HISTORY.getItem("announce.version_showed") || "";
+    if(gtv(ann, showed)){
+        $("#announcement-red-dot").show();
+    }else{
+        $("#announcement-red-dot").hide();
+    }
+    $("#announcement-red-dot").parent().click(function(){
+        HISTORY.setItem('announce.version_showed', ann);
+        $("#announcement-red-dot").hide();
+        HISTORY.commit()
     });
     /** toggle root */
     $("#show-root").change(function(){
         currTree.showRoot(this.checked);
     });
-};
+});
 function loadXml(rdf){
     currTree = null;
     if(!rdf) return Promise.reject(Error("invalid rdf path"));
@@ -560,7 +545,7 @@ function loadXml(rdf){
             try{
                 var _begin = new Date().getTime();
                 currTree = new BookTree(r.target.response, rdf);
-                await currTree.renderTree($(".folder-content.toplevel"), settings.sidebar_show_root == "on");
+                await currTree.renderTree($(".folder-content.toplevel"), CONF.getItem("sidebar.behavior.root.show") == "on");
                 currTree.toggleFolder(currTree.getItemById("root"), true);
                 var cost = new Date().getTime() - _begin;
                 log.info(`rdf loaded in ${cost}ms`);
@@ -582,12 +567,12 @@ function loadXml(rdf){
                 });
             };
             currTree.onItemRemoving=function(id){
-                return ajaxFormPost(settings.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:settings.backend_pwd});
+                return ajaxFormPost(CONF.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:CONF.getItem("backend.pwd")});
             };
             currTree.onOpenContent=function(itemId, url, newTab, isLocal){
                 var method = newTab ? "create" : "update";
                 if(/^file\:/.test(url)){
-                    url = settings.getFileServiceAddress() + url.replace(/.{7}/,'');
+                    url = CONF.getFileServiceAddress() + url.replace(/.{7}/,'');
                 }
                 if(isLocal)
                     browser.tabs[method]({url: `/html/viewer.html?id=${itemId}&path=${rdfPath}`}, function (tab) {});
@@ -626,46 +611,43 @@ function loadXml(rdf){
                 } else {
                     menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"])
                 }
-                new History().load().then((self)=>{
-                    var v = self.getItem("sidebar.nodes.focused") || {};
-                    v[rdf] = id;
-                    self.setItem("sidebar.nodes.focused", v); 
-                });
+                var v = HISTORY.getItem("sidebar.nodes.focused") || {};
+                v[rdf] = id;
+                HISTORY.setItem("sidebar.nodes.focused", v);
+                HISTORY.commit();
             };
             currTree.onToggleFolder=function(){
                 var folderIds = currTree.getExpendedFolderIds().join(",");
-                new History().load().then((self)=>{
-                    var v = self.getItem("sidebar.folders.opened") || {};
-                    v[rdf] = folderIds;
-                    self.setItem("sidebar.folders.opened", v); 
-                });
+                var v = HISTORY.getItem("sidebar.folders.opened") || {};
+                v[rdf] = folderIds;
+                HISTORY.setItem("sidebar.folders.opened", v);
+                HISTORY.commit();
             };
             /** restore status */
             currTree.restoreStatus=function(){
-                new History().load().then((self)=>{
-                    var v = self.getItem("sidebar.folders.opened") || {};
-                    var folders = v[rdf];
-                    if(folders){
-                        folders.split(",").forEach(function(id){
-                            currTree.toggleFolder(currTree.getItemById(id), true);
-                        });
+                var v = HISTORY.getItem("sidebar.folders.opened") || {};
+                var folders = v[rdf];
+                if(folders){
+                    folders.split(",").forEach(function(id){
+                        currTree.toggleFolder(currTree.getItemById(id), true);
+                    });
+                }
+                var v = HISTORY.getItem("sidebar.nodes.focused") || {};
+                var id = v[rdf];
+                if(id){
+                    var $item = currTree.getItemById(id);
+                    if($item.length){
+                        currTree.focusItem($item);
+                        currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
                     }
-                    var v = self.getItem("sidebar.nodes.focused") || {};
-                    var id = v[rdf];
-                    if(id){
-                        var $item = currTree.getItemById(id);
-                        if($item.length){
-                            currTree.focusItem($item);
-                            currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
-                        }
-                    }
-                });
+                }
             }
             currTree.restoreStatus();
             /** history */
-            new History().load().then((self)=>{
-                self.setItem("sidebar.tree.last", rdf); 
-            });
+            
+            HISTORY.setItem("sidebar.tree.last", rdf);
+            HISTORY.commit();
+            
             resolve(currTree);
         };
         xmlhttp.onerror = function(err) {
@@ -673,7 +655,7 @@ function loadXml(rdf){
             log.error(`failed to load ${rdf}`);
             reject(err)
         };
-        xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
+        xmlhttp.open("GET", CONF.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');
@@ -692,7 +674,7 @@ function switchRdf(rdf){
         }
         $(".folder-content.toplevel").html("{Loading...}".translate());
         /** check rdf exists */
-        touchRdf(settings.getBackendAddress(), rdf, settings.backend_pwd).then(function(r){
+        touchRdf(CONF.getBackendAddress(), rdf, CONF.getItem("backend.pwd")).then(function(r){
             loadXml(rdf).then(()=>{
                 resolve();
             });
@@ -705,18 +687,30 @@ function requestUrlSaving(itemId){
         var ref_id;
         function saveIcon(){
             return new Promise((resolve, reject)=>{
-                if(icon && icon.match(/^data:image/i)){
-                    var filename = `${currTree.rdfPath}/data/${itemId}/favicon.ico`;
-                    $.post(settings.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: settings.backend_pwd}, function(r){
-                        icon = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-                        resolve();
-                    });
+                if(icon){
+                    if(icon.match(/^data:image/i)){
+                        var filename = `${currTree.rdfPath}/data/${itemId}/favicon.ico`;
+                        var blob = dataURLtoBlob(icon);
+                        var ir = "resource://scrapbook/data/" + itemId + "/favicon.ico";
+                        browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path: filename, blob}}).then((response) => {
+                            resolve(ir);
+                        }).catch(e => {
+                            resolve(null);
+                        });
+                    }else{
+                        var filename = `${currTree.rdfPath}/data/${itemId}/favicon.ico`;
+                        $.post(CONF.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: CONF.backend_pwd}, function(r){
+                            resolve(ir);
+                        }).fail((e)=>{
+                            resolve(null);
+                        })
+                    }
                 }else{
-                    resolve();
+                    resolve(ir);
                 }
             });
         }
-        saveIcon().then(() => {
+        saveIcon().then((icon) => {
            var $container = null;
            var $f = $(".item.focus");
            if($f.length){
@@ -739,7 +733,7 @@ function requestUrlSaving(itemId){
            }, {
                wait:false,
                is_new:true,
-               pos: settings.saving_new_pos
+               pos: CONF.getItem("capture.behavior.item.new.pos")
            });
            currTree.onXmlChanged();
            showNotification({message: `Save bookmark "${tab.title}" done`, title: "Info"});
@@ -781,7 +775,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             },{
                 wait: true,
                 is_new: true,
-                pos: settings.saving_new_pos
+                pos: CONF.getItem("capture.behavior.item.new.pos")
             });
         }
     }else if(request.type == 'REMOVE_FAILED_NODE'){
@@ -816,7 +810,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                         },{
                             wait: true,
                             is_new: true,
-                            pos: settings.saving_new_pos
+                            pos: CONF.getItem("capture.behavior.item.new.pos")
                         });
                         resolve({rdf:currTree.rdf, rdfPath:currTree.rdfPath, itemId});
                     }catch(e){
@@ -853,4 +847,5 @@ document.oncontextmenu = function (event){
     if($(".dlg-cover:visible").length == 0)
         return false
 }
+
 console.log("==> main.js loaded");

@@ -1,7 +1,12 @@
-import {settings} from "./settings.js";
+import {Configuration} from "./storage.js";
 import {BookTree} from "./tree.js";
 import {getUrlParams} from "./utils.js";
 import {History} from "./history.js"
+import {global} from "./global.js";
+
+window.GLOBAL = global;
+window.CONF = new Configuration();
+window.HISTORY = new History();
 
 function Queue(maxWorkingTasks, workingFn){
     this.tasks = [];
@@ -65,9 +70,7 @@ function loadXml(rdf){
             search_comment = true;
         }
     });
-    new History().load().then((self)=>{
-        self.setItem("searching.source", sources.join(","), true);
-    });
+    HISTORY.setItem("searching.source", sources.join(","), true);
     if(!(search_title || search_body || search_comment))
         return;
     $("#btnSearch").hide();
@@ -81,7 +84,7 @@ function loadXml(rdf){
     xmlhttp.onerror = function(err) {
 	// log.info(`load ${rdf} failed, ${err}`)
     };
-    xmlhttp.open("GET", settings.getFileServiceAddress() + rdf, false);
+    xmlhttp.open("GET", CONF.getFileServiceAddress() + rdf, false);
     xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
     xmlhttp.setRequestHeader('cache-control', 'max-age=0');
     xmlhttp.setRequestHeader('expires', '0');
@@ -173,7 +176,7 @@ async function processTree(tree, search_title, search_body, search_comment){
 	}
     }
     var q = new Queue(50, function(item, callback){
-	var url = tree.getItemIndexPage(item.id);
+        var url = (CONF.getFileServiceAddress() + tree.rdfPath + "data/" + item.id + "/index.html").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime()
 	if(item.type=="page" || item.type=="note"){
 	    $.get(url+"&time="+Math.random(),function(r){
 		seek(item, r);
@@ -213,30 +216,31 @@ async function processTree(tree, search_title, search_body, search_comment){
     q.start();
 }
 $(document).ready(async function(){
-    await settings.loadFromStorage();
-    new History().load().then((self)=>{
-        var sources = (self.getItem("searching.source") || "").split(",");
-        $("input[type=checkbox][name=source]").each(function(){
-            if(sources.indexOf(this.value) > -1){
-                this.setAttribute("checked", "true");
-            }
-        });
-        document.title = document.title.fillData(function(s){
-	    return browser.i18n.getMessage(s)  || s;
-        });    
-        document.body.innerHTML = document.body.innerHTML.fillData(function(s){
-	    return browser.i18n.getMessage(s)  || s;
-        });
-        $("#searchForm").submit(function(){
-	    $("#divResult").html("");
-	    var rdf = $("#lstRdfs").val();
-	    if(rdf)loadXml(rdf);
-            return false;
-        });
-        var params = getUrlParams(location.href);
-        var paths = settings.getRdfPaths();
-        settings.getRdfPathNames().forEach(function(k, i){
-	    $("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs")).prop("selected", paths[i] == params.rdf);
-        });
+    await GLOBAL.load();
+    await CONF.load();
+    await HISTORY.load();
+    
+    var sources = (HISTORY.getItem("searching.source") || "").split(",");
+    $("input[type=checkbox][name=source]").each(function(){
+        if(sources.indexOf(this.value) > -1){
+            this.setAttribute("checked", "true");
+        }
+    });
+    document.title = document.title.fillData(function(s){
+	return browser.i18n.getMessage(s)  || s;
+    });    
+    document.body.innerHTML = document.body.innerHTML.fillData(function(s){
+	return browser.i18n.getMessage(s)  || s;
+    });
+    $("#searchForm").submit(function(){
+	$("#divResult").html("");
+	var rdf = $("#lstRdfs").val();
+	if(rdf)loadXml(rdf);
+        return false;
+    });
+    var params = getUrlParams(location.href);
+    var paths = CONF.getRdfPaths();
+    CONF.getRdfNames().forEach(function(k, i){
+	$("<option></option>").attr("value", paths[i]).html(k).appendTo($("#lstRdfs")).prop("selected", paths[i] == params.rdf);
     });
 });

@@ -1,6 +1,10 @@
 import {getUrlParams, executeScriptsInTab} from "./utils.js";
-import {settings} from "./settings.js";
 import {log} from "./message.js";
+import {Configuration} from "./storage.js"
+import {global} from "./global.js"
+
+window.GLOBAL = global;
+window.CONF = new Configuration();
 
 class EditToolBar{
     constructor(scrapPath, scrapId, tabId, frameId){
@@ -210,11 +214,13 @@ class EditToolBar{
     }
 }
 document.addEventListener('DOMContentLoaded', async function(){
-    await settings.loadFromStorage();
+    await GLOBAL.load();
+    await CONF.load();
+    
     var editbar;
     var params = getUrlParams(location.search)
     var rootPath = `${params.path}/data/${params.id}`;
-    var rootAddress = `${settings.getFileServiceAddress()}${rootPath}`;
+    var rootAddress = `${CONF.getFileServiceAddress()}${rootPath}`;
     var elFrame = document.body.querySelector("#contentFrame");
     document.querySelector("link[rel='shortcut icon']").href= `${rootAddress}/favicon.ico`;
     browser.runtime.sendMessage({type:'GET_TAB_ID'}).then((tabId) => {

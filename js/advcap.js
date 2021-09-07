@@ -1,9 +1,11 @@
-import {settings} from "./settings.js"
+import {Configuration, History} from "./storage.js"
 import {BookTree} from "./tree.js"
 import {log} from "./message.js"
 import {genItemId, refreshTree} from "./utils.js"
 
 var currTree;
+var conf = new Configuration();
+var history = new History();
 
 function loadXml(rdf, $box){
     return new Promise((resolve, reject) => {
@@ -21,17 +23,20 @@ function loadXml(rdf, $box){
 	    }
             $("input[type=button]").prop("disabled", false);
             /** restore status */
-            if(settings.last_rdf == rdf){
-                if(settings.advcap_last_opened_folders){
-                    settings.advcap_last_opened_folders.split(",").forEach(function(id){
+            if(conf.getItem("capture.adv.tree.last") == rdf){
+                var folders = conf.getItem("capture.adv.tree.folders.opened");
+                var focused = conf.getItem("capture.adv.tree.focused.last");
+                
+                if(folders){
+                    folders.split(",").forEach(function(id){
                         currTree.toggleFolder(currTree.getItemById(id), true);
                     });
                 }
-                if(settings.advcap_last_focused){
-                    var $item = currTree.getItemById(settings.advcap_last_focused);
+                if(focused){
+                    var $item = currTree.getItemById(focused);
                     currTree.focusItem($item);
                     currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
-                    currTree.onChooseItem(settings.advcap_last_focused);
+                    currTree.onChooseItem(focused);
                 }
             }
             resolve(currTree);
@@ -39,8 +44,9 @@ function loadXml(rdf, $box){
         xmlhttp.onerror = function(err) {
 	    log.info(`load ${rdf} failed, ${err}`);
         };
-        var address = settings.getFileServiceAddress();
-        xmlhttp.open("GET", `${address}/${rdf}`, false);
+
+        var addr = conf.getFileServiceAddress();
+        xmlhttp.open("GET", `${addr}/${rdf}`, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
         xmlhttp.setRequestHeader('expires', '0');
@@ -51,6 +57,9 @@ function loadXml(rdf, $box){
 }
 
 $(document).ready(async function(){
+    await conf.load();
+    await history.load();
+
     document.body.innerHTML = document.body.innerHTML.translate();
     // function randRange(a, b){
     //     return Math.floor(Math.random() * (b-a+1)) + a;
@@ -64,7 +73,9 @@ $(document).ready(async function(){
     button.onclick=function(){
         var title = prompt("Please input name of new folder");
         if(!title) return;
-        currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true, settings.saving_new_pos);
+
+        var pos = conf.getItem("capture.behavior.item.new.pos");
+        currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true, pos);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
                                      path: currTree.rdf, backup:true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
     }
@@ -96,9 +107,10 @@ $(document).ready(async function(){
             folderId = "urn:scrapbook:root";
 
         var folderIds = currTree.getExpendedFolderIds().join(",");
-        settings.set('advcap_last_rdf',rdf , true);
-        settings.set('advcap_last_focused',currTree.getFocusedItem().attr("id") , true);
-        settings.set('advcap_last_opened_folders',folderIds , true);
+
+        history.getItem('capture.adv.tree.last', rdf);
+        history.getItem('capture.adv.tree.focused.last', currTree.getFocusedItem().attr("id"));
+        history.getItem('capture.adv.tree.folders.opened', folderIds);
 
         currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
         // currTree.updateComment(currTree.getItemById(itemId), comment);
@@ -111,11 +123,11 @@ $(document).ready(async function(){
     }
     /** tree box */
     var $box = $("#tree1");
-    await settings.loadFromStorage();
-    var paths = settings.getRdfPaths();
-    settings.getRdfPathNames().forEach(function(k, i){
+    
+    var paths = conf.getRdfPaths();
+    conf.getRdfPathNames().forEach(function(k, i){
 	var $opt = $("<option></option>").attr("value", paths[i]).text(k).appendTo($("#lstRdfs"));
-        if(paths[i] == settings.advcap_last_rdf){
+        if(paths[i] == history.getItem("capture.adv.rdf.last"){
             $opt.prop("selected", true);
         }
     });

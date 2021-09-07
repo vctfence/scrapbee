@@ -1,5 +1,4 @@
 import {log} from "./message.js";
-import {settings} from "./settings.js";
 
 function scriptsAllowed(tabId, frameId = 0) {
     return browser.tabs.executeScript(tabId, {
@@ -8,14 +7,12 @@ function scriptsAllowed(tabId, frameId = 0) {
                 code: 'true;'
     });
 }
-async function showNotification({message, title=''}) {
+function showNotification({message, title=''}) {
     try{
         log[title.toLowerCase()](message);
     }catch(e){}
-
-    await settings.loadFromStorage();
     
-    if(settings.show_notification != "on")
+    if(CONF.getItem("global.notification.show") != "on")
         return Promise.resolve();
     
     return browser.notifications.create(`sbi-notification-${title}`, {

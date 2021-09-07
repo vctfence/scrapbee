@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "ScrapBee",
-    "version": "2.3.5",
+    "version": "2.3.6",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
     "icons": {
@@ -33,7 +33,7 @@
     },
     "sidebar_action": {
         "default_title": "ScrapBee",
-        "default_panel": "html/main.html",
+        "default_panel": "html/sidebar.html",
         "default_icon": "icons/bee.png"
     },
     "background": {
@@ -54,9 +54,9 @@
     "commands": {
         "_execute_sidebar_action": {
             "suggested_key": {
-                "default": "Ctrl+Shift+B",
-                "linux": "Ctrl+Shift+B",
-                "mac": "MacCtrl+Shift+B"
+                "default": "Ctrl+Alt+B",
+                "linux": "Ctrl+Alt+B",
+                "mac": "MacCtrl+Alt+B"
             },
             "description": "Toggle ScrapBee Sidebar"
         }

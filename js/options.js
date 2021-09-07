@@ -1,10 +1,14 @@
-import {settings, global} from "./settings.js";
+import {global} from "./global.js";
 import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
 import {gtev, touchRdf} from "./utils.js";
 import {ContextMenu} from "./control.js";
 import {History} from "./history.js"
 import {Configuration} from "./storage.js"
+
+window.GLOBAL = global;
+window.CONF = new Configuration();
+window.HISTORY = new History();
 
 function getAsync(url) {
     return new Promise((resolve, reject) => {
@@ -53,9 +57,9 @@ ${FILE_I18N} <input type="text" name="value"/>
     });
 }
 
-function showConfiguration(){
+function showConfiguration(){    
     $("#rdf-area").empty();
-    $("input[name='save']").click(async function(){
+    $("input[name='save']").click(function(){
         try{
             // backend
             var pwd = $.trim($("input[name=backend_pwd]").val());
@@ -64,52 +68,60 @@ function showConfiguration(){
                     throw Error("invalid password format");
                 }
             }
-            settings.set('backend_type', $("input[name=backend_type]:checked").val(), true);
-            settings.set('backend_port', $("input[name=backend_port]").val(), true);
-            settings.set('backend_address', $("input[name=backend_address]").val(), true);
-            settings.set('backend_pwd', $("input[name=backend_pwd]").val(), true);
+            CONF.setItem("backend.type", $("input[name=backend_type]:checked").val());
+            CONF.setItem('backend.address', $("input[name=backend_address]").val());
+            CONF.setItem('backend.port', $("input[name=backend_port]").val());
+            CONF.setItem('backend.pwd', $("input[name=backend_pwd]").val());
+            
             // rdf list
             var names = [];
             var paths = [];
             var touch = [];
             $("#rdf-area div input:nth-of-type(1)").each(function(){
                 var n = $.trim(this.value);
-                names.push(n + "\n");
+                //names.push(n + "\n");
+                names.push(n);
                 var p = $.trim($(this).next("input").val());
-                paths.push(p + "\n");
-                touch.push(touchRdf(settings.getBackendAddress(), p, settings.backend_pwd));
+                //paths.push(p + "\n");
+                paths.push(p);
+                touch.push(touchRdf(CONF.getBackendAddress(), p, pwd));
             });
             Promise.all(touch);
-            settings.set('rdf_paths', paths.join(""), true);
-            settings.set('rdf_path_names', names.join(""), true);
+            CONF.setItem('tree.paths', paths);
+            CONF.setItem('tree.names', names);
+
             // apparence
-            settings.set('bg_color', $("input[name=bg_color]").val().replace("#", ""), true);
-            settings.set('font_color', $("input[name=font_color]").val().replace("#", ""), true);
-            settings.set('separator_color', $("input[name=separator_color]").val().replace("#", ""), true);
-            settings.set('bookmark_color', $("input[name=bookmark_color]").val().replace("#", ""), true);
-            settings.set('focused_bg_color', $("input[name=focused_bg_color]").val().replace("#", ""), true);
-            settings.set('focused_fg_color', $("input[name=focused_fg_color]").val().replace("#", ""), true);
             var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
-            settings.set('font_size', size, true);
-            settings.set('font_name', $("input[name=font_name]").val(), true);
-            settings.set('line_spacing', $("input[name=line_spacing]").val(), true);
+
+            CONF.setItem('tree.color.bg', $("input[name='tree.color.bg']").val().replace("#", ""));
+            CONF.setItem('tree.color.fg', $("input[name='tree.color.fg']").val().replace("#", ""));
+            CONF.setItem('tree.color.separator', $("input[name='tree.color.separator']").val().replace("#", ""));
+            CONF.setItem('tree.color.bookmark', $("input[name='tree.color.bookmark']").val().replace("#", ""));
+            CONF.setItem('tree.color.focused.fg', $("input[name='tree.color.focused.fg']").val().replace("#", ""));
+            CONF.setItem('tree.color.focused.bg', $("input[name='tree.color.focused.bg']").val().replace("#", ""));
+            CONF.setItem('tree.font.size', size);
+            CONF.setItem('tree.font.name', $("input[name=font_name]").val());
+            CONF.setItem('tree.line.spacing', $("input[name=line_spacing]").val());
+            
             // behavior
-            settings.set('sidebar_show_root', $("input[name=sidebar_show_root]").is(":checked")?"on":"off", true);
-            settings.set('open_in_current_tab', $("input[name=open_in_current_tab]").is(":checked")?"on":"off", true);
-            settings.set('auto_close_saving_dialog', $("input[name=auto_close_saving_dialog]").is(":checked")?"on":"off", true);
-            settings.set('show_notification', $("input[name=show_notification]").is(":checked")?"on":"off", true);
-            settings.set('saving_save_frames', $("input[name=saving_save_frames]").is(":checked")?"on":"off", true);
-            settings.set('saving_new_pos', $("input[name=saving_new_pos]:checked").val(), true);
-            settings.set('debug', $("input[name=debug]").is(":checked")?"on":"off", true);
+            CONF.setItem('sidebar.behavior.open.dest', $("input[name=open_in_current_tab]").is(":checked")?"curr-tab":"new-tab");
+            CONF.setItem('sidebar.behavior.root.show', $("input[name=sidebar_show_root]").is(":checked")?"on":"off");
+            CONF.setItem('capture.behavior.saving.dialog.close', $("input[name=auto_close_saving_dialog]").is(":checked")?"auto":"manually");
+            CONF.setItem('capture.behavior.frames.save', $("input[name=saving_save_frames]").is(":checked")?"on":"off");
+            CONF.setItem('capture.behavior.item.new.pos', $("input[name=saving_new_pos]:checked").val());
+            CONF.setItem("global.notification.show", $("input[name=show_notification]").is(":checked")?"on":"off");
+            CONF.setItem("global.debug", $("input[name=debug]").is(":checked")?"on":"off");
+            CONF.commit();
 
             $(this).next("span").fadeIn().fadeOut();
         }catch(e){
             alert("Save failed: " + e);
         }
     });
-    var paths = settings.getRdfPaths();
+    var paths = CONF.getRdfPaths();
+
     if(paths){
-        settings.getRdfPathNames().forEach(function(k, i){
+        CONF.getRdfNames().forEach(function(k, i){
             createRdfField(k, paths[i]);
         });
     }
@@ -119,37 +131,42 @@ function showConfiguration(){
     $("input[name=line_spacing]").bind("input", function(){ // bind 'input' instead of 'change' event
         $(this).next("span").text(parseInt(this.value));
     });
-    ["bg", "font", "separator", "bookmark", "focused_fg", "focused_bg"].forEach(function(pfx){
-        var name = pfx + "_color";
-        var value = (settings[name] || "").replace("#", "");
+    ["bg", "fg", "separator", "bookmark", "focused.fg", "focused.bg"].forEach(function(item){
+        var name = "tree.color." + item;
+        var key = "tree.color." + item;
+        var value = (CONF.getItem(key) || "").replace("#", "");
         var element = $(`input[name='${name}']`)[0];
         element.value = value;
         if(element.jscolor){
             element.jscolor.fromString(value); /** for updating */
         }
     });
+
     jscolor.installByClassName("jscolor");
-    $("input[name=font_size]").val((settings.font_size / 12) * 100).trigger("input");
-    $("input[name=font_name]").val(settings.font_name);    
-    $("input[name=line_spacing]").val(settings.line_spacing).trigger("input");
+    $("input[name=font_size]").val((CONF.getItem("tree.font.size") / 12) * 100).trigger("input");
+    $("input[name=font_name]").val(CONF.getItem("tree.font.name"));    
+    $("input[name=line_spacing]").val(CONF.getItem("tree.line.spacing")).trigger("input");
 
-    $(`input[name=backend_type][value='${settings.backend_type}']`).attr("checked", true);
-    $("input[name=backend_address]").val(settings.backend_address);
-    $("input[name=backend_port]").val(settings.backend_port);
-    $("input[name=backend_pwd]").val(settings.backend_pwd);
+    var type = CONF.getItem("backend.type");
+    $(`input[name=backend_type][value='${type}']`).attr("checked", true);
+    $("input[name=backend_address]").val(CONF.getItem("backend.address"));
+    $("input[name=backend_port]").val(CONF.getItem("backend.port"));
+    $("input[name=backend_pwd]").val(CONF.getItem("backend.pwd"));
+    $("input[name=sidebar_show_root]").prop("checked", CONF.getItem("sidebar.behavior.root.show")=="on");
+    $("input[name=open_in_current_tab]").prop("checked", CONF.getItem("sidebar.behavior.open.dest")=="curr-tab");
+    $("input[name=auto_close_saving_dialog]").prop("checked", CONF.getItem("capture.behavior.saving.dialog.close")=="auto");
+    $("input[name=show_notification]").prop("checked", CONF.getItem("global.notification.show") == "on");
+    $("input[name=saving_save_frames]").prop("checked", CONF.getItem("capture.behavior.frames.save")=="on");
     
-    $("input[name=sidebar_show_root]").prop("checked", settings.sidebar_show_root=="on");
-    $("input[name=open_in_current_tab]").prop("checked", settings.open_in_current_tab=="on");
-    $("input[name=auto_close_saving_dialog]").prop("checked", settings.auto_close_saving_dialog=="on");
-    // $("input[name=show_notification]").prop("checked", settings.show_notification=="on");
-
-    $("input[name=saving_save_frames]").prop("checked", settings.saving_save_frames=="on");
-    $(`input[name=saving_new_pos][value='${settings.saving_new_pos}']`).attr("checked", true);
-    
-    $("input[name=debug]").prop("checked", settings.debug=="on");
+    var pos = CONF.getItem("capture.behavior.item.new.pos")
+    $(`input[name=saving_new_pos][value='${pos}']`).attr("checked", true);
+    $("input[name=debug]").prop("checked", CONF.getItem("global.debug")=="on");
 }
-window.onload=async function(){
-    await settings.loadFromStorage();
+$(document).ready(async function(){
+    await GLOBAL.load();
+    await CONF.load();
+    await HISTORY.load();
+    
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
     if(["en", "zh-CN", "fr"].indexOf(ui) > -1) {
@@ -193,7 +210,7 @@ window.onload=async function(){
 
     /** export / import */
     $("input[name='export']").click(async function(){
-        var json = await settings.getJson();
+        var json = CONF.getJson();
         downloadText(JSON.stringify(json, null, 2), "scrapbee_configure.json", null, true);
     });
     $("input[name='import']").click(async function(){
@@ -204,7 +221,7 @@ window.onload=async function(){
                 var textFromFileLoaded = fileLoadedEvent.target.result;
                 try{
                     var json = JSON.parse(textFromFileLoaded);
-                    settings.loadJson(json);
+                    CONF.loadJson(json);
                     showConfiguration();
                 }catch(e){
                     alert("Invalid configuration file".translate());
@@ -275,9 +292,10 @@ window.onload=async function(){
         }
     });
     $(`input[name=backend_type]:checked`).click();
-    if(settings.backend_path){
+    var dp = HISTORY.getItem("backend.download.path");
+    if(dp){
         $("#txtBackendPath").show();
-        $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + settings.backend_path);
+        $("#txtBackendPath").html("{ALREADY_DOWNLOADED_TO}: ".translate() + dp);
     }
     
     function applyArea(){
@@ -366,8 +384,8 @@ window.onload=async function(){
             downloadFile(src_exec, "scrapbee/" + dest_exec).then(function(dwInfo){
                 /*** query really filename of backend executable */
                 var download_path = dwInfo.filename.replace(/[^\\\/]*$/,"");
-                settings.set('backend_path', download_path, true);
-                if(settings.backend_path){
+                if(download_path){
+                    HISTORY.setItem("backend.download.path", download_path);
                     $(self).next(".download-path").show()
                     $(self).next(".download-path").text("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
                 }
@@ -409,11 +427,7 @@ pause`;
                     }
                 });
             });
-            
-            // .catch(function (error) {
-            //   // $("#txtBackendPath").html("error: " + error);
-            // });
-        })
+        });
     }
     
     function downloadText(text, filename, callback, saveAs=false){
@@ -446,7 +460,7 @@ pause`;
         var $div = $("#div-log .console");
         if(request.type == 'LOGGING'){
             var item = request.log;
-            if(item.logtype != "debug" || settings.debug == "on"){
+            if(item.logtype != "debug" || CONF.getItem("global.debug") == "on"){
                 var b = Math.abs($div.scrollTop() - ($div[0].scrollHeight - $div.height())) < 100;
                 var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
                 $line.addClass(item.logtype);
@@ -460,10 +474,11 @@ pause`;
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {
         var $div = $("#div-log .console");
         response.logs.forEach(function(item){
-            if(item.logtype != "debug" || settings.debug == "on"){
+            if(item.logtype != "debug" || CONF.getItem("global.debug") == "on"){
                 var $line = $("<div class='log-line'/>").appendTo($div).html(`[${item.logtype}] ${item.content}`);
                 $line.addClass(item.logtype);
             }
         });
     });
-}; // window.onload
+}); // window.onload
+
