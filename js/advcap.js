@@ -2,10 +2,13 @@ import {Configuration, History} from "./storage.js"
 import {BookTree} from "./tree.js"
 import {log} from "./message.js"
 import {genItemId, refreshTree} from "./utils.js"
+import {global} from "./global.js";
 
 var currTree;
-var conf = new Configuration();
-var history = new History();
+
+window.GLOBAL = global;
+window.CONF = new Configuration();
+window.HISTORY = new History();
 
 function loadXml(rdf, $box){
     return new Promise((resolve, reject) => {
@@ -23,10 +26,9 @@ function loadXml(rdf, $box){
 	    }
             $("input[type=button]").prop("disabled", false);
             /** restore status */
-            if(conf.getItem("capture.adv.tree.last") == rdf){
-                var folders = conf.getItem("capture.adv.tree.folders.opened");
-                var focused = conf.getItem("capture.adv.tree.focused.last");
-                
+            if(HISTORY.getItem("capture.adv.tree.last") == rdf){
+                var folders = HISTORY.getItem("capture.adv.tree.folders.opened");
+                var focused = HISTORY.getItem("capture.adv.tree.focused.last");
                 if(folders){
                     folders.split(",").forEach(function(id){
                         currTree.toggleFolder(currTree.getItemById(id), true);
@@ -35,7 +37,7 @@ function loadXml(rdf, $box){
                 if(focused){
                     var $item = currTree.getItemById(focused);
                     currTree.focusItem($item);
-                    currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+                    currTree.scrollToItem($box.parent(), $item , 500, 0, false);
                     currTree.onChooseItem(focused);
                 }
             }
@@ -44,8 +46,7 @@ function loadXml(rdf, $box){
         xmlhttp.onerror = function(err) {
 	    log.info(`load ${rdf} failed, ${err}`);
         };
-
-        var addr = conf.getFileServiceAddress();
+        var addr = CONF.getFileServiceAddress();
         xmlhttp.open("GET", `${addr}/${rdf}`, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
@@ -56,17 +57,13 @@ function loadXml(rdf, $box){
     });
 }
 
-$(document).ready(async function(){
-    await conf.load();
-    await history.load();
-
+async function initAll(){
     document.body.innerHTML = document.body.innerHTML.translate();
-    // function randRange(a, b){
-    //     return Math.floor(Math.random() * (b-a+1)) + a;
-    // }
-    // function genItemId(){
-    //     return new Date().format("yyyyMMddhhmmssS" + String(randRange(1,999999)).padStart(6, "0"));
-    // }
+    
+    await GLOBAL.load();
+    await CONF.load();
+    await HISTORY.load();
+
     $("input[type=button]").prop("disabled", true);
     /** add folder */
     var button = document.body.querySelector("#btnAddFoder");
@@ -74,7 +71,7 @@ $(document).ready(async function(){
         var title = prompt("Please input name of new folder");
         if(!title) return;
 
-        var pos = conf.getItem("capture.behavior.item.new.pos");
+        var pos = CONF.getItem("capture.behavior.item.new.pos");
         currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true, pos);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
                                      path: currTree.rdf, backup:true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
@@ -108,9 +105,10 @@ $(document).ready(async function(){
 
         var folderIds = currTree.getExpendedFolderIds().join(",");
 
-        history.getItem('capture.adv.tree.last', rdf);
-        history.getItem('capture.adv.tree.focused.last', currTree.getFocusedItem().attr("id"));
-        history.getItem('capture.adv.tree.folders.opened', folderIds);
+        HISTORY.setItem('capture.adv.tree.last', rdf);
+        HISTORY.setItem('capture.adv.tree.focused.last', currTree.getFocusedItem().attr("id"));
+        HISTORY.setItem('capture.adv.tree.folders.opened', folderIds);
+        HISTORY.commit()
 
         currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
         // currTree.updateComment(currTree.getItemById(itemId), comment);
@@ -123,11 +121,10 @@ $(document).ready(async function(){
     }
     /** tree box */
     var $box = $("#tree1");
-    
-    var paths = conf.getRdfPaths();
-    conf.getRdfPathNames().forEach(function(k, i){
+    var paths = CONF.getRdfPaths();
+    CONF.getRdfNames().forEach(function(k, i){
 	var $opt = $("<option></option>").attr("value", paths[i]).text(k).appendTo($("#lstRdfs"));
-        if(paths[i] == history.getItem("capture.adv.rdf.last"){
+        if(paths[i] == HISTORY.getItem("capture.adv.tree.last")){
             $opt.prop("selected", true);
         }
     });
@@ -136,12 +133,14 @@ $(document).ready(async function(){
     });
     
     $("#lstRdfs").change();
-});
+}
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if(request.type == "TAB_INNER_CALL" && request.dest == "CAPTURER_DLG"){
-        return new Promise(function(resolve, reject){
+        return new Promise(async function(resolve, reject){
+            await initAll();
             $("#txTitle").val(request.title);
             $("#txUrl").val(request.url);
+            resolve();
         });
     }else if(request.type == 'FILE_CONTENT_CHANGED'){
         if(request.filename == currTree.rdf && request.srcToken != currTree.unique_id){

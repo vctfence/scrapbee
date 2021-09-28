@@ -182,6 +182,7 @@ if(!window.scrapbee_injected){
             var content = null;
             /** set unique id */
             document.querySelectorAll("*").forEach(el => {
+                // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
                 el.setAttribute("scrapbee_unique_id", "el" + new NumberRange(0,999999999).random());
             });
             try{
@@ -228,6 +229,7 @@ if(!window.scrapbee_injected){
             var distinct = {};
             var haveIcon = false;
             segment.childNodes.iterateAll(function(item){
+                // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
                 if(item.nodeType == 1){
                     var el = new ScrapbeeElement(item)
                     var resources = el.processResources();
@@ -237,7 +239,7 @@ if(!window.scrapbee_injected){
                             distinct[r.url] = 1;
                             r.subPath = subPath;
                             appendResource(r)
-                            if(r.saveas == "favicon.ico"){
+                            if(r.isIcon){
                                 haveIcon = true;
                             }
                         }
@@ -247,7 +249,7 @@ if(!window.scrapbee_injected){
             if(!haveIcon && name=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
-                    appendResource({tag:"link", type:"image", url, saveas:"favicon.ico", subPath})
+                    appendResource({tag:"link", type:"image", url, isIcon:true, subPath})
                     var mc = doc.createElement("link");
                     mc.rel="shortcut icon";
                     mc.href=`favicon.ico`;
@@ -329,6 +331,7 @@ if(!window.scrapbee_injected){
             var res = [];
             var title = ""
             var haveIcon = false
+            var iconFilename = ""
             var blobfile = {};
             var remain = 0;
             // toplevel page
@@ -342,7 +345,7 @@ if(!window.scrapbee_injected){
                     try{
                         gatherContent(saveType == "SAVE_SELECTION");
                     }catch(e){
-                        browser.runtime.sendMessage({type:'REMOVE_FAILED_NODE', haveIcon, rdf, itemId});
+                        browser.runtime.sendMessage({type: 'REMOVE_FAILED_NODE', haveIcon, rdf, itemId});
                         dlgDownload.remove();
                         unlock();
                         reject(e);
@@ -359,6 +362,7 @@ if(!window.scrapbee_injected){
                             resolve();
                         }
                     }
+                    var nodes = 0
                     function receive(request, sender, sendResponse) {
                         if(request.type == "TAB_INNER_CALL" && request.action == "APPEND_RESOURCE"){
                             var i = added ++;
@@ -383,8 +387,14 @@ if(!window.scrapbee_injected){
                                 // download
                                 downloadFile(r.url, function(b){
                                     var ext = getMainMimeExt(b.type) || "";
-                                    r.filename = r.subPath + (r.saveas || (r.hex + ext));
-                                    blobfile[r.hex] = (r.saveas || (r.hex + ext));
+                                    if(r.isIcon) {
+                                        iconFilename = "favicon" + ext;
+                                        r.filename = r.subPath + iconFilename;
+                                        blobfile[r.hex] = iconFilename;
+                                    }else{
+                                        r.filename = r.subPath + (r.saveas || (r.hex + ext));
+                                        blobfile[r.hex] = (r.saveas || (r.hex + ext));
+                                    }
                                     if(b){
                                         r.blob = b;
                                         dlgDownload.updateCell(i, 0, b.type);
@@ -402,7 +412,7 @@ if(!window.scrapbee_injected){
                                             inc(i, r);
                                         });
                                     }else{ // download failed
-                                        if(r.saveas == "favicon.ico")
+                                        if(r.isIcon)
                                             haveIcon = false;
                                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
                                         r.failed = 1;
@@ -447,7 +457,7 @@ if(!window.scrapbee_injected){
                         }
                     }
                     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
-                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, rdf, itemId});
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, iconFilename, rdf, itemId});
                         dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
                     }).catch(e=>{
                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");

@@ -1,7 +1,7 @@
 import {global} from "./global.js";
 import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
-import {gtev, touchRdf} from "./utils.js";
+import {gtev, touchRdf, dataURLtoBlob} from "./utils.js";
 import {ContextMenu} from "./control.js";
 import {History} from "./history.js"
 import {Configuration} from "./storage.js"
@@ -166,6 +166,8 @@ $(document).ready(async function(){
     await GLOBAL.load();
     await CONF.load();
     await HISTORY.load();
+
+    var paths = CONF.getRdfPaths();
     
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
@@ -482,3 +484,10 @@ pause`;
     });
 }); // window.onload
 
+
+var icon = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMyAzNCIgd2lkdGg9IjMzcHgiIGhlaWdodD0iMzRweCI+CiAgPHN0eWxlPgogICAgcGF0aCB7CiAgICAgIGZpbGw6ICMxMDEwMTA7CiAgICB9CiAgICBAbWVkaWEgKHByZWZlcnMtY29sb3Itc2NoZW1lOiBkYXJrKSB7CiAgICAgIHBhdGggewogICAgICAgIGZpbGw6ICNGMkYyRjI7CiAgICAgIH0KICAgIH0KICA8L3N0eWxlPgogIDxwYXRoIGQ9Ik0xNi41IDI3QzkuNyAyNyA0LjIgMjIuNCAxLjMgMTdjMy01LjYgOC41LTEwIDE1LjItMTAgNi44IDAgMTIuMyA0LjQgMTUuMiAxMC0zIDUuNC04LjMgMTAtMTUuMiAxMG0wLTI3QzcuNSAwIDAgNy42IDAgMTdzNy40IDE3IDE2LjUgMTdjOSAwIDE2LjUtNy42IDE2LjUtMTdTMjUuNiAwIDE2LjUgMCIgLz4KICA8cGF0aCBkPSJNMTYuNSAyNS40YzQuNiAwIDguMy0zLjggOC4zLTguNlMyMSA4LjIgMTYuNSA4LjJDMTEuOCA4LjIgOCAxMiA4IDE2LjhzMy44IDguNiA4LjUgOC42IiAvPgo8L3N2Zz4K";
+
+var blob = dataURLtoBlob(icon);
+
+
+console.log(blob.text())

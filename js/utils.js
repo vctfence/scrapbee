@@ -511,9 +511,8 @@ function touchRdf(backendAddress, path, pwd){
 }
 function dataURLtoBlob(dataurl) {
     var arr = dataurl.split(',');
-    var _arr = arr[1].substring(0,arr[1].length-2);
     var mime = arr[0].match(/:(.*?);/)[1],
-        bstr =atob(_arr),
+        bstr = atob(arr[1]),
         n = bstr.length,
         u8arr = new Uint8Array(n);
     while (n--) {

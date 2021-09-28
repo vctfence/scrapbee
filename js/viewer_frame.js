@@ -81,7 +81,8 @@ class Editor{
                     alert("{NO_SELECTION_ACTIVATED}".translate());
                 }
             }else if(request.type == "GET_TITLE"){
-                return Promise.resolve(document.title);
+                var link = document.querySelector("link[rel*='shortcut icon']");
+                return Promise.resolve([document.title, link && link.href]);
             }else if(request.type == "RELOAD"){
                 location.reload();
                 return Promise.resolve();

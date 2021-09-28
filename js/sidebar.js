@@ -188,7 +188,7 @@ menulistener.onCreateNote = function(){
 menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
     var url = $foc.attr("source");
-    var method = conf.getItem("sidebar.behavior.open.dest") == "curr-tab" ? "update" : "create";
+    var method = CONF.getItem("sidebar.behavior.open.dest") == "curr-tab" ? "update" : "create";
     browser.tabs[method]({ url: url }, function(tab){});
 };
 menulistener.onDebug = function(){};
@@ -638,7 +638,7 @@ function loadXml(rdf){
                     var $item = currTree.getItemById(id);
                     if($item.length){
                         currTree.focusItem($item);
-                        currTree.scrollToItem($item, 500, $(".toolbar").height() + 5, false);
+                        currTree.scrollToItem($(document.body), $item, 500, $(".toolbar").height() + 5, false);
                     }
                 }
             }
@@ -688,10 +688,12 @@ function requestUrlSaving(itemId){
         function saveIcon(){
             return new Promise((resolve, reject)=>{
                 if(icon){
-                    if(icon.match(/^data:image/i)){
-                        var filename = `${currTree.rdfPath}/data/${itemId}/favicon.ico`;
+                    var m;
+                    if(m = icon.match(/^data:image/i)){
                         var blob = dataURLtoBlob(icon);
-                        var ir = "resource://scrapbook/data/" + itemId + "/favicon.ico";
+                        var ext = blob.type.match(/svg/) ? 'svg' : 'ico';
+                        var filename = `${currTree.rdfPath}/data/${itemId}/favicon.${ext}`;
+                        var ir = `resource://scrapbook/data/${itemId}/favicon.${ext}`;
                         browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path: filename, blob}}).then((response) => {
                             resolve(ir);
                         }).catch(e => {
@@ -786,7 +788,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == 'UPDATE_FINISHED_NODE'){
         /** update node in sidebar only in the same window, sidebar in other windows will reloaded after icon updated */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
-            var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/favicon.ico" : "";
+            var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/" + request.iconFilename : "";
             currTree.updateItemIcon($("#"+request.itemId), icon);
             currTree.unlockItem($("#"+request.itemId));
             if(sender.tab.windowId == thisWindowId)
@@ -831,7 +833,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if($item.length){
                     currTree.focusItem($item);
                     currTree.expandAllParents($item);
-                    currTree.scrollToItem($item, 500, $(".toolbar").height() + 5);
+                    currTree.scrollToItem($(document.body), $item, 500, $(".toolbar").height() + 5);
                     resolve();
                 }else{
                     reject();

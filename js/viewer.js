@@ -131,7 +131,8 @@ class EditToolBar{
             var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
                 e.preventDefault();
                 self.toggleStatus("unlock");
-                browser.tabs.sendMessage(self.tabId, {type: "MARK_PEN", marker: `scrapbee-marker-${child}`}, {frameId: self.frameId}).then(function(){})
+                browser.tabs.sendMessage(self.tabId, {type: "MARK_PEN", marker: `scrapbee-marker-${child}`},
+                                         {frameId: self.frameId}).then(function(){})
             });
             $(`<div class='scrapbee-menu-item scrapbee-marker-${child}'>Example Text</div>`).appendTo($item);
         }
@@ -222,9 +223,9 @@ document.addEventListener('DOMContentLoaded', async function(){
     var rootPath = `${params.path}/data/${params.id}`;
     var rootAddress = `${CONF.getFileServiceAddress()}${rootPath}`;
     var elFrame = document.body.querySelector("#contentFrame");
-    document.querySelector("link[rel='shortcut icon']").href= `${rootAddress}/favicon.ico`;
+    // document.querySelector("link[rel='shortcut icon']").href= `${rootAddress}/favicon.ico`;
     browser.runtime.sendMessage({type:'GET_TAB_ID'}).then((tabId) => {
-        browser.webNavigation.getAllFrames({tabId}).then((frames)=>{
+        browser.webNavigation.getAllFrames({tabId}).then((frames) => {
             var frameId = frames[1].frameId;
             var url = `${rootAddress}/index.html?scrapbee_refresh=` + new Date().getTime();
             browser.webNavigation.onDOMContentLoaded.addListener((details) => {
@@ -235,15 +236,15 @@ document.addEventListener('DOMContentLoaded', async function(){
                         ], frameId).then(function(){
                             browser.tabs.sendMessage(tabId, {type: "INIT", frameId}, {frameId}).then((status)=>{
                                 if(status == "ok"){
-
                                     if(!editbar){
                                         editbar = new EditToolBar(`${params.path}/data/${params.id}/`, params.id, tabId, frameId);
                                         editbar.toggleStatus("lock");
                                     }
                                     $.get(url,function(r){
 		                        editbar.toggleStatus("unlock");
-                                        browser.tabs.sendMessage(tabId, {type: "GET_TITLE"}, {frameId}).then((title) => {
+                                        browser.tabs.sendMessage(tabId, {type: "GET_TITLE"}, {frameId}).then(([title, icon]) => {
                                             document.title = title
+                                            document.querySelector("link[rel='shortcut icon']").href = icon;
                                         });
 	                            }).fail(function(){});
                                 }

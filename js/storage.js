@@ -207,9 +207,13 @@ class Configuration extends StorageDB{
     }
     getRdfPaths(){
         var paths = this.getItem("tree.paths");
-        if(paths && paths.constructor == Array){
+        if(paths && Array.isArray(paths)){ // paths.constructor == Array
             return paths;
         }else{
+            // console.log(paths) 
+            // //alert(paths.constructor == Array.constructor)
+            // console.log(Array)
+            // console.log(paths.constructor, paths.constructor == Array)
             var paths = (paths || "").split("\n");
             paths.pop();
             return paths;
@@ -217,7 +221,7 @@ class Configuration extends StorageDB{
     }
     getRdfNames = function(){
         var names = this.getItem("tree.names");
-        if(names && names.constructor == Array){
+        if(names && Array.isArray(names)){ // names.constructor == Array
             return names;
         }else{
             var names = (names || "").split("\n");

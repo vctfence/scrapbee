@@ -355,17 +355,16 @@ class BookTree {
             }
         }
     }
-    scrollToItem($item, ms, mostTop, ani=true){
+    scrollToItem($el, $item, ms, mostTop, ani=true){
         if($item && $item.length){
+            var y = $item.offset().top - $el.offset().top - mostTop;
             if(ani){
-                $(document.body).animate({
-                    scrollTop: $item.offset().top - mostTop
-                }, ms);
+                $el.animate({scrollTop: y}, ms);
             }else{
-                document.body.scrollTop = $item.offset().top - mostTop;
+                $el.prop("scrollTop", y);
             }
         }
-     }
+    }
     getExpendedFolderIds(){
         var ids = [];
         this.$top_container.find(".item.folder.expended").each(function(){

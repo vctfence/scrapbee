@@ -251,23 +251,32 @@ ScrapbeeElement.prototype.getImgResources=function(){
 	var hex = HEX_FUN(this.el.src);
 	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
 	this.el.src = hex;
-        this.el.srcset = "";
+        // this.el.srcset = "";
     }
     return r;
 };
-ScrapbeeElement.prototype.getScriptResources=function(){
+ScrapbeeElement.prototype.getStyleResources=function(){
     this.el.setAttribute("mark_remove", "1");
     return [];
 };
-ScrapbeeElement.prototype.getStyleResources=function(){
+ScrapbeeElement.prototype.getScriptResources=function(){
     // this.el.setAttribute("mark_remove", "1");
-    return [];
+    var r = []
+    // if(this.el.getAttribute("src")){
+    //     var hex = HEX_FUN(this.el.src);
+    //     r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
+    // }
+    return r;
 };
 ScrapbeeElement.prototype.getLinkResources=function(){
     var r=[];
     if((/shortcut/i).test(this.el.rel)){ // rel="shortcut icon"
-	r.push({tag:this.el.tagName, type:"image", url:this.el.href, saveas:"favicon.ico"});
-	this.el.href="favicon.ico";
+        var hex = HEX_FUN(this.el.href);
+	
+        this.el.rel = "shortcut icon";
+        this.el.href = hex;
+
+        r.push({tag:this.el.tagName, type:"image", url:this.el.href, isIcon:true, hex});
     }else{
         this.el.setAttribute("mark_remove", "1");
     }
