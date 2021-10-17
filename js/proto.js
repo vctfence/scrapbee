@@ -272,11 +272,9 @@ ScrapbeeElement.prototype.getLinkResources=function(){
     var r=[];
     if((/shortcut/i).test(this.el.rel)){ // rel="shortcut icon"
         var hex = HEX_FUN(this.el.href);
-	
         this.el.rel = "shortcut icon";
-        this.el.href = hex;
-
         r.push({tag:this.el.tagName, type:"image", url:this.el.href, isIcon:true, hex});
+        this.el.href = hex;
     }else{
         this.el.setAttribute("mark_remove", "1");
     }
