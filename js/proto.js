@@ -266,11 +266,13 @@ ScrapbeeElement.prototype.getScriptResources=function(){
     //     var hex = HEX_FUN(this.el.src);
     //     r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
     // }
+
+    this.el.setAttribute("mark_remove", "1");
     return r;
 };
 ScrapbeeElement.prototype.getLinkResources=function(){
     var r=[];
-    if((/shortcut/i).test(this.el.rel)){ // rel="shortcut icon"
+    if((/(^|\W)(shortcut|icon)(\W|$)/i).test(this.el.rel)){ // rel="shortcut icon"
         var hex = HEX_FUN(this.el.href);
         this.el.rel = "shortcut icon";
         r.push({tag:this.el.tagName, type:"image", url:this.el.href, isIcon:true, hex});

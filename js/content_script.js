@@ -151,12 +151,14 @@ if(!window.scrapbee_injected){
     }
 
     /* capture content */
-    async function gatherContent(isForSelection, name="index", subPath=""){
+    async function gatherContent(isForSelection, page="index", subPath=""){
         var doc = document;
         var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
 
         function appendResource(resource){
-            browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "APPEND_RESOURCE", resource});
+
+            console.log(page)
+            browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "APPEND_RESOURCE", resource, page});
         }
         
         // injext all frames
@@ -246,13 +248,14 @@ if(!window.scrapbee_injected){
                     }
                 }
             });
-            if(!haveIcon && name=="index"){
+            if(!haveIcon && page=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
-                    appendResource({tag:"link", type:"image", url, isIcon:true, subPath})
+                    var hex = hex_md5(url).substr(0, 15);
+                    appendResource({tag:"link", type:"image", url, isIcon:true, subPath, hex})
                     var mc = doc.createElement("link");
                     mc.rel="shortcut icon";
-                    mc.href=`favicon.ico`;
+                    // mc.href=`{FAVICON_ICO}`;
                     mc.media="screen";
                     var head = segment.querySelectorAll("head");
                     if(head.length){
@@ -284,7 +287,7 @@ if(!window.scrapbee_injected){
                             type: "CALL_FRAME",
                             action: "GATHER_CONTENT",
                             subPath: subPath + _name + "/",
-                            name: _name,
+                            page: _name,
                             saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
                             frameId: frameId
                         });
@@ -297,7 +300,7 @@ if(!window.scrapbee_injected){
             /*** html page and css */
             appendResource({type: "text", mime:"text/css", saveas: `${subPath}index.css`, content: css.join("\n")})
             appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
-                            isLast: name == "index", title: doc.title, haveIcon})
+                            isLast: page == "index", title: doc.title, haveIcon})
             /** remove unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.removeAttribute("scrapbee_unique_id");
@@ -331,7 +334,7 @@ if(!window.scrapbee_injected){
             var res = [];
             var title = ""
             var haveIcon = false
-            var iconFilename = ""
+            var mainIconFilename = ""
             var blobfile = {};
             var remain = 0;
             // toplevel page
@@ -388,9 +391,12 @@ if(!window.scrapbee_injected){
                                 downloadFile(r.url, function(b){
                                     var ext = getMainMimeExt(b.type) || "";
                                     if(r.isIcon) {
-                                        iconFilename = "favicon" + ext;
-                                        r.filename = r.subPath + iconFilename;
-                                        blobfile[r.hex] = iconFilename;
+                                        var f = "favicon" + ext;
+                                        r.filename = r.subPath + f;
+                                        blobfile[r.hex] = f;
+                                        if(request.page == 'index'){
+                                            mainIconFilename = f;
+                                        }
                                     }else{
                                         r.filename = r.subPath + (r.saveas || (r.hex + ext));
                                         blobfile[r.hex] = (r.saveas || (r.hex + ext));
@@ -457,7 +463,7 @@ if(!window.scrapbee_injected){
                         }
                     }
                     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
-                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, iconFilename, rdf, itemId});
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, iconFilename: mainIconFilename, rdf, itemId});
                         dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
                     }).catch(e=>{
                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
@@ -500,7 +506,7 @@ if(!window.scrapbee_injected){
                 });
             }
         }else if(request.type == "GATHER_CONTENT") {
-            return gatherContent(request.saveType == "SAVE_SELECTION", request.name, request.subPath);
+            return gatherContent(request.saveType == "SAVE_SELECTION", request.page, request.subPath);
         }else if(request.type == 'SAVE_PAGE_REQUEST' || request.type == 'SAVE_SELECTION_REQUEST'){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));
