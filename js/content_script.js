@@ -192,6 +192,7 @@ if(!window.scrapbee_injected){
             }catch(e){
                 reject(e)
             }
+
             /** css */
             var css = [];
             function getRuleCss(r){
@@ -230,24 +231,28 @@ if(!window.scrapbee_injected){
             /** gather resources and inline styles */
             var distinct = {};
             var haveIcon = false;
-            segment.childNodes.iterateAll(function(item){
-                // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
-                if(item.nodeType == 1){
-                    var el = new ScrapbeeElement(item)
-                    var resources = el.processResources();
-                    el.processInlineStyle();
-                    for(let r of resources){
-                        if(!distinct[r.url]){
-                            distinct[r.url] = 1;
-                            r.subPath = subPath;
-                            appendResource(r)
-                            if(r.isIcon){
-                                haveIcon = true;
+            try{
+                segment.childNodes.iterateAll(function(item){
+                    // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
+                    if(item.nodeType == 1){
+                        var el = new ScrapbeeElement(item)
+                        var resources = el.processResources();
+                        el.processInlineStyle();
+                        for(let r of resources){
+                            if(!distinct[r.url]){
+                                distinct[r.url] = 1;
+                                r.subPath = subPath;
+                                appendResource(r)
+                                if(r.isIcon){
+                                    haveIcon = true;
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }catch(e){
+                log.error(e)
+            }
             if(!haveIcon && page=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
