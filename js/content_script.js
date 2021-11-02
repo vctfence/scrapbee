@@ -154,13 +154,9 @@ if(!window.scrapbee_injected){
     async function gatherContent(isForSelection, page="index", subPath=""){
         var doc = document;
         var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
-
         function appendResource(resource){
-
-            console.log(page)
             browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "APPEND_RESOURCE", resource, page});
         }
-        
         // injext all frames
         if(conf.capture.behavior.frames.save == "on"){
             await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
@@ -190,9 +186,8 @@ if(!window.scrapbee_injected){
             try{
                 var segment = await cloneSegment(doc, isForSelection)
             }catch(e){
-                reject(e)
+                reject(e);
             }
-
             /** css */
             var css = [];
             function getRuleCss(r){
@@ -370,7 +365,7 @@ if(!window.scrapbee_injected){
                             resolve();
                         }
                     }
-                    var nodes = 0
+                    var nodes = 0;
                     function receive(request, sender, sendResponse) {
                         if(request.type == "TAB_INNER_CALL" && request.action == "APPEND_RESOURCE"){
                             var i = added ++;

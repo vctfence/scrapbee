@@ -1,7 +1,6 @@
-import {Configuration} from "./storage.js";
 import {BookTree} from "./tree.js";
 import {getUrlParams} from "./utils.js";
-import {History} from "./history.js"
+import {Configuration, History} from "./storage.js"
 import {global} from "./global.js";
 
 window.GLOBAL = global;
@@ -13,8 +12,8 @@ function Queue(maxWorkingTasks, workingFn){
     this.maxWorkingTasks = maxWorkingTasks;
     this.workingTasks = 0;
     this.workingFn = workingFn;
-    this.taskCount=0;
-    this.doneCount=0;
+    this.taskCount = 0;
+    this.doneCount = 0;
     this.pause = false;
 }
 Queue.prototype.addTask=function(task){
@@ -30,7 +29,6 @@ Queue.prototype.start=function(){
 };
 Queue.prototype.popTask=function(){
     var self = this;
-    
     if(this.doneCount == this.taskCount || (this.exit && self.workingTasks == 0)){
     	if(this.onfinished)
             this.onfinished();
@@ -93,12 +91,8 @@ function loadXml(rdf){
     xmlhttp.send();
 }
 function red(a){
-    return "<b style='color:red'>"+a+"</b>";
+    return "<b style='color:red'>" + a + "</b>";
 }
-// function extractContent(html) {
-//     return body.replace(/<(?:.|\n)*?>/gm, '').replace(/(&nbsp;)+/g, " ").replace(/\s+/g, " ");
-//     return (new DOMParser).parseFromString(html, "text/html").documentElement.textContent;
-// }
 function extractContent(html) {
     var span = document.createElement('span');
     span.innerHTML = html;
@@ -189,18 +183,14 @@ async function processTree(tree, search_title, search_body, search_comment){
 	    callback();
 	}
     });
-
     $("#btnStop").click(()=>{q.stop();});
-    
     q.onfinished=function(){
 	var i18n_result = browser.i18n.getMessage("RESULTS_FOUND");
 	$("<div>").appendTo($("#divResult")).html(match_count + i18n_result);
-	// $("#btnSearch").prop("disabled", false);
         $("#btnSearch").show();
         $("#btnStop").hide();
         $("img.loading").hide();
     };
-    
     await tree.iterateLiNodes(async function(item){
 	if(item.nodeType == "bookmark" || item.nodeType == "page" || item.nodeType == "note"){
             try{
@@ -219,7 +209,6 @@ $(document).ready(async function(){
     await GLOBAL.load();
     await CONF.load();
     await HISTORY.load();
-    
     var sources = (HISTORY.getItem("searching.source") || "").split(",");
     $("input[type=checkbox][name=source]").each(function(){
         if(sources.indexOf(this.value) > -1){

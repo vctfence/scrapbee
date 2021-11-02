@@ -167,7 +167,6 @@ ScrapbeeElement.prototype.getFullUrl=function(url){
 }
 ScrapbeeElement.prototype.processInlineStyle=function(){
     if(this.originEl.style.cssText){ // inline (on tag or js assigned)
-        // console.log(this.el.style.cssText)
         this.el.setAttribute("style", this.el.style.cssText);
     }
 }
@@ -226,23 +225,6 @@ ScrapbeeElement.prototype.getTextareaResources=function(){
 }
 ScrapbeeElement.prototype.getBodyResources=function(){
     var r=[];
-    // var style = window.getComputedStyle(this.originEl, false);
-    // var bg = style.backgroundImage.replace(/url\(['"]?(.+?)['"]?\)/, function(a, b){
-    //     return b;
-    // });
-    // if(bg && bg != "none"){
-    //     try{
-    //         var hex = HEX_FUN(bg);
-    //         var saveas = hex;
-    //         bg.replace(/\.\w+$/,function(a){
-    //             saveas = hex + a; // hex + ext
-    //         });
-    //         r.push({tag:this.el.tagName, type:"body", url:bg, saveas, type: "image"});
-    //         this.el.background = saveas;
-    //     }catch(e){
-    //         console.log(`ScrapbeeElement.getBodyResources: ${e}`)
-    //     }
-    // }
     return r;
 }
 ScrapbeeElement.prototype.getImgResources=function(){
@@ -260,13 +242,11 @@ ScrapbeeElement.prototype.getStyleResources=function(){
     return [];
 };
 ScrapbeeElement.prototype.getScriptResources=function(){
-    // this.el.setAttribute("mark_remove", "1");
-    var r = []
+    var r = [];
     // if(this.el.getAttribute("src")){
     //     var hex = HEX_FUN(this.el.src);
     //     r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
     // }
-
     this.el.setAttribute("mark_remove", "1");
     return r;
 };

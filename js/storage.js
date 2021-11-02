@@ -1,15 +1,24 @@
 import {gtev} from "./utils.js";
-import {global} from "./global.js"
+import {global} from "./global.js";
 
 class StorageDB{
-    constructor(){
+    constructor(db){
         var self = this;
         this.data = {};
-        this.dbName = null;
+        this.dbName = db;
         browser.storage.onChanged.addListener(function(changes, area){
             var changedItems = Object.keys(changes);
             var backend_changed;
-            var ch = {}
+            var ch = {};
+            function compire(path, a, b){
+                Object.keys(a).forEach((k)=>{
+                    if(a[k].constructor == Object){
+                        compire((path ?  (path + ".") : "") + k, a[k], b[k] || {})
+                    }else if((a[k] || "").toString() != (b[k] || "").toString()){
+                        ch[path + "." +  k] = {newValue: a[k], oldValue: b[k]}
+                    }
+                });
+            }               
             for (var item of changedItems) {
                 if(item == self.dbName){
                     var oldData = self.data;
@@ -17,15 +26,6 @@ class StorageDB{
                     self.data = newData;
                     if(self.__ondatachanged)
                         compire("", newData, oldData);
-                }
-                function compire(path, a, b){
-                    Object.keys(a).forEach((k)=>{
-                        if(a[k].constructor == Object){
-                            compire((path ?  (path + ".") : "") + k, a[k], b[k] || {})
-                        }else if((a[k] || "").toString() != (b[k] || "").toString()){
-                            ch[path + "." +  k] = {newValue: a[k], oldValue: b[k]}
-                        }
-                    });
                 }
             }
             if(Object.keys(ch).length)
@@ -88,24 +88,23 @@ class StorageDB{
             this.commit();
     }
     commit(){
-        var item = {};
-        item[this.dbName] = this.data;
-        browser.storage.local.set(item);
+        var json = {};
+        json[this.dbName] = this.data;
+        browser.storage.local.set(json);
     }
 }
 
 class History extends StorageDB{
     constructor(){
-        super();
-        this.dbName = "__history__";
+        super("__history__");
     }
 }
 
 class Configuration extends StorageDB{
     constructor(){
-        super();
+        super("__config__");
+
         var self = this;
-        this.dbName = "__config__";
         this.__ondatachanged = (changes) => {
             var backend_changed = false;
             Object.keys(changes).forEach((item)=>{
@@ -194,7 +193,7 @@ class Configuration extends StorageDB{
             }).catch(e => {reject(e)});
         });
     }
-    loadJson = function(json){
+    loadJson(json){
         var self = this;
         Object.keys(json).forEach(function(key) {
             var nKey = self.translateKey(key) || key;
@@ -202,7 +201,7 @@ class Configuration extends StorageDB{
         });
         this.commit();
     }
-    getJson = function(){
+    getJson(){
         return this.data;
     }
     getRdfPaths(){
@@ -210,16 +209,12 @@ class Configuration extends StorageDB{
         if(paths && Array.isArray(paths)){ // paths.constructor == Array
             return paths;
         }else{
-            // console.log(paths) 
-            // //alert(paths.constructor == Array.constructor)
-            // console.log(Array)
-            // console.log(paths.constructor, paths.constructor == Array)
             var paths = (paths || "").split("\n");
             paths.pop();
             return paths;
         }
     }
-    getRdfNames = function(){
+    getRdfNames(){
         var names = this.getItem("tree.names");
         if(names && Array.isArray(names)){ // names.constructor == Array
             return names;

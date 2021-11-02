@@ -503,7 +503,7 @@ $(document).ready(async function(){
         {value: "menuSort1", icon:"/icons/sort_a_z.svg", title: "{Sort}"},
     ];
     items.forEach(function(v, i){
-        items[i]["title"]= v.title.translate()
+        items[i]["title"] = v.title.translate();
     });
     document.body.ctxMenu = new ContextMenu(items);
     document.body.ctxMenu.onselect = function(title, value){
@@ -516,7 +516,7 @@ $(document).ready(async function(){
     applyAppearance();
     loadRdfList();
     /** announcement */
-    var ann = browser.i18n.getMessage("announcement_version")
+    var ann = "2.4.0"; // browser.i18n.getMessage("announcement_version")
     var showed = HISTORY.getItem("announce.version_showed") || "";
     if(gtv(ann, showed)){
         $("#announcement-red-dot").show();
