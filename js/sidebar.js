@@ -266,7 +266,9 @@ menulistener.onOpenFolder = function(){
 };
 var drop;
 function loadRdfList(){
-    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then((response) => {
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then(async (response) => {
+        await GLOBAL.load();
+        
         log.info("show rdf list");
         var lastRdf = HISTORY.getItem("sidebar.tree.last");
         var saw = false;

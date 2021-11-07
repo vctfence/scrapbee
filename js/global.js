@@ -19,4 +19,11 @@ global.load = function(){
         });
     });
 }
+
+browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if(request.type == "BACKEND_SERVICE_STARTED"){
+        global.backendVersion = request.version
+    }
+});
+
 export {global};
