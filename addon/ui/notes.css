@@ -328,3 +328,20 @@ button.ql-hr {
     font-size: 120%;
     box-sizing: border-box;
 }
+
+.format-html ul > li::before {
+    content: '\2022';
+}
+
+.format-html li::before {
+    margin-left: -1.5em;
+    margin-right: 0.3em;
+    text-align: right;
+    display: inline-block;
+    white-space: nowrap;
+    width: 1.2em;
+}
+
+.format-html ol li::before {
+    content: counter(list-0, decimal) '. ';
+}
