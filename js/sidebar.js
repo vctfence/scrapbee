@@ -376,7 +376,7 @@ body{
   width:${origin_h}px;
   height:${origin_h}px;
   mask-size:${origin_h}px ${origin_h}px;
-  background:#${appearance.font_color}
+  background:#${appearance.color.fg}
 }
 .item{
   margin-top:0 !important;
@@ -384,7 +384,7 @@ body{
 }
 .simple-menu-item{
   border-color:#${appearance.color.fg};
-  color:#${appearance.font_color}
+  color:#${appearance.color.fg}
 }
 .simple-dropdown, .simple-menu{
   background:#${bg_color};
