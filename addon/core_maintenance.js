@@ -169,7 +169,7 @@ receive.reindexArchiveContent = async message => {
             if (node.has_comments) {
                 const comments = await bookmarkManager.fetchComments(node.id);
                 if (comments) {
-                    const words = comments.indexWords(false);
+                    const words = indexWords(comments, false);
                     await bookmarkManager.updateCommentIndex(node.id, words);
                 }
             }
