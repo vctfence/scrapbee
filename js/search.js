@@ -69,6 +69,7 @@ function loadXml(rdf){
         }
     });
     HISTORY.setItem("searching.source", sources.join(","), true);
+    HISTORY.commit();
     if(!(search_title || search_body || search_comment))
         return;
     $("#btnSearch").hide();
