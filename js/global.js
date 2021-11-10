@@ -3,12 +3,15 @@ function __p(name, value){
     var self = global;
     self.__defineGetter__(name, function() { return value; });
 }
-if(browser && browser.runtime){
-    browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        if(request.type == "BACKEND_SERVICE_STARTED"){
-            __p("backendVersion", request.version);
-        }
-    });
+// if(browser && browser.runtime){
+//     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+//         if(request.type == "BACKEND_SERVICE_STARTED"){
+//             __p("backendVersion", request.version);
+//         }
+//     });
+// }
+global.set = function(name, value){
+    __p(name, value);
 }
 global.load = function(){
     var self = global;

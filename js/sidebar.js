@@ -266,13 +266,14 @@ menulistener.onOpenFolder = function(){
 };
 var drop;
 function loadRdfList(){
-    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then(async (response) => {
-        await GLOBAL.load();
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then(async (version) => {
+        GLOBAL.set("backendVersion", version);
         
         log.info("show rdf list");
-        var lastRdf = HISTORY.getItem("sidebar.tree.last");
+
         var saw = false;
-        var paths = CONF.getRdfPaths();
+        let lastRdf = HISTORY.getItem("sidebar.tree.last");
+        let paths = CONF.getRdfPaths();
         if(paths.length == 0)
             $(".folder-content.toplevel").html("{NO_RDF_SETTED_HINT}".translate());
         drop = drop || new SimpleDropdown($(".drop-button")[0], []);

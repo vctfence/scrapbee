@@ -288,9 +288,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         return new Promise((resolve, reject) => {
             function check(){
                 times --;
-                // log.info(web_status)
                 if(web_status == "launched"){
-                    resolve()
+                    resolve(backend_version)
                 }else if(times < 1){
                     reject(Error("max times tried"));
                 }else if(web_status == "failed"){
