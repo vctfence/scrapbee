@@ -1,6 +1,5 @@
 import {log} from "./message.js";
 import {randRange, comp} from "./utils.js";
-import {Configuration} from "./storage.js"
 
 class NodeHTMLBuffer {
     constructor(start="", end="") {
@@ -29,13 +28,12 @@ class NodeHTMLBuffer {
     }
 }
 class BookTree {
-    constructor(xmlString, rdf_full_file, options={}) {
+    constructor(xmlString, rdfFullFile, options={}) {
         var self = this;
-        
         this.unique_id = randRange(0, 99999999); 
         this.options = options;
-        this.rdf = rdf_full_file;
-        this.rdfPath = rdf_full_file.replace(/[^\/\\]*$/, "");
+        this.rdf = rdfFullFile;
+        this.rdfHome = rdfFullFile.replace(/[^\/\\]*$/, "");
         this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
         this.namespaces = this.getNameSpaces();
         Object.keys(this.namespaces).forEach(function(k) {
@@ -83,11 +81,11 @@ class BookTree {
         });
         return r;
     }
-    translateResource(r, rdfPath, id) {
+    translateResource(r, rdfHome, id) {
         /** scrap data */
         r = r.replace(
             /^resource\:\/\/scrapbook/,
-            CONF.getFileServiceAddress() + rdfPath
+            CONF.getFileServiceAddress() + rdfHome
         );
         /** local file */
         if((/^(\/|(\[a-z]\:))/).test(r)){
@@ -342,7 +340,7 @@ class BookTree {
         return c;
     }
     getItemFilePath(id) {
-        return (this.rdfPath + "data/" + id + "/").replace(/\/{2,}/g, "/");
+        return (this.rdfHome + "data/" + id + "/").replace(/\/{2,}/g, "/");
     }    
     toggleFolder($item, on) {
         if ($item && $item.hasClass("folder")) {
@@ -663,7 +661,7 @@ class BookTree {
     updateItemIcon($item, icon) {
         var id = $item.attr("id");
         if(icon){
-            $item.find("i").css("background-image", "url(" + this.translateResource(icon, this.rdfPath, id) + ")");
+            $item.find("i").css("background-image", "url(" + this.translateResource(icon, this.rdfHome, id) + ")");
         }else{
             $item.find("i")[0].style.removeProperty("background-image");
         }
@@ -791,7 +789,7 @@ class BookTree {
         if (wait){
             style = "background-image:url(/icons/loading.gif);";
         }else if (icon) {
-            style = "background-image:url(" + this.translateResource(icon, this.rdfPath, id) + ");";
+            style = "background-image:url(" + this.translateResource(icon, this.rdfHome, id) + ");";
         }
 
         var bf = new NodeHTMLBuffer(
@@ -960,7 +958,7 @@ class BookTree {
         if(node){
             node.parentNode.removeChild(node);
         }
-        [this.desc_node_cache ,this.separator_node_cache ,this.seq_node_cache].forEach(function(buf){
+        [this.descNodeCache ,this.separatorNodeCache ,this.seqNodeCache].forEach(function(buf){
             var node = buf[about];
             if(node){
                 node.parentNode.removeChild(node);
@@ -990,7 +988,7 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "id", id);
             node.setAttributeNS(this.MAIN_NS, "type", "separator");
             this.xmlDoc.documentElement.appendChild(node);
-            this.separator_node_cache["urn:scrapbook:item" + id] = node;
+            this.separatorNodeCache["urn:scrapbook:item" + id] = node;
         }
     }
     createScrapXml(folder_id, type, id, ref_id, title="", source="", icon="", comment="", tag="", pos="bottom") {
@@ -1021,7 +1019,7 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "source", source);
             node.setAttributeNS(this.MAIN_NS, "icon", icon);
             this.xmlDoc.documentElement.appendChild(node);
-            this.desc_node_cache["urn:scrapbook:item" + id] = node;
+            this.descNodeCache["urn:scrapbook:item" + id] = node;
         }
     }
     createFolderXml(folder_id, id, ref_id, title, pos="bottom") {
@@ -1049,11 +1047,11 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
             node.setAttributeNS(this.MAIN_NS, "comment", "");
             this.xmlDoc.documentElement.appendChild(node);
-            this.desc_node_cache["urn:scrapbook:item" + id] = node;
+            this.descNodeCache["urn:scrapbook:item" + id] = node;
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Seq");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
             this.xmlDoc.documentElement.appendChild(node);
-            this.seq_node_cache["urn:scrapbook:item" + id] = node;
+            this.seqNodeCache["urn:scrapbook:item" + id] = node;
         }
     }
     xmlSerialized() {
@@ -1068,24 +1066,24 @@ class BookTree {
     cacheXmlNode() {
         var search = `//RDF:Description`;
         var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-        this.desc_node_cache={};
+        this.descNodeCache={};
         var n;
         while(n = result.iterateNext()){
-            this.desc_node_cache[n.getAttributeNS(this.NS_RDF, "about")] = n;
+            this.descNodeCache[n.getAttributeNS(this.NS_RDF, "about")] = n;
         }
         var search = `//RDF:Seq`;
         var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-        this.seq_node_cache={};
+        this.seqNodeCache={};
         var n;
         while(n = result.iterateNext()){
-            this.seq_node_cache[n.getAttributeNS(this.NS_RDF, "about")] = n;
+            this.seqNodeCache[n.getAttributeNS(this.NS_RDF, "about")] = n;
         }
         var search = `//NC:BookmarkSeparator`;
         var result = this.xmlDoc.evaluate(search, this.xmlDoc, this.nsResolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-        this.separator_node_cache={};
+        this.separatorNodeCache={};
         var n;
         while(n = result.iterateNext()){
-            this.separator_node_cache[n.getAttributeNS(this.NS_RDF, "about")] = n;
+            this.separatorNodeCache[n.getAttributeNS(this.NS_RDF, "about")] = n;
         }
     }
     getLiNode(about) {
@@ -1107,16 +1105,16 @@ class BookTree {
             node.setAttributeNS(this.MAIN_NS, "type", "folder");
             node.setAttributeNS(this.MAIN_NS, "title", "root");
             node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
-            return node
+            return node;
         }else{
-            return this.desc_node_cache[about];
+            return this.descNodeCache[about];
         }
     }
     getSeqNode(about) {
-        return this.seq_node_cache[about];
+        return this.seqNodeCache[about];
     }
     getSeparatorNode(about) {
-        return this.separator_node_cache[about];
+        return this.separatorNodeCache[about];
     }
     getNameSpaces() {
         var r = {};

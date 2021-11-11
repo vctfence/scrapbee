@@ -67,7 +67,7 @@ class Editor{
             }else if(request.type == "TOGGLE_EDITING"){
                 document.designMode = document.designMode == "off" ? "on" : "off";
             }else if(request.type == "TOGGLE_PAGE_CLEAN"){
-                self.toggleDomEdit()
+                self.toggleDomCleaning()
             }else if(request.type == "CLEAR_MARK_PEN"){
                 if(self.isSelectionOn()){
                     clearMarkPen(request.marker)
@@ -100,7 +100,7 @@ class Editor{
             if(e.button == 0) {
                 browser.runtime.sendMessage({type: "TAB_CALL", tabId:self.tabId, message: "onmousedown", frameId:0})
                 /** remove dom node by cleaner */
-                if(self.last && self.editing){
+                if(self.last && self.cleaning){
                     e.preventDefault();
                     self.last.parentNode.removeChild(self.last);
                     self.last = null;
@@ -124,7 +124,7 @@ class Editor{
         window.addEventListener("mousemove", function(e){
             currMousePos.x = e.pageX - window.scrollX;
             currMousePos.y = e.pageY - window.scrollY;
-            if(self.editing){
+            if(self.cleaning){
                 var dom = document.elementFromPoint(e.pageX - window.scrollX, e.pageY - window.scrollY);
                 if(dom){
                     if(dom != document.body && $(document.body).closest(dom).length == 0){
@@ -156,14 +156,14 @@ class Editor{
         }
         return false;
     }
-    toggleDomEdit(){
+    toggleDomCleaning(){
         this.last = null;
-        this.editing = !this.editing;
-        if(this.editing)
+        this.cleaning = !this.cleaning;
+        if(this.cleaning)
             this.$cap = $("<div>").appendTo(document.body);
         else
             this.$cap.remove();
-        document.body.style.cursor = this.editing ? "crosshair" : ""; 
+        document.body.style.cursor = this.cleaning ? "crosshair" : ""; 
     }
     replaceHTML(request){
         // <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

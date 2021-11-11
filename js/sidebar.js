@@ -122,7 +122,6 @@ menulistener.onOpenAll = function(){
         }
     }, [liXmlNode]);
 };
-
 menulistener.onSort1 = function(){
     showDlg("sort", {}).then(async function(d){
         var $target = null;
@@ -191,7 +190,6 @@ menulistener.onOpenOriginLink = function(){
     var method = CONF.getItem("sidebar.behavior.open.dest") == "curr-tab" ? "update" : "create";
     browser.tabs[method]({ url: url }, function(tab){});
 };
-menulistener.onDebug = function(){};
 menulistener.onProperty = function(){
     var $foc = $(".item.focus");
     if($foc.length){
