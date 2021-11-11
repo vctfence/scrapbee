@@ -18,7 +18,7 @@ import {getMimetypeExt} from "./utils.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrl, packUrlExt} from "./bookmarking.js";
+import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
@@ -28,7 +28,7 @@ export function isAutomationAllowed(sender) {
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
 }
 
-const ALLOWED_API_FIELDS = ["type", "uuid", "title", "url", "icon", "tags", "details", "todo_state", "todo_date",
+const ALLOWED_API_FIELDS = ["type", "uuid", "title", "url", "icon", "path", "tags", "details", "todo_state", "todo_date",
                             "comments", "container", "content", "content_type", "pack", "local", "select", "refresh",
                             "hide_tab"];
 
