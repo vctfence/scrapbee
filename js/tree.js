@@ -35,15 +35,15 @@ class BookTree {
         this.rdf = rdfFullFile;
         this.rdfHome = rdfFullFile.replace(/[^\/\\]*$/, "");
         this.xmlDoc = new DOMParser().parseFromString(xmlString, 'text/xml');
-        this.namespaces = this.getNameSpaces();
-        Object.keys(this.namespaces).forEach(function(k) {
-            var v = self.namespaces[k];
-            if (/^NS\d+$/.test(k))
-                self.MAIN_NS = v;
+        var namespaces = this.getNameSpaces();
+        Object.keys(namespaces).forEach(function(k) {
+            var v = namespaces[k];
             self["NS_" + k] = v;
+            if (/^NS\d+$/.test(k))
+                self.NS_MAIN = v;
         });
         this.nsResolver=function(prefix) {
-            return self.namespaces[prefix] || null;
+            return namespaces[prefix] || null;
         };
         this.cacheXmlNode();
     }
@@ -125,7 +125,7 @@ class BookTree {
             if(e.target.tagName != "INPUT"){
                 var $el = getItemNode(e.target);
                 if ($el) {
-                    if (["page", "bookmark", "note", "folder"].includes(self.getItemType($el))) {
+                    if (["page", "bookmark", "note", "folder", "separator"].includes(self.getItemType($el))) {
                         if(self.onChooseItem)self.onChooseItem($el.attr("id"));
                     }            
                     if (e.button == 0) {
@@ -316,26 +316,26 @@ class BookTree {
     }
     getItemIcon(id) {
         var node = this.getDescNode("urn:scrapbook:item" + id);
-        var c = node.getAttributeNS(this.MAIN_NS, "icon") || "";
+        var c = node.getAttributeNS(this.NS_MAIN, "icon") || "";
         return c;
     }
     getItemComment(id) {
         var node = this.getDescNode("urn:scrapbook:item" + id);
-        var c = node.getAttributeNS(this.MAIN_NS, "comment") || "";
+        var c = node.getAttributeNS(this.NS_MAIN, "comment") || "";
         c = c.replace(/ __BR__ /g, "\n");
         c = c.htmlDecode(); // temporary solution for html entity
-        node.setAttributeNS(this.MAIN_NS, "comment", c); // temporarily replace html entity
+        node.setAttributeNS(this.NS_MAIN, "comment", c); // temporarily replace html entity
         return c;
     }
     getItemTag(id) {
         var node = this.getDescNode("urn:scrapbook:item" + id);
-        var c = node.getAttributeNS(this.MAIN_NS, "tag") || "";
+        var c = node.getAttributeNS(this.NS_MAIN, "tag") || "";
         c = c.htmlDecode();
         return c;
     }
     getItemTag(id) {
         var node = this.getDescNode("urn:scrapbook:item" + id);
-        var c = node.getAttributeNS(this.MAIN_NS, "tag") || "";
+        var c = node.getAttributeNS(this.NS_MAIN, "tag") || "";
         c = c.htmlDecode();
         return c;
     }
@@ -613,9 +613,9 @@ class BookTree {
                             var desc_node = self.getDescNode(about);
                             var data;
                             if(desc_node){
-                                id = desc_node.getAttributeNS(self.MAIN_NS, "id");
-                                var title = desc_node.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
-                                desc_node.setAttributeNS(self.MAIN_NS, "title", title);  // temporarily replace html entity
+                                id = desc_node.getAttributeNS(self.NS_MAIN, "id");
+                                var title = desc_node.getAttributeNS(self.NS_MAIN, "title").htmlDecode(); // temporary solution for html entity
+                                desc_node.setAttributeNS(self.NS_MAIN, "title", title);  // temporarily replace html entity
                                 data = {
                                     parentId: parentId,
                                     nodeType: 'seq',
@@ -634,17 +634,17 @@ class BookTree {
                         var id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");
                         await fn({ nodeType: 'separator', id: id, parentId: parentId, level}, child);
                     } else if(nodeType) {   // scrap
-                        var title = introNode.getAttributeNS(self.MAIN_NS, "title").htmlDecode(); // temporary solution for html entity
-                        introNode.setAttributeNS(self.MAIN_NS, "title", title); // temporarily replace html entity 
+                        var title = introNode.getAttributeNS(self.NS_MAIN, "title").htmlDecode(); // temporary solution for html entity
+                        introNode.setAttributeNS(self.NS_MAIN, "title", title); // temporarily replace html entity 
                         await fn({
                             parentId: parentId,
                             nodeType: nodeType,
-                            id: introNode.getAttributeNS(self.MAIN_NS, "id"),
+                            id: introNode.getAttributeNS(self.NS_MAIN, "id"),
                             type: nodeType,
-                            source: introNode.getAttributeNS(self.MAIN_NS, "source"),
-                            icon: introNode.getAttributeNS(self.MAIN_NS, "icon"),
+                            source: introNode.getAttributeNS(self.NS_MAIN, "source"),
+                            icon: introNode.getAttributeNS(self.NS_MAIN, "icon"),
                             title: title,
-                            comment: (introNode.getAttributeNS(self.MAIN_NS, "comment") || "").replace(/ __BR__ /g, "\n"),
+                            comment: (introNode.getAttributeNS(self.NS_MAIN, "comment") || "").replace(/ __BR__ /g, "\n"),
                             level
                         }, child);
                     }
@@ -666,7 +666,7 @@ class BookTree {
             $item.find("i")[0].style.removeProperty("background-image");
         }
         var node = this.getDescNode("urn:scrapbook:item" + id);
-        if (node) node.setAttributeNS(this.MAIN_NS, "icon", icon);
+        if (node) node.setAttributeNS(this.NS_MAIN, "icon", icon);
     }
     renameItem($item, title) {
         var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
@@ -674,7 +674,7 @@ class BookTree {
         if (desc_node) {
             $item.find("label").html(title.htmlEncode() || "-- UNTITLED --");
             $item.attr("title", title);
-            desc_node.setAttributeNS(this.MAIN_NS, "title", title);
+            desc_node.setAttributeNS(this.NS_MAIN, "title", title);
         }
     }
     updateSource($item, source) {
@@ -682,7 +682,7 @@ class BookTree {
         source = $.trim(source);
         if (desc_node) {
             $item.attr("source", source);
-            desc_node.setAttributeNS(this.MAIN_NS, "source", source);
+            desc_node.setAttributeNS(this.NS_MAIN, "source", source);
         }
     }
     updateComment($item, comment) {
@@ -691,14 +691,14 @@ class BookTree {
         comment = comment.replace(/\n\r/g, "\n");
         comment = comment.replace(/[\n\r]/g, " __BR__ ");
         if(desc_node) {
-            desc_node.setAttributeNS(this.MAIN_NS, "comment", comment);
+            desc_node.setAttributeNS(this.NS_MAIN, "comment", comment);
         }
     }
     updateTag($item, tag) {
         var desc_node = this.getDescNode("urn:scrapbook:item" + $item.attr("id"));
         tag = $.trim(tag);
         if(desc_node) {
-            desc_node.setAttributeNS(this.MAIN_NS, "tag", tag);
+            desc_node.setAttributeNS(this.NS_MAIN, "tag", tag);
         }
     }    
     getItemPath($item, separator=' / ') {
@@ -924,7 +924,7 @@ class BookTree {
             return ["separator", separator];
         var r = this.getDescNode(resource);
         if (r) {
-            var type = r.getAttributeNS(this.MAIN_NS, "type");
+            var type = r.getAttributeNS(this.NS_MAIN, "type");
             if (!(["page", "bookmark", "note"].includes(type))) type = "page";
             return [type, r];
         }
@@ -985,8 +985,8 @@ class BookTree {
             }
             var node = this.xmlDoc.createElementNS(this.NS_NC, "BookmarkSeparator");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            node.setAttributeNS(this.MAIN_NS, "id", id);
-            node.setAttributeNS(this.MAIN_NS, "type", "separator");
+            node.setAttributeNS(this.NS_MAIN, "id", id);
+            node.setAttributeNS(this.NS_MAIN, "type", "separator");
             this.xmlDoc.documentElement.appendChild(node);
             this.separatorNodeCache["urn:scrapbook:item" + id] = node;
         }
@@ -1010,14 +1010,14 @@ class BookTree {
             }
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            node.setAttributeNS(this.MAIN_NS, "id", id);
-            node.setAttributeNS(this.MAIN_NS, "type", type);
-            node.setAttributeNS(this.MAIN_NS, "title", title);
-            node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
-            node.setAttributeNS(this.MAIN_NS, "comment", comment);
-            // node.setAttributeNS(this.MAIN_NS, "tag", tag);
-            node.setAttributeNS(this.MAIN_NS, "source", source);
-            node.setAttributeNS(this.MAIN_NS, "icon", icon);
+            node.setAttributeNS(this.NS_MAIN, "id", id);
+            node.setAttributeNS(this.NS_MAIN, "type", type);
+            node.setAttributeNS(this.NS_MAIN, "title", title);
+            node.setAttributeNS(this.NS_MAIN, "chars", "UTF-8");
+            node.setAttributeNS(this.NS_MAIN, "comment", comment);
+            // node.setAttributeNS(this.NS_MAIN, "tag", tag);
+            node.setAttributeNS(this.NS_MAIN, "source", source);
+            node.setAttributeNS(this.NS_MAIN, "icon", icon);
             this.xmlDoc.documentElement.appendChild(node);
             this.descNodeCache["urn:scrapbook:item" + id] = node;
         }
@@ -1041,11 +1041,11 @@ class BookTree {
             }
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:item" + id);
-            node.setAttributeNS(this.MAIN_NS, "id", id);
-            node.setAttributeNS(this.MAIN_NS, "type", "folder");
-            node.setAttributeNS(this.MAIN_NS, "title", title);
-            node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
-            node.setAttributeNS(this.MAIN_NS, "comment", "");
+            node.setAttributeNS(this.NS_MAIN, "id", id);
+            node.setAttributeNS(this.NS_MAIN, "type", "folder");
+            node.setAttributeNS(this.NS_MAIN, "title", title);
+            node.setAttributeNS(this.NS_MAIN, "chars", "UTF-8");
+            node.setAttributeNS(this.NS_MAIN, "comment", "");
             this.xmlDoc.documentElement.appendChild(node);
             this.descNodeCache["urn:scrapbook:item" + id] = node;
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Seq");
@@ -1101,10 +1101,10 @@ class BookTree {
         if(about == "urn:scrapbook:root"){ // fake node, does not exists in the doc
             var node = this.xmlDoc.createElementNS(this.NS_RDF, "Description");
             node.setAttributeNS(this.NS_RDF, "about", "urn:scrapbook:root");
-            node.setAttributeNS(this.MAIN_NS, "id", "root");
-            node.setAttributeNS(this.MAIN_NS, "type", "folder");
-            node.setAttributeNS(this.MAIN_NS, "title", "root");
-            node.setAttributeNS(this.MAIN_NS, "chars", "UTF-8");
+            node.setAttributeNS(this.NS_MAIN, "id", "root");
+            node.setAttributeNS(this.NS_MAIN, "type", "folder");
+            node.setAttributeNS(this.NS_MAIN, "title", "root");
+            node.setAttributeNS(this.NS_MAIN, "chars", "UTF-8");
             return node;
         }else{
             return this.descNodeCache[about];

@@ -167,7 +167,7 @@ menulistener.onCreateSeparator = function(){
 };
 menulistener.onCreateNote = function(){
     var id = genItemId();
-    var path = `${currTree.rdfPath}/data/${id}/index.html`;
+    var path = `${currTree.rdfHome}/data/${id}/index.html`;
     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE',
                                  text: "<title>New Note</title>New Note",
                                  path: path}).then((response) => {
@@ -241,7 +241,7 @@ menulistener.onProperty = function(){
             if(c1 != c0){
                 currTree.updateComment($foc, c1);
             }
-            var icon1 = d.icon.replace(new RegExp("^" + currTree.rdfPath + "data/"), "resource://scrapbook/data/");
+            var icon1 = d.icon.replace(new RegExp("^" + currTree.rdfHome + "data/"), "resource://scrapbook/data/");
             if(icon1 != icon0 && opt.display_icon == ""){
                 currTree.updateItemIcon($foc, icon1);
             }
@@ -284,19 +284,15 @@ function loadRdfList(){
             var names = CONF.getRdfNames();
             names.forEach(function(name, i){
                 log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
-                if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
-                    saw = true;
-                    try{
-                        drop.select(name, paths[i]);
-                    }catch(e){
-                        log.error(e.message);
-                    }
-                }
                 try{
+                    if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
+                        saw = true;
+                        drop.select(name, paths[i]);
+                    }
                     drop.addItem(name, paths[i]);
                 }catch(e){
                     log.error(e.message);
-                }            
+                }
             });
             if(!saw){
                 drop.select(names[0], paths[0]);
@@ -539,7 +535,7 @@ function loadXml(rdf){
     if(!rdf) return Promise.reject(Error("invalid rdf path"));
     return new Promise((resolve, reject) => {
         $(".folder-content.toplevel").empty().text("{Loading...}".translate());
-        var rdfPath = rdf.replace(/[^\/\\]*$/, "");
+        var rdfHome = rdf.replace(/[^\/\\]*$/, "");
         var rdf_file = rdf.replace(/.*[\/\\]/, "");
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
@@ -568,7 +564,7 @@ function loadXml(rdf){
                 });
             };
             currTree.onItemRemoving=function(id){
-                return ajaxFormPost(CONF.getBackendAddress() + "deletedir/", {path: rdfPath + "data/" + id, pwd:CONF.getItem("backend.pwd")});
+                return ajaxFormPost(CONF.getBackendAddress() + "deletedir/", {path: rdfHome + "data/" + id, pwd:CONF.getItem("backend.pwd")});
             };
             currTree.onOpenContent=function(itemId, url, newTab, isLocal){
                 var method = newTab ? "create" : "update";
@@ -576,7 +572,7 @@ function loadXml(rdf){
                     url = CONF.getFileServiceAddress() + url.replace(/.{7}/,'');
                 }
                 if(isLocal)
-                    browser.tabs[method]({url: `/html/viewer.html?id=${itemId}&path=${rdfPath}`}, function (tab) {});
+                    browser.tabs[method]({url: `/html/viewer.html?id=${itemId}&path=${rdfHome}`}, function (tab) {});
                 else
                     browser.tabs[method]({url: url}, function (tab) {});
             };
@@ -693,7 +689,7 @@ function requestUrlSaving(itemId){
                     if(m = icon.match(/^data:image/i)){
                         var blob = dataURLtoBlob(icon);
                         var ext = blob.type.match(/svg/) ? 'svg' : 'ico';
-                        var filename = `${currTree.rdfPath}/data/${itemId}/favicon.${ext}`;
+                        var filename = `${currTree.rdfHome}/data/${itemId}/favicon.${ext}`;
                         var ir = `resource://scrapbook/data/${itemId}/favicon.${ext}`;
                         browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path: filename, blob}}).then((response) => {
                             resolve(ir);
@@ -701,7 +697,7 @@ function requestUrlSaving(itemId){
                             resolve(null);
                         });
                     }else{
-                        var filename = `${currTree.rdfPath}/data/${itemId}/favicon.ico`;
+                        var filename = `${currTree.rdfHome}/data/${itemId}/favicon.ico`;
                         $.post(CONF.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: CONF.backend_pwd}, function(r){
                             resolve(ir);
                         }).fail((e)=>{
@@ -783,13 +779,13 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }
     }else if(request.type == 'REMOVE_FAILED_NODE'){
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
-            currTree.updateItemIcon($("#"+request.itemId), icon);
+            // currTree.updateItemIcon($("#"+request.itemId), icon);
             currTree.removeItem($("#"+request.itemId));
         }
     }else if(request.type == 'UPDATE_FINISHED_NODE'){
         /** update node in sidebar only in the same window, sidebar in other windows will reloaded after icon updated */
         if(currTree && currTree.rendered && request.rdf == currTree.rdf){
-            var icon = request.haveIcon ? "resource://scrapbook/data/" + request.itemId + "/" + request.iconFilename : "";
+            var icon = request.iconFilename ? "resource://scrapbook/data/" + request.itemId + "/" + request.iconFilename : "";
             currTree.updateItemIcon($("#"+request.itemId), icon);
             currTree.unlockItem($("#"+request.itemId));
             if(sender.tab.windowId == thisWindowId)
@@ -815,7 +811,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                             is_new: true,
                             pos: CONF.getItem("capture.behavior.item.new.pos")
                         });
-                        resolve({rdf:currTree.rdf, rdfPath:currTree.rdfPath, itemId});
+                        resolve({rdf:currTree.rdf, rdfHome:currTree.rdfHome, itemId});
                     }catch(e){
                         reject(e)
                     }

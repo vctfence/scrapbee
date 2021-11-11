@@ -170,7 +170,6 @@ $(document).ready(async function(){
 
     var paths = CONF.getRdfPaths();
 
-    
     var lang = "en";
     var ui = browser.i18n.getUILanguage();
     if(["en", "zh-CN", "fr"].indexOf(ui) > -1) {

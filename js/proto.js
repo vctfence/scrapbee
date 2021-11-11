@@ -229,6 +229,9 @@ ScrapbeeElement.prototype.getBodyResources=function(){
 }
 ScrapbeeElement.prototype.getImgResources=function(){
     var r=[];
+    ["data-orig-file", "data-medium-file", "data-large-file", "srcset"].forEach((a)=>{
+        this.el.removeAttribute(a);    
+    });
     if(this.el.getAttribute("src")){ // always absolute uri?
 	var hex = HEX_FUN(this.el.src);
 	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
@@ -247,11 +250,13 @@ ScrapbeeElement.prototype.getScriptResources=function(){
     //     var hex = HEX_FUN(this.el.src);
     //     r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
     // }
+
     this.el.setAttribute("mark_remove", "1");
+
     return r;
 };
 ScrapbeeElement.prototype.getLinkResources=function(){
-    var r=[];
+    var r = [];
     if((/(^|\W)(shortcut|icon)(\W|$)/i).test(this.el.rel)){ // rel="shortcut icon"
         var hex = HEX_FUN(this.el.href);
         this.el.rel = "shortcut icon";
@@ -264,6 +269,20 @@ ScrapbeeElement.prototype.getLinkResources=function(){
 };
 ScrapbeeElement.prototype.getIframeResources=function(){
     // this.el.setAttribute("mark_remove", "1");
+    return [];
+};
+ScrapbeeElement.prototype.getMetaResources=function(){
+    var attr = this.el.getAttribute("http-equiv");
+    
+    // if(["expires", "content-security-policy", "pragma", "refresh", "origin-trial", "og:image", "image", "robots"
+    //     "set-cookie", "window-target", "page-enter", "page-exit"].indexOf(attr.toLowerCase()) > -1){
+    //     this.el.setAttribute("mark_remove", "1");
+    // }
+    
+    if(attr && attr.toLowerCase() == "content-type"){
+    }else{
+        this.el.setAttribute("mark_remove", "1");
+    }
     return [];
 };
 ScrapbeeElement.prototype.getBaseResources=function(){

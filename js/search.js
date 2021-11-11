@@ -114,7 +114,7 @@ async function processTree(tree, search_title, search_body, search_comment){
     function seek(item, body){
 	var url;
 	if(item.type == "page" || item.type == "note"){
-	    url = `/html/viewer.html?id=${item.id}&path=${tree.rdfPath}`
+	    url = `/html/viewer.html?id=${item.id}&path=${tree.rdfHome}`
 	}else{
 	    url = item.source;
 	}
@@ -171,7 +171,7 @@ async function processTree(tree, search_title, search_body, search_comment){
 	}
     }
     var q = new Queue(50, function(item, callback){
-        var url = (CONF.getFileServiceAddress() + tree.rdfPath + "data/" + item.id + "/index.html").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime()
+        var url = (CONF.getFileServiceAddress() + tree.rdfHome + "data/" + item.id + "/index.html").replace(/\/{2,}/g, "/") + `?scrapbee_refresh=` + new Date().getTime()
 	if(item.type=="page" || item.type=="note"){
 	    $.get(url+"&time="+Math.random(),function(r){
 		seek(item, r);
@@ -196,7 +196,7 @@ async function processTree(tree, search_title, search_body, search_comment){
 	if(item.nodeType == "bookmark" || item.nodeType == "page" || item.nodeType == "note"){
             try{
                 if(item.icon){
-                    item.icon = tree.translateResource(item.icon, tree.rdfPath, item.id);
+                    item.icon = tree.translateResource(item.icon, tree.rdfHome, item.id);
                 }
 		q.addTask(item);
             }catch(e){

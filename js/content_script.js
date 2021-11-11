@@ -225,7 +225,7 @@ if(!window.scrapbee_injected){
             }
             /** gather resources and inline styles */
             var distinct = {};
-            var haveIcon = false;
+            var founcIcon = false;
             try{
                 segment.childNodes.iterateAll(function(item){
                     // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
@@ -239,7 +239,7 @@ if(!window.scrapbee_injected){
                                 r.subPath = subPath;
                                 appendResource(r)
                                 if(r.isIcon){
-                                    haveIcon = true;
+                                    founcIcon = true;
                                 }
                             }
                         }
@@ -248,7 +248,7 @@ if(!window.scrapbee_injected){
             }catch(e){
                 log.error(e)
             }
-            if(!haveIcon && page=="index"){
+            if(!founcIcon && page=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
                     var hex = hex_md5(url).substr(0, 15);
@@ -260,7 +260,6 @@ if(!window.scrapbee_injected){
                     var head = segment.querySelectorAll("head");
                     if(head.length){
                         head[0].appendChild(mc);
-                        haveIcon = true
                     }
                 }
             }
@@ -300,7 +299,7 @@ if(!window.scrapbee_injected){
             /*** html page and css */
             appendResource({type: "text", mime:"text/css", saveas: `${subPath}index.css`, content: css.join("\n")})
             appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
-                            isLast: page == "index", title: doc.title, haveIcon})
+                            isLast: page == "index", title: doc.title})
             /** remove unique id */
             document.querySelectorAll("*").forEach(el => {
                 el.removeAttribute("scrapbee_unique_id");
@@ -308,7 +307,7 @@ if(!window.scrapbee_injected){
             resolve();
         });
     };
-    function saveBookmarkIcon(rdf, rdfPath, itemId){
+    function saveBookmarkIcon(rdf, rdfHome, itemId){
         browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((url) => {
             if(!url){
                 Array.prototype.forEach.call(document.querySelectorAll("link"), function(item){
@@ -318,7 +317,7 @@ if(!window.scrapbee_injected){
                 });
             }
             if(url){
-                var filename = `${rdfPath}/data/${itemId}/favicon.ico`;
+                var filename = `${rdfHome}/data/${itemId}/favicon.ico`;
                 browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
                     browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: true, rdf, itemId});
                 });
@@ -327,13 +326,13 @@ if(!window.scrapbee_injected){
             }
         })
     }
-    async function startCapture(saveType, rdf, rdfPath, itemId, autoClose=false){
+    async function startCapture(saveType, rdf, rdfHome, itemId, autoClose=false){
         if(!lock()) return;
         var dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
             var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
             var res = [];
             var title = ""
-            var haveIcon = false
+            // var haveIcon = false
             var mainIconFilename = ""
             var blobfile = {};
             var remain = 0;
@@ -345,22 +344,21 @@ if(!window.scrapbee_injected){
             dlgDownload.show();
             function gather(){
                 return new Promise(async (resolve, reject) => {
-                    try{
-                        gatherContent(saveType == "SAVE_SELECTION");
-                    }catch(e){
-                        browser.runtime.sendMessage({type: 'REMOVE_FAILED_NODE', haveIcon, rdf, itemId});
+                    gatherContent(saveType == "SAVE_SELECTION").catch(e=>{
+                        alert(e)
+                        browser.runtime.sendMessage({type: 'REMOVE_FAILED_NODE', rdf, itemId});
                         dlgDownload.remove();
                         unlock();
                         reject(e);
-                    }
+                    });
                     var downloaded = 0;
-                    var added = 0;
-                    var all = "";
-                    function inc(n, r){
+                    var nReceived = 0;
+                    var allReceived = false;
+                    function inc(n, r){ /* inc downloaded */
                         downloaded ++;
                         if(!r.failed)
                             dlgDownload.updateCell(n, 2, r.filename);
-                        if(downloaded == res.length && all == "loaded"){
+                        if(downloaded == res.length && allReceived){
                             browser.runtime.onMessage.removeListener(receive);
                             resolve();
                         }
@@ -368,13 +366,12 @@ if(!window.scrapbee_injected){
                     var nodes = 0;
                     function receive(request, sender, sendResponse) {
                         if(request.type == "TAB_INNER_CALL" && request.action == "APPEND_RESOURCE"){
-                            var i = added ++;
+                            var i = nReceived ++;
                             var r = request.resource;
                             res.push(r);
                             if(r.isLast){
                                 title = r.title;
-                                haveIcon = r.haveIcon;
-                                all = "loaded";
+                                allReceived = true;
                             }
                             var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
                             var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
@@ -394,7 +391,7 @@ if(!window.scrapbee_injected){
                                         var f = "favicon" + ext;
                                         r.filename = r.subPath + f;
                                         blobfile[r.hex] = f;
-                                        if(request.page == 'index'){
+                                        if(request.page == 'index' && ext != ".html"){
                                             mainIconFilename = f;
                                         }
                                     }else{
@@ -407,7 +404,7 @@ if(!window.scrapbee_injected){
                                         if(b.type)
                                             dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
                                         // save
-                                        r.path = `${rdfPath}/data/${itemId}/${r.filename}`;
+                                        r.path = `${rdfHome}/data/${itemId}/${r.filename}`;
                                         browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: r}).then((response) => {
                                             dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
                                             inc(i, r);
@@ -418,8 +415,8 @@ if(!window.scrapbee_injected){
                                             inc(i, r);
                                         });
                                     }else{ // download failed
-                                        if(r.isIcon)
-                                            haveIcon = false;
+                                        // if(r.isIcon)
+                                        //     haveIcon = false;
                                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
                                         r.failed = 1;
                                         inc(i, r);
@@ -455,7 +452,7 @@ if(!window.scrapbee_injected){
                             content = ['<!Doctype html>', content,].join("\n");
                         }
                     }
-                    var path = `${rdfPath}/data/${itemId}/${r.saveas}`;
+                    var path = `${rdfHome}/data/${itemId}/${r.saveas}`;
                     for(hex in blobfile){
                         if(hex){
                             var reg = new RegExp(hex, "g" );
@@ -463,7 +460,7 @@ if(!window.scrapbee_injected){
                         }
                     }
                     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
-                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon, iconFilename: mainIconFilename, rdf, itemId});
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', iconFilename: mainIconFilename, rdf, itemId});
                         dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
                     }).catch(e=>{
                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
@@ -511,13 +508,13 @@ if(!window.scrapbee_injected){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "page", title: document.title, url: location.href}).then((r) => {
-                startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfPath, r.itemId, request.autoClose);
+                startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfHome, r.itemId, request.autoClose);
             }).catch(function (error) {
                 alert("capture failed: " + error)
             });
         }else if(request.type == 'SAVE_URL_REQUEST_INJECTED'){
             browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
-                saveBookmarkIcon(r.rdf, r.rdfPath, r.itemId);
+                saveBookmarkIcon(r.rdf, r.rdfHome, r.itemId);
             });
         }else if(request.type == "TAB_INNER_CALL" && request.dest == "CONTENT_PAGE"){
             if(request.action == "CANCEL_CAPTURE"){
@@ -535,9 +532,9 @@ if(!window.scrapbee_injected){
                         browser.runtime.sendMessage(request_new);
                     }
                     if(request.saveType == "SAVE_URL"){
-                        saveBookmarkIcon(request.rdf, request.rdfPath, request.itemId);
+                        saveBookmarkIcon(request.rdf, request.rdfHome, request.itemId);
                     }else{
-                        startCapture(request.saveType, request.rdf, request.rdfPath, request.itemId);
+                        startCapture(request.saveType, request.rdf, request.rdfHome, request.itemId);
                     }
                 });
             }

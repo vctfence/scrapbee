@@ -94,7 +94,7 @@ async function initAll(){
         var title = document.body.querySelector("#txTitle").value;
         // var tags = document.body.querySelector("#txTags").value;
         var url = document.body.querySelector("#txUrl").value;
-        var rdfPath = currTree.rdfPath; // document.body.querySelector("#lstRdfs").value;
+        var rdfHome = currTree.rdfHome; // document.body.querySelector("#lstRdfs").value;
         var rdf = currTree.rdf;
         var refId = currTree.getCurrRefId();
         var folderId = currTree.getCurrFolderId();  // folder or root folder
@@ -114,7 +114,7 @@ async function initAll(){
         // currTree.updateComment(currTree.getItemById(itemId), comment);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', backup: true, text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
             browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "START_CAPTURE",
-                                         title, itemId, rdf, rdfPath, folderId, refId, url, saveType, nodeType, comment}).then(() => {
+                                         title, itemId, rdf, rdfHome, folderId, refId, url, saveType, nodeType, comment}).then(() => {
                                              // can not reach here, because this dialog already removed now
                                          });
         });

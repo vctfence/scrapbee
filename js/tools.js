@@ -143,8 +143,8 @@ function initMover(){
                 var id = genItemId(item.id);
                 var rid = item.level == 0 ? ref_id : null;
                 if(item.nodeType == "bookmark" || item.nodeType == "page" || item.nodeType == "note"){
-                    var src = srcTree.rdfPath + 'data/' + item.id;
-                    var dest = destTree.rdfPath + 'data/' + id;
+                    var src = srcTree.rdfHome + 'data/' + item.id;
+                    var dest = destTree.rdfHome + 'data/' + id;
                     browser.runtime.sendMessage({type: moveType, src, dest}).catch((e) => {
                         log.error("failed to move/copy files: " + e.message);
                     }).finally((response) => {
@@ -214,7 +214,7 @@ function initMover(){
     });
     function loadXml(rdf, $box, treeId){
         return new Promise((resolve, reject) => {
-            var rdfPath = rdf.replace(/[^\/\\]*$/, "");
+            var rdfHome = rdf.replace(/[^\/\\]*$/, "");
             var xmlhttp=new XMLHttpRequest();
             xmlhttp.onload = async function(r) {
 	        var currTree = new BookTree(r.target.response, rdf, {checkboxes: true});
@@ -249,7 +249,7 @@ function initMover(){
 	        };
                 currTree.onItemRemoving=function(id){
                     return ajaxFormPost(CONF.getBackendAddress() + "deletedir/",
-                                        {path: rdfPath + "data/" + id, pwd:CONF.getItem("backend.pwd")});
+                                        {path: rdfHome + "data/" + id, pwd:CONF.getItem("backend.pwd")});
                 };
                 resolve(currTree);
             };

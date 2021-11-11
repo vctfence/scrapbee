@@ -19,6 +19,9 @@ window.onload=async function(){
         window.close();
     });
     $("#btnCapturePage").click(function(){
+        if(this.getAttribute("disabled") == "true")
+            return;
+            
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
@@ -34,6 +37,9 @@ window.onload=async function(){
         });
     });
     $("#btnCaptureSelection").click(function(){
+        if(this.getAttribute("disabled") == "true")
+            return;
+        
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
@@ -59,15 +65,20 @@ window.onload=async function(){
         });
     });
     $("#btnCaptureUrl").click(function(){
+        if(this.getAttribute("disabled") == "true")
+            return;
+        
         browser.sidebarAction.isOpen({}).then(result => {
             if(!result){
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"})
             } else {
                 browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
                     // sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST_INJECTED'});
-                    browser.runtime.sendMessage(tabs[0], {type: 'SAVE_URL_REQUEST'}).then(function(){
+                    browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'}).then(function(){
                         window.close();
                     }).catch(function(e){
+
+                        alert(e)
                         window.close();
                     });
                 });
@@ -75,6 +86,9 @@ window.onload=async function(){
         });
     });
     $("#btnCaptureAdv").click(function(){
+        if(this.getAttribute("disabled") == "true")
+            return;
+        
         browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
             sendTabContentMessage(tabs[0], {type: 'SAVE_ADVANCE_REQUEST'}).then(function(){
                 window.close();
@@ -84,12 +98,13 @@ window.onload=async function(){
         });
     });
     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
-        var url = tabs[0].url;
+        let url = tabs[0].url;
         // var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
-        var disabled = new RegExp(browser.i18n.getMessage("@@extension_id")).test(url) || !(/^http/.test(url));
-        $("#btnCapturePage").prop("disabled", disabled);
-        $("#btnCaptureSelection").prop("disabled", disabled);
-        $("#btnCaptureUrl").prop("disabled", disabled);
-        $("#btnCaptureAdv").prop("disabled", disabled)
+        let disabled = new RegExp(browser.i18n.getMessage("@@extension_id")).test(url) || !(/^http/.test(url));
+        let attr = disabled ? "true" : "false";
+        $("#btnCapturePage")[0].setAttribute("disabled", attr);
+        $("#btnCaptureSelection")[0].setAttribute("disabled", attr);
+        $("#btnCaptureUrl")[0].setAttribute("disabled", attr);
+        $("#btnCaptureAdv")[0].setAttribute("disabled", attr)
     });
 }
