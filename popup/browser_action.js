@@ -77,8 +77,6 @@ window.onload=async function(){
                     browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'}).then(function(){
                         window.close();
                     }).catch(function(e){
-
-                        alert(e)
                         window.close();
                     });
                 });

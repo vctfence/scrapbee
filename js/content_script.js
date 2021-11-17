@@ -192,13 +192,21 @@ if(!window.scrapbee_injected){
             var css = [];
             function getRuleCss(r){
                 var css = [];
-                if(r instanceof CSSStyleRule){
-                    css.push(r.cssText);
-                }else if(r instanceof CSSImportRule){
+                if(r instanceof CSSImportRule){
                     rule = r.styleSheet.cssRules;
                     for (let r of rule){
                         css.push(r.cssText + "");
                     }
+                }else if(r.cssText){
+                    css.push(r.cssText);
+                    // }else if(r instanceof CSSMediaRule){
+                    //     css.push(r.cssText);
+                    // }else if(r instanceof CSSKeyframesRule){
+                    //     css.push(r.cssText);
+                    // }else if(r instanceof CSSFontFaceRule){
+                    //     css.push(r.cssText);
+                }else{
+                    console.log(r)
                 }
                 return css.join("\n");
             }
@@ -231,8 +239,8 @@ if(!window.scrapbee_injected){
                     // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
                     if(item.nodeType == 1){
                         var el = new ScrapbeeElement(item)
-                        var resources = el.processResources();
                         el.processInlineStyle();
+                        var resources = el.processResources();
                         for(let r of resources){
                             if(!distinct[r.url]){
                                 distinct[r.url] = 1;
@@ -246,7 +254,7 @@ if(!window.scrapbee_injected){
                     }
                 });
             }catch(e){
-                log.error(e)
+                log.error(e);
             }
             if(!founcIcon && page=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
@@ -344,6 +352,10 @@ if(!window.scrapbee_injected){
             dlgDownload.show();
             function gather(){
                 return new Promise(async (resolve, reject) => {
+                    var nDownloaded = 0;
+                    var nReceived = 0;
+                    var isAllReceived = false;
+                    
                     gatherContent(saveType == "SAVE_SELECTION").catch(e=>{
                         alert(e)
                         browser.runtime.sendMessage({type: 'REMOVE_FAILED_NODE', rdf, itemId});
@@ -351,19 +363,17 @@ if(!window.scrapbee_injected){
                         unlock();
                         reject(e);
                     });
-                    var downloaded = 0;
-                    var nReceived = 0;
-                    var allReceived = false;
+              
                     function inc(n, r){ /* inc downloaded */
-                        downloaded ++;
+                        nDownloaded ++;
                         if(!r.failed)
                             dlgDownload.updateCell(n, 2, r.filename);
-                        if(downloaded == res.length && allReceived){
+                        if(nDownloaded == res.length && isAllReceived){
                             browser.runtime.onMessage.removeListener(receive);
                             resolve();
                         }
                     }
-                    var nodes = 0;
+                    // var nodes = 0;
                     function receive(request, sender, sendResponse) {
                         if(request.type == "TAB_INNER_CALL" && request.action == "APPEND_RESOURCE"){
                             var i = nReceived ++;
@@ -371,7 +381,7 @@ if(!window.scrapbee_injected){
                             res.push(r);
                             if(r.isLast){
                                 title = r.title;
-                                allReceived = true;
+                                isAllReceived = true;
                             }
                             var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
                             var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
@@ -392,7 +402,12 @@ if(!window.scrapbee_injected){
                                         r.filename = r.subPath + f;
                                         blobfile[r.hex] = f;
                                         if(request.page == 'index' && ext != ".html"){
-                                            mainIconFilename = f;
+                                            if(ext == '.ico')
+                                                mainIconFilename = f;
+                                            else if(ext == '.svg' && !(/\.ico$/.test(mainIconFilename)))
+                                                mainIconFilename = f;
+                                            else if(!mainIconFilename)
+                                                mainIconFilename = f;
                                         }
                                     }else{
                                         r.filename = r.subPath + (r.saveas || (r.hex + ext));
