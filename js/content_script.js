@@ -181,7 +181,7 @@ if(!window.scrapbee_injected){
             /** set unique id */
             document.querySelectorAll("*").forEach(el => {
                 // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
-                el.setAttribute("scrapbee_unique_id", "el" + new NumberRange(0,999999999).random());
+                el.setAttribute("scrapbee_unique_id", new NumberRange(0,999999999).random());
             });
             try{
                 var segment = await cloneSegment(doc, isForSelection)
@@ -199,12 +199,6 @@ if(!window.scrapbee_injected){
                     }
                 }else if(r.cssText){
                     css.push(r.cssText);
-                    // }else if(r instanceof CSSMediaRule){
-                    //     css.push(r.cssText);
-                    // }else if(r instanceof CSSKeyframesRule){
-                    //     css.push(r.cssText);
-                    // }else if(r instanceof CSSFontFaceRule){
-                    //     css.push(r.cssText);
                 }else{
                     console.log(r)
                 }
@@ -396,24 +390,24 @@ if(!window.scrapbee_injected){
                                 };
                                 // download
                                 downloadFile(r.url, function(b){
-                                    var ext = getMainMimeExt(b.type) || "";
-                                    if(r.isIcon) {
-                                        var f = "favicon" + ext;
-                                        r.filename = r.subPath + f;
-                                        blobfile[r.hex] = f;
-                                        if(request.page == 'index' && ext != ".html"){
-                                            if(ext == '.ico')
-                                                mainIconFilename = f;
-                                            else if(ext == '.svg' && !(/\.ico$/.test(mainIconFilename)))
-                                                mainIconFilename = f;
-                                            else if(!mainIconFilename)
-                                                mainIconFilename = f;
+                                    if(b){ /* download success */
+                                        var ext = getMainMimeExt(b.type) || "";
+                                        if(r.isIcon) {
+                                            var f = "favicon" + ext;
+                                            r.filename = r.subPath + f;
+                                            blobfile[r.hex] = f;
+                                            if(request.page == 'index' && ext != ".html"){
+                                                if(ext == '.ico')
+                                                    mainIconFilename = f;
+                                                else if(ext == '.svg' && !(/\.ico$/.test(mainIconFilename)))
+                                                    mainIconFilename = f;
+                                                else if(!mainIconFilename)
+                                                    mainIconFilename = f;
+                                            }
+                                        }else{
+                                            r.filename = r.subPath + (r.saveas || (r.hex + ext));
+                                            blobfile[r.hex] = (r.saveas || (r.hex + ext));
                                         }
-                                    }else{
-                                        r.filename = r.subPath + (r.saveas || (r.hex + ext));
-                                        blobfile[r.hex] = (r.saveas || (r.hex + ext));
-                                    }
-                                    if(b){
                                         r.blob = b;
                                         dlgDownload.updateCell(i, 0, b.type);
                                         if(b.type)
@@ -429,9 +423,7 @@ if(!window.scrapbee_injected){
                                             r.failed = 1;
                                             inc(i, r);
                                         });
-                                    }else{ // download failed
-                                        // if(r.isIcon)
-                                        //     haveIcon = false;
+                                    }else{ /* download failed */
                                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
                                         r.failed = 1;
                                         inc(i, r);
@@ -556,16 +548,6 @@ if(!window.scrapbee_injected){
         }
         return false;
     });
-    function isDescendant(parent, child) {
-        var node = child;
-        while (node != null) {
-            if (node == parent) {
-                return true;
-            }
-            node = node.parentNode;
-        }
-        return false;
-    }
     function downloadFile(url, callback){
         try{
             var oReq = new XMLHttpRequest();
