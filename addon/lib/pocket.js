@@ -87,7 +87,7 @@ export class GetPocket {
     //     options.consumer_key = this.consumer_key;
     //     options.access_token = this.access_token;
     //
-    //     return this.postJSON(url, options);
+    //     return this.jsonPost(url, options);
     // }
 
     send(actions) {
@@ -116,7 +116,7 @@ export class GetPocket {
     //     options.consumer_key = this.config.consumer_key;
     //     options.access_token = this.config.access_token;
     //
-    //     return this.postJSON(url, options);
+    //     return this.jsonPost(url, options);
     // },
     //
     // retrieve: function(params, callback) {

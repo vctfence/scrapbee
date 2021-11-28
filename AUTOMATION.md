@@ -1,15 +1,13 @@
 ## Automation
 
 Automation is a powerful feature that allows to programmatically create, modify, and delete Scrapyard bookmarks
-from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions.
-For example, with this API you can import hierarchical content, manage TODO
-lists, or create something similar to the former Firefox "Live Bookmarks".
+from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions. For example, with this API you
+can import hierarchical content, manage TODO lists, or create something similar to the former Firefox "Live Bookmarks".
 
-Currently, automation is experimental, and should be
-manually enabled from the Scrapyard advanced settings page: **ext+scrapyard://advanced**
+Currently, automation is experimental, and should be manually enabled from the Scrapyard advanced settings page:
+**ext+scrapyard://advanced**
 <br>
-Because Scrapyard knows about iShell, you do not need to enable automation to use the
-code below from iShell commands.
+Because Scrapyard knows about iShell, you do not need to enable automation to use the code below from iShell commands.
 
 All automation features are implemented through the WebExtensions
 [runtime messaging API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage).
@@ -17,7 +15,7 @@ The following messages are currently available:
 
 #### SCRAPYARD_GET_VERSION
 
-Returns Scrapyard version. Useful for testing for Scrapyard presence in the browser:
+Returns Scrapyard version. Useful for testing if Scrapyard presents in the browser:
 
 ```javascript
 try {
@@ -312,7 +310,7 @@ class MySite {
 }
 ```
 
-Let's write a function that will allow to create such commands with one line of code.
+The following function allows to create such commands with one line of code:
 
 ```js
 /**
@@ -358,7 +356,7 @@ createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297"
 
 #### Uploading Local Files to Scrapyard
 
-You can pass a local file path to the following iShell command to store this file in Scrapyard
+You can pass a local file path to the following iShell command to store a file in Scrapyard
 under the folder specified by the `at` argument (helper application v0.4+ is required).
 
 ```js
@@ -383,7 +381,7 @@ class UploadFile {
     constructor(args) {
         args[OBJECT] = {nountype: noun_arb_text, label: "path"};
         // cmdAPI.scrapyard.noun_type_directory provides the list of all Scrapyard directories
-        // to autocompletion. Precaution is takein for the case of missing Scrapyard add-on.
+        // to autocompletion. A precaution is taken in the case of missing Scrapyard add-on.
         const directory_noun = cmdAPI.scrapyard?.noun_type_directory || {suggest: () => ({})};
         args[AT] = {nountype: directory_noun, label: "directory"};
     }

@@ -7,6 +7,13 @@ function showDlg(name, data, callback) {
     if ($(".dlg-cover:visible").length)
         return
     let $dlg = $(".dlg-cover.dlg-" + name).clone().prependTo(document.body);
+
+    if (data.width)
+        $dlg.find(".dlg").css("width", data.width);
+
+    if (data.wrap)
+        $dlg.find(".dlg-table .row").css("white-space", "normal");
+
     $dlg.show();
 
     if (name === "prompt")

@@ -12,13 +12,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.net.URL;
 import java.util.Arrays;
 
 import l2.albitron.scrapyard.Scrapyard;
+import l2.albitron.scrapyard.cloud.exceptions.CloudNotAuthorizedException;
+import l2.albitron.scrapyard.cloud.json.Node;
 
 public class CloudBackend {
 
@@ -38,13 +39,13 @@ public class CloudBackend {
     public void shareBookmark(String path, String referrer, String content_type, Bundle extras) throws Exception {
         CloudDB db = provider.getDB();
 
-        BookmarkRecord targetGroup = !StringUtils.isBlank(path)
+        Node targetGroup = !StringUtils.isBlank(path)
             ? db.getOrCreateGroup(path)
             : null;
 
-        Long parentId = targetGroup == null? Scrapyard.CLOUD_SHELF_ID: targetGroup.id;
+        String parentId = targetGroup == null? Scrapyard.CLOUD_SHELF_UUID: targetGroup.uuid;
 
-        BookmarkRecord bookmark = new BookmarkRecord();
+        Node bookmark = new Node();
         bookmark.parentId = parentId;
         db.addNode(bookmark);
 
@@ -90,7 +91,7 @@ public class CloudBackend {
         else {
             String text = getSharedText(referrer, extras);
             String url = getSharedURL(referrer, extras);
-            String title = getSharedTitle(extras);
+            String title = getSharedTitle(referrer, extras);
 
             if (title == null && text != null) {
                 title = getTitleFromText(text);
@@ -107,14 +108,13 @@ public class CloudBackend {
             bookmark.todoState = todoState;
             bookmark.details = extras.getString(EXTRA_TODO_DETAILS);
             bookmark.type = text != null? Scrapyard.NODE_TYPE_ARCHIVE: Scrapyard.NODE_TYPE_BOOKMARK;
-            System.out.println(getFavicon(url));
+            //System.out.println(getFavicon(url));
 
-            bookmark.icon = getFavicon(url);
+            bookmark.icon = getFaviconFromURL(url);
 
             if (bookmark.type == Scrapyard.NODE_TYPE_ARCHIVE && url == null) {
                 bookmark.type = Scrapyard.NODE_TYPE_NOTES;
                 bookmark.hasNotes = true;
-                bookmark.notesFormat = "text";
             }
 
             provider.persistDB(db);
@@ -127,7 +127,7 @@ public class CloudBackend {
         }
     }
 
-    protected String getSharedTitle(Bundle extras) {
+    protected String getSharedTitle(String referrer, Bundle extras) {
         String subject = extras.getString(Intent.EXTRA_SUBJECT);
         String title = extras.getString(Intent.EXTRA_TITLE);
         String result = null;
@@ -138,8 +138,10 @@ public class CloudBackend {
         if (!StringUtils.isBlank(subject))
             result = subject;
 
-        if (result != null && result.length() >= MAX_TITLE_LENGTH * 2)
+        if (result != null && (result.length() >= MAX_TITLE_LENGTH * 2))
             result = getTitleFromText(result);
+        else if ("Share via".equals(result))
+            result = getTitleFromText(extras.getString(Intent.EXTRA_TEXT));
 
         return result;
     }
@@ -153,13 +155,16 @@ public class CloudBackend {
         if (UrlValidator.getInstance().isValid(text))
             return text;
 
-        if (StringUtils.startsWith(referrer, "com.ideashower.readitlater")) { // Pocket app
+        boolean pocket = StringUtils.startsWith(referrer, "com.ideashower.readitlater");
+        boolean chrome = StringUtils.startsWith(referrer, "com.android.chrome");
+
+        if (pocket || chrome) {
             String [] lines = StringUtils.split(text, "\n");
 
-            if (lines.length > 0) {
-                String url = lines[lines.length - 1];
+            if (lines.length > 1) {
+                String url = lines[lines.length - 1].trim();
 
-                if (UrlValidator.getInstance().isValid(url))
+                if (url.matches("^https?://(.*)"))
                     return url;
             }
         }
@@ -173,12 +178,25 @@ public class CloudBackend {
         if (StringUtils.isBlank(text) || UrlValidator.getInstance().isValid(text))
             return null;
 
-        if (StringUtils.startsWith(referrer, "com.ideashower.readitlater")) { // Pocket app
-            String [] lines = StringUtils.split(text, "\n");
-            if (lines.length > 1) {
-                String [] text_lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+        boolean pocket = StringUtils.startsWith(referrer, "com.ideashower.readitlater");
+        boolean chrome = StringUtils.startsWith(referrer, "com.android.chrome");
 
-                return StringUtils.join(text_lines, "\n");
+        if (pocket || chrome) {
+            String [] lines = StringUtils.split(text, "\n");
+            String [] text_lines = lines;
+
+            if (lines.length > 1) {
+                String url = lines[lines.length - 1].trim();
+
+                if (url.matches("^https?://(.*)"))
+                    text_lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+            }
+
+            text = StringUtils.join(text_lines, "\n");
+
+            if (chrome) {
+                text = text.replaceAll("^\"", "");
+                text = text.replaceAll("\"$", "");
             }
         }
 
@@ -222,7 +240,7 @@ public class CloudBackend {
         return buffer.toString();
     }
 
-    private String getFavicon(String url) {
+    private String getFaviconFromURL(String url) {
         try {
             Document doc = Jsoup.connect(url).get();
             Elements links = doc.select("head link[rel*='icon'], head link[rel*='shortcut']");
@@ -250,6 +268,20 @@ public class CloudBackend {
 
                 return builder.toString();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private String getTitleFromURL(String url) {
+        try {
+            Document doc = Jsoup.connect(url).get();
+            Elements title = doc.select("head title");
+
+            if (title.size() > 0)
+                return title.get(0).text();
         } catch (Exception e) {
             e.printStackTrace();
         }

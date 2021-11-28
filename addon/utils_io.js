@@ -28,7 +28,7 @@ export function readBlob(blob, mode) {
     });
 }
 
-export class ReadLine {
+export class LineReader {
     /* options:
          chunk_size:          The chunk byte size. Default is 256K.
     */
@@ -118,6 +118,19 @@ export class ReadLine {
 
             this.reader.readAsArrayBuffer(this.file.slice(offset, offset + this.chunkSize));
         });
+    }
+}
+
+export class LineStream {
+    constructor(reader) {
+        this._iterator = reader.lines();
+    }
+
+    async read() {
+        const item = await this._iterator.next();
+        if (item.done)
+            return undefined;
+        return item.value;
     }
 }
 

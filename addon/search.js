@@ -1,7 +1,7 @@
-import {bookmarkManager} from "./backend.js"
 import {TREE_STATE_PREFIX} from "./ui/tree.js";
-import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_GROUP, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {openContainerTab} from "./utils_browser.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
 
 
 export const SEARCH_MODE_TITLE = 1;
@@ -10,7 +10,7 @@ export const SEARCH_MODE_CONTENT = 3;
 export const SEARCH_MODE_NOTES = 4;
 export const SEARCH_MODE_COMMENTS = 5;
 export const SEARCH_MODE_DATE = 6;
-
+export const SEARCH_MODE_FOLDER = 7;
 
 class SearchProvider {
     constructor(shelf) {
@@ -28,17 +28,32 @@ export class TitleSearchProvider extends SearchProvider {
     }
 
     search(text, limit) {
-        let path;
-        if (this.shelf !== EVERYTHING)
-            path = this.shelf;
-
         if (text)
-            return bookmarkManager.listNodes({
+            return Bookmark.list({
                 search: text,
                 depth: "subtree",
-                path: path,
+                path: this.shelf,
                 limit: limit,
                 types: ENDPOINT_TYPES
+            });
+
+        return [];
+    }
+}
+
+export class FolderSearchProvider extends SearchProvider {
+    constructor(shelf) {
+        super(shelf)
+    }
+
+    search(text, limit) {
+        if (text)
+            return Bookmark.list({
+                search: text,
+                depth: "subtree",
+                path: this.shelf,
+                limit: limit,
+                types: [NODE_TYPE_GROUP]
             });
 
         return [];
@@ -51,14 +66,10 @@ export class TagSearchProvider extends SearchProvider {
     }
 
     search(text) {
-        let path;
-        if (this.shelf !== EVERYTHING)
-            path = this.shelf;
-
         if (text) {
-            return bookmarkManager.listNodes({
+            return Bookmark.list({
                 depth: "subtree",
-                path: path,
+                path: this.shelf,
                 tags: text,
                 types: ENDPOINT_TYPES
             });
@@ -74,17 +85,13 @@ export class ContentSearchProvider extends SearchProvider {
     }
 
     search(text) {
-        let path;
-        if (this.shelf !== EVERYTHING)
-            path = this.shelf;
-
         if (text) {
-            return bookmarkManager.listNodes({
+            return Bookmark.list({
                 search: text,
                 content: true,
                 index: this.index,
                 depth: "subtree",
-                path: path
+                path: this.shelf
             });
         }
         return [];
@@ -97,10 +104,6 @@ export class DateSearchProvider extends SearchProvider {
     }
 
     search(text) {
-        let path;
-        if (this.shelf !== EVERYTHING)
-            path = this.shelf;
-
         if (text) {
             const dates = [];
             for (const m of text.matchAll(/(\d{4}-\d{2}-\d{2})/g))
@@ -111,9 +114,9 @@ export class DateSearchProvider extends SearchProvider {
 
             const period = /(.*?)\d{4}-\d{2}-\d{2}/.exec(text.trim().toLowerCase())[1];
 
-            return bookmarkManager.listNodes({
+            return Bookmark.list({
                 depth: "subtree",
-                path: path,
+                path: this.shelf,
                 date: dates[0],
                 date2: dates[1],
                 period: period.trim(),
@@ -175,6 +178,9 @@ export class SearchContext {
         switch (search_mode) {
             case SEARCH_MODE_TITLE:
                 this.provider = new TitleSearchProvider(shelf);
+                break;
+            case SEARCH_MODE_FOLDER:
+                this.provider = new FolderSearchProvider(shelf);
                 break;
             case SEARCH_MODE_TAGS:
                 this.provider = new TagSearchProvider(shelf);

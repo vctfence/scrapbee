@@ -35,6 +35,7 @@ to obtain the desired features.
 * ~~Automation API [DONE]~~
 * ~~Full text search through archived content, notes and comments [DONE]~~
 * ~~Backup management UI [DONE]~~
+* ~~File-based synchronization [DONE]~~
 
 ### Project status
 
@@ -45,6 +46,6 @@ Nevertheless, do not forget to donate if you have a good use of the software.
 
 ### The current status of cloud support
 
-Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API. 
+Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API.
 Since there is no real database, the speed of operations is inversely proportional to
 the amount of bookmarks you have there.

@@ -1,0 +1,106 @@
+#+OPTIONS: toc:t num:nil
+#+CSS: p {text-align: justify;}
+
+Supported [[http://orgmode.org/][org-mode]] markup features:
+
+* Top Level Heading
+** Second Level Heading
+*** Third Level Heading
+
+# A comment line. This line will not be displayed.
+
+Paragraphs are separated by at least one empty line.
+
+
+*** Formatting
+
+*bold*
+/italic/
+_underlined_
++strikethrough+
+=monospaced=
+and ~code~
+
+Sub_{script}. a_{1}, a_{2}, and a_{3}.
+
+A horizontal line, fill-width across the page:
+-----
+
+
+*** Links
+
+[[http://orgmode.org][Link with a description]]
+
+http://orgmode.org - link without a description.
+
+*** Lists
+- First item in a list.
+- Second item.
+  - Sub-item
+    1. Numbered item.
+    2. Another item.
+- [ ] Item yet to be done.
+- [X] Item that has been done.
+
+
+*** Definition List
+
+- vim :: Vi IMproved, a programmers text editor
+- ed :: Line-oriented text editor
+
+
+*** TODO
+
+**** TODO A todo item.
+**** DONE A todo item that has been done.
+
+
+*** Directives
+
+**** ~BEGIN_QUOTE~ and ~END_QUOTE~
+
+#+BEGIN_QUOTE
+To be or not to be, that is the question.
+#+END_QUOTE
+
+**** ~BEGIN_EXAMPLE~ and ~END_EXAMPLE~
+
+#+BEGIN_EXAMPLE
+let o = new Object();
+o.attr = "string";
+#+END_EXAMPLE
+
+**** ~BEGIN_SRC~ and ~END_SRC~
+
+#+BEGIN_SRC javascript
+let o = new Object();
+o.attr = "string";
+#+END_SRC
+
+
+*** Verbatim text
+
+: Text to be displayed verbatim (as-is), without markup
+: (*bold* does not change font), e.g., for source code.
+: Line breaks are respected.
+
+
+*** Table
+
+|-------+--------+------------|
+|       | Symbol | Author     |
+|-------+--------+------------|
+| Emacs | ~M-x~  | _RMS_      |
+|-------+--------+------------|
+| Vi    | ~:~    | _Bill Joy_ |
+|-------+--------+------------|
+
+*** Images
+
+Referenced image:
+
+[[https://upload.wikimedia.org/wikipedia/commons/6/60/Cat_silhouette.svg][Cat silhouette]]
+
+From data URL:
+
+[[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC][Cat silhouette]]

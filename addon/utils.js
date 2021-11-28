@@ -1,3 +1,4 @@
+import {send} from "./proxy.js";
 
 export function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -23,7 +24,7 @@ export function partition(items, size) {
         result.push(items.splice(0, n));
 
     if (result.length > size) {
-        result[result.length - 2] = [...result[result.length - 2], result[result.length - 1]];
+        result[result.length - 2] = [...result[result.length - 2], ...result[result.length - 1]];
         result.splice(result.length - 1, 1);
     }
 
@@ -248,4 +249,49 @@ export function cleanObject(object, forUpdate) {
     }
 
     return object;
+}
+
+export class ProgressCounter {
+    constructor(total, message, payload = {}) {
+        this._total = total;
+        this._last = total - 1;
+        this._message = message;
+        this._payload = payload;
+        this._lastProgress = 0;
+        this._counter = 0;
+    }
+
+    increment() {
+        this._counter += 1
+    }
+
+    notify(progress, payload={}) {
+        if (!progress) {
+            progress = Math.round((this._counter / this._total) * 100);
+            if (progress !== this._lastProgress) {
+                this._lastProgress = progress;
+                send[this._message](Object.assign({progress}, this._payload, payload));
+            }
+        }
+        else if (progress) {
+            send[this._message](Object.assign({progress}, this._payload, payload));
+        }
+    }
+
+    incrementAndNotify(payload={}) {
+        this.increment();
+        this.notify(null, payload);
+    }
+
+    finish() {
+        this.notify(100, {finished: true});
+    }
+
+    isFinished() {
+        return this._counter === this._total;
+    }
+
+    isLast() {
+        return this._counter === this._last;
+    }
 }

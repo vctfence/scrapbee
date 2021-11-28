@@ -1,7 +1,7 @@
 import {send} from "../proxy.js";
-import {bookmarkManager} from "../backend.js";
-import {isSpecialShelf} from "../storage.js";
+import {isBuiltInShelf} from "../storage.js";
 import {showNotification} from "../utils_browser.js";
+import {Query} from "../storage_query.js";
 
 export function load() {
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
@@ -35,8 +35,8 @@ async function onStartRDFImport(e) {
         return;
     }
 
-    let shelf_node = await bookmarkManager.queryShelf(shelf);
-    if (isSpecialShelf(shelf) || shelf_node) {
+    let shelf_node = await Query.shelf(shelf);
+    if (isBuiltInShelf(shelf) || shelf_node) {
         showNotification({message: "The specified shelf already exists."});
         return;
     }

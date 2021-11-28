@@ -34,6 +34,7 @@
     <string name="todoToScrapyard">Add TODO to Scrapyard</string>
     <string name="details">Details:</string>
     <string name="errorAccessingCloud">Error accessing cloud</string>
+    <string name="warning">Warning</string>
 
     <string-array name="todo_states">
         <item>TODO</item>

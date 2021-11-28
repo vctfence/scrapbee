@@ -1,6 +1,6 @@
 import {settings} from "../settings.js";
 import {
-    isSpecialShelf,
+    isBuiltInShelf,
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
     CLOUD_SHELF_UUID,
@@ -14,10 +14,10 @@ import {
     FIREFOX_SHELF_NAME,
     FIREFOX_SHELF_UUID,
     TODO_SHELF_ID,
-    TODO_SHELF_NAME
+    TODO_SHELF_NAME, DEFAULT_SHELF_UUID
 } from "../storage.js";
-import {bookmarkManager} from "../backend.js";
 import {formatShelfName} from "../bookmarking.js";
+import {Query} from "../storage_query.js";
 
 const DEFAULT_SHELF_LIST_WIDTH = 91;
 
@@ -78,7 +78,7 @@ export class ShelfList {
 
         const label = $("span.label", this._element);
 
-        if (isSpecialShelf(name))
+        if (isBuiltInShelf(name))
             label.addClass("option-builtin");
         else
             label.removeClass("option-builtin");
@@ -103,45 +103,42 @@ export class ShelfList {
     }
 
     async reload() {
-        this._select.html(`
-    <option class="option-builtin" value="${TODO_SHELF_ID}" data-uuid="${TODO_SHELF_NAME}">${TODO_SHELF_NAME}</option>
-    <option class="option-builtin" value="${DONE_SHELF_ID}" data-uuid="${DONE_SHELF_NAME}">${DONE_SHELF_NAME}</option>
-    <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
-            data-uuid="${EVERYTHING}">${formatShelfName(EVERYTHING)}</option>`);
+        let html = `
+            <option class="option-builtin" value="${TODO_SHELF_ID}" data-uuid="${TODO_SHELF_NAME}">${TODO_SHELF_NAME}</option>
+            <option class="option-builtin" value="${DONE_SHELF_ID}" data-uuid="${DONE_SHELF_NAME}">${DONE_SHELF_NAME}</option>
+            <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
+                    data-uuid="${EVERYTHING}">${formatShelfName(EVERYTHING)}</option>`
 
         if (settings.cloud_enabled())
-            this._select.append(`<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
-                                         value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`);
+            html += `<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
+                             value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`;
 
-        let shelves = await bookmarkManager.listShelves();
+        if (settings.show_firefox_bookmarks())
+            html += `<option class=\"option-builtin\" data-uuid="${FIREFOX_SHELF_UUID}"
+                             value=\"${FIREFOX_SHELF_ID}\">${formatShelfName(FIREFOX_SHELF_NAME)}</option>`;
+
+        let shelves = await Query.allShelves();
 
         let cloudShelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
         if (cloudShelf)
             shelves.splice(shelves.indexOf(cloudShelf), 1);
 
-        if (settings.show_firefox_bookmarks())
-            this._select.append(`<option class=\"option-builtin\" data-uuid="${FIREFOX_SHELF_UUID}"
-                                         value=\"${FIREFOX_SHELF_ID}\">${formatShelfName(FIREFOX_SHELF_NAME)}</option>`);
-
         let firefoxShelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
         if (firefoxShelf)
             shelves.splice(shelves.indexOf(firefoxShelf), 1);
 
-        shelves.sort((a, b) => a.name.localeCompare(b.name));
-
         let defaultShelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(defaultShelf), 1);
         defaultShelf.name = formatShelfName(defaultShelf.name);
-        shelves = [defaultShelf, ...shelves];
+        html += `<option class="option-builtin" data-uuid="${DEFAULT_SHELF_UUID}"
+                         value="${defaultShelf.id}">${formatShelfName(defaultShelf.name)}</option>`;
 
-        for (let shelf of shelves) {
-            let option = $("<option></option>").appendTo(this._select).html(shelf.name)
-                .attr("value", shelf.id)
-                .attr("data-uuid", shelf.uuid);
+        shelves.sort((a, b) => a.name.localeCompare(b.name));
 
-            if (shelf.name.toLowerCase() === DEFAULT_SHELF_NAME)
-                option.addClass("option-builtin");
-        }
+        for (let shelf of shelves)
+            html += `<option data-uuid="${shelf.uuid}" value="${shelf.id}">${shelf.name}</option>`;
+
+        this._select.html(html);
     }
 
     load() {

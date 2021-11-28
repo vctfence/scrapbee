@@ -31,8 +31,7 @@ receive.reconcileCloudBookmarkDb = async message => {
 };
 
 receive.enableCloudBackgroundSync = async message => {
-    await settings.load()
-    cloudBackend.startBackgroundSync(settings.cloud_background_sync());
+    cloudBackend.enableBackgroundSync(message.enable);
 };
 
 receive.helperAppGetVersion = async message => {

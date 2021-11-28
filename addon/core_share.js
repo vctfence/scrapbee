@@ -3,10 +3,10 @@ import {GetPocket} from "./lib/pocket.js";
 import {settings} from "./settings.js";
 import {showNotification} from "./utils_browser.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage.js";
-import {bookmarkManager} from "./backend.js";
 import {notes2html} from "./notes_render.js";
 import {dropboxBackend} from "./backend_dropbox.js";
 import {CONTENT_TYPE_TO_EXT} from "./utils.js";
+import {Archive, Notes} from "./storage_entities.js";
 
 receive.shareToPocket = async message => {
     const auth_handler = auth_url => new Promise(async (resolve, reject) => {
@@ -49,7 +49,7 @@ receive.shareToDropbox = async message => {
         let filename, content;
 
         if (node.type === NODE_TYPE_ARCHIVE) {
-            let blob = await bookmarkManager.fetchBlob(node.id);
+            let blob = await Archive.get(node.id);
             if (blob) {
                 const type = blob.type ? blob.type : "text/html";
                 filename = node.name
@@ -61,7 +61,7 @@ receive.shareToDropbox = async message => {
                 if (blob.object)
                     content = blob.object
                 else
-                    content = new Blob([await bookmarkManager.reifyBlob(blob)], {type: type});
+                    content = new Blob([await Archive.reify(blob)], {type: type});
             }
         }
         else if (node.type === NODE_TYPE_BOOKMARK) {
@@ -69,7 +69,7 @@ receive.shareToDropbox = async message => {
             content = "[InternetShortcut]\nURL=" + node.uri;
         }
         else if (node.type === NODE_TYPE_NOTES) {
-            let notes = await bookmarkManager.fetchNotes(node.id);
+            let notes = await Notes.get(node.id);
 
             if (notes) {
                 filename = node.name + ".html";

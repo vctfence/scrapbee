@@ -19,6 +19,7 @@ import java.util.Random;
 import l2.albitron.scrapyard.MainActivity;
 import l2.albitron.scrapyard.R;
 import l2.albitron.scrapyard.Scrapyard;
+import l2.albitron.scrapyard.cloud.exceptions.CloudNotAuthorizedException;
 
 public class CloudOperationsService extends IntentService {
     private static Random random = new Random();

@@ -1,8 +1,6 @@
 import UUID from "./lib/uuid.js"
 import {settings} from "./settings.js"
-import {bookmarkManager} from "./backend.js";
 import {showNotification} from "./utils_browser.js";
-
 
 class NativeBackend {
     constructor() {
@@ -95,51 +93,10 @@ class NativeBackend {
     }
 
     static async incomingMessages(msg) {
-        msg = JSON.parse(msg);
-        switch (msg.type) {
-            case "REQUEST_PUSH_BLOB": {
-                    const node = await bookmarkManager.getNode(msg.uuid, true);
-                    const blob = await bookmarkManager.fetchBlob(node.id);
-                    const data = await bookmarkManager.reifyBlob(blob, true);
-                    const port = await this.getPort();
-
-                    port.postMessage({
-                        type: "PUSH_BLOB",
-                        uuid: node.uuid,
-                        content_type: blob.type || "text/html",
-                        blob: data,
-                        byte_length: blob.byte_length || null
-                    })
-                }
-                break;
-            case "REQUEST_RDF_PATH": {
-                    const node = await bookmarkManager.getNode(msg.uuid, true);
-                    const port = await this.getPort();
-                    let path = await bookmarkManager.computePath(node.id);
-                    let rdf_directory = path[0].uri;
-
-                    port.postMessage({
-                        type: "RDF_PATH",
-                        uuid: node.uuid,
-                        rdf_directory: `${rdf_directory}/data/${node.external_id}/`,
-                    })
-                }
-                break;
-            case "REQUEST_RDF_ROOT": {
-                const node = await bookmarkManager.getNode(msg.uuid, true);
-                const port = await this.getPort();
-
-                let path = await bookmarkManager.computePath(node.id);
-                let rdf_directory = path[0].uri;
-
-                port.postMessage({
-                    type: "RDF_ROOT",
-                    uuid: node.uuid,
-                    rdf_file: `${rdf_directory}/scrapbook.rdf`,
-                })
-            }
-            break;
-        }
+        // msg = JSON.parse(msg);
+        // switch (msg.type) {
+        //
+        // }
     }
 
     url(path) {
@@ -172,11 +129,19 @@ class NativeBackend {
             return response.json();
     }
 
+    async jsonPost(path, init) {
+        let response = await this.post(path, init);
+        if (!response.ok)
+            console.log(await response.text())
+        if (response.ok)
+            return response.json();
+    }
+
     async post(path, fields) {
         let form = new FormData();
 
         for (const [k, v] of Object.entries(fields))
-            form.append(k, v);
+            form.append(k, v + "");
 
         const init = this._injectAuth({method: "POST", body: form});
 

@@ -1,9 +1,10 @@
-import {bookmarkManager} from "../backend.js";
 import {BookmarkTree} from "./tree.js";
 import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
 import {getFaviconFromTab, testFavicon} from "../favicon.js";
 import {send} from "../proxy.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
+import {Query} from "../storage_query.js";
+import {systemInitialization} from "../bookmarks_init.js";
 
 let tree;
 
@@ -27,7 +28,7 @@ function saveHistory(nodeId, text, history) {
 }
 
 window.onload = async function () {
-    await bookmarkManager;
+    await systemInitialization;
 
     let folderHistory;
     const bookmarkFolderSelect = $("#bookmark-folder");
@@ -35,7 +36,7 @@ window.onload = async function () {
 
     tree = new BookmarkTree("#treeview", true);
 
-    bookmarkManager.listGroups().then(nodes => {
+    Query.allGroups().then(nodes => {
         bookmarkFolderSelect.empty();
 
         folderHistory = localStorage.getItem("popup-folder-history");

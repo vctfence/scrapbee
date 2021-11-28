@@ -1,0 +1,83 @@
+[//]: # (p {text-align: justify;})
+
+Supported [Markdown](https://daringfireball.net/projects/markdown/syntax#link) markup features:
+
+# Top Level Heading
+## Second Level Heading
+### Third Level Heading
+
+[//]: # (A comment line. This line will not be displayed.)
+
+Paragraphs are separated by at least one empty line.
+
+
+### Formatting
+
+**bold** __text__
+*italic* _text_
+~~strikethrough~~
+and `monospaced`
+
+A horizontal line, fill-width across the page:
+
+-----
+
+
+### Links
+
+[Link with a description](http://orgmode.org)
+
+http://orgmode.org - link without a description.
+
+### Lists
+- First item in a list.
+- Second item.
+* Third item.
+  + Sub-item
+    1. Numbered item.
+    2. Another item.
+    1. Third item.
+
+
+### Code
+
+Inline `code`
+
+Indented code
+
+    // Some comments
+    line 1 of code
+    line 2 of code
+    line 3 of code
+
+
+Block code "fences"
+
+```
+To be or not to be, that is the question.
+```
+
+
+### Blockquotes
+
+> Blockquotes can also be nested...
+>> ...by using additional greater-than signs right next to each other...
+> > > ...or with spaces between arrows.
+
+### Table
+
+|       | Symbol | Author     |
+|-------|--------|------------|
+| Emacs | ~M-x~  | _RMS_      |
+| Vi    | ~:~    | _Bill Joy_ |
+
+
+### Images
+
+Referenced image:
+
+![Cat silhouette](https://upload.wikimedia.org/wikipedia/commons/6/60/Cat_silhouette.svg)
+
+From data URL:
+
+![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoBAMAAAB+0KVeAAAAMHRFWHRDcmVhdGlvbiBUaW1lANCf0L0gMTUg0LDQv9GAIDIwMTkgMTU6MzA6MzMgKzA0MDAnkrt2AAAAB3RJTUUH4wQPCx8oBV08nwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAARnQU1BAACxjwv8YQUAAAAwUExURf///7W1tWJiYtLS0oODg6CgoPf39wAAACkpKefn597e3j09Pe/v7xQUFAgICMHBwUxnnB8AAACdSURBVHjaY2AYpoArAUNEjeFsALogZ1HIdgxBhufl5QIYgtexCZaXl2Nqb8em0r28/P5KLCrLy2/H22TaIMQYy+FgK1yQBSFYrgDki6ILFgH9uwUkyIQkWP5axeUJyOvq5ajgFgNDsh6qUFF8AoPs87om16B95eWblJTKy6uF+sonMDCYuJoBjQiviASSSq4LGBi8D8BcJYTpzREKABwGR4NYnai5AAAAAElFTkSuQmCC)

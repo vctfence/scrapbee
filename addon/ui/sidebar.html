@@ -2,8 +2,8 @@
 <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta http-equiv="pragma" content="no-cache">
     <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="pragma" content="no-cache">
     <meta http-equiv="expires" content="0">
 
     <link rel="stylesheet" href="../lib/jstree/themes/default/style.css"/>
@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="shelf_list.css"/>
     <link rel="stylesheet" type="text/css" href="sidebar.css"/>
 
-    <script type="text/javascript" src="theme_loader.js"></script>
+    <script type="text/javascript" src="style_loader.js"></script>
     <script type="text/javascript" src="../lib/jquery.js"></script>
     <script type="text/javascript" src="../lib/selectric/jquery.selectric.js"></script>
     <script type="text/javascript" src="../lib/jstree/jstree.js"></script>
@@ -25,135 +25,11 @@
 <div id="main-container">
     <div id="flex-container">
         <div id="toolbar" class="toolbar">
-            <div class="dlg-cover dlg-confirm" style="display:none;">
-                <div class="dlg">
-                    <div class="dlg-box">
-                        <div class="dlg-title">[title]</div>
-                        <div class="dlg-table" style="overflow:hidden;">
-                            <div class="row">
-                                <div class="cell">[message]</div>
-                            </div>
-                            <div class="row">
-                                <div class="cell" style="text-align:center;">
-                                    <input type="button" class="button-ok" value="OK" />
-                                    <input type="button" class="button-cancel" value="Cancel" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="dlg-cover dlg-alert" style="display:none;">
-                <div class="dlg">
-                    <div class="dlg-box">
-                        <div class="dlg-title">[title]</div>
-                        <div class="dlg-table" style="overflow:hidden;">
-                            <div class="row">
-                                <div class="cell">[message]</div>
-                            </div>
-                            <div class="row">
-                                <div class="cell" style="text-align:center;">
-                                    <input type="button" class="button-ok" value="OK"/>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="dlg-cover dlg-properties" style="display:none;">
-                <div class="dlg">
-                    <div class="dlg-box">
-                        <div class="dlg-title">
-                            <span id="prop-dlg-title-text">Properties</span>
-                            <div id="prop-dlg-containers-icon" title="Containers"></div>
-                            <div id="prop-dlg-comments-icon" title="Comments"></div>
-                            <div id="containers-menu" class="simple-menu">
-                            </div>
-                        </div>
-                        <div class="dlg-prop-table" style="overflow: hidden; margin-top: 4px;">
-                            <div id="dlg-comments-container">
-                                <textarea id="prop-comments" name="comments"></textarea>
-                            </div>
-                            <div class="prop-row">
-                                <label for="prop-name" class="cell">Title: </label>
-                                <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
-                            </div>
-                            <div class="prop-row">
-                                <label for="prop-uri" class="cell">URL: </label>
-                                <input id="prop-uri" class="dialog-input" type="" name="uri" value="" style="width:100%"/>
-                            </div>
-                            <div class="prop-row">
-                                <label for="prop-tags" class="cell">Tags: </label>
-                                <input id="prop-tags" class="dialog-input" type="" name="tags" value="" style="width:100%"/>
-                            </div>
-                            <div class="prop-row">
-                                <label for="prop-details" class="cell">Details: </label>
-                                <input id="prop-details" class="dialog-input" type="" name="details" value="" style="width:100%"/>
-                            </div>
-                            <div class="prop-row">
-                                <label for="prop-date" class="cell">Date: </label>
-                                <input id="prop-date" class="dialog-input" type="" name="todo_date" value="" style="width:100%"/>
-                            </div>
-                            <div class="prop-row more-properties">
-                                <div>
-                                    <div><label for="prop-uuid" class="cell">UUID: </label></div>
-                                    <div style="float: right;"><a id="copy-reference-url" href="#">copy reference</a></div>
-                                </div>
-                                <input id="prop-uuid" readonly="true" class="dialog-input" type="" name="uuid" value="" style="width:100%"/>
-                            </div>
-                            <div id="prop-row-icon" class="prop-row more-properties">
-                                <div>
-                                    <div><label for="prop-icon" class="cell">Icon: </label></div>
-                                    <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
-                                </div>
-                                <input id="prop-icon" type="" class="dialog-input" name="icon" value="" style="width:100%"/>
-                            </div>
-                            <div class="prop-row more-properties">
-                                <label for="prop-added" class="cell">Added on: </label>
-                                <input id="prop-added" type="" class="dialog-input" name="date_added" value="" style="width:100%"
-                                       readonly="true"/>
-                            </div>
-                            <div id="prop-row-size" class="prop-row more-properties" style="padding-top: 10px;">
-                                <div style=" float: right;">
-                                    <span>Size: </span><span id="prop-size"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="button-row">
-                            <a id="more-properties" href="#">More</a>
-                            <div class="cell" style="float:right; margin-top: 10px">
-                                <input type="button" class="button-ok" value="OK"/>
-                                <input type="button" class="button-cancel" value="Cancel"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="dlg-cover dlg-prompt" style="display:none;">
-                <div class="dlg">
-                    <div class="dlg-box">
-                        <div class="dlg-title i18n i18n-innerHTML">[caption]</div>
-                        <div class="dlg-table" style="overflow:hidden;">
-                            <div class="row">
-                                <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">[label]</div>
-                                <div class="cell"><input class="dialog-input" type="" name="title" value=""
-                                                         style="width:100%"/></div>
-                            </div>
-                        </div>
-                        <div class="row"
-                             style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
-                            <div class="cell" style="float:right">
-                                <input type="button" class="button-ok i18n i18n-value" value="OK"/>
-                                <input type="button" class="button-cancel i18n i18n-value" value="Cancel"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div id="main-controls">
                 <div id="main-buttons">
                     <img class="tool-button midnight-filter" src="../icons/reload.svg" title="Reload" id="btnLoad"/>
+                    <img class="tool-button midnight-filter" src="../icons/sync.svg" title="Sync" id="btnSync"/>
                     <img class="tool-button midnight-filter" src="../icons/search.svg" title="Search" id="btnSearch"/>
                     <img class="tool-button midnight-filter" src="../icons/settings.svg" title="Settings" id="btnSettings"/>
                     <img class="tool-button midnight-filter" src="../icons/help.svg" title="Help" id="btnHelp"/>
@@ -163,15 +39,14 @@
                     <img id="shelves-icon" title="Shelf" src="../icons/books.svg" class="midnight-filter">
 
                     <div id="shelfList-placeholder" class="selectric-wrapper" style="display: none;">
-                        <div class="selectric"><span class="label">Loading...</span
-                        ><b class="button selectric-button"><img  class="midnight-filter" src="../images/dropdown.svg"/></b></div>
+                        <div class="selectric"><span class="label">Loading...</span><!--
+                        --><b class="button selectric-button"><img class="midnight-filter" src="../images/dropdown.svg"/></b></div>
                     </div>
 
                     <select id="shelfList" autocomplete="off"><option value="-1" selected>Loading...</option></select>
                 </div>
                 <div>
-                    <img id="shelf-menu-button" type="image" src="../icons/grid.svg"
-                         class="midnight-filter" title="Shelf Operations"/>
+                    <img id="shelf-menu-button" type="image" src="../icons/grid.svg" class="midnight-filter" title="Shelf Operations"/>
                     <div id="shelf-menu" class="simple-menu" style="display:none">
                         <div id="shelf-menu-create">Create</div>
                         <div id="shelf-menu-rename">Rename</div>
@@ -179,12 +54,11 @@
                         <div id="shelf-menu-sort">Sort</div>
                         <div id="shelf-menu-import">Import...</div>
                         <div id="shelf-menu-export">Export...</div>
-                        <input type="file" accept=".jsonl,.json,.org,.html" id="file-picker"
-                               style="display: none"/>
+                        <input type="file" accept=".jsonl,.json,.org,.html" id="file-picker" style="display: none"/>
                     </div>
                 </div>
-
             </div>
+
 			<div id="search-controls" class="table-row">
 				<div id="search-input-container">
 					<input type="text" id="search-input" >
@@ -193,6 +67,7 @@
 				<img src="../icons/bookmark.svg" id="search-mode-switch" title="Search Mode" class="midnight-filter">
                 <div id="search-mode-menu" class="simple-menu" style="display: none">
                     <img class="search-icon midnight-filter-menu" src="../icons/bookmark.svg"><div id="shelf-menu-search-title">Title</div>
+                    <img class="search-icon midnight-filter-menu" src="../icons/filter-folder.svg"><div id="shelf-menu-search-folder">Folder</div>
                     <img class="search-icon midnight-filter-menu" src="../icons/tags.svg"><div id="shelf-menu-search-tags">Tags</div>
                     <img class="search-icon midnight-filter-menu" src="../icons/content-web.svg"><div id="shelf-menu-search-content">Content</div>
                     <img class="search-icon midnight-filter-menu" src="../icons/content-notes.svg"><div id="shelf-menu-search-notes">Notes</div>
@@ -200,9 +75,9 @@
                     <img class="search-icon midnight-filter-menu" src="../icons/calendar.svg"><div id="shelf-menu-search-date">Date</div>
                 </div>
 			</div>
+            <div id="sidebar-progress"></div>
         </div>
-            <div id="treeview-container"><div id="treeview" class="root folder-content i18n"></div>
-        </div>
+        <div id="treeview-container"><div id="treeview" class="root folder-content i18n"></div></div>
         <div id="footer">
             <div id="footer-title">Random Bookmark</div>
             <div id="footer-buttons">
@@ -213,6 +88,136 @@
             <div id="footer-content"></div>
         </div>
     </div>
+
+    <div class="dlg-cover dlg-confirm" style="display:none;">
+        <div class="dlg">
+            <div class="dlg-box">
+                <div class="dlg-title">[title]</div>
+                <div class="dlg-table" style="overflow:hidden;">
+                    <div class="row">
+                        <div class="cell">[message]</div>
+                    </div>
+                    <div class="row">
+                        <div class="cell" style="text-align:center;">
+                            <input type="button" class="button-ok" value="OK" />
+                            <input type="button" class="button-cancel" value="Cancel" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dlg-cover dlg-alert" style="display:none;">
+        <div class="dlg">
+            <div class="dlg-box">
+                <div class="dlg-title">[title]</div>
+                <div class="dlg-table" style="overflow:hidden;">
+                    <div class="row">
+                        <div class="cell">[message]</div>
+                    </div>
+                    <div class="row">
+                        <div class="cell" style="text-align:center;">
+                            <input type="button" class="button-ok" value="OK"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dlg-cover dlg-properties" style="display:none;">
+        <div class="dlg">
+            <div class="dlg-box">
+                <div class="dlg-title">
+                    <span id="prop-dlg-title-text">Properties</span>
+                    <div id="prop-dlg-containers-icon" title="Containers"></div>
+                    <div id="prop-dlg-comments-icon" title="Comments"></div>
+                    <div id="containers-menu" class="simple-menu">
+                    </div>
+                </div>
+                <div class="dlg-prop-table" style="overflow: hidden; margin-top: 4px;">
+                    <div id="dlg-comments-container">
+                        <textarea id="prop-comments" name="comments"></textarea>
+                    </div>
+                    <div class="prop-row">
+                        <label for="prop-name" class="cell">Title: </label>
+                        <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
+                    </div>
+                    <div class="prop-row">
+                        <label for="prop-uri" class="cell">URL: </label>
+                        <input id="prop-uri" class="dialog-input" type="" name="uri" value="" style="width:100%"/>
+                    </div>
+                    <div class="prop-row">
+                        <label for="prop-tags" class="cell">Tags: </label>
+                        <input id="prop-tags" class="dialog-input" type="" name="tags" value="" style="width:100%"/>
+                    </div>
+                    <div class="prop-row">
+                        <label for="prop-details" class="cell">Details: </label>
+                        <input id="prop-details" class="dialog-input" type="" name="details" value="" style="width:100%"/>
+                    </div>
+                    <div class="prop-row">
+                        <label for="prop-date" class="cell">Date: </label>
+                        <input id="prop-date" class="dialog-input" type="" name="todo_date" value="" style="width:100%"/>
+                    </div>
+                    <div class="prop-row more-properties">
+                        <div>
+                            <div><label for="prop-uuid" class="cell">UUID: </label></div>
+                            <div style="float: right;"><a id="copy-reference-url" href="#">copy reference</a></div>
+                        </div>
+                        <input id="prop-uuid" readonly="true" class="dialog-input" type="" name="uuid" value="" style="width:100%"/>
+                    </div>
+                    <div id="prop-row-icon" class="prop-row more-properties">
+                        <div>
+                            <div><label for="prop-icon" class="cell">Icon: </label></div>
+                            <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
+                        </div>
+                        <input id="prop-icon" type="" class="dialog-input" name="icon" value="" style="width:100%"/>
+                    </div>
+                    <div class="prop-row more-properties">
+                        <label for="prop-added" class="cell">Added on: </label>
+                        <input id="prop-added" type="" class="dialog-input" name="date_added" value="" style="width:100%"
+                               readonly="true"/>
+                    </div>
+                    <div id="prop-row-size" class="prop-row more-properties" style="padding-top: 10px;">
+                        <div style=" float: right;">
+                            <span>Size: </span><span id="prop-size"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-row">
+                    <a id="more-properties" href="#">More</a>
+                    <div class="cell" style="float:right; margin-top: 10px">
+                        <input type="button" class="button-ok" value="OK"/>
+                        <input type="button" class="button-cancel" value="Cancel"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dlg-cover dlg-prompt" style="display:none;">
+        <div class="dlg">
+            <div class="dlg-box">
+                <div class="dlg-title i18n i18n-innerHTML">[caption]</div>
+                <div class="dlg-table" style="overflow:hidden;">
+                    <div class="row">
+                        <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">[label]</div>
+                        <div class="cell"><input class="dialog-input" type="" name="title" value=""
+                                                 style="width:100%"/></div>
+                    </div>
+                </div>
+                <div class="row"
+                     style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
+                    <div class="cell" style="float:right">
+                        <input type="button" class="button-ok i18n i18n-value" value="OK"/>
+                        <input type="button" class="button-cancel i18n i18n-value" value="Cancel"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

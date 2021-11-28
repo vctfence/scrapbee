@@ -1,13 +1,11 @@
 import {send} from "../proxy.js";
-import {bookmarkManager} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
-
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "../settings.js";
 import {
     isContainer,
     isEndpoint,
-    isSpecialShelf,
+    isBuiltInShelf,
     CLOUD_EXTERNAL_NAME,
     ENDPOINT_TYPES,
     EVERYTHING,
@@ -33,12 +31,14 @@ import {
     EVERYTHING_SHELF_ID,
     TODO_SHELF_ID,
     DONE_SHELF_ID,
-    DEFAULT_SHELF_NAME
+    DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_NAME
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
 import {formatShelfName} from "../bookmarking.js";
+import {Bookmark} from "../bookmarks_bookmark.js";
+import {Comments, Icon, Node} from "../storage_entities.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
@@ -157,7 +157,7 @@ class BookmarkTree {
 
                 if (o(jnode)?.stored_icon) {
                     const cached = this.iconCache.get(jnode.icon);
-                    const base64Url = cached || (await bookmarkManager.fetchIcon(o(jnode).id));
+                    const base64Url = cached || (await Icon.get(o(jnode).id));
 
                     if (base64Url) {
                         if (!cached)
@@ -237,10 +237,10 @@ class BookmarkTree {
                     anchor[0]._mousedown_fired = false;
             }
 
-            let clickable = element.getAttribute("data-clickable");
+            let node = o(this._jstree.get_node(element.id));
+            let clickable = element.getAttribute("data-clickable") || node.__filtering;
 
             if (clickable && !e.ctrlKey && !e.shiftKey) {
-                let node = o(this._jstree.get_node(element.id));
                 if (node) {
                     if (settings.open_bookmark_in_active_tab()) {
                         getActiveTab().then(active_tab => {
@@ -254,26 +254,6 @@ class BookmarkTree {
             }
             return false;
         }
-    }
-
-    traverse(root, visitor) {
-        let _tree = this._jstree;
-        function doTraverse(root) {
-            if (!settings.show_firefox_toolbar() && o(root)?.external_id === FIREFOX_BOOKMARK_TOOLBAR
-                || !settings.show_firefox_mobile() && o(root)?.external_id === FIREFOX_BOOKMARK_MOBILE
-                || o(root)?.uuid === CLOUD_EXTERNAL_NAME)
-                return;
-
-            visitor(root);
-
-            if (root.children)
-                for (let id of root.children) {
-                    let node = _tree.get_node(id);
-                    doTraverse(node);
-                }
-        }
-
-        doTraverse(root);
     }
 
     static _formatNodeTooltip(node) {
@@ -312,24 +292,24 @@ class BookmarkTree {
     }
 
     static styleFirefoxFolders(node, jnode) {
-        if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_MENU) {
+        if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_MENU) {
             jnode.icon = "/icons/bookmarksMenu.svg";
             jnode.li_attr = {"class": "browser-bookmark-menu"};
             node.special_browser_folder = true;
         }
-        else if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_UNFILED) {
+        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_UNFILED) {
             jnode.icon = "/icons/unfiledBookmarks.svg";
             jnode.li_attr = {"class": "browser-unfiled-bookmarks"};
             node.special_browser_folder = true;
         }
-        else if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
+        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
             jnode.icon = "/icons/bookmarksToolbar.svg";
             jnode.li_attr = {"class": "browser-bookmark-toolbar"};
             if (!settings.show_firefox_toolbar())
                 jnode.state = {hidden: true};
             node.special_browser_folder = true;
         }
-        else if (node.external === FIREFOX_SHELF_NAME && node.external_id === FIREFOX_BOOKMARK_MOBILE) {
+        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_MOBILE) {
             if (!settings.show_firefox_mobile())
                 jnode.state = {hidden: true};
             node.special_browser_folder = true;
@@ -349,7 +329,7 @@ class BookmarkTree {
         if (!jnode.parent)
             jnode.parent = "#";
 
-        if (node.type === NODE_TYPE_SHELF && node.external === FIREFOX_SHELF_NAME) {
+        if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_NAME) {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
             jnode.icon = "/icons/firefox.svg";
@@ -368,7 +348,7 @@ class BookmarkTree {
             jnode.icon = "/icons/tape.svg";
         }
         else if (node.type === NODE_TYPE_SHELF) {
-            if (node.name && isSpecialShelf(node.name))
+            if (node.name && isBuiltInShelf(node.name))
                 jnode.text = formatShelfName(node.name);
             jnode.icon = "/icons/shelf.svg";
             jnode.li_attr = {"class": "scrapyard-shelf"};
@@ -562,7 +542,10 @@ class BookmarkTree {
                 jnode.icon = jnode.original.icon;
 
             this._jstree.redraw_node(jnode)
+
+            return true;
         }
+        return false;
     }
 
     openNode(nodeId) {
@@ -584,6 +567,7 @@ class BookmarkTree {
 
         if (forceScroll) {
             domNode.scrollIntoView();
+            $(this._element).scrollLeft(0);
         }
         else {
             if (!isElementInViewport(domNode)) {
@@ -695,18 +679,24 @@ class BookmarkTree {
     }
 
     reorderNodes(jparent) {
-        let siblings = jparent.children.map(c => this._jstree.get_node(c));
+        let jsiblings = jparent.children.map(c => this._jstree.get_node(c));
+        // optimization may produce unexpected results in Sync
+        let optimized = false; //!jsiblings.some(jn => o(jn).external === RDF_EXTERNAL_NAME);
 
         let positions = [];
-        for (let i = 0; i < siblings.length; ++i) {
-            const node = {};
-            const sibling = o(siblings[i]);
-            node.id = sibling.id;
-            node.uuid = sibling.uuid;
-            node.external = sibling.external;
-            node.external_id = sibling.external_id;
-            node.pos = i;
-            positions.push(node);
+        for (let i = 0; i < jsiblings.length; ++i) {
+            const sibling = o(jsiblings[i]);
+            // if (sibling.pos === i && optimized)
+            //     continue;
+
+            const orderNode = {};
+            orderNode.id = sibling.id;
+            orderNode.uuid = sibling.uuid;
+            orderNode.parent_id = sibling.parent_id;
+            orderNode.external = sibling.external;
+            orderNode.external_id = sibling.external_id;
+            sibling.pos = orderNode.pos = i;
+            positions.push(orderNode);
         }
 
         return send.reorderNodes({positions: positions});
@@ -729,13 +719,15 @@ class BookmarkTree {
                                                         ? n.children
                                                         : o(n).id);
             let nodes = [];
-            let marked_nodes = selectedIds.flat().map(id => tree.get_node(id));
+            let changedNodes = selectedIds.flat().map(id => tree.get_node(id));
 
-            selectedIds = marked_nodes.filter(n => isEndpoint(o(n))).map(n => parseInt(n.id));
+            selectedIds = changedNodes.filter(n => isEndpoint(o(n))).map(n => parseInt(n.id));
 
-            selectedNodes = marked_nodes.filter(n => selectedIds.some(id => id === o(n).id)).map(n => o(n));
+            selectedNodes = changedNodes.filter(n => selectedIds.some(id => id === o(n).id)).map(n => o(n));
 
-            selectedNodes.forEach(n => nodes.push({id: n.id, uuid: n.uuid, external: n.external, todo_state: state}));
+            // a minimal set of attributes compatible with marshalling
+            selectedNodes.forEach(n => nodes.push({id: n.id, parent_id: n.parent_id, name: n.name, uuid: n.uuid,
+                external: n.external, todo_state: state}));
 
             this.startProcessingIndication();
 
@@ -772,7 +764,7 @@ class BookmarkTree {
                         let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isEndpoint(n));
                         children = children.filter(c => c.type !== NODE_TYPE_NOTES);
                         children.forEach(c => c.type = NODE_TYPE_BOOKMARK);
-                        children.sort((a, b) => a.pos - b.pos);
+                        children.sort(byPosition);
 
                         for (let node of children) {
                             await send.browseNode({node, container: obj.item.__container_id});
@@ -830,12 +822,10 @@ class BookmarkTree {
                 label: "Open All",
                 action: async () => {
                     let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isEndpoint(n));
-                    children.sort((a, b) => a.pos - b.pos);
+                    children.sort(byPosition);
 
-                    for (let node of children) {
-                        delete node.tag_list;
+                    for (let node of children)
                         await send.browseNode({node: node});
-                    }
                 }
             },
             openInContainerItem: {
@@ -861,7 +851,7 @@ class BookmarkTree {
                         label: "Folder",
                         icon: `/icons/group${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            let group = {id: bookmarkManager.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                            let group = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
                                          parent_id: ctxNode.id};
                             const groupPending = send.createGroup({parent: ctxNode, name: group.name});
 
@@ -876,20 +866,13 @@ class BookmarkTree {
                                 group = await groupPending;
                                 tree.set_id(groupJNode.id, group.id);
 
-                                if (success && !cancelled && jnode.text) {
+                                if (success && !cancelled && jnode.text)
                                     group = await send.renameGroup({id: group.id, name: jnode.text});
 
-                                    tree.rename_node(jnode, group.name);
-                                    Object.assign(o(jnode), group);
-                                    jnode.original = BookmarkTree.toJsTreeNode(group);
-                                    await this.reorderNodes(ctxJNode);
-                                }
-                                else {
-                                    tree.rename_node(jnode, group.name);
-                                    Object.assign(o(jnode), group);
-                                    jnode.original = BookmarkTree.toJsTreeNode(group);
-                                    await this.reorderNodes(ctxJNode);
-                                }
+                                tree.rename_node(jnode, group.name);
+                                Object.assign(o(jnode), group);
+                                jnode.original = BookmarkTree.toJsTreeNode(group);
+                                await this.reorderNodes(ctxJNode);
 
                                 this.stopProcessingIndication();
                             });
@@ -902,7 +885,7 @@ class BookmarkTree {
                             let jparent = tree.get_node(ctxJNode.parent);
                             let position = $.inArray(ctxJNode.id, jparent.children);
 
-                            let group = {id: bookmarkManager.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                            let group = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
                                 parent_id: o(jparent).id};
                             const groupPending = send.createGroup({parent: o(jparent), name: group.name});
 
@@ -917,20 +900,13 @@ class BookmarkTree {
                                 group = await groupPending;
                                 tree.set_id(groupJNode.id, group.id);
 
-                                if (success && !cancelled && jnode.text) {
+                                if (success && !cancelled && jnode.text)
                                     group = await send.renameGroup({id: group.id, name: jnode.text});
 
-                                    tree.rename_node(jnode, group.name);
-                                    Object.assign(o(jnode), group);
-                                    jnode.original = BookmarkTree.toJsTreeNode(group);
-                                    await this.reorderNodes(jparent);
-                                }
-                                else {
-                                    tree.rename_node(jnode, group.name);
-                                    Object.assign(o(jnode), group);
-                                    jnode.original = BookmarkTree.toJsTreeNode(group);
-                                    await this.reorderNodes(jparent);
-                                }
+                                tree.rename_node(jnode, group.name);
+                                Object.assign(o(jnode), group);
+                                jnode.original = BookmarkTree.toJsTreeNode(group);
+                                await this.reorderNodes(jparent);
 
                                 this.stopProcessingIndication();
                             });
@@ -954,7 +930,7 @@ class BookmarkTree {
                                 return;
                             }
 
-                            let notes = {id: bookmarkManager.setTentativeId({}), parent_id: ctxNode.id, name: "New Notes",
+                            let notes = {id: Bookmark.setTentativeId({}), parent_id: ctxNode.id, name: "New Notes",
                                          type: NODE_TYPE_NOTES};
                             const notesPending = send.addNotes({name: notes.name, parent_id: notes.parent_id});
 
@@ -972,17 +948,11 @@ class BookmarkTree {
                                 if (success && !cancelled && jnode.text) {
                                     notes.name = jnode.text;
                                     notes = await send.updateBookmark({node: notes});
-                                    Object.assign(o(jnode), notes);
-                                    jnode.original = BookmarkTree.toJsTreeNode(notes);
-                                    this.data.push(jnode.original);
-                                    await this.reorderNodes(ctxJNode);
                                 }
-                                else {
-                                    Object.assign(o(jnode), notes);
-                                    jnode.original = BookmarkTree.toJsTreeNode(notes);
-                                    this.data.push(jnode.original);
-                                    await this.reorderNodes(ctxJNode);
-                                }
+
+                                Object.assign(o(jnode), notes);
+                                jnode.original = BookmarkTree.toJsTreeNode(notes);
+                                this.data.push(jnode.original);
 
                                 this.stopProcessingIndication();
                             });
@@ -994,7 +964,7 @@ class BookmarkTree {
                         action: async () => {
                             const jparent = tree.get_node(ctxJNode.parent);
                             const position = $.inArray(ctxJNode.id, jparent.children);
-                            let separator = {id: bookmarkManager.setTentativeId({}), type: NODE_TYPE_SEPARATOR,
+                            let separator = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_SEPARATOR,
                                              parent_id: o(jparent).id};
 
                             const jnode = BookmarkTree.toJsTreeNode(separator);
@@ -1026,7 +996,7 @@ class BookmarkTree {
                 action: async () => {
                     let buffer = tree.get_buffer();
                     let selection = Array.isArray(buffer.node)? buffer.node.map(n => o(n)): [o(buffer.node)];
-                    selection.sort((a, b) => a.pos - b.pos);
+                    selection.sort(byPosition);
                     selection = selection.map(n => n.id);
 
                     this.startProcessingIndication();
@@ -1167,7 +1137,7 @@ class BookmarkTree {
                 label: "Delete",
                 action: async () => {
                     if (ctxNode.type === NODE_TYPE_SHELF) {
-                        if (selectedNodes.map(n => o(n)).some(n => isSpecialShelf(n.name))) {
+                        if (selectedNodes.map(n => o(n)).some(n => isBuiltInShelf(n.name))) {
                             showNotification({message: "A built-in shelf could not be deleted."});
                             return;
                         }
@@ -1208,9 +1178,9 @@ class BookmarkTree {
                 label: "Properties...",
                 action: async () => {
                     if (isEndpoint(ctxNode)) {
-                        let properties = await bookmarkManager.getNode(ctxNode.id);
+                        let properties = await Node.get(ctxNode.id);
 
-                        properties.comments = await bookmarkManager.fetchComments(properties.id);
+                        properties.comments = await Comments.get(properties.id);
                         let commentsPresent = !!properties.comments;
 
                         properties.containers = this._containers;
@@ -1233,11 +1203,11 @@ class BookmarkTree {
                             properties.has_comments = !!properties.comments;
 
                             if (commentsPresent || properties.has_comments)
-                                await bookmarkManager.storeComments(properties.id, properties.comments);
+                                await Bookmark.storeComments(properties.id, properties.comments);
 
                             delete properties.comments;
 
-                            bookmarkManager.cleanBookmark(properties);
+                            Bookmark.clean(properties);
 
                             properties = await send.updateBookmark({node: properties});
 
@@ -1265,13 +1235,20 @@ class BookmarkTree {
                     const node = ctxNode;
                     switch (node.type) {
                         case NODE_TYPE_SHELF:
-                            if (isSpecialShelf(node.name)) {
-                                showNotification({message: "A built-in shelf could not be renamed."});
+                            const ERROR_MESSAGE = "A built-in shelf could not be renamed.";
+                            if (isBuiltInShelf(node.name)) {
+                                showNotification({message: ERROR_MESSAGE});
                                 return;
                             }
 
                             tree.edit(node.id, null, async (jnode, success, cancelled) => {
                                 if (success && !cancelled) {
+                                    if (isBuiltInShelf(jnode.text)) {
+                                        tree.rename_node(jnode.id, node.name);
+                                        showNotification({message: ERROR_MESSAGE});
+                                        return;
+                                    }
+
                                     this.startProcessingIndication();
                                     await send.renameGroup({id: node.id, name: jnode.text})
                                     this.stopProcessingIndication();
@@ -1302,9 +1279,9 @@ class BookmarkTree {
                     const options = await showDlg("prompt", {caption: "RDF Directory", label: "Path:",
                                                                         title: ctxNode.uri});
                     if (options) {
-                        let node = await bookmarkManager.getNode(ctxNode.id);
+                        let node = await Node.get(ctxNode.id);
                         ctxNode.uri = node.uri = options.title;
-                        bookmarkManager.updateNode(node);
+                        Node.update(node);
                     }
                 }
             }

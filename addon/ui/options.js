@@ -1,14 +1,17 @@
 import {send} from "../proxy.js";
-import {bookmarkManager} from "../backend.js"
 import {cloudBackend} from "../backend_cloud.js"
 import {dropboxBackend} from "../backend_dropbox.js"
 import {settings} from "../settings.js"
 import {fetchText, fetchWithTimeout} from "../utils_io.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {injectCSS} from "../utils_html.js";
+import {systemInitialization} from "../bookmarks_init.js";
+import {showNotification} from "../utils_browser.js";
+import {nativeBackend} from "../backend_native.js";
+import {confirm, showDlg} from "./dialog.js";
 
 window.onload = async function() {
-    await bookmarkManager;
+    await systemInitialization;
 
     window.onhashchange = switchPane;
     switchPane();
@@ -16,7 +19,8 @@ window.onload = async function() {
     initHelpMarks();
     configureScrapyardSettingsPage();
     configureSavePageSettingsPage();
-    configureCloudSettingsPage();
+    await configureCloudSettingsPage();
+    await configureSyncSettingsPage();
 
     loadSavePageSettings();
     loadScrapyardSettings();
@@ -176,21 +180,21 @@ function loadScrapyardSettings() {
     selectricRefresh($("#option-export-format"));
 }
 
+async function setSaveCheckHandler(id, setting, callback) {
+    await settings.load();
+    $(`#${id}`).on("click", async e => {
+        await settings[setting](e.target.checked);
+        if (callback)
+            return callback(e);
+    });
+}
+
+async function setSaveSelectHandler(id, setting) {
+    await settings.load();
+    $(`#${id}`).on("change", e => settings[setting](e.target.value));
+}
+
 function configureScrapyardSettingsPage() {
-    async function setSaveCheckHandler(id, setting, callback) {
-        await settings.load();
-        $(`#${id}`).on("click", async e => {
-            await settings[setting](e.target.checked);
-            if (callback)
-                callback(e);
-        });
-    }
-
-    async function setSaveSelectHandler(id, setting) {
-        await settings.load();
-        $(`#${id}`).on("change", e => settings[setting](e.target.value));
-    }
-
     simpleSelectric("#option-sidebar-theme");
     simpleSelectric("#option-export-format");
 
@@ -240,10 +244,10 @@ function configureSavePageSettingsPage() {
     $(`#div-capturesettings input[type="number"]`).on("input", storeSavePageSettings);
 }
 
-function configureCloudSettingsPage() {
-    $("#option-enable-cloud").prop("checked", settings.cloud_enabled());
-
-    $("#option-enable-cloud").on("change", async e => {
+async function configureCloudSettingsPage() {
+    const enableCloudCheck = $("#option-enable-cloud");
+    enableCloudCheck.prop("checked", settings.cloud_enabled());
+    enableCloudCheck.on("change", async e => {
         await settings.load();
         await settings.cloud_enabled(e.target.checked);
 
@@ -256,11 +260,8 @@ function configureCloudSettingsPage() {
     });
 
     $("#option-cloud-background-sync").prop("checked", settings.cloud_background_sync());
-
-    $("#option-cloud-background-sync").on("change", async e => {
-        await settings.load();
-        await settings.cloud_background_sync(e.target.checked);
-        send.enableCloudBackgroundSync();
+    await setSaveCheckHandler("option-cloud-background-sync", "cloud_background_sync", async e => {
+        send.enableCloudBackgroundSync({enable: e.target.checked});
     });
 
     if (dropboxBackend.isAuthenticated())
@@ -270,6 +271,88 @@ function configureCloudSettingsPage() {
         await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
         $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
     });
+}
+
+async function configureSyncSettingsPage() {
+    const enableSyncCheck = $("#option-enable-sync");
+    const syncDirectoryPathText = $("#sync-directory-path");
+
+    function disableSync(message) {
+        enableSyncCheck.prop("checked", false);
+        settings.sync_enabled(false);
+        settings.last_sync_date(null);
+        send.syncStateChanged({enabled: false});
+
+        if (typeof message === "string")
+            showNotification(message);
+    }
+
+    function updateSyncTime() {
+        if (settings.last_sync_date()) {
+            let strDate = new Date(settings.last_sync_date()) + "";
+            strDate = strDate.split("GMT")[0];
+
+            $("#sync-last-date").html(`<b>Last synchronization:</b> ${strDate}`);
+        }
+    }
+
+    if (settings.sync_directory())
+        syncDirectoryPathText.val(settings.sync_directory())
+
+    enableSyncCheck.prop("checked", settings.sync_enabled());
+    await setSaveCheckHandler("option-enable-sync", "sync_enabled", async e => {
+        if (!e.target.checked) {
+            disableSync();
+            return;
+        }
+
+        const sync_directory = syncDirectoryPathText.val();
+
+        if (!sync_directory) {
+            disableSync("Please choose a synchronization folder.");
+            return;
+        }
+
+        const status = await send.checkSyncDirectory({sync_directory});
+        if (status) {
+            settings.sync_directory(sync_directory);
+
+            let width;
+            let warning = " This may take some time.";
+
+            if (status === "populated") {
+                warning = " It will merge all existing content and may resurrect items that were deleted when "
+                        + " the synchronization was disabled. Make sure that you have a fresh backup."
+                width = "50%";
+            }
+
+            const message = `Scrapyard will perform the initial synchronization.${warning} Continue?`;
+
+            if (await showDlg("confirm", {title: "Sync", message, width, wrap: true})) {
+                send.syncStateChanged({enabled: e.target.checked});
+                send.performSync({isInitial: true});
+            }
+            else
+                disableSync();
+        }
+        else
+            disableSync();
+    });
+
+    $("#option-background-sync").prop("checked", settings.background_sync());
+    await setSaveCheckHandler("option-background-sync", "background_sync", async e => {
+        send.enableBackgroundSync({enable: e.target.checked});
+    });
+
+    $("#option-sync-on-startup").prop("checked", settings.sync_on_startup());
+    await setSaveCheckHandler("option-sync-on-startup", "sync_on_startup");
+
+    $("#option-sync-on-close-sidebar").prop("checked", settings.sync_on_close_sidebar());
+    await setSaveCheckHandler("option-sync-on-close-sidebar", "sync_on_close_sidebar");
+
+    syncDirectoryPathText.on("input", disableSync);
+
+    updateSyncTime();
 }
 
 async function configureBackupPage() {
@@ -319,15 +402,44 @@ async function configureRDFImportPage() {
 
 function configureDiagnosticsPage() {
     $("a.settings-menu-item[href='#diagnostics']").show();
+
+    function isIDBWriteError(error) {
+        return error.name === "OpenFailedError" && error.message
+            && error.message.includes("A mutation operation was attempted on a "
+                                                + "database that did not allow mutations");
+    }
+
+    function formatIDBWriteError() {
+        const errorDescriptionPre = $("#diagnostics-error-info");
+        const parent = errorDescriptionPre.parent();
+        errorDescriptionPre.remove();
+        $("#diagnostics-guide").remove();
+
+        $("<p>Scrapyard can not open its database for writing. "
+            + "This may be a consequence of particular combination of browser and system settings or an interference with "
+            + "Firefox profile files, for example, by an antivirus as it is explained on the addon "
+            + "<a href='https://addons.mozilla.org/en-US/firefox/addon/scrapyard/'>page</a></p>.")
+            .appendTo(parent);
+    }
+
+    function formatGenericError(error) {
+        $("#diagnostics-error-info").text(
+            `Error name: ${error.name}\n`
+            + `Error message: ${error.message}\n`
+            + `Origin: ${error.origin}\n`
+            + `Browser version: ${navigator.userAgent}\n\n`
+            + `Stacktrace\n\n`
+            + `${error.stack}`);
+    }
+
     let error = localStorage.getItem("scrapyard-diagnostics-error");
     if (error) {
         error = JSON.parse(error);
-        $("#diagnostics-error-info").text(
-            `Error name: ${error.name}\n`
-          + `Error message: ${error.message}\n`
-          + `Origin: ${error.origin}\n\n`
-          + `Stacktrace\n\n`
-          + `${error.stack}`);
+
+        if (isIDBWriteError(error))
+            formatIDBWriteError();
+        else
+            formatGenericError(error);
 
         localStorage.removeItem("scrapyard-diagnostics-error");
     }

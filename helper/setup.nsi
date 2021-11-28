@@ -1,7 +1,7 @@
 Unicode True
 
 !define APPNAME "Scrapyard Helper"
-!define VERSION "0.4"
+!define VERSION "0.5"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
@@ -89,7 +89,63 @@ function StrReplace
   Exch $0
 FunctionEnd
 
+!include LogicLib.nsh
+
+!macro UninstallExisting exitcode uninstcommand
+    Push `${uninstcommand}`
+    Call UninstallExisting
+    Pop ${exitcode}
+!macroend
+Function UninstallExisting
+    Exch $1 ; uninstcommand
+    Push $2 ; Uninstaller
+    Push $3 ; Len
+    StrCpy $3 ""
+    StrCpy $2 $1 1
+    StrCmp $2 '"' qloop sloop
+    sloop:
+        StrCpy $2 $1 1 $3
+        IntOp $3 $3 + 1
+        StrCmp $2 "" +2
+        StrCmp $2 ' ' 0 sloop
+        IntOp $3 $3 - 1
+        Goto run
+    qloop:
+        StrCmp $3 "" 0 +2
+        StrCpy $1 $1 "" 1 ; Remove initial quote
+        IntOp $3 $3 + 1
+        StrCpy $2 $1 1 $3
+        StrCmp $2 "" +2
+        StrCmp $2 '"' 0 qloop
+    run:
+        StrCpy $2 $1 $3 ; Path to uninstaller
+        StrCpy $1 161 ; ERROR_BAD_PATHNAME
+        GetFullPathName $3 "$2\.." ; $InstDir
+        #IfFileExists "$2" 0 +4
+        #ExecWait '"$2" /S _?=$3' $1 ; This assumes the existing uninstaller is a NSIS uninstaller, other uninstallers don't support /S nor _?=
+        RMDir /r "$3"
+        #IntCmp $1 0 "" +2 +2 ; Don't delete the installer if it was aborted
+        #Delete "$2" ; Delete the uninstaller
+        #RMDir "$3" ; Try to delete $InstDir
+        #RMDir "$3\.." ; (Optional) Try to delete the parent of $InstDir
+    #Pop $3
+    #Pop $2
+    #Exch $1 ; exitcode
+    StrCpy $1 0
+    Exch $1
+FunctionEnd
+
 Section "Scrapyard Helper" Section1
+
+    ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
+    ${If} $0 != ""
+    ${AndIf} ${Cmd} `MessageBox MB_YESNO|MB_ICONQUESTION "Uninstall previous version?" /SD IDYES IDYES`
+        !insertmacro UninstallExisting $0 '"$0"'
+        ${If} $1 <> 0
+            MessageBox MB_YESNO|MB_ICONSTOP "Failed to uninstall, continue anyway?" /SD IDYES IDYES +2
+                Abort
+        ${EndIf}
+    ${EndIf}
 
 	; Set Section properties
 	SetOverwrite on

@@ -127,27 +127,37 @@
     <div class="panel" id="maintenance-panel">
         <p class="panel-title">Maintenance
             <a id="statistics-link" href="#">Statistics</a></p>
-        <form>
-        <fieldset style="border: none;">
-            <div class="align-checkbox">
-                <input id="option-repair-icons" type="checkbox"/><label for="option-repair-icons">Repair icons when checking links with context menu</label>
-            </div>
-            <div id="optimize-database" class="action-link">
-                <a id="optimize-database-link" href="#">Optimize database</a>
-                <i class="help-mark"></i>
-                <span class="tips hide">Database optimization may improve Scrapyard performance if the add-on was installed before version 0.12.</span>
-                &nbsp;<span id="optimize-database-progress"></span>
-            </div>
-            <div id="reindex-content" class="action-link">
-                <a id="reindex-content-link" href="#">Rebuild search index</a>
-                &nbsp;<span id="reindex-content-progress"></span>
-            </div>
+            <fieldset style="border: none;">
+                <div class="double-container">
+                    <div class="double-first">
+                        <div id="optimize-database" class="action-link">
+                            <a id="optimize-database-link" href="#">Optimize database</a>
+                            <i class="help-mark"></i>
+                            <span class="tips hide">Database optimization may improve Scrapyard performance if the add-on was installed before version 0.12.</span>
+                            &nbsp;<span id="optimize-database-progress"></span>
+                        </div>
+                        <div id="reindex-content" class="action-link">
+                            <a id="reindex-content-link" href="#">Rebuild search index</a>
+                            &nbsp;<span id="reindex-content-progress"></span>
+                        </div>
 
-            <div id="reset-cloud" class="action-link">
-                <a id="reset-cloud-link" href="#">Reset cloud</a>
-            </div>
-        </fieldset>
-        </form>
+                        <div id="reset-scrapyard" class="action-link">
+                            <a id="reset-scrapyard-link" href="#">Reset Scrapyard</a>
+                        </div>
+                        <div id="reset-cloud" class="action-link">
+                            <a id="reset-cloud-link" href="#">Reset Cloud</a>
+                        </div>
+                        <div id="reset-sync" class="action-link">
+                            <a id="reset-sync-link" href="#">Reset Sync</a>
+                        </div>
+                    </div>
+                    <div class="double-last">
+                        <div class="align-checkbox" style="margin-top: 5px">
+                            <input id="option-repair-icons" type="checkbox"/><label for="option-repair-icons">Repair icons when checking links with context menu</label>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
     </div>
     <div class="panel" id="impexp-panel">
         <p class="panel-title">Import/Export Scrapyard Settings</p>
@@ -163,8 +173,6 @@
             </fieldset>
         </form>
     </div>
-
-
 </div>
 </body>
 </html>

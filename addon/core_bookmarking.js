@@ -1,5 +1,4 @@
 import {formatBytes, getMimetypeExt} from "./utils.js";
-import {bookmarkManager} from "./backend.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "./storage.js";
 import {getActiveTab, showNotification} from "./utils_browser.js";
@@ -9,14 +8,19 @@ import {browseNode, captureTab, finalizeCapture, isSpecialPage, notifySpecialPag
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
+import {TODO} from "./bookmarks_todo.js";
+import {Group} from "./bookmarks_group.js";
+import {Shelf} from "./bookmarks_shelf.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {Node} from "./storage_entities.js";
 
-receive.createShelf = message => bookmarkManager.createGroup(null, message.name, NODE_TYPE_SHELF);
+receive.createShelf = message => Shelf.add(message.name);
 
-receive.createGroup = message => bookmarkManager.createGroup(message.parent, message.name);
+receive.createGroup = message => Group.add(message.parent, message.name);
 
-receive.renameGroup = message => bookmarkManager.renameGroup(message.id, message.name);
+receive.renameGroup = message => Group.rename(message.id, message.name);
 
-receive.addSeparator = message => bookmarkManager.addSeparator(message.parent_id);
+receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
 receive.createBookmark = message => {
     const options = message.data;
@@ -27,12 +31,12 @@ receive.createBookmark = message => {
     }
 
     const addBookmark = () =>
-        bookmarkManager.addBookmark(options, NODE_TYPE_BOOKMARK)
+        Bookmark.add(options, NODE_TYPE_BOOKMARK)
             .then(bookmark => {
                 send.bookmarkAdded({node: bookmark});
             });
 
-    bookmarkManager.setTentativeId(options);
+    Bookmark.setTentativeId(options);
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
@@ -45,10 +49,13 @@ receive.createBookmarkFromURL = async message => {
         name: "Untitled"
     };
 
+    if (!/^https?:\/\/.*/.exec(options.uri))
+        options.uri = "http://" + options.uri;
+
     send.startProcessingIndication();
 
     try {
-        const html = await fetchText(message.url);
+        const html = await fetchText(options.uri);
         let doc;
         if (html)
             doc = parseHtml(html);
@@ -58,21 +65,21 @@ receive.createBookmarkFromURL = async message => {
             if (title)
                 options.name = title;
 
-            const icon = await getFavicon(message.url, doc);
+            const icon = await getFavicon(options.uri, doc);
             if (icon)
                 options.icon = icon;
         }
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
     }
 
-    const bookmark = await bookmarkManager.addBookmark(options, NODE_TYPE_BOOKMARK);
+    const bookmark = await Bookmark.add(options, NODE_TYPE_BOOKMARK);
     await send.stopProcessingIndication();
     send.bookmarkCreated({node: bookmark});
 };
 
-receive.updateBookmark = message => bookmarkManager.updateBookmark(message.node);
+receive.updateBookmark = message => Bookmark.update(message.node);
 
 receive.createArchive = message => {
     const options = message.data;
@@ -83,7 +90,7 @@ receive.createArchive = message => {
     }
 
     let addBookmark = () =>
-        bookmarkManager.addBookmark(options, NODE_TYPE_ARCHIVE)
+        Bookmark.add(options, NODE_TYPE_ARCHIVE)
             .then(bookmark => {
                 getActiveTab().then(tab => {
                     bookmark.__tab_id = tab.id;
@@ -91,18 +98,18 @@ receive.createArchive = message => {
                 });
             });
 
-    bookmarkManager.setTentativeId(options);
+    Bookmark.setTentativeId(options);
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
 };
 
-receive.updateArchive = message => bookmarkManager.updateBlob(message.id, message.data);
+receive.updateArchive = message => Bookmark.updateArchive(message.id, message.data);
 
-receive.setTODOState = message => bookmarkManager.setTODOState(message.nodes);
+receive.setTODOState = message => TODO.setState(message.nodes);
 
 receive.getBookmarkInfo = async message => {
-    let node = await bookmarkManager.getNode(message.id);
+    let node = await Node.get(message.id);
     node.__formatted_size = node.size ? formatBytes(node.size) : null;
     node.__formatted_date = node.date_added
         ? node.date_added.toString().replace(/:[^:]*$/, "")
@@ -116,30 +123,30 @@ receive.getHideToolbarSetting = async message => {
 };
 
 receive.copyNodes = message => {
-    return bookmarkManager.copyNodes(message.node_ids, message.dest_id, message.move_last);
+    return Bookmark.copy(message.node_ids, message.dest_id, message.move_last);
 };
 
 receive.shareToCloud = message => {
-    return bookmarkManager.copyNodes(message.node_ids, CLOUD_SHELF_ID, true);
+    return Bookmark.copy(message.node_ids, CLOUD_SHELF_ID, true);
 }
 
 receive.moveNodes = message => {
-    return bookmarkManager.moveNodes(message.node_ids, message.dest_id, message.move_last);
+    return Bookmark.move(message.node_ids, message.dest_id, message.move_last);
 };
 
 receive.deleteNodes = message => {
-    return bookmarkManager.deleteNodes(message.node_ids);
+    return Bookmark.delete(message.node_ids);
 };
 
 receive.reorderNodes = message => {
-    return bookmarkManager.reorderNodes(message.positions);
+    return Bookmark.reorder(message.positions);
 };
 
 receive.storePageHtml = message => {
     if (message.bookmark.__page_packing)
         return;
 
-    bookmarkManager.storeBlob(message.bookmark.id, message.data, "text/html")
+    Bookmark.storeArchive(message.bookmark.id, message.data, "text/html")
         .then(() => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
@@ -156,9 +163,9 @@ receive.storePageHtml = message => {
         });
 };
 
-receive.addNotes = message => bookmarkManager.addNotes(message.parent_id, message.name);
+receive.addNotes = message => Bookmark.addNotes(message.parent_id, message.name);
 
-receive.storeNotes = message => bookmarkManager.storeNotes(message.options);
+receive.storeNotes = message => Bookmark.storeNotes(message.options, message.property_change);
 
 receive.uploadFiles = async message => {
     send.startProcessingIndication();
@@ -194,9 +201,9 @@ receive.uploadFiles = async message => {
                         }
                     }
 
-                    bookmark = await bookmarkManager.addBookmark(bookmark, NODE_TYPE_ARCHIVE);
+                    bookmark = await Bookmark.add(bookmark, NODE_TYPE_ARCHIVE);
                     if (content)
-                        await bookmarkManager.storeBlob(bookmark.id, content, contentType);
+                        await Bookmark.storeArchive(bookmark.id, content, contentType);
                     else
                         throw new Error();
                 } catch (e) {
@@ -210,7 +217,7 @@ receive.uploadFiles = async message => {
                 send.nodesUpdated();
         }
         else {
-            showNotification(`Helper application v0.4+ is required for this feature.`);
+            showNotification(`Scrapyard helper application v0.4+ is required for this feature.`);
         }
     }
     finally {

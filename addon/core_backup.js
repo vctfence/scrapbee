@@ -1,18 +1,12 @@
 import {send} from "./proxy.js";
 import {nativeBackend} from "./backend_native.js";
-import {
-    CLOUD_SHELF_ID,
-    DONE_SHELF_NAME,
-    EVERYTHING,
-    FIREFOX_BOOKMARK_MOBILE,
-    TODO_SHELF_NAME
-} from "./storage.js";
-import {bookmarkManager} from "./backend.js";
+import {isVirtualShelf} from "./storage.js";
 import {receive} from "./proxy.js"
 import UUID from "./lib/uuid.js";
-import {exportJSON, importJSON} from "./import_json.js";
 import {sleep} from "./utils.js";
-import {importTransaction} from "./import.js";
+import {Export, Import} from "./import.js";
+import {Query} from "./storage_query.js";
+import {LineStream} from "./utils_io.js";
 
 receive.listBackups = message => {
     let form = new FormData();
@@ -22,19 +16,17 @@ receive.listBackups = message => {
 };
 
 receive.backupShelf = async message => {
-    const ushelf = message.shelf.toUpperCase();
     let shelf, shelfName, shelfUUID;
 
-    if (ushelf === TODO_SHELF_NAME || ushelf === DONE_SHELF_NAME || ushelf === EVERYTHING.toUpperCase()) {
+    if (isVirtualShelf(message.shelf))
         shelf = shelfUUID = shelfName = message.shelf;
-    }
     else {
-        shelf = await bookmarkManager.queryShelf(message.shelf);
+        shelf = await Query.shelf(message.shelf);
         shelfUUID = shelf.uuid;
         shelfName = shelf.name;
     }
 
-    let nodes = await bookmarkManager.listExportedNodes(shelf);
+    let nodes = await Export.nodes(shelf);
 
     let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
 
@@ -60,7 +52,17 @@ receive.backupShelf = async message => {
     await sleep(50);
 
     try {
-        await exportJSON(file, nodes, shelfName, shelfUUID, false, message.comment, true);
+        const exporter = Export.create("json")
+            .setName(shelfName)
+            .setUUID(shelfUUID)
+            .setComment(message.comment)
+            .setReportProgress(true)
+            .setMuteSidebar(true)
+            .setObjects(nodes)
+            .setStream(file)
+            .build();
+
+        await exporter.export();
     }
     finally {
         port.postMessage({
@@ -101,8 +103,16 @@ receive.restoreShelf = async message => {
         };
 
         const shelfName = message.new_shelf? message.meta.alt_name: message.meta.name;
-        shelf = await importTransaction(shelfName, () => importJSON(shelfName, new Reader(), true));
+        const importer = Import.create("json")
+            .setName(shelfName)
+            .setReportProgress(true)
+            .setMuteSidebar(true)
+            .setStream(new LineStream(new Reader()))
+            .build();
+
+        shelf = await Import.transaction(shelfName, importer);
     } catch (e) {
+        console.log(e.stack);
         error = e;
     }
     finally {

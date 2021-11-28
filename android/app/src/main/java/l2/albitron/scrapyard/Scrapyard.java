@@ -4,6 +4,8 @@ import java.util.UUID;
 
 public interface Scrapyard {
 
+    long CLOUD_VERSION = 1;
+
     long NODE_TYPE_SHELF = 1;
     long NODE_TYPE_GROUP = 2;
     long NODE_TYPE_BOOKMARK = 3;
@@ -11,7 +13,8 @@ public interface Scrapyard {
     long NODE_TYPE_SEPARATOR = 5;
     long NODE_TYPE_NOTES = 6;
 
-    long CLOUD_SHELF_ID = -5;
+    String CLOUD_SHELF_UUID = "cloud";
+    String CLOUD_EXTERNAL_NAME = "cloud";
 
     long DEFAULT_POSITION = 2147483647L;
 

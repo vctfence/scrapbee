@@ -1,7 +1,8 @@
 import UUID from "./lib/uuid.js";
-import {bookmarkManager} from "./backend.js";
 import {nativeBackend} from "./backend_native.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
+import {Archive, Node} from "./storage_entities.js";
+import {Path} from "./path.js";
 
 class RDFDoc {
 
@@ -41,8 +42,10 @@ class RDFDoc {
     async write () {
         try {
             let content = this._formatXML(this.doc)
-            if (content)
-                await nativeBackend.post(`/rdf/root/save/${this.uuid}`, {rdf_content: content});
+            if (content) {
+                await nativeBackend.post(`/rdf/xml/save/${this.uuid}`,
+                    {rdf_content: content, rdf_file: this.path});
+            }
         }
         catch (e) {
             console.error(e);
@@ -50,14 +53,21 @@ class RDFDoc {
     }
 
     static async fromNode(node) {
-        const helperApp = nativeBackend.probe(true);
+        const helperApp = await nativeBackend.hasVersion("0.5");
         if (!helperApp)
             return null;
+
+        const rdf_path = `${(await Path.compute(node))[0].uri}/scrapbook.rdf`;
 
         let xml = null;
 
         try {
-            xml = await nativeBackend.fetchText(`/rdf/root/${node.uuid}`);
+            const resp = await nativeBackend.post(`/rdf/xml/${node.uuid}`, {rdf_file: rdf_path});
+
+            if (!resp.ok)
+                return null;
+
+            xml = await resp.text();
         }
         catch (e) {
             console.error(e);
@@ -69,6 +79,7 @@ class RDFDoc {
         let instance = new RDFDoc();
 
         instance.uuid = node.uuid;
+        instance.path = rdf_path;
 
         let doc = instance.doc = new DOMParser().parseFromString(xml, 'application/xml');
 
@@ -201,31 +212,46 @@ export class RDFBackend {
     constructor() {
     }
 
-    async createBookmark(node, parent) {
-        if (parent.external === RDF_EXTERNAL_NAME) {
-            node.external = RDF_EXTERNAL_NAME;
-            node.external_id = UUID.date();
-            await bookmarkManager.updateNode(node);
+    async createBookmarkFolder(node, parent) {
+        node.external = RDF_EXTERNAL_NAME;
+        node.external_id = UUID.date();
+        await Node.update(node);
 
-            const rdf_doc = await RDFDoc.fromNode(node);
-            if (rdf_doc) {
-                rdf_doc.addBookmarkNode(node, parent);
-                await rdf_doc.write();
-            }
+        const rdfDoc = await RDFDoc.fromNode(node);
+        if (rdfDoc) {
+            rdfDoc.createBookmarkFolder(node, parent);
+            await rdfDoc.write();
         }
     }
 
-    async storeBookmarkData(node_id, data) {
-        let node = await bookmarkManager.getNode(node_id);
+    async createBookmark(node, parent) {
+        node.external = RDF_EXTERNAL_NAME;
+        node.external_id = UUID.date();
+        await Node.update(node);
 
-        if (node.external === RDF_EXTERNAL_NAME) {
-            await bookmarkManager.deleteBlob(node_id);
+        const rdfDoc = await RDFDoc.fromNode(node);
+        if (rdfDoc) {
+            rdfDoc.addBookmarkNode(node, parent);
+            await rdfDoc.write();
+        }
+    }
 
-            try {
-                await nativeBackend.post(`/rdf/save_item/${node.uuid}`, {item_content: data});
-            }
-            catch (e) {
-                console.error(e);
+    async renameBookmark(node) {
+        const rdfDoc = await RDFDoc.fromNode(node);
+        if (rdfDoc) {
+            rdfDoc.renameBookmark(node)
+            await rdfDoc.write();
+        }
+    }
+
+    async moveBookmarks(dest, nodes) {
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
+
+        if (rdfNodes.length) {
+            const rdfDoc = await RDFDoc.fromNode(dest);
+            if (rdfDoc) {
+                rdfDoc.moveNodes(nodes, dest);
+                await rdfDoc.write();
             }
         }
     }
@@ -244,7 +270,8 @@ export class RDFBackend {
 
                     if (node.type === NODE_TYPE_ARCHIVE) {
                         try {
-                            await nativeBackend.fetch(`/rdf/delete_item/${node.uuid}`);
+                            await nativeBackend.post(`/rdf/delete_item/${node.uuid}`,
+                                {rdf_directory: await this.getRDFPageDir(node)});
                         } catch (e) {
                             console.error(e);
                         }
@@ -255,55 +282,11 @@ export class RDFBackend {
         }
     }
 
-    async renameBookmark(node) {
-        if (node.external === RDF_EXTERNAL_NAME) {
-            const rdfDoc = await RDFDoc.fromNode(node);
-            if (rdfDoc) {
-                rdfDoc.renameBookmark(node)
-                await rdfDoc.write();
-            }
-        }
-    }
-
     async updateBookmark(node) {
-        if (node.external === RDF_EXTERNAL_NAME) {
-            const rdfDoc = await RDFDoc.fromNode(node);
-            if (rdfDoc) {
-                rdfDoc.renameBookmark(node)
-                await rdfDoc.write();
-            }
-        }
-    }
-
-    async createBookmarkFolder(node, parent) {
-        if (typeof parent !== "object")
-            parent = await bookmarkManager.getNode(parent);
-
-        if (parent && parent.external === RDF_EXTERNAL_NAME) {
-            node.external = RDF_EXTERNAL_NAME;
-            node.external_id = UUID.date();
-            await bookmarkManager.updateNode(node);
-
-            const rdfDoc = await RDFDoc.fromNode(node);
-            if (rdfDoc) {
-                rdfDoc.createBookmarkFolder(node, parent);
-                await rdfDoc.write();
-            }
-        }
-    }
-
-    async moveBookmarks(nodes, dest_id) {
-        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
-
-        if (rdfNodes.length) {
-            let dest = await bookmarkManager.getNode(dest_id);
-            if (dest.external === RDF_EXTERNAL_NAME) {
-                const rdfDoc = await RDFDoc.fromNode(dest);
-                if (rdfDoc) {
-                    rdfDoc.moveNodes(nodes, dest);
-                    await rdfDoc.write();
-                }
-            }
+        const rdfDoc = await RDFDoc.fromNode(node);
+        if (rdfDoc) {
+            rdfDoc.renameBookmark(node)
+            await rdfDoc.write();
         }
     }
 
@@ -316,6 +299,29 @@ export class RDFBackend {
                 await rdfDoc.write();
             }
         }
+    }
+
+    async storeBookmarkData(node, data) {
+        await Archive.delete(node.id);
+
+        try {
+            await nativeBackend.post(`/rdf/save_item/${node.uuid}`,
+                {item_content: data,
+                rdf_directory: await this.getRDFPageDir(node)});
+        }
+        catch (e) {
+            console.error(e);
+        }
+    }
+
+    async getRDFPageDir(node) {
+        const path = await Path.compute(node);
+        return `${path[0].uri}/data/${node.external_id}/`;
+    }
+
+    async pushRDFPath(node) {
+        await nativeBackend.post(`/rdf/browse/push/${node.uuid}`,
+            {rdf_directory: await this.getRDFPageDir(node)});
     }
 }
 

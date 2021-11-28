@@ -1,12 +1,13 @@
-import {bookmarkManager} from "./backend.js";
-import {DEFAULT_POSITION, NODE_TYPE_BOOKMARK} from "./storage.js";
-import {prepareNewImport} from "./import.js";
+import {NODE_TYPE_BOOKMARK} from "./storage.js";
+import {Import} from "./import.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {StreamImporterBuilder} from "./import_drivers.js";
 
-export async function importHtml(shelf, text) {
-    await prepareNewImport(shelf);
+async function importHtml(shelf, html) {
+    await Import.prepare(shelf);
 
-    let html = jQuery.parseHTML(text);
-    let root = html.find(e => e.localName === "dl");
+    let doc = jQuery.parseHTML(html);
+    let root = doc.find(e => e.localName === "dl");
     let path = [shelf];
 
     function peekType(node) {
@@ -29,15 +30,14 @@ export async function importHtml(shelf, text) {
                     path.pop();
                 }
                 else if (type === "link") {
-                    node = await bookmarkManager.importBookmark({
+                    node = await Bookmark.import({
                         uri: node.href,
                         name: node.textContent,
                         type: NODE_TYPE_BOOKMARK,
-                        pos: DEFAULT_POSITION,
                         path: path.join("/")
                     });
 
-                    await bookmarkManager.storeIconFromURI(node)
+                    await Bookmark.storeIconFromURI(node)
                 }
             }
             else if (child.localName === "dl") {
@@ -47,4 +47,14 @@ export async function importHtml(shelf, text) {
     }
 
     await traverseHtml(root, path);
+}
+
+export class NetscapeImporterBuilder extends StreamImporterBuilder {
+    _createImporter(options) {
+        return {
+            import() {
+                return importHtml(options.name, options.stream);
+            }
+        };
+    }
 }

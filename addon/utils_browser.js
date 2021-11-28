@@ -2,8 +2,9 @@ export async function scriptsAllowed(tabId, frameId = 0) {
     try {
         await browser.tabs.executeScript(tabId, {
             frameId: frameId,
-            runAt: 'document_start',
-            file: '/true.js'
+            runAt: "document_start",
+            //file: "/true.js"
+            code: "true"
         });
         return true;
     } catch (e) {}
@@ -14,10 +15,10 @@ export function showNotification(args) {
         args = {message: arguments[0]}
 
     return browser.notifications.create(`sbi-notification-${args.type}`, {
-        type: args.type ? args.type : 'basic',
-        title: args.title ? args.title : 'Scrapyard',
+        type: args.type ? args.type : "basic",
+        title: args.title ? args.title : "Scrapyard",
         message: args.message,
-        iconUrl: '/icons/scrapyard.svg'
+        iconUrl: "/icons/scrapyard.svg"
     });
 }
 
@@ -45,3 +46,9 @@ export async function openContainerTab(url, container) {
     }
 }
 
+export const CONTEXT_BACKGROUND = 0;
+export const CONTEXT_FOREGROUND = 1;
+
+export function getContextType() {
+    return window.location.pathname === "/background.html"? CONTEXT_BACKGROUND: CONTEXT_FOREGROUND;
+}

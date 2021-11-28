@@ -1,4 +1,4 @@
-package l2.albitron.scrapyard.cloud;
+package l2.albitron.scrapyard.cloud.json;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "id",
     "name",
     "uuid",
     "uri",
@@ -22,24 +21,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "parent_id",
     "type",
     "tags",
-    "tag_list",
     "date_added",
+    "date_modified",
+    "content_modified",
     "todo_state",
     "details",
     "todo_date",
     "has_notes",
-    "date_modified",
-    "notes_format",
+    "has_comments",
     "content_type",
     "byte_length",
     "external",
-    "external_id",
-    "cloud",
-    "date",
-    "next_id"
+    "external_id"
 })
-public class BookmarkRecord {
-
+public class Node extends JSONEntity {
     @JsonProperty("name")
     public String name;
     @JsonProperty("uri")
@@ -49,15 +44,17 @@ public class BookmarkRecord {
     @JsonProperty("icon")
     public String icon;
     @JsonProperty("parent_id")
-    public Long parentId;
+    public String parentId;
     @JsonProperty("type")
     public Long type;
-    @JsonProperty("tag_list")
-    public List<String> tagList = null;
     @JsonProperty("pos")
     public Long pos;
     @JsonProperty("date_added")
     public Long dateAdded;
+    @JsonProperty("date_modified")
+    public Long dateModified;
+    @JsonProperty("content_modified")
+    public Long contentModified;
     @JsonProperty("uuid")
     public String uuid;
     @JsonProperty("todo_state")
@@ -68,38 +65,13 @@ public class BookmarkRecord {
     public String todoDate;
     @JsonProperty("has_notes")
     public Boolean hasNotes;
-    @JsonProperty("date_modified")
-    public Long dateModified;
-    @JsonProperty("id")
-    public Long id;
-    @JsonProperty("notes_format")
-    public String notesFormat;
+    @JsonProperty("has_comments")
+    public Boolean hasComments;
     @JsonProperty("content_type")
     public String contentType;
-    @JsonProperty("byte_length")
-    public Long byteLength;
     @JsonProperty("external")
     public String external;
     @JsonProperty("external_id")
     public String externalId;
-    @JsonProperty("cloud")
-    public String cloud;
-    @JsonProperty("date")
-    public Long date;
-    @JsonProperty("next_id")
-    public Long nextId;
-
-    @JsonIgnore
-    public Map<String, Object> additionalProperties = new HashMap<String, Object>();
-
-    @JsonAnyGetter
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
-    }
-
-    @JsonAnySetter
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
-    }
 }
 

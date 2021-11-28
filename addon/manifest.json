@@ -1,8 +1,8 @@
 {
-    "version": "0.14.6",
+    "version": "0.15",
     "applications": {
         "gecko": {
-            "id": "scrapyard-we@firefox",
+            "id": "scrapyard@firefox",
             "strict_min_version": "78.0"
         }
     },
@@ -24,6 +24,7 @@
         "tabs",
         "activeTab",
         "tabHide",
+        "alarms",
         "bookmarks",
         "menus",
         "contextMenus",

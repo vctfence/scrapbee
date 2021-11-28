@@ -24,7 +24,8 @@
         <activity
             android:name=".CloudBookmarkActivity"
             android:icon="@drawable/ic_scrapyard"
-            android:theme="@android:style/Theme.NoDisplay">
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true">
             <intent-filter android:label="@string/bookmarkToScrapyard">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -35,7 +36,8 @@
         <activity android:name=".TODODialogActivity"
             android:icon="@drawable/ic_scrapyard_todo"
             android:excludeFromRecents="true"
-            android:theme="@style/DialogTheme">
+            android:theme="@style/DialogTheme"
+            android:exported="true">
             <intent-filter android:label="@string/todoToScrapyard">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -46,26 +48,27 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:configChanges="orientation|keyboard"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:exported="true">
             <intent-filter>
                 <data android:scheme="db-0y7co3j1k4oc7up" />
-
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
-
+    <queries>
+        <package android:name="com.dropbox.android" />
+    </queries>
 </manifest>

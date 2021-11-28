@@ -4,12 +4,14 @@ package l2.albitron.scrapyard;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -17,27 +19,29 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
-import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
+import android.webkit.JsResult;
 import android.webkit.MimeTypeMap;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import l2.albitron.scrapyard.cloud.CloudNotAuthorizedException;
-import l2.albitron.scrapyard.cloud.CloudOperationsService;
+import l2.albitron.scrapyard.cloud.CloudDB;
+import l2.albitron.scrapyard.cloud.CloudProvider;
+import l2.albitron.scrapyard.cloud.exceptions.CloudNotAuthorizedException;
 import l2.albitron.scrapyard.cloud.DropboxProvider;
 
 public class BrowseBookmarksFragment extends Fragment {
@@ -63,15 +67,12 @@ public class BrowseBookmarksFragment extends Fragment {
             final String[] json = new String[]{null};
 
             try {
-                DropboxProvider dropbox =
-                    new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
-                json[0] = dropbox.getDBRaw();
+                CloudProvider provider = new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
+                json[0] = provider.readCloudFile(CloudDB.CLOUD_DB_INDEX);
             } catch (CloudNotAuthorizedException e) {
                 handler.post(() -> {
                     Context context = getActivity().getApplicationContext();
-                    Toast.makeText(context,
-                        getString(R.string.needToConfigureCloudProvider),
-                        Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, getString(R.string.needToConfigureCloudProvider), Toast.LENGTH_LONG).show();
 
                     Intent activityIntent = new Intent(context, MainActivity.class);
                     activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -83,7 +84,7 @@ public class BrowseBookmarksFragment extends Fragment {
 
             handler.post(() -> {
                 if (json[0] != null) {
-                    String script = "injectCloudBookmarks(" + json[0] + ")";
+                    String script = "injectCloudBookmarks(\"" + StringEscapeUtils.escapeJson(json[0]) + "\")";
                     browser.evaluateJavascript(script, null);
                 }
             });
@@ -106,7 +107,6 @@ public class BrowseBookmarksFragment extends Fragment {
         browser.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         browser.loadUrl(url);
 
-
         browser.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -122,11 +122,32 @@ public class BrowseBookmarksFragment extends Fragment {
                     return false;
                 }
             }
+        });
 
+        browser.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {
+                new AlertDialog.Builder(view.getContext())
+                    .setTitle(R.string.warning)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                result.confirm();
+                            }
+                        })
+                    .setNegativeButton(android.R.string.cancel,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                result.cancel();
+                            }
+                        }).create().show();
+                return true;
+            }
         });
 
         class WebAppInterface {
-            Context context;
+            final Context context;
 
             WebAppInterface(Context c) {
                 context = c;
@@ -212,13 +233,12 @@ public class BrowseBookmarksFragment extends Fragment {
                 browser.post(() -> browser.evaluateJavascript("showAnimation()", null));
 
                 executor.execute(() -> {
-                    final byte[][] assetBytes = new byte[][]{null};
+                    final byte[][] asset = new byte[][] {null};
 
                     try {
-                        DropboxProvider dropbox =
-                            new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
-                        assetBytes[0] = dropbox.getAssetBytes(DropboxProvider.DROPBOX_APP_PATH
-                            + "/" + uuid + ".data");
+                        CloudProvider provider = new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
+                        CloudDB db = provider.getEmptyDB();
+                        asset[0] = db.getArchiveBytes(uuid);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -226,8 +246,8 @@ public class BrowseBookmarksFragment extends Fragment {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            if (assetBytes[0] != null)
-                                writeToDisk(assetBytes[0], name, type);
+                            if (asset[0] != null)
+                                writeToDisk(asset[0], name, type);
                             browser.post(() -> browser.evaluateJavascript("hideAnimation()", null));
                         }
                     });
@@ -238,6 +258,32 @@ public class BrowseBookmarksFragment extends Fragment {
             public void refreshTree() {
                 browser.post(() -> browser.evaluateJavascript("showAnimation()", null));
                 browser.post(() -> loadBookmarks(browser));
+            }
+
+            @JavascriptInterface
+            public void deleteNode(String uuid) {
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                Handler handler = new Handler(Looper.getMainLooper());
+
+                browser.post(() -> browser.evaluateJavascript("showAnimation()", null));
+
+                executor.execute(() -> {
+                    try {
+                        CloudProvider provider = new DropboxProvider(BrowseBookmarksFragment.this.getActivity());
+                        CloudDB db = provider.getDB();
+                        db.deleteNode(uuid);
+                        provider.persistDB(db);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            browser.post(() -> browser.evaluateJavascript("hideAnimation()", null));
+                        }
+                    });
+                });
             }
         }
 

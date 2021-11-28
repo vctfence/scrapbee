@@ -1,11 +1,12 @@
 import {settings} from "./settings.js";
 import {openContainerTab, openPage, scriptsAllowed, showNotification, updateTab} from "./utils_browser.js";
 import {capitalize, getMimetypeExt} from "./utils.js";
-import {bookmarkManager} from "./backend.js";
 import {send} from "./proxy.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME, NODE_TYPE_GROUP} from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
 import {fetchWithTimeout} from "./utils_io.js";
+import {Archive} from "./storage_entities.js";
+import {rdfBackend} from "./backend_rdf.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -42,10 +43,9 @@ export async function captureTab(tab, bookmark) {
     }
 }
 
-async function captureHTMLTab(tab, bookmark) {
-    // Acquire selection html, if presents
+async function extractSelection(tab, bookmark) {
+    const frames = await browser.webNavigation.getAllFrames({tabId: tab.id});
     let selection;
-    let frames = await browser.webNavigation.getAllFrames({tabId: tab.id});
 
     for (let frame of frames) {
         try {
@@ -60,16 +60,23 @@ async function captureHTMLTab(tab, bookmark) {
         }
     }
 
-    let response;
-    let initiateCapture = () => browser.tabs.sendMessage(tab.id, {
-        type: "performAction",
-        menuaction: 1,
-        saveditems: 2,
-        selection: selection,
-        bookmark: bookmark
-    });
+    return selection;
+}
 
-    try { response = await initiateCapture(); } catch (e) {}
+async function captureHTMLTab(tab, bookmark) {
+
+    async function savePageCapture() {
+        return browser.tabs.sendMessage(tab.id, {
+            type: "performAction",
+            menuaction: 1,
+            saveditems: 2,
+            selection: await extractSelection(tab, bookmark),
+            bookmark: bookmark
+        });
+    }
+
+    let response;
+    try { response = await savePageCapture(); } catch (e) {}
 
     if (typeof response == "undefined") { /* no response received - content script not loaded in active tab */
         let onScriptInitialized = async (message, sender) => {
@@ -77,7 +84,7 @@ async function captureHTMLTab(tab, bookmark) {
                 browser.runtime.onMessage.removeListener(onScriptInitialized);
 
                 try {
-                    response = await initiateCapture();
+                    response = await savePageCapture();
                 } catch (e) {
                     console.error(e)
                 }
@@ -117,7 +124,7 @@ async function captureNonHTMLTab(tab, bookmark) {
 
             bookmark.content_type = contentType;
 
-            await bookmarkManager.storeBlob(bookmark.id, await response.arrayBuffer(), contentType);
+            await Bookmark.storeArchive(bookmark.id, await response.arrayBuffer(), contentType);
         }
     }
     catch (e) {
@@ -221,6 +228,74 @@ export async function packUrlExt(url, hide_tab) {
     return packPage(url, {}, b => b.__page_packing = true, resolver, hide_tab);
 }
 
+function showEditToolbar(archiveTab) {
+    // Tab may be automatically reloaded if charset encoding is not found in first 1024 bytes
+    // A twisted logic is necessary to load the editor toolbar in this case
+    // This may happen if a large favicon is the first tag under the <head>
+    // Corrected version of page capture solves this problem by forcing encoding meta to be the first tag
+    // But for existing pages a workaround is necessary
+
+    let configureTab = async tab => {
+        browser.tabs.onUpdated.removeListener(listener)
+
+        await browser.tabs.insertCSS(tab.id, {file: "ui/edit_toolbar.css"});
+        await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"});
+        await browser.tabs.executeScript(tab.id, {file: "ui/edit_toolbar.js"});
+    };
+
+    let completed = false;
+    let retryTimeout;
+    let retries = 0;
+    let lastState;
+    let urlChanges = 0;
+
+    let checkStatus = tab => {
+        if (lastState === "complete") { // OK, the page is loaded, show toolbar
+            configureTab(tab);
+        }
+        else if (lastState !== "complete" && retries < 3) { // Wait 3 more seconds
+            retries += 1;
+            retryTimeout = setTimeout(() => checkStatus(tab), 1000);
+        }
+        else {
+            configureTab(tab); // Try to show the toolbar and remove the listener
+        }
+    };
+
+    var listener = async (id, changed, tab) => {
+        if (tab.id === archiveTab.id) {
+            // Register first completed state, "loading" states will follow if the tab is reloaded
+            if (!completed)
+                completed = changed.status === "complete";
+
+            // Register URL change events, there should be more than one if the tab is reloaded
+            if (changed.url)
+                urlChanges += 1;
+
+            // This should work for the most of properly captured well-formed pages
+            if (changed.status === "complete" && tab.title !== tab.url) {
+                clearTimeout(retryTimeout);
+                configureTab(tab);
+            }
+            // This should work for reloaded pages without <title> tag
+            else if (changed.status === "complete" && urlChanges > 1) {
+                clearTimeout(retryTimeout);
+                configureTab(tab);
+            }
+            // This should work for non-reloaded pages without <title> tag
+            else if (completed) {
+                // Continue to register states
+                lastState = changed.status;
+                clearTimeout(retryTimeout);
+                // When changes halted more than for one second, check if the last state is "complete"
+                retryTimeout = setTimeout(() => checkStatus(tab), 1000);
+            }
+        }
+    };
+
+    browser.tabs.onUpdated.addListener(listener);
+}
+
 export async function browseNode(node, external_tab, preserve_history, container) {
 
     const openUrl = (url, newtabf = openPage, container) => {
@@ -252,28 +327,44 @@ export async function browseNode(node, external_tab, preserve_history, container
                 return;
 
             if (node.external === RDF_EXTERNAL_NAME) {
-                let helperApp = await nativeBackend.probe(true);
+                let helperApp = await nativeBackend.hasVersion("0.5");
 
                 if (helperApp) {
+                    await rdfBackend.pushRDFPath(node);
                     const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
                     return openUrl(url);
                 }
             }
 
-            return bookmarkManager.fetchBlob(node.id).then(async blob => {
+            return Archive.get(node.id).then(async blob => {
                 if (blob) {
                     let objectURL = null;
                     let helperApp = false;
 
                     if (settings.browse_with_helper()) {
-                        helperApp = await nativeBackend.probe(true);
-                        if (helperApp)
+                        helperApp = await nativeBackend.hasVersion("0.5");
+                        if (helperApp) {
+                            const blob = await Archive.get(node.id);
+                            const data = await Archive.reify(blob, true);
+
+                            const fields = {
+                                blob: data,
+                                content_type: blob.type || "text/html",
+                            };
+
+                            if (blob.byte_length) {
+                                fields.blob = btoa(fields.blob);
+                                fields.byte_length = blob.byte_length;
+                            }
+
+                            await nativeBackend.post(`/browse/upload/${node.uuid}`, fields);
                             objectURL = nativeBackend.url(`/browse/${node.uuid}`);
+                        }
                     }
 
                     if (!objectURL) {
                         if (blob.data) { // legacy string content
-                            let object = new Blob([await bookmarkManager.reifyBlob(blob)],
+                            let object = new Blob([await Archive.reify(blob)],
                                 {type: blob.type? blob.type: "text/html"});
                             objectURL = URL.createObjectURL(object);
                         }
@@ -281,80 +372,12 @@ export async function browseNode(node, external_tab, preserve_history, container
                             objectURL = URL.createObjectURL(blob.object);
                     }
 
-                    let archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
+                    const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
+                    const archiveTab = await openUrl(archiveURL);
+                    showEditToolbar(archiveTab);
 
-                    return openUrl(archiveURL)
-                        .then(archive_tab => {
-
-                            // Tab may be automatically reloaded if charset encoding is not found in first 1024 bytes
-                            // A twisted logic is necessary to load the editor toolbar in this case
-                            // This may happen if a large favicon is the first tag under the <head>
-                            // Corrected version of page capture solves this problem by forcing encoding meta to be the first tag
-                            // But for existing pages a workaround is necessary
-
-                            let configureTab = async tab => {
-                                browser.tabs.onUpdated.removeListener(listener)
-
-                                await browser.tabs.insertCSS(tab.id, {file: "ui/edit_toolbar.css"});
-                                await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"});
-                                await browser.tabs.executeScript(tab.id, {file: "ui/edit_toolbar.js"});
-
-                                if (!helperApp)
-                                    URL.revokeObjectURL(objectURL);
-                            };
-
-                            let completed = false;
-                            let retryTimeout;
-                            let retries = 0;
-                            let lastState;
-                            let urlChanges = 0;
-
-                            let checkStatus = tab => {
-                                if (lastState === "complete") { // OK, the page is loaded, show toolbar
-                                    configureTab(tab);
-                                }
-                                else if (lastState !== "complete" && retries < 3) { // Wait 3 more seconds
-                                    retries += 1;
-                                    retryTimeout = setTimeout(() => checkStatus(tab), 1000);
-                                }
-                                else {
-                                    configureTab(tab); // Try to show the toolbar and remove the listener
-                                }
-                            };
-
-                            var listener = async (id, changed, tab) => {
-                                if (tab.id === archive_tab.id) {
-                                    // Register first completed state, "loading" states will follow if the tab is reloaded
-                                    if (!completed)
-                                        completed = changed.status === "complete";
-
-                                    // Register URL change events, there should be more than one if the tab is reloaded
-                                    if (changed.url)
-                                        urlChanges += 1;
-
-                                    // This should work for the most of properly captured well-formed pages
-                                    if (changed.status === "complete" && tab.title !== tab.url) {
-                                        clearTimeout(retryTimeout);
-                                        configureTab(tab);
-                                    }
-                                    // This should work for reloaded pages without <title> tag
-                                    else if (changed.status === "complete" && urlChanges > 1) {
-                                        clearTimeout(retryTimeout);
-                                        configureTab(tab);
-                                    }
-                                    // This should work for non-reloaded pages without <title> tag
-                                    else if (completed) {
-                                        // Continue to register states
-                                        lastState = changed.status;
-                                        clearTimeout(retryTimeout);
-                                        // When changes halted more than for one second, check if the last state is "complete"
-                                        retryTimeout = setTimeout(() => checkStatus(tab), 1000);
-                                    }
-                                }
-                            };
-
-                            browser.tabs.onUpdated.addListener(listener);
-                        });
+                    if (!helperApp)
+                        URL.revokeObjectURL(objectURL);
                 }
                 else {
                     showNotification({message: "No data is stored."});
@@ -363,5 +386,9 @@ export async function browseNode(node, external_tab, preserve_history, container
 
         case NODE_TYPE_NOTES:
             return openUrl("ui/notes.html#" + node.uuid + ":" + node.id);
+
+        case NODE_TYPE_GROUP:
+            if (node.__filtering)
+                send.selectNode({node, open: true, forceScroll: true});
     }
 }

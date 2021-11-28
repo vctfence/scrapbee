@@ -1,11 +1,13 @@
 import {nativeBackend} from "./backend_native.js";
 import {getFaviconFromTab} from "./favicon.js";
-import {bookmarkManager} from "./backend.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {partition} from "./utils.js";
 import {send} from "./proxy.js";
-import {prepareNewImport} from "./import.js";
 import {packPage} from "./bookmarking.js";
+import {Group} from "./bookmarks_group.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {Node} from "./storage_entities.js";
+import {StreamImporterBuilder} from "./import_drivers.js";
 
 function traverseRDFTree(doc, visitor) {
     const namespaces = new Map(Object.values(doc.documentElement.attributes)
@@ -31,6 +33,7 @@ function traverseRDFTree(doc, visitor) {
                 node.__sb_comment = node.getAttributeNS(NS_SCRAPBOOK, "comment");
                 node.__sb_icon = node.getAttributeNS(NS_SCRAPBOOK, "icon");
             }
+
             result.set(node.getAttributeNS(NS_RDF, "about"), node);
         }
 
@@ -76,7 +79,7 @@ async function importRDFArchive(node, scrapbook_id, _) {
 
         if (icon) {
             bookmark.icon = icon;
-            await bookmarkManager.storeIcon(bookmark);
+            await Bookmark.storeIcon(bookmark);
         }
 
         node.__mute_ui = true;
@@ -85,8 +88,8 @@ async function importRDFArchive(node, scrapbook_id, _) {
     return packPage(index, node, initializer, _ => null, false);
 }
 
-export async function importRDF(shelf, path, threads, quick) {
-    await prepareNewImport(shelf);
+async function importRDF(shelf, path, threads, quick) {
+    //await Import.prepare(shelf);
 
     path = path.replace(/\\/g, "/");
 
@@ -117,12 +120,12 @@ export async function importRDF(shelf, path, threads, quick) {
     let id_map = new Map();
     let reverse_id_map = new Map();
 
-    let shelf_node = await bookmarkManager.getGroupByPath(shelf);
+    let shelf_node = await Group.getOrCreateByPath(shelf);
     if (shelf_node) {
         if (quick) {
             shelf_node.external = RDF_EXTERNAL_NAME;
             shelf_node.uri = rdf_directory;
-            await bookmarkManager.updateNode(shelf_node);
+            await Node.update(shelf_node);
         }
         id_map.set(null, shelf_node.id);
     }
@@ -156,7 +159,7 @@ export async function importRDF(shelf, path, threads, quick) {
             data.external_id = node.__sb_id;
         }
 
-        let bookmark = await bookmarkManager.importBookmark(data);
+        let bookmark = await Bookmark.import(data);
 
         id_map.set(node.__sb_id, bookmark.id);
 
@@ -208,7 +211,6 @@ export async function importRDF(shelf, path, threads, quick) {
         //let startTime = new Date().getTime() / 1000;
 
         let id = 0;
-        console.log(parts.length, parts)
         await Promise.all(parts.map(part => importf(part, id++)));
         send.rdfImportProgress({progress: 0});
 
@@ -230,7 +232,7 @@ export async function importRDF(shelf, path, threads, quick) {
         if (node.icon && node.icon.startsWith("resource://scrapbook/")) {
             node.icon = node.icon.replace("resource://scrapbook/", "");
             node.icon = nativeBackend.url(`/rdf/import/files/${node.icon}`);
-            await bookmarkManager.storeIcon(node);
+            await Bookmark.storeIcon(node);
         }
     }
 
@@ -238,4 +240,22 @@ export async function importRDF(shelf, path, threads, quick) {
         send.nodesReady({shelf: shelf_node})
 
     browser.runtime.onMessage.removeListener(cancelListener);
+}
+
+export class RDFImporterBuilder extends StreamImporterBuilder {
+    setNumberOfThreads(threads) {
+        this._importOptions.threads = threads;
+    }
+
+    setQuickImport(quick) {
+        this._importOptions.quick = quick;
+    }
+
+    _createImporter(options) {
+        return {
+            import() {
+                return importRDF(options.name, options.stream, options.threads, options.quick);
+            }
+        };
+    }
 }

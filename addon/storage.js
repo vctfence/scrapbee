@@ -1,3 +1,5 @@
+export const STORAGE_FORMAT = "Scrapyard";
+
 export const NODE_TYPE_SHELF = 1;
 export const NODE_TYPE_GROUP = 2;
 export const NODE_TYPE_BOOKMARK = 3;
@@ -66,13 +68,17 @@ export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
 export const FIREFOX_SPECIAL_FOLDERS = [FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_TOOLBAR];
 
+export const BROWSER_EXTERNAL_NAME = FIREFOX_SHELF_NAME;
+
 export const CLOUD_SHELF_NAME = "cloud";
 export const CLOUD_SHELF_UUID = CLOUD_SHELF_NAME;
-export const CLOUD_EXTERNAL_NAME = "cloud";
+export const CLOUD_EXTERNAL_NAME = CLOUD_SHELF_NAME;
 
 export const RDF_EXTERNAL_NAME = "rdf";
 
-export const SPECIAL_UUIDS = [FIREFOX_SHELF_UUID, CLOUD_EXTERNAL_NAME];
+export const NON_IMPORTABLE_SHELVES = [FIREFOX_SHELF_UUID, CLOUD_SHELF_UUID];
+
+export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME];
 
 export const DEFAULT_POSITION = 2147483647;
 
@@ -93,6 +99,7 @@ export const NODE_PROPERTIES =
      "todo_state",
      "date_added",
      "date_modified",
+     "content_modified",
      "stored_icon",
      "has_notes",
      "has_comments",
@@ -112,7 +119,14 @@ export function isEndpoint(node) {
     return node && ENDPOINT_TYPES.some(t => t == node.type);
 }
 
-export function isSpecialShelf(name) {
+export function isVirtualShelf(name) {
+    name = name?.toLocaleUpperCase();
+    return name === EVERYTHING.toLocaleUpperCase()
+        || name === TODO_SHELF_NAME.toLocaleUpperCase()
+        || name === DONE_SHELF_NAME.toLocaleUpperCase();
+}
+
+export function isBuiltInShelf(name) {
     name = name?.toLocaleUpperCase();
     return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
         || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
@@ -122,14 +136,26 @@ export function isSpecialShelf(name) {
         || name === DONE_SHELF_NAME.toLocaleUpperCase();
 }
 
-export function sanitizeNode(node) {
-    node = Object.assign({}, node);
-
-    for (let key of Object.keys(node)) {
-        if (!NODE_PROPERTIES.some(k => k === key))
-            delete node[key];
-    }
-
-    return node;
+export function isNodeHasContents(node) {
+    return node.type === NODE_TYPE_ARCHIVE || node.stored_icon || node.has_notes || node.has_comments;
 }
 
+export function byPosition(a, b) {
+    let a_pos = a.pos === undefined? DEFAULT_POSITION: a.pos;
+    let b_pos = b.pos === undefined? DEFAULT_POSITION: b.pos;
+    return a_pos - b_pos;
+}
+
+export function byDateDesc(a, b) {
+    if (a.date_added && b.date_added)
+        return b.date_added - a.date_added;
+
+    return 0;
+}
+
+export function byDateAsc(a, b) {
+    if (a.date_added && b.date_added)
+        return a.date_added - b.date_added;
+
+    return 0;
+}

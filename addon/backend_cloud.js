@@ -1,8 +1,6 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {dropboxBackend} from "./backend_dropbox.js";
-import {bookmarkManager} from "./backend.js";
-
 import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
@@ -10,8 +8,15 @@ import {
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
     isContainer, CLOUD_SHELF_UUID
 } from "./storage.js";
-import {notes2html} from "./notes_render.js";
-import {showNotification} from "./utils_browser.js";
+import {CONTEXT_BACKGROUND, getContextType, showNotification} from "./utils_browser.js";
+import {ExternalNode} from "./storage_node_external.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {Archive, Node} from "./storage_entities.js";
+import {MarshallerCloud, UnmarshallerCloud} from "./marshaller_cloud.js";
+import {ProgressCounter} from "./utils.js";
+
+const CLOUD_SYNC_ALARM_NAME = "cloud-sync-alarm";
+const CLOUD_SYNC_ALARM_PERIOD = 15;
 
 export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 
@@ -22,6 +27,8 @@ export class CloudBackend {
     initialize() {
         this._provider = dropboxBackend;
         this._provider.initialize();
+        this._marshaller = new MarshallerCloud();
+        this._unmarshaller = new UnmarshallerCloud();
     }
 
     async reset() {
@@ -37,29 +44,7 @@ export class CloudBackend {
                 external: CLOUD_EXTERNAL_NAME};
     }
 
-    async getTree(root) {
-        let db = await this._provider.getDB();
-
-        if (!db)
-            return null;
-
-        let list = await db.queryNodes();
-        root = root? root: this.newCloudRootNode();
-
-        let traverse = (root) => {
-            root.children = list.filter(n => n.parent_id === root.id);
-
-            for (let c of root.children)
-                if (c.type === NODE_TYPE_GROUP)
-                    traverse(c);
-
-            return root;
-        };
-
-        return traverse(root, list);
-    }
-
-    getLastModified() {
+    getRemoteLastModified() {
         return this._provider.getLastModified();
     }
 
@@ -94,313 +79,74 @@ export class CloudBackend {
 
         if (node.type === NODE_TYPE_ARCHIVE)
             await db.deleteData(node);
-
-        // if (node.stored_icon)
-        //     await db.deleteIcon(node);
-    }
-
-    async deleteBookmarks(nodes) {
-        if (!settings.cloud_enabled())
-            return;
-
-        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
-
-        if (cloudNodes.length)
-            return this.withCloudDB(async db => {
-                for (let node of cloudNodes)
-                    await this.cleanBookmarkAssets(db, node);
-
-                return db.deleteNodes(cloudNodes);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
-    }
-
-    async renameBookmark(node) {
-        if (settings.cloud_enabled() && node.external === CLOUD_EXTERNAL_NAME) {
-            return this.withCloudDB(async db => {
-                let cloudNode = await db.getNode(node.uuid, true);
-                cloudNode.name = node.name;
-                await db.updateNode(cloudNode);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
-        }
-    }
-
-    async updateBookmark(node) {
-        if (settings.cloud_enabled() && node.external === CLOUD_EXTERNAL_NAME) {
-            return this.withCloudDB(async db => {
-                return db.updateNode(node);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
-        }
-    }
-
-    async updateBookmarks(nodes) {
-        if (!settings.cloud_enabled())
-            return;
-
-        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
-
-        if (cloudNodes.length) {
-            return this.withCloudDB(async db => {
-                for (let node of cloudNodes) {
-                    await db.updateNode(node);
-                }
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
-        }
-    }
-
-    async _createBookmarkInternal(db, node, parentId) {
-        let parent = await db.getNode(parentId, true);
-        let cloudNode = Object.assign({}, node);
-
-        cloudNode.parent_id = parent? parent.id: CLOUD_SHELF_ID;
-
-        if (node.stored_icon) {
-            cloudNode.icon_data = await bookmarkManager.fetchIcon(node.id);
-            //await db.storeIcon(bookmark, icon);
-        }
-
-        await db.addNode(cloudNode).then(async bookmark => {
-            node.external = CLOUD_EXTERNAL_NAME;
-            node.external_id = bookmark.uuid;
-            node.uuid = bookmark.uuid;
-            await bookmarkManager.updateNode(node);
-
-            try {
-                if (node.has_notes) {
-                    let notes = await bookmarkManager.fetchNotes(node.id);
-                    if (notes)
-                        await this._storeNotesInternal(db, bookmark, notes);
-                }
-
-                if (node.has_comments) {
-                    let comments = await bookmarkManager.fetchComments(node.id);
-                    if (comments)
-                        await this._storeCommentsInternal(bookmark, comments);
-                }
-
-                if (node.type === NODE_TYPE_ARCHIVE) {
-                    let blob = await bookmarkManager.fetchBlob(node.id);
-                    if (blob) {
-                        const data = await bookmarkManager.reifyBlob(blob);
-                        await this._storeDataInternal(db, bookmark, data, blob.type);
-                    }
-                }
-            }
-            catch (e) {
-                console.error(e);
-            }
-        });
-    }
-
-    async _storeNotesInternal(db, node, options) {
-        let cloudNode = await db.getNode(node.uuid, true);
-
-        if (options.hasOwnProperty("content"))
-            cloudNode.has_notes = !!options.content;
-        if (options.hasOwnProperty("format"))
-            cloudNode.notes_format = options.format;
-        if (options.hasOwnProperty("align"))
-            cloudNode.notes_align = options.align;
-        if (options.hasOwnProperty("width"))
-            cloudNode.notes_width = options.width;
-
-        cloudNode = await db.updateNode(cloudNode);
-
-        if (options.hasOwnProperty("content")) {
-            let isHtml = options.format === "html" || options.format === "delta";
-
-            let view = `<html><head></head><body class="${isHtml ? "format-html" : ""}">${notes2html(options)}</body></html>`;
-
-            await db.storeView(cloudNode, view);
-
-            return db.storeNotes(cloudNode, options.content);
-        }
-    }
-
-    async _storeCommentsInternal(node, comments) {
-        let db = await this._provider.getDB(true);
-        return db.storeComments(node, comments);
-    }
-
-    async storeBookmarkNotes(options) {
-        if (!settings.cloud_enabled())
-            return;
-
-        let node = await bookmarkManager.getNode(options.node_id);
-
-        if (node.external === CLOUD_EXTERNAL_NAME)
-            await this.withCloudDB(async db => {
-                return this._storeNotesInternal(db, node, options);
-            });
-    }
-
-    async storeBookmarkComments(node_id, comments) {
-        if (!settings.cloud_enabled())
-            return;
-
-        let node = await bookmarkManager.getNode(node_id);
-
-        if (node.external === CLOUD_EXTERNAL_NAME)
-            return this._storeCommentsInternal(node, comments);
-    }
-
-    async fetchCloudNotes(node) {
-        return (await this._provider.getDB(true)).fetchNotes(node);
-    }
-
-    async fetchCloudView(node) {
-        return (await this._provider.getDB(true)).fetchView(node);
-    }
-
-    async fetchCloudComments(node) {
-        return (await this._provider.getDB(true)).fetchComments(node);
-    }
-
-    _fixUTF8Encoding(html) {
-        const metaRx = /<meta\s*charset=['"]?([^'"\/>]+)['"]?\s*\/?>/ig
-        const contentTypeRx =
-            /<meta\s*http-equiv=["']?content-type["']?\s*content=["']text\/html;\s*charset=([^'"/>]+)['"]\s*\/?>/ig
-
-        let proceed = null;
-
-        let m = html.match(metaRx);
-
-        if (m && m[1] && m[1].toUpperCase() === "UTF-8")
-            proceed = "utf-8";
-        else if (m && m[1])
-            proceed = "meta";
-
-        if (!proceed) {
-            m = html.match(contentTypeRx);
-
-            if (m && m[1] && m[1].toUpperCase() === "UTF-8")
-                proceed = "utf-8";
-            else if (m && m[1])
-                proceed = "content-type";
-        }
-
-        if (proceed === "meta") {
-            html = html.replace(metaRx, "");
-            html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
-        }
-        else if (proceed === "content-type") {
-            html = html.replace(contentTypeRx, "");
-            html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
-        }
-        else if (proceed === null) {
-            html = html.replace(/<head[^>]*>/ig, m => `${m}<meta charset="utf-8"/>`);
-        }
-
-        return html;
-    }
-
-    async _storeDataInternal(db, node, data, content_type) {
-        let cloudNode = await db.getNode(node.uuid, true);
-
-        if (typeof data === "string")
-            data = new TextEncoder().encode(this._fixUTF8Encoding(data));
-        else
-            cloudNode.byte_length = data.byteLength;
-
-        if (content_type)
-            cloudNode.content_type = content_type;
-        cloudNode = await db.updateNode(cloudNode);
-
-        return db.storeData(cloudNode, new Blob([data], {type: content_type}));
-    }
-
-    async storeBookmarkData(node_id, data, content_type) {
-        if (!settings.cloud_enabled())
-            return;
-
-        let node = await bookmarkManager.getNode(node_id);
-
-        if (node.external === CLOUD_EXTERNAL_NAME)
-            await this.withCloudDB(async db => {
-                return this._storeDataInternal(db, node, data, content_type);
-            });
-    }
-
-    async updateBookmarkData(node_id, data, content_type) {
-        if (!settings.cloud_enabled())
-            return;
-
-        let node = await bookmarkManager.getNode(node_id);
-
-        if (node.external === CLOUD_EXTERNAL_NAME)
-            await this.withCloudDB(async db => {
-                let node = await bookmarkManager.getNode(node_id);
-                return this._storeDataInternal(db, node, data, null);
-            });
-    }
-
-    async fetchCloudData(node) {
-        return (await this._provider.getDB(true)).fetchData(node);
-    }
-
-    // icon now is stored in the index.js
-    // async fetchCloudIcon(node) {
-    //     return (await this._provider.getDB(true)).fetchIcon(node);
-    // }
-
-    async createBookmark(node, parent) {
-        if (!settings.cloud_enabled())
-            return;
-
-        if (parent.external === CLOUD_EXTERNAL_NAME) {
-            await this.withCloudDB(async db => {
-                return this._createBookmarkInternal(db, node, parent.uuid);
-            }, e => showNotification(CLOUD_ERROR_MESSAGE));
-        }
     }
 
     async createBookmarkFolder(node, parent) {
-        if (!settings.cloud_enabled())
-            return;
-
-        if (typeof parent !== "object")
-            parent = await bookmarkManager.getNode(parent);
-
-        if (parent && parent.external === CLOUD_EXTERNAL_NAME) {
+        if (settings.cloud_enabled())
             return this.createBookmark(node, parent);
+    }
+
+    async createBookmark(node, parent) {
+        if (settings.cloud_enabled())
+            await this.withCloudDB(async db => await this._createBookmarkInternal(db, node, parent),
+                 e => showNotification(CLOUD_ERROR_MESSAGE));
+    }
+
+    async _createBookmarkInternal(db, node, parent) {
+        try {
+            node.external = CLOUD_EXTERNAL_NAME;
+            node.external_id = node.uuid;
+            await Node.update(node);
+
+            await this._marshaller.marshalContent(db, node, parent);
+        }
+        catch (e) {
+            console.error(e);
         }
     }
 
-    async moveBookmarks(nodes, dest_id) {
+    async renameBookmark(node) {
+        if (settings.cloud_enabled()) {
+            return this.withCloudDB(async db => {
+                let cloudNode = db.getNode(node.uuid);
+                cloudNode.name = node.name;
+                cloudNode.date_modified = Date.now();
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+        }
+    }
+
+    async moveBookmarks(dest, nodes) {
         if (!settings.cloud_enabled())
             return;
 
-        let dest = await bookmarkManager.getNode(dest_id);
         let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
         let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_NAME);
 
-        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloudNodes.length)
-            return;
-
         return this.withCloudDB(async db => {
             if (dest.external === CLOUD_EXTERNAL_NAME) {
-                await Promise.all(cloudNodes.map(n => db.moveNode(n, dest, this.newCloudRootNode())));
+                await Promise.all(cloudNodes.map(n => db.moveNode(n, dest)));
 
                 return Promise.all(otherNodes.map(n => {
                     if (isContainer(n)) {
-                        return bookmarkManager.traverse(n, (parent, node) =>
-                            this._createBookmarkInternal(db, node, parent? parent.uuid: dest.uuid));
+                        return Bookmark.traverse(n, (parent, node) =>
+                            this._createBookmarkInternal(db, node, parent || dest));
                     }
                     else
-                        return this._createBookmarkInternal(db, n, dest.uuid)
+                        return this._createBookmarkInternal(db, n, dest)
                 }));
             } else {
                 return Promise.all(cloudNodes.map(async n => {
                     n.external = undefined;
                     n.external_id = undefined;
-                    await bookmarkManager.updateNode(n);
+                    await Node.update(n);
 
                     try {
                         if (isContainer(n)) {
-                            await bookmarkManager.traverse(n, async (parent, node) => {
+                            await Bookmark.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = undefined;
                                     node.external_id = undefined;
-                                    await bookmarkManager.updateNode(node);
+                                    await Node.update(node);
 
                                     await this.cleanBookmarkAssets(db, node);
                                 }
@@ -421,24 +167,20 @@ export class CloudBackend {
         }, e => showNotification(CLOUD_ERROR_MESSAGE));
     }
 
-    async copyBookmarks(nodes, dest_id) {
+    async copyBookmarks(dest, nodes) {
         if (!settings.cloud_enabled())
             return;
 
-        let dest = await bookmarkManager.getNode(dest_id);
         let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
-
-        if (dest.external !== CLOUD_EXTERNAL_NAME && !cloudNodes.length)
-            return;
 
         if (dest.external === CLOUD_EXTERNAL_NAME) {
             return this.withCloudDB(async db => {
                 for (let n of nodes) {
                     if (isContainer(n)) {
-                        await bookmarkManager.traverse(n, (parent, node) =>
-                            this._createBookmarkInternal(db, node, parent ? parent.uuid : dest.uuid));
+                        await Bookmark.traverse(n, (parent, node) =>
+                            this._createBookmarkInternal(db, node, parent || dest));
                     } else
-                        await this._createBookmarkInternal(db, n, dest.uuid)
+                        await this._createBookmarkInternal(db, n, dest)
                 }
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
         }
@@ -446,15 +188,15 @@ export class CloudBackend {
             return Promise.all(cloudNodes.map(async n => {
                 n.external = undefined;
                 n.external_id = undefined;
-                await bookmarkManager.updateNode(n);
+                await Node.update(n);
 
                 try {
                     if (isContainer(n)) {
-                        await bookmarkManager.traverse(n, async (parent, node) => {
+                        await Bookmark.traverse(n, async (parent, node) => {
                             if (parent) {
                                 node.external = undefined;
                                 node.external_id = undefined;
-                                await bookmarkManager.updateNode(node);
+                                await Node.update(node);
                             }
                         });
                     }
@@ -466,6 +208,41 @@ export class CloudBackend {
         }
     }
 
+    async deleteBookmarks(nodes) {
+        if (!settings.cloud_enabled())
+            return;
+
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+
+        if (cloudNodes.length)
+            return this.withCloudDB(async db => {
+                for (let node of cloudNodes)
+                    await this.cleanBookmarkAssets(db, node);
+
+                return db.deleteNodes(cloudNodes);
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+    }
+
+    async updateBookmark(node) {
+        if (settings.cloud_enabled())
+            return this.withCloudDB(async db => this._marshaller.marshalNodeUpdate(db, node),
+                e => showNotification(CLOUD_ERROR_MESSAGE));
+    }
+
+    async updateBookmarks(nodes) {
+        if (!settings.cloud_enabled())
+            return;
+
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+
+        if (cloudNodes.length) {
+            return this.withCloudDB(async db => {
+                for (let node of cloudNodes)
+                    await this._marshaller.marshalNodeUpdate(db, node);
+            }, e => showNotification(CLOUD_ERROR_MESSAGE));
+        }
+    }
+
     async reorderBookmarks(nodes) {
         if (!settings.cloud_enabled())
             return;
@@ -474,190 +251,130 @@ export class CloudBackend {
 
         if (nodes.length) {
             return this.withCloudDB(async db => {
+                const now = Date.now();
                 for (let n of nodes) {
-                    await db.updateNode({uuid: n.uuid, pos: n.pos}, true);
+                    await db.updateNode({uuid: n.uuid, pos: n.pos, date_modified: now});
                 }
             });
         }
     }
 
-    // should only be called in the background script through message
-    async reconcileCloudBookmarksDB(verbose) {
-        if (verbose) {
-            // resolve inconsistency after the migration to the new dropbox authorization protocol
-            if (settings.dropbox___dbat() && !this.isAuthenticated()) {
-                showNotification("Authentication is required for the new Dropbox OAuth2 protocol.");
+    async storeBookmarkNotes(node, options, propertyChange) {
+        if (settings.cloud_enabled())
+            await this.withCloudDB(async db => this._marshaller.marshalNotes(db, node, options));
+    }
 
-                let success = await this.authenticate();
-                if (!success)
-                    return;
-            }
+    async storeBookmarkComments(node, comments) {
+        if (settings.cloud_enabled())
+            await this.withCloudDB(async db => this._marshaller.marshalComments(db, node, comments));
+    }
+
+    async storeBookmarkData(node, data, contentType) {
+        if (settings.cloud_enabled())
+            await this.withCloudDB(async db => this._storeDataInternal(db, node, data, contentType));
+    }
+
+    async updateBookmarkData(node, data) {
+        if (settings.cloud_enabled())
+            await this.withCloudDB(async db => this._storeDataInternal(db, node, data));
+    }
+
+    async _storeDataInternal(db, node, data, contentType) {
+        const archive = Archive.compose(data, contentType);
+        return this._marshaller.marshalArchive(db, node, archive);
+    }
+
+    async _isRemoteDBModified(cloudShelf) {
+        const remoteLastModified = await this.getRemoteLastModified();
+
+        const modified = cloudShelf.date_modified?.getTime() !== remoteLastModified?.getTime();
+
+        if (modified) {
+            cloudShelf.date_modified = remoteLastModified;
+            await Node.update(cloudShelf, false);
         }
 
-        let cloudIds = [];
-        let beginTime = Date.now();
-        let dbPool = new Map();
-        let downloadIcons = [];
-        let downloadNotes = [];
-        let downloadComments = [];
-        let downloadData = [];
+        return modified;
+    }
 
-        let reconcile = async (d, c) => { // node, cloud bookmark
-            for (let cloudNode of c.children) {
-                cloudIds.push(cloudNode.uuid);
+    // should only be called in the background script through message
+    async reconcileCloudBookmarksDB(verbose) {
+        await settings.load();
 
-                let node = dbPool.get(cloudNode.uuid);
-                if (node) {
-                    let nodeDate = node.date_modified;
-                    let cloudDate = cloudNode.date_modified;
+        if (settings.cloud_enabled()) {
+            // TODO: remove in the next version
+            if (!settings.using_cloud_v1() && await this._provider.isCloudV0Present()) {
+                send.cloudShelfFormatChanged();
+                return;
+            }
+            else if (!settings.using_cloud_v1())
+                settings.using_cloud_v1(true);
+
+            let beginTime = Date.now();
+            let cloudShelf = await Node.get(CLOUD_SHELF_ID);
+
+            if (!cloudShelf) {
+                const node = this.newCloudRootNode();
+                Node.resetDates(node);
+                cloudShelf = await Node.import(node);
+                try {await send.shelvesChanged()} catch (e) {console.error(e)}
+            }
+
+           if (!await this._isRemoteDBModified(cloudShelf))
+               return;
+
+            send.cloudSyncStart();
+
+            const remoteDB = await this._provider.getDB();
+            let remoteIDs = remoteDB.nodes.map(n => n.external_id);
+
+            try {
+                await ExternalNode.deleteMissingIn(remoteIDs, CLOUD_EXTERNAL_NAME);
+
+                const objects = remoteDB.objects;
+                const progressCounter = new ProgressCounter(objects.length, "cloudSyncProgress");
+                for (const object of objects)
                     try {
-                        if (!(nodeDate instanceof Date))
-                            nodeDate = new Date(nodeDate);
-
-                        if (!(cloudDate instanceof Date))
-                            cloudDate = new Date(cloudDate);
-
-                        if (nodeDate.getTime() < cloudDate.getTime()) {
-                            delete cloudNode.id;
-                            delete cloudNode.parent_id;
-                            delete cloudNode.icon;
-                            delete cloudNode.icon_data;
-                            delete cloudNode.date_added
-                            node = Object.assign(node, cloudNode);
-
-                            if (cloudNode.has_notes)
-                                downloadNotes.push(node);
-
-                            if (cloudNode.has_comments)
-                                downloadComments.push(node);
-
-                            await bookmarkManager.updateNode(node);
-                        }
+                        await this._unmarshaller.unmarshal(remoteDB, object);
+                        progressCounter.incrementAndNotify();
                     }
                     catch (e) {
                         console.error(e);
                     }
-                }
-                else {
-                    delete cloudNode.id;
-                    cloudNode.parent_id = d.id;
-                    cloudNode.external = CLOUD_EXTERNAL_NAME;
-                    cloudNode.external_id = cloudNode.uuid;
-                    cloudNode.date_added = new Date(cloudNode.date_added);
-                    cloudNode.date_modified = new Date(cloudNode.date_modified);
-                    node = await bookmarkManager.addNode(cloudNode, false, false, false);
-
-                    if (cloudNode.has_notes) {
-                        node.notes_format = cloudNode.notes_format;
-                        node.notes_align = cloudNode.notes_align;
-                        downloadNotes.push(node);
-                    }
-
-                    if (cloudNode.has_comments)
-                        downloadComments.push(node);
-
-                    if (cloudNode.type === NODE_TYPE_ARCHIVE) {
-                        node.content_type = cloudNode.content_type;
-                        node.byte_length = cloudNode.byte_length;
-                        downloadData.push(node);
-                    }
-
-                    if (!node.icon && node.uri)
-                        await bookmarkManager.storeIconFromURI(node);
-                    else if (node.icon && !node.stored_icon)
-                        await bookmarkManager.storeIcon(node);
-                    else if (node.icon && node.stored_icon)
-                        await bookmarkManager.storeIconLowLevel(node.id, cloudNode.icon_data);
-                }
-
-                if (cloudNode.type === NODE_TYPE_GROUP)
-                    await reconcile(node, cloudNode);
-            }
-        };
-
-        if (settings.cloud_enabled()) {
-            let dbRoot = await bookmarkManager.getNode(CLOUD_SHELF_ID);
-            if (!dbRoot) {
-                dbRoot = await bookmarkManager.addNode(this.newCloudRootNode(), false, true, false);
-                try {await send.shelvesChanged()} catch (e) {console.error(e)}
-            }
-
-            let cloudLastModified = await this.getLastModified();
-
-            if (dbRoot.date_modified && cloudLastModified
-                    && dbRoot.date_modified.getTime() === cloudLastModified.getTime())
-                return;
-
-            let cloudRoot = await this.getTree();
-
-            if (!cloudRoot)
-                return;
-
-            send.cloudSyncStart();
-
-            dbPool = new Map((await bookmarkManager.getExternalNodes(CLOUD_EXTERNAL_NAME)).map(n => [n.uuid, n]));
-
-            await reconcile(dbRoot, cloudRoot).then(async () => {
-                cloudRoot = null;
-                dbPool = null;
-
-                await bookmarkManager.deleteMissingExternalNodes(cloudIds, CLOUD_EXTERNAL_NAME);
-
-                for (let notesNode of downloadNotes) {
-                    let notes = await this.fetchCloudNotes(notesNode);
-                    if (notes) {
-                        let options = {
-                            node_id: notesNode.id,
-                            content: notes,
-                            format: notesNode.notes_format,
-                            align: notesNode.notes_align,
-                            width: notesNode.notes_width
-                        };
-
-                        if (notesNode.notes_format === "delta")
-                            options.html = await this.fetchCloudView(notesNode);
-
-                        await bookmarkManager.storeIndexedNotes(options);
-                    }
-                }
-
-                for (let commentsNode of downloadComments) {
-                    let comments = await this.fetchCloudComments(commentsNode);
-                    if (comments)
-                        await bookmarkManager.storeIndexedComments(commentsNode.id, comments);
-                }
-
-                for (let archive of downloadData) {
-                    let data = await this.fetchCloudData(archive);
-
-                    if (data) {
-                        await bookmarkManager.storeIndexedBlob(archive.id, data, archive.content_type, archive.byte_length);
-                    }
-                }
-
-                dbRoot.date_modified = cloudLastModified;
-                await bookmarkManager.updateNode(dbRoot, false);
+                progressCounter.finish();
 
                 console.log("cloud reconciliation time: " + ((new Date().getTime() - beginTime) / 1000) + "s");
 
                 send.cloudSyncEnd();
                 send.externalNodesReady();
-            }).catch(e => console.error(e));
+            }
+            catch (e) {
+                console.error(e);
+            }
         }
         else {
-            await bookmarkManager.deleteExternalNodes(CLOUD_EXTERNAL_NAME);
+            await ExternalNode.delete(CLOUD_EXTERNAL_NAME);
             send.shelvesChanged();
         }
     }
 
-    startBackgroundSync() {
-        if (settings.cloud_background_sync())
-            this._backgroundSyncInterval = setInterval(
-                () => this.reconcileCloudBookmarksDB(),
-                15 * 60 * 1000);
-        else if (this._backgroundSyncInterval)
-            clearInterval(this._backgroundSyncInterval);
+    async enableBackgroundSync(enable) {
+        if (enable) {
+            const alarm = await browser.alarms.get(CLOUD_SYNC_ALARM_NAME);
+            if (!alarm)
+                browser.alarms.create(CLOUD_SYNC_ALARM_NAME, {periodInMinutes: CLOUD_SYNC_ALARM_PERIOD});
+        }
+        else {
+            browser.alarms.clear(CLOUD_SYNC_ALARM_NAME);
+        }
     }
 }
 
 export let cloudBackend = new CloudBackend();
+
+if (getContextType() === CONTEXT_BACKGROUND) {
+    browser.alarms.onAlarm.addListener(alarm => {
+        if (alarm.name === CLOUD_SYNC_ALARM_NAME)
+            cloudBackend.reconcileCloudBookmarksDB();
+    });
+}

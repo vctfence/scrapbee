@@ -1,10 +1,12 @@
 import {send} from "../proxy.js"
-import {bookmarkManager} from "../backend.js";
 import {settings} from "../settings.js";
 import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
 import {getActiveTab} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
-import {EVERYTHING_SHELF_ID} from "../storage.js";
+import {Bookmark} from "../bookmarks_bookmark.js";
+import {Archive, Icon} from "../storage_entities.js";
+import {systemInitialization} from "../bookmarks_init.js";
+import {ProgressCounter} from "../utils.js";
 
 let shelfList;
 
@@ -15,7 +17,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.onload = async function() {
-    await bookmarkManager;
+    await systemInitialization;
 
     shelfList = new ShelfList("#search-scope", {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
@@ -34,8 +36,8 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
-    const blob = await bookmarkManager.fetchBlob(node.id);
-    const text = await bookmarkManager.reifyBlob(blob);
+    const blob = await Archive.get(node.id);
+    const text = await Archive.reify(blob);
     const doc = parseHtml(text);
     const mark = new Mark(doc.body);
 
@@ -68,7 +70,7 @@ async function appendSearchResult(query, node, occurrences) {
 
     let icon = node.icon;
     if (node.stored_icon)
-        icon = await bookmarkManager.fetchIcon(node.id);
+        icon = await Icon.get(node.id);
 
     if (!icon)
         icon = fallbackIcon;
@@ -111,17 +113,16 @@ async function appendSearchResult(query, node, occurrences) {
     $("#search-result-count").text(`${++resultsFound} ${resultsFound === 1? "result": "results"} found`);
 }
 
-function markSearch(query, nodes, across, callback) {
+function markSearch(query, nodes, across, progressCallback, finishCallback) {
     if (!nodes.length || !searching) {
-        callback()
+        finishCallback()
         return;
     }
 
     let node = nodes.shift();
-
-    bookmarkManager.fetchBlob(node.id)
+    Archive.get(node.id)
         .then(blob => {
-            bookmarkManager.reifyBlob(blob)
+            Archive.reify(blob)
                 .then(text => {
                     let doc = parseHtml(text);
                     let mark = new Mark(doc);
@@ -136,10 +137,11 @@ function markSearch(query, nodes, across, callback) {
                         //filter: (n, t, c) => {return c === 0},
                         noMatch: () => {found = false;},
                         done: c => {
-                            if (found && searching) {
+                            if (found && searching)
                                 appendSearchResult(query, node, c);
-                            }
-                            markSearch(query, nodes, across, callback);
+
+                            progressCallback();
+                            markSearch(query, nodes, across, progressCallback, finishCallback);
                         }
                     });
                 });
@@ -163,20 +165,25 @@ async function performSearch() {
 
         send.startProcessingIndication({noWait: true});
 
-        const nodes = await bookmarkManager.listNodes({
+        const nodes = await Bookmark.list({
             search: searchQuery,
             content: true,
             index: "content",
+            order: "date_desc",
             path: shelfList.selectedShelfName
         });
 
         $("#found-items").empty();
         $("#search-preview").empty();
 
-        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0, () => {
+        const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
+        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0,
+            () => progressCounter.incrementAndNotify(),
+            () => {
             searching = false;
             $("#search-button").val("Search");
             send.stopProcessingIndication();
+            progressCounter.finish();
 
             if (resultsFound === 0)
                 $("#search-result-count").text(`not found`);

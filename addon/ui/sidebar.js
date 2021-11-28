@@ -1,6 +1,5 @@
 import {send, receive, receiveExternal} from "../proxy.js";
 import {settings} from "../settings.js"
-import {bookmarkManager} from "../backend.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {showDlg, confirm} from "./dialog.js"
@@ -8,7 +7,7 @@ import {showDlg, confirm} from "./dialog.js"
 import {
     SearchContext,
     SEARCH_MODE_TITLE, SEARCH_MODE_TAGS, SEARCH_MODE_CONTENT,
-    SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE
+    SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE, SEARCH_MODE_FOLDER
 } from "../search.js";
 
 import {pathToNameExt, sleep} from "../utils.js";
@@ -20,10 +19,18 @@ import {
     FIREFOX_SHELF_ID,
     NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
-    isSpecialShelf, isEndpoint
+    isBuiltInShelf, isEndpoint, byPosition
 } from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
+import {Query} from "../storage_query.js";
+import {Path} from "../path.js";
+import {Shelf} from "../bookmarks_shelf.js";
+import {TODO} from "../bookmarks_todo.js";
+import {Bookmark} from "../bookmarks_bookmark.js";
+import {Group} from "../bookmarks_group.js";
+import {Icon, Node} from "../storage_entities.js";
+import {systemInitialization} from "../bookmarks_init.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -42,7 +49,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.onload = async function () {
-    await bookmarkManager;
+    await systemInitialization;
 
     shelfList = new ShelfList("#shelfList", {
         maxHeight: settings.shelf_list_height() || settings.default.shelf_list_height,
@@ -55,9 +62,13 @@ window.onload = async function () {
     shelfList.change(function () { switchShelf(this.value, true, true) });
 
     $("#btnLoad").on("click", () => loadShelves());
+    $("#btnSync").on("click", () => performSync());
     $("#btnSearch").on("click", () => openPage("fulltext.html"));
     $("#btnSettings").on("click", () => openPage("options.html"));
     $("#btnHelp").on("click", () => openPage("options.html#help"));
+
+    // in the case if settings are cleaned by user
+    localStorage.setItem("sidebar-show-sync", settings.sync_enabled()? "show": "hide");
 
     $("#shelf-menu-button").click(() => {
         $("#search-mode-menu").hide();
@@ -83,6 +94,13 @@ window.onload = async function () {
         $("#search-mode-switch").prop("src", "/icons/bookmark.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TITLE, shelfList.selectedShelfName);
+        performSearch();
+    });
+
+    $("#shelf-menu-search-folder").click(() => {
+        $("#search-mode-switch").prop("src", "/icons/filter-folder.svg");
+        $("#search-input").attr("placeholder", "");
+        context.setMode(SEARCH_MODE_FOLDER, shelfList.selectedShelfName);
         performSearch();
     });
 
@@ -194,6 +212,11 @@ window.onload = async function () {
     loadSidebar();
 };
 
+window.onunload = async function() {
+    if (settings.sync_enabled() && settings.sync_on_close_sidebar())
+        send.performSync();
+};
+
 async function loadSidebar() {
     try {
         await shelfList.load();
@@ -253,6 +276,7 @@ function setLastShelf(id) {
 
 async function loadShelves(selected, synchronize = true, clearSelection = false) {
     try {
+        updateProgress(0);
         await shelfList.reload();
         return switchShelf(selected || getLastShelf() || DEFAULT_SHELF_ID, synchronize, clearSelection);
     }
@@ -269,7 +293,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
 
     shelfList.selectShelf(shelf_id);
     let path = shelfList.selectedShelfName;
-    path = isSpecialShelf(path)? path.toLocaleLowerCase(): path;
+    path = isBuiltInShelf(path)? path.toLocaleLowerCase(): path;
 
     setLastShelf(shelf_id);
 
@@ -284,22 +308,22 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
         return performSearch();
     else {
         if (shelf_id == TODO_SHELF_ID) {
-            const nodes = await bookmarkManager.listTODO();
+            const nodes = await TODO.listTODO();
             tree.list(nodes, TODO_SHELF_NAME, true);
         }
         else if (shelf_id == DONE_SHELF_ID) {
-            const nodes = await bookmarkManager.listDONE();
+            const nodes = await TODO.listDONE();
             tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            const nodes = await bookmarkManager.listShelfContent(EVERYTHING);
+            const nodes = await Shelf.listContent(EVERYTHING);
             tree.update(nodes, true, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
             }
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
-            const nodes = await bookmarkManager.listShelfContent(path);
+            const nodes = await Shelf.listContent(path);
             tree.update(nodes, false, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
@@ -307,7 +331,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.openRoot();
         }
         else if (shelf_id == FIREFOX_SHELF_ID) {
-            const nodes = await bookmarkManager.listShelfContent(path);
+            const nodes = await Shelf.listContent(path);
             nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
 
             for (let node of nodes) {
@@ -319,7 +343,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.update(nodes, false, clearSelection);
         }
         else if (path) {
-            const nodes = await bookmarkManager.listShelfContent(path);
+            const nodes = await Shelf.listContent(path);
             tree.update(nodes, false, clearSelection);
             tree.openRoot();
         }
@@ -330,7 +354,7 @@ async function createShelf() {
     const options = await showDlg("prompt", {caption: "Create Shelf", label: "Name:"});
 
     if (options?.title) {
-        if (!isSpecialShelf(options.title)) {
+        if (!isBuiltInShelf(options.title)) {
             const shelf = await send.createShelf({name: options.title});
             if (shelf)
                 loadShelves(shelf.id);
@@ -343,10 +367,10 @@ async function createShelf() {
 async function renameShelf() {
     let {id, name} = shelfList.getCurrentShelf();
 
-    if (name && !isSpecialShelf(name)) {
+    if (name && !isBuiltInShelf(name)) {
         const options = await showDlg("prompt", {caption: "Rename", label: "Name", title: name});
         let newName = options?.title;
-        if (newName && !isSpecialShelf(newName)) {
+        if (newName && !isBuiltInShelf(newName)) {
             await send.renameGroup({id, name: newName});
             tree.renameRoot(newName);
             shelfList.renameShelf(id, newName);
@@ -360,7 +384,7 @@ async function renameShelf() {
 async function deleteShelf() {
     let {id, name} = shelfList.getCurrentShelf();
 
-    if (isSpecialShelf(name)) {
+    if (isBuiltInShelf(name)) {
         showNotification({message: "A built-in shelf could not be deleted."})
         return;
     }
@@ -375,10 +399,10 @@ async function deleteShelf() {
 }
 
 async function sortShelves() {
-    let nodes = await bookmarkManager.queryShelf();
-    let special = nodes.filter(n => isSpecialShelf(n.name)).sort((a, b) => a.id - b.id);
-    let regular = nodes.filter(n => !isSpecialShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
-    let sorted = [...special, ...regular];
+    let nodes = await Query.allShelves();
+    let builtIn = nodes.filter(n => isBuiltInShelf(n.name)).sort((a, b) => a.id - b.id);
+    let regular = nodes.filter(n => !isBuiltInShelf(n.name)).sort((a, b) => a.name.localeCompare(b.name));
+    let sorted = [...builtIn, ...regular];
 
     let positions = [];
     for (let i = 0; i < sorted.length; ++i)
@@ -393,7 +417,7 @@ async function importShelf(e) {
         let {name, ext} = pathToNameExt($("#file-picker").val());
         let lname = name.toLocaleLowerCase();
 
-        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isSpecialShelf(lname)) {
+        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isBuiltInShelf(lname)) {
             if (shelfList.hasShelf(name)) {
                 if (await confirm("Warning", "This will replace '" + name + "'.")) {
                     await performImport(e.target.files[0], name, ext);
@@ -437,9 +461,9 @@ async function performImport(file, file_name, file_ext) {
         stopProcessingIndication();
 
         if (file_name.toLocaleLowerCase() === EVERYTHING)
-            loadShelves(EVERYTHING_SHELF_ID);
+            await loadShelves(EVERYTHING_SHELF_ID);
         else {
-            const shelf = await bookmarkManager.queryShelf(file_name);
+            const shelf = await Query.shelf(file_name);
             await loadShelves(shelf.id);
         }
     }
@@ -460,20 +484,32 @@ async function performExport() {
         stopProcessingIndication();
     }
     catch (e) {
-        console.log(e.message);
+        console.error(e);
         stopProcessingIndication();
         if (!e.message?.includes("Download canceled"))
             showNotification({message: "The export has failed: " + e.message});
     }
 }
 
-async function selectNode(node) {
+async function performSync(verbose = true) {
+    if (getLastShelf() === CLOUD_SHELF_ID)
+        await switchShelf(CLOUD_SHELF_ID);
+    else {
+        await settings.load();
+        if (settings.sync_enabled())
+            send.performSync();
+        else if (verbose)
+            showNotification("Synchronization is not configured.");
+    }
+}
+
+async function selectNode(node, open, forceScroll) {
     $("#search-input").val("");
     $("#search-input-clear").hide();
 
-    const path = await bookmarkManager.computePath(node.id)
+    const path = await Path.compute(node)
     await loadShelves(path[0].id, false);
-    tree.selectNode(node.id);
+    tree.selectNode(node.id, open, forceScroll);
 }
 
 function sidebarRefresh() {
@@ -483,12 +519,12 @@ function sidebarRefresh() {
 function sidebarRefreshExternal() {
     let last_shelf = getLastShelf();
 
-    if (last_shelf == EVERYTHING_SHELF_ID || last_shelf == FIREFOX_SHELF_ID || last_shelf == CLOUD_SHELF_ID)
+    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === FIREFOX_SHELF_ID || last_shelf === CLOUD_SHELF_ID)
         settings.load().then(() => loadShelves(last_shelf, false));
 }
 
 async function getRandomBookmark() {
-    const ids = await bookmarkManager.getNodeIds();
+    const ids = await Query.allNodeIDs();
 
     if (!ids?.length)
         return null;
@@ -496,7 +532,7 @@ async function getRandomBookmark() {
     let ctr = 20;
     do {
         const id = Math.floor(Math.random() * (ids.length - 1));
-        const node = await bookmarkManager.getNode(ids[id]);
+        const node = await Node.get(ids[id]);
 
         if (isEndpoint(node))
             return node;
@@ -528,7 +564,7 @@ async function displayRandomBookmark() {
         }
 
         if (bookmark.stored_icon) {
-            icon = `url("${await bookmarkManager.fetchIcon(bookmark.id)}")`;
+            icon = `url("${await Icon.get(bookmark.id)}")`;
         }
         else if (bookmark.icon) {
             let image = new Image();
@@ -563,15 +599,14 @@ receive.beforeBookmarkAdded = async message => {
     if (node.type === NODE_TYPE_ARCHIVE)
         startProcessingIndication(true);
 
-    const name = await bookmarkManager.ensureUnique(node.parent_id, node.name);
+    const name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
     node.name = name;
     tree.createTentativeNode(node);
 
     if (select) {
-        const path = await bookmarkManager.computePath(node.parent_id);
-        if (getLastShelf() == path[0].id) {
+        const path = await Path.compute(node.parent_id);
+        if (getLastShelf() == path[0].id)
             tree.selectNode(node.id);
-        }
         else {
             await loadShelves(path[0].id, false)
             tree.createTentativeNode(node, select);
@@ -585,7 +620,8 @@ receive.bookmarkAdded = message => {
         stopProcessingIndication();
 
     if (settings.switch_to_new_bookmark())
-        tree.updateTentativeNode(message.node);
+        if (!tree.updateTentativeNode(message.node))
+            selectNode(message.node);
 };
 
 receive.bookmarkCreated = message => {
@@ -594,7 +630,7 @@ receive.bookmarkCreated = message => {
 };
 
 receive.selectNode = message => {
-    selectNode(message.node);
+    selectNode(message.node, message.open, message.forceScroll);
 };
 
 receive.notesChanged = message => {
@@ -652,33 +688,95 @@ receive.reloadSidebar = message => {
     browser.sidebarAction.setPanel({panel: sidebarUrl});
 };
 
+receive.syncStateChanged = message => {
+    if (message.enabled) {
+        $("#btnSync").css("display", "inline-block");
+        localStorage.setItem("sidebar-show-sync", "show");
+    }
+    else {
+        $("#btnSync").hide();
+        localStorage.setItem("sidebar-show-sync", "hide");
+    }
+};
+
+receive.exportProgress = message => message.muteSidebar? null: updateProgress(message);
+receive.importProgress = message => message.muteSidebar? null: updateProgress(message);
+receive.syncProgress = message => updateProgress(message);
+receive.cloudSyncProgress = message => updateProgress(message);
+receive.fullTextSearchProgress = message => updateProgress(message);
+
+function updateProgress(message) {
+    const progressDiv = $("#sidebar-progress");
+    if (message.progress) {
+        if (message.finished)
+            setTimeout(() => progressDiv.css("width", "0"), 300);
+        else if (message.progress === 100) {
+            progressDiv.css("width", message.progress + "%");
+            setTimeout(() => progressDiv.css("width", "0"), 200);
+        }
+        else
+            progressDiv.css("width", message.progress + "%");
+    }
+    else
+        progressDiv.css("width", "0");
+}
+
+receive.cloudShelfFormatChanged = async message => {
+
+    const text = "The Cloud shelf needs to be reset due to internal format change. "
+        + "This will delete all its contents. By pressing \"Cancel\" you may still copy the"
+        + " relevant items to other shelves. Continue?";
+
+    if (await showDlg("confirm", {title: "Warning", message: text, wrap: true})) {
+        let success = await send.resetCloud();
+
+        if (success) {
+            await settings.load();
+            settings.using_cloud_v1(true);
+            setTimeout(loadShelves, 1000);
+        }
+        else
+            showNotification("Error accessing cloud.");
+    }
+};
 
 receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
     if (message.name) {
-        let external_path = bookmarkManager.expandPath(message.name);
+        let external_path = Path.expand(message.name);
         let [shelf, ...path] = external_path.split("/");
 
-        const shelfNode = await bookmarkManager.queryShelf(shelf);
+        const shelfNode = await Query.shelf(shelf);
 
         if (shelfNode) {
-            const group = await bookmarkManager.getGroupByPath(external_path);
+            const group = await Group.getOrCreateByPath(external_path);
             await switchShelf(shelfNode.id);
             tree.selectNode(group.id, true);
         }
         else {
-            if (!isSpecialShelf(shelf)) {
-                const shelfNode = await bookmarkManager.createGroup(null, shelf, NODE_TYPE_SHELF);
+            if (isBuiltInShelf(shelf)) {
+                switch (shelf.toUpperCase()) {
+                    case EVERYTHING.toUpperCase():
+                        await switchShelf(EVERYTHING_SHELF_ID);
+                        break;
+                    case TODO_SHELF_NAME:
+                        await switchShelf(TODO_SHELF_ID);
+                        break;
+                    case DONE_SHELF_NAME:
+                        await switchShelf(DONE_SHELF_ID);
+                        break;
+                }
+            }
+            else {
+                const shelfNode = await Shelf.add(shelf);
                 if (shelfNode) {
-                    let group = await bookmarkManager.getGroupByPath(external_path);
+                    let group = await Group.getOrCreateByPath(external_path);
                     await loadShelves(shelfNode.id);
                     tree.selectNode(group.id, true);
                 }
             }
-            else
-                showNotification({message: "Can not create shelf with this name."});
         }
     }
 };
@@ -686,7 +784,7 @@ receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
 async function switchAfterCopy(message, external_path, group, topNodes) {
     if (message.action === "switching") {
         const [shelf, ...path] = external_path.split("/");
-        const shelfNode = await bookmarkManager.queryShelf(shelf);
+        const shelfNode = await Query.shelf(shelf);
 
         await loadShelves(shelfNode.id);
 
@@ -701,17 +799,17 @@ receiveExternal.scrapyardCopyAt = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let external_path = bookmarkManager.expandPath(message.path);
+    let external_path = Path.expand(message.path);
     let selection = tree.getSelectedNodes();
 
     if (selection.some(n => n.type === NODE_TYPE_SHELF)) {
         showNotification("Can not copy shelves.")
     }
     else {
-        selection.sort((a, b) => a.pos - b.pos);
+        selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const group = await bookmarkManager.getGroupByPath(external_path);
+        const group = await Group.getOrCreateByPath(external_path);
         let newNodes = await send.copyNodes({node_ids: selection, dest_id: group.id, move_last: true});
         let topNodes = newNodes.filter(n => selection.some(id => id === n.old_id)).map(n => n.id);
 
@@ -723,16 +821,16 @@ receiveExternal.scrapyardMoveAt = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    let external_path = bookmarkManager.expandPath(message.path);
+    let external_path = Path.expand(message.path);
     let selection = tree.getSelectedNodes();
     if (selection.some(n => n.type === NODE_TYPE_SHELF)) {
         showNotification("Can not move shelves.")
     }
     else {
-        selection.sort((a, b) => a.pos - b.pos);
+        selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const group = await bookmarkManager.getGroupByPath(external_path);
+        const group = await Group.getOrCreateByPath(external_path);
         await send.moveNodes({node_ids: selection, dest_id: group.id, move_last: true});
         await switchAfterCopy(message, external_path, group, selection);
     }

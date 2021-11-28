@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import java.io.UnsupportedEncodingException;
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -65,64 +65,63 @@ public class BrowseArchiveFragment extends Fragment {
         browser.getSettings().setDefaultTextEncodingName("utf-8");
         browser.loadUrl(url);
 
-        browser.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                ExecutorService executor = Executors.newSingleThreadExecutor();
-                Handler handler = new Handler(Looper.getMainLooper());
-                //System.out.println(view.getSettings().getUserAgentString());
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        final byte[][] assetBytes = new byte[][]{null};
-
-                        try {
-                            DropboxProvider dropbox =
-                                new DropboxProvider(BrowseArchiveFragment.this.getActivity());
-                            assetBytes[0] = dropbox.getAssetBytes(DropboxProvider.DROPBOX_APP_PATH
-                                + "/" + uuid + "." + asset);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-                        handler.post(() -> {
-                            if (assetBytes[0] != null) {
-                                try {
-                                    String base64 = Base64
-                                        .encodeToString(assetBytes[0], Base64.NO_WRAP);
-
-                                    String links = "";
-                                    if ("data".equals(asset)) {
-                                        links = "<link rel='stylesheet' href='css/markers.css'/>";
-                                    }
-                                    else if ("view".equals(asset)) {
-                                        links = "<link rel='stylesheet' href='css/notes.css'/>"
-                                            + "<link rel='stylesheet' href='css/org.css'/>";
-                                    }
-
-                                    String script = "replaceDocument(\"" + base64 + "\", \"" + links + "\")";
-                                    browser.evaluateJavascript(script, null);
-
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
-                    view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
+        browser.setWebViewClient(new TreeWebViewClient(browser));
 
         return rootView;
+    }
+
+    private class TreeWebViewClient extends WebViewClient {
+        private final WebView browser;
+
+        public TreeWebViewClient(WebView browser) {
+            this.browser = browser;
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+            //System.out.println(view.getSettings().getUserAgentString());
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    final String[] assetContent = new String[]{null};
+
+                    try {
+                        DropboxProvider dropbox = new DropboxProvider(BrowseArchiveFragment.this.getActivity());
+                        assetContent[0] = dropbox.readCloudFile(uuid + "." + asset);
+
+                        if (assetContent[0] == null) {
+                            BrowseArchiveFragment.this.getActivity().getFragmentManager().popBackStack();
+                            return;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    handler.post(() -> {
+                        if (assetContent[0] != null) {
+                            try {
+                                String escapedContent = StringEscapeUtils.escapeJson(assetContent[0]);
+                                String script = "replaceDocument(\"" + escapedContent + "\", \"" + asset + "\")";
+                                browser.evaluateJavascript(script, null);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
+                view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }

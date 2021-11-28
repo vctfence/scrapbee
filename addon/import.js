@@ -1,185 +1,120 @@
-import {bookmarkManager} from "./backend.js"
 import {settings} from "./settings.js"
 
 import {
-    CLOUD_SHELF_UUID, DEFAULT_SHELF_ID,
-    DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
+    CLOUD_SHELF_ID,
+    DEFAULT_SHELF_NAME,
+    DONE_SHELF_NAME,
     EVERYTHING,
-    FIREFOX_SHELF_UUID,
-    NODE_TYPE_UNLISTED
+    FIREFOX_BOOKMARK_MOBILE,
+    TODO_SHELF_NAME
 } from "./storage.js";
-import {send} from "./proxy.js";
+import {Query} from "./storage_query.js";
+import {ExportArea} from "./storage_export.js";
+import {TODO} from "./bookmarks_todo.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {MarshallerJSON, StructuredUnmarshallerJSON} from "./marshaller_json.js";
+import {MarshallerORG, UnmarshallerORG} from "./marshaller_org.js";
+import {NetscapeImporterBuilder} from "./import_html.js";
+import {RDFImporterBuilder} from "./import_rdf.js";
+import {StreamExporterBuilder, StreamImporterBuilder, StructuredStreamImporterBuilder} from "./import_drivers.js";
+import {importTransaction} from "./import_transaction.js";
 
-const RESERVED_SHELVES = [CLOUD_SHELF_UUID, FIREFOX_SHELF_UUID, DEFAULT_SHELF_UUID];
-
-export async function prepareNewImport(shelf) {
-    if (settings.undo_failed_imports())
-        return;
-
-    if (shelf === EVERYTHING) {
-        return bookmarkManager.wipeEverything();
-    }
-    else {
-        shelf = await bookmarkManager.queryShelf(shelf);
-
-        if (shelf && shelf.name === DEFAULT_SHELF_NAME) {
-            return bookmarkManager.deleteChildNodes(shelf.id);
-        } else if (shelf) {
-            return bookmarkManager.deleteNodes(shelf.id);
+export class Export {
+    static create(format) {
+        switch (format) {
+            case "json":
+                return new StreamExporterBuilder(new MarshallerJSON());
+            case "org":
+                return new StreamExporterBuilder(new MarshallerORG());
         }
     }
-}
 
-async function createRollbackNode(shelf) {
-    let rollbackNode = {
-        name: "_" + shelf,
-        type: NODE_TYPE_UNLISTED
-    };
+    // get nodes of the specified shelf for export
+    static async nodes(shelf, computeLevel) {
+        const isShelfName = typeof shelf === "string";
+        let nodes;
 
-    return bookmarkManager.addNode(rollbackNode);
-}
-
-async function relocateNodes(nodes, dest) {
-    for (let node of nodes) {
-        await bookmarkManager.updateNode({id: node.id, parent_id: dest?.id || undefined}, false);
-    }
-}
-
-async function maskUUIDs(rollbackNode) {
-    const rollbackItemIds = await bookmarkManager.queryFullSubtreeIds(rollbackNode.id);
-
-    await bookmarkManager.updateNodes(node => {
-        node._unlisted = true;
-        node._uuid = node.uuid;
-        node.uuid = undefined;
-    }, rollbackItemIds)
-}
-
-async function unmaskUUIDs(rollbackNode) {
-    const rollbackItemIds = await bookmarkManager.queryFullSubtreeIds(rollbackNode.id);
-
-    await bookmarkManager.updateNodes(node => {
-        node._unlisted = undefined;
-        node.uuid = node._uuid;
-        node._uuid = undefined;
-    }, rollbackItemIds)
-}
-
-export async function createRollback(shelf) {
-    if (shelf === EVERYTHING) {
-        const rollbackNode = await createRollbackNode(EVERYTHING);
-        let shelves = await bookmarkManager.queryShelf();
-        shelves = shelves.filter(n => !RESERVED_SHELVES.some(uuid => uuid === n.uuid));
-        await relocateNodes(shelves, rollbackNode);
-        await maskUUIDs(rollbackNode);
-
-        await createRollback(DEFAULT_SHELF_NAME);
-    }
-    else {
-        shelf = await bookmarkManager.queryShelf(shelf);
-        if (shelf) {
-            const rollbackNode = await createRollbackNode(shelf.name);
-            const nodes = await bookmarkManager.getChildNodes(shelf.id);
-            await relocateNodes(nodes, rollbackNode);
-            await maskUUIDs(rollbackNode);
+        if (isShelfName && shelf.toUpperCase() === TODO_SHELF_NAME) {
+            nodes = await TODO.listTODO();
+            if (computeLevel)
+                nodes.forEach(n => n.__level = 1)
+            return nodes;
         }
-    }
-}
-
-async function cleanRollback() {
-    const unlisted = await bookmarkManager.queryUnlisted();
-    let rollbackItems = [];
-
-    for (const node of unlisted) {
-        rollbackItems = [...await bookmarkManager.queryFullSubtreeIds(node.id), ...rollbackItems];
-    }
-
-    await bookmarkManager.deleteNodesLowLevel(rollbackItems);
-}
-
-async function cleanFailedImport(shelf, exists) {
-    if (shelf === EVERYTHING) {
-        let shelves = await bookmarkManager.queryShelf();
-        shelves = shelves.filter(n => !RESERVED_SHELVES.some(uuid => uuid === n.uuid));
-
-        let failedItems = [];
-
-        for (const node of shelves) {
-            failedItems = [...await bookmarkManager.queryFullSubtreeIds(node.id), ...failedItems];
+        else if (isShelfName && shelf.toUpperCase() === DONE_SHELF_NAME) {
+            nodes = await TODO.listDONE();
+            if (computeLevel)
+                nodes.forEach(n => n.__level = 1)
+            return nodes;
         }
 
-        await bookmarkManager.deleteNodesLowLevel(failedItems);
-    }
-    else {
-        shelf = await bookmarkManager.queryShelf(shelf);
+        const everything = isShelfName && shelf === EVERYTHING;
 
-        if (shelf) {
-            const failedItems = await bookmarkManager.queryFullSubtreeIds(shelf.id);
-            if (exists)
-                failedItems.shift();
-            await bookmarkManager.deleteNodesLowLevel(failedItems);
+        if (!everything && isShelfName)
+            shelf = await Query.shelf(shelf);
+
+        let level = computeLevel? (everything? 1: 0): undefined;
+
+        if (everything) {
+            const shelves = await Query.allShelves();
+            const cloud = shelves.find(s => s.id === CLOUD_SHELF_ID);
+            if (cloud)
+                shelves.splice(shelves.indexOf(cloud), 1);
+            nodes = await Query.fullSubtree(shelves.map(s => s.id), true, level);
         }
+        else {
+            nodes = await Query.fullSubtree(shelf.id,true, level);
+            nodes.shift();
+        }
+
+        const mobileBookmarks = nodes.find(n => n.external_id === FIREFOX_BOOKMARK_MOBILE);
+        if (mobileBookmarks) {
+            const mobileSubtree = nodes.filter(n => n.parent_id === mobileBookmarks.id);
+            for (const n of mobileSubtree)
+                nodes.splice(nodes.indexOf(n), 1);
+            nodes.splice(nodes.indexOf(mobileBookmarks), 1);
+        }
+
+        return nodes;
     }
 }
 
-export async function rollbackImport(shelf, exists) {
-    if (shelf === EVERYTHING) {
-        await cleanFailedImport(EVERYTHING, true);
-
-        const rollbackNode = await bookmarkManager.queryUnlisted("_" + EVERYTHING);
-        await unmaskUUIDs(rollbackNode);
-        const shelves = await bookmarkManager.getChildNodes(rollbackNode.id);
-        await relocateNodes(shelves, null);
-
-        await bookmarkManager.deleteNodesLowLevel(rollbackNode.id);
-
-        await rollbackImport(DEFAULT_SHELF_NAME, true);
-    }
-    else {
-        await cleanFailedImport(shelf, exists);
-
-        const rollbackNode = await bookmarkManager.queryUnlisted("_" + shelf);
-        shelf = await bookmarkManager.queryShelf(shelf);
-        if (rollbackNode && shelf) {
-            await unmaskUUIDs(rollbackNode);
-            const nodes = await bookmarkManager.getChildNodes(rollbackNode.id);
-            await relocateNodes(nodes, shelf);
-            await bookmarkManager.deleteNodesLowLevel(rollbackNode.id);
+export class Import {
+    static create(format) {
+        switch (format) {
+            case "json":
+            case "jsonl":
+                return new StructuredStreamImporterBuilder(new StructuredUnmarshallerJSON());
+            case "org":
+                return new StreamImporterBuilder(new UnmarshallerORG());
+            case "html":
+                return new NetscapeImporterBuilder(null);
+            case "rdf":
+                return new RDFImporterBuilder(null);
         }
+    }
+
+    static async prepare(shelf) {
+        if (settings.undo_failed_imports())
+            return;
+
+        if (shelf === EVERYTHING) {
+            return ExportArea.prepareToImportEverything();
+        }
+        else {
+            shelf = await Query.shelf(shelf);
+
+            if (shelf && shelf.name === DEFAULT_SHELF_NAME) {
+                return Bookmark.deleteChildren(shelf.id);
+            } else if (shelf) {
+                return Bookmark.delete(shelf.id);
+            }
+        }
+    }
+
+    static async transaction(shelf, importer) {
+        return importTransaction(shelf, importer);
     }
 }
 
-export async function importTransaction(shelf, importf) {
-    const exists = shelf === EVERYTHING || !!await bookmarkManager.queryShelf(shelf);
-    const undo = settings.undo_failed_imports();
 
-    if (exists && undo) {
-        try { send.importInitializingTransaction(); } catch {}
 
-        await cleanRollback();
-        _tm()
-        await createRollback(shelf);
-        _te()
-    }
-
-    let result;
-    try {
-        result = await importf();
-    }
-    catch (e) {
-        if (undo) {
-            try { send.importRollingBack(); } catch {}
-
-            await rollbackImport(shelf, exists);
-        }
-        throw e;
-    }
-
-    if (exists && undo) {
-        try { send.importFinalizingTransaction(); } catch {}
-
-        await cleanRollback(shelf);
-    }
-
-    return result;
-}

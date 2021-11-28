@@ -64,10 +64,15 @@ export async function getFavicon(url, doc) {
     }
 
     if (doc) {
-        const origin = new URL(url).origin;
-        const faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
+        try {
+            const origin = new URL(url).origin;
+            const faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
 
-        return (faviconElt && await testFavicon(new URL(faviconElt.href, origin)))
-            || await testFavicon(new URL("/favicon.ico", origin));
+            return (faviconElt && await testFavicon(new URL(faviconElt.href, origin)))
+                || await testFavicon(new URL("/favicon.ico", origin));
+        }
+        catch (e) {
+            console.error(e);
+        }
     }
 }

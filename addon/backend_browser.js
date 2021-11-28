@@ -1,13 +1,17 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {bookmarkManager} from "./backend.js";
 import {
     FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
     FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
     NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF, NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
-    isContainer, isEndpoint, FIREFOX_SPECIAL_FOLDERS,
+    isContainer, isEndpoint, FIREFOX_SPECIAL_FOLDERS, BROWSER_EXTERNAL_NAME,
 } from "./storage.js";
+import {ExternalNode} from "./storage_node_external.js";
+import {Path} from "./path.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {Node} from "./storage_entities.js";
+import {CONTEXT_FOREGROUND, getContextType} from "./utils_browser.js";
 
 const CATEGORY_ADDED = 0;
 const CATEGORY_CHANGED = 1;
@@ -42,7 +46,7 @@ export class BrowserBackend {
                 name: FIREFOX_SHELF_NAME,
                 uuid: FIREFOX_SHELF_UUID,
                 type: NODE_TYPE_SHELF,
-                external: FIREFOX_SHELF_NAME};
+                external: BROWSER_EXTERNAL_NAME};
     }
 
     _convertType(node) {
@@ -61,7 +65,7 @@ export class BrowserBackend {
     }
 
     _isUIContext() {
-        return window.location.pathname !== "/background.html";
+        return getContextType() === CONTEXT_FOREGROUND;
     }
 
     markUIBookmarks(bookmarks, category) {
@@ -94,55 +98,159 @@ export class BrowserBackend {
             type: this._convertType(bookmark),
             parent_id: parent.id,
             date_added: bookmark.dateAdded,
-            external: FIREFOX_SHELF_NAME,
+            external: BROWSER_EXTERNAL_NAME,
             external_id: bookmark.id
         };
     }
 
     async createBrowserBookmark(node, parentId) {
+        if (!node.uri && !isContainer(node))
+            return;
+
         const type = this._toBrowserType(node);
         const bookmark = await browser.bookmarks.create({
-                                            url: node.uri,
-                                            title: node.type === NODE_TYPE_SEPARATOR? undefined: node.name,
-                                            type: type,
-                                            parentId: parentId,
-                                            index: type === "folder"? undefined: node.pos
-                                        });
+            url: node.uri,
+            title: node.type === NODE_TYPE_SEPARATOR? undefined: node.name,
+            type: type,
+            parentId: parentId,
+            index: type === "folder"? undefined: node.pos
+        });
 
         this.markUIBookmarks(bookmark.id, CATEGORY_ADDED);
 
-        node.external = FIREFOX_SHELF_NAME;
+        node.external = BROWSER_EXTERNAL_NAME;
         node.external_id = bookmark.id;
-        return bookmarkManager.updateNode(node);
+        return Node.update(node);
+    }
+
+    async createBookmarkFolder(node, parent) {
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
+            return;
+
+        return this.muteBrowserListeners(() => this.createBrowserBookmark(node, parent.external_id));
     }
 
     async createBookmark(node, parent) {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        if (parent.external === FIREFOX_SHELF_NAME)
-            return this.muteBrowserListeners(() => this.createBrowserBookmark(node, parent.external_id));
+        return this.muteBrowserListeners(() => this.createBrowserBookmark(node, parent.external_id));
     }
 
-    async createBookmarkFolder(node, parentId) {
+    async renameBookmark(node) {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        if (typeof parentId !== "object")
-            parentId = await bookmarkManager.getNode(parentId);
+        this.markUIBookmarks(node.external_id, CATEGORY_CHANGED);
+        return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id, {title: node.name}));
+    }
 
-        if (parentId && parentId.external === FIREFOX_SHELF_NAME)
-            return this.muteBrowserListeners(() => this.createBrowserBookmark(node, parentId.external_id));
+    async moveBookmarks(dest, nodes) {
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
+            return;
+
+        let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME);
+        let otherNodes = nodes.filter(n => n.external !== BROWSER_EXTERNAL_NAME);
+
+        return this.muteBrowserListeners(async () => {
+            if (dest.external === BROWSER_EXTERNAL_NAME) {
+                await Promise.all(browserNodes.map(n => {
+                        this.markUIBookmarks(n.external_id, CATEGORY_MOVED);
+                        return browser.bookmarks.move(n.external_id, {parentId: dest.external_id, index: n.pos})
+                    }
+                ));
+
+                return Promise.all(otherNodes.map(n => {
+                    if (isContainer(n)) {
+                        return Bookmark.traverse(n, (parent, node) =>
+                            this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id));
+                    }
+                    else
+                        return this.createBrowserBookmark(n, dest.external_id)
+                }));
+            } else {
+                return Promise.all(browserNodes.map(async n => {
+                    let id = n.external_id;
+
+                    n.external = undefined;
+                    n.external_id = undefined;
+                    await Node.update(n);
+
+                    try {
+                        if (isContainer(n)) {
+                            await Bookmark.traverse(n, async (parent, node) => {
+                                if (parent) {
+                                    node.external = undefined;
+                                    node.external_id = undefined;
+                                    await Node.update(node);
+                                }
+                            });
+                            this.markUIBookmarks(id, CATEGORY_REMOVED);
+                            return browser.bookmarks.removeTree(id);
+                        }
+                        else {
+                            this.markUIBookmarks(id, CATEGORY_REMOVED);
+                            return browser.bookmarks.remove(id);
+                        }
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
+                }));
+            }
+        });
+    }
+
+    async copyBookmarks(dest, nodes) {
+        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
+            return;
+
+        let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME);
+        //let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
+
+        return this.muteBrowserListeners(async () => {
+            if (dest.external === BROWSER_EXTERNAL_NAME) {
+                return Promise.all(nodes.map(async n => {
+                    if (isContainer(n)) {
+                        return Bookmark.traverse(n, (parent, node) =>
+                            this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id));
+                    }
+                    else
+                        return this.createBrowserBookmark(n, dest.external_id)
+                }));
+            } else {
+                return Promise.all(browserNodes.map(async n => {
+                    n.external = undefined;
+                    n.external_id = undefined;
+                    await Node.update(n);
+
+                    try {
+                        if (isContainer(n)) {
+                            await Bookmark.traverse(n, async (parent, node) => {
+                                if (parent) {
+                                    node.external = undefined;
+                                    node.external_id = undefined;
+                                    await Node.update(node);
+                                }
+                            });
+                        }
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
+                }));
+            }
+        });
     }
 
     async deleteBookmarks(nodes) {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        let externalEndpoints = nodes.filter(n => n.external === FIREFOX_SHELF_NAME
+        let externalEndpoints = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME
                                                         && (isEndpoint(n) || n.type === NODE_TYPE_SEPARATOR));
 
-        let externalGroups = nodes.filter(n => n.external === FIREFOX_SHELF_NAME &&  n.type === NODE_TYPE_GROUP);
+        let externalGroups = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME &&  n.type === NODE_TYPE_GROUP);
 
         if (externalEndpoints.length || externalGroups.length)
             return this.muteBrowserListeners(async () => {
@@ -168,138 +276,20 @@ export class BrowserBackend {
             });
     }
 
-    async renameBookmark(node) {
-        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
-            return;
-
-        if (node.external === FIREFOX_SHELF_NAME) {
-            this.markUIBookmarks(node.external_id, CATEGORY_CHANGED);
-            return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id, {title: node.name}));
-        }
-    }
-
     async updateBookmark(node) {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        if (node.external === FIREFOX_SHELF_NAME) {
-            this.markUIBookmarks(node.external_id, CATEGORY_CHANGED);
-            return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id,
-                                                                                    {title: node.name, url: node.uri}));
-        }
-    }
-
-    async moveBookmarks(nodes, destId) {
-        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
-            return;
-
-        let dest = await bookmarkManager.getNode(destId);
-        let browserNodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
-        let otherNodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
-
-        if (dest.external !== FIREFOX_SHELF_NAME && !browserNodes.length)
-            return;
-
-        return this.muteBrowserListeners(async () => {
-            if (dest.external === FIREFOX_SHELF_NAME) {
-                await Promise.all(browserNodes.map(n => {
-                        this.markUIBookmarks(n.external_id, CATEGORY_MOVED);
-                        return browser.bookmarks.move(n.external_id, {parentId: dest.external_id, index: n.pos})
-                    }
-                ));
-
-                return Promise.all(otherNodes.map(n => {
-                    if (isContainer(n)) {
-                        return bookmarkManager.traverse(n, (parent, node) =>
-                            this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id));
-                    }
-                    else
-                        return this.createBrowserBookmark(n, dest.external_id)
-                }));
-            } else {
-                return Promise.all(browserNodes.map(async n => {
-                    let id = n.external_id;
-
-                    n.external = undefined;
-                    n.external_id = undefined;
-                    await bookmarkManager.updateNode(n);
-
-                    try {
-                        if (isContainer(n)) {
-                            await bookmarkManager.traverse(n, async (parent, node) => {
-                                if (parent) {
-                                    node.external = undefined;
-                                    node.external_id = undefined;
-                                    await bookmarkManager.updateNode(node);
-                                }
-                            });
-                            this.markUIBookmarks(id, CATEGORY_REMOVED);
-                            return browser.bookmarks.removeTree(id);
-                        }
-                        else {
-                            this.markUIBookmarks(id, CATEGORY_REMOVED);
-                            return browser.bookmarks.remove(id);
-                        }
-                    }
-                    catch (e) {
-                        console.error(e);
-                    }
-                }));
-            }
-        });
-    }
-
-    async copyBookmarks(nodes, destId) {
-        if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
-            return;
-
-        let dest = await bookmarkManager.getNode(destId);
-        let browserNodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME);
-        //let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
-
-        if (dest.external !== FIREFOX_SHELF_NAME && !browserNodes.length)
-            return;
-
-        return this.muteBrowserListeners(async () => {
-            if (dest.external === FIREFOX_SHELF_NAME) {
-                return Promise.all(nodes.map(async n => {
-                    if (isContainer(n)) {
-                        return bookmarkManager.traverse(n, (parent, node) =>
-                            this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id));
-                    }
-                    else
-                        return this.createBrowserBookmark(n, dest.external_id)
-                }));
-            } else {
-                return Promise.all(browserNodes.map(async n => {
-                    n.external = undefined;
-                    n.external_id = undefined;
-                    await bookmarkManager.updateNode(n);
-
-                    try {
-                        if (isContainer(n)) {
-                            await bookmarkManager.traverse(n, async (parent, node) => {
-                                if (parent) {
-                                    node.external = undefined;
-                                    node.external_id = undefined;
-                                    await bookmarkManager.updateNode(node);
-                                }
-                            });
-                        }
-                    }
-                    catch (e) {
-                        console.error(e);
-                    }
-                }));
-            }
-        });
+        this.markUIBookmarks(node.external_id, CATEGORY_CHANGED);
+        return this.muteBrowserListeners(async () => browser.bookmarks.update(node.external_id,
+                                                                                {title: node.name, url: node.uri}));
     }
 
     async reorderBookmarks(nodes) {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        nodes = nodes.filter(n => n.external === FIREFOX_SHELF_NAME && n.external_id);
+        nodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME && n.external_id);
 
         if (nodes.length)
             return this.muteBrowserListeners(async () => {
@@ -317,11 +307,11 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let parent = await bookmarkManager.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
+            let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_NAME);
             if (parent) {
                 let node = this.convertBookmark(bookmark, parent);
-                node = await bookmarkManager.addNode(node);
-                await bookmarkManager.storeIconFromURI(node);
+                node = await Node.add(node);
+                await Bookmark.storeIconFromURI(node);
 
                 if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                     send.bookmarkCreated({node: node});
@@ -339,9 +329,9 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let node = await bookmarkManager.getExternalNode(id, FIREFOX_SHELF_NAME);
+            let node = await ExternalNode.get(id, BROWSER_EXTERNAL_NAME);
             if (node) {
-                await bookmarkManager.deleteNodes([node.id], FIREFOX_SHELF_NAME);
+                await Bookmark.delete([node.id]);
                 send.externalNodeRemoved({node: node});
             }
         }
@@ -357,11 +347,11 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let node = await bookmarkManager.getExternalNode(id, FIREFOX_SHELF_NAME);
+            let node = await ExternalNode.get(id, BROWSER_EXTERNAL_NAME);
             if (node) {
                 node.uri = bookmark.url;
                 node.name = bookmark.title;
-                node = await bookmarkManager.updateNode(node);
+                node = await Node.update(node);
                 send.externalNodeUpdated({node: node});
             }
         }
@@ -377,7 +367,7 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let parent = await bookmarkManager.getExternalNode(bookmark.parentId, FIREFOX_SHELF_NAME);
+            let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_NAME);
 
             if (parent) {
                 let browserBookmarks = await browser.bookmarks.getChildren(bookmark.parentId);
@@ -385,7 +375,7 @@ export class BrowserBackend {
                 let updatedNode;
 
                 for (let browserBookmark of browserBookmarks) {
-                    let dbBookmark = await bookmarkManager.getExternalNode(browserBookmark.id, FIREFOX_SHELF_NAME);
+                    let dbBookmark = await ExternalNode.get(browserBookmark.id, BROWSER_EXTERNAL_NAME);
 
                     if (dbBookmark) {
                         if (browserBookmark.id === id) {
@@ -398,10 +388,10 @@ export class BrowserBackend {
                     }
                 }
 
-                await bookmarkManager.reorderNodes(dbBookmarks);
+                await Bookmark.reorder(dbBookmarks);
 
                 if (updatedNode)
-                    await bookmarkManager.updateNode(updatedNode);
+                    await Node.update(updatedNode);
 
                 if (updatedNode.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark())
                     send.bookmarkCreated({node: updatedNode});
@@ -481,11 +471,20 @@ export class BrowserBackend {
         }
     }
 
+    async saveFirefoxBookmarkFolderNames() {
+        const bookmarkMenu = await ExternalNode.get(FIREFOX_BOOKMARK_MENU, BROWSER_EXTERNAL_NAME);
+        if (bookmarkMenu)
+            Path.storeSubstitute("@", FIREFOX_SHELF_NAME + "/" + bookmarkMenu.name);
+
+        const unfiledMenu = await ExternalNode.get(FIREFOX_BOOKMARK_UNFILED, BROWSER_EXTERNAL_NAME);
+        if (unfiledMenu)
+            Path.storeSubstitute("@@", FIREFOX_SHELF_NAME + "/" + unfiledMenu.name);
+    }
+
     // should only be called in the background script through message
     async reconcileBrowserBookmarksDB() {
-        let getIcons = [];
+        let iconsToGet = [];
         let browserIds = [];
-        let beginTime = new Date().getTime();
         let dbPool = new Map();
 
         let reconcile = async (databaseNode, bookmark) => { // node, bookmark
@@ -494,20 +493,23 @@ export class BrowserBackend {
 
                 let node = dbPool.get(browserNode.id);
                 if (node) {
-                    if (node.name !== browserNode.title || node.uri !== browserNode.url
-                        || node.pos !== browserNode.index || node.parent_id !== databaseNode.id) {
+                    if (node.name !== browserNode.title
+                        || node.uri !== browserNode.url
+                        || node.pos !== browserNode.index
+                        || node.parent_id !== databaseNode.id) {
+
                         node.name = browserNode.title;
                         node.uri = browserNode.url;
                         node.pos = browserNode.index;
                         node.parent_id = databaseNode.id;
-                        await bookmarkManager.updateNode(node);
+                        await Node.update(node);
                     }
                 }
                 else {
-                    node = await bookmarkManager.addNode(this.convertBookmark(browserNode, databaseNode), false);
+                    node = await Node.add(this.convertBookmark(browserNode, databaseNode));
 
                     if (node.type === NODE_TYPE_BOOKMARK && node.uri)
-                        getIcons.push([node.id, node.uri])
+                        iconsToGet.push([node.id, node.uri])
                 }
 
                 if (browserNode.type === "folder")
@@ -516,52 +518,51 @@ export class BrowserBackend {
         };
 
         if (settings.show_firefox_bookmarks()) {
+            let beginTime = new Date().getTime();
+
             this.removeBrowserListeners();
 
-            let dbRoot = await bookmarkManager.getNode(FIREFOX_SHELF_ID);
+            let dbRoot = await Node.get(FIREFOX_SHELF_ID);
             if (!dbRoot) {
-                dbRoot = await bookmarkManager.addNode(this.newBrowserRootNode(),
-                    false, true, false);
+                const node = this.newBrowserRootNode();
+                Node.resetDates(node);
+                dbRoot = await Node.import(node);
                 send.shelvesChanged();
             }
 
             let [browserRoot] = await browser.bookmarks.getTree();
 
-            dbPool = new Map((await bookmarkManager.getExternalNodes(FIREFOX_SHELF_NAME)).map(n => [n.external_id, n]));
+            dbPool = new Map((await ExternalNode.get(BROWSER_EXTERNAL_NAME)).map(n => [n.external_id, n]));
 
-            await reconcile(dbRoot, browserRoot).then(async () => {
+            try {
+                await reconcile(dbRoot, browserRoot);
                 browserRoot = null;
                 dbPool = null;
 
-                await bookmarkManager.deleteMissingExternalNodes(browserIds, FIREFOX_SHELF_NAME);
+                await this.saveFirefoxBookmarkFolderNames();
 
-                //console.log("reconciliation time: " + ((new Date().getTime() - beginTime) / 1000) + "s");
+                await ExternalNode.deleteMissingIn(browserIds, BROWSER_EXTERNAL_NAME);
+
                 send.externalNodesReady();
 
-                for (let item of getIcons) {
-                    let node = await bookmarkManager.getNode(item[0]);
-                    await bookmarkManager.storeIconFromURI(node);
+                for (let tuple of iconsToGet) {
+                    let node = await Node.get(tuple[0]);
+                    await Bookmark.storeIconFromURI(node);
                 }
 
-                bookmarkManager.getExternalNode(FIREFOX_BOOKMARK_MENU, FIREFOX_SHELF_NAME).then(node => {
-                    if (node)
-                        browser.extension.getBackgroundPage()._browserBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
-                });
-
-                bookmarkManager.getExternalNode(FIREFOX_BOOKMARK_UNFILED, FIREFOX_SHELF_NAME).then(node => {
-                    if (node)
-                        browser.extension.getBackgroundPage()._unfiledBookmarkPath = FIREFOX_SHELF_NAME + "/" + node.name;
-                });
-
-                if (getIcons.length)
+                if (iconsToGet.length)
                     setTimeout(() => send.externalNodesReady(), 500);
 
                 this.installBrowserListeners();
-            });
+                //console.log("reconciliation time: " + ((new Date().getTime() - beginTime) / 1000) + "s");
+            }
+            catch (e) {
+                console.error(e);
+            }
         }
         else {
             this.removeBrowserListeners();
-            await bookmarkManager.deleteExternalNodes(FIREFOX_SHELF_NAME);
+            await ExternalNode.delete(BROWSER_EXTERNAL_NAME);
             send.shelvesChanged();
         }
     }

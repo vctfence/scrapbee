@@ -256,7 +256,7 @@ function lockDocument() {
         lock.style.justifyContent = "center";
 
         let image = document.createElement("object");
-        image.setAttribute("data", browser.extension.getURL(`icons/lock.svg`));
+        image.setAttribute("data", browser.runtime.getURL(`icons/lock.svg`));
         image.setAttribute("type", "image/svg+xml");
         lock.appendChild(image);
 
@@ -985,7 +985,7 @@ function initializeBeforeSave()
 
         // Scrapyard //////////////////////////////////////////////////////////////////
         if (loadShadowDom && !shadowLoaderText)
-            fetch(browser.extension.getURL("savepage/shadowloader.js"))
+            fetch(browser.runtime.getURL("savepage/shadowloader.js"))
                 .then(response => response.text())
                 .then(text => shadowLoaderText = text)
                 .then(gatherStyleSheets)

@@ -60,6 +60,7 @@
         <a class="settings-menu-item" href="#settings">Settings</a>
         <a class="settings-menu-item" href="#capturesettings">Page Capture</a>
         <a class="settings-menu-item" href="#cloud">Cloud</a>
+        <a class="settings-menu-item" href="#sync">Sync</a>
         <a class="settings-menu-item" href="#backup">Backup</a>
         <a class="settings-menu-item" href="#links">Check Links</a>
         <a class="settings-menu-item" href="#importrdf">Import RDF</a>
@@ -123,9 +124,9 @@
                                         /><label for="option-show-firefox-bookmarks">Enable Firefox bookmarks integration</label>
                                         <div style="margin: 0; margin-left: 20px; width: max-content;">
                                             <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"
-                                            /><label for="option-show-firefox-bookmarks-toolbar">Show bookmark toolbar folder</label><br>
+                                            /><label for="option-show-firefox-bookmarks-toolbar">Show the bookmark toolbar folder</label><br>
                                             <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"
-                                            /><label for="option-show-firefox-bookmarks-mobile" style="display: none">Show mobile bookmarks folder</label>
+                                            /><label for="option-show-firefox-bookmarks-mobile" style="display: none">Show the mobile bookmarks folder</label>
                                         </div>
                                     </fieldset>
                                 </form>
@@ -157,7 +158,7 @@
                                         <input id="option-display-random-bookmark" type="checkbox"/><label for="option-display-random-bookmark"
                                         >Display random bookmarks in the sidebar</label>
                                         <i class="help-mark"></i>
-                                        <span class="tips hide">Display random bookmarks from your collection at the bottom of sidebar.</span>
+                                        <span class="tips hide">Display random bookmarks from your collection at the bottom of the sidebar.</span>
                                     </div>
                                 </fieldset>
                             </form>
@@ -199,13 +200,13 @@
                             <form>
                                 <fieldset style="border: none;">
                                     <input id="option-use-helper-app-for-export" type="checkbox"/><label for="option-use-helper-app-for-export"
-                                        >Use helper application to accelerate export</label><br>
+                                        >Use the helper application to accelerate export</label><br>
                                     <div class="align-checkbox">
                                         <input id="option-undo-failed-imports" type="checkbox"/><label for="option-undo-failed-imports"
                                             >Undo failed imports</label>
                                         <i class="help-mark"></i>
-                                        <span class="tips hide">Restore database at the state before a failed import.<br>
-                                            May require twice as much time and disk space.</span>
+                                        <span class="tips hide">Return the Scrapyard database at the state before a failed import or backup restore.<br>
+                                            This may require twice as much time and disk space as the size of the imported content.</span>
                                     </div>
                                 </fieldset>
                             </form>
@@ -230,7 +231,7 @@
                                 <fieldset style="border: none;">
                                     <div class="align-checkbox">
                                         <input id="option-browse-with-helper" type="checkbox"
-                                        /><label for="option-browse-with-helper">Use helper application to browse archives</label>
+                                        /><label for="option-browse-with-helper">Use the helper application to browse archives</label>
                                         <i class="help-mark"></i>
                                         <div class="tips hide">Check this only if you need to execute saved scripts, load embedded content and shadow DOM.<br>
                                         Note that scripts are not saved by default (see the page capture settings).</div>
@@ -447,6 +448,59 @@
             </tr>
         </table>
     </div>
+    <div id="div-sync" class="settings-content" style="display:none;">
+        <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
+            <tr>
+                <td style="width: 98px">Status</td>
+                <td>
+                    <div class="panel double-container">
+                        <div class="double-first">
+                            <form>
+                                <fieldset style="border: none; align-items: center;">
+                                    <input type="checkbox" id="option-enable-sync"><label for="option-enable-sync">Enable synchronization</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide" style="font-weight: normal">Correctness of synchronization depends on properly set system time.</span>
+                                    <div class="align-checkbox">
+                                        <input type="checkbox" id="option-background-sync"><label for="option-background-sync">Background synchronization</label>
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="double-last">
+                            <form>
+                                <fieldset style="border: none;">
+                                    <input type="checkbox" id="option-sync-on-startup"><label for="option-sync-on-startup">Synchronize on startup</label>
+                                    <div class="align-checkbox">
+                                        <input type="checkbox" id="option-sync-on-close-sidebar"><label for="option-sync-on-close-sidebar">Synchronize when I close sidebar</label>
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="margin-left: 14px;">Folder</td>
+                <td>
+                    <div class="panel" style="">
+                        <form>
+                            <fieldset style="border: none; display: flex; align-items: center;">
+                                <div id="sync-directory-path-container">
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">For example: <b>d:\my cloud\scrapyard</b> or <b>~/cloud/scrapyard</b></span>
+                                    <input id="sync-directory-path" type="text"/>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr id="sync-last-date-pane">
+                <td style="margin-left: 14px;">&nbsp;</td>
+                <td id="sync-last-date"></td>
+            </tr>
+        </table>
+    </div>
     <div id="div-backup" class="settings-content" style="display:none;"></div>
     <div id="div-links" class="settings-content" style="display:none;"></div>
     <div id="div-importrdf" class="settings-content" style="display:none;"></div>
@@ -457,18 +511,18 @@
                 by providing several features that are otherwise impossible:</p>
         <ul>
             <li>Import and browse Scrapbook RDF archives from any filesystem location.</li>
-            <li>Run scripts and display embedded objects at the saved pages.</li>
+            <li>Run scripts and display embedded objects on the saved pages.</li>
             <li>Improve export performance.</li>
             <li>Upload local files.</li>
             <li>Manage backups.</li>
+            <li>Synchronization.</li>
         </ul>
 
             <p id="helper-app-version-installed"><b>Installed version:</b> checking...</p>
             <p id="helper-app-version"><b>Latest version:</b> checking...</p>
 
-
-            <p>On Windows the helper application could be installed automatically without the need of any configuration. It could also be installed
-                manually on any system that supports Python 3.6+ with Tcl/Tk (you may need to consult
+            <p>On Windows, the helper application could be installed automatically without the need for any configuration. It could also be installed
+                manually on any system that supports Python 3.7+ with Tcl/Tk (you may need to consult
                 <a href="https://wiki.mozilla.org/WebExtensions/Native_Messaging#Host_Manifests" target="_blank">Mozilla Wiki</a>
                 for more details on the configuration of native messaging).</p>
 
@@ -483,10 +537,10 @@
         </div>
     </div>
     <div id="div-help" class="settings-content" style="display:none;"></div>
-    <div id="div-diagnostics" class="settings-content" style="display:none;">
+    <div id="div-diagnostics" class="settinges-content" style="display:none;">
         <div id="diagnostics-container">
             <h2>Scrapyard Diagnostics</h2>
-            <p>Please do not try to reinstall the add-on. Create an issue at the Scrapyard
+            <p id="diagnostics-guide">Please do not try to reinstall the add-on. Create an issue at the Scrapyard
                 <a href="https://github.com/GChristensen/scrapyard/issues" target="_blank">support page</a>
                 with the info below.</p>
 

@@ -1,13 +1,14 @@
 import {settings} from "../settings.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
-import {bookmarkManager} from "../backend.js";
 import {send} from "../proxy.js";
 import {EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
 import {getFavicon} from "../favicon.js";
 import {fetchWithTimeout} from "../utils_io.js";
 import {confirm} from "./dialog.js";
-import {openPage, showNotification} from "../utils_browser.js";
-import {sleep} from "../utils.js";
+import {showNotification} from "../utils_browser.js";
+import {Node} from "../storage_entities.js";
+import {Path} from "../path.js";
+import {Bookmark} from "../bookmarks_bookmark.js";
 
 const DEFAULT_LINK_CHECK_TIMEOUT = 10;
 
@@ -56,7 +57,7 @@ export class LinkChecker {
 
         if (this.autoStartCheckLinks) {
             $("#update-icons").prop("checked", urlParams.get("repairIcons") === "true");
-            let scopePath = await bookmarkManager.computePath(parseInt(urlParams.get("scope")));
+            let scopePath = await Path.compute(parseInt(urlParams.get("scope")));
             $("#link-check-scope-container", $("#check-links"))
                 .replaceWith(`<span style="white-space: nowrap">${scopePath.slice(-1)[0].name}&nbsp;&nbsp;</span>`);
             this.autoLinkCheckScope = scopePath.map(g => g.name).join("/");
@@ -82,7 +83,7 @@ export class LinkChecker {
     }
 
     async _makeBreadCrumb(node) {
-        const path = await bookmarkManager.computePath(node.id);
+        const path = await Path.compute(node);
         path.length = path.length - 1;
 
         let breadcrumb = " &#187; ";
@@ -124,11 +125,11 @@ export class LinkChecker {
 
             if (favicon) {
                 node.icon = favicon;
-                await bookmarkManager.storeIcon(node);
+                await Bookmark.storeIcon(node);
             }
             else if (node.icon && !node.stored_icon) {
                 node.icon = undefined;
-                await bookmarkManager.updateNode(node);
+                await Node.update(node);
             }
         }
 
@@ -177,7 +178,7 @@ export class LinkChecker {
             }
         }
 
-        const nodes = await bookmarkManager.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
+        const nodes = await Bookmark.list({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
 
         for (let node of nodes) {
             if (this.abortCheckLinks)
@@ -222,7 +223,7 @@ export class LinkChecker {
 
                 if (networkError && updateIcons && node.icon && !node.stored_icon) {
                     node.icon = undefined;
-                    await bookmarkManager.updateNode(node);
+                    await Node.update(node);
                 }
             }
             else if (updateIcons && contentType?.toLowerCase()?.startsWith("text/html")) {
@@ -252,7 +253,7 @@ export class LinkChecker {
 
         send.startProcessingIndication({noWait: true})
 
-        const nodes = await bookmarkManager.listNodes({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
+        const nodes = await Bookmark.list({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
         const links = new Map();
 
         for (let node of nodes) {
@@ -360,7 +361,7 @@ export class LinkChecker {
                 this.stopCheckLinks();
             }
         } else if (this.checkIsInProgress && startCheckLinksButton.val() === "Check") {
-            showNotification("Please wait.")
+            showNotification("Please wait and retry later.")
         }
         else {
             this.stopCheckLinks();

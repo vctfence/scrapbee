@@ -1,10 +1,10 @@
 import {send} from "../proxy.js";
 import {settings} from "../settings.js";
-import {bookmarkManager} from "../backend.js";
 import {showNotification} from "../utils_browser.js";
 import {alert, confirm} from "./dialog.js";
 import {formatBytes} from "../utils.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
+import {systemInitialization} from "../bookmarks_init.js";
 
 function initHelpMarks() {
     $(".help-mark").hover(function(e){
@@ -123,12 +123,27 @@ function configureMaintenancePanel() {
     $("#reset-cloud-link").on("click", async e => {
         e.preventDefault();
 
-        if (await confirm("Warning", "This will remove all cloud shelf content. Continue?")) {
+        if (await confirm("Warning", "This will remove all contents of the Cloud shelf. Continue?")) {
             let success = await send.resetCloud();
 
             if (!success)
                 showNotification("Error accessing cloud.")
         }
+    });
+
+    $("#reset-sync-link").on("click", async e => {
+        e.preventDefault();
+
+        if (await confirm("Warning", "This will reset all contents of the Sync storage on disk. Continue?"))
+            await send.resetSync();
+    });
+
+
+    $("#reset-scrapyard-link").on("click", async e => {
+        e.preventDefault();
+
+        if (await confirm("Warning", "This will remove all contents in Scrapyard. Continue?"))
+            await send.resetScrapyard();
     });
 
     $("#statistics-link").on("click", async e => {
@@ -235,7 +250,7 @@ function configureImpExpPanel() {
 }
 
 window.onload = async function() {
-    await bookmarkManager;
+    await systemInitialization;
 
     initHelpMarks();
     configureAutomationPanel();

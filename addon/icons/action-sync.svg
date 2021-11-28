@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2021.5 -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="199px" height="199px" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 199 199"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .fil0 {fill:#FF9D33}
+   ]]>
+  </style>
+ </defs>
+ <g id="Layer_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <path class="fil0" d="M99.5 0c54.95,0 99.5,44.55 99.5,99.5 0,54.95 -44.55,99.5 -99.5,99.5 -54.95,0 -99.5,-44.55 -99.5,-99.5 0,-54.95 44.55,-99.5 99.5,-99.5zm51.41 92.2c2.25,15.48 -2.48,31.78 -14.55,43.67 -17.84,17.61 -45.36,19.77 -65.6,6.55l14.18 -13.82 -52.12 -7.27 7.28 50.9 15.91 -15.25c28.58,21.07 69.12,19.08 95.09,-6.55 15.05,-14.85 21.92,-34.57 21.07,-54.03l-21.26 -4.2zm-88.26 -29.05c17.83,-17.6 45.35,-19.78 65.59,-6.55l-14.21 13.82 52.12 7.28 -7.27 -50.92 -15.89 15.28c-28.59,-21.09 -69.11,-19.08 -95.09,6.54 -15.05,14.85 -21.91,34.57 -21.07,54.03l21.26 4.19c-2.25,-15.49 2.49,-31.77 14.56,-43.67z"/>
+ <!--animate attributeType="CSS" attributeName="transform" 
+           from="scaleX(1)" to="scaleX(-1)" dur="3s" repeatCount="indefinite" /-->
+ </g>
+
+ <style>
+
+   #Layer_x0020_1 {
+     animation: loading-spinner 3s linear infinite;
+   }
+
+   @keyframes loading-spinner {
+     from {
+       transform: rotate(0deg);
+       transform-origin: 50% 50%;
+     }
+     to {
+       transform: rotate(360deg);
+       transform-origin: 50% 50%;
+     }
+   }
+  
+ </style>
+</svg>

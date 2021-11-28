@@ -1,14 +1,15 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {JSONStorage} from "./storage_json.js";
 
 import DropboxAuth from "./lib/dropbox/auth.js";
 import Dropbox from "./lib/dropbox/dropbox.js"
 import {readBlob} from "./utils_io.js";
+import {CloudStorage} from "./storage_cloud.js";
 
 const APP_KEY = "0y7co3j1k4oc7up";
 const DROPBOX_APP_PATH = "/Cloud";
-const DROPBOX_INDEX_PATH = "/Cloud/index.json";
+const DROPBOX_INDEX_PATH_V0 = "/Cloud/index.json";
+const DROPBOX_INDEX_PATH = "/Cloud/index.jsonl";
 const REDIRECT_URL = "https://gchristensen.github.io/scrapyard/";
 
 export class DropboxBackend {
@@ -44,46 +45,49 @@ export class DropboxBackend {
                     return;
                 }
 
-                this.dbxAuth.getAuthenticationUrl(REDIRECT_URL, undefined, 'code',
-                    'offline', undefined, undefined, true)
-                    .then(async authUrl => {
-                        let dropboxTab = await browser.tabs.create({url: authUrl});
-                        let listener = async (id, changed, tab) => {
-                            if (id === dropboxTab.id) {
-                                if (changed.url && changed.url.startsWith(REDIRECT_URL)) {
-                                    await browser.tabs.onUpdated.removeListener(listener);
-                                    browser.tabs.remove(dropboxTab.id);
+                try {
+                    let authUrl = await this.dbxAuth.getAuthenticationUrl(REDIRECT_URL, undefined, 'code',
+                        'offline', undefined, undefined, true);
 
-                                    if (changed.url.includes("code=")) {
-                                        const code = changed.url.match(/.*code=(.*)$/i)[1];
-                                        this.dbxAuth.getAccessTokenFromCode(REDIRECT_URL, code)
-                                            .then(async (response) => {
-                                                const refreshToken = response.result.refresh_token;
-                                                this.dbxAuth.setRefreshToken(refreshToken);
-                                                await settings.dropbox_refresh_token(refreshToken);
-                                                send.dropboxAuthenticated({refreshToken});
+                    let dropboxTab = await browser.tabs.create({url: authUrl});
 
-                                                if (settings.dropbox___dbat())
-                                                    settings.dropbox___dbat(null);
+                    let listener = async (id, changed, tab) => {
+                        if (id === dropboxTab.id && changed.url && changed.url.startsWith(REDIRECT_URL)) {
+                            await browser.tabs.onUpdated.removeListener(listener);
+                            browser.tabs.remove(dropboxTab.id);
 
-                                                resolve(true);
-                                            })
-                                            .error(e => {
-                                                console.error(e);
-                                                resolve(false);
-                                            });
-                                    }
-                                    else
-                                        resolve(false);
+                            if (changed.url.includes("code=")) {
+                                const code = changed.url.match(/.*code=(.*)$/i)[1];
+
+                                try {
+                                    let response = await this.dbxAuth.getAccessTokenFromCode(REDIRECT_URL, code);
+                                    const refreshToken = response.result.refresh_token;
+                                    this.dbxAuth.setRefreshToken(refreshToken);
+
+                                    await settings.dropbox_refresh_token(refreshToken);
+                                    send.dropboxAuthenticated({refreshToken});
+
+                                    if (settings.dropbox___dbat())
+                                        settings.dropbox___dbat(null);
+
+                                    resolve(true);
+                                }
+                                catch (e) {
+                                    console.error(e);
+                                    resolve(false);
                                 }
                             }
-                        };
-                        browser.tabs.onUpdated.addListener(listener);
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        resolve(false);
-                    });
+                            else
+                                resolve(false);
+                        }
+                    };
+
+                    browser.tabs.onUpdated.addListener(listener);
+                }
+                catch (e) {
+                    console.error(e);
+                    resolve(false);
+                }
             });
         }
         else
@@ -191,18 +195,18 @@ export class DropboxBackend {
         if (!blank)
             try {
                 const {result: {fileBlob}} = await this.dbx.filesDownload( {path: DROPBOX_INDEX_PATH});
-                storage = JSONStorage.fromJSON(await readBlob(fileBlob));
+                storage = CloudStorage.deserialize(await readBlob(fileBlob));
             }
             catch (e) {
                 if (e.status === 409) { // no index.js file
                     if (e.error.error_summary.startsWith("path/not_found"))
-                        storage = new JSONStorage({cloud: "Scrapyard"});
+                        storage = new CloudStorage({cloud: "Scrapyard"});
                     }
                 else
                     console.error(e);
             }
         else
-            storage = new JSONStorage({cloud: "Scrapyard"});
+            storage = new CloudStorage({cloud: "Scrapyard"});
 
         if (storage)
             Object.assign(storage, this.assetManager);
@@ -233,6 +237,21 @@ export class DropboxBackend {
         }
 
         return null;
+    }
+
+    async isCloudV0Present() {
+        try {
+            const {result: meta} = await this.dbx.filesGetMetadata({
+                "path": DROPBOX_INDEX_PATH_V0
+            });
+
+            return !!meta;
+        }
+        catch (e) {
+            console.error(e);
+        }
+
+        return false;
     }
 }
 
