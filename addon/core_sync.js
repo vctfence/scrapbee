@@ -3,7 +3,7 @@ import {settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
 import {nativeBackend} from "./backend_native.js";
 import {showNotification} from "./utils_browser.js";
-import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContents} from "./storage.js";
+import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent} from "./storage.js";
 import {SYNC_VERSION} from "./marshaller_json.js";
 import {ProgressCounter} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
@@ -164,9 +164,12 @@ async function getNodesForSync() {
         if (node.parent_id)
             syncNode.parent_id = id2uuid.get(node.parent_id);
 
-        date2UnixTime(syncNode, "date_modified");
+        if (syncNode.date_modified && syncNode.date_modified instanceof Date)
+            syncNode.date_modified = syncNode.date_modified.getTime();
+        else
+            syncNode.date_modified = 0;
 
-        if (!node.content_modified && isNodeHasContents(node))
+        if (!node.content_modified && isNodeHasContent(node))
             syncNode.content_modified = syncNode.date_modified;
         else if (syncNode.content_modified)
             syncNode.content_modified = syncNode.content_modified.getTime();
@@ -179,13 +182,6 @@ async function getNodesForSync() {
         defaultShelf.date_modified = 0;
 
     return syncNodes;
-}
-
-function date2UnixTime(node, field) {
-    if (node[field] && node[field] instanceof Date)
-        node[field] = node[field].getTime();
-    else
-        node[field] = 0;
 }
 
 async function performOperations(syncOperations, sync_directory) {

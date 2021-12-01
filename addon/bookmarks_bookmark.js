@@ -5,7 +5,7 @@ import {
     DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
     EVERYTHING,
-    isEndpoint, isNodeHasContents, isVirtualShelf,
+    isEndpoint, isNodeHasContent, isVirtualShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP, NODE_TYPE_NOTES,
@@ -134,7 +134,7 @@ export class BookmarkManager extends EntityManager {
         // but it should not be touched when performing a sync import
         if (!sync) {
             data.date_modified = now;
-            if (data.content_modified || isNodeHasContents(data))
+            if (data.content_modified || isNodeHasContent(data))
                 data.content_modified = data.date_modified;
         }
 

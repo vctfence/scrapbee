@@ -136,7 +136,7 @@ export function isBuiltInShelf(name) {
         || name === DONE_SHELF_NAME.toLocaleUpperCase();
 }
 
-export function isNodeHasContents(node) {
+export function isNodeHasContent(node) {
     return node.type === NODE_TYPE_ARCHIVE || node.stored_icon || node.has_notes || node.has_comments;
 }
 
