@@ -708,8 +708,9 @@ receive.fullTextSearchProgress = message => updateProgress(message);
 function updateProgress(message) {
     const progressDiv = $("#sidebar-progress");
     if (message.progress) {
-        if (message.finished)
+        if (message.finished) {
             setTimeout(() => progressDiv.css("width", "0"), 300);
+        }
         else if (message.progress === 100) {
             progressDiv.css("width", message.progress + "%");
             setTimeout(() => progressDiv.css("width", "0"), 200);

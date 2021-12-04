@@ -161,7 +161,7 @@ async function getNodesForSync() {
             content_modified: node.content_modified
         };
 
-        if (node.parent_id)
+        if (node.parent_id) 
             syncNode.parent_id = id2uuid.get(node.parent_id);
 
         if (syncNode.date_modified && syncNode.date_modified instanceof Date)

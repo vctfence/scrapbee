@@ -198,7 +198,7 @@ def compute_sync(params):
         "push": push_nodes,
         "pull": pull_nodes,
         "delete": [uuid2node_incoming[n] for n in deleted_incoming],
-        "delete_in_sync": [uuid2node_db[n] for n in deleted_in_db]
+        "delete_in_sync": [make_sync_node(uuid2node_db[n]) for n in deleted_in_db]
     }
 
     return result

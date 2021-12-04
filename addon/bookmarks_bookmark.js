@@ -281,7 +281,7 @@ export class BookmarkManager extends EntityManager {
         if (nodes.some(n => n.type === NODE_TYPE_GROUP))
             ishellBackend.invalidateCompletion();
 
-        return Query.fullSubtree(ids, false, true);
+        return Query.fullSubtree(ids, true);
     }
 
     async copy(ids, destId, moveLast) {

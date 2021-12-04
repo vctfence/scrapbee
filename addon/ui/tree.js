@@ -162,7 +162,9 @@ class BookmarkTree {
                     if (base64Url) {
                         if (!cached)
                             this.iconCache.set(jnode.icon, base64Url);
-                        (await getIconElement()).style.backgroundImage = `url("${base64Url}")`;
+                        let iconElement = await getIconElement();
+                        if (iconElement)
+                            iconElement.style.backgroundImage = `url("${base64Url}")`;
                     }
                 }
                 else {
@@ -171,9 +173,9 @@ class BookmarkTree {
                     image.onerror = async e => {
                         const fallback_icon = "var(--themed-globe-icon)";
                         jnode.icon = fallback_icon;
-                        let element = await getIconElement();
-                        if (element)
-                            element.style.backgroundImage = fallback_icon;
+                        let iconElement = await getIconElement();
+                        if (iconElement)
+                            iconElement.style.backgroundImage = fallback_icon;
                     };
                     image.src = jnode.icon;
                 }
