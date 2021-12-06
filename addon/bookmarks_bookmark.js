@@ -268,6 +268,8 @@ export class BookmarkManager extends EntityManager {
             console.error(e);
         }
 
+        // TODO: check for circular references
+
         for (let n of nodes) {
             n.parent_id = destId;
             n.name = await this.ensureUniqueName(destId, n.name);
