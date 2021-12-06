@@ -420,7 +420,9 @@ browser.browserAction.onClicked.addListener(function(){
 /* update menu */
 function updateMenu(url) {
     // var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
-    var enabled = !(new RegExp(browser.i18n.getMessage("@@extension_id")).test(url)) && /^http/.test(url);
+    var enabled = !(new RegExp(browser.i18n.getMessage("@@extension_id")).test(url)) && /^(http|https|file)\:\/\//.test(url);
+
+    
     browser.menus.update("scrapbee-capture-selection", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-page", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-url", {enabled: enabled, visible: enabled});

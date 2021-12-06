@@ -98,8 +98,8 @@ window.onload=async function(){
     browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
         let url = tabs[0].url;
         // var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
-        let disabled = new RegExp(browser.i18n.getMessage("@@extension_id")).test(url) || !(/^http/.test(url));
-        let attr = disabled ? "true" : "false";
+        var enabled = !(new RegExp(browser.i18n.getMessage("@@extension_id")).test(url)) && /^(http|https|file)\:\/\//.test(url);
+        let attr = enabled ? "false" : "true";
         $("#btnCapturePage")[0].setAttribute("disabled", attr);
         $("#btnCaptureSelection")[0].setAttribute("disabled", attr);
         $("#btnCaptureUrl")[0].setAttribute("disabled", attr);
