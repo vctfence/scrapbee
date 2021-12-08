@@ -462,28 +462,27 @@ function ajaxFormPost(url, json){
 function downloadFile(url){
     return new Promise((resolve, reject)=>{
         try{
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open("GET", url, true);
-            xmlhttp.responseType = "blob";
-            // xmlhttp.onload = function(oEvent) {
-            //     if(xmlhttp.response){
-            //         resolve(xmlhttp.response);
+            var request = new RequestRequest();
+            request.open("GET", url, true);
+            request.responseType = "blob";
+            // request.onload = function(oEvent) {
+            //     if(request.response){
+            //         resolve(request.response);
             //     }else{
             //         reject();
             //     }
             // };
-            xmlhttp.onreadystatechange=function(){
-                if(request.readyState == 4 && request.status == 200){
-                    // console.log(xmlhttp.response)
-                    resolve(xmlhttp.response);
-                }else if(request.status == 500){
-                    reject(Error(request.responseText));
+            request.onreadystatechange=function(){
+                if(this.readyState == 4 && this.status == 200){
+                    resolve(request.response);
+                }else if(this.status >= 400){
+                    reject(Error(this.responseText));
                 }
             };
-            xmlhttp.onerror = function(e){
+            request.onerror = function(e){
                 reject(e);
             };
-            xmlhttp.send();
+            request.send();
         }catch(e){
             reject();
         }

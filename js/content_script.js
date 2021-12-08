@@ -550,22 +550,22 @@ if(!window.scrapbee_injected){
     });
     function downloadFile(url, callback){
         try{
-            var oReq = new XMLHttpRequest();
-            oReq.open("GET", url, true);
-            oReq.responseType = "blob";
-            oReq.onload = function(oEvent) {
-                if(oReq.response){
-                    callback(oReq.response);
-                }else{
+            var request = new XMLHttpRequest();
+            request.open("GET", url, true);
+            request.responseType = "blob";
+            request.onreadystatechange=function(){
+                if(this.readyState == 4 && this.status == 200){
+                    callback(this.response);
+                }else if(this.status >= 400){
                     callback(false);
                 }
             };
-            oReq.onerror = function(e){
+            request.onerror = function(e){
                 callback(false);
             };
-            oReq.send();
+            request.send();
         }catch(e){
-            log.error(`download file error, ${e}`);
+            console.log(`download file error, ${e}`);
             callback(false);
         }
     }
