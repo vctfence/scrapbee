@@ -351,37 +351,38 @@ $(document).ready(async function(){
     /** download install scripts */
     $("#btnDownloadScripts").click(async function(){
         var self = this;
-        // get download path
-        downloadText("done", "scrapbee/scrapbee_backend.json").then(async function(dwInfo){
-            var [src, dest] = getBackendDownload(0);
-            
+        const extRoot = "moz-extension://" + global.extensionId;
+
+        try{
+            // download install script
+            var dwInfo;
+            if(GLOBAL.platformOS == "win")
+                dwInfo = await downloadText(installBat(download_path), "scrapbee/install.bat");
+            else if(GLOBAL.platformOS == "mac")
+                dwInfo = await downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh");
+            else
+                dwInfo = await downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh");
+
+            // download backend config file
+            var [src_exec, dest_exec] = getBackendDownload(0);
             var filename = dwInfo.filename;
             var download_path = filename.replace(/[^\\\/]*$/, "");
             var json = {"allowed_extensions": ["scrapbee@scrapbee.org"],
                         "description": "ScrapBee backend",
                         "name": "scrapbee_backend",
-                        "path": download_path + "" + dest, /** path to downloaded backend executable */
+                        "path": download_path + dest_exec, /** path to downloaded backend executable */
                         "type": "stdio"};
-            // download backend config file
+            
             var jstr = JSON.stringify(json, null, 2);
             await downloadText(jstr, "scrapbee/scrapbee_backend.json");
-            // download install script
-            const extRoot = "moz-extension://" + global.extensionId;
 
-            if(GLOBAL.platformOS=="win")
-                await downloadText(installBat(download_path), "scrapbee/install.bat");
-            else if(GLOBAL.platformOS=="mac")
-                await downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh");
-            else
-                await downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh");
-            
             $(self).next(".download-path").show()
-            $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);            
-        }).catch(e => {
-            alert(e)  
-        });
+            $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
+        }catch(e){
+            alert(e)
+        }
     });
-    
+
     /** download backend */
     $("#btnDownloadBackend").click(function(){
         var self = this;

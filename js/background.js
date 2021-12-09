@@ -33,7 +33,7 @@ function loadBrowserInfo(){
                     }else{
                         self.constructor();
                     }
-                }, 1000)
+                }, 1000);
             })();
         } else {
             browser_info_status = "loading";
