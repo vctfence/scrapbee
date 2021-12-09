@@ -162,13 +162,15 @@ if(!window.scrapbee_injected){
             await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
                 for(var i=0;i<ar.length;i++){
                     var f = ar[i];
+                    console.log(f.frameId)
                     doc.querySelectorAll("iframe,frame").forEach((iframe, i) => {
                         if(f.url == iframe.src){
                             iframe.setAttribute("scrapbee_frame_id", f.frameId);
                         }
                     });
                     try{
-                        await browser.runtime.sendMessage({type: "INJECT_FRAME", frameId: f.frameId});
+                        if(f.frameId)
+                            await browser.runtime.sendMessage({type: "INJECT_FRAME", frameId: f.frameId});
                     }catch(e){
                         console.log("invalid url: ", f.url) // about:debugging, about:addons causes an error
                     }
@@ -389,46 +391,45 @@ if(!window.scrapbee_injected){
                                     inc(i, r);
                                 };
                                 // download
-                                downloadFile(r.url, function(b){
-                                    if(b){ /* download success */
-                                        var ext = getMainMimeExt(b.type) || "";
-                                        if(r.isIcon) {
-                                            var f = "favicon" + ext;
-                                            r.filename = r.subPath + f;
-                                            blobfile[r.hex] = f;
-                                            if(request.page == 'index' && ext != ".html"){
-                                                if(ext == '.ico')
-                                                    mainIconFilename = f;
-                                                else if(ext == '.svg' && !(/\.ico$/.test(mainIconFilename)))
-                                                    mainIconFilename = f;
-                                                else if(!mainIconFilename)
-                                                    mainIconFilename = f;
-                                            }
-                                        }else{
-                                            r.filename = r.subPath + (r.saveas || (r.hex + ext));
-                                            blobfile[r.hex] = (r.saveas || (r.hex + ext));
+                                browser.runtime.sendMessage({type: 'DOWNLOAD_FILE_BLOB', url: r.url}).then(b => {
+                                    /** download success */
+                                    var ext = getMainMimeExt(b.type) || "";
+                                    if(r.isIcon) {
+                                        var f = "favicon" + ext;
+                                        r.filename = r.subPath + f;
+                                        blobfile[r.hex] = f;
+                                        if(request.page == 'index' && ext != ".html"){
+                                            if(ext == '.ico')
+                                                mainIconFilename = f;
+                                            else if(ext == '.svg' && !(/\.ico$/.test(mainIconFilename)))
+                                                mainIconFilename = f;
+                                            else if(!mainIconFilename)
+                                                mainIconFilename = f;
                                         }
-                                        r.blob = b;
-                                        dlgDownload.updateCell(i, 0, b.type);
-                                        if(b.type)
-                                            dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
-                                        // save
-                                        r.path = `${rdfHome}/data/${itemId}/${r.filename}`;
-                                        browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: r}).then((response) => {
-                                            dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
-                                            inc(i, r);
-                                        }).catch(e => {
-                                            dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
-                                            log.error(e.message);
-                                            r.failed = 1;
-                                            inc(i, r);
-                                        });
-                                    }else{ /* download failed */
+                                    }else{
+                                        r.filename = r.subPath + (r.saveas || (r.hex + ext));
+                                        blobfile[r.hex] = (r.saveas || (r.hex + ext));
+                                    }
+                                    r.blob = b;
+                                    dlgDownload.updateCell(i, 0, b.type);
+                                    if(b.type)
+                                        dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
+                                    // save
+                                    r.path = `${rdfHome}/data/${itemId}/${r.filename}`;
+                                    browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: r}).then((response) => {
+                                        dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
+                                        inc(i, r);
+                                    }).catch(e => {
                                         dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                        log.error(e.message);
                                         r.failed = 1;
                                         inc(i, r);
-                                    }
-                                });
+                                    });
+                                }).catch(e => { /** download failed */
+                                    dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                    r.failed = 1;
+                                    inc(i, r);
+                                }); /* end of download */
                             }else{
                                 r.filename = r.saveas
                                 dlgDownload.addRow(r.mime, sourceLink, "", "<font style='color:#005500'>waiting</font>");

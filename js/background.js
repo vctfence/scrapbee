@@ -282,12 +282,13 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             });
         });
     }else if(request.type == "DOWNLOAD_FILE_BLOB"){
-        return downloadFile(rquest.url);
+        return downloadFile(request.url);
     }else if(request.type == "WAIT_WEB_SERVER"){
         var times = request.try_times;
         return new Promise((resolve, reject) => {
             function check(){
                 times --;
+                
                 if(web_status == "launched"){
                     resolve(backend_version)
                 }else if(times < 1){

@@ -440,7 +440,7 @@ function ajaxFormPost(url, json){
         for(var k in json){
             formData.append(k, json[k]);
         }
-        var request=new XMLHttpRequest();
+        var request = new XMLHttpRequest();
         request.onload = function(r) {
         };
         request.onreadystatechange=function(){
@@ -462,7 +462,7 @@ function ajaxFormPost(url, json){
 function downloadFile(url){
     return new Promise((resolve, reject)=>{
         try{
-            var request = new RequestRequest();
+            var request = new XMLHttpRequest();
             request.open("GET", url, true);
             request.responseType = "blob";
             // request.onload = function(oEvent) {
@@ -474,7 +474,7 @@ function downloadFile(url){
             // };
             request.onreadystatechange=function(){
                 if(this.readyState == 4 && this.status == 200){
-                    resolve(request.response);
+                    resolve(this.response);
                 }else if(this.status >= 400){
                     reject(Error(this.responseText));
                 }

@@ -323,7 +323,7 @@ $(document).ready(async function(){
     $("#donate").click(() => window.open('http://PayPal.me/VFence', '_blank'));
 
     function getBackendDownload(sourceId){
-        const extRoot = "moz-extension://" + global.extension_id;
+        const extRoot = "moz-extension://" + global.extensionId;
         var sources = [
             // extRoot + "/bin/",
             // "https://raw.githubusercontent.com/vctfence/scrapbee_backend/v1.7.1/",
@@ -332,6 +332,7 @@ $(document).ready(async function(){
             "https://gitee.com/vctfence/scrapbee_backend/raw/master/"];
         var binDir = sources[sourceId];
         var src_exec = "scrapbee_backend";
+
         if(GLOBAL.platformOS == "mac")
             src_exec += "_mac";
         else if(GLOBAL.platformOS == "linux")
@@ -353,6 +354,7 @@ $(document).ready(async function(){
         // get download path
         downloadText("done", "scrapbee/scrapbee_backend.json").then(async function(dwInfo){
             var [src, dest] = getBackendDownload(0);
+            
             var filename = dwInfo.filename;
             var download_path = filename.replace(/[^\\\/]*$/, "");
             var json = {"allowed_extensions": ["scrapbee@scrapbee.org"],
@@ -364,7 +366,8 @@ $(document).ready(async function(){
             var jstr = JSON.stringify(json, null, 2);
             await downloadText(jstr, "scrapbee/scrapbee_backend.json");
             // download install script
-            const extRoot = "moz-extension://" + global.extension_id;
+            const extRoot = "moz-extension://" + global.extensionId;
+
             if(GLOBAL.platformOS=="win")
                 await downloadText(installBat(download_path), "scrapbee/install.bat");
             else if(GLOBAL.platformOS=="mac")
@@ -383,7 +386,7 @@ $(document).ready(async function(){
     $("#btnDownloadBackend").click(function(){
         var self = this;
         function Start(){
-            const extRoot = "moz-extension://" + global.extension_id;
+            // const extRoot = "moz-extension://" + global.extensionId;
             var sourceId = $("input[name='download_source']:checked").val();
             var [src_exec, dest_exec] = getBackendDownload(sourceId);
             /** download backend executable */
