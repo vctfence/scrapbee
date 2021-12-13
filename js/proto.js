@@ -157,8 +157,9 @@ function ScrapbeeElement(el){
     this.el = el;
     var uniqueId = el.getAttribute("scrapbee_unique_id");
     if(uniqueId){
-        this.el.removeAttribute("scrapbee_unique_id");
+        
         this.originEl = document.querySelector(`*[scrapbee_unique_id='${uniqueId}']`);
+        this.el.removeAttribute("scrapbee_unique_id");
     }
 }
 ScrapbeeElement.prototype.getFullUrl=function(url){
@@ -166,7 +167,7 @@ ScrapbeeElement.prototype.getFullUrl=function(url){
     return new URL(url, baseURI).href;
 }
 ScrapbeeElement.prototype.processInlineStyle=function(){
-    if(this.originEl.style.cssText){ // inline (on tag or js assigned)
+    if(this.originEl && this.originEl.style.cssText){ // inline (on tag or js assigned)
         this.el.setAttribute("style", this.el.style.cssText);
     }
 }

@@ -162,7 +162,7 @@ if(!window.scrapbee_injected){
             await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
                 for(var i=0;i<ar.length;i++){
                     var f = ar[i];
-                    console.log(f.frameId)
+                    // console.log(f.frameId)
                     doc.querySelectorAll("iframe,frame").forEach((iframe, i) => {
                         if(f.url == iframe.src){
                             iframe.setAttribute("scrapbee_frame_id", f.frameId);
@@ -180,11 +180,27 @@ if(!window.scrapbee_injected){
         return new Promise(async (resolve, reject) => {
             /** html */
             var content = null;
+            
             /** set unique id */
-            document.querySelectorAll("*").forEach(el => {
-                // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
-                el.setAttribute("scrapbee_unique_id", new NumberRange(0,999999999).random());
-            });
+            // document.querySelectorAll("*").forEach(async el => {
+            //     el.setAttribute("scrapbee_unique_id", new NumberRange(0,999999999).random());
+            // });
+
+            function setAttr(el, attr){
+                if(el.className.indexOf('altmetric') > -1){
+                    return;
+                }
+                el.setAttribute("scrapbee_unique_id", new NumberRange(0, 999999999).random());
+                var c = el.firstChild;
+                while(c){
+                    if(c.nodeType == 1){
+                        setAttr(c);
+                    }
+                    c = c.nextSibling;
+                }
+            }
+            setAttr(document.documentElement)
+            
             try{
                 var segment = await cloneSegment(doc, isForSelection)
             }catch(e){
@@ -229,12 +245,12 @@ if(!window.scrapbee_injected){
             }
             /** gather resources and inline styles */
             var distinct = {};
-            var founcIcon = false;
-            try{
-                segment.childNodes.iterateAll(function(item){
+            var foundIcon = false;
+            segment.childNodes.iterateAll(function(item){
+                try{
                     // browser.runtime.sendMessage({type:'TAB_INNER_CALL', action: "PROCESS_NODE"});
                     if(item.nodeType == 1){
-                        var el = new ScrapbeeElement(item)
+                        var el = new ScrapbeeElement(item);
                         el.processInlineStyle();
                         var resources = el.processResources();
                         for(let r of resources){
@@ -243,23 +259,25 @@ if(!window.scrapbee_injected){
                                 r.subPath = subPath;
                                 appendResource(r)
                                 if(r.isIcon){
-                                    founcIcon = true;
+                                    foundIcon = true;
                                 }
                             }
                         }
                     }
-                });
-            }catch(e){
-                log.error(e);
-            }
-            if(!founcIcon && page=="index"){
+                }catch(e){
+                    console.log(e)
+                    log.error(e);
+                }
+            });
+       
+            if(!foundIcon && page=="index"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
                     var hex = hex_md5(url).substr(0, 15);
                     appendResource({tag:"link", type:"image", url, isIcon:true, subPath, hex})
                     var mc = doc.createElement("link");
                     mc.rel="shortcut icon";
-                    // mc.href=`{FAVICON_ICO}`;
+                    mc.href=`favicon.ico`;
                     mc.media="screen";
                     var head = segment.querySelectorAll("head");
                     if(head.length){
@@ -284,6 +302,10 @@ if(!window.scrapbee_injected){
                 for(var i=0;i<frames.length;i++){
                     var iframe = frames[i];
                     var frameId = parseInt(iframe.getAttribute("scrapbee_frame_id"));
+
+                    if(!frameId)
+                        continue;
+                    
                     try{
                         var _name = "iframe" + (i + 1);
                         var _res = await browser.runtime.sendMessage({
@@ -292,7 +314,7 @@ if(!window.scrapbee_injected){
                             subPath: subPath + _name + "/",
                             page: _name,
                             saveType: "SAVE_PAGE", // isForSelection ? "SAVE_SELECTION" : "SAVE_PAGE",
-                            frameId: frameId
+                            frameId
                         });
                         iframe.setAttribute("src", _name + "/index.html");
                     }catch(e){
@@ -305,7 +327,7 @@ if(!window.scrapbee_injected){
             appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
                             isLast: page == "index", title: doc.title})
             /** remove unique id */
-            document.querySelectorAll("*").forEach(el => {
+            document.querySelectorAll("*[scrapbee_unique_id]").forEach(el => {
                 el.removeAttribute("scrapbee_unique_id");
             });
             resolve();
