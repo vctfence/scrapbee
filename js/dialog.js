@@ -69,7 +69,8 @@ var DialogWaiting = class extends Dialog {
         this.el.innerHTML = "";
         var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover waiting"})
         var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
-        this.newElement(dlg, "img", {className: "waiting-gif", src: "/icons/loading.gif"})
+        cover.innerHTML = "<div class='spinner'><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>"
+        // this.newElement(dlg, "img", {className: "waiting-gif", src: "/icons/loading.gif"})
     }
 };
 var DialogProgress = class extends Dialog {

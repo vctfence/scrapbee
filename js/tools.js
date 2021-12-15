@@ -372,7 +372,7 @@ async function initExporter(){
         if(!path)
             return;
         path = path.replace(/\.rdf\s*$/i, ".html");
-        $(this).parent().next("div").find("span.path").html(path).click(() => {
+        $(this).parent().next("div").find("span.path").html(path).unbind('click').click(() => {
             window.open(CONF.getFileServiceAddress() + path, "_blank");
         });
     });

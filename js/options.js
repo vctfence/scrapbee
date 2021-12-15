@@ -34,16 +34,16 @@ function createRdfField(k, v){
     var FILE_I18N = browser.i18n.getMessage("File");
     var $el = $(`<div class='rdf-row'><span>${NAME_I18N}</span> <input type="text" name="name"/>
 ${FILE_I18N} <input type="text" name="value"/>
-<input type="button" name="move" value="↑" />
-<input type="button" name="move" value="↓" />
-<input type="button" name="del" value="-" /></div>`).appendTo($("#rdf-area"));
+<input type="button" name="move" value="" class="moveup"/>
+<input type="button" name="move" value="" class="movedn"/>
+<input type="button" name="del" value="" class="delete"/></div>`).appendTo($("#rdf-area"));
     $el.find("input[name=name]").val(k);
     $el.find("input[name=value]").val(v);
     $el.find("input[name=del]").click(function(){
         $(this).parent().remove();
     });
     $el.find("input[name=move]").click(function(){
-        var up = (this.value == '↑');
+        var up = (this.className == 'moveup');
         var $you;
         var $p = $(this).parent();
         if(up){
@@ -59,66 +59,70 @@ ${FILE_I18N} <input type="text" name="value"/>
 function showConfiguration(){    
     $("#rdf-area").empty();
     $("input[name='save']").click(function(){
-        try{
-            // backend
-            var pwd = $.trim($("input[name=backend_pwd]").val());
-            if(pwd){
-                if(!pwd.match(/^[0-9a-zA-Z]+$/)){
-                    throw Error("invalid password format");
+        var dialog = new DialogWaiting();
+        dialog.show();
+
+        setTimeout(r => {
+            try{
+                // backend
+                var pwd = $.trim($("input[name=backend_pwd]").val());
+                if(pwd){
+                    if(!pwd.match(/^[0-9a-zA-Z]+$/)){
+                        throw Error("invalid password format");
+                    }
                 }
+                CONF.setItem('backend.type', $("input[name=backend_type]:checked").val());
+                CONF.setItem('backend.address', $("input[name=backend_address]").val());
+                CONF.setItem('backend.port', $("input[name=backend_port]").val());
+                CONF.setItem('backend.pwd', $("input[name=backend_pwd]").val());
+                
+                // rdf list
+                var names = [];
+                var paths = [];
+                var touch = [];
+                $("#rdf-area div input:nth-of-type(1)").each(function(){
+                    var n = $.trim(this.value);
+                    //names.push(n + "\n");
+                    names.push(n);
+                    var p = $.trim($(this).next("input").val());
+                    //paths.push(p + "\n");
+                    paths.push(p);
+                    touch.push(touchRdf(CONF.getBackendAddress(), p, pwd));
+                });
+                Promise.all(touch);
+                CONF.setItem('tree.paths', paths);
+                CONF.setItem('tree.names', names);
+
+                // apparence
+                var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
+
+                CONF.setItem('tree.color.bg', $("input[name='tree.color.bg']").val().replace("#", ""));
+                CONF.setItem('tree.color.fg', $("input[name='tree.color.fg']").val().replace("#", ""));
+                CONF.setItem('tree.color.separator', $("input[name='tree.color.separator']").val().replace("#", ""));
+                CONF.setItem('tree.color.bookmark', $("input[name='tree.color.bookmark']").val().replace("#", ""));
+                CONF.setItem('tree.color.focused.fg', $("input[name='tree.color.focused.fg']").val().replace("#", ""));
+                CONF.setItem('tree.color.focused.bg', $("input[name='tree.color.focused.bg']").val().replace("#", ""));
+                CONF.setItem('tree.font.size', size);
+                CONF.setItem('tree.font.name', $("input[name=font_name]").val());
+                CONF.setItem('tree.line.spacing', $("input[name=line_spacing]").val());
+                
+                // behavior
+                CONF.setItem('sidebar.behavior.open.dest', $("input[name=open_in_current_tab]").is(":checked")?"curr-tab":"new-tab");
+                CONF.setItem('sidebar.behavior.root.show', $("input[name=sidebar_show_root]").is(":checked")?"on":"off");
+                CONF.setItem('capture.behavior.saving.dialog.close', $("input[name=auto_close_saving_dialog]").is(":checked")?"auto":"manually");
+                CONF.setItem('capture.behavior.frames.save', $("input[name=saving_save_frames]").is(":checked")?"on":"off");
+                CONF.setItem('capture.behavior.item.new.pos', $("input[name=saving_new_pos]:checked").val());
+                CONF.setItem("global.notification.show", $("input[name=show_notification]").is(":checked")?"on":"off");
+                CONF.setItem("global.debug", $("input[name=debug]").is(":checked")?"on":"off");
+                CONF.commit();
+
+                dialog.remove();
+            }catch(e){
+                alert("Save failed: " + e);
             }
-            CONF.setItem("backend.type", $("input[name=backend_type]:checked").val());
-            CONF.setItem('backend.address', $("input[name=backend_address]").val());
-            CONF.setItem('backend.port', $("input[name=backend_port]").val());
-            CONF.setItem('backend.pwd', $("input[name=backend_pwd]").val());
-            
-            // rdf list
-            var names = [];
-            var paths = [];
-            var touch = [];
-            $("#rdf-area div input:nth-of-type(1)").each(function(){
-                var n = $.trim(this.value);
-                //names.push(n + "\n");
-                names.push(n);
-                var p = $.trim($(this).next("input").val());
-                //paths.push(p + "\n");
-                paths.push(p);
-                touch.push(touchRdf(CONF.getBackendAddress(), p, pwd));
-            });
-            Promise.all(touch);
-            CONF.setItem('tree.paths', paths);
-            CONF.setItem('tree.names', names);
-
-            // apparence
-            var size = (parseInt($("input[name=font_size]").val() / 5) * 5) / 100 * 12;
-
-            CONF.setItem('tree.color.bg', $("input[name='tree.color.bg']").val().replace("#", ""));
-            CONF.setItem('tree.color.fg', $("input[name='tree.color.fg']").val().replace("#", ""));
-            CONF.setItem('tree.color.separator', $("input[name='tree.color.separator']").val().replace("#", ""));
-            CONF.setItem('tree.color.bookmark', $("input[name='tree.color.bookmark']").val().replace("#", ""));
-            CONF.setItem('tree.color.focused.fg', $("input[name='tree.color.focused.fg']").val().replace("#", ""));
-            CONF.setItem('tree.color.focused.bg', $("input[name='tree.color.focused.bg']").val().replace("#", ""));
-            CONF.setItem('tree.font.size', size);
-            CONF.setItem('tree.font.name', $("input[name=font_name]").val());
-            CONF.setItem('tree.line.spacing', $("input[name=line_spacing]").val());
-            
-            // behavior
-            CONF.setItem('sidebar.behavior.open.dest', $("input[name=open_in_current_tab]").is(":checked")?"curr-tab":"new-tab");
-            CONF.setItem('sidebar.behavior.root.show', $("input[name=sidebar_show_root]").is(":checked")?"on":"off");
-            CONF.setItem('capture.behavior.saving.dialog.close', $("input[name=auto_close_saving_dialog]").is(":checked")?"auto":"manually");
-            CONF.setItem('capture.behavior.frames.save', $("input[name=saving_save_frames]").is(":checked")?"on":"off");
-            CONF.setItem('capture.behavior.item.new.pos', $("input[name=saving_new_pos]:checked").val());
-            CONF.setItem("global.notification.show", $("input[name=show_notification]").is(":checked")?"on":"off");
-            CONF.setItem("global.debug", $("input[name=debug]").is(":checked")?"on":"off");
-            CONF.commit();
-
-            $(this).next("span").fadeIn().fadeOut();
-        }catch(e){
-            alert("Save failed: " + e);
-        }
+        }, 500);
     });
     var paths = CONF.getRdfPaths();
-
     if(paths){
         CONF.getRdfNames().forEach(function(k, i){
             createRdfField(k, paths[i]);
@@ -161,7 +165,6 @@ function showConfiguration(){
     $(`input[name=saving_new_pos][value='${pos}']`).attr("checked", true);
     $("input[name=debug]").prop("checked", CONF.getItem("global.debug")=="on");
 }
-
 
 $(document).ready(async function(){
     await GLOBAL.load();
@@ -234,7 +237,6 @@ $(document).ready(async function(){
         };
         document.getElementById("import_file").click();
     });
-    
     /** tools */
     function initTools(version){
         if(gtev(version, '1.7.0')){
@@ -491,3 +493,5 @@ pause`;
         });
     });
 }); // window.onload
+
+console.log($(".ttt").uniqueId())

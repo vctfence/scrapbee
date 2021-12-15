@@ -1,3 +1,5 @@
+@import "dialog.css";
+
 *{
     font-family:"WenQuanYi Micro Hei",
 		"Open Sans",
@@ -61,6 +63,15 @@ input[type=button]:disabled, input[type=button]:disabled:hover{
 }
 input[type=button]:hover{
     background:#080;
+}
+input[type=button].delete{
+    background: url("/icons/rdf-delete.svg");
+}
+input[type=button].moveup{
+    background: url("/icons/rdf-move-up.svg");
+}
+input[type=button].movedn{
+    background: url("/icons/rdf-move-dn.svg");
 }
 .download-path{
     border-radius:5px;
@@ -565,7 +576,6 @@ hr{
     margin-right:3px;
     vertical-align:middle;
 }
-
 
 .boxx:hover{
     background:#599;

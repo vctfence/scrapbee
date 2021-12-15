@@ -155,11 +155,11 @@ DocumentFragment.prototype.html = function(){
 }
 function ScrapbeeElement(el){
     this.el = el;
-    var uniqueId = el.getAttribute("scrapbee_unique_id");
+    var uniqueId = el.getAttribute("sb-uid");
     if(uniqueId){
         
-        this.originEl = document.querySelector(`*[scrapbee_unique_id='${uniqueId}']`);
-        this.el.removeAttribute("scrapbee_unique_id");
+        this.originEl = document.querySelector(`*[sb-uid='${uniqueId}']`);
+        this.el.removeAttribute("sb-uid");
     }
 }
 ScrapbeeElement.prototype.getFullUrl=function(url){

@@ -101,16 +101,16 @@ if(!window.scrapbee_injected){
                     var leaves = getLeavesIn(rangeContent);
                     leaves.forEach(thisNode => {
                         if(thisNode.nodeType == 1){
-                            var _uid = thisNode.getAttribute("scrapbee_unique_id");
-                            var refNode = document.querySelector(`*[scrapbee_unique_id='${_uid}']`);
+                            var _uid = thisNode.getAttribute("sb-uid");
+                            var refNode = document.querySelector(`*[sb-uid='${_uid}']`);
                         }else{
                             var refNode = thisNode;
                         }
                         for(var c=refNode,pr=null;c;){
                             var pn = c.cloneNode(false);
                             if(c.nodeType == 1){
-                                var uid = c.getAttribute("scrapbee_unique_id");
-                                var p = segment.querySelector(`*[scrapbee_unique_id='${uid}']`);
+                                var uid = c.getAttribute("sb-uid");
+                                var p = segment.querySelector(`*[sb-uid='${uid}']`);
                                 var exist = !!p;
                                 if(!exist && c.tagName == "HTML"){
                                     segment.appendChild(pn);
@@ -183,23 +183,24 @@ if(!window.scrapbee_injected){
             
             /** set unique id */
             // document.querySelectorAll("*").forEach(async el => {
-            //     el.setAttribute("scrapbee_unique_id", new NumberRange(0,999999999).random());
+            //     el.setAttribute("sb-uid", new NumberRange(0,999999999).random());
             // });
 
-            function setAttr(el, attr){
+            function setUid(el, attr){
                 if(el.className.indexOf('altmetric') > -1){
-                    return;
+                   return;
                 }
-                el.setAttribute("scrapbee_unique_id", new NumberRange(0, 999999999).random());
+                el.setAttribute("sb-uid", new NumberRange(0, 999999999).random());
                 var c = el.firstChild;
                 while(c){
                     if(c.nodeType == 1){
-                        setAttr(c);
+                        console.log(c)
+                        setUid(c);
                     }
                     c = c.nextSibling;
                 }
             }
-            setAttr(document.documentElement)
+            setUid(document.documentElement)
             
             try{
                 var segment = await cloneSegment(doc, isForSelection)
@@ -327,8 +328,8 @@ if(!window.scrapbee_injected){
             appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
                             isLast: page == "index", title: doc.title})
             /** remove unique id */
-            document.querySelectorAll("*[scrapbee_unique_id]").forEach(el => {
-                el.removeAttribute("scrapbee_unique_id");
+            document.querySelectorAll("*[sb-uid]").forEach(el => {
+                el.removeAttribute("sb-uid");
             });
             resolve();
         });

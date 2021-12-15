@@ -1,3 +1,5 @@
+@import "spinner.css";
+
 .scrapbee-dlg{
     margin:auto;
     text-align:center;
@@ -173,3 +175,4 @@
     font-size:12px;
     white-space:nowrap;
 }
+
