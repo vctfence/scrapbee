@@ -2,45 +2,89 @@
     <string name="app_name">Scrapyard</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">Scrapyard</string>
+    <string name="nav_header_subtitle">Share and manage mobile bookmarks</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
 
-    <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
-    <string name="menu_tools">Tools</string>
-    <string name="menu_share">Share</string>
-    <string name="menu_send">Send</string>
-    <string name="providersHeading">Cloud Providers</string>
-    <string name="dropbox">Dropbox</string>
-    <string name="signIn">Sign in</string>
-    <string name="signOut">Sign out</string>
-    <string name="browseBookmarks">Browse Bookmarks</string>
-    <string name="browseCloudShelf">Browse Cloud Shelf</string>
-    <string name="saveLocationHeading">Shared Content Destination</string>
-    <string name="cloud">cloud</string>
-    <string name="cloudPathStart">cloud/</string>
-    <string name="shared">shared</string>
-    <string name="scrapyardURL">https://gchristensen.github.io/scrapyard/</string>
-    <string name="appDescription">Scrapyard Android application allows to share links and content into the <font fgcolor='#FF0099CC'>&#x200B;Scrapyard</font> Cloud shelf.</string>
-    <string name="dropboxAPIKey">0y7co3j1k4oc7up</string>
-    <string name="needToConfigureCloudProvider">A cloud provider needs to be configured</string>
-    <string name="successfullyShared">Successfully shared to Scrapyard</string>
-    <string name="sharingToScrapyard">Sharing to Scrapyard...</string>
-    <string name="todoState">TODO state:</string>
-    <string name="bookmarkToScrapyard">Bookmark to Scrapyard</string>
-    <string name="todoToScrapyard">Add TODO to Scrapyard</string>
-    <string name="details">Details:</string>
-    <string name="errorAccessingCloud">Error accessing cloud</string>
-    <string name="warning">Warning</string>
+    <string name="menu_cloud_shelf">Cloud Shelf</string>
+    <string name="menu_sync">Sync Bookmarks</string>
+    <string name="menu_providers">Cloud Providers</string>
 
+    <string name="providers_description">Authorize cloud providers</string>
+    <string name="providers_heading">Cloud Providers</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="onedrive_requires_android_n">OneDrive requires Android 7.0+</string>
+
+    <string name="bookmark_to_scrapyard">Bookmark to Scrapyard</string>
+    <string name="sharing_to_scrapyard">Sharing to Scrapyard…</string>
+    <string name="successfully_shared">Successfully shared to Scrapyard</string>
+    <string name="error_accessing_cloud">Error accessing cloud</string>
+    <string name="no_internet">No Internet connection</string>
+    <string name="configure_cloud_provider">A cloud provider needs to be configured</string>
+    <string name="can_not_share_to_empty_sync">Can not share to the empty Sync storage</string>
+
+    <string name="bookmark_title">Title:</string>
+    <string name="bookmark_details">Details:</string>
+    <string name="todo_state">TODO state:</string>
     <string-array name="todo_states">
+        <item>NONE</item>
         <item>TODO</item>
         <item>WAITING</item>
         <item>POSTPONED</item>
     </string-array>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="warning">Warning</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Preferences -->
+    <string name="menu_settings">Settings</string>
+
+    <!-- Preference Titles -->
+    <string name="view_header">View</string>
+    <string name="sharing_header">Sharing</string>
+    <string name="cloud_providers_header">Cloud Providers</string>
+
+    <!-- View Preferences -->
+    <string name="startup_screen">Startup screen</string>
+    <string-array name="startup_screen_entries">
+        <item>Cloud Shelf</item>
+        <item>Sync Bookmarks</item>
+        <item>Providers</item>
+    </string-array>
+    <string-array name="startup_screen_values">
+        <item>cloud</item>
+        <item>sync</item>
+        <item>providers</item>
+    </string-array>
+
+    <string name="remember_tree_state">Remember tree state</string>
+
+    <!-- Cloud Providers Preferences -->
+    <string name="cloud_shelf">Cloud Shelf</string>
+    <string name="sync_bookmarks">Sync Bookmarks</string>
+    <string-array name="cloud_provider_entries">
+        <item>Dropbox</item>
+        <item>OneDrive</item>
+    </string-array>
+    <string-array name="cloud_provider_values">
+        <item>dropbox</item>
+        <item>onedrive</item>
+    </string-array>
+
+    <!-- Sharing Preferences -->
+    <string name="share_to_shelf">Share to shelf</string>
+    <string-array name="shelf_entries">
+        <item>Cloud shelf</item>
+        <item>Default Sync shelf</item>
+    </string-array>
+    <string-array name="shelf_values">
+        <item>cloud</item>
+        <item>sync</item>
+    </string-array>
+    <string name="shared_folder_name">Share to folder</string>
+    <string name="default_shared_folder_name">shared</string>
+    <string name="ask_for_additional_properties">Ask for additional bookmark properties</string>
 </resources>

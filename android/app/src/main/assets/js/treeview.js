@@ -7,9 +7,14 @@ var NODE_TYPE_ARCHIVE = 4;
 var NODE_TYPE_SEPARATOR = 5;
 var NODE_TYPE_NOTES = 6;
 
+var DEFAULT_SHELF_UUID = "1"
+
 var CLOUD_SHELF_ID = -5;
 var CLOUD_SHELF_NAME = "cloud";
 var CLOUD_EXTERNAL_NAME = "cloud";
+
+var BROWSER_EXTERNAL_NAME = "firefox";
+var RDF_EXTERNAL_NAME = "rdf";
 
 var TODO_STATE_TODO = 1;
 var TODO_STATE_DONE = 4;
@@ -44,6 +49,11 @@ var IMAGE_FORMATS = [
     "image/svg+xml"
 ];
 
+var ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
+var CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP];
+
+function o(n) { return n.data; }
+
 function _styleTODO(node) {
     if (node.todo_state)
         return " todo-state-" + (node._overdue
@@ -53,114 +63,135 @@ function _styleTODO(node) {
     return "";
 }
 
-function toJsTreeNode(n) {
-    n.text = n.name;
+function toJsTreeNode(node) {
+    var jnode = {};
 
-    n.parent = n.parent_id;
-    if (!n.parent)
-        n.parent = "#";
+    jnode.id = node.id;
+    jnode.text = node.name || "";
+    jnode.type = node.type;
+    jnode.icon = node.icon;
+    jnode.data = node; // store the original Scrapyard node
+    jnode.parent = node.parent_id;
 
-    if (n.type == NODE_TYPE_SHELF) {
-        n.icon = "icons/cloud.svg";
-        n.li_attr = {"class": "cloud-shelf"};
+    if (!jnode.parent)
+        jnode.parent = "#";
+
+    if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_NAME) {
+        jnode.li_attr = {"class": "browser-logo"};
+        jnode.icon = "icons/firefox.svg";
     }
-    else if (n.type == NODE_TYPE_GROUP) {
-        n.icon = "icons/group.svg";
-        n.li_attr = {
-            "class": "scrapyard-group",
+    else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME) {
+        jnode.li_attr = {"class": "cloud-shelf"};
+        jnode.icon = "icons/cloud.svg";
+    }
+    else if (node.type === NODE_TYPE_SHELF && node.external === RDF_EXTERNAL_NAME) {
+        jnode.li_attr = {"class": "rdf-archive"};
+        jnode.icon = "icons/tape.svg";
+    }
+    else if (node.type === NODE_TYPE_SHELF) {
+        jnode.icon = "icons/shelf.svg";
+        jnode.li_attr = {"class": "scrapyard-shelf"};
+    }
+    else if (node.type === NODE_TYPE_GROUP) {
+        jnode.icon = "icons/group.svg";
+        jnode.li_attr = {
+            class: "scrapyard-group",
         };
     }
-    else if (n.type == NODE_TYPE_SEPARATOR) {
-        n.text = "──".repeat(60);
-        n.icon = false;
-        n.a_attr = {
-            "class": "separator-node"
+    else if (node.type === NODE_TYPE_SEPARATOR) {
+        jnode.text = "─".repeat(60);
+        jnode.icon = false;
+        jnode.a_attr = {
+            class: "separator-node"
         };
     }
-    else if (n.type != NODE_TYPE_SHELF) {
-        var urin = "";
-        if (n.uri)
-            urin = false //n.uri.length > 60
-                ? "\x0A" + n.uri.substring(0, 60) + "..."
-                : ("\x0A" + n.uri);
-
-        n.li_attr = {
-            "class": "show_tooltip",
-            "title": n.text + urin,
-            "data-id": n.id,
+    else if (node.type !== NODE_TYPE_SHELF) {
+        jnode.li_attr = {
+            class: "show_tooltip",
+            title: _formatNodeTooltip(node),
             "data-clickable": "true"
         };
 
-        if (n.type == NODE_TYPE_ARCHIVE)
-            n.li_attr.class += " archive-node";
+        if (node.type === NODE_TYPE_ARCHIVE)
+            jnode.li_attr.class += " archive-node";
 
-        n.a_attr = {
-            "class": n.has_notes? "has-notes": "",
-            "href": n.uri
+        jnode.a_attr = {
+            class: node.has_notes? "has-notes": ""
         };
 
-        if (n.todo_state) {
-            n.a_attr.class += _styleTODO(n);
+        if (node.todo_state)
+            jnode.a_attr.class += _styleTODO(node);
 
-            if (n._extended_todo) {
-                n.li_attr.class += " extended-todo";
-                n.text = _formatTODO(n);
-            }
-        }
+        if (node.type === NODE_TYPE_NOTES)
+            jnode.li_attr.class += " scrapyard-notes";
 
-        if (n.type == NODE_TYPE_NOTES) {
-            n.icon = "icons/notes.svg";
-            n.li_attr.class += " scrapyard-notes";
-        }
-
-        if (n.icon_data)
-            n.icon = n.icon_data;
-
-        if (!n.icon) {
-            if (n.content_type === "application/pdf")
-                n.icon = "icons/format-pdf.svg";
-            else if (IMAGE_FORMATS.some(function(f) {return f === n.content_type;}))
-                n.icon = "icons/format-image.svg";
+        if (!node.icon) {
+            if (node.type === NODE_TYPE_NOTES)
+                jnode.icon = "icons/notes.svg";
+            else if (node.content_type === "application/pdf")
+                jnode.icon = "icons/format-pdf.svg";
+            else if (IMAGE_FORMATS.some(function (f) { return f === node.content_type; }))
+                jnode.icon = "icons/format-image.svg";
             else {
-                n.icon = "icons/globe.svg";
-                n.a_attr.class += " generic-icon";
+                jnode.icon = "icons/globe.svg";
+                jnode.a_attr.class += " generic-icon";
             }
         }
     }
 
-    n.data = $.extend({}, n);
-
-    return n;
+    return jnode;
 }
 
-$("#treeview").jstree({
-    plugins: ["wholerow", "contextmenu"],
-    core: {
-        worker: false,
-        animation: 0,
-        multiple: false,
-        themes: {
-            name: "default",
-            dots: false,
-            icons: true,
-        },
-        check_callback: function(operation, node, parent, position) {
-            if(operation == 'delete_node') {
-                return true;
-            }
-        }
-    },
-    contextmenu: {
-        show_at_node: false,
-        items: contextMenu
-    }
-});
+function _formatNodeTooltip(node) {
+    return node.name + (node.uri? "\x0A" + node.uri: "");
+}
 
-window.tree = $("#treeview").jstree(true);
+function createTree() {
+    var plugins = ["wholerow", "contextmenu"];
+
+    window.rememberTreeState = window.location.hash.includes("rememberTreeState")
+    if (window.rememberTreeState)
+        plugins.push("state");
+
+    $("#treeview").jstree({
+        plugins: plugins,
+        core: {
+            worker: false,
+            animation: 0,
+            multiple: false,
+            themes: {
+                name: "default",
+                dots: false,
+                icons: true,
+            },
+            check_callback: function(operation, node, parent, position) {
+                if(operation == 'delete_node') {
+                    return true;
+                }
+            }
+        },
+        contextmenu: {
+            show_at_node: false,
+            items: contextMenu
+        },
+        state: {}
+    });
+
+    window.tree = $("#treeview").jstree(true);
+}
+
+createTree();
 
 function contextMenu(jnode) {
     var node = jnode.data;
     var items = {
+        openOriginalItem: {
+            label: "Open Original URL",
+            action: function () {
+                if (node.uri)
+                    document.location.href = node.uri;
+            }
+        },
         viewNotesItem: {
             label: "View notes",
             action: function() {
@@ -169,7 +200,7 @@ function contextMenu(jnode) {
         },
         deleteItem: {
             label: "Delete",
-            separator_before: node.has_notes,
+            separator_before: node.has_notes || node.type === NODE_TYPE_ARCHIVE,
             action: function() {
                 if (confirm("Do you really want to delete the selected item?")) {
                     Android.deleteNode(node.uuid);
@@ -179,10 +210,13 @@ function contextMenu(jnode) {
         }
     };
 
+    if (node.type !== NODE_TYPE_ARCHIVE)
+        delete items.openOriginalItem;
+
     if (!node.has_notes)
         delete items.viewNotesItem;
 
-    if (node.type === NODE_TYPE_SHELF)
+    if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME)
         delete items.deleteItem;
 
     return items;
@@ -193,7 +227,8 @@ $(document).on("click", ".jstree-anchor", handleMouseClick);
 function handleMouseClick(e) {
     var jnode = window.tree.get_selected(true)[0];
     if (jnode) {
-        var node = jnode.data;
+        var node = o(jnode);
+
         if (node.type === NODE_TYPE_BOOKMARK) {
             document.location.href = node.uri;
         }
@@ -214,44 +249,156 @@ function handleMouseClick(e) {
     }
 }
 
-tree.__icon_check_hook = function(a_element, node) {
-    if (node.__icon_validated || !node.icon || (node.icon && node.icon.indexOf("icons/") == 0))
+var INPUT_TIMEOUT = 1000;
+var filterInputTimeout;
+$("#search-input").on("input", function (e) {
+    clearTimeout(filterInputTimeout);
+
+    if (e.target.value) {
+        $("#search-input-clear").show();
+        filterInputTimeout = setTimeout(function () { performSearch(e.target.value) }, INPUT_TIMEOUT);
+    }
+    else {
+        filterInputTimeout = null;
+        $("#search-input-clear").hide();
+        performSearch();
+    }
+});
+
+$("#search-input-clear").click(function (e) {
+    clearSearchInput();
+    $("#search-input").trigger("input");
+});
+
+function clearSearchInput() {
+    $("#search-input").val("");
+    $("#search-input-clear").hide();
+}
+
+function performSearch(text) {
+    if (text) {
+        if (text.length > 2) {
+            text = text.toLocaleLowerCase();
+            var results = tree.__nodes.filter(function (jnode) {
+                var node = o(jnode);
+                return ENDPOINT_TYPES.some(function (t) { return t == node.type })
+                    && (node.name && node.name.toLocaleLowerCase().indexOf(text) >= 0
+                        ||  node.uri && node.uri.toLocaleLowerCase().indexOf(text) >= 0);
+            });
+
+            listTreeNodes(results);
+        }
+    }
+    else {
+        tree.settings.core.data = tree.__nodes;
+        tree.refresh(true);
+        if (tree.__nodes.length > 0 && tree.__nodes[0].text == CLOUD_SHELF_NAME)
+            tree.open_node(CLOUD_SHELF_NAME);
+    }
+}
+
+function listTreeNodes(nodes) {
+    nodes = nodes.map(function (n) { return $.extend({}, n) });
+    nodes.forEach(function (n) { n.parent = "#" });
+    tree.settings.core.data = nodes;
+
+    tree.refresh(true);
+    tree.deselect_all(true);
+}
+
+tree.iconCache = {}
+
+tree.__icon_set_hook = function(jnode) {
+    if (jnode.icon.startsWith("icons/"))
+        return "url(\"" + jnode.icon + "\")";
+    else {
+        var node = o(jnode)
+
+        if (node && node.download_icon) {
+            var icon = this.iconCache[node.icon];
+            if (icon)
+                return "url(\"" + icon + "\")";
+            else
+                return "url(\"icons/globe.svg\")";
+        }
+        else
+            return "url(\"" + jnode.icon + "\")";
+    }
+};
+
+tree.__icon_check_hook = function(a_element, jnode) {
+    if (jnode.__icon_validated || !jnode.icon || (jnode.icon && jnode.icon.startsWith("icons/")))
         return;
 
     setTimeout(function () {
-        var getIconElement = function () {
-            return new Promise(function (resolve, reject) {
+        var node = o(jnode);
+
+        if (node && node.download_icon) {
+            var cached = tree.iconCache[node.icon];
+
+            if (cached)
+                setNodeIcon(cached, a_element)
+            else
+                downloadIcon(node, a_element.id);
+        }
+        else {
+            var image = new Image();
+
+            image.onerror = function(e) {
+                var fallback_icon = "icons/globe.svg";
+                jnode.icon = fallback_icon;
+                setNodeIcon(fallback_icon, a_element);
+            };
+            image.src = jnode.icon;
+        }
+    }, 0);
+
+    jnode.__icon_validated = true;
+};
+
+function getIconElement(a_element) {
+    return new Promise(function (resolve, reject) {
+        var a_element2 = document.getElementById(a_element.id);
+        if (a_element2) {
+            resolve(a_element2.childNodes[0]);
+        }
+        else {
+            setTimeout(function () {
                 var a_element2 = document.getElementById(a_element.id);
                 if (a_element2) {
                     resolve(a_element2.childNodes[0]);
                 }
                 else {
-                    setTimeout(function () {
-                        var a_element2 = document.getElementById(a_element.id);
-                        if (a_element2) {
-                            resolve(a_element2.childNodes[0]);
-                        }
-                        else {
-                            console.error("can't find icon element");
-                            resolve(null);
-                        }
-                    }, 100);
+                    console.error("can't find icon element");
+                    resolve(null);
                 }
-             });
+            }, 100);
         }
+    });
+}
 
-        var image = new Image();
+function setNodeIcon(icon, a_element) {
+    getIconElement(a_element).then(function (element) {
+        if (element)
+            element.style.backgroundImage = "url(\"" + icon + "\")"
+    });
+}
 
-        image.onerror = function(e) {
-            var fallback_icon = 'url("icons/globe.svg")';
-            node.icon = fallback_icon;
-            getIconElement().then(function (e) {e.style.backgroundImage = fallback_icon});
-        };
-        image.src = node.icon;
-    }, 0);
+function setNodeIconExternal(icon, elementId, hash) {
+    if (icon) {
+        tree.iconCache[hash] = icon;
+        setNodeIcon(icon, {id: elementId});
+    }
+    else
+        setNodeIcon("icons/globe.svg", {id: elementId});
+}
 
-    node.__icon_validated = true;
-};
+function downloadIcon(node, elementId) {
+    return new Promise(function (resolve, reject) {
+        Android.downloadIcon(node.uuid, elementId, node.icon);
+        resolve();
+    })
+}
 
 var root = {id: CLOUD_SHELF_NAME,
             pos: -2,
@@ -267,7 +414,43 @@ function byPosition(a, b) {
     return a_pos - b_pos;
 }
 
-function extractNode(bookmark) {
+function injectCloudBookmarks(bookmarks) {
+    clearSearchInput();
+
+    var lines = bookmarks.split("\n").filter(function (s) {return !!s});
+    var metaJSON = lines.shift();
+    var meta;
+
+    if (metaJSON)
+        meta = JSON.parse(metaJSON);
+
+    if (meta && meta.cloud)
+        injectCloudShelfBookmarks(lines.shift())
+    else if (meta && meta.sync)
+        injectSyncBookmarks(lines.shift())
+
+    hideLoadingAnimation();
+}
+
+function injectCloudShelfBookmarks(json) {
+    var nodes = [root];
+    var content;
+
+    if (json)
+        content = JSON.parse(json);
+
+    if (content && content.nodes)
+        nodes = nodes.concat(content.nodes.map(extractCloudShelfNode));
+
+    nodes.sort(byPosition);
+
+    var jnodes = nodes.map(toJsTreeNode);
+    tree.settings.state.key = "tree-state-cloud";
+    addNodesToTree(jnodes);
+    tree.open_node(CLOUD_SHELF_NAME);
+}
+
+function extractCloudShelfNode(bookmark) {
     var node = bookmark.node;
     node.id = node.uuid;
     if (bookmark.icon)
@@ -275,38 +458,97 @@ function extractNode(bookmark) {
     return node;
 }
 
-function injectCloudBookmarks(bookmarks) {
-    var nodes = [root];
-    var lines = bookmarks.split("\n").filter(function (s) {return !!s});
+function injectSyncBookmarks(json) {
+    var nodes = [];
+    var content;
 
-    lines.shift();
+    if (json)
+        content = JSON.parse(json);
 
-    var objects = lines.shift();
-    if (objects)
-        objects = JSON.parse(objects);
-    if (objects.nodes)
-        objects = objects.nodes.map(extractNode);
-    else
-        objects = [];
-    objects.sort(byPosition);
+    if (content && content.nodes)
+        nodes = content.nodes.map(extractSyncNode);
 
-    nodes = nodes.concat(objects);
-    nodes.forEach(toJsTreeNode);
+    nodes.sort(byPosition);
 
-    tree.settings.core.data = nodes;
-    tree.deselect_all();
-    tree.refresh(true);
-    tree.open_node(CLOUD_SHELF_NAME);
-
-    hideAnimation();
+    var jnodes = nodes.map(toJsTreeNode);
+    tree.settings.state.key = "tree-state-sync";
+    addNodesToTree(jnodes);
 }
 
-function showAnimation() {
+function addNodesToTree(nodes) {
+    tree.__nodes = nodes;
+    tree.settings.core.data = nodes;
+
+    if (window.rememberTreeState) {
+        var state = JSON.parse(localStorage.getItem(tree.settings.state.key));
+        tree.refresh(true, function() {return state.state});
+    }
+    else
+        tree.refresh(true)
+
+    tree.deselect_all()
+}
+
+function extractSyncNode(node) {
+    node.id = node.uuid;
+    if (node.type === NODE_TYPE_SHELF && node.uuid === DEFAULT_SHELF_UUID)
+        node.pos = -1;
+    if (node.stored_icon)
+        node.download_icon = true;
+    return node;
+}
+
+function handleEmptyContent(dbType) {
+    if (dbType === "cloud")
+        handleEmptyCloud()
+    else if (dbType === "sync")
+        handleEmptySync()
+
+    hideLoadingAnimation();
+}
+
+function handleEmptyCloud() {
+    var nodes = [root];
+    var jnodes = nodes.map(toJsTreeNode);
+    addNodesToTree(jnodes);
+}
+
+function handleEmptySync() {
+    showEmptySync();
+}
+
+function handleNoConnection() {
+    hideLoadingAnimation();
+    showOffline();
+}
+
+function showLoadingAnimation() {
     $("#animation").show();
 }
 
-function hideAnimation() {
+function hideLoadingAnimation() {
     $("#animation").hide();
+}
+
+function showOffline() {
+    $("#offline").show();
+}
+
+function hideOffline() {
+    $("#offline").hide();
+}
+
+function showEmptySync() {
+    $("#empty_sync").css("display", "flex");
+}
+
+function hideEmptySync() {
+    $("#empty_sync").hide();
+}
+
+function hideFillers() {
+    hideOffline();
+    hideEmptySync();
 }
 
 $("#btnLoad").on("click", function(e) {

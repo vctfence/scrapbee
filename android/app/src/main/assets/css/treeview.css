@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+#toolbar {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+#main-buttons {
+    flex: 1 0 30%;
+}
+
+#item-filter {
+    flex: 1 0 65%;
+    padding-right: 20px;
+    position: relative;
+}
+
+#search-input {
+   width: 100%;
+   padding-left: 25px;
+   border: 1px solid #555555;
+   border-radius: 3px;
+   height: unset;
+   font-size: unset;
+}
+
+#search-input-clear {
+    right: 25px;
+    display: none;
+}
+
+#item-filter::before {
+    position: absolute;
+    transform: translate(0,-50%);
+    left: 6px;
+    top: 50%;
+    font-family: "FontAwesome";
+    content: "\f002";
+}
+
+#treeview-container {
+    position: relative;
+}
+
+#animation, #offline, #empty_sync {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 100000;
+}
+
+#animation {
+    background-image: url("../icons/loader.gif");
+}
+
+#offline {
+    background-image: url("../icons/no-connection.svg");
+    background-color: white;
+    background-size: 30%;
+    display: none;
+}
+
+#empty_sync {
+    background-color: white;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    display: none;
+}
+
+#empty_sync p {
+    text-align: center;
+    width: 100%;
+}
+
+.themed_text {
+    color: #007799;
+}
+
+a.has-notes, a.has-notes:hover {
+    text-decoration: underline !important;
+}

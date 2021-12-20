@@ -1,58 +1,97 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    //id 'com.github.sgtsilvio.gradle.android-retrofix'
+}
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    compileSdk 31
+
     defaultConfig {
         applicationId "l2.albitron.scrapyard"
-        minSdkVersion 21
-        targetSdkVersion 31
-        multiDexEnabled true
-        versionCode 14
-        versionName "1.11"
-        //testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        minSdk 21
+        targetSdk 31
+        versionCode 15
+        versionName "2.0"
+
+        String dropboxKey = localProperties['DBX_API_KEY']
+        buildConfigField "String", "DBX_API_KEY", "\"${dropboxKey}\""
+        manifestPlaceholders = [dropboxKey: dropboxKey]
+
+        //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     compileOptions {
-        sourceCompatibility = '1.8'
-        targetCompatibility = '1.8'
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
-    lintOptions {
-        //checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
-        // but continue the build even when errors are found:
-        abortOnError false
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/AL2.0'
+        exclude 'META-INF/LGPL2.1'
+        exclude 'META-INF/LICENSE.md'
+        exclude 'META-INF/NOTICE.md'
+        exclude 'META-INF/io.netty.versions.properties'
     }
-    sourceSets {
-        main {
-            assets {
-                srcDirs 'src\\main\\assets'
-            }
-        }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
+        //dataBinding true
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+
+    implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.4.0'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    //testImplementation 'junit:junit:4.12'
-    //androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    //androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation group: 'com.dropbox.core', name: 'dropbox-core-sdk', version: '4.0.0'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.9'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.9'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'androidx.work:work-runtime-ktx:2.7.1'
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
+
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.5'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.5'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.5'
     implementation 'org.apache.commons:commons-text:1.9'
-    implementation 'commons-validator:commons-validator:1.6'
-    implementation 'com.annimon:stream:1.2.1'
     implementation 'org.jsoup:jsoup:1.10.3'
+
+    //implementation 'net.sourceforge.streamsupport:android-retrofuture:1.7.4'
+
+    implementation 'com.dropbox.core:dropbox-core-sdk:5.0.0'
+
+    implementation ("com.microsoft.identity.client:msal:2.2.2") { exclude group: 'com.microsoft.device.display' }
+    implementation ('com.microsoft.graph:microsoft-graph:3.1.0') {
+        exclude group: 'javax.activation'
+        exclude group: 'xpp3'
+    }
+
+
+    //testImplementation 'junit:junit:4.+'
+    //androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    //androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
+
+def getLocalProperties() {
+    Properties props = new Properties()
+    if (file('../local.properties').exists()) {
+        props.load(new FileInputStream(file('../local.properties')))
+    }
+    return props
 }

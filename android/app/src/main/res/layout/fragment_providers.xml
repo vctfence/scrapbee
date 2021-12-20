@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable name="fragment" type="l2.albitron.scrapyard.ui.providers.ProvidersFragment"/>
+    </data-->
+
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/content_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.providers.ProvidersFragment">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/black"
+                android:paddingTop="20dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:textSize="16sp"
+                android:text="@string/providers_description" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                android:textColor="@android:color/white"
+                android:text="@string/providers_heading"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:layout_marginBottom="15dp"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent">
+
+            <LinearLayout
+                android:id="@+id/sign_in_dropbox_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:paddingEnd="20dp">
+
+                <TextView
+                    android:id="@+id/sign_in_dropbox_button_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="5dp"
+                    android:paddingRight="15dp"
+                    android:text="@string/sign_in"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textAllCaps="true"/>
+
+                <ImageView
+                    android:layout_width="121dp"
+                    android:layout_height="30dp"
+                    android:scaleType="fitXY"
+                    app:srcCompat="@drawable/dropbox"
+                    android:layout_gravity="center" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <FrameLayout
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent">
+
+            <LinearLayout
+                android:id="@+id/sign_in_onedrive_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:paddingEnd="20dp">
+
+                <TextView
+                    android:id="@+id/sign_in_onedrive_button_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="5dp"
+                    android:paddingRight="15dp"
+                    android:text="@string/sign_in"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textAllCaps="true"/>
+
+                <ImageView
+                    android:layout_width="121dp"
+                    android:layout_height="30dp"
+                    android:scaleType="fitXY"
+                    app:srcCompat="@drawable/onedrive"
+                    android:layout_gravity="center" />
+            </LinearLayout>
+        </FrameLayout>
+
+    </LinearLayout>
+    </FrameLayout>
+
+<!--/layout-->

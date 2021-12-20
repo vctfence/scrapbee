@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="l2.albitron.scrapyard">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
@@ -12,62 +11,63 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        tools:ignore="GoogleAppIndexingWarning"
-        android:usesCleartextTraffic="true">
-
-        <service
-            android:name=".cloud.CloudOperationsService"
-            android:exported="false" />
+        android:theme="@style/Theme.Scrapyard">
 
         <activity
-            android:name=".CloudBookmarkActivity"
+            android:name=".ui.sharing.ShareBookmarkActivity"
             android:icon="@drawable/ic_scrapyard"
-            android:theme="@android:style/Theme.NoDisplay"
-            android:exported="true">
-            <intent-filter android:label="@string/bookmarkToScrapyard">
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-                <!-- data android:mimeType="application/pdf" / -->
-            </intent-filter>
-        </activity>
-        <activity android:name=".TODODialogActivity"
-            android:icon="@drawable/ic_scrapyard_todo"
+            android:theme="@style/Theme.UserDialog"
             android:excludeFromRecents="true"
-            android:theme="@style/DialogTheme"
             android:exported="true">
-            <intent-filter android:label="@string/todoToScrapyard">
+            <intent-filter android:label="@string/bookmark_to_scrapyard">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
-                <!-- data android:mimeType="application/pdf" / -->
             </intent-filter>
         </activity>
+
         <activity
             android:name=".MainActivity"
+            android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:exported="true">
+            android:theme="@style/Theme.Scrapyard.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:configChanges="orientation|keyboard"
-            android:launchMode="singleTask"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <data android:scheme="db-${dropboxKey}" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.microsoft.identity.client.BrowserTabActivity"
             android:exported="true">
             <intent-filter>
-                <data android:scheme="db-0y7co3j1k4oc7up" />
+                <data
+                    android:host="l2.albitron.scrapyard"
+                    android:path="/QWXHGnKiJl6A43QeaHWg0wDflgA="
+                    android:scheme="msauth" />
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
+
     <queries>
         <package android:name="com.dropbox.android" />
     </queries>

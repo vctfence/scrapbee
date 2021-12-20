@@ -593,7 +593,7 @@
 					return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue));
 				})
 				.remove();
-			this.element.html("<"+"ul class='jstree-container-ul jstree-children' role='group'><"+"li id='j"+this._id+"_loading' class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='tree-item'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor' href='#'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
+			this.element.html("<"+"ul class='jstree-container-ul jstree-children' role='group'><"+"li id='j"+this._id+"_loading' class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='tree-item'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
 			this.element.attr('aria-activedescendant','j' + this._id + '_loading');
 			this._data.core.li_height = this.get_container_ul().children("li").first().outerHeight() || 24;
 			this._data.core.node = this._create_prototype_node();
@@ -641,7 +641,7 @@
 			_node.appendChild(_temp1);
 			_temp1 = document.createElement('A');
 			_temp1.className = 'jstree-anchor';
-			_temp1.setAttribute('href','#');
+//			_temp1.setAttribute('href','#');
 			_temp1.setAttribute('tabindex','-1');
 			_temp2 = document.createElement('I');
 			_temp2.className = 'jstree-icon jstree-themeicon';
@@ -1636,7 +1636,7 @@
 									data		: d.data,
 									state		: { },
 									li_attr		: { id : false },
-									a_attr		: { href : '#' },
+									a_attr		: { /*href : '#'*/ },
 									original	: false
 								};
 							for(i in df) {
@@ -1726,7 +1726,7 @@
 								data		: null,
 								state		: { },
 								li_attr		: { id : false },
-								a_attr		: { href : '#' },
+								a_attr		: { /*href : '#'*/ },
 								original	: false
 							};
 							for(i in df) {
@@ -1823,6 +1823,7 @@
 						// 2) populate children (foreach)
 						for(i = 0, j = dat.length; i < j; i++) {
 							if (!m[dat[i].parent.toString()]) {
+                                //console.log("Scrapyard node with invalid parent: " + dat[i].id);
 								//this._data.core.last_error = { 'error' : 'parse', 'plugin' : 'core', 'id' : 'core_07', 'reason' : 'Node with invalid parent', 'data' : JSON.stringify({ 'id' : dat[i].id.toString(), 'parent' : dat[i].parent.toString() }) };
 								//this.settings.core.error.call(this, this._data.core.last_error);
 								continue;
@@ -2012,7 +2013,7 @@
 					data		: null,
 					state		: { },
 					li_attr		: { id : false },
-					a_attr		: { href : '#' },
+					a_attr		: { /*href : '#'*/ },
 					original	: false
 				}, i, tmp, tid;
 			for(i in this._model.default_state) {
@@ -2127,7 +2128,7 @@
 					data		: d.data,
 					state		: { },
 					li_attr		: { id : false },
-					a_attr		: { href : '#' },
+					a_attr		: { /*href : '#'*/ },
 					original	: false
 				};
 			for(i in df) {
@@ -2226,7 +2227,7 @@
 				data		: null,
 				state		: { },
 				li_attr		: { id : false },
-				a_attr		: { href : '#' },
+				a_attr		: { /*href : '#'*/ },
 				original	: false
 			};
 			for(i in df) {
@@ -2534,22 +2535,28 @@
 			if(c.length) {
 				node.childNodes[1].className = 'jstree-anchor ' + c;
 			}
-    		if((obj.icon && obj.icon !== true) || obj.icon === false) {
+			if((obj.icon && obj.icon !== true) || obj.icon === false) {
 				if(obj.icon === false) {
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-hidden';
 				}
-				else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1) {
-					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
-				}
+				// else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1 && !obj.icon.startsWith("var(")) {
+				// 	node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
+				// }
 				else {
-    				node.childNodes[1].childNodes[0].style.backgroundImage = 'url("' + obj.icon + '")';
+				    var icon = 'url("'+obj.icon+'")';
+
+				    if (this.__icon_set_hook)
+				        icon = this.__icon_set_hook(obj);
+
+				    if (icon)
+    				    node.childNodes[1].childNodes[0].style.backgroundImage = icon;
 					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
 					node.childNodes[1].childNodes[0].style.backgroundSize = '16px 16px';
 					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
-				}
 
-                if (this.__icon_check_hook)
-                    this.__icon_check_hook(node.childNodes[1], obj);
+                    if (this.__icon_check_hook)
+                        this.__icon_check_hook(node.childNodes[1], obj);
+				}
 			}
 
 			if(this.settings.core.force_text) {
@@ -3432,13 +3439,18 @@
 		 * @return {Object}
 		 */
 		get_state : function () {
+            var scroll_element =
+                this.settings.state._scrollable
+                    ? this.element
+                    : this.element.parent();
+
 			var state	= {
 				'core' : {
 					'open' : [],
 					'loaded' : [],
 					'scroll' : {
-						'left' : this.element.scrollLeft(),
-						'top' : this.element.scrollTop()
+						'left' : scroll_element.scrollLeft(),
+						'top' : scroll_element.scrollTop()
 					},
 					/*!
 					'themes' : {
@@ -3510,11 +3522,16 @@
 						return false;
 					}
 					if(state.core.scroll) {
+                        var scroll_element =
+                            this.settings.state._scrollable
+                                ? this.element
+                                : this.element.parent();
+
 						if(state.core.scroll && state.core.scroll.left !== undefined) {
-							this.element.scrollLeft(state.core.scroll.left);
+                            scroll_element.scrollLeft(state.core.scroll.left);
 						}
 						if(state.core.scroll && state.core.scroll.top !== undefined) {
-							this.element.scrollTop(state.core.scroll.top);
+                            scroll_element.scrollTop(state.core.scroll.top);
 						}
 						delete state.core.scroll;
 						this.set_state(state, callback);
@@ -3587,7 +3604,7 @@
 
 			var c = this.get_container_ul()[0].className;
 			if(!skip_loading) {
-				this.element.html("<"+"ul class='"+c+"' role='group'><"+"li class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='treeitem' id='j"+this._id+"_loading'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor' href='#'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
+				this.element.html("<"+"ul class='"+c+"' role='group'><"+"li class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='treeitem' id='j"+this._id+"_loading'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
 				this.element.attr('aria-activedescendant','j'+this._id+'_loading');
 			}
 			this.load_node($.jstree.root, function (o, s) {
@@ -4805,14 +4822,17 @@
 				dom.removeClass('jstree-themeicon-custom ' + old).css("background","").removeAttr("rel");
 				if(old === false) { this.show_icon(obj); }
 			}
-			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1) {
+			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1 && !obj.icon.startsWith("var(")) {
 				dom.removeClass(old).css("background","");
 				dom.addClass(icon + ' jstree-themeicon-custom').attr("rel",icon);
 				if(old === false) { this.show_icon(obj); }
 			}
 			else {
 				dom.removeClass(old).css("background","");
-				dom.addClass('jstree-themeicon-custom').css("background", "url('" + icon + "') center center no-repeat").attr("rel",icon);
+				dom.addClass('jstree-themeicon-custom').css("background",
+                    (icon.startsWith("var(")? icon: 'url("' + icon + '")') + " center center no-repeat")
+                    .css("background-size", "16px 16px")
+                    .attr("rel",icon);
 				if(old === false) { this.show_icon(obj); }
 			}
 			return true;
@@ -6334,7 +6354,8 @@
 					str += "<"+"a href='#' rel='" + (vakata_context.items.length - 1) + "' " + (val.title ? "title='" + val.title + "'" : "") + ">";
 					if($.vakata.context.settings.icons) {
 						str += "<"+"i ";
-						if(val.icon) {
+                        if (val._istyle) {str += " style='" + val._istyle + "' "}
+						else if(val.icon) {
 							if(val.icon.indexOf("/") !== -1 || val.icon.indexOf(".") !== -1) { str += " style='background:url(\"" + val.icon + "\") center center no-repeat' "; }
 							else { str += " class='" + val.icon + "' "; }
 						}

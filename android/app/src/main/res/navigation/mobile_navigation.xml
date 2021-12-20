@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_providers">
+
+    <fragment
+        android:id="@+id/nav_cloud_shelf"
+        android:name="l2.albitron.scrapyard.ui.cloud_shelf.CloudShelfFragment"
+        android:label="@string/menu_cloud_shelf"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_sync"
+        android:name="l2.albitron.scrapyard.ui.sync_bookmarks.SyncBookmarksFragment"
+        android:label="@string/menu_sync"
+        tools:layout="@layout/fragment_gallery" />
+
+    <fragment
+        android:id="@+id/nav_providers"
+        android:name="l2.albitron.scrapyard.ui.providers.ProvidersFragment"
+        android:label="@string/menu_providers"
+        tools:layout="@layout/fragment_providers" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="l2.albitron.scrapyard.ui.settings.SettingsFragment"
+        android:label="@string/menu_settings"/>
+
+    <fragment
+        android:id="@+id/nav_content_browser"
+        android:name="l2.albitron.scrapyard.ui.webview.ContentBrowserFragment"/>
+</navigation>

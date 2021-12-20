@@ -245,7 +245,7 @@
     font-style: normal;
     color: #777;
     white-space: nowrap;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .jstree-default .extended-todo .todo-details {
@@ -269,4 +269,12 @@
 
 a.has-notes, a.has-notes:hover {
     text-decoration: underline;
+}
+
+.container-context-menu i {
+    background-size: 16px 16px !important;
+}
+
+.node-pending {
+    color: dimgray;
 }

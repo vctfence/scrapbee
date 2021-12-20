@@ -1,0 +1,55 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/view_header">
+        <ListPreference
+            app:defaultValue="providers"
+            app:entries="@array/startup_screen_entries"
+            app:entryValues="@array/startup_screen_values"
+            app:key="PREF_STARTUP_SCREEN"
+            app:title="@string/startup_screen"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            app:key="PREF_REMEMBER_TREE_STATE"
+            app:title="@string/remember_tree_state" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cloud_providers_header">
+        <ListPreference
+            app:defaultValue="dropbox"
+            app:entries="@array/cloud_provider_entries"
+            app:entryValues="@array/cloud_provider_values"
+            app:key="PREF_CLOUD_SHELF_PROVIDER"
+            app:title="@string/cloud_shelf"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="dropbox"
+            app:entries="@array/cloud_provider_entries"
+            app:entryValues="@array/cloud_provider_values"
+            app:key="PREF_SYNC_BOOKMARKS_PROVIDER"
+            app:title="@string/sync_bookmarks"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/sharing_header">
+        <ListPreference
+            app:defaultValue="cloud"
+            app:entries="@array/shelf_entries"
+            app:entryValues="@array/shelf_values"
+            app:key="PREF_SHARE_TO_SHELF"
+            app:title="@string/share_to_shelf"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="PREF_DEFAULT_BOOKMARK_FOLDER"
+            app:title="@string/shared_folder_name"
+            app:defaultValue="@string/default_shared_folder_name"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            app:key="PREF_ASK_ADDITIONAL_PROPERTIES"
+            app:title="@string/ask_for_additional_properties" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
