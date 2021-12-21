@@ -12,40 +12,38 @@ manager with some org-mode goodness which I would be able to control from [iShel
 I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch
 to obtain the desired features.
 
+It is hard to believe, but it is 2020s now, and it is time to abandon XML-based RDF and move towards databases, JSON
+and cloud services. For an advanced user Scrapyard may become a dream cloud bookmarking solution. Please see
+the [online help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/help.html) for more details.
+
 ### Objectives
 
 * ~~Store data at IndexedDB~~ [DONE]
 * ~~Replace "RDF" tree with jsTree~~ [DONE]
-* ~~Add a fancy user-action popup with tree of directories to add bookmarks~~ [DONE]
+* ~~Add a fancy user-action popup with tree of directories to add bookmarks into~~ [DONE]
 * ~~Store archived web-pages as single file a la SavePageWE in a DB-record~~ [DONE]
 * ~~Rework archive page editing tools to accommodate new storage method~~ [DONE]
 * ~~Store indexed content of downloaded html documents in the database~~ [DONE]
-* ~~Add search text input on the toolbar; search by tags, title, content and in Firefox bookmarks~~ [DONE]
+* ~~Add search text input on the toolbar; search by tags, title, content and other attributes~~ [DONE]
 * ~~Control from~~ [iShell](https://gchristensen.github.io/ishell/) [DONE]
 * ~~Basic TODO functionality a la org~~ [DONE]
 * ~~Import/export from .org~~ [DONE]
-* ~~Import from Firefox/Chrome .html~~
+* ~~Import from Firefox/Chrome .html bookmarks~~
 * ~~Rework settings page~~ [DONE]
 * ~~Dark theme~~ [DONE]
 * ~~Write help~~ [DONE]
 * ~~A little bit of Wiki functionality: editable notes in org markup and other formats~~ [DONE]
-* ~~Live link auto checker~~ [DONE]
+* ~~Live link/duplicate checker~~ [DONE]
 * ~~Helper application [DONE]~~
 * ~~Multi-account containers support [DONE]~~
 * ~~Automation API [DONE]~~
-* ~~Full text search through archived content, notes and comments [DONE]~~
+* ~~Full text search/filtering through archived content, notes and comments [DONE]~~
 * ~~Backup management UI [DONE]~~
 * ~~File-based synchronization [DONE]~~
+* ~~Bookmark browsing on Android [DONE]~~
 
 ### Project status
 
-Currently, the project is considered as a permanent alpha: be prepared for breaking changes, devastating bugs and
-groundbreaking experiments. Please, backup your Firefox profile often. Scrapyard also could be incredibly buggy at the
-times of major internal refactorings, since I have not enough resources for the proper QA.
-Nevertheless, do not forget to donate if you have a good use of the software.
-
-### The current status of cloud support
-
-Currently, cloud bookmarking is implemented on the basis of the Dropbox HTTP API.
-Since there is no real database, the speed of operations is inversely proportional to
-the amount of bookmarks you have there.
+Currently, the project is considered as a permanent alpha, the codebase is highly volatile. Be prepared for breaking
+changes, devastating bugs and groundbreaking experiments. Nevertheless, do not forget to support the author
+if you have a good use of the software.

@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {cloudBackend} from "../backend_cloud.js"
+import {cloudBackend} from "../backend_cloud_shelf.js"
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "../settings.js";
 import {
@@ -134,27 +134,6 @@ class BookmarkTree {
                 return;
 
             setTimeout(async () => {
-                let getIconElement = async () => {
-                    const a_element2 = document.getElementById(a_element.id);
-                    if (a_element2) {
-                        return a_element2.childNodes[0];
-                    }
-                    else {
-                        return new Promise((resolve, reject) => {
-                            setTimeout(() => {
-                                const a_element2 = document.getElementById(a_element.id);
-                                if (a_element2) {
-                                    resolve(a_element2.childNodes[0]);
-                                }
-                                else {
-                                    console.error("can't find icon element");
-                                    resolve(null);
-                                }
-                            }, 100);
-                        })
-                    }
-                }
-
                 if (o(jnode)?.stored_icon) {
                     const cached = this.iconCache.get(jnode.icon);
                     const base64Url = cached || (await Icon.get(o(jnode).id));
@@ -162,7 +141,7 @@ class BookmarkTree {
                     if (base64Url) {
                         if (!cached)
                             this.iconCache.set(jnode.icon, base64Url);
-                        let iconElement = await getIconElement();
+                        let iconElement = await this._getIconElement(a_element);
                         if (iconElement)
                             iconElement.style.backgroundImage = `url("${base64Url}")`;
                     }
@@ -173,7 +152,7 @@ class BookmarkTree {
                     image.onerror = async e => {
                         const fallback_icon = "var(--themed-globe-icon)";
                         jnode.icon = fallback_icon;
-                        let iconElement = await getIconElement();
+                        let iconElement = await this._getIconElement(a_element);
                         if (iconElement)
                             iconElement.style.backgroundImage = fallback_icon;
                     };
@@ -206,6 +185,27 @@ class BookmarkTree {
             });
         }
     }
+
+    _getIconElement(a_element) {
+        const a_element2 = document.getElementById(a_element.id);
+        if (a_element2)
+            return a_element2.childNodes[0];
+        else {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    const a_element2 = document.getElementById(a_element.id);
+                    if (a_element2) {
+                        resolve(a_element2.childNodes[0]);
+                    }
+                    else {
+                        console.error("can't find icon element");
+                        resolve(null);
+                    }
+                }, 100);
+            })
+        }
+    }
+
 
     clearIconCache() {
         this.iconCache = new Map();
@@ -1067,6 +1067,14 @@ class BookmarkTree {
                             if (selectedNodes)
                                 await send.shareToDropbox({nodes: selectedNodes.map(n => o(n))});
                         }
+                    },
+                    oneDriveItem: {
+                        label: "OneDrive",
+                        icon: "/icons/onedrive.png",
+                        action: async () => {
+                            if (selectedNodes)
+                                await send.shareToOneDrive({nodes: selectedNodes.map(n => o(n))});
+                        }
                     }
                 }
             },
@@ -1311,6 +1319,7 @@ class BookmarkTree {
                 if (items.shareItem) {
                     delete items.shareItem.submenu.pocketItem;
                     delete items.shareItem.submenu.dropboxItem;
+                    delete items.shareItem.submenu.oneDriveItem;
                 }
                 if (ctxNode.type === NODE_TYPE_GROUP)
                     delete items.rdfPathItem;
@@ -1347,6 +1356,7 @@ class BookmarkTree {
                     delete items.copyItem;
                     delete items.pasteItem;
                     delete items.shareItem.submenu.dropboxItem;
+                    delete items.shareItem.submenu.oneDriveItem;
                 }
                 break;
         }

@@ -1,22 +1,18 @@
 import {send} from "./proxy.js";
 import {settings} from "./settings.js";
-
 import DropboxAuth from "./lib/dropbox/auth.js";
 import Dropbox from "./lib/dropbox/dropbox.js"
 import {readBlob} from "./utils_io.js";
-import {CloudStorage} from "./storage_cloud.js";
+import {BackendCloudBase, CloudItemNotFoundError} from "./backend_cloud_base.js";
 
 const APP_KEY = "0y7co3j1k4oc7up";
-const DROPBOX_APP_PATH = "/Cloud";
-const DROPBOX_INDEX_PATH_V0 = "/Cloud/index.json";
-const DROPBOX_INDEX_PATH = "/Cloud/index.jsonl";
-const REDIRECT_URL = "https://gchristensen.github.io/scrapyard/";
 
-export class DropboxBackend {
+export class DropboxBackend extends BackendCloudBase {
     constructor() {
+        super()
+        this.ID = "dropbox";
         this.dbxAuth = new DropboxAuth({clientId: APP_KEY});
         this.dbx = new Dropbox({auth: this.dbxAuth});
-        this.assetManager = this.newAssetManager();
     }
 
     initialize() {
@@ -37,133 +33,61 @@ export class DropboxBackend {
         return !!settings.dropbox_refresh_token();
     }
 
-    async authenticate(signin = true) {
-        if (signin) {
-            return new Promise(async (resolve, reject) => {
-                if (settings.dropbox_refresh_token()) {
-                    resolve(true);
-                    return;
-                }
-
-                try {
-                    let authUrl = await this.dbxAuth.getAuthenticationUrl(REDIRECT_URL, undefined, 'code',
-                        'offline', undefined, undefined, true);
-
-                    let dropboxTab = await browser.tabs.create({url: authUrl});
-
-                    let listener = async (id, changed, tab) => {
-                        if (id === dropboxTab.id && changed.url && changed.url.startsWith(REDIRECT_URL)) {
-                            await browser.tabs.onUpdated.removeListener(listener);
-                            browser.tabs.remove(dropboxTab.id);
-
-                            if (changed.url.includes("code=")) {
-                                const code = changed.url.match(/.*code=(.*)$/i)[1];
-
-                                try {
-                                    let response = await this.dbxAuth.getAccessTokenFromCode(REDIRECT_URL, code);
-                                    const refreshToken = response.result.refresh_token;
-                                    this.dbxAuth.setRefreshToken(refreshToken);
-
-                                    await settings.dropbox_refresh_token(refreshToken);
-                                    send.dropboxAuthenticated({refreshToken});
-
-                                    if (settings.dropbox___dbat())
-                                        settings.dropbox___dbat(null);
-
-                                    resolve(true);
-                                }
-                                catch (e) {
-                                    console.error(e);
-                                    resolve(false);
-                                }
-                            }
-                            else
-                                resolve(false);
-                        }
-                    };
-
-                    browser.tabs.onUpdated.addListener(listener);
-                }
-                catch (e) {
-                    console.error(e);
-                    resolve(false);
-                }
-            });
-        }
-        else
-            settings.dropbox_refresh_token(null);
+    signOut() {
+        settings.dropbox_refresh_token(null);
     }
 
-    newAssetManager() {
-        let storeAsset = ext => {
-            return async (node, data) => {
-                try {
-                    await this.dbx.filesUpload({
-                        path: `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`,
-                        mode: "overwrite",
-                        mute: true,
-                        contents: data
-                    });
-                } catch (e) {
-                    console.error(e);
-                }
-            };
-        }
-
-        let fetchAsset = ext => {
-            return async (node) => {
-                try {
-                    const {result: {fileBlob}} = await this.dbx.filesDownload( {
-                        path: `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`
-                    });
-
-                    return readBlob(fileBlob, node.byte_length? "binary": "string");
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            };
-        }
-
-        let deleteAsset = ext => {
-            return async (node) => {
-                try {
-                    await this.dbx.filesDeleteV2( {
-                        "path": `${DROPBOX_APP_PATH}/${node.uuid}.${ext}`
-                    });
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            };
-        }
-
-        let manager = {};
-
-        manager.storeNotes = storeAsset("notes");
-        manager.fetchNotes = fetchAsset("notes")
-        manager.deleteNotes = deleteAsset("notes");
-
-        manager.storeData = storeAsset("data");
-        manager.fetchData = fetchAsset("data")
-        manager.deleteData = deleteAsset("data");
-
-        manager.storeIcon = storeAsset("icon");
-        manager.fetchIcon = fetchAsset("icon")
-        manager.deleteIcon = deleteAsset("icon");
-
-        manager.storeComments = storeAsset("comments");
-        manager.fetchComments = fetchAsset("comments")
-        manager.deleteComments = deleteAsset("comments");
-
-        manager.storeView = storeAsset("view");
-        manager.fetchView = fetchAsset("view");
-        manager.deleteView = deleteAsset("view");
-
-        return manager;
+    _getAuthorizationUrl() {
+        return this.dbxAuth.getAuthenticationUrl(BackendCloudBase.REDIRECT_URL, undefined,
+            'code', 'offline', undefined, undefined, true);
     }
 
-    async upload(path, filename, content, reentry) {
+    async _obtainRefreshToken(url) {
+        const code = url.match(/.*code=(.*)$/i)[1];
+        let response = await this.dbxAuth.getAccessTokenFromCode(BackendCloudBase.REDIRECT_URL, code);
+        const refreshToken = response.result.refresh_token;
+        this.dbxAuth.setRefreshToken(refreshToken);
+
+        await settings.dropbox_refresh_token(refreshToken);
+        send.dropboxAuthenticated({refreshToken});
+
+        if (settings.dropbox___dbat())
+            settings.dropbox___dbat(null);
+    }
+
+    async uploadFile(path, data) {
+        await this.dbx.filesUpload({
+            path,
+            contents: data,
+            mode: "overwrite",
+            mute: true
+        });
+    }
+
+    async downloadFile(path) {
+        let result = null;
+
+        try {
+            const {result: {fileBlob}} = await this.dbx.filesDownload({path});
+            result = readBlob(fileBlob);
+        }
+        catch (e) {
+            if (e.status === 409) { // no index.js file
+                if (e.error.error_summary.startsWith("path/not_found"))
+                    throw new CloudItemNotFoundError();
+            }
+            else
+                console.error(e);
+        }
+
+        return result;
+    }
+
+    async deleteFile(path) {
+        await this.dbx.filesDeleteV2({path});
+    }
+
+    async share(path, filename, content) {
         await this.authenticate();
         return this.dbx.filesUpload({
             path: path + filename.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_"),
@@ -177,7 +101,7 @@ export class DropboxBackend {
 
     async reset() {
         try {
-            const {result: {entries}} = await this.dbx.filesListFolder({path: DROPBOX_APP_PATH});
+            const {result: {entries}} = await this.dbx.filesListFolder({path: BackendCloudBase.CLOUD_SHELF_PATH});
 
             if (entries && entries.length) {
                 const files = {entries: entries.map(f => ({path: f.path_display}))};
@@ -189,44 +113,10 @@ export class DropboxBackend {
         }
     }
 
-    async getDB(blank = false) {
-        let storage = null;
-
-        if (!blank)
-            try {
-                const {result: {fileBlob}} = await this.dbx.filesDownload( {path: DROPBOX_INDEX_PATH});
-                storage = CloudStorage.deserialize(await readBlob(fileBlob));
-            }
-            catch (e) {
-                if (e.status === 409) { // no index.js file
-                    if (e.error.error_summary.startsWith("path/not_found"))
-                        storage = new CloudStorage({cloud: "Scrapyard"});
-                    }
-                else
-                    console.error(e);
-            }
-        else
-            storage = new CloudStorage({cloud: "Scrapyard"});
-
-        if (storage)
-            Object.assign(storage, this.assetManager);
-
-        return storage;
-    }
-
-    async persistDB(db) {
-        await this.dbx.filesUpload({
-                path: DROPBOX_INDEX_PATH,
-                mode: "overwrite",
-                mute: true,
-                contents: db.serialize()
-            });
-    }
-
     async getLastModified() {
         try {
             const {result: meta} = await this.dbx.filesGetMetadata({
-                "path": DROPBOX_INDEX_PATH
+                path: `${BackendCloudBase.CLOUD_SHELF_PATH}/${BackendCloudBase.CLOUD_SHELF_INDEX}`
             });
 
             if (meta && meta.server_modified)
@@ -237,21 +127,6 @@ export class DropboxBackend {
         }
 
         return null;
-    }
-
-    async isCloudV0Present() {
-        try {
-            const {result: meta} = await this.dbx.filesGetMetadata({
-                "path": DROPBOX_INDEX_PATH_V0
-            });
-
-            return !!meta;
-        }
-        catch (e) {
-            console.error(e);
-        }
-
-        return false;
     }
 }
 

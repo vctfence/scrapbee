@@ -657,15 +657,17 @@ receive.externalNodeUpdated = sidebarRefreshExternal;
 receive.externalNodeRemoved = sidebarRefreshExternal;
 
 receive.cloudSyncStart = message => {
+    startProcessingIndication();
     tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-sync-icon)");
 };
 
 receive.cloudSyncEnd = message => {
     tree.setNodeIcon(CLOUD_SHELF_ID, "var(--themed-cloud-icon)");
+    stopProcessingIndication();
 };
 
 receive.shelvesChanged = message => {
-    return settings.load().then(() => loadShelves(getLastShelf(), false));
+    return settings.load().then(() => loadShelves(getLastShelf(), message.synchronize));
 };
 
 receive.sidebarThemeChanged = message => {
@@ -721,25 +723,6 @@ function updateProgress(message) {
     else
         progressDiv.css("width", "0");
 }
-
-receive.cloudShelfFormatChanged = async message => {
-
-    const text = "The Cloud shelf needs to be reset due to internal format change. "
-        + "This will delete all its contents. By pressing \"Cancel\" you may still copy the"
-        + " relevant items to other shelves. Continue?";
-
-    if (await showDlg("confirm", {title: "Warning", message: text, wrap: true})) {
-        let success = await send.resetCloud();
-
-        if (success) {
-            await settings.load();
-            settings.using_cloud_v1(true);
-            setTimeout(loadShelves, 1000);
-        }
-        else
-            showNotification("Error accessing cloud.");
-    }
-};
 
 receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))

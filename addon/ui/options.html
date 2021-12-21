@@ -401,7 +401,7 @@
                         <div class="double-first">
                             <form>
                                 <fieldset style="border: none; display: flex; align-items: center;">
-                                    <input type="checkbox" id="option-enable-cloud"><label for="option-enable-cloud">Enable cloud</label>
+                                    <input type="checkbox" id="option-enable-cloud"><label for="option-enable-cloud">Enable cloud shelf</label>
                                 </fieldset>
                             </form>
                         </div>
@@ -422,12 +422,19 @@
                 <td>
                     <div class="panel" style="">
                         <form>
-                            <fieldset style="border: none; display: flex; align-items: center;">
-                                <!--input type="radio" id="provider-dropbox" checked><label for="provider-dropbox"-->
-                                <a href="http://dropbox.com" target="_blank">Dropbox</a>&nbsp;<!--/label-->
-                                <span> (may be a subject of <a href="https://help.dropbox.com/accounts-billing/settings-sign-in/computer-limit" target="_blank"
-                                >certain limitations</a>)</span>
-                                <input type="button" class="blue-button" id="auth-dropbox" value="Sign in" style="margin-left: 10px;">
+                            <fieldset style="border: none;">
+                                <div style="display: flex; align-items: center;">
+                                    <input type="radio" id="provider-dropbox" name="cloud-providers" value="dropbox" checked><label for="provider-dropbox">Dropbox</label>
+                                    &nbsp;(<a href="https://dropbox.com" target="_blank">dropbox.com</a>)
+                                    <!--span> (may be a subject of <a href="https://help.dropbox.com/accounts-billing/settings-sign-in/computer-limit" target="_blank"
+                                    >certain limitations</a>)</span-->
+                                    <input type="button" class="blue-button" id="auth-dropbox" value="Sign in" style="margin-left: 10px;">
+                                </div>
+                                <div style="display: flex; align-items: center;">
+                                    <input type="radio" id="provider-onedrive" name="cloud-providers" value="onedrive"><label for="provider-onedrive">OneDrive</label>
+                                    &nbsp;(<a href="https://onedrive.live.com" target="_blank">onedrive.live.com</a>)
+                                    <input type="button" class="blue-button" id="auth-onedrive" value="Sign in" style="margin-left: 10px;">
+                                </div>
                             </fieldset>
                         </form>
                     </div>
@@ -487,7 +494,8 @@
                             <fieldset style="border: none; display: flex; align-items: center;">
                                 <div id="sync-directory-path-container">
                                     <i class="help-mark"></i>
-                                    <span class="tips hide">For example: <b>d:\my cloud\scrapyard</b> or <b>~/cloud/scrapyard</b></span>
+                                    <span class="tips hide">For example: <b>d:\my cloud\scrapyard</b> or <b>~/cloud/scrapyard</b>.
+                                    <br>Use the path <b>&lt;cloud folder&gt;/Apps/Scrapyard/Sync</b> to make your content available on mobile devices.</span>
                                     <input id="sync-directory-path" type="text"/>
                                 </div>
                             </fieldset>

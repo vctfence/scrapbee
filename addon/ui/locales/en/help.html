@@ -87,8 +87,9 @@
     <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page
         fragments, or complete HTML pages and PDF documents in unlimited quantities.
         Unlike most others ScrapBook alternatives, Scrapyard does not require installing external tools
-        for most of its functionality by keeping the data in the browser local storage.
-        It is possible to import or export all your bookmarks in <a
+        for most of its functionality by keeping the data in the browser internal storage.
+        If necessary, it is possible to keep your content on disk for synchronization through a
+        cloud service, or import/export all your bookmarks in <a
             href="https://orgmode.org" target="_blank">org-mode</a> or <a
             href="https://www.jsonlines.org/">JSON</a> formats. Scrapyard also supports
         import of RDF archives of the legacy ScrapBook addon.
@@ -101,17 +102,17 @@
         target="_blank">Firefox sidebar</a> as shown in the image below. The sidebar
         itself could be opened with the corresponding toolbar button: <img
             style="display: inline-block" src="images/sidebar-button.png">. In the more recent
-        versions of Firefox, it may be necessary to add this button to the toolbar manually by right-clicking
-        on the main Firefox menu button and choosing "Customize Toolbar...".</p>
+        versions of Firefox, it may be necessary to add this button to the toolbar manually by selecting "Customize Toolbar..."
+        at Main menu > More tools.</p>
+
+    <p>
+        The <code>Alt+Y</code> keyboard shortcut allows opening Scrapyard directly.
+        Keyboard shortcuts provided by any extension could be <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
+        customized</a> in Firefox settings.
+    </p>
 
     <p style="text-align: center">
         <img src="images/find-sidebar.png">
-    </p>
-
-    <p>
-        Additionally, the <code>Alt+Y</code> keyboard shortcut allows opening Scrapyard directly.
-        Keyboard shortcuts provided by any extension could be <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
-        customized</a> in Firefox settings.
     </p>
 
     <h2>Main Features</h2>
@@ -142,10 +143,10 @@
 
     <h3>Search</h3>
     <p>The search input field at the Scrapyard sidebar allows filtering bookmarks of the current shelf
-        by title/URL, folder name, tags, date, the content of archived web pages, the content of attached notes, or comments.
+        by content and various attributes.
         Use the "Everything" shelf to search through all bookmarks. Although the Sidebar filter is
         reasonably fast, it matches all items that contain every entered word longer than 2 characters
-        in any order and distance. Use full-text search if you need exact results.<p>
+        in any order and distance. Use the full-text search if you need exact results.<p>
 
     <p>Filtering by date supports simple queries:</p>
 
@@ -209,13 +210,15 @@
     <p>
         Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available
         across different Firefox instances that use a cloud provider with the same credentials.
-        Cloud providers are configurable at the addon settings (currently, only Dropbox is
-        supported).</p>
-    <p><a
-        href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
+        Cloud providers are configurable at the addon settings. It is possible to authorize in several
+        cloud providers and quickly switch between them (currently only Dropbox and OneDrive are supported).</p>
+    <p><a href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
         Android</a> allows to save links and text into the Cloud shelf from mobile devices,
-        and browse contents of this shelf. See the corresponding section below for more details.
+        and to browse contents of this shelf. See the corresponding section below for more details.
     </p>
+
+    <p>It is not necessary to install native cloud clients or the Scrapyard
+    helper application on any OS to use the cloud shelf. Just a Dropbox or a personal Microsoft account is required.</p>
 
     <p style="text-align: center">
         <img src="images/cloud.png">
@@ -224,9 +227,9 @@
     <h3>Sharing Bookmarks</h3>
     <p>
         A bookmark or archive could be shared to either <a href="https://getpocket.com/"
-                                                           target="_blank">Pocket</a> or <a
-        href="https://dropbox.com/" target="_blank">Dropbox</a> through the "Share" context menu.
-        Files that are shared to Dropbox appear at the "Apps/Scrapyard" Dropbox folder. Only links
+                                                           target="_blank">Pocket</a> or a
+        cloud service through the "Share" context menu.
+        Files that are shared to Dropbox or OneDrive appear at the "Apps/Scrapyard" folder. Only links
         could be shared to the Pocket application.
         The "Cloud" menu item copies any selected items to the Scrapyard Cloud shelf.
     </p>
@@ -236,10 +239,13 @@
     </p>
 
     <h3>Synchronization</h3>
-    <p>Cloud bookmarks are aimed primarily for mobile devices and quick sharing of
-        selected items. The Sync option allows to maintain an actual copy of Scrapyard content as a
-        set of files on disk that could be shared through a cloud provider of your choice.
-        This feature requires the helper application version 0.5 or above.</p>
+    <p>The cloud shelf is aimed primarily for sharing from mobile devices.
+        The Sync option allows to maintain an actual copy of Scrapyard content as a
+        set of files on disk that could be shared and picked up by different Scrapyard instances
+        through a cloud provider of your choice.
+        This feature requires the helper application version 0.5 or above. The synchronized
+        bookmarks shared through Dropbox or OneDrive also could be browsed in the Scrapyard
+        application for Android.</p>
 
     <p>Note that due to potentially large volume of synchronized content, synchronization is not
         automatic, and is not performed, for example, after you added or deleted a bookmark. To
@@ -258,6 +264,8 @@
         <li>The items from restored backups are considered as newly added. If a restored backup
             deletes any existing items, they will also be deleted in the Sync storage.</li>
     </ul>
+
+    <p>Use the path <b>&lt;cloud folder&gt;/Apps/Scrapyard/Sync</b> to make your content available on mobile devices.</p>
 
     <p>Because this feature can introduce irreversible changes, please consider taking a full backup
         on every Firefox instance where you intend to enable it. If you need to reset Scrapyard or Sync
@@ -279,7 +287,7 @@
 
     <p><br>Additionally, it is possible to assign a container to a bookmark in its property dialog, as
     it is shown in the image below. Such bookmarks will automatically open in the corresponding
-    container, even when selected through the URL-bar search initiated by the "scr" keyword.</p>
+    container.</p>
 
     <p style="text-align: center">
         <img src="images/containers-properties.png">
@@ -301,22 +309,22 @@
         of the assigned state.</p>
 
     <h3>Markers</h3>
-    <p>Every archived page provides a toolbar that offers several types of text markers to
+    <p>Every archived page contains a toolbar that offers several types of text markers to
         highlight sections of interest. The "Auto open" check makes the marker menu to open
         automatically when some text is selected. The "Edit document" button allows to clean the
         document of unnecessary elements by direct editing of its content. It is also possible to
-        type in something, press F7 to display the caret. Alternatively, there is DOM Eraser, which
-        allows removing of elements with a single click. The HTML code of a page may be
-        modified through the browser developer tools accessible through the F12 keyboard key.
-        Press "Save" after you have finished document editing.</p>
+        type in something, press F7 to display the caret. The DOM Eraser tool is able to remove
+        any element on the page with a single click. The HTML code of a page may also be
+        manually modified through the browser developer tools accessible through the F12 keyboard key.
+        Press the "Save" button after you have finished document editing.</p>
 
-    <p>Saved page size and creation date are available through the page info icon at the right-most toolbar side.</p>
+    <p>The size of a saved page in bytes and its creation date are available through the page info icon at the right-most toolbar side.</p>
 
     <p style="text-align: center">
         <img src="images/markers.png">
     </p>
 
-    <p>There is an option to not display the editing toolbar automatically for archived pages.
+    <p>There is an option to not display the editing toolbar automatically.
        The toolbar always could be toggled by the <code>Ctrl+Alt+T</code> key combination.</p>
 
     <h3>Bookmark Comments</h3>
@@ -350,7 +358,7 @@
         <p>Notes could be entered in rich text format (using a visual editor),
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>,
         <a href="https://orgmode.org/manual/Markup.html" target="_blank">Org-mode markup</a>, or plain text.
-            The format selector dropdown list is located at the bottom left corner of the "Edit" tab.
+            The format selector dropdown list is located in the bottom left corner of the "Edit" tab.
             Notes in Org format may have an automatically generated table of contents.
         Insert the example markup into the note editor to explore what options are available.</p>
 
@@ -383,16 +391,15 @@
         <img src="images/impexp.png">
     </p>
 
-    <p>Install Scrapyard helper application if you need to improve export performance.</p>
-
     <h3>Importing Legacy ScrapBook RDF Archives</h3>
 
-    <p>To import legacy ScrapBook RDF archives you also need to install the Scrapyard <a
+    <p>To import legacy ScrapBook RDF archives you need to install the Scrapyard <a
         href="#helperapp"
         onmouseenter="this.href='https://github.com/GChristensen/scrapyard/releases'">helper
         application</a>. There are two import modes: the full import, which transfers saved files into
         the Scrapyard database, and the quick import which only recreates the RDF directory structure and
-        leaves the archived ScrapBook files on disk. See the "Import RDF" tab of the settings page
+        leaves the archived ScrapBook files on disk. The recent may be useful to arrange the contents
+        of an RDF archive before the full import. See the "Import RDF" tab of the settings page
         for more details about the available import options.</p>
 
     <p>Shelves imported in the quick mode are marked with a tape reel icon. It is possible to add
@@ -410,11 +417,11 @@
     </p>
 
     <h3>Backup</h3>
-    <p>By using the Scrapyard backup manager, it is possible to backup contents of any bookmark shelf to
-        a designated directory on the hard drive. This feature requires the helper application
-        version 0.3 or above. If the corresponding option is set, backups will be automatically
-        compressed. Compression method and level could be chosen in the advanced settings. Methods
-        with better compression require more processing time.</p>
+    <p>It is possible to backup contents of any bookmark shelf to a designated directory on the hard
+        drive by using the backup manager. This feature requires the helper application version 0.3
+        or above. Backups will be automatically compressed if the corresponding option is checked.
+        Compression method and level could be chosen in the advanced settings. Methods with better
+        compression require more processing time.</p>
 
     <p>A backup could be restored to the original shelf, imported as a new separate shelf,
         or deleted from the disk through the backup list context menu.</p>
@@ -428,7 +435,7 @@
     <p>The automatic link checker allows finding broken links or URL duplicates. Its mode of
         operation may be selected through the "Check for" dropdown list. Since different archived page
         fragments may share the same original URL, link checker results in the "check for duplicates"
-        mode may not always mean the duplication of content. Please check the found items before
+        mode may not always mean the duplication of content. Please check the duplicate bookmarks before
         deleting them.</p>
 
     <p style="text-align: center">
@@ -454,17 +461,15 @@
         It uses the standard Android sharing functionality, which may be tricky to deal
         with, as it is shown in the examples below.</p>
 
-    <p>At first, you need to enable cloud support in Scrapyard itself by
-        checking the corresponding option at the "Cloud" setting tab and sign into Dropbox.</p>
+    <p>At first, you need to enable cloud shelf in Scrapyard by checking the corresponding option at
+        the "Cloud" setting tab and sign into a cloud service. The bookmarks also may be shared into the
+        default Sync shelf, if synchronization is enabled, although it is recommended to use the
+        cloud shelf for the sharing from mobile devices.</p>
 
-    <p>Then you need to install the Scrapyard application on your device and sign into the same Dropbox
-    account from its front screen.</p>
+    <p>Then you need to install the Scrapyard application on your device and sign into the same
+        cloud service account from its "Cloud Providers" screen.</p>
 
-    <p style="text-align: center">
-        <img src="images/android-sign-in.png">
-    </p>
-
-    <p>To share a link from the application of choice, find and tap the "Share" button or menu item in it.
+    <p>To share a link from the application of choice, find and tap the "Share" button or the "Share" menu item in it.
     The example below highlights the "Share" button in the mobile Firefox application.</p>
 
     <p style="text-align: center">
@@ -492,10 +497,11 @@
         To save source URL, share text from the Pocket app or the recent versions of Chrome browser.
     </p>
 
-    <p>The application also offers basic browsing functionality for the Cloud shelf. Bookmarks,
-        archived pages, and notes could be opened directly. Archived PDF documents and other binary
-        files could be downloaded to the device storage memory. There is a long-tap context menu which
-        allows to view attached notes and delete bookmarks and folders.</p>
+    <p>The application also offers basic browsing functionality for the Cloud shelf and synchronized
+        bookmarks. Bookmarks, archived pages, and notes could be opened directly. Archived PDF
+        documents and other binary files could be downloaded to the device storage memory. There is
+        a long-tap context menu which allows to view attached notes and delete bookmarks and
+        folders.</p>
 
     <p style="text-align: center">
         <img src="images/android-cloud-shelf.png">
@@ -571,10 +577,11 @@
 
     <h2>Automation</h2>
 
-    <p>By using the automation API provided by Scrapyard it is possible to programmatically create,
+    <p>The automation API provided by Scrapyard allows to programmatically create,
         modify, and delete bookmarks or page archives from iShell commands and your own extensions.
         See the <a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
                    target="_blank">automation API documentation</a> for more details.</p>
 </div>
+
     <div id="help-spacer-right"></div>
 </div>

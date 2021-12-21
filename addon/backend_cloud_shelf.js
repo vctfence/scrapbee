@@ -1,6 +1,7 @@
-import {send} from "./proxy.js";
+import {receive, send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {dropboxBackend} from "./backend_dropbox.js";
+import {oneDriveBackend} from "./backend_onedrive.js";
 import {
     CLOUD_EXTERNAL_NAME,
     CLOUD_SHELF_ID,
@@ -14,9 +15,10 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Archive, Node} from "./storage_entities.js";
 import {MarshallerCloud, UnmarshallerCloud} from "./marshaller_cloud.js";
 import {ProgressCounter} from "./utils.js";
+import {CloudError} from "./backend_cloud_base.js";
 
 const CLOUD_SYNC_ALARM_NAME = "cloud-sync-alarm";
-const CLOUD_SYNC_ALARM_PERIOD = 15;
+const CLOUD_SYNC_ALARM_PERIOD = 60;
 
 export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 
@@ -25,10 +27,18 @@ export class CloudBackend {
     }
 
     initialize() {
-        this._provider = dropboxBackend;
-        this._provider.initialize();
+        dropboxBackend.initialize();
+        oneDriveBackend.initialize();
+        this.selectProvider(settings.active_cloud_provider())
         this._marshaller = new MarshallerCloud();
         this._unmarshaller = new UnmarshallerCloud();
+    }
+
+    selectProvider(providerID) {
+        if (providerID === oneDriveBackend.ID)
+            this._provider = oneDriveBackend;
+        else
+            this._provider = dropboxBackend;
     }
 
     async reset() {
@@ -50,7 +60,7 @@ export class CloudBackend {
 
     async withCloudDB(f, fe) {
         try {
-            let db = await this._provider.getDB();
+            let db = await this._provider.downloadDB();
             await f(db);
             await this._provider.persistDB(db);
         }
@@ -60,12 +70,16 @@ export class CloudBackend {
         }
     }
 
-    authenticate(signin = true) {
-        return this._provider.authenticate(signin);
-    }
-
     isAuthenticated() {
         return this._provider.isAuthenticated();
+    }
+
+    authenticate() {
+        return this._provider.authenticate();
+    }
+
+    signOut() {
+        return this._provider.signOut();
     }
 
     async cleanBookmarkAssets(db, node) {
@@ -302,14 +316,6 @@ export class CloudBackend {
         await settings.load();
 
         if (settings.cloud_enabled()) {
-            // TODO: remove in the next version
-            if (!settings.using_cloud_v1() && await this._provider.isCloudV0Present()) {
-                send.cloudShelfFormatChanged();
-                return;
-            }
-            else if (!settings.using_cloud_v1())
-                settings.using_cloud_v1(true);
-
             let beginTime = Date.now();
             let cloudShelf = await Node.get(CLOUD_SHELF_ID);
 
@@ -320,15 +326,15 @@ export class CloudBackend {
                 try {await send.shelvesChanged()} catch (e) {console.error(e)}
             }
 
-           if (!await this._isRemoteDBModified(cloudShelf))
-               return;
+            if (!await this._isRemoteDBModified(cloudShelf))
+                return;
 
             send.cloudSyncStart();
 
-            const remoteDB = await this._provider.getDB();
-            let remoteIDs = remoteDB.nodes.map(n => n.external_id);
-
             try {
+                const remoteDB = await this._provider.downloadDB();
+                let remoteIDs = remoteDB.nodes.map(n => n.external_id);
+
                 await ExternalNode.deleteMissingIn(remoteIDs, CLOUD_EXTERNAL_NAME);
 
                 const objects = remoteDB.objects;
@@ -349,6 +355,12 @@ export class CloudBackend {
                 send.externalNodesReady();
             }
             catch (e) {
+                if (e instanceof CloudError)
+                    showNotification(e.message)
+                else
+                    showNotification(CLOUD_ERROR_MESSAGE);
+
+                send.cloudSyncEnd();
                 console.error(e);
             }
         }
@@ -377,4 +389,8 @@ if (getContextType() === CONTEXT_BACKGROUND) {
         if (alarm.name === CLOUD_SYNC_ALARM_NAME)
             cloudBackend.reconcileCloudBookmarksDB();
     });
+
+    receive.cloudProviderChanged = message => {
+        cloudBackend.selectProvider(message.provider);
+    };
 }

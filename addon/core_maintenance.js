@@ -9,7 +9,7 @@ import {
     NODE_TYPE_SHELF
 } from "./storage.js";
 import {computeSHA1} from "./utils.js";
-import {cloudBackend} from "./backend_cloud.js";
+import {cloudBackend} from "./backend_cloud_shelf.js";
 import {nativeBackend} from "./backend_native.js";
 import {parseHtml, fixDocumentEncoding, indexWords} from "./utils_html.js";
 import {Query} from "./storage_query.js";

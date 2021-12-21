@@ -1,13 +1,13 @@
 import {send} from "../proxy.js";
-import {cloudBackend} from "../backend_cloud.js"
+import {cloudBackend} from "../backend_cloud_shelf.js"
 import {dropboxBackend} from "../backend_dropbox.js"
+import {oneDriveBackend} from "../backend_onedrive.js";
 import {settings} from "../settings.js"
 import {fetchText, fetchWithTimeout} from "../utils_io.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {injectCSS} from "../utils_html.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {showNotification} from "../utils_browser.js";
-import {nativeBackend} from "../backend_native.js";
 import {confirm, showDlg} from "./dialog.js";
 
 window.onload = async function() {
@@ -245,6 +245,29 @@ function configureSavePageSettingsPage() {
 }
 
 async function configureCloudSettingsPage() {
+    const dropboxRadio = $("#provider-dropbox");
+    const oneDriveRadio = $("#provider-onedrive");
+
+    let activeProvider;
+    let activeProviderID = settings.active_cloud_provider() || dropboxBackend.ID;
+    if (activeProviderID === dropboxBackend.ID)
+        activeProvider = dropboxBackend;
+    else if (activeProviderID === oneDriveBackend.ID)
+        activeProvider = oneDriveBackend;
+
+    $("input[name=cloud-providers][value=" + activeProvider.ID + "]").prop('checked', true);
+
+    async function setActiveProvider(provider) {
+        activeProvider = provider;
+        await settings.active_cloud_provider(activeProvider.ID);
+        await send.cloudProviderChanged({provider: activeProvider.ID});
+        if (activeProvider.isAuthenticated())
+            send.shelvesChanged({synchronize: true})
+    }
+
+    dropboxRadio.on("change", e => setActiveProvider(dropboxBackend));
+    oneDriveRadio.on("change", e => setActiveProvider(oneDriveBackend));
+
     const enableCloudCheck = $("#option-enable-cloud");
     enableCloudCheck.prop("checked", settings.cloud_enabled());
     enableCloudCheck.on("change", async e => {
@@ -252,9 +275,9 @@ async function configureCloudSettingsPage() {
         await settings.cloud_enabled(e.target.checked);
 
         if (e.target.checked) {
-            const success = await cloudBackend.authenticate();
+            const success = await activeProvider.authenticate();
             if (success)
-                $("#auth-dropbox").val("Sign out");
+                $(`#auth-${activeProvider.ID}`).val("Sign out");
         }
         send.reconcileCloudBookmarkDb()
     });
@@ -265,12 +288,23 @@ async function configureCloudSettingsPage() {
     });
 
     if (dropboxBackend.isAuthenticated())
-        $("#auth-dropbox").val("Sign out");
+        $(`#auth-dropbox`).val("Sign out");
+    if (oneDriveBackend.isAuthenticated())
+        $(`#auth-onedrive`).val("Sign out");
 
-    $("#auth-dropbox").on("click", async () => {
-        await dropboxBackend.authenticate(!dropboxBackend.isAuthenticated());
-        $("#auth-dropbox").val(dropboxBackend.isAuthenticated()? "Sign out": "Sign in");
-    });
+    function providerAuthHandler(provider) {
+        return async () => {
+            if (provider.isAuthenticated())
+                await provider.signOut();
+            else
+                await provider.authenticate();
+
+            $(`#auth-${provider.ID}`).val(provider.isAuthenticated()? "Sign out": "Sign in");
+        };
+    }
+
+    $("#auth-dropbox").on("click", providerAuthHandler(dropboxBackend));
+    $("#auth-onedrive").on("click", providerAuthHandler(oneDriveBackend));
 }
 
 async function configureSyncSettingsPage() {

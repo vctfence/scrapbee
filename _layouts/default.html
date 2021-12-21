@@ -99,19 +99,19 @@
         <h4><a id="user-content-description" class="anchor" aria-hidden="true" href="#description">
         </a>Description
         </h4>
-        <p style="text-align: justify;">Scrapyard is a Firefox bookmarking extension that resides in <a href="https://support.mozilla.org/en-US/kb/use-firefox-sidebar-access-bookmarks-history-synced" target="_blank">sidebar</a>
-            where you can store and organize bookmarks,
-            page fragments or complete documents
+        <p style="text-align: justify;">Scrapyard is a Firefox bookmarking extension that resides in the
+            <a href="https://support.mozilla.org/en-US/kb/use-firefox-sidebar-access-bookmarks-history-synced" target="_blank">sidebar</a>
+            where you can store and organize bookmarks, page fragments or complete documents
           in unlimited quantities. It is intended as a modern alternative to the legacy
           <a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a> add-on.
-          By utilizing browser local storage Scrapyard does not require
-            external tools to operate and allows to import/export data in <a href="https://json.org" target="_blank">JSON</a> or
-            <a href="https://orgmode.org" target="_blank">org-mode</a> formats.
+          By utilizing browser internal storage Scrapyard does not require
+            external tools to operate and allows to import/export bookmarks in <a href="https://json.org" target="_blank">JSON</a>,
+            <a href="https://orgmode.org" target="_blank">org-mode</a> formats or synchronize them through a cloud service.
+            It also allows to access your content on mobile devices.
             See the <a href="https://gchristensen.github.io/scrapyard/addon/ui/locales/en/help.html" target="_blank">online help</a>
             for the more detailed description of the add-on features.</p>
-        <h4><a id="features" class="anchor" aria-hidden="true" href="#description">
-        </a>Features
-        </h4>
+
+        <h4><a id="features" class="anchor" aria-hidden="true" href="#description"></a>Key Features</h4>
 
         <p style="text-align: justify;">
             <ul>
@@ -119,30 +119,34 @@
                 <li>Firefox bookmark integration.</li>
                 <li>Multiple bookmark shelves.</li>
                 <li>Ability to save page fragments and entire PDF-documents.</li>
+                <li>It is possible to attach text notes to any bookmark or archived page.</li>
                 <li>Cloud bookmarking.</li>
                 <li>TODO functionality.</li>
                 <li>Support of Firefox Multi-Account containers.</li>
                 <li>Import/export from org-mode files and HTML-bookmarks.</li>
-                <li>It is possible to attach text notes to any bookmark or archived page.</li>
-                <li>Import of <a href="https://en.wikipedia.org/wiki/ScrapBook" target="_blank">ScrapBook</a> RDF archives.</li>
-                <li>Sharing to <a href="https://getpocket.com" target="_blank">Pocket</a> or
-                    <a href="https://dropbox.com" target="_blank">Dropbox</a>.</li>
+                <li>Import of ScrapBook RDF archives.</li>
+                <li>Sharing to <a href="https://getpocket.com" target="_blank">Pocket</a>,
+                    <a href="https://dropbox.com" target="_blank">Dropbox</a>, and <a href="https://onedrive.live.com" target="_blank">OneDrive</a>.</li>
                 <li>File-based synchronization.</li>
+                <li>Bookmarks synchronized through Dropbox or OneDrive are available on Android mobile devices.</li>
                 <li><a href="https://gchristensen.github.io/ishell/" target="_blank">iShell</a> integration.</li>
                 <li><a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md" target="_blank">Automation</a></li>
             </ul>
         </p>
 
-        <h4>Discover possible Scrapyard usage scenarios</h4>
+        <h4>Cloud Bookmarking</h4>
 
         <p style="text-align: justify;">It is possible to share links into the special Scrapyard
             Cloud shelf from mobile devices and get them on PC. The content of this shelf could also
             be browsed on your phone, in the case if you added bookmarks there from your computer. By
-            using the Cloud shelf or sharing to other applications, you can have the necessary
+            using the Cloud shelf or direct sharing to cloud services, you can have the selected
             bookmarks or archived pages available on all your devices.</p>
 
-        <p><img src="/scrapyard/media/scenarios.png" alt="scenarios"/></p>
+        <p>The Sync option allows to browse all your bookmarks and archives on Android mobile
+            devices if the content is shared through the Dropbox or OneDrive cloud services. Please
+            see the user manual for more details.</p>
 
+        <p><img src="/scrapyard/media/scenarios.png" alt="scenarios"/></p>
 
         <h4>Text command interface</h4>
         <p>Use <a href="https://gchristensen.github.io/ishell/">iShell Extension</a> to bookmark or archive pages into Scrapyard with text commands:</p>
@@ -156,7 +160,9 @@
                 <h4>Limitations</h4>
                 <ul>
                     <li style="text-align: justify;">Text shared from the Android platform does not include links or images.</li>
-                    <li style="text-align: justify;">Selected text is shared as notes without a source URL. Share text from the <a href="http://getpocket.com">Pocket</a> app to save source URLs automatically.</li>
+                    <li style="text-align: justify;">Selected text is shared as notes without a source URL. \
+                        Share text from the <a href="http://getpocket.com">Pocket</a> app or the recent
+                        versions of Chrome to save source URLs automatically.</li>
                 </ul>
             </p>
         </p>

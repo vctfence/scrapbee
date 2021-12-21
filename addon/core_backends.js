@@ -1,6 +1,6 @@
 import {browserBackend} from "./backend_browser.js";
 import {settings} from "./settings.js";
-import {cloudBackend} from "./backend_cloud.js";
+import {cloudBackend} from "./backend_cloud_shelf.js";
 import {nativeBackend} from "./backend_native.js";
 import {receive} from "./proxy.js";
 

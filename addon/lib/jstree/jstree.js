@@ -2543,7 +2543,7 @@
 				// 	node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
 				// }
 				else {
-				    let icon = 'url("'+obj.icon+'")';
+				    var icon = 'url("'+obj.icon+'")';
 
 				    if (this.__icon_set_hook)
 				        icon = this.__icon_set_hook(obj);

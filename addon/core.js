@@ -1,6 +1,6 @@
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserBackend} from "./backend_browser.js";
-import {cloudBackend} from "./backend_cloud.js";
+import {cloudBackend} from "./backend_cloud_shelf.js";
 import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
@@ -34,3 +34,19 @@ receive.startListener(true);
         console.log("==> core.js loaded");
     }
 })();
+
+// remove the Origin header from add-on fetch requests
+function originWithId(header) {
+    return header.name.toLowerCase() === 'origin'
+        && (header.value.startsWith('moz-extension://') || header.value.startsWith('chrome-extension://'));
+}
+
+browser.webRequest.onBeforeSendHeaders.addListener(
+    (details) => {
+        return {
+            requestHeaders: details.requestHeaders.filter(x => !originWithId(x))
+        }
+    },
+    {urls: ["<all_urls>"]},
+    ["blocking", "requestHeaders"]
+);
