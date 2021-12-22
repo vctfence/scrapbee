@@ -11,8 +11,8 @@ android {
         applicationId "l2.albitron.scrapyard"
         minSdk 21
         targetSdk 31
-        versionCode 16
-        versionName "2.0"
+        versionCode 17
+        versionName "2.1"
 
         String dropboxKey = localProperties['DBX_API_KEY']
         buildConfigField "String", "DBX_API_KEY", "\"${dropboxKey}\""
