@@ -528,9 +528,11 @@
     <h3>The "bookmark" and "archive" Commands</h3>
 
     <p>Use the "bookmark" or "archive" commands with the corresponding arguments to bookmark/archive
-        a page into the specified destination. The arguments allow specifying bookmark title,
-        details, path, tags, TODO state, and expiration date. Folders in the bookmark path will be
-        autocompleted by iShell and created in Scrapyard if they do not exist.</p>
+        a page into the specified destination. The arguments allow specifying bookmark title, path,
+        details, tags, TODO state, and TODO deadline. Folders in the bookmark path will be
+        autocompleted by iShell and created in Scrapyard if they do not exist.
+        Note that due to the quirks of iShell parser spaces are not welcomed in folder names.
+    </p>
     <p>The first folder in the path is
         always interpreted as a shelf name. The tilde (~) character may be used in place of the
         "default" shelf. Contents of the Firefox "Bookmarks Menu" and "Other Bookmarks" bookmark

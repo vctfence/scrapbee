@@ -249,11 +249,10 @@ async function configureCloudSettingsPage() {
     const oneDriveRadio = $("#provider-onedrive");
 
     let activeProvider;
-    let activeProviderID = settings.active_cloud_provider() || dropboxBackend.ID;
-    if (activeProviderID === dropboxBackend.ID)
-        activeProvider = dropboxBackend;
-    else if (activeProviderID === oneDriveBackend.ID)
+    if (settings.active_cloud_provider() === oneDriveBackend.ID)
         activeProvider = oneDriveBackend;
+    else
+        activeProvider = dropboxBackend;
 
     $("input[name=cloud-providers][value=" + activeProvider.ID + "]").prop('checked', true);
 

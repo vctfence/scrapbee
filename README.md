@@ -13,7 +13,7 @@ I decided to rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scr
 to obtain the desired features.
 
 It is hard to believe, but it is 2020s now, and it is time to abandon XML-based RDF and move towards databases, JSON
-and cloud services. For an advanced user Scrapyard may become a dream cloud bookmarking solution. Please see
+and cloud services. For an advanced user Scrapyard may become a cloud bookmarking solution of choice. Please see
 the [online help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/help.html) for more details.
 
 ### Objectives
@@ -45,5 +45,5 @@ the [online help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/h
 ### Project status
 
 Currently, the project is considered as a permanent alpha, the codebase is highly volatile. Be prepared for breaking
-changes, devastating bugs and groundbreaking experiments. Nevertheless, do not forget to support the author
+changes, devastating bugs and groundbreaking experiments. Nevertheless, do not hesitate to support the author
 if you have a good use of the software.

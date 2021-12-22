@@ -52,7 +52,7 @@ export class OneDriveBackend extends BackendCloudBase {
 
             await settings.onedrive_refresh_token(this._refreshToken);
         }
-        else {
+        else if (response.error?.code) { // MS Graph error on refresh token
             this._refreshToken = null;
             this._accessToken = null;
 
@@ -100,6 +100,8 @@ export class OneDriveBackend extends BackendCloudBase {
                     await this._refreshAccessToken();
                     return this._makeGraphRequest(path, params);
                 }
+                else
+                    throw e;
             }
         }
         else {
