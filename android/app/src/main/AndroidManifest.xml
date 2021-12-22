@@ -59,7 +59,7 @@
             <intent-filter>
                 <data
                     android:host="l2.albitron.scrapyard"
-                    android:path="/QWXHGnKiJl6A43QeaHWg0wDflgA="
+                    android:path="/${msalSigHash}"
                     android:scheme="msauth" />
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.BROWSABLE" />

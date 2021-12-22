@@ -3,6 +3,10 @@ package l2.albitron.scrapyard.cloud.providers
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.util.Base64
+import android.util.Log
 import com.microsoft.graph.authentication.BaseAuthenticationProvider
 import com.microsoft.graph.http.GraphServiceException
 import com.microsoft.graph.models.DriveItem
@@ -11,19 +15,18 @@ import com.microsoft.graph.models.DriveItemUploadableProperties
 import com.microsoft.graph.requests.DriveItemRequestBuilder
 import com.microsoft.graph.requests.GraphServiceClient
 import com.microsoft.graph.tasks.LargeFileUploadTask
-import com.microsoft.identity.client.AuthenticationCallback
-import com.microsoft.identity.client.IAuthenticationResult
+import com.microsoft.identity.client.*
 import com.microsoft.identity.client.IPublicClientApplication.ISingleAccountApplicationCreatedListener
-import com.microsoft.identity.client.ISingleAccountPublicClientApplication
-import com.microsoft.identity.client.PublicClientApplication
 import com.microsoft.identity.client.exception.MsalClientException
 import com.microsoft.identity.client.exception.MsalException
 import com.microsoft.identity.client.exception.MsalUiRequiredException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import l2.albitron.scrapyard.BuildConfig
 import l2.albitron.scrapyard.R
 import l2.albitron.scrapyard.Settings
+import l2.albitron.scrapyard.cloud.bookmarks.StorageService
 import l2.albitron.scrapyard.cloud.providers.exceptions.CloudItemNotFoundException
 import l2.albitron.scrapyard.cloud.providers.exceptions.CloudNotAuthorizedException
 import okhttp3.OkHttpClient
@@ -34,6 +37,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -225,7 +230,13 @@ class OneDriveProvider : CloudProvider {
     companion object {
         suspend fun createClientApplication(context: Context): ISingleAccountPublicClientApplication {
             return suspendCoroutine { continuation ->
-                PublicClientApplication.createSingleAccountPublicClientApplication(context, R.raw.msal_auth_config,
+                val configResource =
+                    if (BuildConfig.DEBUG)
+                        R.raw.msal_auth_config_debug
+                    else
+                        R.raw.msal_auth_config
+
+                PublicClientApplication.createSingleAccountPublicClientApplication(context, configResource,
                     object : ISingleAccountApplicationCreatedListener {
                         override fun onCreated(application: ISingleAccountPublicClientApplication) {
                             continuation.resume(application)
@@ -273,6 +284,7 @@ class OneDriveProvider : CloudProvider {
             }
         }
 
+//        @Suppress("DEPRECATION")
 //        fun getSignature(context: Context) {
 //            val packageName: String = context.getPackageName()
 //            try {
@@ -281,9 +293,13 @@ class OneDriveProvider : CloudProvider {
 //                    var md: MessageDigest
 //                    md = MessageDigest.getInstance("SHA")
 //                    md.update(signature.toByteArray())
-//                    val sha1Singature = String(Base64.encode(md.digest(), 0))
+//                    //val sha1Singature = String(Base64.encode(md.digest(), 0))
 //                    //String something = new String(Base64.encodeBytes(md.digest()));
-//                    Log.e("uuu", sha1Singature)
+//                    //Log.e("TAG", sha1Singature)
+//
+//                    val sha1SingatureBytes = Base64.encode(md.digest(), 0)
+//                    val storageService = StorageService(context)
+//                    storageService.writeToDiskAndOpen(sha1SingatureBytes, "sig.txt", "text/plain")
 //                }
 //            } catch (e1: PackageManager.NameNotFoundException) {
 //                Log.e("name not found", e1.toString())

@@ -1,7 +1,7 @@
 {
   "client_id" : "c4d0a237-f00c-41a4-ac9f-f7aa4d88e857",
   "authorization_user_agent" : "DEFAULT",
-  "redirect_uri" : "msauth://l2.albitron.scrapyard/Lm22218LExCUFqwe7GUlEf7O828%3D",
+  "redirect_uri" : "msauth://l2.albitron.scrapyard/QWXHGnKiJl6A43QeaHWg0wDflgA%3D",
   "account_mode" : "SINGLE",
   "broker_redirect_uri_registered": true,
   "authorities" : [

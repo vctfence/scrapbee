@@ -11,12 +11,12 @@ android {
         applicationId "l2.albitron.scrapyard"
         minSdk 21
         targetSdk 31
-        versionCode 15
+        versionCode 16
         versionName "2.0"
 
         String dropboxKey = localProperties['DBX_API_KEY']
         buildConfigField "String", "DBX_API_KEY", "\"${dropboxKey}\""
-        manifestPlaceholders = [dropboxKey: dropboxKey]
+        manifestPlaceholders = [dropboxKey: dropboxKey, msalSigHash: ""]
 
         //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -25,6 +25,11 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            manifestPlaceholders.msalSigHash = localProperties['MSAL_SIG_HASH']
+        }
+        debug {
+            manifestPlaceholders.msalSigHash = localProperties['MSAL_SIG_HASH_DEBUG']
         }
     }
     compileOptions {
@@ -70,7 +75,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.5'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.5'
     implementation 'org.apache.commons:commons-text:1.9'
-    implementation 'org.jsoup:jsoup:1.10.3'
+    implementation 'org.jsoup:jsoup:1.14.3'
 
     //implementation 'net.sourceforge.streamsupport:android-retrofuture:1.7.4'
 
@@ -81,7 +86,6 @@ dependencies {
         exclude group: 'javax.activation'
         exclude group: 'xpp3'
     }
-
 
     //testImplementation 'junit:junit:4.+'
     //androidTestImplementation 'androidx.test.ext:junit:1.1.2'

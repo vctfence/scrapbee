@@ -71,6 +71,7 @@ class StorageService(context: Context) {
         return uri
     }
 
+    @Suppress("DEPRECATION")
     private fun saveForAndroidLessThanQ(bytes: ByteArray?, fileName: String): Uri? {
         val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val file = File(directory, fileName)

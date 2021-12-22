@@ -11,6 +11,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
+import l2.albitron.scrapyard.cloud.providers.OneDriveProvider
 import l2.albitron.scrapyard.cloud.sharing.SharingService
 import l2.albitron.scrapyard.databinding.ActivityMainBinding
 
@@ -42,6 +43,8 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         setupStartDestination(navController)
+
+        //OneDriveProvider.getSignature(this)
     }
 
     private fun setupStartDestination(navController: NavController) {

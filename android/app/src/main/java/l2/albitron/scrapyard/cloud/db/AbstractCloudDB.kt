@@ -1,10 +1,7 @@
 package l2.albitron.scrapyard.cloud.db
 
-import android.content.Context
 import l2.albitron.scrapyard.Scrapyard
-import l2.albitron.scrapyard.cloud.db.model.BookmarkContent
 import l2.albitron.scrapyard.cloud.db.model.Node
-import l2.albitron.scrapyard.cloud.providers.CloudProvider
 import java.util.ArrayList
 
 abstract class AbstractCloudDB<T> {
@@ -73,10 +70,10 @@ abstract class AbstractCloudDB<T> {
     private fun getChildren(node: Node, bookmarks: MutableList<T>, outNodes: MutableList<Node>) {
         val children = bookmarks.filter { node.uuid.equals(accessNode(it).parentId, ignoreCase = true) }
         for (bookmark in children) {
-            val node = accessNode(bookmark)
-            outNodes.add(node)
-            if (node.type == Scrapyard.NODE_TYPE_SHELF || node.type == Scrapyard.NODE_TYPE_GROUP)
-                getChildren(node, bookmarks, outNodes)
+            val childNode = accessNode(bookmark)
+            outNodes.add(childNode)
+            if (childNode.type == Scrapyard.NODE_TYPE_SHELF || childNode.type == Scrapyard.NODE_TYPE_GROUP)
+                getChildren(childNode, bookmarks, outNodes)
         }
     }
 
