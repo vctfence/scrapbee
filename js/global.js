@@ -19,22 +19,29 @@ global.load = function(){
         __p("runtimeId", browser.runtime.id);
         __p("extensionId", browser.i18n.getMessage("@@extension_id"));
         if(browser && browser.runtime){
-            browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((v)=>{
-                __p("backendVersion", v);
-                if(browser.runtime.getPlatformInfo){
-                    browser.runtime.getPlatformInfo().then((p)=>{
-                        __p("fsPathSeparator", p.os == 'win' ? '\\' : '/');
-                        __p("platformOS", p.os);
-                        __p("platformArch", p.arch);
+            browser.runtime.getBrowserInfo().then(function(info) {
+                __p("browserName", info.name);
+                __p("browserVersion", info.version);
+                var manifest = browser.runtime.getManifest();
+                __p("extensionVersion", manifest.manifest_version);
+                browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((v)=>{
+                    __p("backendVersion", v);
+                    if(browser.runtime.getPlatformInfo){
+                        browser.runtime.getPlatformInfo().then((p)=>{
+                            __p("fsPathSeparator", p.os == 'win' ? '\\' : '/');
+                            __p("platformOS", p.os);
+                            __p("platformArch", p.arch);
+                            resolve();
+                        });
+                    }else{
                         resolve();
-                    });
-                }else{
-                    resolve();
-                }
+                    }
+                });
             });
         }else{
             resolve();
         }
     });
-}
+};
+
 export {global};

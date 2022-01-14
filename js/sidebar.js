@@ -513,7 +513,7 @@ $(document).ready(async function(){
     applyAppearance();
     loadRdfList();
     /** announcement */
-    var ann = "2.4.0"; // browser.i18n.getMessage("announcement_version")
+    var ann = "2.5.0"; // browser.i18n.getMessage("announcement_version")
     var showed = HISTORY.getItem("announce.version_showed") || "";
     if(gtv(ann, showed)){
         $("#announcement-red-dot").show();

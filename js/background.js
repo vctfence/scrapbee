@@ -42,11 +42,13 @@ function loadBrowserInfo(){
                 log.info("version = " + manifest.version);
                 log.info("browser = " + info.name + " " + info.version);
                 var main_version = parseInt(info.version.replace(/\..+/, ""));
-                if((info.name != "Firefox" && info.name != "Waterfox") || main_version < 60){
-                    var em = "Only Firefox version after 60 is supported";
+                let compatible = info.name == "Firefox" && main_version >= 57;
+                compatible = compatible || (info.name == "Waterfox" && main_version >= 57);
+                if(!compatible){
+                    var em = "Your browser or version is not supported";
                     log.error(em);
                     browser_info_status = "error";
-                    reject(Error(em))
+                    reject(Error(em));
                 }else{
                     // log.info("platform = " + navigator.platform);
                     browser.runtime.getPlatformInfo().then((p)=>{
@@ -422,8 +424,6 @@ browser.browserAction.onClicked.addListener(function(){
 function updateMenu(url) {
     // var enabled = !(/localhost.+scrapbee/.test(url)) && (/^http(s?):/.test(url) || /^file:/.test(url));
     var enabled = !(new RegExp(browser.i18n.getMessage("@@extension_id")).test(url)) && /^(http|https|file)\:\/\//.test(url);
-
-    
     browser.menus.update("scrapbee-capture-selection", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-page", {enabled: enabled, visible: enabled});
     browser.menus.update("scrapbee-capture-url", {enabled: enabled, visible: enabled});

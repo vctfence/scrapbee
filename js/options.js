@@ -198,9 +198,9 @@ $(document).ready(async function(){
                     filename: dest,
                     // conflictAction: "overwrite",
                     saveAs: true
-                })
+                });
                 return false;
-            }
+            };
         });        
     });
 
@@ -347,7 +347,7 @@ $(document).ready(async function(){
         src_exec += "?raw=true";
 
         var dest_exec = "scrapbee_backend" + (GLOBAL.platformOS == "win" ? ".exe" : "");
-        return [binDir + src_exec, dest_exec]
+        return [binDir + src_exec, dest_exec];
     }
  
     /** download install scripts */
@@ -356,19 +356,24 @@ $(document).ready(async function(){
         const extRoot = "moz-extension://" + global.extensionId;
 
         try{
-            // download install script
-            var dwInfo;
+            /*** download an empty file to get the download path (can be choosed by user) */
+            var dwInfo = await downloadText("", "scrapbee/scrapbee_backend.json");
+            var filename = dwInfo.filename;
+            var download_path = filename.replace(/[^\\\/]*$/, "");
+
+            /*** download install script */
             if(GLOBAL.platformOS == "win")
-                dwInfo = await downloadText(installBat(download_path), "scrapbee/install.bat");
+                dwInfo = await downloadText(installBat(download_path, GLOBAL.browserName), "scrapbee/install.bat");
             else if(GLOBAL.platformOS == "mac")
                 dwInfo = await downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh");
             else
                 dwInfo = await downloadFile(extRoot + "/install/install_lnx.sh", "scrapbee/install.sh");
 
-            // download backend config file
+            /*** download backend config file */
             var [src_exec, dest_exec] = getBackendDownload(0);
-            var filename = dwInfo.filename;
-            var download_path = filename.replace(/[^\\\/]*$/, "");
+            // filename = dwInfo.filename;
+            // download_path = filename.replace(/[^\\\/]*$/, "");
+            
             var json = {"allowed_extensions": ["scrapbee@scrapbee.org"],
                         "description": "ScrapBee backend",
                         "name": "scrapbee_backend",
@@ -378,10 +383,10 @@ $(document).ready(async function(){
             var jstr = JSON.stringify(json, null, 2);
             await downloadText(jstr, "scrapbee/scrapbee_backend.json");
 
-            $(self).next(".download-path").show()
+            $(self).next(".download-path").show();
             $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
         }catch(e){
-            alert(e)
+            alert(e);
         }
     });
 
@@ -410,12 +415,13 @@ $(document).ready(async function(){
         setTimeout(Start, 1000);
     });
 
-    function installBat(backend_path){
+    function installBat(backend_path, browserName){
+        var soft = browserName == 'Waterfox' ? 'Waterfox' : 'Mozilla';
         return `chcp 65001\r\n\r
-reg delete "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /f\r
-reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
-reg delete "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /f\r
-reg add "HKEY_CURRENT_USER\\Software\\Mozilla\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
+reg delete "HKEY_LOCAL_MACHINE\\SOFTWARE\\${soft}\\NativeMessagingHosts\\scrapbee_backend" /f\r
+reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\${soft}\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
+reg delete "HKEY_CURRENT_USER\\Software\\${soft}\\NativeMessagingHosts\\scrapbee_backend" /f\r
+reg add "HKEY_CURRENT_USER\\Software\\${soft}\\NativeMessagingHosts\\scrapbee_backend" /d "${backend_path}\scrapbee_backend.json" /f\r\n\r
 echo done\r
 pause`;
     }
