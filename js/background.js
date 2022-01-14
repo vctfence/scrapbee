@@ -42,7 +42,7 @@ function loadBrowserInfo(){
                 log.info("version = " + manifest.version);
                 log.info("browser = " + info.name + " " + info.version);
                 var main_version = parseInt(info.version.replace(/\..+/, ""));
-                if(info.name != "Firefox" || main_version < 60){
+                if((info.name != "Firefox" && info.name != "Waterfox") || main_version < 60){
                     var em = "Only Firefox version after 60 is supported";
                     log.error(em);
                     browser_info_status = "error";

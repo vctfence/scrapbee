@@ -493,5 +493,3 @@ pause`;
         });
     });
 }); // window.onload
-
-console.log($(".ttt").uniqueId())

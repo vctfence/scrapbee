@@ -4,7 +4,7 @@ import {showNotification, getColorFilter, genItemId, gtv, ajaxFormPost} from "./
 import {refreshTree, touchRdf, dataURLtoBlob} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown, ContextMenu} from "./control.js";
-import {Configuration, History} from "./storage.js"
+import {Configuration, History} from "./storage.js";
 
 var currTree;
 var thisWindowId;
@@ -183,7 +183,7 @@ menulistener.onCreateNote = function(){
                                      });
                                      currTree.onXmlChanged();
                                  });
-}
+};
 menulistener.onOpenOriginLink = function(){
     var $foc = currTree.getFocusedItem();
     var url = $foc.attr("source");
@@ -508,7 +508,7 @@ $(document).ready(async function(){
             var listener = menulistener[value.replace(/^menu/, "on")];
             if(listener)listener();
         }
-    }
+    };
     /**  */
     applyAppearance();
     loadRdfList();
@@ -523,7 +523,7 @@ $(document).ready(async function(){
     $("#announcement-red-dot").parent().click(function(){
         HISTORY.setItem('announce.version_showed', ann);
         $("#announcement-red-dot").hide();
-        HISTORY.commit()
+        HISTORY.commit();
     });
     /** toggle root */
     $("#show-root").change(function(){
@@ -588,25 +588,25 @@ function loadXml(rdf){
                     }
                     left = Math.max(0, left);
                     top = Math.max(0, top);
-                    this.ctxMenu.show(left, top)
+                    this.ctxMenu.show(left, top);
                 }
-            })
+            });
             currTree.onChooseItem=function(id){
                 var $f = currTree.getItemById(id);
                 var menu = document.body.ctxMenu;
                 menu.hideAllItems();
                 if ($f.hasClass("folder")) {
-                    menu.showItems(["menuProperty", "menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1", "menuOpenAll"])
+                    menu.showItems(["menuProperty", "menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1", "menuOpenAll"]);
                 } else if ($f.hasClass("separator")) {
-                    menu.showItems(["menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"])
+                    menu.showItems(["menuDelete", "menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"]);
                 } else if ($f.hasClass("item")) {
                     menu.showItems(["menuOpenOriginLink", "menuProperty", "menuDelete", "menuCreateFolder",
-                                    "menuCreateSeparator", "menuCreateNote","menuOpenFolder", "menuSort1", ])                    
+                                    "menuCreateSeparator", "menuCreateNote","menuOpenFolder", "menuSort1", ]);
                     if($f.hasClass("bookmark")){
                         menu.hideItem("menuOpenOriginLink");
                     }
                 } else {
-                    menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"])
+                    menu.showItems(["menuCreateFolder", "menuCreateSeparator", "menuCreateNote", "menuSort1"]);
                 }
                 var v = HISTORY.getItem("sidebar.nodes.focused") || {};
                 v[rdf] = id;
@@ -621,7 +621,7 @@ function loadXml(rdf){
                 HISTORY.commit();
             };
             /** restore status */
-            currTree.restoreStatus=function(){
+            currTree.restoreStatus = function(){
                 var v = HISTORY.getItem("sidebar.folders.opened") || {};
                 var folders = v[rdf];
                 if(folders){
@@ -638,7 +638,7 @@ function loadXml(rdf){
                         currTree.scrollToItem($(document.body), $item, 500, $(".toolbar").height() + 5, false);
                     }
                 }
-            }
+            };
             currTree.restoreStatus();
             /** history */
             
@@ -650,7 +650,7 @@ function loadXml(rdf){
         xmlhttp.onerror = function(err) {
             $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
             log.error(`failed to load ${rdf}`);
-            reject(err)
+            reject(err);
         };
         xmlhttp.open("GET", CONF.getFileServiceAddress() + rdf, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
@@ -676,7 +676,7 @@ function switchRdf(rdf){
                 resolve();
             });
         });
-    })
+    });
 }
 function requestUrlSaving(itemId){
     withCurrTab(function(tab){
@@ -685,11 +685,12 @@ function requestUrlSaving(itemId){
         function saveIcon(){
             return new Promise((resolve, reject)=>{
                 if(icon){
-                    var m;
-                    if(m = icon.match(/^data:image/i)){
+                    var m = icon.match(/^data:image/i);
+                    var filename;
+                    if(m){
                         var blob = dataURLtoBlob(icon);
                         var ext = blob.type.match(/svg/) ? 'svg' : 'ico';
-                        var filename = `${currTree.rdfHome}/data/${itemId}/favicon.${ext}`;
+                        filename = `${currTree.rdfHome}/data/${itemId}/favicon.${ext}`;
                         var ir = `resource://scrapbook/data/${itemId}/favicon.${ext}`;
                         browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path: filename, blob}}).then((response) => {
                             resolve(ir);
@@ -697,12 +698,12 @@ function requestUrlSaving(itemId){
                             resolve(null);
                         });
                     }else{
-                        var filename = `${currTree.rdfHome}/data/${itemId}/favicon.ico`;
+                        filename = `${currTree.rdfHome}/data/${itemId}/favicon.ico`;
                         $.post(CONF.getBackendAddress() + "download", {url: icon, itemId, filename, pwd: CONF.backend_pwd}, function(r){
                             resolve(ir);
                         }).fail((e)=>{
                             resolve(null);
-                        })
+                        });
                     }
                 }else{
                     resolve(ir);
@@ -736,7 +737,7 @@ function requestUrlSaving(itemId){
            });
            currTree.onXmlChanged();
            showNotification({message: `Save bookmark "${tab.title}" done`, title: "Info"});
-        })
+        });
     });
 }
 /* receive message from background page */
@@ -813,7 +814,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                         });
                         resolve({rdf:currTree.rdf, rdfHome:currTree.rdfHome, itemId});
                     }catch(e){
-                        reject(e)
+                        reject(e);
                     }
                 }else{
                     reject(Error("rdf have not been loaded"));
@@ -823,9 +824,8 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }else if(request.type == 'LOCATE_ITEM'){
         return new Promise((resolve, reject) => {
             if($(".dlg-cover:visible").length){
-                return reject();
-            }
-            if(currTree && currTree.rendered && sender.tab.windowId == thisWindowId) {
+                reject();
+            } else if(currTree && currTree.rendered && sender.tab.windowId == thisWindowId) {
                 var $item = currTree.getItemById(request.id);
                 if($item.length){
                     currTree.focusItem($item);
@@ -839,12 +839,14 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }
 });
+
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });
+
 document.oncontextmenu = function (event){
     if($(".dlg-cover:visible").length == 0)
-        return false
-}
+        return false;
+};
 
 console.log("==> main.js loaded");
