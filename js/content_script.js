@@ -188,7 +188,7 @@ if(!window.scrapbee_injected){
             // });
 
             function setUid(el, attr){
-                if(el.className && el.className.indexOf('altmetric') > -1){
+                if(el.className && String(el.className).indexOf('altmetric') > -1){
                    return;
                 }
                 el.setAttribute("sbuid", new NumberRange(0, 999999999).random());
