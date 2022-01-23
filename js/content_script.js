@@ -202,7 +202,6 @@ if(!window.scrapbee_injected){
                 }
             }
             setUid(document.documentElement);
-            
             try{
                 var segment = await cloneSegment(doc, isForSelection);
             }catch(e){
@@ -255,11 +254,7 @@ if(!window.scrapbee_injected){
                         var el = new ScrapbeeElement(item);
                         el.processInlineStyle();
                         var resources = el.processResources();
-
-                        
                         for(let r of resources){
-
-                            
                             if(!distinct[r.url]){
                                 distinct[r.url] = 1;
                                 r.subPath = subPath;
@@ -356,16 +351,16 @@ if(!window.scrapbee_injected){
             }else{
                 browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: false, rdf, itemId});
             }
-        })
+        });
     }
     async function startCapture(saveType, rdf, rdfHome, itemId, autoClose=false){
         if(!lock()) return;
         var dlgDownload = new DialogDownloadTable('Download', 'Waiting...', async function(){
             var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
             var res = [];
-            var title = ""
+            var title = "";
             // var haveIcon = false
-            var mainIconFilename = ""
+            var mainIconFilename = "";
             var blobfile = {};
             var remain = 0;
             // toplevel page
