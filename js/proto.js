@@ -151,30 +151,29 @@ DocumentFragment.prototype.html = function(){
         self.childNodes, 
         (result, node) => result + (node.outerHTML || node.nodeValue),
         ''
-    );    
-}
+    );
+};
 function ScrapbeeElement(el){
     this.el = el;
-    var uniqueId = el.getAttribute("sb-uid");
+    var uniqueId = el.getAttribute("sbuid");
     if(uniqueId){
-        
-        this.originEl = document.querySelector(`*[sb-uid='${uniqueId}']`);
-        this.el.removeAttribute("sb-uid");
+        this.originEl = document.querySelector(`*[sbuid='${uniqueId}']`);
+        this.el.removeAttribute("sbuid");
     }
 }
 ScrapbeeElement.prototype.getFullUrl=function(url){
     var baseURI = this.el.baseURI.replace(/\/[^\/]+$/, "/");
     return new URL(url, baseURI).href;
-}
+};
 ScrapbeeElement.prototype.processInlineStyle=function(){
     if(this.originEl && this.originEl.style.cssText){ // inline (on tag or js assigned)
         this.el.setAttribute("style", this.el.style.cssText);
     }
-}
+};
 ScrapbeeElement.prototype.processResources=function(){
-    if(!this.originEl)
+    if(!this.originEl){
         return [];
-    
+    }
     var t = this.el.tagName.toLowerCase().replace(/^\w/, function(m){return m.toUpperCase();});
     var fn = "get" + t + "Resources";
     var res = this.getCommonResources();
@@ -216,10 +215,10 @@ ScrapbeeElement.prototype.getCommonResources=function(){
 	    this.el.style.backgroundImage = hex;
         }
     }catch(e){
-        console.log(`ScrapbeeElement.getCommonResources: ${e}`)
+        console.log(`ScrapbeeElement.getCommonResources: ${e}`);
     }
     return r;
-}
+};
 ScrapbeeElement.prototype.getInputResources=function(){
     this.el.setAttribute("value", this.el.value);
 }

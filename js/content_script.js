@@ -32,7 +32,7 @@ if(!window.scrapbee_injected){
             log.sendLog("warning", stringifyArgs(arguments));
         },
         debug: function(){
-            log.sendLog("debug", stringifyArgs(arguments))
+            log.sendLog("debug", stringifyArgs(arguments));
         },
         clear: function(){
             browser.runtime.sendMessage({type:'CLEAR_LOG'});
@@ -51,7 +51,8 @@ if(!window.scrapbee_injected){
             window.addEventListener("beforeunload", lockListener);
             oldLockListener = lockListener;
             return true;
-        } 
+        }
+        return false;
     }
     function unlock(){
         window.removeEventListener("beforeunload", oldLockListener);
@@ -101,16 +102,16 @@ if(!window.scrapbee_injected){
                     var leaves = getLeavesIn(rangeContent);
                     leaves.forEach(thisNode => {
                         if(thisNode.nodeType == 1){
-                            var _uid = thisNode.getAttribute("sb-uid");
-                            var refNode = document.querySelector(`*[sb-uid='${_uid}']`);
+                            var _uid = thisNode.getAttribute("sbuid");
+                            var refNode = document.querySelector(`*[sbuid='${_uid}']`);
                         }else{
                             var refNode = thisNode;
                         }
                         for(var c=refNode,pr=null;c;){
                             var pn = c.cloneNode(false);
                             if(c.nodeType == 1){
-                                var uid = c.getAttribute("sb-uid");
-                                var p = segment.querySelector(`*[sb-uid='${uid}']`);
+                                var uid = c.getAttribute("sbuid");
+                                var p = segment.querySelector(`*[sbuid='${uid}']`);
                                 var exist = !!p;
                                 if(!exist && c.tagName == "HTML"){
                                     segment.appendChild(pn);
@@ -172,7 +173,7 @@ if(!window.scrapbee_injected){
                         if(f.frameId)
                             await browser.runtime.sendMessage({type: "INJECT_FRAME", frameId: f.frameId});
                     }catch(e){
-                        console.log("invalid url: ", f.url) // about:debugging, about:addons causes an error
+                        console.log("invalid url: ", f.url); // about:debugging, about:addons causes an error
                     }
                 }
             });
@@ -182,28 +183,28 @@ if(!window.scrapbee_injected){
             var content = null;
             
             /** set unique id */
-            // document.querySelectorAll("*").forEach(async el => {
-            //     el.setAttribute("sb-uid", new NumberRange(0,999999999).random());
+            // document.querySelectorAll("*").forEach(el => {
+            //     el.setAttribute("sbuid", new NumberRange(0,999999999).random());
             // });
 
             function setUid(el, attr){
-                if(el.className || el.className.indexOf('altmetric') > -1){
+                if(el.className && el.className.indexOf('altmetric') > -1){
                    return;
                 }
-                el.setAttribute("sb-uid", new NumberRange(0, 999999999).random());
+                el.setAttribute("sbuid", new NumberRange(0, 999999999).random());
                 var c = el.firstChild;
                 while(c){
                     if(c.nodeType == 1){
-                        console.log(c)
+                        // console.log(c);
                         setUid(c);
                     }
                     c = c.nextSibling;
                 }
             }
-            setUid(document.documentElement)
+            setUid(document.documentElement);
             
             try{
-                var segment = await cloneSegment(doc, isForSelection)
+                var segment = await cloneSegment(doc, isForSelection);
             }catch(e){
                 reject(e);
             }
@@ -219,7 +220,7 @@ if(!window.scrapbee_injected){
                 }else if(r.cssText){
                     css.push(r.cssText);
                 }else{
-                    console.log(r)
+                    console.log(r);
                 }
                 return css.join("\n");
             }
@@ -254,11 +255,15 @@ if(!window.scrapbee_injected){
                         var el = new ScrapbeeElement(item);
                         el.processInlineStyle();
                         var resources = el.processResources();
+
+                        
                         for(let r of resources){
+
+                            
                             if(!distinct[r.url]){
                                 distinct[r.url] = 1;
                                 r.subPath = subPath;
-                                appendResource(r)
+                                appendResource(r);
                                 if(r.isIcon){
                                     foundIcon = true;
                                 }
@@ -266,7 +271,7 @@ if(!window.scrapbee_injected){
                         }
                     }
                 }catch(e){
-                    console.log(e)
+                    console.log(e);
                     log.error(e);
                 }
             });
@@ -328,8 +333,8 @@ if(!window.scrapbee_injected){
             appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
                             isLast: page == "index", title: doc.title})
             /** remove unique id */
-            document.querySelectorAll("*[sb-uid]").forEach(el => {
-                el.removeAttribute("sb-uid");
+            document.querySelectorAll("*[sbuid]").forEach(el => {
+                el.removeAttribute("sbuid");
             });
             resolve();
         });

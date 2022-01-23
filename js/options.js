@@ -3,7 +3,7 @@ import {log} from "./message.js";
 import {initMover, initExporter} from "./tools.js";
 import {gtev, touchRdf, dataURLtoBlob} from "./utils.js";
 import {ContextMenu} from "./control.js";
-import {Configuration, History} from "./storage.js"
+import {Configuration, History} from "./storage.js";
 
 window.GLOBAL = global;
 window.CONF = new Configuration();
@@ -22,7 +22,7 @@ function getAsync(url) {
             }
         };
         request.onerror = function(err) {
-            reject(Error("request failed"))
+            reject(Error("request failed"));
         };
         request.open("GET", url);
         request.send();
@@ -161,7 +161,7 @@ function showConfiguration(){
     $("input[name=show_notification]").prop("checked", CONF.getItem("global.notification.show") == "on");
     $("input[name=saving_save_frames]").prop("checked", CONF.getItem("capture.behavior.frames.save")=="on");
     
-    var pos = CONF.getItem("capture.behavior.item.new.pos")
+    var pos = CONF.getItem("capture.behavior.item.new.pos");
     $(`input[name=saving_new_pos][value='${pos}']`).attr("checked", true);
     $("input[name=debug]").prop("checked", CONF.getItem("global.debug")=="on");
 }
@@ -185,7 +185,7 @@ $(document).ready(async function(){
         $("#div-announcement").html(content.translate());
         // $("#div-announcement").html($("#div-announcement").html().replace(/#(\d+\.\d+\.\d+)#/ig, "<h2>V$1</h2>"))
     }).catch(e => {
-       alert(e.message)
+        alert(e.message);
     });
 
     getAsync("/_locales/" + lang + "/help.html").then((content) => {
@@ -242,9 +242,9 @@ $(document).ready(async function(){
         if(gtev(version, '1.7.0')){
             initMover();
             initExporter();
-            log.debug("tools initiated successfully.")
+            log.debug("tools initiated successfully.");
         }else{
-            log.error("can not initiate tools, make sure backend 1.7.0 or later installed.")
+            log.error("can not initiate tools, make sure backend 1.7.0 or later installed.");
         }
     }
     browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((version) => {
@@ -310,7 +310,7 @@ $(document).ready(async function(){
         location.href.replace(/.+#/, "").replace(/(\w+)=(\w+)/g, function(a, b, c){
             map[b] = c;
         });
-        map.area = map.area || "configure"
+        map.area = map.area || "configure";
         $("#div-" + map.area).show();
         $("a.left-index[href='#area=" + map.area + "']").addClass("focus");
         if(map.scroll){
@@ -358,12 +358,11 @@ $(document).ready(async function(){
         try{
             /*** download an empty file to get the download path (can be choosed by user) */
             var dwInfo = await downloadText("", "scrapbee/scrapbee_backend.json");
-            var filename = dwInfo.filename;
-            var download_path = filename.replace(/[^\\\/]*$/, "");
+            var downloadPath = dwInfo.filename.replace(/[^\\\/]*$/, "");
 
             /*** download install script */
             if(GLOBAL.platformOS == "win")
-                dwInfo = await downloadText(installBat(download_path, GLOBAL.browserName), "scrapbee/install.bat");
+                dwInfo = await downloadText(installBat(downloadPath, GLOBAL.browserName), "scrapbee/install.bat");
             else if(GLOBAL.platformOS == "mac")
                 dwInfo = await downloadFile(extRoot + "/install/install_mac.sh", "scrapbee/install.sh");
             else
@@ -371,20 +370,19 @@ $(document).ready(async function(){
 
             /*** download backend config file */
             var [src_exec, dest_exec] = getBackendDownload(0);
-            // filename = dwInfo.filename;
-            // download_path = filename.replace(/[^\\\/]*$/, "");
+            // downloadPath = filename.replace(/[^\\\/]*$/, "");
             
             var json = {"allowed_extensions": ["scrapbee@scrapbee.org"],
                         "description": "ScrapBee backend",
                         "name": "scrapbee_backend",
-                        "path": download_path + dest_exec, /** path to downloaded backend executable */
+                        "path": downloadPath + dest_exec, /** path to backend executable */
                         "type": "stdio"};
             
             var jstr = JSON.stringify(json, null, 2);
             await downloadText(jstr, "scrapbee/scrapbee_backend.json");
 
             $(self).next(".download-path").show();
-            $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
+            $(self).next(".download-path").html("{ALREADY_DOWNLOADED_TO}: ".translate() + downloadPath);
         }catch(e){
             alert(e);
         }
@@ -400,14 +398,14 @@ $(document).ready(async function(){
             /** download backend executable */
             downloadFile(src_exec, "scrapbee/" + dest_exec).then(function(dwInfo){
                 /*** query really filename of backend executable */
-                var download_path = dwInfo.filename.replace(/[^\\\/]*$/,"");
-                if(download_path){
-                    HISTORY.setItem("backend.download.path", download_path);
-                    $(self).next(".download-path").show()
-                    $(self).next(".download-path").text("{ALREADY_DOWNLOADED_TO}: ".translate() + download_path);
+                var downloadPath = dwInfo.filename.replace(/[^\\\/]*$/,"");
+                if(downloadPath){
+                    HISTORY.setItem("backend.download.path", downloadPath);
+                    $(self).next(".download-path").show();
+                    $(self).next(".download-path").text("{ALREADY_DOWNLOADED_TO}: ".translate() + downloadPath);
                 }
             }).catch(e => {
-                alert(e)
+                alert(e);
             });
         }
         $("#txtBackendPath").show();
@@ -468,12 +466,12 @@ pause`;
                         browser.downloads.onChanged.removeListener(fn);
                     }
                 });
-            })
-            // .catch(function (error) {
-            //   $("#txtBackendPath").html("error: " + error);
-            // });
+            }).catch(function (error) {
+                reject(e);
+            });
         });
     }
+    /* LOGGING */
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         var $div = $("#div-log .console");
         if(request.type == 'LOGGING'){
@@ -489,6 +487,7 @@ pause`;
             initTools(request.version);
         }
     });
+    
     browser.runtime.sendMessage({type: 'GET_ALL_LOG_REQUEST'}).then((response) => {
         var $div = $("#div-log .console");
         response.logs.forEach(function(item){
