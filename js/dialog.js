@@ -1,16 +1,46 @@
 var Dialog = class{
     constructor(title='', content='') {
-        this.el = this.newElement(document.body, "div", {className: "scrapbee-dlg-container"})
-        var dlgCover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover"})
-        var dlg = this.newElement(dlgCover, "div", {className: "scrapbee-dlg"})
-        var frame = this.newElement(dlg, "div", {className: "scrapbee-dlg-frame"})
-        this.titleNode = this.newElement(frame, "div", {className: "scrapbee-dlg-title", textContent: title})
-        this.contentNode = this.newElement(frame, "div", {className: "scrapbee-dlg-content", innerHTML: content})
+        /** root element */
+        var div =  this.newElement(document.documentElement, "scrapbee-dialog");
+        div.style.dispaly = 'block';
+        div.style.position = 'fixed';
+        div.style.width = '100%';
+        div.style.height = '100%';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.zIndex = '2147483647';
+        div.attachShadow({mode: 'open'});
+        this.root = div;
+
+        /** css */
+        var css = browser.extension.getURL("/css/dialog.css");
+        div.shadowRoot.innerHTML = `<link href='${css}' rel='stylesheet' type='text/css'/>`;
+
+        /** css holder used on pages where the css is blocked */
+        this.styleSheetTag = this.newElement(div.shadowRoot, "style");
+
+        /** container of visiable */
+        this.el = this.newElement(div.shadowRoot, "div", {className: "scrapbee-dlg-container"});
+        
+        /** dialog construction */
+        var dlgCover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover"});
+        var dlg = this.newElement(dlgCover, "div", {className: "scrapbee-dlg"});
+        var frame = this.newElement(dlg, "div", {className: "scrapbee-dlg-frame"});
+        this.titleNode = this.newElement(frame, "div", {className: "scrapbee-dlg-title", textContent: title});
+        this.contentNode = this.newElement(frame, "div", {className: "scrapbee-dlg-content", innerHTML: content});
+  
         /** prevent user in host page selection lose */
         this.el.addEventListener('mousedown', function(e){
             e.preventDefault();
         });
+        
         this.hide();
+    }
+    set styleSheet(content){
+        this.styleSheetTag.textContent = content;
+    }
+    get styleSheet(){
+        return this.styleSheetTag.textContent;
     }
     get content(){
         return this.contentNode.innerHTML;
@@ -31,7 +61,7 @@ var Dialog = class{
         this.el.style.display = "none";
     }
     remove(){
-        this.el.remove();
+        this.root.remove();
     }
     newElement(parent, tagName, props={}){
         var el = document.createElement(tagName);
@@ -51,10 +81,10 @@ var Dialog = class{
 var DialogYesNo = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
-        this.newElement(this.contentNode, "div", {innerHTML: content})
-        var box = this.newElement(this.contentNode, "div", {className: "scrapbee-dlg-yesno-buttons"})
-        var btnNo = this.newElement(box, "input", {value: "No"})
-        var btnYes = this.newElement(box, "input", {value: "Yes"})
+        this.newElement(this.contentNode, "div", {innerHTML: content});
+        var box = this.newElement(this.contentNode, "div", {className: "scrapbee-dlg-yesno-buttons"});
+        var btnNo = this.newElement(box, "input", {value: "No"});
+        var btnYes = this.newElement(box, "input", {value: "Yes"});
         btnNo.addEventListener("click", function(){
             fn(this.value);
         });
@@ -67,9 +97,9 @@ var DialogWaiting = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
         this.el.innerHTML = "";
-        var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover waiting"})
-        var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
-        cover.innerHTML = "<div class='spinner'><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>"
+        var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover waiting"});
+        var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"});
+        cover.innerHTML = "<div class='spinner'><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>";
         // this.newElement(dlg, "img", {className: "waiting-gif", src: "/icons/loading.gif"})
     }
 };
@@ -77,12 +107,11 @@ var DialogProgress = class extends Dialog {
     constructor(title, content, fn) {
         super(title, '');
         this.el.innerHTML = "";
-        var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover progress"})
-        var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"})
-
-        this.text = this.newElement(dlg, "div", {className: "text"})
-        var bar = this.newElement(dlg, "div", {className: "bar"})
-        this.indicator = this.newElement(bar, "div", {className: "indicator"})
+        var cover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover progress"});
+        var dlg = this.newElement(cover, "div", {className: "scrapbee-dlg"});
+        this.text = this.newElement(dlg, "div", {className: "text"});
+        var bar = this.newElement(dlg, "div", {className: "bar"});
+        this.indicator = this.newElement(bar, "div", {className: "indicator"});
     }
     setProgress(progress, text=""){
         this.text.textContent = text;
@@ -92,13 +121,14 @@ var DialogProgress = class extends Dialog {
 var DialogIframe = class extends Dialog {
     constructor(title, src, onload) {
         super(title, '');
-        this.iframe = this.newElement(this.contentNode, "iframe")
+        this.iframe = this.newElement(this.contentNode, "iframe");
         this.iframe.style.width="100%";
         this.iframe.style.height="100%";
         this.iframe.style.minHeight="0px";
         this.iframe.style.minWidth="0px";
         this.iframe.style.border="0px solid #555";
         this.iframe.src = src;
+        this.iframe.setAttribute("crossorigin", "");
         this.iframe.onload = function(){
             if(onload)onload();
         };
@@ -122,48 +152,40 @@ var DialogIframe = class extends Dialog {
         return this.bodyInner.querySelectorAll(q);
     }    
 };
-var DialogDownloadTable = class extends DialogIframe {
-    constructor(title, hint, onready, onclose) {
-        super(title, '');
-        var self = this;
-        this.iframe.onload = function(){
-            self.bodyInner.style.margin="0px";
-            var dlgcss = browser.extension.getURL("/css/dialog.css");
-            self.contentInner = `
-<link rel="stylesheet" type="text/css" href="${dlgcss}" media="screen"/>
+var DialogDownloadTable = class extends Dialog {
+    constructor(title, hint, onclose) {
+        super(title, '');        
+        this.content = `
 <div class='scrapbee-dlg-table-outer'><table class='scrapbee-dlg-table'><thead></thead><tbody></tbody></table></div>
 <div class='scrapbee-dlg-yesno-buttons'>
 <div class='scrapbee-dlg-table-hint'>${content}</div>
-<input type="button" name="" value="Close" class="blue-button"/>
+<input type="button" name="" value="Close" class="blue-button close-button"/>
 </div>`;
-            self.findChildInner("input[value=Close]").addEventListener("click", function(){
-                if(onclose)onclose();
-            });
-            self.table = self.findChildInner("table");
-            self.thead = self.table.querySelector("thead");
-            self.tbody = self.table.querySelector("tbody");
-            self.hint = hint;
-            if(onready)onready();
-        };
-        this.iframe.src = browser.extension.getURL("/html/empty.html");
+        this.findChild("input.close-button").addEventListener("click", function(){
+            if(onclose)onclose();
+        });
+        this.table = this.findChild("table");
+        this.thead = this.table.querySelector("thead");
+        this.tbody = this.table.querySelector("tbody");
+        this.hint = hint;
     }
     hideButton(){
-        this.findChildInner("input[value=Close]").style.display = 'none';
+        this.findChild("input[value=Close]").style.display = 'none';
     }
     showButton(){
-        this.findChildInner("input[value=Close]").style.display = 'inline-block';
+        this.findChild("input[value=Close]").style.display = 'inline-block';
     }
     get hint(){
-        return this.findChildInner(".scrapbee-dlg-table-hint").innerHTML;
+        return this.findChild(".scrapbee-dlg-table-hint").innerHTML;
     }
     set hint(s){
-        this.findChildInner(".scrapbee-dlg-table-hint").innerHTML = s;
+        this.findChild(".scrapbee-dlg-table-hint").innerHTML = s;
     }
     addHeader(){
         var self = this;
         var tr = document.createElement("tr");
         Array.from(arguments).forEach((v) => {
-            self.newElement(tr, "th", {innerHTML:v})
+            self.newElement(tr, "th", {innerHTML:v});
         });
         this.thead.appendChild(tr);
     }    
@@ -171,7 +193,7 @@ var DialogDownloadTable = class extends DialogIframe {
         var self = this;
         var tr = document.createElement("tr");
         Array.from(arguments).forEach((v) => {
-            self.newElement(tr, "td", {innerHTML:v})
+            self.newElement(tr, "td", {innerHTML:v});
         });
         this.tbody.appendChild(tr);
     }

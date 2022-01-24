@@ -1,5 +1,16 @@
 @import "spinner.css";
-
+*{
+    font-family:
+		"Open Sans",
+		"Fira Sans",
+		"Lucida Sans",
+		"Lucida Sans Unicode",
+		"Trebuchet MS",
+		"Liberation Sans",
+		"Nimbus Sans L",
+		sans-serif;
+    font-size:12px;
+}
 .scrapbee-dlg{
     margin:auto;
     text-align:center;
@@ -22,7 +33,6 @@
 .scrapbee-dlg iframe{
     margin:0;
 }
-
 .scrapbee-dlg-cover.waiting .scrapbee-dlg{
     width:200px;
     height:50px;
@@ -65,7 +75,6 @@
     width:0;
     background:#f50;
 }
-
 .blue-button, .scrapbee-dlg input[type=button]{
     padding:5px 20px;
     appearance: none;
@@ -108,13 +117,16 @@
 .scrapbee-dlg-title{
     text-align:left;
     background:#888;
-    height:36px;
-    line-height:36px;
+    height:30px;
+    line-height:30px;
+    margin-top:6px;
     padding-left:45px;
+    vertical-align:bottom;
     background-image:url(/icons/bee.png);
     background-repeat:no-repeat;
     background-size:20px 20px;;
-    background-position:15px 8px;
+    background-position:15px 2px;
+    font-size:16px;
 }
 .scrapbee-dlg-content{
     text-align:left;
@@ -147,10 +159,12 @@
     background:#bbb;
 }
 .scrapbee-dlg-table-hint{
-    margin-right:30px;
+    margin-top:6px;
+    margin-right:10px;
     display:inline-block;
     vertical-align:middle;
     line-height:30px;
+    font-size:14px;
 }
 .scrapbee-dlg-yesno-buttons{
     position:absolute;
@@ -175,4 +189,3 @@
     font-size:12px;
     white-space:nowrap;
 }
-
