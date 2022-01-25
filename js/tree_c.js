@@ -1,7 +1,10 @@
-import {log} from "./message.js";
-import {randRange, comp} from "./utils.js";
-
-class NodeHTMLBuffer {
+function randRange(a, b){
+    return Math.floor(Math.random() * (b-a+1)) + a;
+}
+function comp(a, b){
+    return a < b ? -1 : (a > b ? 1 : 0);
+}
+var NodeHTMLBuffer = class NodeHTMLBuffer {
     constructor(start="", end="") {
         this.start=start;
         this.end=end;
@@ -27,7 +30,7 @@ class NodeHTMLBuffer {
         return list.join("");
     }
 }
-class BookTree {
+var BookTree = class {
     constructor(xmlString, rdfFullFile, options={}) {
         var self = this;
         this.unique_id = randRange(0, 99999999); 
@@ -85,11 +88,11 @@ class BookTree {
         /** scrap data */
         r = r.replace(
             /^resource\:\/\/scrapbook/,
-            CONF.getFileServiceAddress() + rdfHome
+            CONF.getItem('__computed.fileServiceAddress') + rdfHome
         );
         /** local file */
         if((/^(\/|(\[a-z]\:))/).test(r)){
-            r =  CONF.getFileServiceAddress() + r;
+            r =  CONF.getItemType('__computed.fileServiceAddress') + r;
         }
         r = r.replace(/\\/g, "/").replace(/([^\:\/])\/{2,}/g, function(a, b, c){
             return b + "/";
@@ -174,7 +177,7 @@ class BookTree {
                         return;
                     var url = $el.attr("source");
                     var is_local = (($el.hasClass("page") || $el.hasClass("note")) && !$(e.target).hasClass("origin"));
-                    if ((CONF.getItem("sidebar.behavior.open.dest") == "curr-tab") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
+                    if ((CONF.getItem('sidebar.behavior.open.dest') == "curr-tab") === !(e.ctrlKey || e.metaKey || e.which == 2)) {
                         if(self.onOpenContent)self.onOpenContent($el.attr("id"), url, false, is_local);
                     } else {
                         if(self.onOpenContent)self.onOpenContent($el.attr("id"), url, true, is_local);
@@ -346,19 +349,27 @@ class BookTree {
         if ($item && $item.hasClass("folder")) {
             if (!$item.hasClass("expended") || on) {
                 $item.addClass("expended");
-                $item.nextAll(".folder-content:first").show();
+                $item.nextAll(".folder-content:first").css("display", "block");
             } else {
                 $item.removeClass("expended");
-                $item.nextAll(".folder-content:first").hide();
+                $item.nextAll(".folder-content:first").css("display", "none");
             }
         }
     }
     scrollToItem($el, $item, ani, mostTop=0, ms=500){
         if($item && $item.length){
-            var y = $item.offset().top - $el.offset().top - mostTop;
+            // let itemTop = parseInt($item.offset().top);
+            // let elTop = parseInt($el.offset().top);
+            // var y = itemTop - elTop - mostTop;
+            
+            var y = $item[0].offsetTop;
+            
             if(ani){
                 $el.animate({scrollTop: y}, ms);
             }else{
+                // console.log(itemTop, elTop, $item[0].offsetTop)
+                // console.log($item[0]), 
+                
                 $el.prop("scrollTop", y);
             }
         }
@@ -393,7 +404,7 @@ class BookTree {
             return;
         var $c = $item.clone();
         if (move_type == 3){
-            if(CONF.getItem("capture.behavior.item.new.pos") == "bottom"){
+            if(CONF.getItem('capture.behavior.item.new.pos') == "bottom"){
                 $ref_item.nextAll(".folder-content:first").append($c);
             }else{
                 $ref_item.nextAll(".folder-content:first").prepend($c);
@@ -484,8 +495,6 @@ class BookTree {
             items.push({id: json.id, title, parentId, sect: sects[parentId], node, type});
             sects[parentId] += inc;
         }, nodes);
-        log.debug("sorting, language = {0}, case sensitive = {1}".fillData(
-            [browser.i18n.getUILanguage(), case_sensitive ? 'on' : 'off']));
         items = items.sort(function(a, b){
             var v = comp(a.parentId, b.parentId);
             v = v || comp(a.sect, b.sect);
@@ -507,7 +516,7 @@ class BookTree {
                                 ignorePunctuation: false
                             });
                     }catch(e){
-                        log.debug(e.message);
+                        // log.debug(e.message);
                     }
                 }else if(sortBy == "date"){
                     v = v || a.id > b.id;
@@ -585,7 +594,7 @@ class BookTree {
             this.showCheckBoxes(this.options.checkboxes);
             this.rendered = true;
         }catch(e){
-            log.error(e.message);
+            // log.error(e.message);
         }
         this.listenUserEvents($container);
         this.showCheckBoxes(this.options.checkboxes);
@@ -649,7 +658,7 @@ class BookTree {
                         }, child);
                     }
                 }catch(e){
-                    log.error(nodeType, "node error: ", e.message)
+                    // log.error(nodeType, "node error: ", e.message)
                 }
             }
         }
@@ -1128,4 +1137,3 @@ class BookTree {
     }
 }
 
-export { BookTree };

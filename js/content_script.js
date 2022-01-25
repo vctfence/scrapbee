@@ -1,8 +1,3 @@
-/*
-  ====================
-  content_script.js
-  ====================
-*/
 if(!window.scrapbee_injected){
     ///////////////////////////////
     window.scrapbee_injected = true;
@@ -54,10 +49,10 @@ if(!window.scrapbee_injected){
         }
         return false;
     }
-    function unlock(){
+    var unlock = function(){
         window.removeEventListener("beforeunload", oldLockListener);
         oldLockListener = null;
-    }
+    };
     function truncate(fullStr, strLen, separator) {
         if (fullStr.length <= strLen) return fullStr;
         separator = separator || '...';
@@ -95,19 +90,20 @@ if(!window.scrapbee_injected){
                 if(selection.rangeCount == 0){
                     return reject("no selection activated");
                 }
-                for(var i=0;i<selection.rangeCount;i++){
+                for(var i=0; i<selection.rangeCount; i++){
                     var range = selection.getRangeAt(i);
                     var rangeContent = range.cloneContents();
                     var commonAncestor = range.commonAncestorContainer;
                     var leaves = getLeavesIn(rangeContent);
                     leaves.forEach(thisNode => {
+                        let refNode;
                         if(thisNode.nodeType == 1){
                             var _uid = thisNode.getAttribute("sbuid");
-                            var refNode = document.querySelector(`*[sbuid='${_uid}']`);
+                            refNode = document.querySelector(`*[sbuid='${_uid}']`);
                         }else{
-                            var refNode = thisNode;
+                            refNode = thisNode;
                         }
-                        for(var c=refNode,pr=null;c;){
+                        for(var c=refNode, pr=null; c;){
                             var pn = c.cloneNode(false);
                             if(c.nodeType == 1){
                                 var uid = c.getAttribute("sbuid");
@@ -275,7 +271,7 @@ if(!window.scrapbee_injected){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
                     var hex = hex_md5(url).substr(0, 15);
-                    appendResource({tag:"link", type:"image", url, isIcon:true, subPath, hex})
+                    appendResource({tag:"link", type:"image", url, isIcon:true, subPath, hex});
                     var mc = doc.createElement("link");
                     mc.rel="shortcut icon";
                     mc.href=`favicon.ico`;
@@ -293,7 +289,7 @@ if(!window.scrapbee_injected){
             mc.media="screen";
             var head = segment.querySelectorAll("head");
             if(head.length){
-                head[0].insertBefore(mc, head[0].firstChild)
+                head[0].insertBefore(mc, head[0].firstChild);
             }
             /*** remove tags not wanted */
             segment.querySelectorAll("*[mark_remove='1']").forEach(el => el.remove());
@@ -334,36 +330,46 @@ if(!window.scrapbee_injected){
             resolve();
         });
     };
-    function saveBookmarkIcon(rdf, rdfHome, itemId){
+    
+    var saveBookmarkIcon = function(rdf, rdfHome, itemId){
         browser.runtime.sendMessage({type: "GET_TAB_FAVICON"}).then((url) => {
             if(!url){
                 Array.prototype.forEach.call(document.querySelectorAll("link"), function(item){
-                    if(item.rel && /shortcut/.test(item.rel)){
+                    if(item.rel && /shortcut/.test(item.rel)) {
                         url = item.href;
                     }
                 });
             }
             if(url){
-                var filename = `${rdfHome}/data/${itemId}/favicon.ico`;
-                browser.runtime.sendMessage({type: "DOWNLOAD_FILE", url, filename, itemId}).then(() => {
-                    browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: true, rdf, itemId});
+                var filename = `${rdfHome}data/${itemId}/favicon.ico`;
+                browser.runtime.sendMessage({type: "DOWNLOAD_FILE_BLOB", url}).then((blob) => {
+                    browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: {path: filename, blob}}).then((response) => {
+                        browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: true, rdf, itemId, iconFilename:'favicon.ico'});
+                    });
                 });
             }else{
                 browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', haveIcon: false, rdf, itemId});
             }
         });
-    }
-
-    function loadInnerCss(){
+    };
+    
+    function loadAssetText(path){
         return new Promise(resolve => {
             $.ajax({
-                url:browser.extension.getURL("/css/dialog.css"),
+                url:browser.extension.getURL(path),
                 dataType:"text",
                 success:function(data){
                     resolve(data);
                 }
             });
         });
+    }
+
+    function loadAssetScript(path){
+        var script = document.createElement("script");
+        script.src = browser.extension.getURL(path);
+        script.type = "module";
+        document.documentElement.appendChild(script);
     }
 
     function wait(ms){
@@ -373,14 +379,14 @@ if(!window.scrapbee_injected){
             }, ms);
         });
     }
-
+    
     var DLG_CSS = null;
-    async function startCapture(saveType, rdf, rdfHome, itemId, autoClose=false){
+    var startCapture = async function(saveType, rdf, rdfHome, itemId, autoClose=false){
         if(!lock()) return;
 
         /* hack css for dialog in shadowRoot */
         if(!DLG_CSS){
-            var DLG_CSS = await loadInnerCss();
+            var DLG_CSS = await loadAssetText(("/css/dialog.css"));
             var icon = browser.extension.getURL("/icons/bee.png");
             DLG_CSS += `.scrapbee-dlg-title{background-image:url(${icon}) !important;}`;
         }
@@ -449,7 +455,8 @@ if(!window.scrapbee_injected){
                                 r.failed = 1;
                                 inc(i, r);
                             };
-                            // download
+
+                            /* download */
                             browser.runtime.sendMessage({type: 'DOWNLOAD_FILE_BLOB', url: r.url}).then(b => {
                                 /** download success */
                                 var ext = getMainMimeExt(b.type) || "";
@@ -544,26 +551,22 @@ if(!window.scrapbee_injected){
                 });
             }
         });
-    }
+    };  // end startCapture
+
+    var context = this;
     /* message listener */
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // log.debug("content script recv msg:", request.type)
         if(request.type == "SAVE_ADVANCE_REQUEST"){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));
-            if(lock()){   
-                return new Promise((resolve, reject) => {
-                    var url =  browser.extension.getURL("/html/advcap.html");
-                    var w = new DialogIframe("{CAPTURE}".translate(), url, function(){
-                        browser.runtime.sendMessage({type:'TAB_INNER_CALL',
-                                                     dest: "CAPTURER_DLG",
-                                                     action: "INIT_FORM",
-                                                     title: document.title,
-                                                     url: location.href}).then(function(){});
-                        resolve();
-                    });
-                    currDialog = w;
-                    w.show();
+            if(lock()){
+                return new Promise(async (resolve, reject) => {
+                    try{
+                        advDialog(context);
+                    }catch(e){
+                        reject(e);
+                    }
                 });
             }
         }else if(request.type == "GATHER_CONTENT") {
@@ -576,10 +579,6 @@ if(!window.scrapbee_injected){
                 startCapture(request.type.replace(/_REQUEST/, ""), r.rdf, r.rdfHome, r.itemId, request.autoClose);
             }).catch(function (error) {
                 alert("capture failed: " + error);
-            });
-        }else if(request.type == 'SAVE_URL_REQUEST_INJECTED'){
-            browser.runtime.sendMessage({type: "CREATE_NODE_REQUEST", nodeType: "bookmark", title: document.title, url: location.href}).then((r) => {
-                saveBookmarkIcon(r.rdf, r.rdfHome, r.itemId);
             });
         }else if(request.type == "TAB_INNER_CALL" && request.dest == "CONTENT_PAGE"){
             if(request.action == "CANCEL_CAPTURE"){
@@ -606,26 +605,5 @@ if(!window.scrapbee_injected){
         }
         return false;
     });
-    function downloadFile(url, callback){
-        try{
-            var request = new XMLHttpRequest();
-            request.open("GET", url, true);
-            request.responseType = "blob";
-            request.onreadystatechange=function(){
-                if(this.readyState == 4 && this.status == 200){
-                    callback(this.response);
-                }else if(this.status >= 400){
-                    callback(false);
-                }
-            };
-            request.onerror = function(e){
-                callback(false);
-            };
-            request.send();
-        }catch(e){
-            console.log(`download file error, ${e}`);
-            callback(false);
-        }
-    }
 }
 console.log("[content_script.js] loaded");

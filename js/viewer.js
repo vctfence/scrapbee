@@ -1,7 +1,8 @@
-import {getUrlParams, executeScriptsInTab} from "./utils.js";
+import {getUrlParams} from "./utils.js";
 import {log} from "./message.js";
-import {Configuration} from "./storage.js"
-import {global} from "./global.js"
+import {Configuration} from "./storage.js";
+import {global} from "./global.js";
+import {Injector} from "./inject.js";
 
 window.GLOBAL = global;
 window.CONF = new Configuration();
@@ -62,34 +63,40 @@ class EditToolBar{
             browser.tabs.sendMessage(self.tabId, {type: "GET_HTML"}, {frameId: self.frameId}).then(function(code){
                 dlg.findChildInner("textarea").value = code;
                 dlg.findChildInner("input[name='ok']").onclick = function(){
-                    var html = dlg.findChildInner("textarea").value;
+                    let html = dlg.findChildInner("textarea").value;
                     let doc = document.implementation.createHTMLDocument("New Document");
                     var publicId=null, systemId=null, doctypeName=null;
                     doc.open("text/html","replace");
                     doc.write(html);
                     var docType = null;
                     if(doc.doctype){
-                        docType = {name:doc.doctype.name, publicId:doc.doctype.publicId, systemId: doc.doctype.systemId} 
+                        docType = {name:doc.doctype.name, publicId:doc.doctype.publicId, systemId: doc.doctype.systemId};
                     }
                     var rootAttrs = {};
-                    Array.prototype.slice.call(doc.documentElement.attributes).forEach((item) => {
-                        rootAttrs[item.name] = item.value;
-                    });
-                    document.title = doc.title;
+
+                    let _html = '';
+                    if(doc.documentElement){
+                        Array.prototype.slice.call(doc.documentElement.attributes).forEach((item) => {
+                            rootAttrs[item.name] = item.value;
+                        });
+                        document.title = doc.title;
+                        _html = doc.documentElement.innerHTML;
+                    }
                     doc.close();
+                    
                     browser.tabs.sendMessage(
                         self.tabId,
-                        {type: "SET_HTML", html: doc.documentElement.innerHTML, docType, rootAttrs},
+                        {type: "SET_HTML", html: _html, docType, rootAttrs},
                         {frameId: self.frameId}
                     ).then(function(){
                         self.toggleStatus("unlock");    
                     }).catch((e) => {
-                        log.error(e.message)
+                        log.error(e.message);
                     });
-                }
+                };
                 dlg.findChildInner("input[name='cancel']").onclick = function(){
                     self.toggleStatus("unlock");
-                }
+                };
             });
         });
         dlg.show();
@@ -123,7 +130,7 @@ class EditToolBar{
         var $item = $("<div class='scrapbee-marker'>").appendTo($m).bind("mousedown", function(e){
             e.preventDefault();
             self.toggleStatus("unlock");
-            browser.tabs.sendMessage(self.tabId, {type: "CLEAR_MARK_PEN"}, {frameId: self.frameId}).then(function(){})
+            browser.tabs.sendMessage(self.tabId, {type: "CLEAR_MARK_PEN"}, {frameId: self.frameId}).then(function(){});
         });
         $(`<div class='scrapbee-menu-item'>Clear Marks</div>`).appendTo($item);
         /** markers */
@@ -132,7 +139,7 @@ class EditToolBar{
                 e.preventDefault();
                 self.toggleStatus("unlock");
                 browser.tabs.sendMessage(self.tabId, {type: "MARK_PEN", marker: `scrapbee-marker-${child}`},
-                                         {frameId: self.frameId}).then(function(){})
+                                         {frameId: self.frameId}).then(function(){});
             });
             $(`<div class='scrapbee-menu-item scrapbee-marker-${child}'>Example Text</div>`).appendTo($item);
         }
@@ -148,7 +155,7 @@ class EditToolBar{
         var btn = buttons[4];
         btn.value = chrome.i18n.getMessage("SOURCE_CODE");
         btn.addEventListener("click", function(){
-            self.toggleStatus("source")
+            self.toggleStatus("source");
         });
         /** reload button */
         var btn = buttons[5];
@@ -177,9 +184,9 @@ class EditToolBar{
                 $(self.divToolbar).find("input[type=button]").prop("disabled", true);
             }else if(mode == "clean" || self.mode == "clean"){
                 $(self.divToolbar).find("input[type=button]").prop("disabled", true);
-                browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_PAGE_CLEAN"}, {frameId: self.frameId})
+                browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_PAGE_CLEAN"}, {frameId: self.frameId});
                 self.btnDomClean.value = chrome.i18n.getMessage(mode == "clean" ? "MODIFY_DOM_OFF" : "MODIFY_DOM_ON");
-                self.btnDomClean.disabled = false
+                self.btnDomClean.disabled = false;
             }else if(mode == "mark" || self.mode == "mark"){
                 if(mode == "mark"){
                     var rect_div = self.divToolbar.getBoundingClientRect();
@@ -192,12 +199,12 @@ class EditToolBar{
                 }
             }else if(mode == "edit" || self.mode == "edit"){
                 $(self.divToolbar).find("input[type=button]").prop("disabled", true);
-                browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: self.frameId}).then(function(){})
+                browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: self.frameId}).then(function(){});
                 self.btnEditing.value = chrome.i18n.getMessage(mode == "edit" ? "STOP_EDIT_CONTENT" : "EDIT_CONTENT");
                 self.btnEditing.disabled = false;
                 browser.webNavigation.getAllFrames({tabId: self.tabId}).then((frames)=>{
                     for(var i=2; i<frames.length-1;i++){
-                        browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: frames[i].frameId}).then(function(){})
+                        browser.tabs.sendMessage(self.tabId, {type: "TOGGLE_EDITING"}, {frameId: frames[i].frameId}).then(function(){});
                     }
                 });
             } else if(mode == "source" || self.mode == "source"){
@@ -210,7 +217,7 @@ class EditToolBar{
             if(mode == "unlock"){
                 $(self.divToolbar).find("input[type=button]").prop("disabled", false);
             } 
-            self.mode = mode
+            self.mode = mode;
         }
     }
 }
@@ -219,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async function(){
     await CONF.load();
     
     var editbar;
-    var params = getUrlParams(location.search)
+    var params = getUrlParams(location.search);
     var rootPath = `${params.path}/data/${params.id}`;
     var rootAddress = `${CONF.getFileServiceAddress()}${rootPath}`;
     var elFrame = document.body.querySelector("#contentFrame");
@@ -231,10 +238,10 @@ document.addEventListener('DOMContentLoaded', async function(){
             browser.webNavigation.onDOMContentLoaded.addListener((details) => {
                 try{
                     if((details.tabId == tabId) && (details.frameId == frameId)){
-                        executeScriptsInTab(tabId, [
+                        new Injector(tabId, frameId).executeScripts(
                             "/js/proto.js", "/js/marker.js", "/libs/jquery-3.3.1.js", "/js/viewer_frame.js",
-                        ], frameId).then(function(){
-                            browser.tabs.sendMessage(tabId, {type: "INIT", frameId}, {frameId}).then((status)=>{
+                        ).then(function(){
+                            browser.tabs.sendMessage(tabId, {type: "INIT", frameId}, {frameId}).then((status) => {
                                 if(status == "ok"){
                                     if(!editbar){
                                         editbar = new EditToolBar(`${params.path}/data/${params.id}/`, params.id, tabId, frameId);
@@ -243,12 +250,12 @@ document.addEventListener('DOMContentLoaded', async function(){
                                     $.get(url,function(r){
 		                        editbar.toggleStatus("unlock");
                                         browser.tabs.sendMessage(tabId, {type: "GET_TITLE"}, {frameId}).then(([title, icon]) => {
-                                            document.title = title
+                                            document.title = title;
                                             document.querySelector("link[rel='shortcut icon']").href = icon;
                                         });
-	                            }).fail(function(){});
+	                            }).fail(function(e){});
                                 }
-                            });
+                            }).catch(e => {});
                         }).catch(function(e){
                             log.error(e.message);
                             return false;

@@ -1,19 +1,59 @@
-import {Configuration, History} from "./storage.js"
-import {BookTree} from "./tree.js"
-import {log} from "./message.js"
-import {genItemId, refreshTree} from "./utils.js"
-import {global} from "./global.js";
-
+var CONTEXT;
 var currTree;
+var DLG;
 
-window.GLOBAL = global;
-window.CONF = new Configuration();
-window.HISTORY = new History();
+function randRange(a, b){
+    return Math.floor(Math.random() * (b-a+1)) + a;
+}
 
-function loadXml(rdf, $box){
+function genItemId(proto){
+    var r = String(randRange(1,999999)).padStart(6, "0");
+    if(proto)
+        return proto.substr(0, 14) + r;
+    else
+        return new Date().format("yyyyMMddhhmmss" + r);
+}
+
+function refreshTree(){
+    var params = Array.from(arguments);
+    var tree = params.shift();
+    var fnLoad = params.shift();
+    var $box = params[1];
     return new Promise((resolve, reject) => {
-        // $("#path-box bdi").empty();
-        $("input[type=button]").prop("disabled", true);
+        var expended_ids = tree.getExpendedFolderIds();
+        var focusId = tree.getFocusedItem().attr('id');
+        var p = fnLoad.apply(null, params);
+        p.then((tree) => {
+            expended_ids.forEach((id) => {
+                tree.toggleFolder(tree.getItemById(id), true);
+            });
+            var $item = tree.getItemById(focusId);
+            tree.focusItem($item);
+            tree.scrollToItem($box.parent(), $item, false);
+            tree.onChooseItem();
+            resolve();
+        });
+    });
+}
+
+var JsonExt = class {
+    constructor(data){
+        this.data = data;
+    }
+    getItem(key){
+        var t = this.data;
+        key.split(".").every(k => {
+            if(t)
+                t = t[k];
+            return !(t == null || t == undefined);
+        });
+        return t;
+    }
+};
+
+function loadXml(rdf, $box, loadHistory=true){
+    return new Promise(async (resolve, reject) => {
+        DLG.findChildren("input[type=button]").forEach(el => el.setAttribute("disabled", true));
         $box.empty().text("loading...");
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onload = async function(r) {
@@ -22,11 +62,11 @@ function loadXml(rdf, $box){
             // currTree.toggleFolder(currTree.getItemById("root"), true);
             currTree.onChooseItem = function(itemId) {
                 var t = currTree.getItemPath(currTree.getItemById(itemId));
-                $("#path-box bdi").html(t);
-	    }
-            $("input[type=button]").prop("disabled", false);
+                $(DLG.findChild("#path-box bdi")).html(t);
+	    };
+            DLG.findChildren("input[type=button]").forEach(el => el.removeAttribute("disabled"));
             /** restore status */
-            if(HISTORY.getItem("capture.adv.tree.last") == rdf){
+            if(loadHistory && HISTORY.getItem("capture.adv.tree.last") == rdf){
                 var folders = HISTORY.getItem("capture.adv.tree.folders.opened");
                 var focused = HISTORY.getItem("capture.adv.tree.focused.last");
                 if(folders){
@@ -37,7 +77,7 @@ function loadXml(rdf, $box){
                 if(focused){
                     var $item = currTree.getItemById(focused);
                     currTree.focusItem($item);
-                    currTree.scrollToItem($box.parent(), $item , 500, 0, false);
+                    currTree.scrollToItem($box.parent(), $item, false);
                     currTree.onChooseItem(focused);
                 }
             }
@@ -46,7 +86,8 @@ function loadXml(rdf, $box){
         xmlhttp.onerror = function(err) {
 	    log.info(`load ${rdf} failed, ${err}`);
         };
-        var addr = CONF.getFileServiceAddress();
+        /** fetch rdf */
+        var addr = CONF.getItem('__computed.fileServiceAddress');
         xmlhttp.open("GET", `${addr}/${rdf}`, false);
         xmlhttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
         xmlhttp.setRequestHeader('cache-control', 'max-age=0');
@@ -57,100 +98,134 @@ function loadXml(rdf, $box){
     });
 }
 
-async function initAll(){
-    document.body.innerHTML = document.body.innerHTML.translate();
+async function advDialog(context){
+    CONTEXT = context;
     
-    await GLOBAL.load();
-    await CONF.load();
-    await HISTORY.load();
+    /* store host page selection */
+    const selection = window.getSelection();
+    const ranges = [];
+    for(var i=0; i<selection.rangeCount; i++){
+        ranges.push(selection.getRangeAt(i));
+    }
 
-    $("input[type=button]").prop("disabled", true);
+    function restore() {
+        let s = window.getSelection();
+        s.removeAllRanges();
+        ranges.forEach(r => s.addRange(r));
+
+        dlg.remove();
+        context.unlock();
+    }
+
+    var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
+    window.CONF = new JsonExt(conf);
+
+    var history = await browser.runtime.sendMessage({type:'GET_HISTORY'});
+    window.HISTORY = new JsonExt(history);
+    
+    var html = await loadAssetText(("/html/advcap.html"));
+    var css = await loadAssetText(("/css/dialog.css"));
+    css += await loadAssetText(("/css/tree.css"));
+
+    var dlg = new Dialog('Download');
+    dlg.styleSheet = css;
+    dlg.content = html.replace(/<body>[\s\S.]*/, s => s.translate());
+    dlg.show();
+    DLG = dlg;
+
+    DLG.findChild("#txTitle").value = document.title;
+    DLG.findChild("#txUrl").value = location.href;
+
+    // DLG.findChild("style").textContent = css;
+    // var c = document.documentElement.querySelector("scrapbee-dialog")
+
+    /** add script tag */
+    // const script = document.createElement('script');
+    // script.textContent = `alert(loadAssetText);`;
+    // dlg.appendChild(script);
+
+    /** disable buttons */
+    DLG.findChildren("input[type=button]").forEach(el => el.setAttribute("disabled", true));
+
+    /** init trees box */
+    var $box = $(DLG.findChild("#tree1"));
+    $box.empty().text("loading...");
+    
+    /** load trees */
+    var $drop = $(DLG.findChild("#lstRdfs"));
+    CONF.getItem('tree.names').forEach(function(k, i){
+        var $opt = $("<option></option>").attr("value", CONF.getItem('tree.paths')[i]).text(k).appendTo($drop);
+        if(CONF.getItem('tree.paths')[i] == HISTORY.getItem('capture.adv.tree.last')){
+            $opt.prop("selected", true);
+        }
+    });
+    $drop.change(function(){
+        loadXml($(this).val(), $box);
+    });
+    $drop.change();
+
     /** add folder */
-    var button = document.body.querySelector("#btnAddFoder");
+    var button = DLG.findChild("#btnAddFoder");
     button.onclick=function(){
         var title = prompt("Please input name of new folder");
         if(!title) return;
 
-        var pos = CONF.getItem("capture.behavior.item.new.pos");
+        var pos = CONF.getItem('capture.behavior.item.new.pos');
         currTree.createFolder(currTree.getCurrContainer(), genItemId(), currTree.getCurrRefId(), title, true, pos);
         browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: currTree.xmlSerialized(),
                                      path: currTree.rdf, backup:true, boardcast:true, srcToken: currTree.unique_id}).then((response) => {});
-    }
-    /** toggle root */
-    $("#show-root").change(function(){
-        currTree.showRoot(this.checked)
-    });
+    };
+    
     /** cancle capture */
-    var button = document.body.querySelector("#btnCancel");
-    button.onclick=function(){
-        browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "CANCEL_CAPTURE"}).then((response) => {});
-    }
+    var button = $(DLG.findChild("#btnCancel"));
+    button.click(function(){
+        restore();
+    });
+
     /** start capture */
-    var button = document.body.querySelector("#btnCapture");
-    button.onclick = function(){
-        var saveType = document.body.querySelector("input[type=radio][name=save_type]:checked").value;
+    var button = $(DLG.findChild("#btnCapture"));
+    button.click(function(){
+        var saveType = DLG.findChild("input[type=radio][name=save_type]:checked").value;
         var nodeType = saveType == "SAVE_URL" ? "bookmark" : "page";
         var itemId = genItemId();
-        var title = document.body.querySelector("#txTitle").value;
-        // var tags = document.body.querySelector("#txTags").value;
-        var url = document.body.querySelector("#txUrl").value;
-        var rdfHome = currTree.rdfHome; // document.body.querySelector("#lstRdfs").value;
+        var title = DLG.findChild("#txTitle").value;
+        var url = DLG.findChild("#txUrl").value;
+        var rdfHome = currTree.rdfHome;
         var rdf = currTree.rdf;
         var refId = currTree.getCurrRefId();
-        var folderId = currTree.getCurrFolderId();  // folder or root folder
         var ico = "resource://scrapbook/data/" + itemId + "/favicon.ico";
-        var comment = document.body.querySelector("#txComment").value;
-        if(folderId == "tree1")
-            folderId = "urn:scrapbook:root";
-
+        var comment = DLG.findChild("#txComment").value;
         var folderIds = currTree.getExpendedFolderIds().join(",");
+        browser.runtime.sendMessage({type: 'SAVE_HISTORY', items: {
+            "capture.adv.tree.last": rdf,
+            "capture.adv.tree.focused.last": currTree.getFocusedItem().attr("id"),
+            "capture.adv.tree.folders.opened": folderIds,
+        }}).then(_ => {
+            var folderId = currTree.getCurrFolderId();  // folder or root folder
+            if(folderId == "tree1")
+                folderId = "urn:scrapbook:root";
+            currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
+            browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', backup: true, text: currTree.xmlSerialized(), path: currTree.rdf, boardcast:true}).then(r => {
+                restore();
 
-        HISTORY.setItem('capture.adv.tree.last', rdf);
-        HISTORY.setItem('capture.adv.tree.focused.last', currTree.getFocusedItem().attr("id"));
-        HISTORY.setItem('capture.adv.tree.folders.opened', folderIds);
-        HISTORY.commit()
-
-        currTree.createScrapXml(folderId, nodeType, itemId, refId, title, url, ico, comment);
-        // currTree.updateComment(currTree.getItemById(itemId), comment);
-        browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', backup: true, text: currTree.xmlSerialized(), path: currTree.rdf}).then((response) => {
-            browser.runtime.sendMessage({type: 'TAB_INNER_CALL', dest: "CONTENT_PAGE", action: "START_CAPTURE",
-                                         title, itemId, rdf, rdfHome, folderId, refId, url, saveType, nodeType, comment}).then(() => {
-                                             // can not reach here, because this dialog already removed now
-                                         });
+                if(saveType == "SAVE_URL")
+                    context.saveBookmarkIcon(rdf, rdfHome, itemId);
+                else
+                    context.startCapture(saveType, rdf, rdfHome, itemId);
+            });
         });
-    }
-    /** tree box */
-    var $box = $("#tree1");
-    var paths = CONF.getRdfPaths();
-    CONF.getRdfNames().forEach(function(k, i){
-	var $opt = $("<option></option>").attr("value", paths[i]).text(k).appendTo($("#lstRdfs"));
-        if(paths[i] == HISTORY.getItem("capture.adv.tree.last")){
-            $opt.prop("selected", true);
-        }
     });
-    $("#lstRdfs").change(function(){
-        loadXml($(this).val(), $box);
-    });
-    
-    $("#lstRdfs").change();
-}
-browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if(request.type == "TAB_INNER_CALL" && request.dest == "CAPTURER_DLG"){
-        return new Promise(async function(resolve, reject){
-            await initAll();
-            $("#txTitle").val(request.title);
-            $("#txUrl").val(request.url);
-            resolve();
-        });
-    }else if(request.type == 'FILE_CONTENT_CHANGED'){
-        if(request.filename == currTree.rdf && request.srcToken != currTree.unique_id){
-            if(currTree){
-                refreshTree(currTree, loadXml, currTree.rdf, $("#tree1"));
-            }else{
-                $("#lstRdfs").change(); /** reload tree */
+    browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+        if(request.type == 'FILE_CONTENT_CHANGED') {
+            if(request.filename == currTree.rdf && request.srcToken != currTree.unique_id){
+                if(currTree){
+                    refreshTree(currTree, loadXml, currTree.rdf, $(DLG.findChild("#tree1")), false);
+                }else{
+                    $("#lstRdfs").change(); /** reload tree */
+                }
             }
         }
-    }
-});
-
+    });
+    
+}
 

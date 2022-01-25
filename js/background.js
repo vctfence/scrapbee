@@ -1,9 +1,13 @@
 import {log} from "./message.js";
 import {showNotification} from "./utils.js";
-import {sendTabContentMessage, executeScriptsInTab, ajaxFormPost, gtev, downloadFile} from "./utils.js";
-import {Configuration} from "./storage.js"
+import {Injector} from "./inject.js";
+import {sendTabContentMessage, sendMessageToTabs, ajaxFormPost, gtev, downloadFile} from "./utils.js";
+import {Configuration, History} from "./storage.js";
+import {global} from "./global.js";
 
 window.CONF = new Configuration();
+window.HISTORY = new History();
+window.GLOBAL = global;
 
 /* logging */
 var log_pool = [];
@@ -63,9 +67,9 @@ function loadBrowserInfo(){
     });
 }
 loadBrowserInfo().then(async () => {
-    await CONF.load()
+    await CONF.load();
     startWebServer(20, "background");
-})
+});
 /* backend*/
 var backend_inst_port;
 var web_status;
@@ -76,11 +80,11 @@ function communicate(command, body, callback){
             backend_inst_port = browser.runtime.connectNative("scrapbee_backend");
             backend_inst_port.onDisconnect.addListener((p) => {
                 if (p.error) {
-                    var em = `backend disconnected due to an error: ${p.error.message}`
+                    let em = `backend disconnected due to an error: ${p.error.message}`;
                     log.error(em);
                     reject(Error(em));
                 }else{
-                    var em = `backend disconnected`;
+                    let em = `backend disconnected`;
                     log.error(em);
                     reject(Error(em));
                 }
@@ -91,7 +95,7 @@ function communicate(command, body, callback){
         }else{
             body.command = command;
             var listener = (response) => {
-                resolve(response)
+                resolve(response);
                 backend_inst_port.onMessage.removeListener(listener);
             };
             backend_inst_port.onMessage.addListener(listener);
@@ -106,16 +110,17 @@ function startWebServer(try_times){
     function showInfo(r){
         var version = r.Version || 'unknown';
         backend_version = version;
+        GLOBAL.set("backendVersion", version);
         log.info(`connect web server: connected, version = ${version}`);
         if(!gtev(version, '1.7.3')){
-            log.warning(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version.`)
+            log.warning(`connect web server: backend >= 1.7.3 wanted for full functions, please install new version.`);
         }
         web_status = "launched";
         browser.runtime.sendMessage({type: 'BACKEND_SERVICE_STARTED', version});
     }
     return new Promise((resolve, reject) => {
-        var port = CONF.getItem("backend.port")
-        var pwd = CONF.getItem("backend.pwd")
+        var port = CONF.getItem("backend.port");
+        var pwd = CONF.getItem("backend.pwd");
         if(web_status == "launched"){
             resolve();
         }else if(CONF.getItem("backend.type") == "address"){
@@ -123,15 +128,15 @@ function startWebServer(try_times){
             log.info(`connect web server: address = ${address}`);
             $.get(address + `serverinfo/?pwd=${pwd}`, function(r){
                 if(r.Serverstate == "ok"){
-                    web_status == "launched"
+                    web_status = "launched";
                     showInfo(r);
                     resolve();
                 }else{
-                    return startWebServer(try_times - 1);
+                    startWebServer(try_times - 1);
                 }
             }).fail(function(e){
                 if(e.status > 0){ // old version backend
-                    web_status == "launched"
+                    web_status = "launched";
                     showInfo({});
                     resolve();
                 }else{
@@ -148,7 +153,7 @@ function startWebServer(try_times){
                     }else{
                         self.constructor();
                     }
-                }, 1000)
+                }, 1000);
             })();
         } else {
             web_status = "launching";
@@ -166,14 +171,14 @@ function startWebServer(try_times){
                             return reject(Error(ms));
                         }
                     }else{
-                        web_status == "launched"
+                        web_status = "launched";
                         showInfo(r);
-                        resolve();
+                        return resolve();
                     }
                 }).catch((e) => {
-                    log.error(e)
-                })
-            })
+                    log.error(e);
+                });
+            });
         }
     }).catch((e)=>{
         log.error(e.message);
@@ -182,7 +187,7 @@ function startWebServer(try_times){
 };
 CONF.onchange=function(key, value){
     if(key == "__backend__"){
-        web_status = ""
+        web_status = "";
         CONF.load().then(()=>{
             startWebServer(20);
         });
@@ -206,7 +211,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             return ajaxFormPost(CONF.getBackendAddress() + "savebinfile", {filename, file, pwd: CONF.getItem("backend.pwd")});
         }
     }else if(request.type == 'DOWNLOAD_FILE'){
-        var {url, itemId, filename} = request;
+        let {url, itemId, filename} = request;
         return ajaxFormPost(CONF.getBackendAddress() + "download", {url, itemId, filename, pwd: CONF.getItem("backend.pwd")});
     }else if(request.type == 'SAVE_TEXT_FILE'){
         if(request.backup){
@@ -217,16 +222,16 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     }).catch(e=>{
                         reject(e);
                     });
-                })
+                });
             });
         }else{
             return saveTextFile(request);
         }
     }else if(request.type == 'FS_MOVE'){
-        var src = request.src, dest = request.dest;
+        let src = request.src, dest = request.dest;
         return ajaxFormPost(CONF.getBackendAddress() + "fs/move", {src, dest, pwd: CONF.getItem("backend.pwd")});
     }else if(request.type == 'FS_COPY'){
-        var src = request.src, dest = request.dest;
+        let src = request.src, dest = request.dest;
         return ajaxFormPost(CONF.getBackendAddress() + "fs/copy", {src, dest, pwd: CONF.getItem("backend.pwd")});
     }else if(request.type == 'NOTIFY'){
         return showNotification(request.message, request.title, request.notify_type);
@@ -244,15 +249,15 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             });
         });
     }else if(request.type == 'INJECT_FRAME'){
-        var tabId = sender.tab.id;
-        return executeScriptsInTab(tabId, [
+        let tabId = sender.tab.id;
+        return new Injector(tabId, request.frameId).executeScripts(
             "/libs/mime.types.js",
             "/libs/jquery-3.3.1.js",
             "/libs/md5.js",
             "/js/proto.js",
             "/js/dialog.js",
             "/js/content_script.js"
-        ], request.frameId);
+        );
     }else if(request.type == 'TAB_INNER_CALL'){
         // return browser.tabs.sendMessage(sender.tab.id, request);
         return browser.tabs.sendMessage(sender.tab.id, request, {frameId: request.frameId});
@@ -265,7 +270,28 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             resolve(sender.tab.favIconUrl);
         });
     }else if(request.type == 'GET_SETTINGS'){
-        return Promise.resolve(CONF.getJson());
+        return new Promise((resolve, reject) => {
+            GLOBAL.load().then(_ => {
+                resolve(CONF.getJson());
+            });
+        });
+    }else if(request.type == 'SAVE_HISTORY'){
+        return new Promise((resolve, reject) => {
+            HISTORY.load().then(_ => {
+                var k;
+                for(k in request.items){
+                    HISTORY.setItem(k, request.items[k]);
+                }
+                HISTORY.commit();
+                resolve();
+            });
+        });
+    }else if(request.type == 'GET_HISTORY'){
+        return new Promise((resolve, reject) => {
+            HISTORY.load().then(_ => {
+                resolve(HISTORY.getJson());
+            });
+        });
     }else if(request.type == "CAPTURE_TABS"){
         browser.tabs.query({currentWindow: true}).then(function(tabs){
             for(let tab of tabs){
@@ -284,21 +310,45 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             });
         });
     }else if(request.type == "DOWNLOAD_FILE_BLOB"){
-        return downloadFile(request.url);
+        let url = request.url;
+        // local files can not be downloaded directly when
+        // security.fileuri.strict_origin_policy = true
+        var fs = CONF.getFileServiceAddress();
+        url = url.replace(/^file\:\/{3}/, fs);
+        return new Promise((resolve, reject)=>{
+            try{
+                var request = new XMLHttpRequest();
+                request.open("GET", url, true);
+                request.responseType = "blob";
+                request.onload = function(oEvent) {};
+                request.onreadystatechange=function(){
+                    if(this.readyState == 4 && this.status == 200){
+                        resolve(this.response);
+                    }else if(this.status >= 400){
+                        reject(Error(this.responseText));
+                    }
+                };
+                request.onerror = function(e){
+                    reject(e);
+                };
+                request.send();
+            }catch(e){
+                reject(e);
+            }
+        });
     }else if(request.type == "WAIT_WEB_SERVER"){
         var times = request.try_times;
         return new Promise((resolve, reject) => {
             function check(){
                 times --;
-                
                 if(web_status == "launched"){
-                    resolve(backend_version)
+                    resolve(backend_version);
                 }else if(times < 1){
                     reject(Error("max times tried"));
                 }else if(web_status == "failed"){
                     reject(Error("backend failed"));
                 }else{
-                    setTimeout(function(r){check()}, 1000);
+                    setTimeout(function(r){check();}, 1000);
                 }
             }
             check();
@@ -311,7 +361,9 @@ function saveTextFile(request){
     return new Promise((resolve, reject) => {
         ajaxFormPost(CONF.getBackendAddress() + "savefile", {filename, content, pwd: CONF.getItem("backend.pwd")}).then(response => {
             if(request.boardcast){
-                browser.runtime.sendMessage({type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken}).then((response) => {});
+                var msg = {type: 'FILE_CONTENT_CHANGED', filename, srcToken:request.srcToken};
+                browser.runtime.sendMessage(msg).then((response) => {});
+                sendMessageToTabs(msg);
             }
             resolve(response);
         }).catch(error => {
@@ -324,7 +376,7 @@ function backupFile(src){
         try{
             var dest = src.replace(/([\\\/])([^\\\/]+?)(\.\w*)?$/, function(a, b, c, d){
                 return b + "backup" + b + c + "_" + (new Date().format("yyyyMMdd")) + (d || "");
-            })
+            });
         }catch(e){
             log.error(e.message);
         }
@@ -398,7 +450,6 @@ browser.menus.create({
                 showNotification({message: "Please open ScrapBee in sidebar before the action", title: "Info"});
             }else{
                 browser.runtime.sendMessage({type: 'SAVE_URL_REQUEST'}).then((response) => {});
-                // sendTabContentMessage(tab, {type: 'SAVE_URL_REQUEST_INJECTED'});
             }
         });
     }

@@ -8,7 +8,7 @@ var Dialog = class{
         div.style.height = '100%';
         div.style.top = '0';
         div.style.left = '0';
-        div.style.zIndex = '2147483647';
+        div.style.zIndex = '2147483640';
         div.attachShadow({mode: 'open'});
         this.root = div;
 
@@ -21,18 +21,21 @@ var Dialog = class{
 
         /** container of visiable */
         this.el = this.newElement(div.shadowRoot, "div", {className: "scrapbee-dlg-container"});
-        
+
         /** dialog construction */
         var dlgCover = this.newElement(this.el, "div", {className: "scrapbee-dlg-cover"});
         var dlg = this.newElement(dlgCover, "div", {className: "scrapbee-dlg"});
         var frame = this.newElement(dlg, "div", {className: "scrapbee-dlg-frame"});
         this.titleNode = this.newElement(frame, "div", {className: "scrapbee-dlg-title", textContent: title});
         this.contentNode = this.newElement(frame, "div", {className: "scrapbee-dlg-content", innerHTML: content});
-  
-        /** prevent user in host page selection lose */
+
+        /** prevent host page selection lose */
         this.el.addEventListener('mousedown', function(e){
-            e.preventDefault();
-        });
+            if(e.target.className == "scrapbee-dlg-cover"){
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }, false);
         
         this.hide();
     }
@@ -76,6 +79,12 @@ var Dialog = class{
     }
     findChildren(q){
         return this.el.querySelectorAll(q);
+    }
+    appendChild(el){
+        this.root.appendChild(el);
+    }
+    getRoot(){
+        return this.root;
     }
 };
 var DialogYesNo = class extends Dialog {

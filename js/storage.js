@@ -51,8 +51,8 @@ class StorageDB{
         var x = keys.every((k)=>{
             if(t){
                 t = t[k];
-                return true;
             }
+            return !(t == null || t == undefined);
         });
         if(x && t){
             delete t[key];
@@ -64,8 +64,8 @@ class StorageDB{
         var x = path.split(".").every((k)=>{
             if(t){
                 t = t[k];
-                return true;
             }
+            return !(t == null || t == undefined);
         });
         return (x && t) || null; 
     }
@@ -98,6 +98,10 @@ class History extends StorageDB{
     constructor(){
         super("__history__");
     }
+    getJson(){
+        var json = {...this.data};
+        return json;
+    }    
 }
 
 class Configuration extends StorageDB{
@@ -202,7 +206,9 @@ class Configuration extends StorageDB{
         this.commit();
     }
     getJson(){
-        return this.data;
+        var json = {...this.data};
+        json.__computed = {fileServiceAddress: this.getFileServiceAddress()};
+        return json;
     }
     getRdfPaths(){
         var paths = this.getItem("tree.paths");

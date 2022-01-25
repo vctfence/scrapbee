@@ -1,15 +1,14 @@
 @import "dialog.css";
-
 *{
-    font-family:"WenQuanYi Micro Hei",
-		"Open Sans",
-		"Fira Sans",
-		"Lucida Sans",
-		"Lucida Sans Unicode",
-		"Trebuchet MS",
-		"Liberation Sans",
-		"Nimbus Sans L",
-		sans-serif;
+    font-family:
+	"Open Sans",
+	"Fira Sans",
+	"Lucida Sans",
+	"Lucida Sans Unicode",
+	"Trebuchet MS",
+	"Liberation Sans",
+	"Nimbus Sans L",
+	sans-serif;
     font-size:12px;
 }
 html{

@@ -19,6 +19,8 @@
     padding:0px 2px 0px 2px;
     border-radius:3px;
     vertical-align:middle;
+    line-height:15px;
+    font-size:12px;
 }
 .item i{ /* icon */
     display:inline-block;
@@ -30,7 +32,7 @@
     height:12px;
 }
 .item input[type='checkbox']{
-    mask-image:url(/icons/checkbox.svg);
+    mask-image:url(moz-extension://__MSG_@@extension_id__/icons/checkbox.svg);
     -moz-appearance:none;
     border:1px sloid;
     margin:0;
@@ -43,7 +45,7 @@
     display:none;
 }
 .item input[type='checkbox']:checked{
-    mask-image:url(/icons/checkbox-on.svg);
+    mask-image:url(moz-extension://__MSG_@@extension_id__/icons/checkbox-on.svg);
 }
 .item.page{
     color:#000;
@@ -75,7 +77,7 @@
     mask-size:10px 10px;
     width:10px;
     height:10px;
-    mask-image:url(/icons/online.svg);
+    mask-image:url(moz-extension://__MSG_@@extension_id__/icons/online.svg);
     margin-top:-2px;
 }
 .item.bookmark.focus label,
@@ -86,10 +88,10 @@
     color:#fff;
 }
 .item.page i, .item.bookmark i{
-    background:url(/icons/item.gif);
+    background:url(moz-extension://__MSG_@@extension_id__/icons/item.gif);
 }
 .item.note i{
-    background:url(/icons/note.gif);
+    background:url(moz-extension://__MSG_@@extension_id__/icons/note.gif);
 }
 .item.folder{
     color:#000;
@@ -97,10 +99,10 @@
     margin:0 0 5px 0;
 }
 .item.folder i{
-    background:url(/icons/folder.gif);
+    background:url(moz-extension://__MSG_@@extension_id__/icons/folder.gif);
 }
 .item.folder.expended i{
-    background:url(/icons/openfolder.gif);
+    background:url(moz-extension://__MSG_@@extension_id__/icons/openfolder.gif);
 }
 .item.folder::before{
     content: "\200B";

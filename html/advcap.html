@@ -1,27 +1,20 @@
 <head>
-  <script type="text/javascript" src="/libs/jquery-3.3.1.js"></script>
-  <script type="text/javascript" src="/js/proto.js"></script>
-  <link rel="stylesheet" type="text/css" href="/css/tree.css" media="screen"/>
+  <!-- <script type="text/javascript" src="/libs/jquery-3.3.1.js"></script>
+       <script type="text/javascript" src="/js/proto.js"></script>
+       <link rel="stylesheet" type="text/css" href="/css/tree.css" media="screen"/> -->
+  <style type="text/css" media="screen">
+  </style>
   <style type="text/css" media="screen">
    *{
-     font-family:"WenQuanYi Micro Hei",
-     "Open Sans",
-     "Fira Sans",
-     "Lucida Sans",
-     "Lucida Sans Unicode",
-     "Trebuchet MS",
-     "Liberation Sans",
-     "Nimbus Sans L",
-     sans-serif;
-     font-size:12px;
-     box-sizing:border-box;
+     font-size: 12px;
+     box-sizing: border-box;
    }
    .folder-content.root{
-     display:block;
+     display:block !important;
      margin-left:0px;
      margin:0;
      overflow:visible;
-     padding:15px;
+     padding:10px;
    }
    body, html{
      margin:0px;
@@ -35,7 +28,7 @@
    input[type=text], textarea{
      border:none;
      background:#555;
-     color:#fff;
+     color:#fff !important;
      border-radius:3px;
      margin-bottom:3px;
      width:100%;
@@ -53,9 +46,10 @@
      text-align:right;
      width:50px;
      vertical-align:top;
+     padding-top:10px;
    }
    input[type=button]{
-     padding:5px 10px;
+     padding:0px 10px;
      appearance: none;
      -moz-appearance: none;
      border-radius:5px;
@@ -114,7 +108,7 @@
    #main-table td{
    }
    .bottom-panel{
-     position:fixed;
+     position:absolute;
      wdith:100%;
      height:35px;
      left:0;
@@ -123,25 +117,28 @@
      text-align:right;
      padding-right:30px
    }
-   #tree1 .item.folder{
+   #tree1 .item.folder *{
      color:#eee;
    }
-   #tree1 .item.page{
+   #tree1 .item.page *{
      color:#eee;
    }
-   #tree1 .item.bookmark{
+   #tree1 .item.bookmark *{
      color:#6f0;
    }
-   #tree1 .item.note{
+   #tree1 .item.note *{
      color:#eee;
-   }   
+   }
+   #tree1 .item{
+     margin-bottom: 5px !important;
+   }
    #lstRdfs{
      max-width:50%;
    }
   </style>
 </head>
 <body>
-  <div style="position:fixed;width:100%;top:0;bottom:40px;box-sizing:border-box;padding:10px 20px 5px 0px;">
+  <div style="position:absolute;width:100%;top:0;bottom:40px;box-sizing:border-box;padding:10px 20px 5px 0px;">
     <table width="100%" style="" cellspacing="" cellpadding="3" border="1" id="main-table">
       <tr style="height:30px;">
         <td>{Type}</td><td>
@@ -169,7 +166,7 @@
         <td style="position:relative;vertical-align:top;padding:0">
           <div id="tpanel" style="vertical-align:middle;padding:3px;position:relative;">
             <select id="lstRdfs"></select>
-            <input type='button' value='+Folder' id="btnAddFoder"/>
+            <input type='button' value='Add Folder' id="btnAddFoder"/>
             <!-- <label style="position:absolute;right:0px;line-height:25px;vertical-align:middle;">
                  <input id="show-root" type="checkbox" name="" value=""/> <span>Root</span>
                  </label> -->
@@ -179,7 +176,7 @@
           </div>
           <span id="path-box" style=""><bdi>/</bdi></span>
         </td>
-        </tr>
+      </tr>
     </table>
   </div>
   <div class="bottom-panel">

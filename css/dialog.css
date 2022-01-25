@@ -1,21 +1,25 @@
 @import "spinner.css";
+
 *{
     font-family:
-		"Open Sans",
-		"Fira Sans",
-		"Lucida Sans",
-		"Lucida Sans Unicode",
-		"Trebuchet MS",
-		"Liberation Sans",
-		"Nimbus Sans L",
-		sans-serif;
-    font-size:12px;
+	"Open Sans",
+	"Fira Sans",
+	"Lucida Sans",
+	"Lucida Sans Unicode",
+	"Trebuchet MS",
+	"Liberation Sans",
+	"Nimbus Sans L",
+	sans-serif;
 }
 .scrapbee-dlg{
     margin:auto;
     text-align:center;
     width:800px;
     height:600px;
+    -moz-user-select: none;
+}
+.scrapbee-dlg textarea, .scrapbee-dlg input, {
+    -moz-user-select: none;
 }
 .scrapbee-dlg-frame{
     width:100%;
@@ -77,13 +81,21 @@
 }
 .blue-button, .scrapbee-dlg input[type=button]{
     padding:5px 20px;
+
+    line-height:18px;
+    height:25px;
+    vertical-align:middle;
+    
     appearance: none;
-    -moz-appearance: none;
     border-radius:5px;
     border:none;
     background:#079;
     color:#fff;
     cursor:pointer;
+    box-sizing:border-box;
+}
+.scrapbee-dlg select{
+    z-index:2147483647;
 }
 .scrapbee-dlg-cover{
     width:100% !important;
@@ -93,7 +105,7 @@
 			       rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.8))
 			      repeat scroll 0% 0% transparent;
     position:fixed;
-    z-index:999999999;
+    z-index:2147483640;
     width:100%;
     height:100%;
     background:#0005;
@@ -106,7 +118,7 @@
     align-items: center;
 }
 .scrapbee-dlg-container {
-    z-index:2147483647 !important;
+    z-index:2147483641 !important;
     height:100% !important;
     width:100% !important;
     display:table !important;
@@ -118,14 +130,14 @@
     text-align:left;
     background:#888;
     height:30px;
-    line-height:30px;
+    line-height:34px;
     margin-top:6px;
-    padding-left:45px;
-    vertical-align:bottom;
-    background-image:url(/icons/bee.png);
+    padding-left:43px;
+    vertical-align:middle;
+    background-image:url(moz-extension://__MSG_@@extension_id__/icons/bee.png);
     background-repeat:no-repeat;
-    background-size:20px 20px;;
-    background-position:15px 2px;
+    background-size:20px 20px;
+    background-position:15px 4px;
     font-size:16px;
 }
 .scrapbee-dlg-content{

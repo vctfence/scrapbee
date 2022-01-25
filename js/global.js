@@ -24,17 +24,17 @@ global.load = function(){
                 __p("browserVersion", info.version);
                 var manifest = browser.runtime.getManifest();
                 __p("extensionVersion", manifest.manifest_version);
-                browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((v)=>{
-                    __p("backendVersion", v);
-                    if(browser.runtime.getPlatformInfo){
-                        browser.runtime.getPlatformInfo().then((p)=>{
-                            __p("fsPathSeparator", p.os == 'win' ? '\\' : '/');
-                            __p("platformOS", p.os);
-                            __p("platformArch", p.arch);
+                browser.runtime.getPlatformInfo().then((p)=>{
+                    __p("fsPathSeparator", p.os == 'win' ? '\\' : '/');
+                    __p("platformOS", p.os);
+                    __p("platformArch", p.arch);
+                    if(global.backendVersion){
+                        resolve();
+                    }else{
+                        browser.runtime.sendMessage({type: 'GET_BACKEND_VERSION'}).then((v)=>{
+                            __p("backendVersion", v);
                             resolve();
                         });
-                    }else{
-                        resolve();
                     }
                 });
             });

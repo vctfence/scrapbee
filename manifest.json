@@ -18,9 +18,11 @@
         "webNavigation",
         "webRequest",
         "webRequestBlocking",
-        "file:///*",
+        "file:///*/*",
         "http://*/*",
         "https://*/*",
+
+	"<all_urls>",
         "menus",
         "nativeMessaging",
         "notifications"

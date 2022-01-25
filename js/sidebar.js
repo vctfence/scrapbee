@@ -1,10 +1,11 @@
 import {BookTree} from "./tree.js";
 import {global} from "./global.js";
-import {showNotification, getColorFilter, genItemId, gtv, ajaxFormPost} from "./utils.js";
+import {showNotification, genItemId, gtv, ajaxFormPost} from "./utils.js";
 import {refreshTree, touchRdf, dataURLtoBlob} from "./utils.js";
 import {log} from "./message.js";
 import {SimpleDropdown, ContextMenu} from "./control.js";
 import {Configuration, History} from "./storage.js";
+import {getColorFilter} from "./color.js";
 
 var currTree;
 var thisWindowId;
@@ -283,7 +284,7 @@ function loadRdfList(){
         if(paths){
             var names = CONF.getRdfNames();
             names.forEach(function(name, i){
-                log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
+                // log.debug(`append dropdown item: '${paths[i]}' as '${name}'`);
                 try{
                     if(!saw && typeof lastRdf != "undefined" && paths[i] == lastRdf){
                         saw = true;
@@ -315,7 +316,7 @@ function applyAppearance(){
     var origin_h = item_h * 0.80;
     var bg_color = CONF.getItem("tree.color.bg");
     // var filter = getColorFilter("#"+settings.font_color).filter;
-
+    var label_lineheight = CONF.getItem('tree.font.size') + 3;
     var appearance = CONF.getJson().tree;
     sheet.innerHTML = `
 *{
@@ -339,6 +340,9 @@ body{
   border-color:#${appearance.color.fg};
   background:#${appearance.color.bg};
 }
+.item.separator > .stroke{
+    background:#${appearance.color.separator};
+}
 .item.separator.focus > .stroke{
   background:#${appearance.color.focused.fg};
   border-color:#${appearance.color.focused.bg};
@@ -349,6 +353,7 @@ body{
 }
 .item.page label,.item.bookmark  label,.item.folder label{
   font-size:${appearance.font.size}px;
+  line-height:${label_lineheight}px;
 }
 .item.page i,.item.bookmark i,.item.folder i,.item.note i{
   width:${icon_h}px;
@@ -411,7 +416,6 @@ body{
 }`;
     document.body.appendChild(sheet);
 }
-
 CONF.onchange=function(key, value){
     if(key == "tree.paths" || key == "tree.names"){
         loadRdfList();
@@ -441,7 +445,6 @@ $(document).ready(async function(){
     await GLOBAL.load();
     await CONF.load();
     await HISTORY.load();
-
     document.title = document.title.translate();
     document.body.innerHTML = document.body.innerHTML.translate();
     /** init tab frames */
@@ -635,16 +638,14 @@ function loadXml(rdf){
                     var $item = currTree.getItemById(id);
                     if($item.length){
                         currTree.focusItem($item);
-                        currTree.scrollToItem($(document.body), $item, 500, $(".toolbar").height() + 5, false);
+                        currTree.scrollToItem($(document.body), $item, false, $(".toolbar").height() + 5);
                     }
                 }
             };
             currTree.restoreStatus();
             /** history */
-            
             HISTORY.setItem("sidebar.tree.last", rdf);
             HISTORY.commit();
-            
             resolve(currTree);
         };
         xmlhttp.onerror = function(err) {
@@ -830,7 +831,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if($item.length){
                     currTree.focusItem($item);
                     currTree.expandAllParents($item);
-                    currTree.scrollToItem($(document.body), $item, 500, $(".toolbar").height() + 5);
+                    currTree.scrollToItem($(document.body), $item, true, $(".toolbar").height() + 5);
                     resolve();
                 }else{
                     reject();
@@ -839,14 +840,11 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }
 });
-
 browser.windows.getCurrent({populate: true}).then((windowInfo) => {
     thisWindowId = windowInfo.id;
 });
-
 document.oncontextmenu = function (event){
     if($(".dlg-cover:visible").length == 0)
         return false;
 };
-
 console.log("==> main.js loaded");
