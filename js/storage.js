@@ -13,9 +13,9 @@ class StorageDB{
             function compire(path, a, b){
                 Object.keys(a).forEach((k)=>{
                     if(a[k].constructor == Object){
-                        compire((path ?  (path + ".") : "") + k, a[k], b[k] || {})
+                        compire((path ?  (path + ".") : "") + k, a[k], b[k] || {});
                     }else if((a[k] || "").toString() != (b[k] || "").toString()){
-                        ch[path + "." +  k] = {newValue: a[k], oldValue: b[k]}
+                        ch[path + "." +  k] = {newValue: a[k], oldValue: b[k]};
                     }
                 });
             }               
@@ -71,13 +71,13 @@ class StorageDB{
     }
     setItem(path, value, overwrite=true, commit=false){
         var t = this.data;
-        var dd = t
+        var dd = t;
         var keys = path.split(".");
         var key = keys.pop();
         keys.every((k) => {
             t[k] = t[k] || {};
             t = t[k];
-            return true
+            return true;
         });
         if(overwrite){
             t[key] = value;
@@ -126,9 +126,9 @@ class Configuration extends StorageDB{
                 }
             });
             if(backend_changed){
-                if(self.onchange) self.onchange("__backend__")
+                if(self.onchange) self.onchange("__backend__");
             }
-        }
+        };
     }
     translateKey(k, byValue=false){
         var map = {'backend_type': "backend.type",
@@ -151,7 +151,7 @@ class Configuration extends StorageDB{
                    'auto_close_saving_dialog': 'capture.behavior.saving.dialog.close',
                    'saving_save_frames': 'capture.behavior.frames.save',
                    'saving_new_pos': 'capture.behavior.item.new.pos',
-                   'show_notification': 'global.notification.show'}
+                   'show_notification': 'global.notification.show'};
         if(byValue){
             return Object.keys(map)[Object.values(map).indexOf(k)];
         }else{
@@ -215,7 +215,7 @@ class Configuration extends StorageDB{
         if(paths && Array.isArray(paths)){ // paths.constructor == Array
             return paths;
         }else{
-            var paths = (paths || "").split("\n");
+            let paths = (paths || "").split("\n");
             paths.pop();
             return paths;
         }
@@ -225,7 +225,7 @@ class Configuration extends StorageDB{
         if(names && Array.isArray(names)){ // names.constructor == Array
             return names;
         }else{
-            var names = (names || "").split("\n");
+            let names = (names || "").split("\n");
             names.pop();
             return names;
         }
