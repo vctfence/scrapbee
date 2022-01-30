@@ -609,32 +609,32 @@ class BookTree {
                         var seqNode = introNode;
                         var about = introNode.getAttributeNS(self.NS_RDF, "about");
                         if (about) {
-                            var id = null;
+                            let id = null;
                             var desc_node = self.getDescNode(about);
                             var data;
                             if(desc_node){
                                 id = desc_node.getAttributeNS(self.NS_MAIN, "id");
-                                var title = desc_node.getAttributeNS(self.NS_MAIN, "title").htmlDecode(); // temporary solution for html entity
+                                let title = desc_node.getAttributeNS(self.NS_MAIN, "title").htmlDecode(); // temporary solution for html entity
                                 desc_node.setAttributeNS(self.NS_MAIN, "title", title);  // temporarily replace html entity
                                 data = {
                                     parentId: parentId,
                                     nodeType: 'seq',
-                                    id: id,
+                                    id,
                                     title: title,
                                     level
-                                }
+                                };
                                 await fn(data, child);
                             }
                             level++;
                             await processer(seqNode.children, id);
                             level--;
-                            if(fn2 && desc_node)fn2(data, child)
+                            if(fn2 && desc_node)fn2(data, child);
                         }
                     } else if(nodeType == "separator") {
-                        var id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");
+                        let id = child.getAttributeNS(self.NS_RDF, "resource").replace("urn:scrapbook:item", "");
                         await fn({ nodeType: 'separator', id: id, parentId: parentId, level}, child);
                     } else if(nodeType) {   // scrap
-                        var title = introNode.getAttributeNS(self.NS_MAIN, "title").htmlDecode(); // temporary solution for html entity
+                        let title = introNode.getAttributeNS(self.NS_MAIN, "title").htmlDecode(); // temporary solution for html entity
                         introNode.setAttributeNS(self.NS_MAIN, "title", title); // temporarily replace html entity 
                         await fn({
                             parentId: parentId,
@@ -649,7 +649,7 @@ class BookTree {
                         }, child);
                     }
                 }catch(e){
-                    log.error(nodeType, "node error: ", e.message)
+                    log.error(nodeType, "node error: ", e.message);
                 }
             }
         }
@@ -936,11 +936,8 @@ class BookTree {
     moveItemXml(id, folder_id, ref_id, move_type) {
         var node = this.getLiNode("urn:scrapbook:item" + id);
         if (node) {
-            // log.info(`${id} ${folder_id} ${ref_id} ${move_type}`)
-            // log.info(move_type)
             var nn = node.cloneNode();
             var seq_node = this.getSeqNode("urn:scrapbook:item" + folder_id) || this.getSeqNode("urn:scrapbook:root");
-            // log.info(seq_node)
             var ref_node = this.getLiNode("urn:scrapbook:item" + ref_id);
             if (move_type == 1) {
                 seq_node.insertBefore(nn, ref_node);

@@ -28,17 +28,17 @@ function withCurrTab(fn){
         fn.apply(null, [tabs[0]]);
     });
 }
-function initRdf(rdf, callback){
-    var content = `<?xml version="1.0"?>
-<RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-<RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
-</RDF:RDF>`;
-    browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
-        if(callback)callback();
-    }).catch((err) => {
-        alert("{Warning}", err.message);
-    });
-}
+// function initRdf(rdf, callback){
+//     var content = `<?xml version="1.0"?>
+// <RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+// <RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
+// </RDF:RDF>`;
+//     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
+//         if(callback)callback();
+//     }).catch((err) => {
+//         alert("{Warning}", err.message);
+//     });
+// }
 function showDlg(name, data, onshowed){
     if($(".dlg-cover:visible").length)
         return Promise.reject(Error("only one dialog can be showed"));
@@ -347,11 +347,10 @@ body{
   background:#${appearance.color.focused.fg};
   border-color:#${appearance.color.focused.bg};
 }
-.item.page,.item.bookmark,.item.folder{
-  000padding-left:${icon_space}px;
+.item.page,.item.bookmark,.item.folder,.item.note{
   background-size:${icon_h}px ${icon_h}px;
 }
-.item.page label,.item.bookmark  label,.item.folder label{
+.item label{
   font-size:${appearance.font.size}px;
   line-height:${label_lineheight}px;
 }
@@ -360,6 +359,7 @@ body{
   height:${icon_h}px;
 }
 .item.page input[type='checkbox'],
+.item.note input[type='checkbox'],
 .item.bookmark input[type='checkbox'],
 .item.folder input[type='checkbox']{
   mask-size:${icon_h}px ${icon_h}px;
@@ -400,9 +400,7 @@ body{
   border-color:#${appearance.color.fg};
   color:#${appearance.color.fg}
 }
-.item.bookmark.focus label,
-.item.page.focus label,
-.item.folder.focus label,
+.item.focus label,
 .simple-menu-item:hover,
 .tool-button:hover{
   background-color:#${appearance.color.focused.bg};

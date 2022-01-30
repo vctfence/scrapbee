@@ -148,7 +148,7 @@ if(!window.scrapbee_injected){
     }
 
     /* capture content */
-    async function gatherContent(isForSelection, page="index", subPath=""){
+    async function gatherContent(isForSelection, page="TOP_MOST", subPath=""){
         var doc = document;
         var conf = await browser.runtime.sendMessage({type:'GET_SETTINGS'});
         function appendResource(resource){
@@ -159,7 +159,6 @@ if(!window.scrapbee_injected){
             await browser.runtime.sendMessage({type: "GET_FRAMES"}).then(async function(ar){
                 for(var i=0;i<ar.length;i++){
                     var f = ar[i];
-                    // console.log(f.frameId)
                     doc.querySelectorAll("iframe,frame").forEach((iframe, i) => {
                         if(f.url == iframe.src){
                             iframe.setAttribute("scrapbee_frame_id", f.frameId);
@@ -169,7 +168,7 @@ if(!window.scrapbee_injected){
                         if(f.frameId)
                             await browser.runtime.sendMessage({type: "INJECT_FRAME", frameId: f.frameId});
                     }catch(e){
-                        console.log("invalid url: ", f.url); // about:debugging, about:addons causes an error
+                        console.log("invalid url: ", f.url); // about:blank causes an error
                     }
                 }
             });
@@ -191,7 +190,6 @@ if(!window.scrapbee_injected){
                 var c = el.firstChild;
                 while(c){
                     if(c.nodeType == 1){
-                        // console.log(c);
                         setUid(c);
                     }
                     c = c.nextSibling;
@@ -267,7 +265,7 @@ if(!window.scrapbee_injected){
                 }
             });
        
-            if(!foundIcon && page=="index"){
+            if(!foundIcon && page=="TOP_MOST"){
                 var url =  await browser.runtime.sendMessage({type: "GET_TAB_FAVICON"});
                 if(url){
                     var hex = hex_md5(url).substr(0, 15);
@@ -322,7 +320,7 @@ if(!window.scrapbee_injected){
             /*** html page and css */
             appendResource({type: "text", mime:"text/css", saveas: `${subPath}index.css`, content: css.join("\n")});
             appendResource({type: "text", mime:"text/html", url: doc.location.href, saveas: `${subPath}index.html`, content: segment.html().trim(), subPath,
-                            isLast: page == "index", title: doc.title});
+                            isLast: page == "TOP_MOST", title: doc.title});
             /** remove unique id */
             document.querySelectorAll("*[sbuid]").forEach(el => {
                 el.removeAttribute("sbuid");
@@ -384,6 +382,14 @@ if(!window.scrapbee_injected){
     var startCapture = async function(saveType, rdf, rdfHome, itemId, autoClose=false){
         if(!lock()) return;
 
+        let style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
+        const STATUS_CELL_WAITING = "<font style='color:#005500'>waiting</font>";
+        const STATUS_CELL_DOWNLOADING = `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignore</span>`;
+        const STATUS_CELL_BUFFERED = "<font style='color:#005500'>buffered</font>";
+        const STATUS_CELL_SAVED = "<font style='color:#0055ff'>saved</font>";
+        const STATUS_CELL_FAILED = "<font style='color:#ff0000'>failed</font>";
+        const STATUS_CELL_CANCELED = "<font style='color:#ff0000'>canceled</font>";        
+
         /* hack css for dialog in shadowRoot */
         if(!DLG_CSS){
             var DLG_CSS = await loadAssetText(("/css/dialog.css"));
@@ -444,14 +450,14 @@ if(!window.scrapbee_injected){
                             title = r.title;
                             isAllReceived = true;
                         }
-                        var style = "cursor:pointer;color:#fff;background:#555;display:inlie-block;border-radius:3px;padding:3px";
-                        var sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
+                        
+                        let sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
                         if(r.type == "image"){
-                            dlgDownload.addRow("", sourceLink, "", `<font style='color:#005500'>waiting</font>`);
-                            dlgDownload.updateCell(i, 3, `<font style='color:#cc5500'>downloading.. </font> <span style='${style}'>ignore</span>`);
+                            dlgDownload.addRow("", sourceLink, "", STATUS_CELL_WAITING);
+                            dlgDownload.updateCell(i, 3, STATUS_CELL_DOWNLOADING);
                             var span = dlgDownload.getCell(i, 3).querySelector("span");
                             span.onclick = function(e){ // ignore this resource (cancel downloading)
-                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>canceled</font>");
+                                dlgDownload.updateCell(i, 3, STATUS_CELL_CANCELED);
                                 r.failed = 1;
                                 inc(i, r);
                             };
@@ -464,7 +470,7 @@ if(!window.scrapbee_injected){
                                     var f = "favicon" + ext;
                                     r.filename = r.subPath + f;
                                     blobfile[r.hex] = f;
-                                    if(request.page == 'index' && ext != ".html"){
+                                    if(request.page == 'TOP_MOST' && ext != ".html"){
                                         if(ext == '.ico')
                                             mainIconFilename = f;
                                         else if(ext == '.svg' && !(/\.ico$/.test(mainIconFilename)))
@@ -479,26 +485,26 @@ if(!window.scrapbee_injected){
                                 r.blob = b;
                                 dlgDownload.updateCell(i, 0, b.type);
                                 if(b.type)
-                                    dlgDownload.updateCell(i, 3, "<font style='color:#005500'>buffered</font>");
+                                    dlgDownload.updateCell(i, 3, STATUS_CELL_BUFFERED);
                                 // save
                                 r.path = `${rdfHome}/data/${itemId}/${r.filename}`;
                                 browser.runtime.sendMessage({type: 'SAVE_BLOB_ITEM', item: r}).then((response) => {
-                                    dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
+                                    dlgDownload.updateCell(i, 3, STATUS_CELL_SAVED);
                                     inc(i, r);
                                 }).catch(e => {
-                                    dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                    dlgDownload.updateCell(i, 3, STATUS_CELL_FAILED);
                                     log.error(e.message);
                                     r.failed = 1;
                                     inc(i, r);
                                 });
                             }).catch(e => { /** download failed */
-                                dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                                dlgDownload.updateCell(i, 3, STATUS_CELL_FAILED);
                                 r.failed = 1;
                                 inc(i, r);
                             }); /* end of download */
                         }else{
                             r.filename = r.saveas;
-                            dlgDownload.addRow(r.mime, sourceLink, "", "<font style='color:#005500'>waiting</font>");
+                            dlgDownload.addRow(r.mime, sourceLink, "", STATUS_CELL_WAITING);
                             remain ++;
                             inc(i, r);
                         }
@@ -535,9 +541,9 @@ if(!window.scrapbee_injected){
                 }
                 browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path}).then((response) => {
                     browser.runtime.sendMessage({type:'UPDATE_FINISHED_NODE', iconFilename: mainIconFilename, rdf, itemId});
-                    dlgDownload.updateCell(i, 3, "<font style='color:#0055ff'>saved</font>");
+                    dlgDownload.updateCell(i, 3, STATUS_CELL_SAVED);
                 }).catch(e=>{
-                    dlgDownload.updateCell(i, 3, "<font style='color:#ff0000'>failed</font>");
+                    dlgDownload.updateCell(i, 3, STATUS_CELL_FAILED);
                     log.error(e.message);
                 }).finally(()=>{
                     if(!(--remain)){
@@ -556,7 +562,6 @@ if(!window.scrapbee_injected){
     var context = this;
     /* message listener */
     browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        // log.debug("content script recv msg:", request.type)
         if(request.type == "SAVE_ADVANCE_REQUEST"){
             if(oldLockListener)
                 reject(Error("a task already exists on this page"));

@@ -339,8 +339,11 @@ $(document).ready(async function(){
             src_exec += "_mac";
         else if(GLOBAL.platformOS == "linux")
             src_exec += "_lnx";
+        
         if(GLOBAL.platformArch == "x86-64"){
             src_exec += "_64"; 
+        }else if(GLOBAL.platformArch == 'aarch64'){
+            src_exec += "_arm64";
         }
 
         src_exec += GLOBAL.platformOS == "win" ? ".exe" : "";

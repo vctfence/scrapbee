@@ -20,11 +20,11 @@ function refreshTree(){
     var fnLoad = params.shift();
     var $box = params[1];
     return new Promise((resolve, reject) => {
-        var expended_ids = tree.getExpendedFolderIds();
+        var expendedIds = tree.getExpendedFolderIds();
         var focusId = tree.getFocusedItem().attr('id');
         var p = fnLoad.apply(null, params);
         p.then((tree) => {
-            expended_ids.forEach((id) => {
+            expendedIds.forEach((id) => {
                 tree.toggleFolder(tree.getItemById(id), true);
             });
             var $item = tree.getItemById(focusId);
@@ -166,7 +166,7 @@ async function advDialog(context){
 
     /** add folder */
     var button = DLG.findChild("#btnAddFoder");
-    button.onclick=function(){
+    button.onclick = function(){
         var title = prompt("Please input name of new folder");
         if(!title) return;
 
@@ -226,6 +226,5 @@ async function advDialog(context){
             }
         }
     });
-    
 }
 
