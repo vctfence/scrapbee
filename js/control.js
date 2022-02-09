@@ -108,6 +108,9 @@ class ContextMenu{
     }
     bindEvents(){
         var self = this;
+        $(document.body).bind("mouseleave", function(e) {
+            self.$menu.hide();
+        });
         $(document.body).bind("mousedown", function(e){
             var click_menu = $(e.target).closest(self.$menu).length > 0;
             if(click_menu && $(e.target).hasClass("simple-menu-item")){
