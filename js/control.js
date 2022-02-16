@@ -16,14 +16,14 @@ class SimpleDropdown{
     clear(){
         this.$menu.hide();
         this.$menu.empty();
-        this.select(null, null)
+        this.select(null, null);
     }
     addItem(title, value){
         $(`<div class='simple-menu-item' value='${value}'>${title}</div>`).appendTo(this.$menu);
     }
     select(title, value){
         if(this.value != value)
-            this.onchange && this.onchange(title, value)
+            this.onchange && this.onchange(title, value);
         this.value = value;
     }
     bindEvents(){
@@ -32,16 +32,22 @@ class SimpleDropdown{
             var p = self.button.getBoundingClientRect();
             self.$menu.css({left: Math.min(p.left, document.body.clientWidth - self.$menu.outerWidth() - 1) + "px"});
             if(!self.auto_width)
-                self.$menu.css("width", $(self.button).width() + "px")
+                self.$menu.css("width", $(self.button).width() + "px");
         }
+        
         $(window).resize(function(){
             hput();
         });
+
+        $(window).bind("blur", function(e) {
+            self.$menu.hide();
+        });
+        
         $(document.body).bind("mousedown", function(e){
             var click_menu = $(e.target).closest(self.$menu).length > 0;
             if($(e.target).closest(self.button).length > 0){
                 var p = self.button.getBoundingClientRect();
-                self.$menu.css({top:(p.bottom-1)+"px"})
+                self.$menu.css({top:(p.bottom-1)+"px"});
                 hput();
                 self.$menu.toggle();   
             }else if(click_menu && $(e.target).hasClass("simple-menu-item")){
@@ -72,6 +78,7 @@ class ContextMenu{
         this.$menu.show();
         this.$menu.css({left: x + "px"});
         this.$menu.css({top: y +"px"});
+        this.$menu[0].focus();
     }
     get width(){
         return this.$menu.outerWidth();
@@ -85,7 +92,7 @@ class ContextMenu{
     clear(){
         this.$menu.hide();
         this.$menu.empty();
-        this.select(null, null)
+        this.select(null, null);
     }
     hideAllItems(){
         this.$menu.find(`.simple-menu-item`).hide();
@@ -94,7 +101,7 @@ class ContextMenu{
         var self = this;
         values.forEach(function(v){
             self.$menu.find(`.simple-menu-item[value=${v}]`).show();
-        })
+        });
     }
     hideItem(value){
         this.$menu.find(`.simple-menu-item[value=${value}]`).hide();
@@ -104,10 +111,13 @@ class ContextMenu{
         // $item.find(".icon").css("mask-image", `url(${icon})`);
     }
     select(title, value){
-        this.onselect && this.onselect(title, value)
+        this.onselect && this.onselect(title, value);
     }
     bindEvents(){
         var self = this;
+        $(window).bind("blur", function(e) {
+            self.$menu.hide();
+        });
         $(document.body).bind("mousedown", function(e){
             var click_menu = $(e.target).closest(self.$menu).length > 0;
             if(click_menu && $(e.target).hasClass("simple-menu-item")){
@@ -115,7 +125,7 @@ class ContextMenu{
                 var value = $(e.target).attr("value");
                 if(self.value != value){
                     if(e.cancelable)
-                        e.preventDefault()
+                        e.preventDefault();
                     self.select(title, value);
                 }
             }
