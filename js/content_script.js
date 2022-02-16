@@ -452,6 +452,7 @@ if(!window.scrapbee_injected){
                         }
                         
                         let sourceLink = r.url ? "<a href='" + r.url + "' target='_blank' style='color:#05f'>" + truncate(r.url, 32) + "</a>" : "generated";
+
                         if(r.type == "image"){
                             dlgDownload.addRow("", sourceLink, "", STATUS_CELL_WAITING);
                             dlgDownload.updateCell(i, 3, STATUS_CELL_DOWNLOADING);

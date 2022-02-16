@@ -233,9 +233,12 @@ ScrapbeeElement.prototype.getImgResources=function(){
         this.el.removeAttribute(a);    
     });
     if(this.el.getAttribute("src")){ // always absolute uri?
-	var hex = HEX_FUN(this.el.src);
-	r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
-	this.el.src = hex;
+        // data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='540' height='563'></svg>
+        if(!(/^data\:image\/svg/i).test(this.el.src)){
+	    var hex = HEX_FUN(this.el.src);
+	    r.push({tag:this.el.tagName, type:"image", url:this.el.src, hex});
+            this.el.src = hex;
+        }
     }
     return r;
 };

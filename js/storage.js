@@ -71,7 +71,6 @@ class StorageDB{
     }
     setItem(path, value, overwrite=true, commit=false){
         var t = this.data;
-        var dd = t;
         var keys = path.split(".");
         var key = keys.pop();
         keys.every((k) => {
