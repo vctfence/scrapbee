@@ -401,8 +401,8 @@ if(!window.scrapbee_injected){
             unlock();
             dlgDownload.remove();
         });
-        
-        dlgDownload.styleSheet = DLG_CSS;
+
+        dlgDownload.styleSheet = DLG_CSS.replace(/\@import.*$/gm, '');
         await wait(1000);
 
         /* load global settings */
@@ -419,6 +419,7 @@ if(!window.scrapbee_injected){
         dlgDownload.addHeader("type", "source", "destination", "status");
         dlgDownload.hint = "Fetch resources...";
         dlgDownload.show();
+
         function gather(){
             return new Promise(async (resolve, reject) => {
                 var nDownloaded = 0;

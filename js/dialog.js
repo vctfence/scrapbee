@@ -12,7 +12,7 @@ var Dialog = class{
         div.attachShadow({mode: 'open'});
         this.root = div;
 
-        /** css */
+        /** css (will be blocked in content script)*/
         var css = browser.extension.getURL("/css/dialog.css");
         div.shadowRoot.innerHTML = `<link href='${css}' rel='stylesheet' type='text/css'/>`;
 
@@ -39,7 +39,7 @@ var Dialog = class{
         
         this.hide();
     }
-    set styleSheet(content){
+    set styleSheet(content){ /** to load style in content script*/
         this.styleSheetTag.textContent = content;
     }
     get styleSheet(){

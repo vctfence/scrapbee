@@ -128,9 +128,10 @@ async function advDialog(context){
     css += await loadAssetText(("/css/tree.css"));
 
     var dlg = new Dialog('Download');
-    dlg.styleSheet = css;
+    dlg.styleSheet = css.replace(/@import.*?[\n\r]/, '');
     dlg.content = html.replace(/<body>[\s\S.]*/, s => s.translate());
     dlg.show();
+    
     DLG = dlg;
 
     DLG.findChild("#txTitle").value = document.title;

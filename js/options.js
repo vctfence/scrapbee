@@ -500,4 +500,4 @@ pause`;
             }
         });
     });
-}); // window.onload
+});

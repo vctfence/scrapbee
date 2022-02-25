@@ -23,7 +23,8 @@ global.load = function(){
                 __p("browserName", info.name);
                 __p("browserVersion", info.version);
                 var manifest = browser.runtime.getManifest();
-                __p("extensionVersion", manifest.manifest_version);
+                // __p("extensionVersion", manifest.manifest_version);
+                __p("extensionVersion", manifest.version);
                 browser.runtime.getPlatformInfo().then((p)=>{
                     __p("fsPathSeparator", p.os == 'win' ? '\\' : '/');
                     __p("platformOS", p.os);

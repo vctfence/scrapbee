@@ -27,7 +27,7 @@ function promiseTo(fn, tabId, info) {
     });
 }
 function exeScript(tabId, frameId, path) {
-    let info = { file : path, frameId, runAt: 'document_end' };
+    let info = { file : path, frameId, runAt: 'document_end' }; // document_end, document_idle
     return promiseTo(browser.tabs.executeScript, tabId, info);
 }
 function exeCodes(tabId, frameId, code) {
