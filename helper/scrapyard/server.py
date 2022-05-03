@@ -18,7 +18,7 @@ app.logger.disabled = not DEBUG
 
 ###
 if DEBUG:
-    logging.basicConfig(filename='d:/tmp/debug.log', encoding='utf-8', level=logging.DEBUG)
+    logging.basicConfig(filename='../.local/helper.log', encoding='utf-8', level=logging.DEBUG)
 ###
 
 auth_token = None

@@ -334,6 +334,10 @@ export async function browseNode(node, external_tab, preserve_history, container
                     const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
                     return openUrl(url);
                 }
+                else {
+                    showNotification(`Scrapyard helper application v0.5+ is required.`);
+                    return;
+                }
             }
 
             return Archive.get(node.id).then(async blob => {
@@ -359,6 +363,10 @@ export async function browseNode(node, external_tab, preserve_history, container
 
                             await nativeBackend.post(`/browse/upload/${node.uuid}`, fields);
                             objectURL = nativeBackend.url(`/browse/${node.uuid}`);
+                        }
+                        else {
+                            showNotification(`Scrapyard helper application v0.5+ is required.`);
+                            return;
                         }
                     }
 
