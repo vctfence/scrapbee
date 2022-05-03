@@ -4,6 +4,8 @@
 *.bak
 bin
 node_modules
+/package.json
+/package-lock.json
 image/donate/
 venv
 backend/flask.bat
