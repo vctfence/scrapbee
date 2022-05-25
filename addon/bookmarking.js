@@ -1,12 +1,20 @@
 import {settings} from "./settings.js";
-import {openContainerTab, openPage, scriptsAllowed, showNotification, updateTab} from "./utils_browser.js";
+import {
+    getActiveTab,
+    openContainerTab,
+    openPage,
+    scriptsAllowed,
+    showNotification,
+    updateTab
+} from "./utils_browser.js";
 import {capitalize, getMimetypeExt} from "./utils.js";
 import {send} from "./proxy.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME, NODE_TYPE_GROUP} from "./storage.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
 import {fetchWithTimeout} from "./utils_io.js";
 import {Archive} from "./storage_entities.js";
 import {rdfBackend} from "./backend_rdf.js";
+import {getFaviconFromTab} from "./favicon.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -29,6 +37,24 @@ export function notifySpecialPage() {
         /* + "chrome:, chrome-extension:,\n" +
         "https://chrome.google.com/webstore,\n" */
     );
+}
+
+export async function getTabMetadata(tab) {
+    const result = {
+        name: tab.title,
+        uri:  tab.url
+    };
+
+    const favicon = await getFaviconFromTab(tab);
+    if (favicon)
+        result.icon = favicon;
+
+    return result;
+}
+
+export async function getActiveTabMetadata() {
+    const tab = await getActiveTab();
+    return await getTabMetadata(tab);
 }
 
 export async function captureTab(tab, bookmark) {

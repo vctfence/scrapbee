@@ -13,6 +13,8 @@ import * as repair from "./core_maintenance.js";
 import * as ishell from "./core_ishell.js";
 import * as automation from "./core_automation.js";
 import * as sync from "./core_sync.js";
+import {getActiveTabMetadata} from "./bookmarking.js";
+import {DEFAULT_SHELF_ID} from "./storage.js";
 
 receiveExternal.startListener(true);
 receive.startListener(true);
@@ -37,8 +39,7 @@ receive.startListener(true);
 
 // remove the Origin header from add-on fetch requests
 function originWithId(header) {
-    return header.name.toLowerCase() === 'origin'
-        && (header.value.startsWith('moz-extension://') || header.value.startsWith('chrome-extension://'));
+    return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
 }
 
 browser.webRequest.onBeforeSendHeaders.addListener(
@@ -50,3 +51,17 @@ browser.webRequest.onBeforeSendHeaders.addListener(
     {urls: ["<all_urls>"]},
     ["blocking", "requestHeaders"]
 );
+
+browser.commands.onCommand.addListener(async function(command) {
+    if (command === "bookmark_to_default_shelf") {
+        const payload = await getActiveTabMetadata();
+        payload.parent_id = DEFAULT_SHELF_ID;
+        await sendLocal.createBookmark({data: payload});
+    }
+    else if (command === "archive_to_default_shelf") {
+        const payload = await getActiveTabMetadata();
+        payload.parent_id = DEFAULT_SHELF_ID;
+        await sendLocal.createArchive({data: payload});
+    }
+});
+

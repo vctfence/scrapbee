@@ -51,6 +51,18 @@
                 "default": "Alt+Y"
             },
             "description": "Open Scrapyard in sidebar"
+        },
+        "bookmark_to_default_shelf": {
+            "suggested_key": {
+                "default": "Alt+Q"
+            },
+            "description": "Bookmark the current tab to the default shelf"
+        },
+        "archive_to_default_shelf": {
+            "suggested_key": {
+                "default": "Alt+W"
+            },
+            "description": "Archive the current tab to the default shelf"
         }
     },
     "background": {
