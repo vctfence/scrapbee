@@ -21,3 +21,7 @@
     user-select: none;
     margin-right: 2px;
 }
+
+#sync-help-link {
+    text-align: right;
+}
