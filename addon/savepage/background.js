@@ -4,9 +4,9 @@
 /*                                                                      */
 /*      Javascript for Background Page                                  */
 /*                                                                      */
-/*      Last Edit - 13 May 2021                                         */
+/*      Last Edit - 19 Apr 2022                                         */
 /*                                                                      */
-/*      Copyright (C) 2016-2021 DW-dev                                  */
+/*      Copyright (C) 2016-2022 DW-dev                                  */
 /*                                                                      */
 /*      Distributed under the GNU General Public License version 2      */
 /*      See LICENCE.txt file and http://www.gnu.org/licenses/           */
@@ -653,6 +653,8 @@ function initialize(optionsOnly)
 
         if (!("options-urllisttime" in object)) object["options-urllisttime"] = 10;
 
+        if (!("options-savedelaytime" in object)) object["options-savedelaytime"] = 0;
+
         if (!("options-lazyloadscrolltime" in object)) object["options-lazyloadscrolltime"] =
             ("options-lazyloadsscrolltime" in object) ? object["options-lazyloadsscrolltime"] : 0.2;  /* Version 24.0-24.2 */
 
@@ -843,7 +845,7 @@ function addListeners()
 
                         xhr.send();  /* throws exception if url is invalid */
                     }
-                    catch(e)
+                    catch (e)
                     {
                         chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "send" },checkError);
                     }

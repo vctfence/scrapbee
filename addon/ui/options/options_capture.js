@@ -60,6 +60,8 @@ async function storeCaptureSettings(e) {
     else if ($("#options-lazyloadtype-2").is(":checked"))
         lazyLoadType = "2";
 
+    // option "options-savedelaytime" is currently not represented in UI, 0 by default
+
     let newSettings = {
         /* General options */
 
