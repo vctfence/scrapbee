@@ -1,5 +1,19 @@
+#check-links {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    min-height: 0;
+    height: 100%;
+    box-sizing: border-box;
+}
+
 #check-links > * {
     flex: 0 1 auto;
+}
+
+#link-check-scope-container {
+    padding-top: 5px;
 }
 
 #link-check-timeout {

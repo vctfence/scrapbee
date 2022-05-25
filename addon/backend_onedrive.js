@@ -1,3 +1,7 @@
+// TODO: has a known issue with multiple login attempts: state string from storage and url differ, currently unresolved
+// to reproduce log out from OneDrive and try to log in again; some wait time (probably lifetime of a refresh token) helps
+// to login successfully
+
 import {BackendCloudBase, CloudError, CloudItemNotFoundError} from "./backend_cloud_base.js";
 import {PKCE} from "./lib/PKCE.js";
 import {settings} from "./settings.js";

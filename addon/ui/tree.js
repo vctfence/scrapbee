@@ -1132,7 +1132,7 @@ class BookmarkTree {
                 action: async () => {
                     await settings.load();
                     let query = `?menu=true&repairIcons=${settings.repair_icons()}&scope=${ctxNode.id}`;
-                    openPage(`options.html${query}#links`);
+                    openPage(`options.html${query}#checklinks`);
                 }
             },
             uploadItem: {

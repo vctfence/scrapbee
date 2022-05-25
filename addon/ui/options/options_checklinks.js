@@ -1,14 +1,14 @@
-import {settings} from "../settings.js";
-import {selectricRefresh, ShelfList, simpleSelectric} from "./shelf_list.js";
-import {send} from "../proxy.js";
-import {EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
-import {getFavicon} from "../favicon.js";
-import {fetchWithTimeout} from "../utils_io.js";
-import {confirm} from "./dialog.js";
-import {showNotification} from "../utils_browser.js";
-import {Node} from "../storage_entities.js";
-import {Path} from "../path.js";
-import {Bookmark} from "../bookmarks_bookmark.js";
+import {settings} from "../../settings.js";
+import {selectricRefresh, ShelfList, simpleSelectric} from "../shelf_list.js";
+import {send} from "../../proxy.js";
+import {EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../../storage.js";
+import {getFavicon} from "../../favicon.js";
+import {fetchWithTimeout} from "../../utils_io.js";
+import {confirm} from "../dialog.js";
+import {showNotification} from "../../utils_browser.js";
+import {Node} from "../../storage_entities.js";
+import {Path} from "../../path.js";
+import {Bookmark} from "../../bookmarks_bookmark.js";
 
 const DEFAULT_LINK_CHECK_TIMEOUT = 10;
 
@@ -51,7 +51,7 @@ export class LinkChecker {
         this.resultCount = 0;
     }
 
-    async load() {
+    async init() {
         const urlParams = new URLSearchParams(window.location.search);
         this.autoStartCheckLinks = !!urlParams.get("menu");
 
@@ -383,4 +383,8 @@ export class LinkChecker {
             setTimeout(() => send.nodesUpdated(), 500);
         }
     }
+}
+
+export function load() {
+    return new LinkChecker().init();
 }

@@ -21,7 +21,7 @@ the [online help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/h
 * ~~Store data at IndexedDB~~ [DONE]
 * ~~Replace "RDF" tree with jsTree~~ [DONE]
 * ~~Add a fancy user-action popup with tree of directories to add bookmarks into~~ [DONE]
-* ~~Store archived web-pages as single file a la SavePageWE in a DB-record~~ [DONE]
+* ~~Use [SavePageWE](https://addons.mozilla.org/en-US/firefox/addon/save-page-we/) engine to save pages in a DB-record as a single file since it is GPL (many kudos to SavePageWE developers)~~ [DONE]
 * ~~Rework archive page editing tools to accommodate new storage method~~ [DONE]
 * ~~Store indexed content of downloaded html documents in the database~~ [DONE]
 * ~~Add search text input on the toolbar; search by tags, title, content and other attributes~~ [DONE]

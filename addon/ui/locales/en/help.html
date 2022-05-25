@@ -81,7 +81,7 @@
 </style>
 
 <div id="help-container">
-    <div id="help-spacer-left"></div>
+<div id="help-spacer-left"></div>
 <div id="help-content">
     <h2>What is Scrapyard?</h2>
     <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page
@@ -391,23 +391,31 @@
         <img src="images/impexp.png">
     </p>
 
-    <h3>Importing Legacy ScrapBook RDF Archives</h3>
+    <h3 id="rdf-import">Importing Legacy ScrapBook RDF Archives</h3>
 
     <p>To import legacy ScrapBook RDF archives you need to install the Scrapyard <a
-        href="#helperapp"
-        onmouseenter="this.href='https://github.com/GChristensen/scrapyard/releases'">helper
-        application</a>. There are two import modes: the full import, which transfers saved files into
-        the Scrapyard database, and the quick import which only recreates the RDF directory structure and
-        leaves the archived ScrapBook files on disk. The recent may be useful to arrange the contents
-        of an RDF archive before the full import. See the "Import RDF" tab of the settings page
-        for more details about the available import options.</p>
+        href="#helperapp">helper application</a>. There are two import modes:</p>
+
+    <ul>
+        <li>The full import. In this mode, the archived files are completely transferred into the browser
+            internal database. This may take a substantial amount of time.
+        </li>
+        <li>The quick import (default). Import in this mode only recreates the RDF directory
+            structure in the Scrapyard database. The archived ScrapBook files are served from the
+            disk by the helper application.
+        </li>
+    </ul>
+
+    <p>The quick import may be useful for arranging the contents of an RDF archive before the full
+        import. See the "<a href="#rdf">Import RDF</a>" tab of the settings page for more details
+        about the available import options.</p>
 
     <p>Shelves imported in the quick mode are marked with a tape reel icon. It is possible to add
-        new archives to them (simple bookmarks are not included in the underlying RDF file), and
-        physically delete RDF entries along with attached files. But when the entire shelf is
-        deleted, the corresponding RDF file and the archived pages are left intact. Some features,
-        such as page editing, full-text search, and bookmark transferring/copying are not available
-        for the shelves imported in quick mode.</p>
+        new archives to these shelves (simple bookmarks are not included in the underlying RDF
+        file), and physically delete RDF entries along with the attached files. Although when a
+        quickly imported shelf itself is deleted, the corresponding RDF file and the archived pages are
+        left intact. Some features, such as page editing, full-text search, and bookmark
+        transferring/copying are not available for the shelves imported in the quick mode.</p>
 
         <p>It is possible to edit the path of the imported RDF file through the "RDF Directory..." context
         menu item of a shelf.</p>

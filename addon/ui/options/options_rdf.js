@@ -1,12 +1,7 @@
-import {send} from "../proxy.js";
-import {isBuiltInShelf} from "../storage.js";
-import {showNotification} from "../utils_browser.js";
-import {Query} from "../storage_query.js";
-
-export function load() {
-    $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
-    $("#start-rdf-import").on("click", onStartRDFImport);
-}
+import {send} from "../../proxy.js";
+import {isBuiltInShelf} from "../../storage.js";
+import {showNotification} from "../../utils_browser.js";
+import {Query} from "../../storage_query.js";
 
 let importing = false;
 async function onStartRDFImport(e) {
@@ -93,4 +88,9 @@ async function onStartRDFImport(e) {
 function selectNode(e) {
     e.preventDefault();
     send.selectNode({node: {id: parseInt(e.target.getAttribute("data-id"))}});
+}
+
+export function load() {
+    $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
+    $("#start-rdf-import").on("click", onStartRDFImport);
 }

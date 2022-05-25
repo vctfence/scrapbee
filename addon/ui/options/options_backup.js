@@ -1,11 +1,11 @@
-import {send} from "../proxy.js";
-import {settings} from "../settings.js";
-import {confirm} from "./dialog.js";
-import {ShelfList} from "./shelf_list.js";
-import {formatBytes, toHHMMSS} from "../utils.js";
-import {showNotification} from "../utils_browser.js";
-import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING, FIREFOX_SHELF_NAME, TODO_SHELF_NAME} from "../storage.js";
-import {Query} from "../storage_query.js";
+import {send} from "../../proxy.js";
+import {settings} from "../../settings.js";
+import {confirm} from "../dialog.js";
+import {ShelfList} from "../shelf_list.js";
+import {formatBytes, toHHMMSS} from "../../utils.js";
+import {showNotification} from "../../utils_browser.js";
+import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING, FIREFOX_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
+import {Query} from "../../storage_query.js";
 
 export class BackupManager {
     constructor() {
@@ -69,7 +69,7 @@ export class BackupManager {
         }).jstree(true);
     }
 
-    async load() {
+    async init() {
         const helperApp = await send.helperAppHasVersion({version: "0.3"});
 
         if (helperApp) {
@@ -361,3 +361,6 @@ export class BackupManager {
 
 }
 
+export function load() {
+    new BackupManager().init();
+}

@@ -1,0 +1,143 @@
+<table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
+    <tr>
+        <td>Capture Options</td>
+        <td>
+            <div class="panel" id="savepage" style="display: flex;">
+                <div style="flex: auto;">
+                    <form>
+                        <fieldset>
+                            <legend>&nbsp;Save Features&nbsp;</legend>
+                            <!--div>
+                                <input id="options-showwarning" type="checkbox"/><label
+                                for="options-showwarning">Show warning if any resources cannot be saved</label>
+                            </div>
+                            <div>
+                                <input id="options-showurllist" type="checkbox"/><label
+                                for="options-showurllist">Show list of all resources that cannot be saved</label>
+                            </div-->
+                            <div>
+                                <input id="options-retaincrossframes" type="checkbox"/><label
+                                for="options-retaincrossframes">Retain cross-origin frames and iframes</label>
+                            </div>
+                            <div>
+                                <input id="options-removeunsavedurls" type="checkbox"/><label
+                                for="options-removeunsavedurls">Remove URLs of all unsaved resources</label>
+                            </div>
+                            <div>
+                                <input id="options-loadshadow" type="checkbox"/><label
+                                for="options-loadshadow">Load shadow DOM</label>
+                            </div>
+                        </fieldset>
+                    </form>
+
+                    <form>
+                        <fieldset style="padding-bottom: 12px">
+                            <legend>&nbsp;Saved Items&nbsp;</legend>
+                            <div>
+                                <input id="options-savehtmlimagesall" type="checkbox"/><label
+                                for="options-savehtmlimagesall">HTML image files (all)</label>
+                            </div>
+                            <div>
+                                <input id="options-savehtmlaudiovideo" type="checkbox"/><label
+                                for="options-savehtmlaudiovideo">HTML audio & video files</label>
+                            </div>
+                            <div>
+                                <input id="options-savehtmlobjectembed" type="checkbox"/><label
+                                for="options-savehtmlobjectembed">HTML object & embed files</label>
+                            </div>
+                            <div>
+                                <input id="options-savecssimagesall" type="checkbox"/><label
+                                for="options-savecssimagesall">CSS image files (all)</label>
+                            </div>
+                            <div>
+                                <input id="options-savecssfontswoff" type="checkbox"/><label
+                                for="options-savecssfontswoff">CSS font files (woff for any browser)</label>
+                            </div>
+                            <div>
+                                <input id="options-savecssfontsall" type="checkbox"/><label
+                                for="options-savecssfontsall">CSS font files (all)</label>
+                            </div>
+                            <div>
+                                <input id="options-savescripts" type="checkbox"/><label
+                                for="options-savescripts">Scripts</label>
+                            </div>
+                            <div>
+                                <input id="options-removeelements" type="checkbox"/><label
+                                for="options-removeelements"
+                                style="display:inline-block; vertical-align: middle;">Do not save elements that
+                                have been hidden<br>by the page, page editors or content blockers</label>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+                <div style="flex: auto; margin-left: 20px;">
+                    <form>
+                        <fieldset>
+                            <legend>&nbsp;Limits&nbsp;</legend>
+                            <div>
+                                <input id="options-maxframedepth" type="number" min="0" max="10"
+                                       value="0"/><label for="options-maxframedepth">Maximum depth of saved
+                                nested frames</label>
+                            </div>
+                            <div>
+                                <input id="options-maxresourcesize" type="number" min="1" max="100" value="50"/><label
+                                for="options-maxresourcesize">Maximum size allowed for a resource (MB)</label>
+                            </div>
+                            <div>
+                                <input id="options-maxresourcetime" type="number" min="5" max="60"
+                                       value="30"/><label for="options-maxresourcetime">Maximum time for loading
+                                a resource (secs)</label>
+                            </div>
+                        </fieldset>
+                    </form>
+
+                    <form>
+                        <fieldset>
+                            <legend>&nbsp;Mixed Content&nbsp;</legend>
+                            <div>
+                                <input id="options-allowpassive" type="checkbox"/><label
+                                for="options-allowpassive">Allow passive mixed content (image, audio,
+                                video)</label>
+                            </div>
+                        </fieldset>
+                    </form>
+
+                    <form id="options-refererheader">
+                        <fieldset>
+                            <legend>&nbsp;Referer Header&nbsp;</legend>
+                            <div>
+                                <label>When requesting a resource:</label>
+                            </div>
+                            <div style="display: flex; align-content: center; align-items: center; flex-wrap: nowrap">
+                                <input id="options-noreferer" type="radio" name="header" value="0"/><label
+                                for="options-noreferer">Do not send referer header</label>
+                            </div>
+                            <div style="display: flex; align-content: center; align-items: center; flex-wrap: nowrap">
+                                <input id="options-originonly" type="radio" name="header" value="1"/><label
+                                for="options-originonly">Send referer header with origin only</label>
+                            </div>
+                            <div style="display: flex; align-content: center; align-items: center; flex-wrap: nowrap">
+                                <input id="options-originpath" type="radio" name="header" value="2"/><label
+                                for="options-originpath">Send referer header with origin and path</label>
+                            </div>
+                        </fieldset>
+                    </form>
+
+                    <form>
+                        <fieldset>
+                            <legend>&nbsp;Lazy Loading&nbsp;</legend>
+                            <div>
+                                <input id="options-lazyloadtype-1" type="checkbox"/><label
+                                for="options-lazyloadtype-1">Scroll down page to force lazy loads before saving</label>
+                            </div>
+                            <div>
+                                <input id="options-lazyloadtype-2" type="checkbox"/><label
+                                for="options-lazyloadtype-2">Shrink page to force lazy loads before saving</label>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
