@@ -12,10 +12,6 @@
     text-align: right;
 }
 
-#start-rdf-import {
-    float: right;
-}
-
 #rdf-import-threads {
     width: 50px;
 }
@@ -35,6 +31,7 @@
     padding-top: 0;
     padding-bottom: 0;
     margin-right: 26px;
+    float: right;
 }
 
 #invalid-imports-container {
