@@ -1,3 +1,12 @@
+$(document).ready(async function () {
+    const toolbar = new EditToolbar();
+
+    $(window).on("beforeunload", e => {
+        if (toolbar._unsavedChanges)
+            e.preventDefault();
+    })
+});
+
 class EditToolbar {
     constructor() {
         this.targetBorder = $("<div id='scrapyard-dom-eraser-border'>").appendTo(document.body);
@@ -150,16 +159,13 @@ class EditToolbar {
 
         const shadowRoot = this.shadowRoot = rootContainer.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = `
-            <style>
-                @import url('${browser.runtime.getURL("ui/edit_toolbar.css")}')
-            </style>
+            <style id="scrapyard-toolbar-style"></style>
             <div id="scrapyard-edit-bar">`;
 
         const editBar = this.editBar = $("#scrapyard-edit-bar", shadowRoot)[0];
         const append = html => $(html).appendTo(editBar);
 
-        append(`<img id="scrapyard-icon" src="moz-extension://${EXTENSION_ID}/icons/scrapyard.svg">
-                     <b id="scrapyard-brand">Scrapyard</b>`);
+        append(`<img id="scrapyard-icon" src=""><b id="scrapyard-brand">Scrapyard</b>`);
 
         append(`<input id="scrapyard-save-doc-button" type="button" class="yellow-button" value="Save">`)
             .on("click", e => {
@@ -346,6 +352,8 @@ class EditToolbar {
             }
         });
 
+        loadInternalResources(shadowRoot);
+
         browser.runtime.sendMessage({type: 'GET_HIDE_TOOLBAR_SETTING'})
             .then(hide => {
                 scrapyardHideToolbar = hide;
@@ -359,14 +367,41 @@ class EditToolbar {
     }
 }
 
-$(document).ready(function () {
-    const toolbar = new EditToolbar();
+async function loadInternalResources(shadowRoot) {
+    // in MV3 resources marked as web accessible in the manifest become unavailable in the addon scripts
+    // so, we need to unmark them as web accessible and load them explicitly in the content script
+    const toolbarCSS = browser.runtime.sendMessage({
+        type: 'LOAD_INTERNAL_RESOURCE',
+        path: "ui/edit_toolbar.css"
+    });
 
-    $(window).on("beforeunload", e => {
-        if (toolbar._unsavedChanges)
-            e.preventDefault();
+    const svgLogo = browser.runtime.sendMessage({
+        type: 'LOAD_INTERNAL_RESOURCE',
+        path: "icons/scrapyard.svg"
     })
-});
+
+    const svgHelpMark = browser.runtime.sendMessage({
+        type: 'LOAD_INTERNAL_RESOURCE',
+        path: "icons/help-mark.svg"
+    })
+
+    const svgPageInfo = browser.runtime.sendMessage({
+        type: 'LOAD_INTERNAL_RESOURCE',
+        path: "icons/page-info.svg"
+    })
+
+    await Promise.all([toolbarCSS, svgLogo, svgHelpMark, svgPageInfo]);
+
+    $("#scrapyard-toolbar-style", shadowRoot).text(await toolbarCSS);
+
+    $("#scrapyard-icon", shadowRoot).prop("src", `data:image/svg+xml,${encodeURIComponent(await svgLogo)}`);
+
+    $(".scrapyard-help-mark", shadowRoot).css("background-image",
+        `url("data:image/svg+xml,${encodeURIComponent(await svgHelpMark)}")`);
+
+    $(".scrapyard-i-mark", shadowRoot).css("background-image",
+        `url("data:image/svg+xml,${encodeURIComponent(await svgPageInfo)}")`);
+}
 
 function getTextNodesBetween(rootNode, startNode, endNode) {
     var pastStartNode = false, reachedEndNode = false, textNodes = [];

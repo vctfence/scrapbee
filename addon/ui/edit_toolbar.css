@@ -256,7 +256,7 @@
     width: 16px;
     height: 16px;
     margin-left: 4px;
-    background-image: url(../icons/help-mark.svg);
+    /*background-image: url(../icons/help-mark.svg);*/
     background-size: 16px 16px;
     background-repeat: no-repeat;
     vertical-align: middle;
@@ -264,7 +264,7 @@
 }
 
 .scrapyard-i-mark {
-    background-image: url(../icons/page-info.svg);
+    /*background-image: url(../icons/page-info.svg);*/
     width: 18px;
     height: 18px;
     background-size: 18px 18px;

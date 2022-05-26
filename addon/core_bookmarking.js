@@ -243,3 +243,9 @@ receive.browseNotes = message => {
 receive.browseOrgReference = message => {
     location.href = message.link;
 };
+
+receive.loadInternalResource = async message => {
+    const url = browser.runtime.getURL(message.path);
+    return await fetchText(url);
+};
+
