@@ -1,25 +1,38 @@
-import {send, receive, receiveExternal} from "../proxy.js";
+import {receive, receiveExternal, send} from "../proxy.js";
 import {settings} from "../settings.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
-import {showDlg, confirm} from "./dialog.js"
+import {confirm, showDlg} from "./dialog.js"
 
 import {
-    SearchContext,
-    SEARCH_MODE_TITLE, SEARCH_MODE_TAGS, SEARCH_MODE_CONTENT,
-    SEARCH_MODE_NOTES, SEARCH_MODE_COMMENTS, SEARCH_MODE_DATE, SEARCH_MODE_FOLDER
+    SEARCH_MODE_COMMENTS,
+    SEARCH_MODE_CONTENT,
+    SEARCH_MODE_DATE,
+    SEARCH_MODE_FOLDER,
+    SEARCH_MODE_NOTES,
+    SEARCH_MODE_TAGS,
+    SEARCH_MODE_TITLE,
+    SearchContext
 } from "../search.js";
 
-import {pathToNameExt, sleep} from "../utils.js";
+import {pathToNameExt} from "../utils.js";
 import {
+    byPosition,
     CLOUD_SHELF_ID,
-    DEFAULT_SHELF_ID, DEFAULT_SHELF_NAME,
-    DONE_SHELF_NAME, DONE_SHELF_ID,
-    EVERYTHING, EVERYTHING_SHELF_ID,
+    DEFAULT_SHELF_ID,
+    DEFAULT_SHELF_NAME,
+    DONE_SHELF_ID,
+    DONE_SHELF_NAME,
+    EVERYTHING,
+    EVERYTHING_SHELF_ID,
     FIREFOX_SHELF_ID,
-    NODE_TYPE_SHELF, TODO_SHELF_NAME, TODO_SHELF_ID,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_NOTES,
-    isBuiltInShelf, isEndpoint, byPosition
+    isBuiltInShelf,
+    isEndpoint,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_NOTES,
+    NODE_TYPE_SHELF,
+    TODO_SHELF_ID,
+    TODO_SHELF_NAME
 } from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
@@ -599,8 +612,7 @@ receive.beforeBookmarkAdded = async message => {
     if (node.type === NODE_TYPE_ARCHIVE)
         startProcessingIndication(true);
 
-    const name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
-    node.name = name;
+    node.name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
     tree.createTentativeNode(node);
 
     if (select) {

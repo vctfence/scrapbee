@@ -36,6 +36,7 @@ receive.createBookmark = message => {
                 send.bookmarkAdded({node: bookmark});
             });
 
+    options.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
     Bookmark.setTentativeId(options);
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
@@ -98,6 +99,7 @@ receive.createArchive = message => {
                 });
             });
 
+    options.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
     Bookmark.setTentativeId(options);
     send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
