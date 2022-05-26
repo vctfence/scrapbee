@@ -39,7 +39,8 @@
         "webRequestBlocking",
         "management",
         "cookies",
-        "contextualIdentities"
+        "contextualIdentities",
+        "scripting"
     ],
     "host_permissions": [
         "<all_urls>"
