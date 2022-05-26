@@ -6,7 +6,7 @@
             "strict_min_version": "91.0"
         }
     },
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "Scrapyard",
     "description": "__MSG_extensionDescription__",
     "homepage_url": "https://gchristensen.github.io/#scrapyard",
@@ -18,9 +18,10 @@
 	    "64": "icons/scrapyard.svg",
         "128": "icons/scrapyard.svg"
     },
-    "content_security_policy": "script-src 'self'; object-src 'self';",
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
     "permissions": [
-        "<all_urls>",
         "tabs",
         "activeTab",
         "tabHide",
@@ -39,6 +40,9 @@
         "management",
         "cookies",
         "contextualIdentities"
+    ],
+    "host_permissions": [
+        "<all_urls>"
     ],
     "sidebar_action": {
         "default_title": "Scrapyard",
@@ -66,10 +70,9 @@
         }
     },
     "background": {
-        "page": "background.html",
-        "persistent": true
+        "page": "background.html"
     },
-    "browser_action": {
+    "action": {
         "default_icon": {
             "64": "icons/scrapyard.svg"
         },
@@ -81,11 +84,16 @@
         "page": "ui/options.html"
     },
     "web_accessible_resources": [
-        "icons/lock.svg",
-        "icons/lock2.svg",
-        "icons/scrapyard.svg",
-        "ui/edit_toolbar.css",
-        "savepage/shadowloader.js"
+        {
+            "resources": [
+                "icons/lock.svg",
+                "icons/lock2.svg",
+                "icons/scrapyard.svg",
+                "ui/edit_toolbar.css",
+                "savepage/shadowloader.js"
+            ],
+            "matches": ["*://*/*"]
+        }
     ],
     "protocol_handlers": [
         {
