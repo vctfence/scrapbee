@@ -1,6 +1,7 @@
 import {settings} from "./settings.js";
 import {fetchWithTimeout} from "./utils_io.js";
 import {parseHtml} from "./utils_html.js";
+import {injectScriptFile} from "./utils_browser.js";
 
 export async function testFavicon(url) {
     try {
@@ -33,13 +34,10 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
         return undefined;
 
     try {
-        let icon = await browser.scripting.executeScript({
-            target: {tabId: tab.id},
-            func: () => document.querySelector("link[rel*='icon'], link[rel*='shortcut']")?.href,
-        });
+        let icon = await injectScriptFile(tab.id, {file: "/content_favicon.js"});
 
-        if (icon && icon.length && icon[0])
-            favicon = await testFavicon(new URL(icon[0].result, origin));
+        if (icon && icon.length && icon[0]) // TODO: leave only .result in MV3
+            favicon = await testFavicon(new URL(icon[0].result || icon[0], origin));
     } catch (e) {
         console.error(e);
     }

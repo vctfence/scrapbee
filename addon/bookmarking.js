@@ -76,7 +76,7 @@ async function extractSelection(tab, bookmark) {
 
     for (let frame of frames) {
         try {
-            await injectScriptFile(tab.id, {file: "/selection.js", frameId: frame.frameId});
+            await injectScriptFile(tab.id, {file: "/content_selection.js", frameId: frame.frameId});
 
             selection = await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: bookmark});
 
