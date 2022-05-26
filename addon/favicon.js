@@ -33,12 +33,13 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
         return undefined;
 
     try {
-        let icon = await browser.tabs.executeScript(tab.id, {
-            code: `document.querySelector("link[rel*='icon'], link[rel*='shortcut']")?.href`
+        let icon = await browser.scripting.executeScript({
+            target: {tabId: tab.id},
+            func: () => document.querySelector("link[rel*='icon'], link[rel*='shortcut']")?.href,
         });
 
         if (icon && icon.length && icon[0])
-            favicon = await testFavicon(new URL(icon[0], origin));
+            favicon = await testFavicon(new URL(icon[0].result, origin));
     } catch (e) {
         console.error(e);
     }

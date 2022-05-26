@@ -1,6 +1,6 @@
 import {settings} from "./settings.js";
 import {
-    getActiveTab,
+    getActiveTab, injectCSSFile, injectScriptFile,
     openContainerTab,
     openPage,
     scriptsAllowed,
@@ -76,7 +76,7 @@ async function extractSelection(tab, bookmark) {
 
     for (let frame of frames) {
         try {
-            await browser.tabs.executeScript(tab.id, {file: "/selection.js", frameId: frame.frameId});
+            await injectScriptFile(tab.id, {file: "/selection.js", frameId: frame.frameId});
 
             selection = await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: bookmark});
 
@@ -125,12 +125,12 @@ async function captureHTMLTab(tab, bookmark) {
 
         try {
             try {
-                await browser.tabs.executeScript(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
+                await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
             } catch (e) {
                 console.error(e);
             }
 
-            await browser.tabs.executeScript(tab.id, {file: "/savepage/content.js"});
+            await injectScriptFile(tab.id, {file: "/savepage/content.js"});
         }
         catch (e) {
             console.error(e);
@@ -222,7 +222,7 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
                 try {
                     try {
-                        await browser.tabs.executeScript(tab.id, {
+                        await injectScriptFile(tab.id, {
                             file: "savepage/content-frame.js",
                             allFrames: true
                         });
@@ -230,7 +230,7 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
                         console.error(e);
                     }
 
-                    await browser.tabs.executeScript(packingTab.id, {file: "savepage/content.js"});
+                    await injectScriptFile(packingTab.id, {file: "savepage/content.js"});
                 } catch (e) {
                     reject(e);
                 }
@@ -265,9 +265,9 @@ function showEditToolbar(archiveTab) {
     let configureTab = async tab => {
         browser.tabs.onUpdated.removeListener(listener)
 
-        await browser.tabs.insertCSS(tab.id, {file: "ui/edit_toolbar.css"});
-        await browser.tabs.executeScript(tab.id, {file: "lib/jquery.js"});
-        await browser.tabs.executeScript(tab.id, {file: "ui/edit_toolbar.js"});
+        await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
+        await injectScriptFile(tab.id, {file: "lib/jquery.js"});
+        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
     };
 
     let completed = false;

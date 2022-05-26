@@ -1,13 +1,32 @@
+export async function injectCSSFile(tabId, options) {
+    return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
+}
+
+export async function injectScriptFile(tabId, options) {
+    const target = {tabId};
+
+    if (options.frameId)
+        target.frameIds = [options.frameId];
+
+    if (options.allFrames)
+        target.allFrames = options.allFrames;
+
+    return browser.scripting.executeScript({target, files: [options.file]});
+}
+
 export async function scriptsAllowed(tabId, frameId = 0) {
     try {
-        await browser.tabs.executeScript(tabId, {
-            frameId: frameId,
-            runAt: "document_start",
-            //file: "/true.js"
-            code: "true"
+        await browser.scripting.executeScript({
+            target: {tabId, frameIds: [frameId]},
+            injectImmediately: true,
+            func: () => true,
         });
+
         return true;
-    } catch (e) {}
+    }
+    catch (e) {}
+
+    return false;
 }
 
 export function showNotification(args) {

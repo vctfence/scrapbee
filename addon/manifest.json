@@ -87,11 +87,7 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "icons/lock.svg",
-                "icons/lock2.svg",
-                "icons/scrapyard.svg",
-                "ui/edit_toolbar.css",
-                "savepage/shadowloader.js"
+                "icons/lock.svg"
             ],
             "matches": ["*://*/*"]
         }
