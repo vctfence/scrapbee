@@ -15,6 +15,7 @@ import {fetchWithTimeout} from "./utils_io.js";
 import {Archive} from "./storage_entities.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {getFaviconFromTab} from "./favicon.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
