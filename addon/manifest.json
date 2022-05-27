@@ -82,7 +82,6 @@
     },
     "web_accessible_resources": [
         "icons/lock.svg",
-        "icons/lock2.svg",
         "icons/scrapyard.svg",
         "ui/edit_toolbar.css",
         "savepage/shadowloader.js"
