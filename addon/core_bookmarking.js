@@ -34,11 +34,12 @@ receive.createBookmark = message => {
         Bookmark.add(options, NODE_TYPE_BOOKMARK)
             .then(bookmark => {
                 send.bookmarkAdded({node: bookmark});
+                return bookmark;
             });
 
     options.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
     Bookmark.setTentativeId(options);
-    send.beforeBookmarkAdded({node: options})
+    return send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
 };
@@ -96,12 +97,13 @@ receive.createArchive = message => {
                 getActiveTab().then(tab => {
                     bookmark.__tab_id = tab.id;
                     captureTab(tab, bookmark);
+                    return bookmark;
                 });
             });
 
     options.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
     Bookmark.setTentativeId(options);
-    send.beforeBookmarkAdded({node: options})
+    return send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
 };

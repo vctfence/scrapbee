@@ -24,23 +24,20 @@ receive.startListener(true);
 
     if (await navigator.storage.persist()) {
         search.initializeOmnibox();
+        // TODO: perhaps move to the addon load event in MV3
         await browserBackend.reconcileBrowserBookmarksDB();
         await cloudBackend.enableBackgroundSync(settings.cloud_background_sync());
 
         if (settings.background_sync())
             await sendLocal.enableBackgroundSync({enable: true});
 
+        // TODO: perhaps move to the addon load event in MV3
         if (settings.sync_on_startup())
             sendLocal.performSync();
 
         console.log("==> core.js loaded");
     }
 })();
-
-// remove the Origin header from add-on fetch requests
-function originWithId(header) {
-    return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
-}
 
 browser.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
@@ -52,16 +49,25 @@ browser.webRequest.onBeforeSendHeaders.addListener(
     ["blocking", "requestHeaders"]
 );
 
-browser.commands.onCommand.addListener(async function(command) {
-    if (command === "bookmark_to_default_shelf") {
-        const payload = await getActiveTabMetadata();
-        payload.parent_id = DEFAULT_SHELF_ID;
-        await sendLocal.createBookmark({data: payload});
-    }
-    else if (command === "archive_to_default_shelf") {
-        const payload = await getActiveTabMetadata();
-        payload.parent_id = DEFAULT_SHELF_ID;
-        await sendLocal.createArchive({data: payload});
-    }
+// remove the Origin header from add-on fetch requests
+function originWithId(header) {
+    return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
+}
+
+browser.commands.onCommand.addListener(function(command) {
+    let action = "createBookmark";
+    if (command === "archive_to_default_shelf")
+        action = "createArchive";
+
+    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open")
+        browser.sidebarAction.open();
+
+    addBookmark(action);
 });
 
+async function addBookmark(event) {
+    const payload = await getActiveTabMetadata();
+    payload.parent_id = DEFAULT_SHELF_ID;
+
+    return sendLocal[event]({data: payload});
+}
