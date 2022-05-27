@@ -30,6 +30,10 @@ function saveHistory(nodeId, text, history) {
 window.onload = async function () {
     await systemInitialization;
 
+    $("#sidebar-toggle").on("click", () => {
+        browser.sidebarAction.toggle();
+    });
+
     let folderHistory;
     const bookmarkFolderSelect = $("#bookmark-folder");
     simpleSelectric("#bookmark-folder")

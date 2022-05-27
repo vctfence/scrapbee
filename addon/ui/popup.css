@@ -23,6 +23,11 @@ input:focus {
 	display: table;
 }
 
+#logo {
+    height: 32px;
+    width: 32px;
+}
+
 #title {
 	line-height: 32px;
 	display: table-cell;
@@ -32,9 +37,14 @@ input:focus {
 	font-size: 22px;
 }
 
-#logo {
-	height: 32px;
-	width: 32px;
+#sidebar-toggle {
+    line-height: 32px;
+    display: table-cell;
+    vertical-align: middle;
+    padding-left: 14px;
+    font-weight: bold;
+    font-size: 22px;
+    cursor: pointer;
 }
 
 #bookmark-folder {
