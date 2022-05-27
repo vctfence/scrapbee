@@ -3,7 +3,6 @@ import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_GROUP, NODE_TYPE_BOOKMARK} from ".
 import {openContainerTab} from "./utils_browser.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
-
 export const SEARCH_MODE_TITLE = 1;
 export const SEARCH_MODE_TAGS = 2;
 export const SEARCH_MODE_CONTENT = 3;

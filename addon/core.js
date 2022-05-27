@@ -24,14 +24,14 @@ receive.startListener(true);
 
     if (await navigator.storage.persist()) {
         search.initializeOmnibox();
-        // TODO: perhaps move to the addon load event in MV3
+        // TODO: somehow should be done on the addon load in MV3
         await browserBackend.reconcileBrowserBookmarksDB();
         await cloudBackend.enableBackgroundSync(settings.cloud_background_sync());
 
         if (settings.background_sync())
             await sendLocal.enableBackgroundSync({enable: true});
 
-        // TODO: perhaps move to the addon load event in MV3
+        // TODO: somehow should be done on the addon load in MV3
         if (settings.sync_on_startup())
             sendLocal.performSync();
 
