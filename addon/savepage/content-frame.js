@@ -178,6 +178,18 @@ function frameScript()
                                 }
                             });
 
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        const links = [];
+
+                        if (message.collectLinks) {
+                            document.querySelectorAll("a").forEach(
+                                function (element) {
+                                    element.setAttribute("data-scrapyard-href", element.href);
+                                    links.push({[element.href]: [element.textContent]});
+                                });
+                        }
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
+
                         doctype = document.doctype;
 
                         if (doctype != null)
@@ -191,7 +203,11 @@ function frameScript()
 
                         htmltext = htmltext.replace(/<head([^>]*)>/,"<head$1><base href=\"" + document.baseURI + "\">");
 
-                        chrome.runtime.sendMessage({ type: "replyFrame", key: key, url: document.baseURI, html: htmltext, fonts: loadedfonts });
+                        chrome.runtime.sendMessage({ type: "replyFrame", key: key, url: document.baseURI, html: htmltext, fonts: loadedfonts,
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            links: message.collectLinks? links: undefined
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
+                        });
 
                         break;
                 }

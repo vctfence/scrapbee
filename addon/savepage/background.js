@@ -774,13 +774,17 @@ function addListeners()
 
             case "requestFrames":
 
-                chrome.tabs.sendMessage(sender.tab.id,{ type: "requestFrames" },checkError);
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                chrome.tabs.sendMessage(sender.tab.id,message,checkError);
+                ////////////////////////////////////////////////////////////////// Scrapyard //
 
                 break;
 
             case "replyFrame":
 
-                chrome.tabs.sendMessage(sender.tab.id,{ type: "replyFrame", key: message.key, url: message.url, html: message.html, fonts: message.fonts },checkError);
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                chrome.tabs.sendMessage(sender.tab.id,message,checkError);
+                ////////////////////////////////////////////////////////////////// Scrapyard //
 
                 break;
 

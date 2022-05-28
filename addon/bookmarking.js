@@ -162,7 +162,7 @@ async function captureNonHTMLTab(tab, bookmark) {
 }
 
 export function finalizeCapture(bookmark) {
-    if (bookmark.__automation && bookmark.select)
+    if (bookmark?.__automation && bookmark?.select)
         send.bookmarkCreated({node: bookmark});
     else if (bookmark && !bookmark.__automation)
         send.bookmarkAdded({node: bookmark});

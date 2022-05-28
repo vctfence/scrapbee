@@ -232,7 +232,9 @@ var debugEnable = false;
 
 // Scrapyard //////////////////////////////////////////////////////////////////
 
-var addedBookmark;
+var frameLinks = [];
+
+var scrapyardBookmark;
 
 var selectionElement;
 var skipIfSelected;
@@ -485,7 +487,7 @@ function addListeners()
                 cancelSave = false;
 
                 // Scrapyard //////////////////////////////////////////////////////////////////
-                addedBookmark = message.bookmark;
+                scrapyardBookmark = message.bookmark;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -591,6 +593,9 @@ function addListeners()
                 frameURL[i] = message.url;
                 frameHTML[i] = message.html;
                 frameFonts[i] = message.fonts;
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                frameLinks[i] = message.links;
+                ////////////////////////////////////////////////////////////////// Scrapyard //
 
                 break;
 
@@ -954,6 +959,9 @@ function initializeBeforeSave()
     frameURL.length = 0;
     frameHTML.length = 0;
     frameFonts.length = 0;
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    frameLinks.length = 0;
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 
     resourceLocation.length = 0;
     resourceReferer.length = 0;
@@ -981,7 +989,10 @@ function initializeBeforeSave()
 
     /* Identify all frames */
 
-    chrome.runtime.sendMessage({ type: "requestFrames" });
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    const collectLinks = scrapyardBookmark.hasOwnProperty("__site_level");
+    chrome.runtime.sendMessage({ type: "requestFrames", collectLinks });
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 
     // Scrapyard //////////////////////////////////////////////////////////////////
     new Promise(resolve => setTimeout(() => resolve(), 200)).then( /* allow time for all frames to reply */
@@ -2069,7 +2080,7 @@ function loadResources()
             // Scrapyard //////////////////////////////////////////////////////////////////
             chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
                                          passive: resourcePassive[i], pagescheme: documentURL.protocol, usecors: useCORS,
-                                         bookmark: addedBookmark });
+                                         bookmark: scrapyardBookmark });
             ////////////////////////////////////////////////////////////////// Scrapyard //
         }
     }
@@ -2251,7 +2262,7 @@ function loadSuccess(index,content,contenttype,alloworigin)
                         // Scrapyard //////////////////////////////////////////////////////////////////
                         chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
                                                      passive: resourcePassive[i], pagescheme: documentURL.protocol, useCORS: false,
-                                                     bookmark: addedBookmark });
+                                                     bookmark: scrapyardBookmark });
                         ////////////////////////////////////////////////////////////////// Scrapyard //
                     }
                 }
@@ -2935,7 +2946,10 @@ function generateHTML()
     let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
-    chrome.runtime.sendMessage({type: "storePageHtml", data: resultingHTML, bookmark: addedBookmark});
+    if (scrapyardBookmark.site)
+        scrapyardBookmark.__site_links = frameLinks.reduce((acc, item) => [...acc, ...item]);
+
+    chrome.runtime.sendMessage({type: "storePageHtml", data: resultingHTML, bookmark: scrapyardBookmark});
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
     // if (cancelSave)

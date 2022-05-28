@@ -108,7 +108,8 @@ export const NODE_PROPERTIES =
      "container",
      "content_type",
      "_uuid",
-     "_unlisted"
+     "_unlisted",
+     "site"
     ];
 
 export function isContainer(node) {

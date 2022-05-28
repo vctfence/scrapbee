@@ -102,6 +102,10 @@ receive.createArchive = message => {
             });
 
     options.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
+
+    //options.site = true;
+    //options.__site_level = 0;
+
     Bookmark.setTentativeId(options);
     return send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
