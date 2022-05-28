@@ -17,10 +17,6 @@ export function delegateProxy (target, origin) {
 }
 
 
-function makeMessageName(name) {
-    return name.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1_$2').toUpperCase();
-}
-
 class ReceiveHandler {
     constructor() {
         this.methods = new Map();
@@ -28,7 +24,7 @@ class ReceiveHandler {
     }
 
     set(target, key, value, receiver) {
-        const type = makeMessageName(key);
+        const type = key;
         this.methods.set(type, value);
         return true;
     }
@@ -68,7 +64,7 @@ export let receiveExternal = new Proxy({_handler: browser.runtime.onMessageExter
 
 export let send = new Proxy({}, {
     get(target, key, receiver) {
-        const type = makeMessageName(key);
+        const type = key;
 
         return val => {
             const payload = val || {};
@@ -82,7 +78,7 @@ export let send = new Proxy({}, {
 
 export let sendLocal = new Proxy({_receiver: receive}, {
     get(target, key, receiver) {
-        const type = makeMessageName(key);
+        const type = key;
 
         return (val) => {
             const payload = val || {};

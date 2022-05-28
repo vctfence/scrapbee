@@ -2935,7 +2935,7 @@ function generateHTML()
     let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
-    chrome.runtime.sendMessage({type: "STORE_PAGE_HTML", data: resultingHTML, bookmark: addedBookmark});
+    chrome.runtime.sendMessage({type: "storePageHtml", data: resultingHTML, bookmark: addedBookmark});
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
     // if (cancelSave)

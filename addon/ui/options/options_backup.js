@@ -224,7 +224,7 @@ export class BackupManager {
         const compress = !!$("#compress-backup:checked").length;
 
         let exportListener = message => {
-            if (message.type === "EXPORT_PROGRESS") {
+            if (message.type === "exportProgress") {
                 if (message.finished) {
                     if (compress) {
                         $("#backup-progress-container").remove();
@@ -283,16 +283,16 @@ export class BackupManager {
 
         let progressIndication = false;
         let importListener = message => {
-            if (message.type === "IMPORT_INITIALIZING_TRANSACTION") {
+            if (message.type === "importInitializingTransaction") {
                 $("#backup-progress-container").html("Saving database state...");
             }
-            else if (message.type === "IMPORT_FINALIZING_TRANSACTION") {
+            else if (message.type === "importFinalizingTransaction") {
                 $("#backup-progress-container").html("Cleaning up...");
             }
-            else if (message.type === "IMPORT_ROLLING_BACK") {
+            else if (message.type === "importRollingBack") {
                 $("#backup-progress-container").html("Restoring database...");
             }
-            else if (message.type === "IMPORT_PROGRESS") {
+            else if (message.type === "importProgress") {
                 if (!progressIndication) {
                     $("#backup-progress-container").html(PROGRESS_BAR_HTML);
                     progressIndication = true;

@@ -175,7 +175,7 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
         let packing;
 
         let completionListener = function (message, sender, sendResponse) {
-            if (message.type === "STORE_PAGE_HTML" && message.bookmark.__tab_id === packingTab.id) {
+            if (message.type === "storePageHtml" && message.bookmark.__tab_id === packingTab.id) {
                 browser.tabs.onUpdated.removeListener(listener);
                 browser.runtime.onMessage.removeListener(completionListener);
                 browser.runtime.onMessage.removeListener(initializationListener);

@@ -4,6 +4,10 @@ export function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+function snakeCaseToCamelCase(name) {
+    return name.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1_$2').toUpperCase();
+}
+
 export function merge(to, from) {
     for (const [k, v] of Object.entries(from)) {
         if (!to.hasOwnProperty(k))

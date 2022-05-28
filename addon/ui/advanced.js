@@ -83,10 +83,10 @@ function configureMaintenancePanel() {
         if (await confirm("Warning", "It is recommended to make a full backup before the optimization. Continue?")) {
 
             let progressListener = message => {
-                if (message.type === "DATABASE_OPTIMIZATION_PROGRESS") {
+                if (message.type === "databaseOptimizationProgress") {
                     $("#optimize-database-progress").text(`Progress: ${message.progress}%`);
                 }
-                else if (message.type === "DATABASE_OPTIMIZATION_FINISHED") {
+                else if (message.type === "databaseOptimizationFinished") {
                     $("#optimize-database-progress").text(``);
                     browser.runtime.onMessage.removeListener(progressListener);
                 }
@@ -104,10 +104,10 @@ function configureMaintenancePanel() {
         e.preventDefault();
 
         let progressListener = message => {
-            if (message.type === "INDEX_UPDATE_PROGRESS") {
+            if (message.type === "indexUpdateProgress") {
                 $("#reindex-content-progress").text(`Progress: ${message.progress}%`);
             }
-            else if (message.type === "INDEX_UPDATE_FINISHED") {
+            else if (message.type === "indexUpdateFinished") {
                 $("#reindex-content-progress").text(``);
                 browser.runtime.onMessage.removeListener(progressListener);
             }

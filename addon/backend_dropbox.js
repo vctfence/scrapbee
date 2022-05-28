@@ -22,7 +22,7 @@ export class DropboxBackend extends BackendCloudBase {
         }
         else {
             browser.runtime.onMessage.addListener((request) => {
-                if (request.type === "DROPBOX_AUTHENTICATED") {
+                if (request.type === "dropboxAuthenticated") {
                     this.dbxAuth.setRefreshToken(request.refreshToken);
                 }
             });

@@ -176,7 +176,7 @@ async function importRDF(shelf, path, threads, quick) {
     let cancelled = false;
 
     let cancelListener = function (message, sender, sendResponse) {
-        if (message.type === "CANCEL_RDF_IMPORT")
+        if (message.type === "cancelRdfImport")
             cancelled = true;
     };
 

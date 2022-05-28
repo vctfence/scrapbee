@@ -22,7 +22,7 @@ class IShellBackend {
         }
 
         browser.runtime.onMessage.addListener((request) => {
-            if (request.type === "ISHELL_ENABLE_INVALIDATION") {
+            if (request.type === "ishellEnableInvalidation") {
                 this.enableInvalidation(request.enable)
             }
         });

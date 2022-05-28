@@ -51,7 +51,7 @@ async function onStartRDFImport(e) {
     let runningProgress = 0;
 
     let importListener = message => {
-        if (message.type === "RDF_IMPORT_PROGRESS") {
+        if (message.type === "rdfImportProgress") {
             let bar = $("#rdf-import-progress");
             if (!bar.length) {
                 bar = $(`<progress id="rdf-import-progress" max="100" value="0"/>`);
@@ -62,13 +62,13 @@ async function onStartRDFImport(e) {
                 bar.val(message.progress);
             }
         }
-        else if (message.type === "RDF_IMPORT_ERROR") {
+        else if (message.type === "rdfImportError") {
             let invalid_link = `<a href="#" target="_blank" data-id="${message.bookmark.id}"
                                        class="invalid-import">${message.bookmark.name}</a>`;
             $("#invalid-imports-container").show();
             $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
         }
-        else if (message.type === "OBTAINING_ICONS") {
+        else if (message.type === "obtainingIcons") {
             progress_row.text("Obtaining page icons...");
         }
     };

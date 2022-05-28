@@ -129,12 +129,12 @@ class EditToolbar {
         this._fixDocumentEncoding(doc);
 
         browser.runtime.sendMessage({
-            type: 'UPDATE_ARCHIVE',
+            type: "updateArchive",
             id: parseInt(location.hash.split(":")[1]),
             data: "<!DOCTYPE html>" + doc.outerHTML
         }).then(async () => {
             return browser.runtime.sendMessage({
-                type: 'GET_BOOKMARK_INFO',
+                type: "getBookmarkInfo",
                 uuid: location.hash.split(":")[0].substring(1),
                 id: parseInt(location.hash.split(":")[1])
             });
@@ -271,7 +271,7 @@ class EditToolbar {
                 else {
                     if (location.origin.startsWith("http")) {
                         browser.runtime.sendMessage({
-                            type: 'BROWSE_NOTES',
+                            type: "browseNotes",
                             uuid: location.hash.split(":")[0].substring(1),
                             id: parseInt(location.hash.split(":")[1])
                         });
@@ -300,7 +300,7 @@ class EditToolbar {
         const originalURLLink = append(`<a id="scrapyard-original-url-link" target="_blank" href="#"></a>`)[0];
 
         browser.runtime.sendMessage({
-            type: 'GET_BOOKMARK_INFO',
+            type: "getBookmarkInfo",
             uuid: location.hash.split(":")[0].substring(1),
             id: parseInt(location.hash.split(":")[1])
         }).then(node => {
@@ -354,7 +354,7 @@ class EditToolbar {
 
         loadInternalResources(shadowRoot);
 
-        browser.runtime.sendMessage({type: 'GET_HIDE_TOOLBAR_SETTING'})
+        browser.runtime.sendMessage({type: "getHideToolbarSetting"})
             .then(hide => {
                 scrapyardHideToolbar = hide;
                 if (!scrapyardHideToolbar) {
@@ -371,22 +371,22 @@ async function loadInternalResources(shadowRoot) {
     // in MV3 resources marked as web accessible in the manifest become unavailable in the addon scripts
     // so, we need to unmark them as web accessible and load them explicitly in the content script
     const toolbarCSS = browser.runtime.sendMessage({
-        type: 'LOAD_INTERNAL_RESOURCE',
+        type: "loadInternalResource",
         path: "ui/edit_toolbar.css"
     });
 
     const svgLogo = browser.runtime.sendMessage({
-        type: 'LOAD_INTERNAL_RESOURCE',
+        type: "loadInternalResource",
         path: "icons/scrapyard.svg"
     })
 
     const svgHelpMark = browser.runtime.sendMessage({
-        type: 'LOAD_INTERNAL_RESOURCE',
+        type: "loadInternalResource",
         path: "icons/help-mark.svg"
     })
 
     const svgPageInfo = browser.runtime.sendMessage({
-        type: 'LOAD_INTERNAL_RESOURCE',
+        type: "loadInternalResource",
         path: "icons/page-info.svg"
     })
 

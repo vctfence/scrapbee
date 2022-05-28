@@ -29,7 +29,7 @@ export class OneDriveBackend extends BackendCloudBase {
         }
         else {
             browser.runtime.onMessage.addListener((request) => {
-                if (request.type === "ONEDRIVE_AUTHENTICATED") {
+                if (request.type === "onedriveAuthenticated") {
                     this._refreshToken = request.refreshToken;
                 }
             });
