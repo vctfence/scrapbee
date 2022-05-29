@@ -27,7 +27,7 @@ import {
     EVERYTHING_SHELF_ID,
     FIREFOX_SHELF_ID,
     isBuiltInShelf,
-    isEndpoint,
+    isEndpoint, isVirtualShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
     NODE_TYPE_SHELF,
@@ -233,7 +233,10 @@ window.onunload = async function() {
 async function loadSidebar() {
     try {
         await shelfList.load();
-        await switchShelf(getLastShelf() || DEFAULT_SHELF_ID, true, true);
+
+        const initialShelf = getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
+        await switchShelf(initialShelf, true, true);
+
         stopProcessingIndication();
     }
     catch (e) {
@@ -281,6 +284,15 @@ function getLastShelf() {
         return parseInt(lastShelf);
 
     return DEFAULT_SHELF_ID;
+}
+
+function getExternalShelf() {
+    const externalShelf = localStorage.getItem("sidebar-select-shelf");
+
+    if (externalShelf) {
+        localStorage.removeItem("sidebar-select-shelf");
+        return parseInt(externalShelf);
+    }
 }
 
 function setLastShelf(id) {
@@ -525,6 +537,44 @@ async function selectNode(node, open, forceScroll) {
     tree.selectNode(node.id, open, forceScroll);
 }
 
+async function selectOrCreatePath(path) {
+    if (path) {
+        let normalized_path = Path.expand(path);
+        let [shelf] = normalized_path.split("/");
+
+        const shelfNode = await Query.shelf(shelf);
+
+        if (shelfNode) {
+            const group = await Group.getOrCreateByPath(normalized_path);
+            await switchShelf(shelfNode.id);
+            tree.selectNode(group.id, true);
+        }
+        else {
+            if (isVirtualShelf(shelf)) {
+                switch (shelf.toUpperCase()) {
+                    case EVERYTHING.toUpperCase():
+                        await switchShelf(EVERYTHING_SHELF_ID);
+                        break;
+                    case TODO_SHELF_NAME:
+                        await switchShelf(TODO_SHELF_ID);
+                        break;
+                    case DONE_SHELF_NAME:
+                        await switchShelf(DONE_SHELF_ID);
+                        break;
+                }
+            }
+            else {
+                const shelfNode = await Shelf.add(shelf);
+                if (shelfNode) {
+                    let group = await Group.getOrCreateByPath(normalized_path);
+                    await loadShelves(shelfNode.id);
+                    tree.selectNode(group.id, true);
+                }
+            }
+        }
+    }
+}
+
 function sidebarRefresh() {
     switchShelf(getLastShelf(), false);
 }
@@ -645,6 +695,10 @@ receive.selectNode = message => {
     selectNode(message.node, message.open, message.forceScroll);
 };
 
+receive.selectPath = async (message, sender) => {
+    await selectOrCreatePath(message.path);
+};
+
 receive.notesChanged = message => {
     tree.setNotesState(message.node_id, !message.removed);
 };
@@ -740,41 +794,7 @@ receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
-    if (message.name) {
-        let external_path = Path.expand(message.name);
-        let [shelf, ...path] = external_path.split("/");
-
-        const shelfNode = await Query.shelf(shelf);
-
-        if (shelfNode) {
-            const group = await Group.getOrCreateByPath(external_path);
-            await switchShelf(shelfNode.id);
-            tree.selectNode(group.id, true);
-        }
-        else {
-            if (isBuiltInShelf(shelf)) {
-                switch (shelf.toUpperCase()) {
-                    case EVERYTHING.toUpperCase():
-                        await switchShelf(EVERYTHING_SHELF_ID);
-                        break;
-                    case TODO_SHELF_NAME:
-                        await switchShelf(TODO_SHELF_ID);
-                        break;
-                    case DONE_SHELF_NAME:
-                        await switchShelf(DONE_SHELF_ID);
-                        break;
-                }
-            }
-            else {
-                const shelfNode = await Shelf.add(shelf);
-                if (shelfNode) {
-                    let group = await Group.getOrCreateByPath(external_path);
-                    await loadShelves(shelfNode.id);
-                    tree.selectNode(group.id, true);
-                }
-            }
-        }
-    }
+    await selectOrCreatePath(message.name);
 };
 
 async function switchAfterCopy(message, external_path, group, topNodes) {

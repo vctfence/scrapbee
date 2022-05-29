@@ -59,8 +59,10 @@ browser.commands.onCommand.addListener(function(command) {
     if (command === "archive_to_default_shelf")
         action = "createArchive";
 
-    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open")
+    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
+        localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
         browser.sidebarAction.open();
+    }
 
     addBookmark(action);
 });
