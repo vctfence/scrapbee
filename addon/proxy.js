@@ -1,3 +1,4 @@
+import {snakeCaseToCamelCase} from "./utils.js";
 
 export function delegateProxy (target, origin) {
     return new Proxy(target, {
@@ -18,9 +19,10 @@ export function delegateProxy (target, origin) {
 
 
 class ReceiveHandler {
-    constructor() {
+    constructor(camelCase = true) {
         this.methods = new Map();
         this.listener = null;
+        this.camelCase = camelCase;
     }
 
     set(target, key, value, receiver) {
@@ -48,7 +50,8 @@ class ReceiveHandler {
 
     _dispatch() {
         const [message] = arguments;
-        const method = this.methods.get(message.type);
+        const type = this.camelCase? message.type: snakeCaseToCamelCase(message.type);
+        const method = this.methods.get(type);
 
         if (method)
             return Reflect.apply(method, null, arguments);
@@ -59,7 +62,7 @@ class ReceiveHandler {
 }
 
 export let receive = new Proxy({_handler: browser.runtime.onMessage}, new ReceiveHandler());
-export let receiveExternal = new Proxy({_handler: browser.runtime.onMessageExternal}, new ReceiveHandler());
+export let receiveExternal = new Proxy({_handler: browser.runtime.onMessageExternal}, new ReceiveHandler(false));
 
 
 export let send = new Proxy({}, {
