@@ -3,6 +3,7 @@ import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_GROUP, NODE_TYPE_BOOKMARK} from ".
 import {openContainerTab} from "./utils_browser.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
+export const SEARCH_MODE_UNIVERSAL = 0;
 export const SEARCH_MODE_TITLE = 1;
 export const SEARCH_MODE_TAGS = 2;
 export const SEARCH_MODE_CONTENT = 3;
@@ -18,6 +19,48 @@ class SearchProvider {
 
     isInputValid(text) {
         return text && text.length > 2;
+    }
+}
+
+export class UniversalSearchProvider extends SearchProvider {
+    constructor(shelf) {
+        super(shelf);
+
+        this.titleProvider = new TitleSearchProvider(shelf);
+        this.folderProvider = new FolderSearchProvider(shelf);
+        this.tagProvider = new TagSearchProvider(shelf);
+        this.contentProvider = new ContentSearchProvider(shelf, "content");
+        this.notesProvider = new ContentSearchProvider(shelf, "notes");
+        this.commentsProvider = new ContentSearchProvider(shelf, "comments");
+        this.dateProvider = new DateSearchProvider(shelf);
+
+        this.providers = [
+            this.titleProvider,
+            this.folderProvider,
+            this.tagProvider,
+            this.contentProvider,
+            this.notesProvider,
+            this.commentsProvider,
+            this.dateProvider
+        ];
+    }
+
+    search(text) {
+        const availableProviders = this.providers.filter(p => p.isInputValid(text));
+        const results = availableProviders.map(p => p.search(text));
+
+        return Promise.all(results).then(results => {
+            results = results.reduce((acc, arr) => [...acc, ...arr], []);
+            results = results.filter((n, i, a) => this._indexByUUID(a, n.uuid) === i); // distinct
+            return results;
+        });
+    }
+
+    _indexByUUID(nodes, uuid) {
+        for (let i = 0; i < nodes.length; ++i) {
+            if (nodes[i].uuid === uuid)
+                return i;
+        }
     }
 }
 
@@ -148,8 +191,8 @@ export class SearchContext {
     constructor(tree) {
         this.tree = tree;
         this._previousInput = "";
-        this.searchMode = SEARCH_MODE_TITLE;
-        this.provider = new TitleSearchProvider(EVERYTHING);
+        this.searchMode = SEARCH_MODE_UNIVERSAL;
+        this.provider = new UniversalSearchProvider(EVERYTHING);
     }
 
     inSearch() {
@@ -175,6 +218,9 @@ export class SearchContext {
         this.shelf = shelf;
 
         switch (search_mode) {
+            case SEARCH_MODE_UNIVERSAL:
+                this.provider = new UniversalSearchProvider(shelf);
+                break;
             case SEARCH_MODE_TITLE:
                 this.provider = new TitleSearchProvider(shelf);
                 break;

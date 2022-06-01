@@ -11,7 +11,7 @@ import {
     SEARCH_MODE_FOLDER,
     SEARCH_MODE_NOTES,
     SEARCH_MODE_TAGS,
-    SEARCH_MODE_TITLE,
+    SEARCH_MODE_TITLE, SEARCH_MODE_UNIVERSAL,
     SearchContext
 } from "../search.js";
 
@@ -103,6 +103,13 @@ window.onload = async function () {
     $("#search-mode-switch").click(() => {
         $("#shelf-menu").hide();
         $("#search-mode-menu").toggle();
+    });
+
+    $("#shelf-menu-search-universal").click(() => {
+        $("#search-mode-switch").prop("src", "/icons/star.svg");
+        $("#search-input").attr("placeholder", "");
+        context.setMode(SEARCH_MODE_UNIVERSAL, shelfList.selectedShelfName);
+        performSearch();
     });
 
     $("#shelf-menu-search-title").click(() => {
