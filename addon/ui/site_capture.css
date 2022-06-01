@@ -1,0 +1,140 @@
+* {
+    font-family: "Helvetica", "Arial", sans-serif;
+}
+
+input, textarea {
+    outline: none !important;
+}
+
+#root-container {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    font-size: 12pt;
+    min-height: 0;
+    background: white;
+}
+
+#header {
+    height: 38px;
+    flex: 0 1 auto;
+    display: flex;
+    border-bottom: 1px solid #777;
+    line-height: 37px;
+    padding: 0 10px;
+    font-weight: bold;
+}
+
+#help-link {
+    font-weight: normal;
+    font-size: 10pt;
+}
+
+#content {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    flex-grow: 1;
+    overflow: auto;
+}
+
+#content > * {
+    flex: 0 1 auto;
+}
+
+#content > textarea {
+    flex: 1 0 auto;
+}
+
+#footer {
+    flex: 0 1 auto;
+    display: flex;
+    border-top: 1px solid #777;
+    line-height: 24px;
+    padding: 4px 8px;
+}
+
+#footer > * {
+    flex: 0 1 auto;
+}
+
+#header .spacer, #footer .spacer {
+    flex: 1 1 auto;
+}
+
+.button {
+    background: #09c;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 3px 15px;
+    border: none;
+    line-height: 20px;
+    margin-left: 5px;
+}
+
+.dropdown {
+    cursor: pointer;
+    user-select: none;
+}
+
+.dropdown-symbol {
+    font-size: 80%;
+    display: inline-block;
+    padding-right: 3px;
+}
+
+#exclude-links-header, #other-options {
+    margin-top: 10px;
+}
+
+.option-line {
+    display: flex;
+    position: relative;
+}
+
+.option-line .spacer {
+    flex: 1 0 auto;
+}
+
+.option-line > .option-container {
+    flex: 0 1 auto;
+}
+
+.option-container input[type="number"] {
+    width: 40px;
+}
+
+.simple-menu {
+    min-width: 50px;
+    position: absolute;
+    background: #fff;
+    right: 5px;
+    top: 15px;
+    margin-top: 5px;
+    border: solid 1px black;
+    z-index: 10000;
+    display: none;
+}
+
+.simple-menu div {
+    color: #000;
+    padding: 5px 15px;
+    cursor: pointer;
+    font-size: 10pt;
+    user-select: none;
+}
+
+.simple-menu div:hover {
+    background: #ddd;
+}
+
+#ok-button, #close-button {
+    width: 5em;
+}

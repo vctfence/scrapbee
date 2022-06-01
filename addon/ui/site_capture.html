@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Site Capture Options</title>
+
+    <link rel="stylesheet" type="text/css" href="site_capture.css" media="all"/>
+
+    <script type="text/javascript" src="../lib/jquery.js"></script>
+
+    <script type="module" src="site_capture.js"></script>
+</head>
+<body class="theme-vars">
+    <div id="root-container">
+        <div id="header" class="option-line">
+            <div>Scrapyard Site Capture Options</div>
+            <div class="spacer">&nbsp;</div>
+            <div><a id="help-link" href="" target="_blank">Help</a></div>
+        </div>
+        <div id="content" class="option-line">
+            <div id="include-links-header" class="option-line">
+                <div class="option-container">Include links</div>
+                <div class="spacer">&nbsp;</div>
+                <div id="include-presets-menu-dropdown" class="option-container dropdown">
+                    Presets<span class="dropdown-symbol">&#9660;</span></div>
+                <div id="include-presets-menu" class="simple-menu">
+                    <div id="include-presets-menu-site" class="menu-item">Same site</div>
+                    <div id="include-presets-menu-domain" class="menu-item">Same domain</div>
+                    <div id="include-presets-menu-directory" class="menu-item">Same directory</div>
+                    <div id="include-presets-menu-path" class="menu-item">Same path</div>
+                    <div id="include-presets-menu-all-links" class="menu-item">All page links</div>
+                    <div id="include-presets-menu-text" class="menu-item">Link text</div>
+                </div>
+            </div>
+            <textarea id="include-links"></textarea>
+            <div id="exclude-links-header" class="option-line">
+                <idv class="option-container">Exclude links</idv>
+                <div class="spacer">&nbsp;</div>
+                <div id="exclude-presets-menu-dropdown" class="option-container dropdown">
+                    Presets<span class="dropdown-symbol">&#9660;</span></div>
+                <div id="exclude-presets-menu" class="simple-menu">
+                    <div id="exclude-presets-menu-site" class="menu-item">Same site</div>
+                    <div id="exclude-presets-menu-domain" class="menu-item">Same domain</div>
+                    <div id="exclude-presets-menu-directory" class="menu-item">Same directory</div>
+                    <div id="exclude-presets-menu-path" class="menu-item">Same path</div>
+                    <div id="exclude-presets-menu-all-links" class="menu-item">All page links</div>
+                    <div id="exclude-presets-menu-text" class="menu-item">Link text</div>
+                </div>
+            </div>
+            <textarea id="exclude-links"></textarea>
+            <div id="other-options" class="option-line">
+                <div class="option-container">
+                    <label for="option-crawling-depth">Crawling depth: </label>
+                    <input id="option-crawling-depth" type="number" value="1" min="0"/>
+                    &nbsp;
+                    <label for="option-processing-threads">Processing threads: </label>
+                    <input id="option-processing-threads" type="number" value="5" min="1"/>
+                </div>
+                <div class="spacer">&nbsp;</div>
+                <div class="option-container">
+                    <input id="option-ignore-hashes" type="checkbox" checked/>
+                    <label for="option-ignore-hashes">Ignore link hashes</label>
+                </div>
+            </div>
+        </div>
+        <div id="footer">
+            <div class="spacer">&nbsp;</div>
+            <input type="button" class="button" id="ok-button" value="OK">
+            <input type="button"  class="button" id="cancel-button" value="Cancel">
+        </div>
+    </div>
+</body>
+</html>

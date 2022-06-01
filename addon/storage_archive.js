@@ -34,7 +34,7 @@ export class ArchiveIDB extends EntityIDB {
     }
 
     compose(data, contentType, byteLength) {
-        if (typeof data !== "string" && data.byteLength) // from ArrayBuffer
+        if (typeof data !== "string" && data?.byteLength) // from ArrayBuffer
             byteLength = data.byteLength;
         else if (typeof data === "string" && byteLength) // from binary string (presumably may come only form import)
             data = this._binaryString2Array(data);

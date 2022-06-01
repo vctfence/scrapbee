@@ -146,6 +146,56 @@
         target="_blank"> customized</a> in Firefox settings. There is an option to open the sidebar
         automatically when bookmarking from keyboard.</p>
 
+    <h3 id="site-capture-manual">Capturing Sites</h3>
+    <p>To create an offline copy of a website, enable the site capture mode by clicking on the
+       white circle inside the "Archive" button.
+    </p>
+
+    <p style="text-align: center">
+        <img src="images/site-capture-mode.png">
+    </p>
+
+    <p>The following click on the "Archive Site" button will display the capture options dialog.
+       By default, Scrapyard will visit and save all links within the given crawling depth.
+       The default crawling depth of 1 means that only links found on the active tab will be visited.
+       Link hashes (any text after the # symbol) are ignored if the "Ignore link hashes" check
+        is selected, although you may want to uncheck it if you are capturing a single page
+        application in which pages are generated dynamically by the browser, based on link hash values.
+    </p>
+
+    <p>"Include links" and "Exclude links" text areas at the capture options dialog allow to
+        specify rules that filter visited links. The rules may be plain strings
+        (case-insensitive) or
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions"
+           target="_blank">regular expressions</a>,
+        if a rule starts and ends with a slash character with optional flags at the end. In the
+        regular expression rules there is no need to escape the slash character itself.
+        For example, the rule <b>/https?://example\.com/path//i</b> allows only links
+        from <b>https://example.com/path/</b> or <b>https://example.com/path/</b>
+        case-insensitively.
+        Use the <b>$text:</b> prefix to match against link text instead of URL. For example,
+        the rule <b>$text:/^Chapter \d+$/</b> will case-sensitively match against links with text
+        <b>Chapter 1</b>, <b>Chapter 2</b>, etc.
+        Several automatically generated presets are available. Generally, you
+        may want to select the preset "Same site" in the "Include links" window
+        to filter out all external URLs.</p>
+
+    <p>To abort the ongoing site capture process, use the corresponding item from the sidebar
+    shelf menu: </p>
+
+    <p style="text-align: center">
+        <img src="images/abort-menu.png">
+    </p>
+
+    <p>The captured pages are placed in a special folder with the spider web icon. A click on the
+        folder name opens the first page stored in it. In the pages opened from this folder,
+        all visited links are replaced to the <b>ext+scrapyard://</b> URLs that lead to the neighboring
+        captured pages.</p>
+
+    <p style="text-align: center">
+        <img src="images/captured-site.png">
+    </p>
+
     <h3>Bookmark Shelves</h3>
     <p>
         It is possible to create an unlimited amount of bookmark shelves to structure your bookmarks.

@@ -4,7 +4,18 @@ import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} 
 import {getActiveTab, showNotification} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
-import {browseNode, captureTab, finalizeCapture, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
+import {
+    browseNode,
+    captureTab,
+    finalizeCapture,
+    isSpecialPage,
+    notifySpecialPage,
+    packUrlExt,
+    showSiteCaptureOptions,
+    performSiteCapture,
+    startCrawling,
+    abortCrawling
+} from "./bookmarking.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {getFavicon} from "./favicon.js";
@@ -37,8 +48,8 @@ receive.createBookmark = message => {
                 return bookmark;
             });
 
-    options.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
     Bookmark.setTentativeId(options);
+    options.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
     return send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
@@ -101,12 +112,15 @@ receive.createArchive = message => {
                 });
             });
 
-    options.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
-
-    //options.site = true;
-    //options.__site_level = 0;
+    if (options.__crawl && !options.__site_capture) {
+        getActiveTab().then(tab => {
+            showSiteCaptureOptions(tab, options);
+        });
+        return;
+    }
 
     Bookmark.setTentativeId(options);
+    options.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
     return send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
@@ -151,7 +165,7 @@ receive.reorderNodes = message => {
 };
 
 receive.storePageHtml = message => {
-    if (message.bookmark.__page_packing)
+    if (message.bookmark.__url_packing)
         return;
 
     Bookmark.storeArchive(message.bookmark.id, message.data, "text/html")
@@ -160,6 +174,9 @@ receive.storePageHtml = message => {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
 
                 finalizeCapture(message.bookmark);
+
+                if (message.bookmark.__crawl)
+                    startCrawling(message.bookmark);
             }
         })
         .catch(e => {
@@ -255,3 +272,22 @@ receive.loadInternalResource = async message => {
     return await fetchText(url);
 };
 
+receive.abortRequested = message => {
+    abortCrawling();
+};
+
+receive.replyFrameSiteCapture = (message, sender) => {
+    browser.tabs.sendMessage(sender.tab.id, message);
+};
+
+receive.cancelSiteCapture = (message, sender) => {
+    browser.tabs.sendMessage(sender.tab.id, message);
+};
+
+receive.continueSiteCapture = (message, sender) => {
+    browser.tabs.sendMessage(sender.tab.id, message);
+};
+
+receive.performSiteCapture = (message, sender) => {
+    performSiteCapture(message.bookmark);
+};

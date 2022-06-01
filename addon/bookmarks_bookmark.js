@@ -510,6 +510,11 @@ export class BookmarkManager extends EntityManager {
         const node = await Node.get(nodeId);
         await this.plugins.storeBookmarkComments(node, comments);
     }
+
+    async isSitePage(node) {
+        const parent = await Node.get(node.parent_id);
+        return parent.site;
+    }
 }
 
 export let Bookmark = new BookmarkManager();

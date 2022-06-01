@@ -315,6 +315,10 @@ select {
     background: transparent !important;
 }
 
+#shelf-menu-abort {
+    display: none;
+}
+
 #shelf-menu-create-folder {
     margin-top: 5px;
     border-top: 1px solid black;

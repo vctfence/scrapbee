@@ -1,5 +1,5 @@
 {
-    "version": "0.17.4",
+    "version": "0.17.4.1",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -84,7 +84,10 @@
         "icons/lock.svg",
         "icons/scrapyard.svg",
         "ui/edit_toolbar.css",
-        "savepage/shadowloader.js"
+        "savepage/shadowloader.js",
+        "ui/site_capture.html",
+        "ui/site_capture.css",
+        "ui/site_capture.js"
     ],
     "protocol_handlers": [
         {

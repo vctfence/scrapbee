@@ -232,7 +232,9 @@ var debugEnable = false;
 
 // Scrapyard //////////////////////////////////////////////////////////////////
 
+var collectLinks;
 var frameLinks = [];
+var selectionLinks;
 
 var scrapyardBookmark;
 
@@ -488,6 +490,7 @@ function addListeners()
 
                 // Scrapyard //////////////////////////////////////////////////////////////////
                 scrapyardBookmark = message.bookmark;
+                collectLinks = !!scrapyardBookmark.__site_capture;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -499,6 +502,9 @@ function addListeners()
                     let frames = selectionElement.querySelectorAll("iframe, frame");
                     for (let frame of frames)
                         frame.src = frame.src + "#" + Math.floor((Math.random() * 1000000) + 1)
+
+                    if (collectLinks)
+                        selectionLinks = collectFrameLinks(selectionElement);
                 }
                 ////////////////////////////////////////////////////////////////// Scrapyard //
 
@@ -990,7 +996,6 @@ function initializeBeforeSave()
     /* Identify all frames */
 
     // Scrapyard //////////////////////////////////////////////////////////////////
-    const collectLinks = scrapyardBookmark.hasOwnProperty("__site_level");
     chrome.runtime.sendMessage({ type: "requestFrames", collectLinks });
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
@@ -2946,8 +2951,8 @@ function generateHTML()
     let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
-    if (scrapyardBookmark.site)
-        scrapyardBookmark.__site_links = frameLinks.reduce((acc, item) => [...acc, ...item]);
+    if (scrapyardBookmark.__site_capture)
+        scrapyardBookmark.__site_capture.links = selectionLinks || frameLinks.reduce((acc, item) => [...acc, ...item]);
 
     chrome.runtime.sendMessage({type: "storePageHtml", data: resultingHTML, bookmark: scrapyardBookmark});
     ////////////////////////////////////////////////////////////////// Scrapyard //

@@ -140,7 +140,7 @@ export async function fetchText(url, init) {
         return response.text();
 }
 
-export async function fetchWithTimeout(resource, options) {
+export async function fetchWithTimeout(resource, options = {}) {
     const { timeout = 10000 } = options;
 
     const controller = new AbortController();

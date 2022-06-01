@@ -7,15 +7,18 @@ import {
     showNotification,
     updateTab
 } from "./utils_browser.js";
-import {capitalize, getMimetypeExt} from "./utils.js";
-import {send} from "./proxy.js";
+import {capitalize, getMimetypeExt, sleep} from "./utils.js";
+import {send, sendLocal} from "./proxy.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
 import {fetchWithTimeout} from "./utils_io.js";
-import {Archive} from "./storage_entities.js";
+import {Archive, Node} from "./storage_entities.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {getFaviconFromTab} from "./favicon.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
+import * as crawler from "./crawler.js";
+import {Group} from "./bookmarks_group.js";
+import {Query} from "./storage_query.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -59,9 +62,8 @@ export async function getActiveTabMetadata() {
 }
 
 export async function captureTab(tab, bookmark) {
-    if (isSpecialPage(tab.url)) {
+    if (isSpecialPage(tab.url))
         notifySpecialPage();
-    }
     else {
         if (await scriptsAllowed(tab.id))
             await captureHTMLTab(tab, bookmark)
@@ -77,8 +79,11 @@ async function extractSelection(tab, bookmark) {
     for (let frame of frames) {
         try {
             await injectScriptFile(tab.id, {file: "/content_selection.js", frameId: frame.frameId});
-
-            selection = await browser.tabs.sendMessage(tab.id, {type: "CAPTURE_SELECTION", options: bookmark});
+            selection = await browser.tabs.sendMessage(
+                tab.id,
+                {type: "CAPTURE_SELECTION", options: bookmark},
+                {frameId: frame.frameId}
+            );
 
             if (selection)
                 break;
@@ -92,18 +97,9 @@ async function extractSelection(tab, bookmark) {
 
 async function captureHTMLTab(tab, bookmark) {
 
-    async function savePageCapture() {
-        return browser.tabs.sendMessage(tab.id, {
-            type: "performAction",
-            menuaction: 1,
-            saveditems: 2,
-            selection: await extractSelection(tab, bookmark),
-            bookmark: bookmark
-        });
-    }
-
     let response;
-    try { response = await savePageCapture(); } catch (e) {}
+    const selection = await extractSelection(tab, bookmark);
+    try { response = await startSavePageCapture(tab, bookmark, selection); } catch (e) {}
 
     if (typeof response == "undefined") { /* no response received - content script not loaded in active tab */
         let onScriptInitialized = async (message, sender) => {
@@ -111,9 +107,9 @@ async function captureHTMLTab(tab, bookmark) {
                 browser.runtime.onMessage.removeListener(onScriptInitialized);
 
                 try {
-                    response = await savePageCapture();
+                    response = await startSavePageCapture(tab, bookmark, selection);
                 } catch (e) {
-                    console.error(e)
+                    console.error(e);
                 }
 
                 if (typeof response == "undefined")
@@ -123,18 +119,35 @@ async function captureHTMLTab(tab, bookmark) {
         };
         browser.runtime.onMessage.addListener(onScriptInitialized);
 
-        try {
-            try {
-                await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
-            } catch (e) {
-                console.error(e);
-            }
+        await injectSavePageScripts(tab)
+    }
+}
 
-            await injectScriptFile(tab.id, {file: "/savepage/content.js"});
-        }
-        catch (e) {
+function startSavePageCapture(tab, bookmark, selection) {
+    return browser.tabs.sendMessage(tab.id, {
+        type: "performAction",
+        menuaction: 1,
+        saveditems: 2,
+        bookmark,
+        selection
+    });
+}
+
+async function injectSavePageScripts(tab, onError) {
+    try {
+        try {
+            await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
+        } catch (e) {
             console.error(e);
         }
+
+        await injectScriptFile(tab.id, {file: "/savepage/content.js"});
+    }
+    catch (e) {
+        console.error(e);
+
+        if (onError)
+            onError(e);
     }
 }
 
@@ -168,6 +181,43 @@ export function finalizeCapture(bookmark) {
         send.bookmarkAdded({node: bookmark});
 }
 
+export async function showSiteCaptureOptions(tab, bookmark) {
+    try {
+        await injectCSSFile(tab.id, {file: "/ui/site_capture_content.css"});
+        await injectScriptFile(tab.id, {file: "/ui/site_capture_content.js", frameId: 0});
+        browser.tabs.sendMessage(tab.id, {type: "storeBookmark", bookmark});
+
+        await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
+        const message = {type: "requestFrames", siteCapture: true, collectLinks: true};
+        setTimeout(() => browser.tabs.sendMessage(tab.id, message), 500);
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+export async function performSiteCapture(bookmark) {
+    const group = await Group.addSite(bookmark.parent_id, bookmark.name);
+    bookmark.parent_id = group.id;
+
+    crawler.initialize(bookmark);
+
+    sendLocal.createArchive({data: bookmark});
+}
+
+export function startCrawling(bookmark) {
+    bookmark.__site_capture.level = 0;
+
+    crawler.enqueue(bookmark);
+
+    send.startProcessingIndication({noWait: true});
+    send.toggleAbortMenu({show: true});
+}
+
+export function abortCrawling() {
+    crawler.abort();
+}
+
 export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
     return new Promise(async (resolve, reject) => {
         let initializationListener;
@@ -176,18 +226,24 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
         let completionListener = function (message, sender, sendResponse) {
             if (message.type === "storePageHtml" && message.bookmark.__tab_id === packingTab.id) {
-                browser.tabs.onUpdated.removeListener(listener);
-                browser.runtime.onMessage.removeListener(completionListener);
-                browser.runtime.onMessage.removeListener(initializationListener);
-                browser.tabs.remove(packingTab.id);
+                removeListeners();
+                browser.tabs.remove(packingTab?.id);
 
+                resolve(resolver(message, changedTab));
+            }
+        };
+
+        let tabRemovedListener = function (tabId) {
+            if (tabId === changedTab.id) {
+                removeListeners();
+                const message = {bookmark};
                 resolve(resolver(message, changedTab));
             }
         };
 
         browser.runtime.onMessage.addListener(completionListener);
 
-        var listener = async (id, changed, tab) => {
+        var tabUpdateListener = async (id, changed, tab) => {
             if (!changedTab && id === packingTab.id)
                 changedTab = tab;
             if (id === packingTab.id && changed.favIconUrl)
@@ -201,16 +257,12 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
                 initializationListener = async function (message, sender, sendResponse) {
                     if (message.type === "CAPTURE_SCRIPT_INITIALIZED" && sender.tab.id === packingTab.id) {
-                        await initializer(bookmark, tab);
+                        if (initializer)
+                            await initializer(bookmark, tab);
                         bookmark.__tab_id = packingTab.id;
 
                         try {
-                            await browser.tabs.sendMessage(packingTab.id, {
-                                type: "performAction",
-                                menuaction: 1,
-                                saveditems: 2,
-                                bookmark: bookmark
-                            });
+                            await startSavePageCapture(packingTab, bookmark);
                         } catch (e) {
                             console.error(e);
                             reject(e);
@@ -220,24 +272,19 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
                 browser.runtime.onMessage.addListener(initializationListener);
 
-                try {
-                    try {
-                        await injectScriptFile(tab.id, {
-                            file: "savepage/content-frame.js",
-                            allFrames: true
-                        });
-                    } catch (e) {
-                        console.error(e);
-                    }
-
-                    await injectScriptFile(packingTab.id, {file: "savepage/content.js"});
-                } catch (e) {
-                    reject(e);
-                }
+                await injectSavePageScripts(packingTab, reject);
             }
         };
 
-        browser.tabs.onUpdated.addListener(listener);
+        function removeListeners() {
+            browser.tabs.onUpdated.removeListener(tabUpdateListener);
+            browser.tabs.onRemoved.removeListener(tabRemovedListener);
+            browser.runtime.onMessage.removeListener(completionListener);
+            browser.runtime.onMessage.removeListener(initializationListener);
+        }
+
+        browser.tabs.onUpdated.addListener(tabUpdateListener);
+        browser.tabs.onRemoved.addListener(tabRemovedListener);
 
         var packingTab = await browser.tabs.create({url: url, active: false});
 
@@ -247,15 +294,31 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 }
 
 export async function packUrl(url, hide_tab) {
-    return packPage(url, {}, b => b.__page_packing = true, m => m.data, hide_tab);
+    return packPage(url, {}, b => b.__url_packing = true, m => m.data, hide_tab);
 }
 
 export async function packUrlExt(url, hide_tab) {
     let resolver = (m, t) => ({html: m.data, title: url.endsWith(t.title)? undefined: t.title, icon: t.favIconUrl});
-    return packPage(url, {}, b => b.__page_packing = true, resolver, hide_tab);
+    return packPage(url, {}, b => b.__url_packing = true, resolver, hide_tab);
 }
 
-function showEditToolbar(archiveTab) {
+const archiveTabs = {};
+
+function trackArchiveTab(tabId, url) {
+    let urls = archiveTabs[tabId];
+    if (!urls) {
+        urls = new Set([url]);
+        archiveTabs[tabId] = urls;
+    }
+    else
+        urls.add(url);
+}
+
+function isArchiveTabTracked(tabId) {
+    return !!archiveTabs[tabId];
+}
+
+function configureArchivePage(node, archiveTab) {
     // Tab may be automatically reloaded if charset encoding is not found in first 1024 bytes
     // A twisted logic is necessary to load the editor toolbar in this case
     // This may happen if a large favicon is the first tag under the <head>
@@ -263,11 +326,14 @@ function showEditToolbar(archiveTab) {
     // But for existing pages a workaround is necessary
 
     let configureTab = async tab => {
-        browser.tabs.onUpdated.removeListener(listener)
+        //browser.tabs.onUpdated.removeListener(tabUpdateListener);
 
         await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
         await injectScriptFile(tab.id, {file: "lib/jquery.js"});
         await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
+
+        if (await Bookmark.isSitePage(node))
+            await configureSiteLinks(node, archiveTab);
     };
 
     let completed = false;
@@ -289,7 +355,7 @@ function showEditToolbar(archiveTab) {
         }
     };
 
-    var listener = async (id, changed, tab) => {
+    var tabUpdateListener = async (id, changed, tab) => {
         if (tab.id === archiveTab.id) {
             // Register first completed state, "loading" states will follow if the tab is reloaded
             if (!completed)
@@ -320,7 +386,44 @@ function showEditToolbar(archiveTab) {
         }
     };
 
-    browser.tabs.onUpdated.addListener(listener);
+    browser.tabs.onUpdated.addListener(tabUpdateListener);
+
+    function tabRemoveListener(tabId) {
+        if (tabId === archiveTab.id) {
+            const objectURLs = archiveTabs[tabId];
+
+            if (objectURLs) {
+                delete archiveTabs[tabId];
+
+                for (const url of objectURLs)
+                    if (url.startsWith("blob:"))
+                        URL.revokeObjectURL(url);
+            }
+
+            browser.tabs.onRemoved.removeListener(tabRemoveListener);
+            browser.tabs.onUpdated.removeListener(tabUpdateListener);
+        }
+    }
+
+    browser.tabs.onRemoved.addListener(tabRemoveListener);
+}
+
+async function configureSiteLinks(node, tab) {
+    await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
+    const siteMap = await buildSiteMap(node);
+    browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap});
+}
+
+async function listSiteArchives(node) {
+    const parentId = node.type === NODE_TYPE_ARCHIVE? node.parent_id: node.id;
+    const parent = await Node.get(parentId);
+    const pages = await Query.fullSubtree(parent.id, true);
+    return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
+}
+
+async function buildSiteMap(node) {
+    const archives = await listSiteArchives(node);
+    return archives.reduce((acc, n) => {acc[n.uri] = n.uuid; return acc;}, {});
 }
 
 export async function browseNode(node, external_tab, preserve_history, container) {
@@ -409,10 +512,11 @@ export async function browseNode(node, external_tab, preserve_history, container
 
                     const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
                     const archiveTab = await openUrl(archiveURL);
-                    showEditToolbar(archiveTab);
 
-                    if (!helperApp)
-                        URL.revokeObjectURL(objectURL);
+                    if (!isArchiveTabTracked(archiveTab.id))
+                        configureArchivePage(node, archiveTab);
+
+                    trackArchiveTab(archiveTab.id, objectURL);
                 }
                 else {
                     showNotification({message: "No data is stored."});
@@ -425,5 +529,11 @@ export async function browseNode(node, external_tab, preserve_history, container
         case NODE_TYPE_GROUP:
             if (node.__filtering)
                 send.selectNode({node, open: true, forceScroll: true});
+            else if (node.site) {
+                const archives = await listSiteArchives(node);
+                const page = archives[0];
+                if (page)
+                    return browseNode(page, external_tab, preserve_history, container)
+            }
     }
 }

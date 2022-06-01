@@ -166,6 +166,10 @@ select,
     background-image: url("../icons/group2.svg") !important;
 }
 
+.jstree-default .scrapyard-site > .jstree-anchor .jstree-themeicon {
+    background-image: url("../icons/web2.svg") !important;
+}
+
 .jstree-default .scrapyard-shelf > .jstree-anchor .jstree-themeicon {
     background-image: url("../icons/shelf2.svg") !important;
 }

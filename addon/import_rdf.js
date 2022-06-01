@@ -1,3 +1,5 @@
+// TODO: refactor, it looks convoluted as shit, and it actually is
+
 import {nativeBackend} from "./backend_native.js";
 import {getFaviconFromTab} from "./favicon.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";

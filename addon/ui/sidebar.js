@@ -98,6 +98,8 @@ window.onload = async function () {
 
     $("#shelf-menu-export").click(() => performExport());
 
+    $("#shelf-menu-abort").click(() => send.abortRequested());
+
     $("#search-mode-switch").click(() => {
         $("#shelf-menu").hide();
         $("#search-mode-menu").toggle();
@@ -765,6 +767,13 @@ receive.syncStateChanged = message => {
         $("#btnSync").hide();
         localStorage.setItem("sidebar-show-sync", "hide");
     }
+};
+
+receive.toggleAbortMenu = message => {
+    if (message.show)
+        $("#shelf-menu-abort").show();
+    else
+        $("#shelf-menu-abort").hide();
 };
 
 receive.exportProgress = message => message.muteSidebar? null: updateProgress(message);

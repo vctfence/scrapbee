@@ -37,7 +37,7 @@ export class PluginContainer {
     _addHandler(methodName) {
         const handler = async (...args) => {
             const external = this._findExternal(args);
-
+            console.log(external)
             if (external) {
                 const backend = this.externalBackends[external];
                 if (backend[methodName])
@@ -53,15 +53,15 @@ export class PluginContainer {
         let external;
         for (const arg of args) {
             if (Array.isArray(arg)) {
-                const node = arg.find(n => n.external);
+                const node = arg.find(n => n.hasOwnProperty("external"));
                 if (node) {
                     external = node.external;
                     break;
                 }
             }
             else {
-                if (arg?.external) {
-                    external = arg.external
+                if (arg?.hasOwnProperty("external")) {
+                    external = arg.external;
                     break;
                 }
             }

@@ -224,6 +224,10 @@ class BookmarkTree {
                 e.target._mousedown_fired = true;
 
             let element = e.target;
+
+            if (element.classList.contains("jstree-ocl")) // expand/collapse arrow icon
+                return;
+
             while (element && !$(element).hasClass("jstree-node")) {
                 element = element.parentNode;
             }
@@ -245,9 +249,9 @@ class BookmarkTree {
             if (clickable && !e.ctrlKey && !e.shiftKey) {
                 if (node) {
                     if (settings.open_bookmark_in_active_tab()) {
-                        getActiveTab().then(active_tab => {
-                            active_tab = e.button === 0 && active_tab ? active_tab : undefined;
-                            send.browseNode({node: node, tab: active_tab, preserveHistory: true});
+                        getActiveTab().then(activeTab => {
+                            activeTab = e.button === 0 && activeTab ? activeTab : undefined;
+                            send.browseNode({node: node, tab: activeTab, preserveHistory: true});
                         });
                     }
                     else
@@ -361,6 +365,12 @@ class BookmarkTree {
                 class: "scrapyard-group",
             };
 
+            if (node.site) {
+                jnode.li_attr["data-clickable"] = "true";
+                jnode.li_attr["class"] += " scrapyard-site"
+                jnode.icon = "/icons/web.svg";
+            }
+
             BookmarkTree.styleFirefoxFolders(node, jnode);
         }
         else if (node.type === NODE_TYPE_SEPARATOR) {
@@ -370,7 +380,7 @@ class BookmarkTree {
                 class: "separator-node"
             };
         }
-        else if (node.type !== NODE_TYPE_SHELF) {
+        else {
             jnode.li_attr = {
                 class: "show_tooltip",
                 title: BookmarkTree._formatNodeTooltip(node),

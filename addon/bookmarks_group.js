@@ -11,11 +11,27 @@ class GroupManager extends EntityManager {
         if (parent && typeof parent === "number")
             parent = await Node.get(parent);
 
-        let node = await Node.add({
-            name: await this.ensureUniqueName(parent?.id, name),
+        return this._addNode({
+            name,
             type: nodeType,
             parent_id: parent?.id
-        });
+        }, parent);
+    }
+
+    async addSite(parentId, name) {
+        const parent = await Node.get(parentId);
+
+        return this._addNode({
+            name,
+            type: NODE_TYPE_GROUP,
+            parent_id: parentId,
+            site: true
+        }, parent);
+    }
+
+    async _addNode(node, parent) {
+        node.name = await this.ensureUniqueName(parent?.id, node.name);
+        node = await Node.add(node);
 
         try {
             ishellBackend.invalidateCompletion();

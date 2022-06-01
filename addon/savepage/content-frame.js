@@ -35,6 +35,24 @@
 
 "use strict";
 
+// Scrapyard //////////////////////////////////////////////////////////////////
+function collectFrameLinks(root) {
+    const links = [];
+
+    root.querySelectorAll("a").forEach(
+        function (element) {
+            const url = element.href;
+
+            if (url.startsWith("http")) {
+                element.setAttribute("data-scrapyard-href", url);
+                links.push({url, text: element.textContent});
+            }
+        });
+
+    return links;
+}
+////////////////////////////////////////////////////////////////// Scrapyard //
+
 frameScript();
 
 function frameScript()
@@ -178,18 +196,6 @@ function frameScript()
                                 }
                             });
 
-                        // Scrapyard //////////////////////////////////////////////////////////////////
-                        const links = [];
-
-                        if (message.collectLinks) {
-                            document.querySelectorAll("a").forEach(
-                                function (element) {
-                                    element.setAttribute("data-scrapyard-href", element.href);
-                                    links.push({[element.href]: [element.textContent]});
-                                });
-                        }
-                        ////////////////////////////////////////////////////////////////// Scrapyard //
-
                         doctype = document.doctype;
 
                         if (doctype != null)
@@ -203,11 +209,16 @@ function frameScript()
 
                         htmltext = htmltext.replace(/<head([^>]*)>/,"<head$1><base href=\"" + document.baseURI + "\">");
 
-                        chrome.runtime.sendMessage({ type: "replyFrame", key: key, url: document.baseURI, html: htmltext, fonts: loadedfonts,
-                            // Scrapyard //////////////////////////////////////////////////////////////////
-                            links: message.collectLinks? links: undefined
-                            ////////////////////////////////////////////////////////////////// Scrapyard //
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        chrome.runtime.sendMessage({
+                            type: `replyFrame${message.siteCapture? "SiteCapture": ""}`,
+                            key: key,
+                            url: document.baseURI,
+                            html: message.siteCapture? "": htmltext,
+                            fonts: loadedfonts,
+                            links: message.collectLinks? collectFrameLinks(document): undefined
                         });
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
 
                         break;
                 }

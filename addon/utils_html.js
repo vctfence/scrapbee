@@ -27,7 +27,7 @@ export function unescapeHtml(string) {
 }
 
 export function parseHtml(htmlText) {
-    var doc = document.implementation.createHTMLDocument("")
+    let doc = document.implementation.createHTMLDocument("")
         , doc_elt = doc.documentElement
         , first_elt;
 

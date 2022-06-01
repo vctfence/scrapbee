@@ -119,7 +119,8 @@ window.onload = async function () {
             uri:  $("#bookmark-url").val(),
             tags: $("#bookmark-tags").val(),
             icon: $("#bookmark-icon").val(),
-            parent_id: parseInt(parentJNode.id)
+            parent_id: parseInt(parentJNode.id),
+            __crawl: crawlerMode
         };
 
         if (nodeType === NODE_TYPE_ARCHIVE)
@@ -136,6 +137,20 @@ window.onload = async function () {
     $("#create-archive").on("click", async e => {
         await addBookmark(NODE_TYPE_ARCHIVE);
         window.close();
+    });
+
+    var crawlerMode = false;
+    $("#crawler-check").on("click", async e => {
+        if (e.target.src.endsWith("mode-page.svg")) {
+            e.target.src = "../icons/mode-site.svg";
+            $("#create-archive").val("Archive Site");
+            crawlerMode = true;
+        }
+        else {
+            e.target.src = "../icons/mode-page.svg"
+            $("#create-archive").val("Archive");
+            crawlerMode = false;
+        }
     });
 };
 
