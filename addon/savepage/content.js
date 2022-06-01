@@ -232,8 +232,9 @@ var debugEnable = false;
 
 // Scrapyard //////////////////////////////////////////////////////////////////
 
-var collectLinks;
+var siteCapture;
 var frameLinks = [];
+var frameIndex = [];
 var selectionLinks;
 
 var scrapyardBookmark;
@@ -490,7 +491,7 @@ function addListeners()
 
                 // Scrapyard //////////////////////////////////////////////////////////////////
                 scrapyardBookmark = message.bookmark;
-                collectLinks = !!scrapyardBookmark.__site_capture;
+                siteCapture = !!scrapyardBookmark.__site_capture;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -503,7 +504,7 @@ function addListeners()
                     for (let frame of frames)
                         frame.src = frame.src + "#" + Math.floor((Math.random() * 1000000) + 1)
 
-                    if (collectLinks)
+                    if (siteCapture)
                         selectionLinks = collectFrameLinks(selectionElement);
                 }
                 ////////////////////////////////////////////////////////////////// Scrapyard //
@@ -601,6 +602,7 @@ function addListeners()
                 frameFonts[i] = message.fonts;
                 // Scrapyard //////////////////////////////////////////////////////////////////
                 frameLinks[i] = message.links;
+                frameIndex[i] = message.index;
                 ////////////////////////////////////////////////////////////////// Scrapyard //
 
                 break;
@@ -996,7 +998,7 @@ function initializeBeforeSave()
     /* Identify all frames */
 
     // Scrapyard //////////////////////////////////////////////////////////////////
-    chrome.runtime.sendMessage({ type: "requestFrames", collectLinks });
+    chrome.runtime.sendMessage({ type: "requestFrames", siteCapture });
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
     // Scrapyard //////////////////////////////////////////////////////////////////
@@ -2951,8 +2953,11 @@ function generateHTML()
     let resultingHTML = htmlStrings.join("");
     htmlStrings.length = 0;
 
-    if (scrapyardBookmark.__site_capture)
-        scrapyardBookmark.__site_capture.links = selectionLinks || frameLinks.reduce((acc, item) => [...acc, ...item]);
+    if (siteCapture)
+        scrapyardBookmark.__site_capture.links = selectionLinks || frameLinks.reduce((acc, item) => [...acc, ...item], []);
+
+    const pageIndex = frameIndex.reduce((acc, item) => [...acc, ...item], []);
+    scrapyardBookmark.__index = {words: Array.from(new Set(pageIndex))};
 
     chrome.runtime.sendMessage({type: "storePageHtml", data: resultingHTML, bookmark: scrapyardBookmark});
     ////////////////////////////////////////////////////////////////// Scrapyard //

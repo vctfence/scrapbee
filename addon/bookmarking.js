@@ -188,7 +188,7 @@ export async function showSiteCaptureOptions(tab, bookmark) {
         browser.tabs.sendMessage(tab.id, {type: "storeBookmark", bookmark});
 
         await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
-        const message = {type: "requestFrames", siteCapture: true, collectLinks: true};
+        const message = {type: "requestFrames", siteCapture: true, siteCaptureOptions: true};
         setTimeout(() => browser.tabs.sendMessage(tab.id, message), 500);
 
     } catch (e) {

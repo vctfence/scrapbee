@@ -37,7 +37,7 @@ export class PluginContainer {
     _addHandler(methodName) {
         const handler = async (...args) => {
             const external = this._findExternal(args);
-            console.log(external)
+
             if (external) {
                 const backend = this.externalBackends[external];
                 if (backend[methodName])

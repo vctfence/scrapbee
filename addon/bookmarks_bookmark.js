@@ -487,8 +487,8 @@ export class BookmarkManager extends EntityManager {
         }
     }
 
-    async storeArchive(nodeId, data, contentType) {
-        await Archive.add(nodeId, data, contentType);
+    async storeArchive(nodeId, data, contentType, index) {
+        await Archive.add(nodeId, data, contentType, null, index);
         const node = await Node.get(nodeId);
         await this.plugins.storeBookmarkData(node, data, contentType);
     }

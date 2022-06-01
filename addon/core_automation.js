@@ -186,7 +186,8 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
         message.content_type = getMimetypeExt(message.uri);
 
     let saveContent = (bookmark, content) => {
-        return Bookmark.storeArchive(bookmark.id, content, message.pack ? "text/html" : message.content_type)
+        const contentType = message.pack? "text/html": message.content_type;
+        return Bookmark.storeArchive(bookmark.id, content, contentType, bookmark.__index)
             .then(() => {
                 if (message.__automation && message.select)
                     send.bookmarkCreated({node: bookmark});

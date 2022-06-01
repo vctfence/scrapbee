@@ -167,15 +167,17 @@
         specify rules that filter visited links. The rules may be plain strings
         (case-insensitive) or
         <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions"
-           target="_blank">regular expressions</a>,
-        if a rule starts and ends with a slash character with optional flags at the end. In the
-        regular expression rules there is no need to escape the slash character itself.
-        For example, the rule <b>/https?://example\.com/path//i</b> allows only links
-        from <b>https://example.com/path/</b> or <b>https://example.com/path/</b>
-        case-insensitively.
+           target="_blank">regular expressions</a>, if a rule starts and ends with a slash
+        character. Optional regular expression flags are allowed after the trailing slash.
+        There is no need to escape the slash character itself inside the
+        regular expression rules.</p>
+    <p>
+        For example, the rule <b>/https?://example\.com/path//i</b> case-insensitively allows only links
+        beginning with <b>http://example.com/path/</b> or <b>https://example.com/path/</b>.
         Use the <b>$text:</b> prefix to match against link text instead of URL. For example,
         the rule <b>$text:/^Chapter \d+$/</b> will case-sensitively match against links with text
-        <b>Chapter 1</b>, <b>Chapter 2</b>, etc.
+        <b>Chapter 1</b>, <b>Chapter 2</b>, etc.</p>
+    <p>
         Several automatically generated presets are available. Generally, you
         may want to select the preset "Same site" in the "Include links" window
         to filter out all external URLs.</p>
@@ -189,7 +191,7 @@
 
     <p>The captured pages are placed in a special folder with the spider web icon. A click on the
         folder name opens the first page stored in it. In the pages opened from this folder,
-        all visited links are replaced to the <b>ext+scrapyard://</b> URLs that lead to the neighboring
+        all visited links are replaced to the <a href="#help:referencing-manual">ext+scrapyard://</a> URLs that lead to the neighboring
         captured pages.</p>
 
     <p style="text-align: center">
@@ -429,7 +431,7 @@
     <p>The text in the note editor is saved automatically, although you may save it at any time with the <code>Ctrl+S</code>
         keyboard shortcut.</p>
 
-    <h3>Referencing to a bookmark or archive</h3>
+    <h3 id="referencing-manual">Referencing to a bookmark or archive</h3>
     <p>To make a reference to a Scrapyard bookmark or archive from the note markup, create a link with the following URL:
         <b><code>ext+scrapyard://&lt;BOOKMARK UUID&gt;</code></b>, for example:</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>

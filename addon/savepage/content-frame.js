@@ -51,6 +51,23 @@ function collectFrameLinks(root) {
 
     return links;
 }
+
+function indexWords(string) {
+    try {
+        string = string.replace(/\n/g, ' ')
+                       .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
+
+        let words = string.split(" ")
+            .filter(s => s && s.length > 2)
+            .map(s => s.toLocaleUpperCase())
+
+        return Array.from(new Set(words));
+    }
+    catch (e) {
+        console.error(e)
+        return [];
+    }
+}
 ////////////////////////////////////////////////////////////////// Scrapyard //
 
 frameScript();
@@ -211,12 +228,13 @@ function frameScript()
 
                         // Scrapyard //////////////////////////////////////////////////////////////////
                         chrome.runtime.sendMessage({
-                            type: `replyFrame${message.siteCapture? "SiteCapture": ""}`,
+                            type: `replyFrame${message.siteCaptureOptions? "SiteCapture": ""}`,
                             key: key,
                             url: document.baseURI,
-                            html: message.siteCapture? "": htmltext,
+                            html: message.siteCaptureOptions? "": htmltext,
                             fonts: loadedfonts,
-                            links: message.collectLinks? collectFrameLinks(document): undefined
+                            links: message.siteCapture? collectFrameLinks(document): undefined,
+                            index: message.siteCaptureOptions? undefined: indexWords(document.documentElement.textContent)
                         });
                         ////////////////////////////////////////////////////////////////// Scrapyard //
 
