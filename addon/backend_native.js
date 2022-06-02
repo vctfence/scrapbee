@@ -69,9 +69,12 @@ class NativeBackend {
         }
     }
 
-    async hasVersion(version) {
-        if (!(await this.probe()))
+    async hasVersion(version, msg) {
+        if (!(await this.probe())) {
+            if (msg)
+                showNotification(msg);
             return false;
+        }
 
         let installed = this.getVersion();
 
@@ -88,6 +91,8 @@ class NativeBackend {
                     return true;
             }
 
+            if (msg)
+                showNotification(msg);
             return false;
         }
     }

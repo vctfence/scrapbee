@@ -302,7 +302,52 @@ export async function packUrlExt(url, hide_tab) {
     return packPage(url, {}, b => b.__url_packing = true, resolver, hide_tab);
 }
 
-const archiveTabs = {};
+function configureArchiveTab(node, archiveTab) {
+    var tabUpdateListener = async (id, changed, tab) => {
+        if (tab.id === archiveTab.id) {
+            if (changed?.hasOwnProperty("attention"))
+                return;
+
+            if (changed.status === "complete")
+                configureArchivePage(tab, node);
+        }
+    };
+
+    browser.tabs.onUpdated.addListener(tabUpdateListener);
+
+    function tabRemoveListener(tabId) {
+        if (tabId === archiveTab.id) {
+            revokeTrackedObjectURLs(tabId);
+
+            browser.tabs.onRemoved.removeListener(tabRemoveListener);
+            browser.tabs.onUpdated.removeListener(tabUpdateListener);
+        }
+    }
+
+    browser.tabs.onRemoved.addListener(tabRemoveListener);
+}
+
+async function configureArchivePage(tab, node) {
+    await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
+    await injectScriptFile(tab.id, {file: "lib/jquery.js"});
+    await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
+
+    if (await Bookmark.isSitePage(node))
+        await configureSiteLinks(node, tab);
+}
+
+async function configureSiteLinks(node, tab) {
+    await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
+    const siteMap = await buildSiteMap(node);
+    browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap});
+}
+
+async function buildSiteMap(node) {
+    const archives = await listSiteArchives(node);
+    return archives.reduce((acc, n) => {acc[n.uri] = n.uuid; return acc;}, {});
+}
+
+var archiveTabs = {};
 
 function trackArchiveTab(tabId, url) {
     let urls = archiveTabs[tabId];
@@ -318,100 +363,143 @@ function isArchiveTabTracked(tabId) {
     return !!archiveTabs[tabId];
 }
 
-function configureArchivePage(node, archiveTab) {
-    // Tab may be automatically reloaded if charset encoding is not found in first 1024 bytes
-    // A twisted logic is necessary to load the editor toolbar in this case
-    // This may happen if a large favicon is the first tag under the <head>
-    // Corrected version of page capture solves this problem by forcing encoding meta to be the first tag
-    // But for existing pages a workaround is necessary
+function revokeTrackedObjectURLs(tabId) {
+    const objectURLs = archiveTabs[tabId];
 
-    let configureTab = async tab => {
-        //browser.tabs.onUpdated.removeListener(tabUpdateListener);
+    if (objectURLs) {
+        delete archiveTabs[tabId];
 
-        await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
-        await injectScriptFile(tab.id, {file: "lib/jquery.js"});
-        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
-
-        if (await Bookmark.isSitePage(node))
-            await configureSiteLinks(node, archiveTab);
-    };
-
-    let completed = false;
-    let retryTimeout;
-    let retries = 0;
-    let lastState;
-    let urlChanges = 0;
-
-    let checkStatus = tab => {
-        if (lastState === "complete") { // OK, the page is loaded, show toolbar
-            configureTab(tab);
-        }
-        else if (lastState !== "complete" && retries < 3) { // Wait 3 more seconds
-            retries += 1;
-            retryTimeout = setTimeout(() => checkStatus(tab), 1000);
-        }
-        else {
-            configureTab(tab); // Try to show the toolbar and remove the listener
-        }
-    };
-
-    var tabUpdateListener = async (id, changed, tab) => {
-        if (tab.id === archiveTab.id) {
-            // Register first completed state, "loading" states will follow if the tab is reloaded
-            if (!completed)
-                completed = changed.status === "complete";
-
-            // Register URL change events, there should be more than one if the tab is reloaded
-            if (changed.url)
-                urlChanges += 1;
-
-            // This should work for the most of properly captured well-formed pages
-            if (changed.status === "complete" && tab.title !== tab.url) {
-                clearTimeout(retryTimeout);
-                configureTab(tab);
-            }
-            // This should work for reloaded pages without <title> tag
-            else if (changed.status === "complete" && urlChanges > 1) {
-                clearTimeout(retryTimeout);
-                configureTab(tab);
-            }
-            // This should work for non-reloaded pages without <title> tag
-            else if (completed) {
-                // Continue to register states
-                lastState = changed.status;
-                clearTimeout(retryTimeout);
-                // When changes halted more than for one second, check if the last state is "complete"
-                retryTimeout = setTimeout(() => checkStatus(tab), 1000);
-            }
-        }
-    };
-
-    browser.tabs.onUpdated.addListener(tabUpdateListener);
-
-    function tabRemoveListener(tabId) {
-        if (tabId === archiveTab.id) {
-            const objectURLs = archiveTabs[tabId];
-
-            if (objectURLs) {
-                delete archiveTabs[tabId];
-
-                for (const url of objectURLs)
-                    if (url.startsWith("blob:"))
-                        URL.revokeObjectURL(url);
-            }
-
-            browser.tabs.onRemoved.removeListener(tabRemoveListener);
-            browser.tabs.onUpdated.removeListener(tabUpdateListener);
-        }
+        for (const url of objectURLs)
+            if (url.startsWith("blob:"))
+                URL.revokeObjectURL(url);
     }
-
-    browser.tabs.onRemoved.addListener(tabRemoveListener);
 }
 
-async function configureSiteLinks(node, tab) {
-    await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
-    const siteMap = await buildSiteMap(node);
-    browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap});
+export async function browseNode(node, existingTab, preserveHistory, container) {
+
+    const options = {existingTab, preserveHistory, container};
+
+    switch (node.type) {
+        case NODE_TYPE_BOOKMARK:
+            return browseBookmark(node, options);
+
+        case NODE_TYPE_ARCHIVE:
+            return browseArchive(node, options);
+
+        case NODE_TYPE_NOTES:
+            return openURL("ui/notes.html#" + node.uuid + ":" + node.id, options);
+
+        case NODE_TYPE_GROUP:
+            return browseGroup(node, options);
+    }
+}
+
+function openURL(url, options, newtabf = openPage) {
+    if (options?.existingTab)
+        return updateTab(options.existingTab, url, options.preserveHistory);
+
+    return newtabf(url, options?.container);
+}
+
+function browseBookmark(node, options) {
+    let url = node.uri;
+    if (url) {
+        try {
+            new URL(url);
+        } catch (e) {
+            url = "http://" + url;
+        }
+
+        options.container = options.container || node.container;
+
+        return openURL(url, options, openContainerTab);
+    }
+}
+
+async function browseArchive(node, options) {
+    if (node.__tentative)
+        return;
+
+    if (node.external === RDF_EXTERNAL_NAME)
+        return await browseRDFArchive(node, options);
+
+    const blob = await Archive.get(node.id);
+    if (blob) {
+        let objectURL = await getBlobURL(node, blob);
+
+        if (objectURL) {
+            const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
+            const archiveTab = await openURL(archiveURL, options);
+
+            if (!isArchiveTabTracked(archiveTab.id))
+                configureArchiveTab(node, archiveTab);
+
+            trackArchiveTab(archiveTab.id, objectURL);
+        }
+    }
+    else
+        showNotification({message: "No data is stored."});
+}
+
+async function browseRDFArchive(node, options) {
+    let helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application v0.5+ is required.");
+
+    if (helperApp) {
+        await rdfBackend.pushRDFPath(node);
+        const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
+        return openURL(url, options);
+    }
+}
+
+async function getBlobURL(node, blob) {
+    if (settings.browse_with_helper()) {
+        const helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application v0.5+ is required.");
+
+        if (helperApp)
+            return sendBlobToBackend(node, blob);
+        else
+            return null;
+    }
+
+    return loadArchive(blob);
+}
+
+async function sendBlobToBackend(node, blob) {
+    const data = await Archive.reify(blob, true);
+
+    const fields = {
+        blob: data,
+        content_type: blob.type || "text/html",
+    };
+
+    if (blob.byte_length) {
+        fields.blob = btoa(fields.blob);
+        fields.byte_length = blob.byte_length;
+    }
+
+    await nativeBackend.post(`/browse/upload/${node.uuid}`, fields);
+    return nativeBackend.url(`/browse/${node.uuid}`);
+}
+
+async function loadArchive(blob) {
+    if (blob.data) { // legacy string content
+        let object = new Blob([await Archive.reify(blob)],
+            {type: blob.type? blob.type: "text/html"});
+        return URL.createObjectURL(object);
+    }
+    else
+        return URL.createObjectURL(blob.object);
+}
+
+async function browseGroup(node, options) {
+    if (node.__filtering)
+        send.selectNode({node, open: true, forceScroll: true});
+    else if (node.site) {
+        const archives = await listSiteArchives(node);
+        const page = archives[0];
+        if (page)
+            return browseArchive(page, options);
+    }
 }
 
 async function listSiteArchives(node) {
@@ -421,119 +509,3 @@ async function listSiteArchives(node) {
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
 }
 
-async function buildSiteMap(node) {
-    const archives = await listSiteArchives(node);
-    return archives.reduce((acc, n) => {acc[n.uri] = n.uuid; return acc;}, {});
-}
-
-export async function browseNode(node, external_tab, preserve_history, container) {
-
-    const openUrl = (url, newtabf = openPage, container) => {
-        return (external_tab
-            ? updateTab(external_tab, url, preserve_history)
-            : newtabf(url, container));
-    };
-
-    switch (node.type) {
-        case NODE_TYPE_BOOKMARK:
-            let url = node.uri;
-            if (url) {
-                try {
-                    new URL(url);
-                } catch (e) {
-                    url = "http://" + url;
-                }
-
-                container = container || node.container;
-
-                return openUrl(url, openContainerTab, container);
-            }
-
-            break;
-
-        case NODE_TYPE_ARCHIVE:
-
-            if (node.__tentative)
-                return;
-
-            if (node.external === RDF_EXTERNAL_NAME) {
-                let helperApp = await nativeBackend.hasVersion("0.5");
-
-                if (helperApp) {
-                    await rdfBackend.pushRDFPath(node);
-                    const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
-                    return openUrl(url);
-                }
-                else {
-                    showNotification(`Scrapyard helper application v0.5+ is required.`);
-                    return;
-                }
-            }
-
-            return Archive.get(node.id).then(async blob => {
-                if (blob) {
-                    let objectURL = null;
-                    let helperApp = false;
-
-                    if (settings.browse_with_helper()) {
-                        helperApp = await nativeBackend.hasVersion("0.5");
-                        if (helperApp) {
-                            const blob = await Archive.get(node.id);
-                            const data = await Archive.reify(blob, true);
-
-                            const fields = {
-                                blob: data,
-                                content_type: blob.type || "text/html",
-                            };
-
-                            if (blob.byte_length) {
-                                fields.blob = btoa(fields.blob);
-                                fields.byte_length = blob.byte_length;
-                            }
-
-                            await nativeBackend.post(`/browse/upload/${node.uuid}`, fields);
-                            objectURL = nativeBackend.url(`/browse/${node.uuid}`);
-                        }
-                        else {
-                            showNotification(`Scrapyard helper application v0.5+ is required.`);
-                            return;
-                        }
-                    }
-
-                    if (!objectURL) {
-                        if (blob.data) { // legacy string content
-                            let object = new Blob([await Archive.reify(blob)],
-                                {type: blob.type? blob.type: "text/html"});
-                            objectURL = URL.createObjectURL(object);
-                        }
-                        else
-                            objectURL = URL.createObjectURL(blob.object);
-                    }
-
-                    const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
-                    const archiveTab = await openUrl(archiveURL);
-
-                    if (!isArchiveTabTracked(archiveTab.id))
-                        configureArchivePage(node, archiveTab);
-
-                    trackArchiveTab(archiveTab.id, objectURL);
-                }
-                else {
-                    showNotification({message: "No data is stored."});
-                }
-            });
-
-        case NODE_TYPE_NOTES:
-            return openUrl("ui/notes.html#" + node.uuid + ":" + node.id);
-
-        case NODE_TYPE_GROUP:
-            if (node.__filtering)
-                send.selectNode({node, open: true, forceScroll: true});
-            else if (node.site) {
-                const archives = await listSiteArchives(node);
-                const page = archives[0];
-                if (page)
-                    return browseNode(page, external_tab, preserve_history, container)
-            }
-    }
-}

@@ -196,7 +196,9 @@ receive.uploadFiles = async message => {
     send.startProcessingIndication();
 
     try {
-        if (await nativeBackend.hasVersion("0.4")) {
+        const helperApp = await nativeBackend.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
+
+        if (helperApp) {
             const uuids = await nativeBackend.fetchJSON("/upload/open_file_dialog");
 
             for (const [uuid, file] of Object.entries(uuids)) {
@@ -240,9 +242,6 @@ receive.uploadFiles = async message => {
             }
             if (Object.entries(uuids).length)
                 send.nodesUpdated();
-        }
-        else {
-            showNotification(`Scrapyard helper application v0.4+ is required for this feature.`);
         }
     }
     finally {

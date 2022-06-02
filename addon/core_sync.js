@@ -16,7 +16,8 @@ let syncing = false;
 receive.checkSyncDirectory = async message => {
     try {
         send.startProcessingIndication({noWait: true});
-        const helperApp = await nativeBackend.hasVersion("0.5");
+        const helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application 0.5+ is required for this feature.");
+
         if (helperApp) {
             const status = await nativeBackend.jsonPost("/sync/check_directory",
                 {sync_directory: message.sync_directory});
@@ -24,8 +25,6 @@ receive.checkSyncDirectory = async message => {
             if (status)
                 return status.status;
         }
-        else
-            showNotification("Scrapyard helper application 0.5+ is required for this feature.");
     }
     finally {
         send.stopProcessingIndication();
@@ -161,7 +160,7 @@ async function getNodesForSync() {
             content_modified: node.content_modified
         };
 
-        if (node.parent_id) 
+        if (node.parent_id)
             syncNode.parent_id = id2uuid.get(node.parent_id);
 
         if (syncNode.date_modified && syncNode.date_modified instanceof Date)
