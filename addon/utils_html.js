@@ -133,22 +133,23 @@ export function applyInlineStyles(element, recursive = true, exclude) {
     }
 }
 
-export function indexWords(string, html = true) {
-    try {
-        if (html)
-            string = string.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
-                           .replace(/<title.*?<\/title>/igs, "")
-                           .replace(/<style.*?<\/style>/igs, "")
-                           .replace(/<script.*?<\/script>/igs, "")
-                           .replace(/&[0-9#a-zA-Z]+;/igs, ' ')
-                           .replace(/<[^>]+>/gs, ' ');
+export function indexString(string) {
+    return createIndex(string, t => t);
+}
 
+export function indexHTML(string) {
+    return createIndex(string, extractTextRecursive)
+}
+
+function createIndex(string, textExtractor) {
+    try {
+        string = textExtractor(string);
         string = string.replace(/\n/g, ' ')
-                       .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
+            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
 
         let words = string.split(" ")
-                          .filter(s => s && s.length > 2)
-                          .map(s => s.toLocaleUpperCase())
+            .filter(s => s && s.length > 2)
+            .map(s => s.toLocaleUpperCase())
 
         return Array.from(new Set(words));
     }
@@ -157,4 +158,28 @@ export function indexWords(string, html = true) {
         console.log("Index creation has failed.")
         return [];
     }
+}
+
+function extractTextRecursive(string, parser) {
+    if (!parser)
+        parser = new DOMParser();
+
+    const doc = parser.parseFromString(string,"text/html");
+    removeScriptTags(doc);
+
+    let text = doc.body.textContent;
+
+    doc.querySelectorAll("iframe").forEach(
+        function (element) {
+            const html = element.srcdoc;
+            if (html)
+                text += " " + extractTextRecursive(html, parser);
+        });
+
+    return text;
+}
+
+function removeScriptTags(doc) {
+    $("body script", doc).remove();
+    $("body style", doc).remove();
 }

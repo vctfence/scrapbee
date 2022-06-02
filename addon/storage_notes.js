@@ -1,5 +1,5 @@
 import {EntityIDB} from "./storage_idb.js";
-import {indexWords} from "./utils_html.js";
+import {indexHTML, indexString} from "./utils_html.js";
 import {notes2html} from "./notes_render.js";
 import {Node} from "./storage_entities.js";
 
@@ -46,14 +46,14 @@ export class NotesIDB extends EntityIDB {
             let words;
 
             if (options.format === "delta" && options.html)
-                words = indexWords(options.html);
+                words = indexHTML(options.html);
             else {
                 if (options.format === "text")
-                    words = indexWords(options.content, false);
+                    words = indexString(options.content);
                 else {
                     let html = notes2html(options);
                     if (html)
-                        words = indexWords(html);
+                        words = indexHTML(html);
                 }
             }
 

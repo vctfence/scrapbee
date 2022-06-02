@@ -89,7 +89,7 @@ function setUpMenu(id) {
             if (pageLinks)
                 for (const link of pageLinks)
                     links += `${link.url}  [${link.text}]\n`;
-            insertRule(id, links);
+            insertRule(id, links.trim());
         });
 
     document.getElementById(`${id}-presets-menu-text`)

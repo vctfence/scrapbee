@@ -13,7 +13,7 @@ import {
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
     TODO_SHELF_NAME, DEFAULT_POSITION
 } from "./storage.js";
-import {indexWords} from "./utils_html.js";
+import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Group} from "./bookmarks_group.js";
@@ -201,7 +201,7 @@ export class BookmarkManager extends EntityManager {
         let result;
 
         if (options.content && options.search) {
-            const search = indexWords(options.search, false);
+            const search = indexString(options.search);
 
             let subtree;
             if (path) {

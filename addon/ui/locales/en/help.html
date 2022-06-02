@@ -148,34 +148,41 @@
 
     <h3 id="site-capture-manual">Capturing Sites</h3>
     <p>To create an offline copy of a website, enable the site capture mode by clicking on the
-       white circle inside the "Archive" button.
+       white circle icon inside the "Archive" button.
     </p>
 
     <p style="text-align: center">
         <img src="images/site-capture-mode.png">
     </p>
 
-    <p>The following click on the "Archive Site" button will display the capture options dialog.
-       By default, Scrapyard will visit and save all links within the given crawling depth.
+    <p>The following click on the button will display the capture options dialog.
+       By default, Scrapyard will visit and save <i>all links</i> within the given crawling depth.
        The default crawling depth of 1 means that only links found on the active tab will be visited.
        Link hashes (any text after the # symbol) are ignored if the "Ignore link hashes" check
-        is selected, although you may want to uncheck it if you are capturing a single page
+        is selected. You may want to uncheck it if you are capturing a single page
         application in which pages are generated dynamically by the browser, based on link hash values.
     </p>
 
     <p>"Include links" and "Exclude links" text areas at the capture options dialog allow to
-        specify rules that filter visited links. The rules may be plain strings
-        (case-insensitive) or
+        specify rules that filter visited links. There are two modes in which rules may be specified:
+        plain strings (case-insensitive), or, if a rule starts and ends with a slash
+        character, it defines a
         <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions"
-           target="_blank">regular expressions</a>, if a rule starts and ends with a slash
-        character. Optional regular expression flags are allowed after the trailing slash.
+           target="_blank">regular expression</a>. Optional regular expression flags may be placed
+        after the trailing slash.
         There is no need to escape the slash character itself inside the
         regular expression rules.</p>
+
+    <p>There are also two scopes in which rules are applied. By default, the rules are matched
+    against link URLs. In URL-scoped rules, any text after the first space character is ignored.
+        If a rule is prefixed with the <b>$text:</b> prefix, it will be matched
+    against the link text. It may contain spaces.</p>
     <p>
-        For example, the rule <b>/https?://example\.com/path//i</b> case-insensitively allows only links
-        beginning with <b>http://example.com/path/</b> or <b>https://example.com/path/</b>.
-        Use the <b>$text:</b> prefix to match against link text instead of URL. For example,
-        the rule <b>$text:/^Chapter \d+$/</b> will case-sensitively match against links with text
+        For example, the rule <b>/^https?://example\.com/path//i</b> case-insensitively allows only links
+        <i>beginning</i> with <b>http://example.com/path/</b> or <b>https://example.com/path/</b>.
+        The rule <b>https://example.com/path/page.html [some text]</b> will only match against the string
+        <b>https://example.com/path/page.html</b>, all other strings will be rejected.
+        The rule <b>$text:/^Chapter \d+$/</b> will case-sensitively match against links with text
         <b>Chapter 1</b>, <b>Chapter 2</b>, etc.</p>
     <p>
         Several automatically generated presets are available. Generally, you
@@ -191,8 +198,8 @@
 
     <p>The captured pages are placed in a special folder with the spider web icon. A click on the
         folder name opens the first page stored in it. In the pages opened from this folder,
-        all visited links are replaced to the <a href="#help:referencing-manual">ext+scrapyard://</a> URLs that lead to the neighboring
-        captured pages.</p>
+        all visited links are replaced with the <a href="#help:referencing-manual">ext+scrapyard://</a>
+        URLs that lead to the neighboring captured pages.</p>
 
     <p style="text-align: center">
         <img src="images/captured-site.png">

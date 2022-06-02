@@ -1,5 +1,5 @@
 import {EntityIDB} from "./storage_idb.js";
-import {indexWords} from "./utils_html.js";
+import {indexString, indexHTML} from "./utils_html.js";
 import {readBlob} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 
@@ -71,7 +71,7 @@ export class ArchiveIDB extends EntityIDB {
         if (index?.words)
             await this._storeIndex(nodeId, index.words);
         else if (typeof data === "string" && !byteLength)
-            await this.updateIndex(nodeId, indexWords(data));
+            await this.updateIndex(nodeId, indexHTML(data));
     }
 
     async updateHTML(nodeId, data) {
@@ -82,7 +82,7 @@ export class ArchiveIDB extends EntityIDB {
             data: undefined // undefined removes fields from IDB
         });
 
-        await this.updateIndex(nodeId, indexWords(data))
+        await this.updateIndex(nodeId, indexHTML(data));
 
         if (!this._importer) {
             const node = {id: nodeId, size: object.size};

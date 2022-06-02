@@ -11,7 +11,7 @@ import {
 import {computeSHA1} from "./utils.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {nativeBackend} from "./backend_native.js";
-import {parseHtml, fixDocumentEncoding, indexWords} from "./utils_html.js";
+import {parseHtml, fixDocumentEncoding, indexString, indexHTML} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
@@ -168,11 +168,11 @@ receive.reindexArchiveContent = async message => {
                 const blob = await Archive.get(node.id);
 
                 if (blob && !blob.byte_length && blob.data && typeof blob.data === "string")
-                    await Archive.updateIndex(node.id, indexWords(blob.data));
+                    await Archive.updateIndex(node.id, indexHTML(blob.data));
                 else if (blob && !blob.byte_length && blob.object) {
                     let text = await Archive.reify(blob);
                     if (text)
-                        await Archive.updateIndex(node.id, indexWords(text));
+                        await Archive.updateIndex(node.id, indexHTML(text));
                 }
             }
 
@@ -187,7 +187,7 @@ receive.reindexArchiveContent = async message => {
             if (node.has_comments) {
                 const comments = await Comments.get(node.id);
                 if (comments) {
-                    const words = indexWords(comments, false);
+                    const words = indexString(comments);
                     await Comments.updateIndex(node.id, words);
                 }
             }

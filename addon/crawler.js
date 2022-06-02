@@ -109,7 +109,7 @@ class Queue {
         if (this.#options.ignoreHashes)
             url = url.replace(/#.*$/, "");
 
-        return url.toLowerCase();
+        return url;
     }
 
     push(link) {

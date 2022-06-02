@@ -1,5 +1,5 @@
 import {EntityIDB} from "./storage_idb.js";
-import {indexWords} from "./utils_html.js";
+import {indexString} from "./utils_html.js";
 import {Node} from "./storage_entities.js";
 
 export class CommentsIDB extends EntityIDB {
@@ -52,7 +52,7 @@ export class CommentsIDB extends EntityIDB {
         await this._addRaw(nodeId, comments);
 
         if (comments) {
-            let words = indexWords(comments, false);
+            let words = indexString(comments);
             await this.updateIndex(nodeId, words);
         }
         else
