@@ -1,9 +1,7 @@
-// TODO: refactor, it looks convoluted as shit, and it actually is
-
 import {nativeBackend} from "./backend_native.js";
 import {getFaviconFromTab} from "./favicon.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
-import {partition} from "./utils.js";
+import {ProgressCounter} from "./utils.js";
 import {send} from "./proxy.js";
 import {packPage} from "./bookmarking.js";
 import {Group} from "./bookmarks_group.js";
@@ -11,136 +9,251 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {StreamImporterBuilder} from "./import_drivers.js";
 
-function traverseRDFTree(doc, visitor) {
-    const namespaces = new Map(Object.values(doc.documentElement.attributes)
-        .map(a => [a.localName, a.prefix === "xmlns" ? a.value : null]));
-    const ns_resolver = ns => namespaces.get(ns);
-    const NS_NC = ns_resolver("NC");
-    const NS_RDF = ns_resolver("RDF");
-    const NS_SCRAPBOOK = ns_resolver(Array.from(namespaces.keys()).find(k => (/NS\d+/i).test(k)));
+class RDFNamespaces {
+    //NS_NC;
+    NS_RDF;
+    NS_SCRAPBOOK;
 
-    let xselect = path => doc.evaluate(path, doc, ns_resolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+    resolver;
 
-    let node_map = path => {
-        const result = new Map();
+    constructor(doc) {
+        const rootAttrs = Object.values(doc.documentElement.attributes);
+        const namespaces = rootAttrs.map(a => [a.localName, a.prefix === "xmlns" ? a.value : null]);
+        const namespaceMap = new Map(namespaces);
+        this.resolver = ns => namespaceMap.get(ns);
 
-        let node, nodes = xselect(path);
-        while (node = nodes.iterateNext()) {
-            if (node.localName === "Description" || node.localName === "BookmarkSeparator") {
-                node.__sb_about = node.getAttributeNS(NS_RDF, "about");
-                node.__sb_id = node.getAttributeNS(NS_SCRAPBOOK, "id");
-                node.__sb_type = node.getAttributeNS(NS_SCRAPBOOK, "type");
-                node.__sb_title = node.getAttributeNS(NS_SCRAPBOOK, "title");
-                node.__sb_source = node.getAttributeNS(NS_SCRAPBOOK, "source");
-                node.__sb_comment = node.getAttributeNS(NS_SCRAPBOOK, "comment");
-                node.__sb_icon = node.getAttributeNS(NS_SCRAPBOOK, "icon");
-            }
+        //this.NS_NC = this.resolver("NC");
+        this.NS_RDF = this.resolver("RDF");
+        this.NS_SCRAPBOOK = namespaces.find(ns => (/NS\d+/i).test(ns[0]))[1];
+    }
+}
 
-            result.set(node.getAttributeNS(NS_RDF, "about"), node);
-        }
+class RDFImporter {
+    #options;
+    #nodeID_SB2SY = new Map();
+    #nodeID_SY2SB = new Map();
+    #shelf;
+    #bookmarks = [];
+    #cancelled = false;
+    #progressCounter;
+    #threads;
 
-        return result;
-    };
+    constructor(importOptions) {
+        this.#options = importOptions;
+    }
 
-    let descriptions = node_map("//RDF:Description");
-    let seqs = node_map("//RDF:Seq");
-    let separators = node_map("//NC:BookmarkSeparator")
+    async import() {
+        const helperApp = await nativeBackend.probe(true);
+        if (!helperApp)
+            return;
 
-    let traverse = (root, visitor) => {
-        let doTraverse = async (parent, root) => {
-            let seq = seqs.get(root ? root.__sb_about : "urn:scrapbook:root");
+        const path = this.#options.stream.replace(/\\/g, "/");
+        const xml = await this.#getRDFXML(path);
+
+        if (!xml)
+            return Promise.reject(new Error("RDF file not found."));
+
+        await this.#buildBookmarkTree(path, xml);
+        await this.#importArchives();
+    }
+
+    #traverseRDFTree(doc, visitor, data) {
+        const namespaces = new RDFNamespaces(doc);
+        const seqs = this.#mapURNToNodes("//RDF:Seq", doc, namespaces, false);
+        const separators = this.#mapURNToNodes("//NC:BookmarkSeparator", doc, namespaces)
+        const descriptions = this.#mapURNToNodes("//RDF:Description", doc, namespaces);
+        const leaves = new Map([...separators, ...descriptions]);
+
+        async function doTraverse(parent, current, visitor) {
+            let seq = seqs.get(current? current.__sb_about: "urn:scrapbook:root");
             let children = seq.children;
+
             if (children && children.length) {
                 for (let i = 0; i < children.length; ++i) {
                     if (children[i].localName === "li") {
-                        let resource = children[i].getAttributeNS(NS_RDF, "resource");
-                        let node = descriptions.get(resource) || separators.get(resource);
+                        let resource = children[i].getAttributeNS(namespaces.NS_RDF, "resource");
+                        let node = leaves.get(resource);
+
                         if (node) {
-                            await visitor(root, node);
+                            await visitor(current, node, data);
                             if (node.__sb_type === "folder")
-                                await doTraverse(root, node);
+                                await doTraverse(current, node, visitor);
                         }
                     }
                 }
             }
+        }
+
+        return doTraverse(null, null, visitor);
+    }
+
+    #mapURNToNodes(xpath, doc, namespaces, collectAttributes = true) {
+        const result = new Map();
+        const nodes = doc.evaluate(xpath, doc, namespaces.resolver, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+        let node;
+
+        while (node = nodes.iterateNext()) {
+            if (collectAttributes) {
+                node.__sb_about = node.getAttributeNS(namespaces.NS_RDF, "about");
+                node.__sb_id = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "id");
+                node.__sb_type = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "type");
+                node.__sb_title = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "title");
+                node.__sb_source = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "source");
+                node.__sb_comment = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "comment");
+                node.__sb_icon = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "icon");
+            }
+
+            result.set(node.getAttributeNS(namespaces.NS_RDF, "about"), node);
+        }
+
+        return result;
+    }
+
+    async #getRDFXML(path) {
+        const rdfFile = path.split("/").at(-1);
+        const rdfDirectory = path.substring(0, path.lastIndexOf("/"));
+        let xml = null;
+
+        try {
+            let form = new FormData();
+            form.append("rdf_file", rdfFile);
+            form.append("rdf_directory", rdfDirectory);
+
+            xml = await nativeBackend.fetchText(`/rdf/import/${rdfFile}`, {method: "POST", body: form});
+        } catch (e) {
+            console.error(e);
+        }
+
+        return xml;
+    }
+
+    async #buildBookmarkTree(path, xml) {
+        this.#shelf = await this.#createShelf(path);
+        const rdfDoc = new DOMParser().parseFromString(xml, 'application/xml');
+
+        await this.#traverseRDFTree(rdfDoc, this.#createBookmark.bind(this), {pos: 0});
+    }
+
+    async #importArchives() {
+        let cancelListener = (message, sender, sendResponse) => {
+            if (message.type === "cancelRdfImport")
+                this.#cancelled = true;
         };
+        browser.runtime.onMessage.addListener(cancelListener);
 
-        return doTraverse(null, root);
-    };
+        try {
+            if (!this.#options.quick) {
+                this.#progressCounter = new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
+                await this.#startThreads(this.#importThread.bind(this));
+            }
+            else
+                await this.#onFinish();
+        } finally {
+            browser.runtime.onMessage.removeListener(cancelListener);
+        }
+    }
 
-    return traverse(null, visitor);
-}
+    async #startThreads(threadf) {
+        const bookmarks = [...this.#bookmarks];
+        this.#threads = Math.min(this.#options.threads, this.#bookmarks.length);
 
-async function importRDFArchive(node, scrapbook_id, _) {
-    let root = nativeBackend.url(`/rdf/import/files/`)
-    let base = `${root}data/${scrapbook_id}/`
-    let index = `${base}index.html`;
+        const promises = [];
+        for (let i = 0; i < this.#threads; ++i)
+            promises.push(threadf(bookmarks));
 
-    let initializer = async (bookmark, tab) => {
-        let icon = await getFaviconFromTab(tab, true);
+        return Promise.all(promises);
+    }
 
-        if (icon) {
-            bookmark.icon = icon;
-            await Bookmark.storeIcon(bookmark);
+    async #importThread(bookmarks) {
+        if (bookmarks.length && !this.#cancelled) {
+            let bookmark = bookmarks.shift();
+
+            try {
+                let scrapbookId = this.#nodeID_SY2SB.get(bookmark.id);
+                await this.#importRDFArchive(bookmark, scrapbookId);
+            } catch (e) {
+                send.rdfImportError({bookmark: bookmark, error: e.message});
+            }
+
+            this.#progressCounter.incrementAndNotify();
+
+            return this.#importThread(bookmarks);
+        }
+        else {
+            this.#threads -= 1;
+            if (this.#threads === 0)
+                return this.#onFinish();
+        }
+    }
+
+    async #iconImportThread(bookmarks) {
+        if (bookmarks.length && !this.#cancelled) {
+            let bookmark = bookmarks.shift();
+
+            if (bookmark.icon && bookmark.icon.startsWith("resource://scrapbook/")) {
+                bookmark.icon = bookmark.icon.replace("resource://scrapbook/", "");
+                bookmark.icon = nativeBackend.url(`/rdf/import/files/${bookmark.icon}`);
+                await Bookmark.storeIcon(bookmark);
+            }
+
+            return this.#iconImportThread(bookmarks);
+        }
+        else {
+            this.#threads -= 1;
+            if (this.#threads === 0)
+                send.nodesReady({shelf: this.#shelf});
+        }
+    }
+
+    async #importRDFArchive(node, scrapbookId) {
+        let root = nativeBackend.url(`/rdf/import/files/`)
+        let base = `${root}data/${scrapbookId}/`
+        let index = `${base}index.html`;
+
+        let initializer = async (bookmark, tab) => {
+            let icon = await getFaviconFromTab(tab, true);
+
+            if (icon) {
+                bookmark.icon = icon;
+                await Bookmark.storeIcon(bookmark);
+            }
+
+            node.__mute_ui = true;
         }
 
-        node.__mute_ui = true;
+        return packPage(index, node, initializer, _ => null, false);
     }
 
-    return packPage(index, node, initializer, _ => null, false);
-}
+    async #onFinish() {
+        send.nodesImported({shelf: this.#shelf});
 
-async function importRDF(shelf, path, threads, quick) {
-    //await Import.prepare(shelf);
+        if (!this.#options.quick)
+            this.#progressCounter.finish();
 
-    path = path.replace(/\\/g, "/");
-
-    let rdf_directory = path.substring(0, path.lastIndexOf("/"));
-    let rdf_file = path.split("/");
-    rdf_file = rdf_file[rdf_file.length - 1];
-    let xml = null;
-
-    let helperApp = await nativeBackend.probe(true);
-
-    if (!helperApp)
-        return;
-
-    try {
-        let form = new FormData();
-        form.append("rdf_directory", rdf_directory);
-        form.append("rdf_file", rdf_file);
-
-        xml = await nativeBackend.fetchText(`/rdf/import/${rdf_file}`, {method: "POST", body: form});
-    } catch (e) {
-        console.error(e);
+        send.obtainingIcons({shelf: this.#shelf});
+        await this.#startThreads(this.#iconImportThread.bind(this));
     }
 
-    if (!xml)
-        return Promise.reject(new Error("RDF file not found."));
+    async #createShelf(path) {
+        const shelfNode = await Group.getOrCreateByPath(this.#options.name);
 
-    let rdf = new DOMParser().parseFromString(xml, 'application/xml');
-    let id_map = new Map();
-    let reverse_id_map = new Map();
-
-    let shelf_node = await Group.getOrCreateByPath(shelf);
-    if (shelf_node) {
-        if (quick) {
-            shelf_node.external = RDF_EXTERNAL_NAME;
-            shelf_node.uri = rdf_directory;
-            await Node.update(shelf_node);
+        if (shelfNode) {
+            if (this.#options.quick) {
+                shelfNode.external = RDF_EXTERNAL_NAME;
+                shelfNode.uri = path.substring(0, path.lastIndexOf("/"));
+                await Node.update(shelfNode);
+            }
+            this.#nodeID_SB2SY.set(null, shelfNode.id);
         }
-        id_map.set(null, shelf_node.id);
+
+        return shelfNode;
     }
 
-    let pos = 0;
-    let total = 0;
-    let bookmarks = [];
-
-    await traverseRDFTree(rdf, async (parent, node) => {
+    async #createBookmark(parent, node, vars) {
         const now = new Date();
 
         let data = {
-            pos: pos++,
+            pos: vars.pos++,
             uri: node.__sb_source,
             name: node.__sb_title,
             type: node.__sb_type === "folder"
@@ -149,99 +262,30 @@ async function importRDF(shelf, path, threads, quick) {
                     ? NODE_TYPE_SEPARATOR
                     : NODE_TYPE_ARCHIVE),
             details: node.__sb_comment,
-            parent_id: parent ? id_map.get(parent.__sb_id) : shelf_node.id,
+            parent_id: parent ? this.#nodeID_SB2SY.get(parent.__sb_id) : this.#shelf.id,
             todo_state: node.__sb_type === "marked" ? 1 : undefined,
             icon: node.__sb_icon,
             date_added: now,
             date_modified: now
         };
 
-        if (quick) {
+        if (this.#options.quick) {
             data.external = RDF_EXTERNAL_NAME;
             data.external_id = node.__sb_id;
         }
 
         let bookmark = await Bookmark.import(data);
 
-        id_map.set(node.__sb_id, bookmark.id);
+        this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
 
         if (data.type === NODE_TYPE_GROUP)
-            id_map.set(node.__sb_id, bookmark.id);
+            this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
         else if (data.type === NODE_TYPE_ARCHIVE) {
-            reverse_id_map.set(bookmark.id, node.__sb_id);
-
-            bookmarks.push(bookmark);
-            total += 1;
-        }
-    });
-
-    let cancelled = false;
-
-    let cancelListener = function (message, sender, sendResponse) {
-        if (message.type === "cancelRdfImport")
-            cancelled = true;
-    };
-
-    browser.runtime.onMessage.addListener(cancelListener);
-
-
-    if (!quick) {
-        let parts = bookmarks.length > threads ? partition([...bookmarks], threads) : bookmarks.map(b => [b]);
-        let progress = Array.from(new Array(parts.length),() => []);
-
-        let importf = async (items, id) => {
-            if (items.length) {
-                let bookmark = items.shift();
-                let scrapbook_id = reverse_id_map.get(bookmark.id);
-
-                progress[id].push(1);
-                let percent = Math.round((progress.reduce((a, p) => a + p.length, 0) / total) * 100);
-
-                try {
-                    await importRDFArchive(bookmark, scrapbook_id, rdf_directory);
-                } catch (e) {
-                    send.rdfImportError({bookmark: bookmark, error: e.message});
-                }
-
-                send.rdfImportProgress({progress: percent});
-
-                if (!cancelled)
-                    await importf(items, id);
-            }
-        };
-
-        //let startTime = new Date().getTime() / 1000;
-
-        let id = 0;
-        await Promise.all(parts.map(part => importf(part, id++)));
-        send.rdfImportProgress({progress: 0});
-
-        // let loadTime = Math.round(new Date().getTime() / 1000 - startTime);
-        // let m = Math.floor(loadTime / 60);
-        // let s = loadTime - m * 60;
-        //
-        // result.processingTime = m + "m " + s + "s";
-    }
-
-    send.nodesImported({shelf: shelf_node});
-
-    send.obtainingIcons({shelf: shelf_node});
-
-    for (let node of bookmarks) {
-        if (cancelled)
-            break;
-
-        if (node.icon && node.icon.startsWith("resource://scrapbook/")) {
-            node.icon = node.icon.replace("resource://scrapbook/", "");
-            node.icon = nativeBackend.url(`/rdf/import/files/${node.icon}`);
-            await Bookmark.storeIcon(node);
+            this.#nodeID_SY2SB.set(bookmark.id, node.__sb_id);
+            this.#bookmarks.push(bookmark);
         }
     }
 
-    if (bookmarks.length)
-        send.nodesReady({shelf: shelf_node})
-
-    browser.runtime.onMessage.removeListener(cancelListener);
 }
 
 export class RDFImporterBuilder extends StreamImporterBuilder {
@@ -254,10 +298,6 @@ export class RDFImporterBuilder extends StreamImporterBuilder {
     }
 
     _createImporter(options) {
-        return {
-            import() {
-                return importRDF(options.name, options.stream, options.threads, options.quick);
-            }
-        };
+        return new RDFImporter(options);
     }
 }
