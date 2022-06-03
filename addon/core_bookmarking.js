@@ -14,7 +14,7 @@ import {
     showSiteCaptureOptions,
     performSiteCapture,
     startCrawling,
-    abortCrawling
+    abortCrawling, archiveBookmark
 } from "./bookmarking.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
@@ -124,6 +124,13 @@ receive.createArchive = message => {
     return send.beforeBookmarkAdded({node: options})
         .then(addBookmark)
         .catch(addBookmark);
+};
+
+receive.archiveBookmarks = async message => {
+    for (const node of message.nodes) {
+        if (node.type === NODE_TYPE_BOOKMARK)
+            await archiveBookmark(node);
+    }
 };
 
 receive.updateArchive = message => Bookmark.updateArchive(message.id, message.data);

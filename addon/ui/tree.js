@@ -802,9 +802,16 @@ class BookmarkTree {
                     this.sidebarSelectNode(ctxNode);
                 }
             },
+            archiveItem: {
+                label: "Archive",
+                separator_before: ctxNode.__filtering,
+                action: async () => {
+                    send.archiveBookmarks({nodes: selectedNodes.map(n => o(n))});
+                }
+            },
             copyLinkItem: {
                 label: "Copy Link",
-                separator_before: ctxNode.__filtering,
+                separator_before: ctxNode.__filtering && ctxNode.type !== NODE_TYPE_BOOKMARK,
                 action: () => navigator.clipboard.writeText(ctxNode.uri)
             },
             openItem: {
@@ -832,6 +839,7 @@ class BookmarkTree {
             },
             openAllItem: {
                 label: "Open All",
+                separator_before: ctxNode.__filtering && ctxNode.type,
                 action: async () => {
                     let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isEndpoint(n));
                     children.sort(byPosition);
@@ -1309,6 +1317,7 @@ class BookmarkTree {
 
         switch (ctxNode.type) {
             case NODE_TYPE_SHELF:
+                delete items.archiveItem;
                 delete items.cutItem;
                 delete items.copyItem;
                 delete items.shareItem;
@@ -1370,6 +1379,9 @@ class BookmarkTree {
                 }
                 break;
         }
+
+        if (ctxNode.type !== NODE_TYPE_BOOKMARK)
+            delete items.archiveItem;
 
         if (ctxNode.type === NODE_TYPE_SEPARATOR) {
             const deleteItem = items.deleteItem;

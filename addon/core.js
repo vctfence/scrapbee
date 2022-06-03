@@ -23,21 +23,25 @@ receive.startListener(true);
     await systemInitialization;
 
     if (await navigator.storage.persist()) {
-        search.initializeOmnibox();
-        // TODO: somehow should be done on the addon load in MV3
-        await browserBackend.reconcileBrowserBookmarksDB();
-        await cloudBackend.enableBackgroundSync(settings.cloud_background_sync());
-
-        if (settings.background_sync())
-            await sendLocal.enableBackgroundSync({enable: true});
-
-        // TODO: somehow should be done on the addon load in MV3
-        if (settings.sync_on_startup())
-            sendLocal.performSync();
+        // TODO: somehow should be done only once on the addon load in MV3
+        await performStartupInitialization();
 
         console.log("==> core.js loaded");
     }
 })();
+
+async function performStartupInitialization() {
+    search.initializeOmnibox();
+
+    await browserBackend.reconcileBrowserBookmarksDB();
+    await cloudBackend.enableBackgroundSync(settings.cloud_background_sync());
+
+    if (settings.background_sync())
+        await sendLocal.enableBackgroundSync({enable: true});
+
+    if (settings.sync_on_startup())
+        sendLocal.performSync();
+}
 
 browser.webRequest.onBeforeSendHeaders.addListener(
     (details) => {

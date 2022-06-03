@@ -177,8 +177,19 @@ async function captureNonHTMLTab(tab, bookmark) {
 export function finalizeCapture(bookmark) {
     if (bookmark?.__automation && bookmark?.select)
         send.bookmarkCreated({node: bookmark});
-    else if (bookmark && !bookmark.__automation)
+    else if (bookmark && !bookmark.__automation && !bookmark.__type_change)
         send.bookmarkAdded({node: bookmark});
+    else if (bookmark?.__type_change)
+        send.nodesUpdated();
+}
+
+export async function archiveBookmark(node) {
+    const bookmark = await Node.get(node.id);
+    bookmark.type = NODE_TYPE_ARCHIVE;
+    await Node.update(bookmark);
+
+    bookmark.__type_change = true;
+    await packPage(bookmark.uri, bookmark, () => null, () => null, false);
 }
 
 export async function showSiteCaptureOptions(tab, bookmark) {
