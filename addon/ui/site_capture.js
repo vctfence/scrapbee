@@ -22,6 +22,7 @@ window.onload = function () {
         .addEventListener("click", e => {
             const options = {
                 depth: parseInt(document.getElementById("option-crawling-depth").value) || 1,
+                delay: parseInt(document.getElementById("option-crawling-delay").value) || 0,
                 threads: parseInt(document.getElementById("option-processing-threads").value) || 5,
                 ignoreHashes: document.getElementById("option-ignore-hashes").checked,
                 includeRules: document.getElementById("include-links").value,

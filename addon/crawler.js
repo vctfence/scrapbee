@@ -3,6 +3,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {NODE_TYPE_ARCHIVE} from "./storage.js";
 import {fetchWithTimeout} from "./utils_io.js";
 import {send} from "./proxy.js";
+import {sleep} from "./utils.js";
 
 class Rules {
     #rules;
@@ -167,13 +168,17 @@ class Crawler {
         this.#abort = true;
     }
 
-    #startThreads() {
+    async #startThreads() {
         if (!this.#crawling) {
             this.#crawling = true;
 
             this.#threads = Math.min(this.#options.threads, this.#queue.size);
-            for (let i = 0; i < this.#threads; ++i)
+            for (let i = 0; i < this.#threads; ++i) {
                 this.#visitLink(this.#queue.pop());
+
+                if (this.#options.delay)
+                    await sleep(this.#options.delay * 1000);
+            }
         }
     }
 
@@ -188,6 +193,9 @@ class Crawler {
         options.level = link.level;
 
         const bookmark = await this.#savePage(link, options);
+
+        if (this.#options.delay)
+            await sleep(this.#options.delay * 1000);
 
         this.#crawl(bookmark);
     }
