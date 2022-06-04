@@ -272,7 +272,7 @@ receive.uploadFiles = async message => {
 }
 
 receive.browseNode = message => {
-    browseNode(message.node, message.tab, message.preserveHistory, message.container);
+    browseNode(message.node, message);
 };
 
 receive.browseNotes = message => {

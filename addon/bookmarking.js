@@ -360,9 +360,11 @@ function configureArchiveTab(node, archiveTab) {
 }
 
 async function configureArchivePage(tab, node) {
-    await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
-    await injectScriptFile(tab.id, {file: "lib/jquery.js"});
-    await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
+    if (node.type === NODE_TYPE_ARCHIVE) {
+        await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
+        await injectScriptFile(tab.id, {file: "lib/jquery.js"});
+        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
+    }
 
     if (await Bookmark.isSitePage(node))
         await configureSiteLinks(node, tab);
@@ -407,10 +409,7 @@ function revokeTrackedObjectURLs(tabId) {
     }
 }
 
-export async function browseNode(node, existingTab, preserveHistory, container) {
-
-    const options = {existingTab, preserveHistory, container};
-
+export async function browseNode(node, options) {
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
             return browseBookmark(node, options);
@@ -427,8 +426,8 @@ export async function browseNode(node, existingTab, preserveHistory, container) 
 }
 
 function openURL(url, options, newtabf = openPage) {
-    if (options?.existingTab)
-        return updateTab(options.existingTab, url, options.preserveHistory);
+    if (options?.tab)
+        return updateTab(options.tab, url, options.preserveHistory);
 
     return newtabf(url, options?.container);
 }
