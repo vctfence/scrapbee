@@ -313,6 +313,19 @@ export class CloudBackend {
 
     // should only be called in the background script through message
     async reconcileCloudBookmarksDB(verbose) {
+        if (this._recondiling)
+            return;
+
+        this._recondiling = true;
+        try {
+            await this._reconcileCloudBookmarksDB(verbose);
+        }
+        finally {
+            this._recondiling = false;
+        }
+    }
+
+    async _reconcileCloudBookmarksDB(verbose) {
         await settings.load();
 
         if (settings.cloud_enabled()) {
@@ -334,7 +347,6 @@ export class CloudBackend {
             try {
                 const remoteDB = await this._provider.downloadDB();
                 let remoteIDs = remoteDB.nodes.map(n => n.external_id);
-
                 await ExternalNode.deleteMissingIn(remoteIDs, CLOUD_EXTERNAL_NAME);
 
                 const objects = remoteDB.objects;

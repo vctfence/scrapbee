@@ -15,6 +15,7 @@ import * as automation from "./core_automation.js";
 import * as sync from "./core_sync.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
+import {UndoManager} from "./bookmarks_undo.js";
 
 receiveExternal.startListener(true);
 receive.startListener(true);
@@ -23,7 +24,7 @@ receive.startListener(true);
     await systemInitialization;
 
     if (await navigator.storage.persist()) {
-        // TODO: somehow should be done only once on the addon load in MV3
+        // TODO: in MV3 somehow this should be done only once on the addon load
         await performStartupInitialization();
 
         console.log("==> core.js loaded");
@@ -41,6 +42,8 @@ async function performStartupInitialization() {
 
     if (settings.sync_on_startup())
         sendLocal.performSync();
+
+    await UndoManager.commit();
 }
 
 browser.webRequest.onBeforeSendHeaders.addListener(

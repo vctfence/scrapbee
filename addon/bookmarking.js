@@ -9,7 +9,15 @@ import {
 } from "./utils_browser.js";
 import {capitalize, getMimetypeExt, sleep} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
+import {
+    NODE_TYPE_SHELF,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_GROUP,
+    NODE_TYPE_NOTES,
+    RDF_EXTERNAL_NAME,
+    UNDO_DELETE
+} from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
 import {fetchWithTimeout} from "./utils_io.js";
 import {Archive, Node} from "./storage_entities.js";
@@ -19,6 +27,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
 import {Group} from "./bookmarks_group.js";
 import {Query} from "./storage_query.js";
+import {Undo} from "./storage_undo.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -519,4 +528,3 @@ async function listSiteArchives(node) {
     const pages = await Query.fullSubtree(parent.id, true);
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
 }
-

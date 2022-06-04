@@ -1,6 +1,6 @@
 import {formatBytes, getMimetypeExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
-import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "./storage.js";
+import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
 import {getActiveTab, showNotification} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
@@ -14,7 +14,8 @@ import {
     showSiteCaptureOptions,
     performSiteCapture,
     startCrawling,
-    abortCrawling, archiveBookmark
+    abortCrawling,
+    archiveBookmark
 } from "./bookmarking.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
@@ -24,6 +25,8 @@ import {Group} from "./bookmarks_group.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
+import {UndoManager} from "./bookmarks_undo.js";
+import {Query} from "./storage_query.js";
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -167,6 +170,10 @@ receive.deleteNodes = message => {
     return Bookmark.delete(message.node_ids);
 };
 
+receive.softDeleteNodes = message => {
+    return Bookmark.softDelete(message.node_ids);
+};
+
 receive.reorderNodes = message => {
     return Bookmark.reorder(message.positions);
 };
@@ -296,4 +303,20 @@ receive.continueSiteCapture = (message, sender) => {
 
 receive.performSiteCapture = (message, sender) => {
     performSiteCapture(message.bookmark);
+};
+
+receive.performUndo = async message => {
+    send.startProcessingIndication();
+    try {
+        const result = await UndoManager.undo();
+
+        switch (result.operation) {
+            case UNDO_DELETE:
+                send.nodesImported({shelf: result.shelf});
+            break;
+        }
+    }
+    finally {
+        send.stopProcessingIndication();
+    }
 };

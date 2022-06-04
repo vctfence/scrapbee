@@ -18,32 +18,30 @@ the [online help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/h
 
 ### Objectives
 
-* ~~Store data at IndexedDB~~ [DONE]
-* ~~Replace "RDF" tree with jsTree~~ [DONE]
-* ~~Add a fancy user-action popup with tree of directories to add bookmarks into~~ [DONE]
-* ~~Use [SavePageWE](https://addons.mozilla.org/en-US/firefox/addon/save-page-we/) engine to save pages in a DB-record as a single file since it is GPL (many kudos to SavePageWE developers)~~ [DONE]
-* ~~Rework archive page editing tools to accommodate new storage method~~ [DONE]
-* ~~Store indexed content of downloaded html documents in the database~~ [DONE]
-* ~~Add search text input on the toolbar; search by tags, title, content and other attributes~~ [DONE]
-* ~~Control from~~ [iShell](https://gchristensen.github.io/ishell/) [DONE]
-* ~~Basic TODO functionality a la org~~ [DONE]
-* ~~Import/export from .org~~ [DONE]
-* ~~Import from Firefox/Chrome .html bookmarks~~
-* ~~Rework settings page~~ [DONE]
-* ~~Dark theme~~ [DONE]
-* ~~Write help~~ [DONE]
-* ~~A little bit of Wiki functionality: editable notes in org markup and other formats~~ [DONE]
-* ~~Live link/duplicate checker~~ [DONE]
-* ~~Helper application [DONE]~~
-* ~~Multi-account containers support [DONE]~~
-* ~~Automation API [DONE]~~
-* ~~Full text search/filtering through archived content, notes and comments [DONE]~~
-* ~~Backup management UI [DONE]~~
-* ~~File-based synchronization [DONE]~~
-* ~~Bookmark browsing on Android [DONE]~~
-
-### Project status
-
-Currently, the project is considered as a permanent alpha, the codebase is highly volatile. Be prepared for breaking
-changes, devastating bugs and groundbreaking experiments. Nevertheless, do not hesitate to support the author
-if you have a good use of the software.
+* [DONE] Store data at IndexedDB
+* [DONE] Replace "RDF" tree with [jsTree](https://www.jstree.com/)
+* [DONE] Add a fancy user-action popup with tree of directories to add bookmarks into
+* [DONE] Since it is GPL, use [SavePageWE](https://addons.mozilla.org/en-US/firefox/addon/save-page-we/) engine to save pages in a DB-record as a single file (many kudos to SavePageWE developers)
+* [DONE] Rework archive page editing tools to accommodate new storage method
+* [DONE] Store indexed content of downloaded html documents in the database
+* [DONE] Add search text input on the toolbar; search by tags, title, content and other attributes
+* [DONE] Control from [iShell](https://gchristensen.github.io/ishell/)
+* [DONE] Basic TODO functionality a la ORG
+* [DONE] Import/export from .org
+* [DONE] Import from Firefox/Chrome .html bookmarks
+* [DONE] Rework settings page
+* [DONE] Dark theme
+* [DONE] Write help
+* [DONE] A little bit of Wiki functionality: editable notes in org markup and other formats
+* [DONE] Duplicate/rotten link checker
+* [DONE] Create an android application to share/pick up links to/from the cloud
+* [DONE] Create a helper application to transcend limits of WebExtensions
+* [DONE] Import of ScrapBook RDF archives
+* [DONE] Multi-account containers support
+* [DONE] Automation API
+* [DONE] Full text search/filtering through archived content, notes and comments
+* [DONE] Backup management UI
+* [DONE] File-based synchronization
+* [DONE] Add ability to browser synchronized bookmarks to the android application
+* [DONE] Add ability to capture entire sites a la WebScrapBook
+* [DONE] Add ability to undo bookmark deletions

@@ -82,6 +82,8 @@ export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_NAME, CLOUD_EXTERNAL
 
 export const DEFAULT_POSITION = 2147483647;
 
+export const UNDO_DELETE = 1;
+
 export const NODE_PROPERTIES =
     ["id",
      "pos",

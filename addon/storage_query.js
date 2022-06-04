@@ -38,6 +38,11 @@ class QueryIDB extends EntityIDB {
         return ascendantIds;
     }
 
+    async rootOf(id) {
+        const ascendants = await this.ascendantIdsOf(id);
+        return Node.get(ascendants.at(-1));
+    }
+
     async selectAllChildrenIdsOf(id, children) {
         let directChildren = [];
         await this._db.nodes.where("parent_id").equals(id)

@@ -44,6 +44,7 @@ import {Bookmark} from "../bookmarks_bookmark.js";
 import {Group} from "../bookmarks_group.js";
 import {Icon, Node} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
+import {UndoManager} from "../bookmarks_undo.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -83,8 +84,14 @@ window.onload = async function () {
     // in the case if settings are cleaned by user
     localStorage.setItem("sidebar-show-sync", settings.sync_enabled()? "show": "hide");
 
-    $("#shelf-menu-button").click(() => {
+    $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();
+
+        if (await UndoManager.canUndo())
+            $("#shelf-menu-undo").show();
+        else
+            $("#shelf-menu-undo").hide();
+
         $("#shelf-menu").toggle();
     });
 
@@ -98,6 +105,7 @@ window.onload = async function () {
 
     $("#shelf-menu-export").click(() => performExport());
 
+    $("#shelf-menu-undo").click(() => send.performUndo());
     $("#shelf-menu-abort").click(() => send.abortRequested());
 
     $("#search-mode-switch").click(() => {
@@ -426,7 +434,7 @@ async function deleteShelf() {
     const proceed = await confirm("Warning", "Do you really want to delete '" + name + "'?");
 
     if (proceed && name) {
-        await send.deleteNodes({node_ids: id})
+        await send.softDeleteNodes({node_ids: id})
         shelfList.removeShelves(id);
         switchShelf(DEFAULT_SHELF_ID);
     }
@@ -654,6 +662,10 @@ async function displayRandomBookmark() {
 
         randomBookmarkTimeout = setTimeout(displayRandomBookmark, 60000 * 5);
     }
+}
+
+function performUndo() {
+
 }
 
 receive.startProcessingIndication = message => {

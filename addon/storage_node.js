@@ -49,6 +49,10 @@ export class NodeIDB extends EntityIDB {
         return node;
     }
 
+    async put(node) {
+        return this._db.nodes.put(this.sanitized(node));
+    }
+
     async import(node) {
         node.id = await this._db.nodes.add(this.sanitized(node));
         return node;
@@ -90,8 +94,7 @@ export class NodeIDB extends EntityIDB {
             await this._db.nodes.update(node.id, this.sanitized(node));
         }
         else {
-            console.error("Updating a node without id or a null reference");
-            console.log(node);
+            console.error("Updating a node without id or a null reference", node);
         }
         return node;
     }
@@ -130,28 +133,30 @@ export class NodeIDB extends EntityIDB {
         if (!Array.isArray(ids))
             ids = [ids];
 
-        if (this._db.tables.some(t => t.name === "blobs"))
-            await this._db.blobs.where("node_id").anyOf(ids).delete();
+        await this.deleteDependencies(ids);
 
-        if (this._db.tables.some(t => t.name === "index"))
-            await this._db.index.where("node_id").anyOf(ids).delete();
+        return this.deleteShallow(ids);
+    }
 
-        if (this._db.tables.some(t => t.name === "notes"))
-            await this._db.notes.where("node_id").anyOf(ids).delete();
-
-        if (this._db.tables.some(t => t.name === "icons"))
-            await this._db.icons.where("node_id").anyOf(ids).delete();
-
-        if (this._db.tables.some(t => t.name === "comments"))
-            await this._db.comments.where("node_id").anyOf(ids).delete();
-
-        if (this._db.tables.some(t => t.name === "index_notes"))
-            await this._db.index_notes.where("node_id").anyOf(ids).delete();
-
-        if (this._db.tables.some(t => t.name === "index_comments"))
-            await this._db.index_comments.where("node_id").anyOf(ids).delete();
+    async deleteShallow(ids) {
+        if (!Array.isArray(ids))
+            ids = [ids];
 
         return this._db.nodes.bulkDelete(ids);
     }
+
+    async deleteDependencies(ids) {
+        if (!Array.isArray(ids))
+            ids = [ids];
+
+        await this._db.blobs?.where("node_id").anyOf(ids).delete();
+        await this._db.index?.where("node_id").anyOf(ids).delete();
+        await this._db.notes?.where("node_id").anyOf(ids).delete();
+        await this._db.icons?.where("node_id").anyOf(ids).delete();
+        await this._db.comments?.where("node_id").anyOf(ids).delete();
+        await this._db.index_notes?.where("node_id").anyOf(ids).delete();
+        await this._db.index_comments?.where("node_id").anyOf(ids).delete();
+    }
+
 }
 

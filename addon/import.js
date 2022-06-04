@@ -18,6 +18,7 @@ import {NetscapeImporterBuilder} from "./import_html.js";
 import {RDFImporterBuilder} from "./import_rdf.js";
 import {StreamExporterBuilder, StreamImporterBuilder, StructuredStreamImporterBuilder} from "./import_drivers.js";
 import {importTransaction} from "./import_transaction.js";
+import {UndoManager} from "./bookmarks_undo.js";
 
 export class Export {
     static create(format) {
@@ -94,6 +95,12 @@ export class Import {
     }
 
     static async prepare(shelf) {
+        try {
+            await UndoManager.commit();
+        } catch (e) {
+            console.error(e);
+        }
+
         if (settings.undo_failed_imports())
             return;
 

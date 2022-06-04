@@ -1176,7 +1176,7 @@ class BookmarkTree {
                             let selectedIds = selectedNodes.map(n => o(n).id);
 
                             try {
-                                await send.deleteNodes({node_ids: selectedIds});
+                                await send.softDeleteNodes({node_ids: selectedIds});
 
                                 tree.delete_node(selectedNodes);
                                 this.onDeleteShelf(selectedIds);
@@ -1191,7 +1191,7 @@ class BookmarkTree {
                             this.startProcessingIndication();
 
                             try {
-                                await send.deleteNodes({node_ids: selectedNodes.map(n => o(n).id)});
+                                await send.softDeleteNodes({node_ids: selectedNodes.map(n => o(n).id)});
                                 tree.delete_node(selectedNodes);
                             }
                             finally {

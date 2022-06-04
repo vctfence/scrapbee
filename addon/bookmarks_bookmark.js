@@ -11,7 +11,7 @@ import {
     NODE_TYPE_GROUP, NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
-    TODO_SHELF_NAME, DEFAULT_POSITION
+    TODO_SHELF_NAME, DEFAULT_POSITION, UNDO_DELETE
 } from "./storage.js";
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
@@ -21,6 +21,8 @@ import {ishellBackend} from "./backend_ishell.js";
 import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {getFavicon} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
+import {Undo} from "./storage_undo.js";
+import {UndoManager} from "./bookmarks_undo.js";
 
 export class BookmarkManager extends EntityManager {
 
@@ -371,23 +373,37 @@ export class BookmarkManager extends EntityManager {
         return newNodes;
     }
 
-    async delete(ids) {
+    async _delete(ids, deletef) {
         if (!Array.isArray(ids))
             ids = [ids];
 
-        let all_nodes = await Query.fullSubtree(ids);
+        let allNodes = await Query.fullSubtree(ids);
 
         try {
-            await this.plugins.deleteBookmarks(all_nodes);
+            await this.plugins.deleteBookmarks(allNodes);
         }
         catch (e) {
             console.error(e);
         }
 
-        await Node.delete(all_nodes.map(n => n.id));
+        await deletef(allNodes);
 
-        if (all_nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
+        if (allNodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
             ishellBackend.invalidateCompletion();
+    }
+
+    async delete(ids) {
+        return this._delete(ids, nodes => Node.delete(nodes.map(n => n.id)));
+    }
+
+    async softDelete(ids) {
+        return this._delete(ids, this._undoDelete.bind(this));
+    }
+
+    async _undoDelete(nodes) {
+        await UndoManager.pushDeleted(nodes);
+
+        return Node.deleteShallow(nodes.map(n => n.id));
     }
 
     async deleteChildren(id) {
@@ -396,6 +412,15 @@ export class BookmarkManager extends EntityManager {
         await Node.delete(all_nodes.map(n => n.id).filter(i => i !== id));
 
         ishellBackend.invalidateCompletion();
+    }
+
+    async restore(node) {
+        await Node.put(node);
+
+        if (node.parent_id) {
+            const parent = await Node.get(node.parent_id);
+            await this.plugins.createBookmark(node, parent);
+        }
     }
 
     async storeIcon(node, iconData, contentType) {
