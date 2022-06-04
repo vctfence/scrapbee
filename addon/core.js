@@ -17,6 +17,18 @@ import {getActiveTabMetadata} from "./bookmarking.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
 import {UndoManager} from "./bookmarks_undo.js";
 
+browser.runtime.onInstalled.addListener(async details => {
+    await settings.load();
+
+    if (details.reason === "install") {
+        settings.install_date(Date.now());
+        settings.install_version(browser.runtime.getManifest().version);
+    }
+    else if (details.reason === "update") {
+        //settings.pending_announcement("options.html#about");
+    }
+});
+
 receiveExternal.startListener(true);
 receive.startListener(true);
 
