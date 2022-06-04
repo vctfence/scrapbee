@@ -1,3 +1,5 @@
+import {fetchWithTimeout} from "./utils_io.js";
+
 var entityMap = {
     '&': '&amp;',
     '<': '&lt;',
@@ -182,4 +184,18 @@ function extractTextRecursive(string, parser) {
 function removeScriptTags(doc) {
     $("body script", doc).remove();
     $("body style", doc).remove();
+}
+
+export async function isHTMLLink(url, timeout = 10000) {
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {method: "head"});
+    } catch (e) {
+        console.error(e);
+    }
+
+    if (response?.ok) {
+        const contentType = response.headers.get("content-type");
+        return !!(contentType && contentType.toLowerCase().startsWith("text/html"));
+    }
 }

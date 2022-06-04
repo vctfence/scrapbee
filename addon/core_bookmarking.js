@@ -130,9 +130,17 @@ receive.createArchive = message => {
 };
 
 receive.archiveBookmarks = async message => {
-    for (const node of message.nodes) {
-        if (node.type === NODE_TYPE_BOOKMARK)
-            await archiveBookmark(node);
+    send.startProcessingIndication();
+
+    try {
+        for (const node of message.nodes) {
+            if (node.type === NODE_TYPE_BOOKMARK)
+                await archiveBookmark(node);
+        }
+    }
+    finally {
+        send.nodesUpdated();
+        send.stopProcessingIndication();
     }
 };
 

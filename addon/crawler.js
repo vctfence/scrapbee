@@ -4,6 +4,7 @@ import {NODE_TYPE_ARCHIVE} from "./storage.js";
 import {fetchWithTimeout} from "./utils_io.js";
 import {send} from "./proxy.js";
 import {sleep} from "./utils.js";
+import {isHTMLLink} from "./utils_html.js";
 
 class Rules {
     #rules;
@@ -220,7 +221,7 @@ class Crawler {
 
     async #savePage(link, options) {
         let resource;
-        const isHTML = await this.#isHTMLLink(link);
+        const isHTML = await isHTMLLink(link.url);
         if (isHTML === true)
             resource = await this.#captureHTMLPage(link, options);
         else if (isHTML === false)
@@ -230,20 +231,6 @@ class Crawler {
             await this.#saveArchive(resource);
 
         return resource?.bookmark
-    }
-
-    async #isHTMLLink(link) {
-        let response;
-        try {
-            response = await fetchWithTimeout(link.url, {method: "head"});
-        } catch (e) {
-            console.error(e);
-        }
-
-        if (response?.ok) {
-            const contentType = response.headers.get("content-type");
-            return !!(contentType && contentType.toLowerCase().startsWith("text/html"));
-        }
     }
 
     #captureHTMLPage(link, options) {

@@ -10,13 +10,11 @@ import {
 import {capitalize, getMimetypeExt, sleep} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
 import {
-    NODE_TYPE_SHELF,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
     NODE_TYPE_NOTES,
-    RDF_EXTERNAL_NAME,
-    UNDO_DELETE
+    RDF_EXTERNAL_NAME
 } from "./storage.js";
 import {nativeBackend} from "./backend_native.js";
 import {fetchWithTimeout} from "./utils_io.js";
@@ -27,7 +25,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
 import {Group} from "./bookmarks_group.js";
 import {Query} from "./storage_query.js";
-import {Undo} from "./storage_undo.js";
+import {isHTMLLink} from "./utils_html.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -197,8 +195,22 @@ export async function archiveBookmark(node) {
     bookmark.type = NODE_TYPE_ARCHIVE;
     await Node.update(bookmark);
 
-    bookmark.__type_change = true;
-    await packPage(bookmark.uri, bookmark, () => null, () => null, false);
+    const isHTML = await isHTMLLink(bookmark.uri);
+    if (isHTML === true) {
+        bookmark.__type_change = true;
+        await packPage(bookmark.uri, bookmark, () => null, () => null, false);
+    }
+    else if (isHTML === false) {
+        let response;
+        try {
+            response = await fetchWithTimeout(bookmark.uri);
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (response.ok)
+           await Bookmark.storeArchive(bookmark.id, await response.blob(), response.headers.get("content-type"));
+    }
 }
 
 export async function showSiteCaptureOptions(tab, bookmark) {
