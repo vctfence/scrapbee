@@ -229,18 +229,18 @@ export async function showSiteCaptureOptions(tab, bookmark) {
 }
 
 export async function performSiteCapture(bookmark) {
-    const group = await Group.addSite(bookmark.parent_id, bookmark.name);
-    bookmark.parent_id = group.id;
+    if (crawler.initialize(bookmark)) {
+        const group = await Group.addSite(bookmark.parent_id, bookmark.name);
+        bookmark.parent_id = group.id;
 
-    crawler.initialize(bookmark);
-
-    sendLocal.createArchive({data: bookmark});
+        sendLocal.createArchive({data: bookmark});
+    }
 }
 
 export function startCrawling(bookmark) {
     bookmark.__site_capture.level = 0;
 
-    crawler.enqueue(bookmark);
+    crawler.crawl(bookmark);
 
     send.startProcessingIndication({noWait: true});
     send.toggleAbortMenu({show: true});

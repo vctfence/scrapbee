@@ -5,6 +5,7 @@ import {fetchWithTimeout} from "./utils_io.js";
 import {send} from "./proxy.js";
 import {sleep} from "./utils.js";
 import {isHTMLLink} from "./utils_html.js";
+import {showNotification} from "./utils_browser.js";
 
 class Rules {
     #rules;
@@ -138,7 +139,6 @@ class Crawler {
     #excludeRules;
     #siteBookmark;
     #threads = 0;
-    #crawling = false;
     #abort = false;
     onFinish = () => null;
 
@@ -161,25 +161,19 @@ class Crawler {
                 }
             }
         }
-
-        this.#startThreads();
     }
 
     abort() {
         this.#abort = true;
     }
 
-    async #startThreads() {
-        if (!this.#crawling) {
-            this.#crawling = true;
+    async startThreads() {
+        this.#threads = Math.min(this.#options.threads, this.#queue.size);
+        for (let i = 0; i < this.#threads; ++i) {
+            this.#visitLink(this.#queue.pop());
 
-            this.#threads = Math.min(this.#options.threads, this.#queue.size);
-            for (let i = 0; i < this.#threads; ++i) {
-                this.#visitLink(this.#queue.pop());
-
-                if (this.#options.delay)
-                    await sleep(this.#options.delay * 1000);
-            }
+            if (this.#options.delay)
+                await sleep(this.#options.delay * 1000);
         }
     }
 
@@ -193,20 +187,24 @@ class Crawler {
         const options = {...this.#options};
         options.level = link.level;
 
-        const bookmark = await this.#savePage(link, options);
+        try {
+            const bookmark = await this.#savePage(link, options);
 
-        if (this.#options.delay)
-            await sleep(this.#options.delay * 1000);
+            if (bookmark)
+                this.enqueue(bookmark);
+        } catch (e) {
+            console.error(e);
+        }
 
-        this.#crawl(bookmark);
+        this.#crawl();
     }
 
-    #crawl(bookmark) {
+    async #crawl() {
         if (this.#abort)
             return;
 
-        if (bookmark)
-            this.enqueue(bookmark);
+        if (this.#options.delay)
+            await sleep(this.#options.delay * 1000);
 
         const nextLink = this.#queue.pop();
 
@@ -274,13 +272,22 @@ class Crawler {
 let crawler;
 
 export function initialize(bookmark) {
-    crawler = new Crawler(bookmark);
-    crawler.onFinish = finalize;
+    if (crawler) {
+        showNotification("Another site capture process is running");
+        return false;
+    }
+    else {
+        crawler = new Crawler(bookmark);
+        crawler.onFinish = finalize;
+        return true;
+    }
 }
 
-export function enqueue(bookmark) {
-    if (crawler)
+export function crawl(bookmark) {
+    if (crawler) {
         crawler.enqueue(bookmark);
+        crawler.startThreads();
+    }
 }
 
 export function abort() {
