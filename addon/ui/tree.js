@@ -1312,7 +1312,14 @@ class BookmarkTree {
                         Node.update(node);
                     }
                 }
-            }
+            },
+            debugItem: {
+                separator_before: true,
+                label: "Debug...",
+                action: async () => {
+                    console.log(ctxNode);
+                }
+            },
         };
 
         switch (ctxNode.type) {
@@ -1442,6 +1449,9 @@ class BookmarkTree {
             items["checkLinksItem"] && (items["checkLinksItem"]._disabled = true);
             items["openOriginalItem"] && (items["openOriginalItem"]._disabled = true);
         }
+
+        if (!settings.debug_mode())
+            delete items.debugItem;
 
         return items;
     }
