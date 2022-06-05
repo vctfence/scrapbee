@@ -51,52 +51,189 @@ receiveExternal.scrapyardGetVersion = (message, sender) => {
     return browser.runtime.getManifest().version;
 };
 
-export async function setUpBookmarkMessage(message, sender, activeTab) {
-    // by design, messages from iShell builtin Scrapyard commands always contain "search" parameter
-    const automation = !(ishellBackend.isIShell(sender.id) && message.search);
+export async function createBookmarkNode(message, sender, activeTab) {
+    const node = {...message};
 
-    if (automation)
-        sanitizeIncomingObject(message);
+    sanitizeIncomingObject(node);
 
-    message.__automation = automation;
+    node.__automation = true;
 
-    if (message.type === NODE_TYPE_ARCHIVE && message.url === "")
-        message.uri = undefined;
-    else if (!message.uri)
-        message.uri = message.url || activeTab.url;
+    if (node.type === NODE_TYPE_ARCHIVE && node.url === "")
+        node.uri = undefined;
+    else if (!node.uri)
+        node.uri = node.url || activeTab.url;
 
-    if (message.uri === null || message.uri === undefined || isSpecialPage(message.uri)) {
+    if (node.uri === null || node.uri === undefined || isSpecialPage(node.uri)) {
         notifySpecialPage();
-        return false;
+        return null;
     }
 
-    if (!message.name)
-        message.name = message.title || activeTab.title;
+    if (!node.name)
+        node.name = node.title || activeTab.title;
 
-    if (message.icon === "" || message.pack)
-        message.icon = undefined;
-    else if (!message.icon && !message.local)
-        message.icon = await getFaviconFromTab(activeTab);
+    if (node.icon === "" || node.pack)
+        node.icon = undefined;
+    else if (!node.icon && !node.local)
+        node.icon = await getFaviconFromTab(activeTab);
 
-    const path = Path.expand(message.path);
+    const path = Path.expand(node.path);
     const group = await Group.getOrCreateByPath(path);
-    message.parent_id = group.id;
-    delete message.path;
+    node.parent_id = group.id;
+    delete node.path;
 
-    // adding bookmark from ishell, take preparations in UI
-    if (!automation) {
+    return node;
+}
+
+receiveExternal.scrapyardAddBookmark = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    message.type = NODE_TYPE_BOOKMARK;
+
+    const node = await createBookmarkNode(message, sender, await getActiveTab());
+    if (!node)
+        return;
+
+    if (node.icon === true || node.title === true) {
         try {
-            Bookmark.setTentativeId(message);
-            await send.beforeBookmarkAdded({node: message});
-        } catch (e) {
+            const content = await fetchText(node.uri);
+            const doc = parseHtml(content);
+
+            if (node.icon === true)
+                node.icon = await getFavicon(node.uri, doc);
+
+            if (node.title === true) {
+                const titleElement = doc.querySelector("title");
+                if (titleElement)
+                    node.name = titleElement.textContent;
+                else
+                    node.name = "Untitled";
+            }
+        }
+        catch (e) {
+            if (node.icon === true)
+                node.icon = undefined;
+
+            if (node.title === true)
+                node.name = "Untitled";
+
             console.error(e);
         }
     }
 
-    return true;
+    return Bookmark.add(node, NODE_TYPE_BOOKMARK)
+        .then(async bookmark => {
+            if (node.comments)
+                await Bookmark.storeComments(bookmark.id, node.comments);
+
+            if (node.select)
+                send.bookmarkCreated({node: bookmark});
+
+            return bookmark.uuid;
+        });
+};
+
+receiveExternal.scrapyardAddArchive = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    let activeTab = await getActiveTab();
+
+    message.type = NODE_TYPE_ARCHIVE;
+
+    const node = await createBookmarkNode(message, sender, await getActiveTab());
+    if (!node)
+        return;
+
+    if (!node.name || node.name === true)
+        node.name = "Unnamed";
+
+    if (!node.content_type)
+        node.content_type = getMimetypeExt(node.uri);
+
+    let saveContent = (bookmark, content) => {
+        const contentType = node.pack? "text/html": node.content_type;
+
+        return Bookmark.storeArchive(bookmark.id, content, contentType, bookmark.__index)
+            .then(() => {
+                if (node.select)
+                    send.bookmarkCreated({node: bookmark});
+
+                return bookmark.uuid;
+            });
+    };
+
+    return Bookmark.add(node, NODE_TYPE_ARCHIVE)
+        .then(async bookmark => {
+
+            if (node.comments)
+                await Bookmark.storeComments(bookmark.id, node.comments);
+
+            if (node.local) {
+                let content = await downloadLocalContent(bookmark);
+
+                bookmark.uri = "";
+                await Bookmark.update(bookmark);
+
+                return saveContent(bookmark, content);
+            }
+            else if (node.pack) {
+                const page = await packUrlExt(node.url, node.hide_tab);
+
+                if (page.icon) {
+                    bookmark.icon = page.icon
+                    await Bookmark.storeIcon(bookmark);
+                }
+
+                bookmark.name = page.title;
+
+                await Bookmark.update(bookmark);
+
+                return saveContent(bookmark, page.html);
+            }
+            else if (node.content) {
+                return saveContent(bookmark, node.content)
+            }
+            else {
+                Object.assign(bookmark, node);
+                bookmark.__tab_id = activeTab.id;
+                captureTab(activeTab, bookmark);
+
+                return bookmark.uuid;
+            }
+        });
+};
+
+async function downloadLocalContent(node) {
+    const localURI = await setUpLocalFileCapture(node);
+
+    let content;
+    if (node.content_type === "text/html") {
+        const page = await packUrlExt(localURI, node.hide_tab);
+
+        if (page.icon && (node.icon === null || node.icon === undefined)) {
+            node.icon = page.icon
+            await Bookmark.storeIcon(node);
+        }
+
+        if (page.title)
+            node.name = page.title;
+
+        content = page.html;
+    }
+    else {
+        const response = await fetch(localURI);
+        if (response.ok) {
+            node.content_type = response.headers.get("content-type") || node.content_type;
+            content = await response.arrayBuffer();
+        }
+    }
+
+    await cleanUpLocalFileCapture(node);
+    return content;
 }
 
-export async function setUpLocalFileCapture(message) {
+async function setUpLocalFileCapture(message) {
     if (message.uri?.startsWith("http"))
         throw new Error("HTTP URL is processed as a local path.");
 
@@ -115,151 +252,10 @@ export async function setUpLocalFileCapture(message) {
     }
 }
 
-export async function cleanUpLocalFileCapture(message) {
+async function cleanUpLocalFileCapture(message) {
     if (message.local)
         await nativeBackend.fetch(`/serve/release_path/${message.__local_uuid}`);
 }
-
-receiveExternal.scrapyardAddBookmark = async (message, sender) => {
-    if (!isAutomationAllowed(sender))
-        throw new Error();
-
-    message.type = NODE_TYPE_BOOKMARK;
-
-    if (!await setUpBookmarkMessage(message, sender, await getActiveTab()))
-        return;
-
-    if (message.icon === true || message.title === true) {
-        try {
-            const content = await fetchText(message.uri);
-            const doc = parseHtml(content);
-
-            if (message.icon === true)
-                message.icon = await getFavicon(message.uri, doc);
-
-            if (message.title === true) {
-                const titleElement = doc.querySelector("title");
-                if (titleElement)
-                    message.name = titleElement.textContent;
-                else
-                    message.name = "Untitled";
-            }
-        }
-        catch (e) {
-            if (message.icon === true)
-                message.icon = undefined;
-
-            if (message.title === true)
-                message.name = "Untitled";
-
-            console.error(e);
-        }
-    }
-
-    return Bookmark.add(message, NODE_TYPE_BOOKMARK)
-        .then(async bookmark => {
-
-            if (message.comments)
-                await Bookmark.storeComments(bookmark.id, message.comments);
-
-            if (message.__automation && message.select)
-                send.bookmarkCreated({node: bookmark});
-            else if (!message.__automation)
-                send.bookmarkAdded({node: bookmark});
-
-            return bookmark.uuid;
-        });
-};
-
-receiveExternal.scrapyardAddArchive = async (message, sender) => {
-    if (!isAutomationAllowed(sender))
-        throw new Error();
-
-    let activeTab = await getActiveTab();
-
-    message.type = NODE_TYPE_ARCHIVE;
-
-    if (!await setUpBookmarkMessage(message, sender, activeTab))
-        return;
-
-    if (!message.content_type)
-        message.content_type = getMimetypeExt(message.uri);
-
-    let saveContent = (bookmark, content) => {
-        const contentType = message.pack? "text/html": message.content_type;
-        return Bookmark.storeArchive(bookmark.id, content, contentType, bookmark.__index)
-            .then(() => {
-                if (message.__automation && message.select)
-                    send.bookmarkCreated({node: bookmark});
-                else if (!message.__automation)
-                    send.bookmarkAdded({node: bookmark});
-
-                return bookmark.uuid;
-            })
-    };
-
-    return Bookmark.add(message, NODE_TYPE_ARCHIVE)
-        .then(async bookmark => {
-
-            if (message.comments)
-                await Bookmark.storeComments(bookmark.id, message.comments);
-
-            if (message.local) {
-                const local_uri = await setUpLocalFileCapture(message);
-
-                let content;
-                if (message.content_type === "text/html") {
-                    const page = await packUrlExt(local_uri, message.hide_tab);
-                    if (page.icon && (message.icon === null || message.icon === undefined)) {
-                        bookmark.icon = page.icon
-                        await Bookmark.storeIcon(bookmark);
-                    }
-
-                    if (page.title)
-                        bookmark.name = page.title;
-
-                    content = page.html;
-                }
-                else {
-                    const response = await fetch(local_uri);
-                    if (response.ok) {
-                        message.content_type = response.headers.get("content-type") || message.content_type;
-                        content = await response.arrayBuffer();
-                    }
-                }
-
-                await cleanUpLocalFileCapture(message);
-
-                bookmark.uri = "";
-                await Bookmark.update(bookmark);
-
-                return saveContent(bookmark, content);
-            }
-            else if (message.pack) {
-                const page = await packUrlExt(message.url, message.hide_tab);
-                if (page.icon) {
-                    bookmark.icon = page.icon
-                    await Bookmark.storeIcon(bookmark);
-                }
-
-                bookmark.name = page.title;
-
-                await Bookmark.update(bookmark);
-
-                return saveContent(bookmark, page.html);
-            }
-            else if (message.content) {
-                return saveContent(bookmark, message.content)
-            }
-            else {
-                Object.assign(bookmark, message);
-                bookmark.__tab_id = activeTab.id;
-                captureTab(activeTab, bookmark);
-
-                return bookmark.uuid;
-            }
-        });
-};
 
 async function nodeToAPIObject(node) {
     if (node) {

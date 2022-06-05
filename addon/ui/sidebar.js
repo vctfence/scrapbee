@@ -818,7 +818,7 @@ function updateProgress(message) {
         progressDiv.css("width", "0");
 }
 
-receiveExternal.scrapyardSwitchShelf = async (message, sender) => {
+receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -839,7 +839,7 @@ async function switchAfterCopy(message, external_path, group, topNodes) {
         await switchShelf(getLastShelf());
 }
 
-receiveExternal.scrapyardCopyAt = async (message, sender) => {
+receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -861,7 +861,7 @@ receiveExternal.scrapyardCopyAt = async (message, sender) => {
     }
 };
 
-receiveExternal.scrapyardMoveAt = async (message, sender) => {
+receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 

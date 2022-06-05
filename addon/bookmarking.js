@@ -439,7 +439,10 @@ function browseBookmark(node, options) {
             url = "http://" + url;
         }
 
-        options.container = options.container || node.container;
+        if (options)
+            options.container = options.container || node.container;
+        else
+            options = {container: node.container};
 
         return openURL(url, options, openContainerTab);
     }

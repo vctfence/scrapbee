@@ -124,9 +124,9 @@ window.onload = async function () {
         };
 
         if (nodeType === NODE_TYPE_ARCHIVE)
-            await send.createArchive({data: payload});
+            await send.createArchive({node: payload});
         else
-            await send.createBookmark({data: payload});
+            await send.createBookmark({node: payload});
     }
 
     $("#create-bookmark").on("click", async e => {

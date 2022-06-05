@@ -1,19 +1,20 @@
-import {receiveExternal} from "./proxy.js";
+import {receiveExternal, send, sendLocal} from "./proxy.js";
 import {
     BROWSER_EXTERNAL_NAME,
     DEFAULT_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING, FIREFOX_BOOKMARK_MENU,
-    FIREFOX_BOOKMARK_UNFILED,
+    FIREFOX_BOOKMARK_UNFILED, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF, TODO_SHELF_NAME
 } from "./storage.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {browseNode} from "./bookmarking.js";
+import {browseNode, getActiveTabMetadata, isSpecialPage, notifySpecialPage} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Icon, Node} from "./storage_entities.js";
+import {Group} from "./bookmarks_group.js";
 
-receiveExternal.scrapyardListShelves = async (message, sender) => {
+receiveExternal.scrapyardListShelvesIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -21,7 +22,7 @@ receiveExternal.scrapyardListShelves = async (message, sender) => {
     return shelves.map(n => ({name: n.name}));
 };
 
-receiveExternal.scrapyardListGroups = async (message, sender) => {
+receiveExternal.scrapyardListGroupsIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -38,7 +39,7 @@ receiveExternal.scrapyardListGroups = async (message, sender) => {
     return [...shelves, ...groups];
 };
 
-receiveExternal.scrapyardListTags = async (message, sender) => {
+receiveExternal.scrapyardListTagsIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -46,7 +47,7 @@ receiveExternal.scrapyardListTags = async (message, sender) => {
     return tags.map(t => ({name: t.name.toLocaleLowerCase()}));
 };
 
-receiveExternal.scrapyardListNodes = async (message, sender) => {
+receiveExternal.scrapyardListNodesIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -75,7 +76,7 @@ receiveExternal.scrapyardListNodes = async (message, sender) => {
         return nodes;
 };
 
-receiveExternal.scrapyardBrowseNode = async (message, sender) => {
+receiveExternal.scrapyardBrowseNodeIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))
         throw new Error();
 
@@ -111,4 +112,49 @@ function renderPath(node, nodes) {
     }
 
     node.path = path.reverse().map(n => n.name).join("/");
+}
+
+receiveExternal.scrapyardAddBookmarkIshell = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
+        throw new Error();
+
+    addBookmarkFromIshell(message, NODE_TYPE_BOOKMARK);
+}
+
+receiveExternal.scrapyardAddArchiveIshell = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
+        throw new Error();
+
+    addBookmarkFromIshell(message, NODE_TYPE_ARCHIVE);
+}
+
+receiveExternal.scrapyardAddSiteIshell = async (message, sender) => {
+    if (!ishellBackend.isIShell(sender.id))
+        throw new Error();
+
+    message.__crawl = true;
+    addBookmarkFromIshell(message, NODE_TYPE_ARCHIVE);
+}
+
+async function addBookmarkFromIshell(message, type) {
+    const node = await getActiveTabMetadata();
+
+    node.name = message.name || node.name;
+    node.tags = message.tags;
+    node.todo_state = message.todo_state;
+    node.todo_date = message.todo_date;
+    node.details = message.details;
+
+    if (message.__crawl)
+        node.__crawl = true;
+
+    const path = Path.expand(message.path);
+    const group = await Group.getOrCreateByPath(path);
+    node.parent_id = group.id;
+    delete message.path;
+
+    if (type === NODE_TYPE_BOOKMARK)
+        sendLocal.createBookmark({node});
+    else
+        sendLocal.createArchive({node});
 }

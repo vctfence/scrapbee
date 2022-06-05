@@ -37,23 +37,23 @@ receive.renameGroup = message => Group.rename(message.id, message.name);
 receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
 receive.createBookmark = message => {
-    const options = message.data;
+    const node = message.node;
 
-    if (isSpecialPage(options.uri)) {
+    if (isSpecialPage(node.uri)) {
         notifySpecialPage();
         return;
     }
 
     const addBookmark = () =>
-        Bookmark.add(options, NODE_TYPE_BOOKMARK)
+        Bookmark.add(node, NODE_TYPE_BOOKMARK)
             .then(bookmark => {
                 send.bookmarkAdded({node: bookmark});
                 return bookmark;
             });
 
-    Bookmark.setTentativeId(options);
-    options.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
-    return send.beforeBookmarkAdded({node: options})
+    Bookmark.setTentativeId(node);
+    node.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
+    return send.beforeBookmarkAdded({node: node})
         .then(addBookmark)
         .catch(addBookmark);
 };
@@ -98,15 +98,15 @@ receive.createBookmarkFromURL = async message => {
 receive.updateBookmark = message => Bookmark.update(message.node);
 
 receive.createArchive = message => {
-    const options = message.data;
+    const node = message.node;
 
-    if (isSpecialPage(options.uri)) {
+    if (isSpecialPage(node.uri)) {
         notifySpecialPage();
         return;
     }
 
     let addBookmark = () =>
-        Bookmark.add(options, NODE_TYPE_ARCHIVE)
+        Bookmark.add(node, NODE_TYPE_ARCHIVE)
             .then(bookmark => {
                 getActiveTab().then(tab => {
                     bookmark.__tab_id = tab.id;
@@ -115,16 +115,16 @@ receive.createArchive = message => {
                 });
             });
 
-    if (options.__crawl && !options.__site_capture) {
+    if (node.__crawl && !node.__site_capture) {
         getActiveTab().then(tab => {
-            showSiteCaptureOptions(tab, options);
+            showSiteCaptureOptions(tab, node);
         });
         return;
     }
 
-    Bookmark.setTentativeId(options);
-    options.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
-    return send.beforeBookmarkAdded({node: options})
+    Bookmark.setTentativeId(node);
+    node.type = NODE_TYPE_ARCHIVE; // needed for beforeBookmarkAdded
+    return send.beforeBookmarkAdded({node: node})
         .then(addBookmark)
         .catch(addBookmark);
 };
