@@ -11,7 +11,7 @@ import {
     NODE_TYPE_GROUP, NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
-    TODO_SHELF_NAME, DEFAULT_POSITION, UNDO_DELETE
+    TODO_SHELF_NAME, DEFAULT_POSITION
 } from "./storage.js";
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
@@ -21,7 +21,6 @@ import {ishellBackend} from "./backend_ishell.js";
 import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {getFavicon} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
-import {Undo} from "./storage_undo.js";
 import {UndoManager} from "./bookmarks_undo.js";
 
 export class BookmarkManager extends EntityManager {
@@ -386,7 +385,7 @@ export class BookmarkManager extends EntityManager {
             console.error(e);
         }
 
-        await deletef(allNodes);
+        await deletef(allNodes, ids);
 
         if (allNodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
             ishellBackend.invalidateCompletion();
@@ -400,8 +399,8 @@ export class BookmarkManager extends EntityManager {
         return this._delete(ids, this._undoDelete.bind(this));
     }
 
-    async _undoDelete(nodes) {
-        await UndoManager.pushDeleted(nodes);
+    async _undoDelete(nodes, ids) {
+        await UndoManager.pushDeleted(ids, nodes);
 
         return Node.deleteShallow(nodes.map(n => n.id));
     }

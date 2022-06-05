@@ -20,14 +20,16 @@ class _UndoManager {
             }
     }
 
-    async pushDeleted(nodes) {
+    async pushDeleted(ids, subtree) {
         const stackIndex = (await Undo.peek()).stack + 1;
 
-        for (const node of nodes) {
+        let ctr = 0;
+        for (const node of subtree) {
             const undoItem = {
                 stack: stackIndex,
                 operation: UNDO_DELETE,
-                node
+                node,
+                selectedIDs: ctr++ === 0? ids: undefined // (!) currently not used
             };
 
             await Undo.add(undoItem);
@@ -36,6 +38,7 @@ class _UndoManager {
 
     async #undoDelete() {
         const batch = await Undo.pop();
+        const selectedIDs = batch[0].selectedIDs;
 
         let shelf;
         for (const undo of batch) {
@@ -48,7 +51,7 @@ class _UndoManager {
         if (!shelf)
             shelf = await Query.rootOf(batch[0].node);
 
-        return {operation: UNDO_DELETE, shelf};
+        return {operation: UNDO_DELETE, selectedIDs, shelf};
     }
 
     async commit() {

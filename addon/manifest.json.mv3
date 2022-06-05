@@ -88,7 +88,10 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "icons/lock.svg"
+                "icons/lock.svg",
+                "ui/site_capture.html",
+                "ui/site_capture.css",
+                "ui/site_capture.js"
             ],
             "matches": ["*://*/*"]
         }

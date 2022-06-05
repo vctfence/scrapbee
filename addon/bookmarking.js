@@ -186,8 +186,6 @@ export function finalizeCapture(bookmark) {
         send.bookmarkCreated({node: bookmark});
     else if (bookmark && !bookmark.__automation && !bookmark.__type_change)
         send.bookmarkAdded({node: bookmark});
-    else if (bookmark?.__type_change)
-        send.nodesUpdated();
 }
 
 export async function archiveBookmark(node) {

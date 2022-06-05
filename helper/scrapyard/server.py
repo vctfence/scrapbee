@@ -69,8 +69,8 @@ def requires_auth(f):
 
 
 ###
-#if DEBUG:
-if True:
+if DEBUG:
+#if True:
     @app.errorhandler(Exception)
     def handle_500(e=None):
         return traceback.format_exc(), 500

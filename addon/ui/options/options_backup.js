@@ -157,12 +157,13 @@ export class BackupManager {
     async listBackups() {
         if (!this.listingBackups) {
             const directory = settings.backup_directory_path();
+            let error = false;
 
             try {
                 this.listingBackups = true;
                 this.setStatus("Loading backups...");
 
-                const backups = await send.listBackups({directory});
+                let backups = await send.listBackups({directory});
                 if (backups) {
                     this.availableBackups = [];
                     for (let [k, v] of Object.entries(backups)) {
@@ -185,9 +186,14 @@ export class BackupManager {
                     this.backupTree.refresh(true);
                 }
             }
+            catch (e) {
+                error = true;
+                this.setStatus("Error connecting helper application.");
+            }
             finally {
                 this.listingBackups = false;
-                this.setStatus("Ready");
+                if (!error)
+                    this.setStatus("Ready");
             }
         }
     }

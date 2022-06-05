@@ -115,6 +115,15 @@ class NativeBackend {
         return init;
     }
 
+    async _handleHTTPError(response) {
+        if (response.status === 204 || response.status === 404)
+            return null;
+        else {
+            console.error(`Scrapyard native client error ${response.status}`, await response.text());
+            throw {httpError: {status: response.status, statusText: response.statusText}};
+        }
+    }
+
     fetch(path, init) {
         init = this._injectAuth(init);
         return window.fetch(this.url(path), init);
@@ -125,6 +134,8 @@ class NativeBackend {
         let response = await window.fetch(this.url(path), init);
         if (response.ok)
             return response.text();
+       else
+           return this._handleHTTPError(response);
     }
 
     async fetchJSON(path, init) {
@@ -132,14 +143,16 @@ class NativeBackend {
         let response = await window.fetch(this.url(path), init);
         if (response.ok)
             return response.json();
+        else
+            return this._handleHTTPError(response);
     }
 
     async jsonPost(path, init) {
         let response = await this.post(path, init);
-        if (!response.ok)
-            console.log(await response.text())
         if (response.ok)
             return response.json();
+        else
+            return this._handleHTTPError(response);
     }
 
     async post(path, fields) {
