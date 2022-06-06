@@ -1,7 +1,10 @@
+import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
-import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
+import {getActiveTabMetadata} from "./bookmarking.js";
+import {DEFAULT_SHELF_ID} from "./storage.js";
+import {UndoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
 import * as bookmarking from "./core_bookmarking.js";
@@ -13,9 +16,9 @@ import * as repair from "./core_maintenance.js";
 import * as ishell from "./core_ishell.js";
 import * as automation from "./core_automation.js";
 import * as sync from "./core_sync.js";
-import {getActiveTabMetadata} from "./bookmarking.js";
-import {DEFAULT_SHELF_ID} from "./storage.js";
-import {UndoManager} from "./bookmarks_undo.js";
+
+if (_MANIFEST_V3)
+    import("./mv3_fixup.js");
 
 browser.runtime.onInstalled.addListener(async details => {
     await settings.load();
@@ -44,9 +47,6 @@ receive.startListener(true);
 })();
 
 async function performStartupInitialization() {
-    if (_MANIFEST_V3)
-        import("./mv3_hack.js");
-
     search.initializeOmnibox();
 
     await browserBackend.reconcileBrowserBookmarksDB();

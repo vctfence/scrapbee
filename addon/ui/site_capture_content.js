@@ -12,6 +12,8 @@ function showSiteCaptureOptions() {
         options.style.overflow = "hidden";
         options.src = browser.runtime.getURL("ui/site_capture.html");
         document.body.insertBefore(options, document.body.firstChild);
+
+        document.addEventListener("keydown", keydownListener);
     }
 }
 
@@ -20,6 +22,13 @@ function hideSiteCaptureOptions() {
         .forEach(element => {
             element.remove();
         });
+
+    document.removeEventListener("keydown", keydownListener);
+}
+
+function keydownListener(e) {
+    if (e.keyCode === 27) // ESC
+        hideSiteCaptureOptions();
 }
 
 var bookmark;

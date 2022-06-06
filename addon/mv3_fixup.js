@@ -1,5 +1,5 @@
 // permanently keeps the background page in memory
-// works only if http(s) tabs are present
+// works only if blob/http(s) tabs are present
 // adapted from https://stackoverflow.com/questions/66618136/persistent-service-worker-in-chrome-extension
 
 let lifeline;
@@ -37,7 +37,7 @@ async function keepAlive() {
 }
 
 async function retryOnTabUpdate(tabId, info, tab) {
-    if (info.url && /^(https?):/.test(info.url)) {
+    if (info.url && /^(blob|https?):/.test(info.url)) {
         keepAlive();
     }
 }
