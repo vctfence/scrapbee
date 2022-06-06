@@ -2,7 +2,7 @@ import json
 
 from . import server, browser
 
-VERSION = "0.5"
+VERSION = "1.0"
 
 def main():
     msg = browser.get_message()
