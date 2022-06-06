@@ -14,7 +14,7 @@ import {ExternalNode} from "./storage_node_external.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Archive, Node} from "./storage_entities.js";
 import {MarshallerCloud, UnmarshallerCloud} from "./marshaller_cloud.js";
-import {ProgressCounter} from "./utils.js";
+import {ProgressCounter, sleep} from "./utils.js";
 import {CloudError} from "./backend_cloud_base.js";
 
 const CLOUD_SYNC_ALARM_NAME = "cloud-sync-alarm";
@@ -264,6 +264,9 @@ export class CloudBackend {
         nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME && n.external_id);
 
         if (nodes.length) {
+            if (this._provider.ID === dropboxBackend.ID)
+                await sleep(1000);
+
             return this.withCloudDB(async db => {
                 const now = Date.now();
                 for (let n of nodes) {
@@ -313,15 +316,15 @@ export class CloudBackend {
 
     // should only be called in the background script through message
     async reconcileCloudBookmarksDB(verbose) {
-        if (this._recondiling)
+        if (this._reconciling)
             return;
 
-        this._recondiling = true;
+        this._reconciling = true;
         try {
             await this._reconcileCloudBookmarksDB(verbose);
         }
         finally {
-            this._recondiling = false;
+            this._reconciling = false;
         }
     }
 
