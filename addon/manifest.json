@@ -1,13 +1,12 @@
-// To enable manifest v3 set _MANIFEST_VERSION = 3 in global.js
 {
-    "version": "0.17",
+    "version": "0.17.4.7",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
             "strict_min_version": "91.0"
         }
     },
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "Scrapyard",
     "description": "__MSG_extensionDescription__",
     "homepage_url": "https://gchristensen.github.io/#scrapyard",
@@ -19,10 +18,9 @@
 	    "64": "icons/scrapyard.svg",
         "128": "icons/scrapyard.svg"
     },
-    "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self';"
-    },
+    "content_security_policy": "script-src 'self'; object-src 'self';",
     "permissions": [
+        "<all_urls>",
         "tabs",
         "activeTab",
         "tabHide",
@@ -40,11 +38,7 @@
         "webRequestBlocking",
         "management",
         "cookies",
-        "contextualIdentities",
-        "scripting"
-    ],
-    "host_permissions": [
-        "<all_urls>"
+        "contextualIdentities"
     ],
     "sidebar_action": {
         "default_title": "Scrapyard",
@@ -72,9 +66,10 @@
         }
     },
     "background": {
-        "page": "background.html"
+        "page": "background.html",
+        "persistent": true
     },
-    "action": {
+    "browser_action": {
         "default_icon": {
             "64": "icons/scrapyard.svg"
         },
@@ -86,13 +81,13 @@
         "page": "ui/options.html"
     },
     "web_accessible_resources": [
-        {
-            "resources": [
-                "icons/lock.svg",
-                "ui/site_capture.html"
-            ],
-            "matches": ["*://*/*"]
-        }
+        "icons/lock.svg",
+        "icons/scrapyard.svg",
+        "ui/edit_toolbar.css",
+        "savepage/shadowloader.js",
+        "ui/site_capture.html",
+        "ui/site_capture.css",
+        "ui/site_capture.js"
     ],
     "protocol_handlers": [
         {
