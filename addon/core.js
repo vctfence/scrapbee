@@ -90,5 +90,5 @@ async function addBookmark(event) {
     const payload = await getActiveTabMetadata();
     payload.parent_id = DEFAULT_SHELF_ID;
 
-    return sendLocal[event]({data: payload});
+    return sendLocal[event]({node: payload});
 }

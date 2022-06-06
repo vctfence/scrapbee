@@ -698,6 +698,10 @@ receive.beforeBookmarkAdded = async message => {
     }
 };
 
+receive.bookmarkCreationFailed = async message => {
+    tree.removeTentativeNode(message.node);
+};
+
 receive.bookmarkAdded = message => {
     if (message.node.type === NODE_TYPE_ARCHIVE)
         stopProcessingIndication();

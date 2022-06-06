@@ -11,7 +11,8 @@ import {
     NODE_TYPE_GROUP, NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
-    TODO_SHELF_NAME, DEFAULT_POSITION
+    TODO_SHELF_NAME, DEFAULT_POSITION,
+    RDF_EXTERNAL_NAME
 } from "./storage.js";
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
@@ -41,15 +42,15 @@ export class BookmarkManager extends EntityManager {
     }
 
     async add(data, nodeType = NODE_TYPE_BOOKMARK) {
-        let group, parentId;
-
         if (data.parent_id)
-            parentId = data.parent_id = parseInt(data.parent_id);
+            data.parent_id = parseInt(data.parent_id);
         else
             throw new Error("No bookmark parent id");
 
-        if (!group)
-            group = await Node.get(parentId);
+        const parent = await Node.get(data.parent_id);
+
+        if (nodeType === NODE_TYPE_BOOKMARK && parent.external === RDF_EXTERNAL_NAME)
+            throw new Error("Only archives could be added to an RDF file");
 
         data.name = await this.ensureUniqueName(data.parent_id, data.name);
 
@@ -67,7 +68,7 @@ export class BookmarkManager extends EntityManager {
         if (iconId)
             await Icon.update(iconId, {node_id: node.id});
 
-        await this.plugins.createBookmark(node, group);
+        await this.plugins.createBookmark(node, parent);
 
         return node;
     }
@@ -372,31 +373,37 @@ export class BookmarkManager extends EntityManager {
         return newNodes;
     }
 
-    async _delete(ids, deletef) {
-        if (!Array.isArray(ids))
-            ids = [ids];
-
-        let allNodes = await Query.fullSubtree(ids);
-
+    async _delete(nodes, deletef) {
         try {
-            await this.plugins.deleteBookmarks(allNodes);
+            await this.plugins.deleteBookmarks(nodes);
         }
         catch (e) {
             console.error(e);
         }
 
-        await deletef(allNodes, ids);
+        await deletef(nodes);
 
-        if (allNodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
+        if (nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
             ishellBackend.invalidateCompletion();
     }
 
+    async _hardDelete(nodes) {
+        return this._delete(nodes, nodes => Node.delete(nodes.map(n => n.id)));
+    }
+
     async delete(ids) {
-        return this._delete(ids, nodes => Node.delete(nodes.map(n => n.id)));
+        const nodes = await Query.fullSubtree(ids);
+
+        return this._hardDelete(nodes);
     }
 
     async softDelete(ids) {
-        return this._delete(ids, this._undoDelete.bind(this));
+        const nodes = await Query.fullSubtree(ids);
+
+        if (nodes.some(n => n.external === RDF_EXTERNAL_NAME))
+            return this._hardDelete(nodes);
+
+        return this._delete(nodes, this._undoDelete.bind(this));
     }
 
     async _undoDelete(nodes, ids) {

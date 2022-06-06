@@ -231,7 +231,7 @@ export async function performSiteCapture(bookmark) {
         const group = await Group.addSite(bookmark.parent_id, bookmark.name);
         bookmark.parent_id = group.id;
 
-        sendLocal.createArchive({data: bookmark});
+        sendLocal.createArchive({node: bookmark});
     }
 }
 
@@ -358,14 +358,17 @@ function configureArchiveTab(node, archiveTab) {
 }
 
 async function configureArchivePage(tab, node) {
-    if (node.type === NODE_TYPE_ARCHIVE) {
+    if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
         await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
         await injectScriptFile(tab.id, {file: "lib/jquery.js"});
         await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
-    }
 
-    if (await Bookmark.isSitePage(node))
-        await configureSiteLinks(node, tab);
+        if (settings.open_bookmark_in_active_tab())
+            node = await Node.getByUUID(tab.url.replace(/^.*#/, "").split(":")[0])
+
+        if (await Bookmark.isSitePage(node))
+            await configureSiteLinks(node, tab);
+    }
 }
 
 async function configureSiteLinks(node, tab) {
@@ -462,11 +465,13 @@ async function browseArchive(node, options) {
         if (objectURL) {
             const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
             const archiveTab = await openURL(archiveURL, options);
+            const tabTracked = isArchiveTabTracked(archiveTab.id);
 
-            if (!isArchiveTabTracked(archiveTab.id))
-                configureArchiveTab(node, archiveTab);
-
+            // configureArchiveTab depends on the tracked url
             trackArchiveTab(archiveTab.id, objectURL);
+
+            if (!tabTracked)
+                configureArchiveTab(node, archiveTab);
         }
     }
     else

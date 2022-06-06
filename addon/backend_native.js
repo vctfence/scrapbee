@@ -119,7 +119,8 @@ class NativeBackend {
         if (response.status === 204 || response.status === 404)
             return null;
         else {
-            console.error(`Scrapyard native client error ${response.status}`, await response.text());
+            const errorMessage = `Scrapyard native client error ${response.status} (${response.statusText})\n`;
+            console.error(errorMessage, await response.text());
             throw {httpError: {status: response.status, statusText: response.statusText}};
         }
     }

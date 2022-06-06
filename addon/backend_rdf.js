@@ -3,15 +3,13 @@ import {nativeBackend} from "./backend_native.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {Archive, Node} from "./storage_entities.js";
 import {Path} from "./path.js";
+import {RDFNamespaces} from "./utils_html.js";
 
 class RDFDoc {
 
-    ns_resolver(ns) {
-        return this.namespaces.get(ns);
-    }
-
-    xselect(path) {
-        return this.doc.evaluate(path, this.doc, ns => this.ns_resolver(ns), XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    xselect(xpath) {
+        return this.doc.evaluate(xpath, this.doc, this._xmlNamespaces.resolver,
+            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
     }
 
     _xpathToArray(xpathResult)
@@ -30,13 +28,26 @@ class RDFDoc {
         return null;
     }
 
+    _selectFirst(xpath) {
+        return this._unique(this.xselect(xpath));
+    }
+
     _formatXML(doc) {
         let xml = new XMLSerializer().serializeToString(doc.documentElement);
-        xml = xml.replace(/<[^<\>]+\>/g, function(a){
-            return a + "\n";
+        let formatted = "", indent= "";
+        const tab = "  ";
+
+        xml.split(/>\s*</).forEach(function(node) {
+            if (node.match( /^\/\w/ ))
+                indent = indent.substring(tab.length);
+
+            formatted += indent + "<" + node + ">\r\n";
+
+            if (node.match( /^<?\w[^>]*[^\/]$/ ))
+                indent += tab;
         });
-        xml = xml.replace(/[\n\r]+/g, "\n");
-        return xml;
+
+        return formatted.substring(1, formatted.length - 3);
     }
 
     async write () {
@@ -83,35 +94,31 @@ class RDFDoc {
 
         let doc = instance.doc = new DOMParser().parseFromString(xml, 'application/xml');
 
-        instance.namespaces = new Map(Object.values(doc.documentElement.attributes)
-            .map(a => [a.localName, a.prefix === "xmlns"? a.value: null]));
-        instance.NS_NC = instance.ns_resolver("NC");
-        instance.NS_RDF = instance.ns_resolver("RDF");
-        instance.NS_SCRAPBOOK = instance.ns_resolver(Array.from(instance.namespaces.keys()).find(k => (/NS\d+/i).test(k)));
+        instance._xmlNamespaces = new RDFNamespaces(doc);
 
         return instance;
     }
 
     addBookmarkNode(node, parent) {
-        let xmlNode = this.doc.createElementNS(this.NS_RDF, "Description");
-        xmlNode.setAttributeNS(this.NS_RDF, "about", `urn:scrapbook:item${node.external_id}`);
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "id", node.external_id);
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "type", "");
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "title", node.name);
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "chars", "");
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "icon", "");
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "source", node.uri);
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "comment", "");
+        let xmlNode = this.doc.createElementNS(this._xmlNamespaces.NS_RDF, "Description");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_RDF, "about", `urn:scrapbook:item${node.external_id}`);
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "id", node.external_id);
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "type", "");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "title", node.name);
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "chars", "");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "icon", "");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "source", node.uri);
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "comment", "");
         this.doc.documentElement.appendChild(xmlNode)
 
         let query = `//RDF:Seq[@RDF:about='urn:scrapbook:item${parent.external_id}']`;
         if (!parent.external_id)
             query = `//RDF:Seq[@RDF:about='urn:scrapbook:root']`;
 
-        let seqNode = this._unique(this.xselect(query));
+        let seqNode = this._selectFirst(query);
 
-        let liNode = this.doc.createElementNS(this.NS_RDF, "li");
-        liNode.setAttributeNS(this.NS_RDF, "resource", `urn:scrapbook:item${node.external_id}`);
+        let liNode = this.doc.createElementNS(this._xmlNamespaces.NS_RDF, "li");
+        liNode.setAttributeNS(this._xmlNamespaces.NS_RDF, "resource", `urn:scrapbook:item${node.external_id}`);
 
         if (seqNode)
             seqNode.appendChild(liNode);
@@ -123,18 +130,18 @@ class RDFDoc {
         let query = node.type === NODE_TYPE_SEPARATOR
             ? `//NC:BookmarkSeparator[@RDF:about='urn:scrapbook:item${node.external_id}']`
             : `//RDF:Description[@RDF:about='urn:scrapbook:item${node.external_id}']`;
-        let xmlNode = this._unique(this.xselect(query));
+        let xmlNode = this._selectFirst(query);
         if (xmlNode)
             xmlNode.parentNode.removeChild(xmlNode);
 
         query = `//RDF:li[@RDF:resource='urn:scrapbook:item${node.external_id}']`;
-        let liNode = this._unique(this.xselect(query));
+        let liNode = this._selectFirst(query);
         if (liNode)
             liNode.parentNode.removeChild(liNode);
 
         if (node.type === NODE_TYPE_GROUP) {
             query = `//RDF:Seq[@RDF:about='urn:scrapbook:item${node.external_id}']`;
-            let seqNode = this._unique(this.xselect(query));
+            let seqNode = this._selectFirst(query);
             if (seqNode)
                 seqNode.parentNode.removeChild(seqNode);
         }
@@ -142,36 +149,36 @@ class RDFDoc {
 
     renameBookmark(node) {
         let query = `//RDF:Description[@RDF:about='urn:scrapbook:item${node.external_id}']`;
-        let xmlNode = this._unique(this.xselect(query));
+        let xmlNode = this._selectFirst(query);
         if (xmlNode)
-            xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "title", node.name);
+            xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "title", node.name);
     }
 
     updateBookmark(node) {
         let query = `//RDF:Description[@RDF:about='urn:scrapbook:item${node.external_id}']`;
-        let xmlNode = this._unique(this.xselect(query));
+        let xmlNode = this._selectFirst(query);
         if (xmlNode)
-            xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "title", node.name);
+            xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "title", node.name);
     }
 
     createBookmarkFolder(node, parent) {
         let xmlNode = this.addBookmarkNode(node, parent);
 
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "type", "folder");
-        xmlNode.setAttributeNS(this.NS_SCRAPBOOK, "source", "");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "type", "folder");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "source", "");
 
-        let seqNode = this.doc.createElementNS(this.NS_RDF, "Seq");
-        seqNode.setAttributeNS(this.NS_RDF, "about", `urn:scrapbook:item${node.external_id}`);
+        let seqNode = this.doc.createElementNS(this._xmlNamespaces.NS_RDF, "Seq");
+        seqNode.setAttributeNS(this._xmlNamespaces.NS_RDF, "about", `urn:scrapbook:item${node.external_id}`);
         this.doc.documentElement.appendChild(seqNode)
     }
 
     moveNodes(nodes, dest) {
         let query = `//RDF:Seq[@RDF:about='urn:scrapbook:item${dest.external_id}']`;
-        let seqNode = this._unique(this.xselect(query));
+        let seqNode = this._selectFirst(query);
         if (seqNode) {
             for (let node of nodes) {
                 let query = `//RDF:li[@RDF:resource='urn:scrapbook:item${node.external_id}']`;
-                let liNode = this._unique(this.xselect(query));
+                let liNode = this._selectFirst(query);
                 if (liNode) {
                     liNode.parentNode.removeChild(liNode);
                     seqNode.appendChild(liNode);
@@ -182,14 +189,16 @@ class RDFDoc {
 
     reorderNodes(nodes) {
         let query = `//RDF:li[@RDF:resource='urn:scrapbook:item${nodes[0].external_id}']`;
-        let liNode = this._unique(this.xselect(query));
+        let liNode = this._selectFirst(query);
         if (liNode) {
             let seq = liNode.parentNode;
             let children = [];
+
             for (let i = 0; i < seq.childNodes.length; i++) {
                 if (seq.childNodes[i].localName === "li")
                     children.push(seq.childNodes[i]);
             }
+
             for (let i = 0; i < children.length; i++) {
                 seq.removeChild(children[i]);
             }
@@ -200,7 +209,7 @@ class RDFDoc {
             }
 
             for (let node of nodes) {
-                let pos = children.find(c => c.getAttributeNS(this.NS_RDF, "resource").endsWith(node.external_id))
+                let pos = children.find(c => c.getAttributeNS(this._xmlNamespaces.NS_RDF, "resource").endsWith(node.external_id))
                 if (pos)
                     seq.appendChild(pos);
             }

@@ -49,6 +49,10 @@ receive.createBookmark = message => {
             .then(bookmark => {
                 send.bookmarkAdded({node: bookmark});
                 return bookmark;
+            })
+            .catch(e => {
+                showNotification(e.message);
+                send.bookmarkCreationFailed({node});
             });
 
     Bookmark.setTentativeId(node);

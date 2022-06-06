@@ -8,25 +8,7 @@ import {Group} from "./bookmarks_group.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {StreamImporterBuilder} from "./import_drivers.js";
-
-class RDFNamespaces {
-    //NS_NC;
-    NS_RDF;
-    NS_SCRAPBOOK;
-
-    resolver;
-
-    constructor(doc) {
-        const rootAttrs = Object.values(doc.documentElement.attributes);
-        const namespaces = rootAttrs.map(a => [a.localName, a.prefix === "xmlns" ? a.value : null]);
-        const namespaceMap = new Map(namespaces);
-        this.resolver = ns => namespaceMap.get(ns);
-
-        //this.NS_NC = this.resolver("NC");
-        this.NS_RDF = this.resolver("RDF");
-        this.NS_SCRAPBOOK = namespaces.find(ns => (/NS\d+/i).test(ns[0]))[1];
-    }
-}
+import {RDFNamespaces} from "./utils_html.js";
 
 class RDFImporter {
     #options;

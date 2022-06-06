@@ -560,6 +560,10 @@ class BookmarkTree {
         return false;
     }
 
+    removeTentativeNode(node) {
+        this._jstree.delete_node(node.__tentative_id);
+    }
+
     openNode(nodeId) {
         let jnode = this._jstree.get_node(nodeId);
         this._jstree.open_node(jnode);
@@ -979,7 +983,7 @@ class BookmarkTree {
                         }
                     },
                     newSeparatorItem: {
-                        label: "Separator",
+                        label: "Separator After",
                         icon: `/icons/separator${lightTheme? "": "2"}.svg`,
                         action: async () => {
                             const jparent = tree.get_node(ctxJNode.parent);
