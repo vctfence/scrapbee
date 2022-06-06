@@ -2,9 +2,7 @@ async function injectCSSFileMV3(tabId, options) {
     return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
 }
 
-// TODO: change to injectCSSFileMV3
-export const injectCSSFile = browser.tabs.insertCSS;
-//export const injectCSSFile = injectCSSFileMV3;
+export const injectCSSFile = _MANIFEST_V3? injectCSSFileMV3: browser.tabs.insertCSS;
 
 async function injectScriptFileMV3(tabId, options) {
     const target = {tabId};
@@ -18,9 +16,7 @@ async function injectScriptFileMV3(tabId, options) {
     return browser.scripting.executeScript({target, files: [options.file]});
 }
 
-// TODO: change to injectScriptFileMV3
-export const injectScriptFile = browser.tabs.executeScript;
-//export const injectScriptFile = injectScriptFileMV3;
+export const injectScriptFile = _MANIFEST_V3? injectScriptFileMV3: browser.tabs.executeScript;
 
 async function scriptsAllowedMV3(tabId, frameId = 0) {
     try {
@@ -48,9 +44,7 @@ async function scriptsAllowedMV2(tabId, frameId = 0) {
     } catch (e) {}
 }
 
-// TODO: change to scriptsAllowedMV3
-export const scriptsAllowed = scriptsAllowedMV2;
-//export const scriptsAllowed = scriptsAllowedMV3;
+export const scriptsAllowed = _MANIFEST_V3? scriptsAllowedMV3: scriptsAllowedMV2;
 
 export function showNotification(args) {
     if (typeof arguments[0] === "string")

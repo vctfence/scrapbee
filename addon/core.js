@@ -44,6 +44,9 @@ receive.startListener(true);
 })();
 
 async function performStartupInitialization() {
+    if (_MANIFEST_V3)
+        import("./mv3_hack.js");
+
     search.initializeOmnibox();
 
     await browserBackend.reconcileBrowserBookmarksDB();

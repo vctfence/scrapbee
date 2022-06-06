@@ -1,3 +1,7 @@
+window._MANIFEST_VERSION = 3;
+
+window._MANIFEST_V3 = window._MANIFEST_VERSION === 3;
+
 window.DEBUG = false;
 
 window.log = (...args) => console.log.apply(console, args);
