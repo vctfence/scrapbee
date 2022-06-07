@@ -77,6 +77,13 @@ function configureMaintenancePanel() {
         settings.repair_icons(e.target.checked);
     });
 
+    $("#option-enable-debug").prop("checked", settings.debug_mode());
+    $("#option-enable-debug").on("change", async e => {
+        await settings.load();
+        settings.debug_mode(e.target.checked);
+    });
+
+
     $("#optimize-database-link").on("click", async e => {
         e.preventDefault();
 

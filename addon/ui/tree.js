@@ -983,7 +983,7 @@ class BookmarkTree {
                         }
                     },
                     newSeparatorItem: {
-                        label: "Separator After",
+                        label: "Separator Below",
                         icon: `/icons/separator${lightTheme? "": "2"}.svg`,
                         action: async () => {
                             const jparent = tree.get_node(ctxJNode.parent);
@@ -1319,9 +1319,25 @@ class BookmarkTree {
             },
             debugItem: {
                 separator_before: true,
-                label: "Debug...",
-                action: async () => {
-                    console.log(ctxNode);
+                label: "Debug",
+                submenu: {
+                    printObjectItem: {
+                        label: "Print object",
+                        action: async () => {
+                            console.log(ctxNode);
+                        }
+                    },
+                    printStubItem: {
+                        label: "Print update stub",
+                        action: async () => {
+                            const stub = `var Node = (await import("./storage_entities.js")).Node;\n`
+                                       + `var node = await Node.get(${ctxNode.id});\n`
+                                       + `node.xyz = ...;\n`
+                                       + `Node.update(node);`
+                            console.log(stub);
+                        }
+                    },
+
                 }
             },
         };

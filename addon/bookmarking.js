@@ -213,14 +213,10 @@ export async function archiveBookmark(node) {
 
 export async function showSiteCaptureOptions(tab, bookmark) {
     try {
+        await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
         await injectCSSFile(tab.id, {file: "/ui/site_capture_content.css"});
         await injectScriptFile(tab.id, {file: "/ui/site_capture_content.js", frameId: 0});
         browser.tabs.sendMessage(tab.id, {type: "storeBookmark", bookmark});
-
-        await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
-        const message = {type: "requestFrames", siteCapture: true, siteCaptureOptions: true};
-        setTimeout(() => browser.tabs.sendMessage(tab.id, message), 500);
-
     } catch (e) {
         console.error(e);
     }

@@ -1,6 +1,8 @@
 var pageURL = null;
 var pageLinks = [];
 
+const DOMAIN_STUB = "INSERT_YOUR_DOMAIN";
+
 window.onload = function () {
     setUpMenu("include");
     setUpMenu("exclude");
@@ -30,6 +32,9 @@ window.onload = function () {
             }
             browser.runtime.sendMessage({type: "continueSiteCapture", options});
         });
+
+    const message = {type: "requestFrames", siteCapture: true, siteCaptureOptions: true};
+    browser.runtime.sendMessage(message);
 };
 
 chrome.runtime.onMessage.addListener(
@@ -59,37 +64,39 @@ function setUpMenu(id) {
 
     document.getElementById(`${id}-presets-menu-site`)
         .addEventListener("click", e => {
-            const url = new URL(pageURL);
-            const urlRegex = url.host.replace(/\./g, "\\.");
+            const url = pageURL? new URL(pageURL): null;
+            const host = url?.host || DOMAIN_STUB;
+            const urlRegex = host.replace(/\./g, "\\.");
             insertRule(id, `/^https?://(?:[^.]*\\.)*?${urlRegex}(?:\\d+)?//`)
         });
 
     document.getElementById(`${id}-presets-menu-domain`)
         .addEventListener("click", e => {
-            const url = new URL(pageURL);
-            const urlRegex = url.origin.replace(/\./g, "\\.");
+            const url = pageURL? new URL(pageURL): null;
+            const origin = url?.origin || DOMAIN_STUB;
+            const urlRegex = origin.replace(/\./g, "\\.");
             insertRule(id, `/^${urlRegex}//`)
         });
 
     document.getElementById(`${id}-presets-menu-directory`)
         .addEventListener("click", e => {
-            const urlRegex = pageURL.replace(/[^/]*$/g, "")
-                                    .replace(/\./g, "\\.");;
+            const urlRegex = (pageURL || DOMAIN_STUB)
+                .replace(/[^/]*$/g, "")
+                .replace(/\./g, "\\.");;
             insertRule(id, `/^${urlRegex}/`);
         });
 
     document.getElementById(`${id}-presets-menu-path`)
         .addEventListener("click", e => {
-            const urlRegex = pageURL.replace(/\./g, "\\.");
+            const urlRegex = (pageURL || DOMAIN_STUB).replace(/\./g, "\\.");
             insertRule(id, `/^${urlRegex}(?=[?#]|$)/`);
         });
 
     document.getElementById(`${id}-presets-menu-all-links`)
         .addEventListener("click", e => {
             let links = "";
-            if (pageLinks)
-                for (const link of pageLinks)
-                    links += `${link.url}  [${link.text}]\n`;
+            for (const link of pageLinks)
+                links += `${link.url}  [${link.text}]\n`;
             insertRule(id, links.trim());
         });
 

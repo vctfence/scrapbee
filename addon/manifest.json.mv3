@@ -1,4 +1,4 @@
-// To enable manifest v3 set _MANIFEST_VERSION = 3 in global.js
+// To enable manifest v3 use this file as the addon manifest
 {
     "version": "0.17",
     "applications": {

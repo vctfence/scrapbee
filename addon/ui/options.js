@@ -11,6 +11,9 @@ window.onload = async function() {
 
     // show settings
     $("#settings-container").css("display", "flex");
+
+    if (settings.debug_mode())
+        $("a.settings-menu-item[href='#debug']").show();
 };
 
 async function switchPane() {

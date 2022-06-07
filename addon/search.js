@@ -342,5 +342,3 @@ export function initializeOmnibox() {
     });
 }
 
-
-console.log("==> search.js loaded")

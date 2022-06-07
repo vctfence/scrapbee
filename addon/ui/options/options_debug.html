@@ -6,7 +6,19 @@
 </style>
 <div id="debug-container">
     <h2>Scrapyard Debug</h2>
-    <p id="debug-description"></p>
+    <table cellspacing="2px">
+        <tr>
+            <td><b>Browser version:</b></td>
+            <td><code id="debug-browser-version"></code></td>
+        </tr>
+        <tr>
+            <td><b>Add-on version:</b></td>
+            <td><code id="debug-addon-version"></code></td>
+        </tr>
+    </table>
 
-    <pre id="debug-info"></pre>
+    <p>
+        Enter the following URL into the address bar to open the debug console:
+        <span id="debug-log-url" style="font-weight: bold;"></span>
+    </p>
 </div>
