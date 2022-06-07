@@ -1,6 +1,6 @@
 import {settings} from "./settings.js";
 import {
-    getActiveTab, injectCSSFile, injectScriptFile,
+    getActiveTab, hasCSRPermission, injectCSSFile, injectScriptFile,
     openContainerTab,
     openPage,
     scriptsAllowed,
@@ -141,6 +141,9 @@ function startSavePageCapture(tab, bookmark, selection) {
 }
 
 async function injectSavePageScripts(tab, onError) {
+    if (!await hasCSRPermission())
+        return;
+
     try {
         try {
             await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
@@ -356,8 +359,8 @@ function configureArchiveTab(node, archiveTab) {
 async function configureArchivePage(tab, node) {
     if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
         await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
-        await injectScriptFile(tab.id, {file: "lib/jquery.js"});
-        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js"});
+        await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
+        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
 
         if (settings.open_bookmark_in_active_tab())
             node = await Node.getByUUID(tab.url.replace(/^.*#/, "").split(":")[0])

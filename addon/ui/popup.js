@@ -5,6 +5,7 @@ import {send} from "../proxy.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {Query} from "../storage_query.js";
 import {systemInitialization} from "../bookmarks_init.js";
+import {askCSRPermission} from "../utils_browser.js";
 
 let tree;
 
@@ -135,7 +136,8 @@ window.onload = async function () {
     });
 
     $("#create-archive").on("click", async e => {
-        await addBookmark(NODE_TYPE_ARCHIVE);
+        if (await askCSRPermission())
+            await addBookmark(NODE_TYPE_ARCHIVE);
         window.close();
     });
 

@@ -763,7 +763,7 @@ function addListeners()
             /* Messages from content script */
 
             // Scrapyard //////////////////////////////////////////////////////////////////
-            case "SAVEPAGE_SETTINGS_CHANGED":
+            case "savepageSettingsChanged":
                 initialize(true);
                 break;
             ////////////////////////////////////////////////////////////////// Scrapyard //

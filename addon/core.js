@@ -16,9 +16,10 @@ import * as repair from "./core_maintenance.js";
 import * as ishell from "./core_ishell.js";
 import * as automation from "./core_automation.js";
 import * as sync from "./core_sync.js";
+import {askCSRPermission} from "./utils_browser.js";
 
 if (_MANIFEST_V3)
-    import("./mv3_fixup.js");
+    import("./mv3_persistent.js");
 
 browser.runtime.onInstalled.addListener(async details => {
     await settings.load();
@@ -36,13 +37,21 @@ receiveExternal.startListener(true);
 receive.startListener(true);
 
 (async () => {
-    await systemInitialization;
-
     if (await navigator.storage.persist()) {
-        // TODO: in MV3 somehow this should be done only once on the addon load
-        await performStartupInitialization();
+        await systemInitialization;
 
-        console.log("==> core.js loaded");
+        if (_MANIFEST_V3) {
+            // until there is no storage.local API,
+            // use an alarm as a flag to call initialization function only once
+            const alarm = await browser.alarms.get("startup-flag-alarm");
+
+            if (!alarm) {
+                await performStartupInitialization();
+                browser.alarms.create("startup-flag-alarm", {periodInMinutes: 525960}); // one year
+            }
+        }
+        else
+            await performStartupInitialization();
     }
 })();
 
@@ -59,6 +68,8 @@ async function performStartupInitialization() {
         sendLocal.performSync();
 
     await UndoManager.commit();
+
+    console.log("==> core.js initialized");
 }
 
 browser.webRequest.onBeforeSendHeaders.addListener(
@@ -86,7 +97,15 @@ browser.commands.onCommand.addListener(function(command) {
         browser.sidebarAction.open();
     }
 
-    addBookmark(action);
+    if (action === "createArchive")
+        askCSRPermission()
+            .then(response => {
+                if (response)
+                    addBookmark(action);
+            })
+            .catch(e => console.error(e));
+    else
+        addBookmark(action);
 });
 
 async function addBookmark(event) {
@@ -95,3 +114,5 @@ async function addBookmark(event) {
 
     return sendLocal[event]({node: payload});
 }
+
+console.log("==> core.js loaded");

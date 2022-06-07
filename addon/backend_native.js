@@ -1,6 +1,6 @@
 import UUID from "./lib/uuid.js"
 import {settings} from "./settings.js"
-import {showNotification} from "./utils_browser.js";
+import {hasCSRPermission, showNotification} from "./utils_browser.js";
 
 class NativeBackend {
     constructor() {
@@ -55,9 +55,14 @@ class NativeBackend {
     }
 
     async probe(verbose = false) {
+        if (!await hasCSRPermission())
+            return false;
+
         const port = await this.getPort();
+
         if (!port && verbose)
             showNotification({message: "Can not connect to the helper application."})
+
         return !!port;
     }
 

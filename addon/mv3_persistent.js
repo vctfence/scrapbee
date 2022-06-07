@@ -1,5 +1,4 @@
 // permanently keeps the background page in memory
-// works only if blob/http(s) tabs are present
 // adapted from https://stackoverflow.com/questions/66618136/persistent-service-worker-in-chrome-extension
 
 let lifeline;
@@ -7,7 +6,7 @@ let lifeline;
 keepAlive();
 
 browser.runtime.onConnect.addListener(port => {
-    if (port.name === 'keepAlive') {
+    if (port.name === "keepAlive") {
         lifeline = port;
         setTimeout(keepAliveForced, 25000); // 25 seconds
         port.onDisconnect.addListener(keepAliveForced);
@@ -23,11 +22,11 @@ function keepAliveForced() {
 async function keepAlive() {
     if (lifeline) return;
 
-    for (const tab of await browser.tabs.query({ url: '*://*/*' })) {
+    for (const tab of await browser.tabs.query({})) {
         try {
             await browser.scripting.executeScript({
                 target: { tabId: tab.id },
-                func: () => browser.runtime.connect({ name: 'keepAlive' }),
+                func: () => browser.runtime.connect({ name: "keepAlive" }),
             });
             browser.tabs.onUpdated.removeListener(retryOnTabUpdate);
             return;
@@ -37,7 +36,7 @@ async function keepAlive() {
 }
 
 async function retryOnTabUpdate(tabId, info, tab) {
-    if (info.url && /^(blob|https?):/.test(info.url)) {
+    if (info.url && /^(about|blob|https?):/.test(info.url)) {
         keepAlive();
     }
 }
