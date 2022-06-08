@@ -3,6 +3,7 @@ import {systemInitialization} from "./bookmarks_init.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
+import {askCSRPermission} from "./utils_browser.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
 import {UndoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
@@ -16,7 +17,6 @@ import * as repair from "./core_maintenance.js";
 import * as ishell from "./core_ishell.js";
 import * as automation from "./core_automation.js";
 import * as sync from "./core_sync.js";
-import {askCSRPermission} from "./utils_browser.js";
 
 if (_MANIFEST_V3)
     import("./mv3_persistent.js");
