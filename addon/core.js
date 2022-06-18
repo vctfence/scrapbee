@@ -41,7 +41,7 @@ receive.startListener(true);
         await systemInitialization;
 
         if (_MANIFEST_V3) {
-            // until there is no storage.local API,
+            // until there is no storage.session API,
             // use an alarm as a flag to call initialization function only once
             const alarm = await browser.alarms.get("startup-flag-alarm");
 

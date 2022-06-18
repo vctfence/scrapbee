@@ -48,6 +48,6 @@ the [online help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/h
 
 ### Manifest v3 Status
 
-The addon is succesfully ported to the manifest v3 as it is
+The addon is successfully ported to the manifest v3 as it is
 [implemented](https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/)
 in Firefox Nightly v102. To run with MV3 rename manifest.json.mv3 to manifest.json.
