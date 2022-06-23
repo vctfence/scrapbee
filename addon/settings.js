@@ -32,8 +32,13 @@ class ScrapyardSettings {
         this._bin = merge(object[this._key] || {}, this._default);
     }
 
-    _load() {
-        return this._loadPlatform().then(() => this._loadSettings());
+    async _load() {
+        await this._loadPlatform();
+        await this._loadSettings();
+    }
+
+    async _save() {
+        return browser.storage.local.set({[this._key]: this._bin});
     }
 
     get(target, key, receiver) {
@@ -44,16 +49,22 @@ class ScrapyardSettings {
         else if (key === "platform")
             return this._platform;
 
-        return (val) => {
+        return val => {
             let bin = this._bin;
-            if (val === undefined) return bin[key];
+
+            if (val === undefined)
+                return bin[key];
+
+            let deleted;
             if (val === null) {
-                var old = bin[key];
+                deleted = bin[key];
                 delete bin[key]
             }
-            else bin[key] = val;
-            let result = key in bin? bin[key]: old;
-            return new Promise(resolve => browser.storage.local.set({[this._key]: bin}).then(resolve(result)));
+            else
+                bin[key] = val;
+
+            let result = key in bin? bin[key]: deleted;
+            return this._save().then(() => result);
         }
     }
 
