@@ -8,7 +8,7 @@
 }
 
 #treeview {
-    overflow-x: hidden;
+    overflow: hidden;
 }
 .jstree-default .jstree-node {
     margin-left: 16px;
@@ -196,28 +196,28 @@
     background: #ddd;
 }
 
-.jstree-default .todo-state-todo {
+.jstree-anchor.todo-state-todo {
     color: #fc6dac;
     font-weight: bold;
 }
 
-.jstree-default .todo-state-waiting {
+.jstree-anchor.todo-state-waiting {
     color: #ff8a00;
     font-weight: bold;
 }
 
-.jstree-default .todo-state-postponed {
+.jstree-anchor.todo-state-postponed {
     color: #00b7ee;
     font-weight: bold;
 }
 
-.jstree-default .todo-state-cancelled,
-.jstree-default .todo-state-overdue {
+.jstree-anchor.todo-state-cancelled,
+.jstree-anchor.todo-state-overdue {
     color: #ff4d26;
     font-weight: bold;
 }
 
-.jstree-default .todo-state-done {
+.jstree-anchor.todo-state-done {
     color: #00b60e;
     font-weight: bold;
 }
@@ -272,6 +272,26 @@
 
 .archive-node {
     font-style: italic;
+}
+
+.archive-node-color {
+    color: #c6300d;;
+}
+
+.archive-node-jar .jstree-themeicon {
+    margin-right: 17px;
+}
+
+.archive-node-jar .jstree-themeicon::after {
+    content: " ";
+    background-image: url("/icons/jar.svg");
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 16px;
+    background-size: 15px 15px;
+    background-position: 1px 0;
+    background-repeat: no-repeat;
 }
 
 a.has-notes, a.has-notes:hover {

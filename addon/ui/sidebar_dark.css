@@ -317,3 +317,11 @@ select#link-scope, select#option-export-format, select#notes-format {
     border: 1px solid #b0b0b0 !important;
 }
 
+.archive-node-jar .jstree-themeicon::after {
+    background-image: url("/icons/jar2.svg") !important;
+}
+
+.archive-node-color {
+    color: #ff7b7b;
+}
+

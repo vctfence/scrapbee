@@ -211,7 +211,9 @@ window.onload = async function () {
         displayRandomBookmark();
     });
 
-    $("#footer-close-btn").click(e => {
+    $("#footer-close-btn").click(async e => {
+        await settings.load();
+        settings.display_random_bookmark(false);
         clearTimeout(randomBookmarkTimeout);
         $("#footer").hide();
     });
@@ -662,10 +664,6 @@ async function displayRandomBookmark() {
 
         randomBookmarkTimeout = setTimeout(displayRandomBookmark, 60000 * 5);
     }
-}
-
-function performUndo() {
-
 }
 
 receive.startProcessingIndication = message => {

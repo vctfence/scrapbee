@@ -7,16 +7,16 @@ import {askCSRPermission} from "./utils_browser.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
 import {UndoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
-import * as search from "./search.js";
-import * as bookmarking from "./core_bookmarking.js";
-import * as imports from "./core_import.js";
-import * as share from "./core_share.js";
-import * as backup from "./core_backup.js"
-import * as backends from "./core_backends.js";
-import * as repair from "./core_maintenance.js";
-import * as ishell from "./core_ishell.js";
-import * as automation from "./core_automation.js";
-import * as sync from "./core_sync.js";
+import "./search.js";
+import "./core_bookmarking.js";
+import "./core_import.js";
+import "./core_share.js";
+import "./core_backup.js"
+import "./core_backends.js";
+import "./core_maintenance.js";
+import "./core_ishell.js";
+import "./core_automation.js";
+import "./core_sync.js";
 
 if (_MANIFEST_V3)
     import("./mv3_persistent.js");

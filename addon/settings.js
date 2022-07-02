@@ -10,7 +10,9 @@ class ScrapyardSettings {
             helper_port_number: 20202,
             show_firefox_bookmarks: true,
             switch_to_new_bookmark: true,
-            enable_backup_compression: true
+            enable_backup_compression: true,
+            visual_archive_icon: true,
+            visual_archive_color: true
         };
 
         this._bin = {};

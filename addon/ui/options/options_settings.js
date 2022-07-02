@@ -35,6 +35,12 @@ function configureScrapyardSettingsPage() {
         () => send.reconcileBrowserBookmarkDb());
     setSaveCheckHandler("option-show-firefox-bookmarks-toolbar", "show_firefox_toolbar",
         () => send.externalNodesReady());
+    setSaveCheckHandler("option-visually-emphasise-archives", "visually_emphasise_archives",
+        () => send.shelvesChanged());
+    setSaveCheckHandler("option-archives-icon", "visual_archive_icon",
+        () => send.shelvesChanged());
+    setSaveCheckHandler("option-archives-color", "visual_archive_color",
+        () => send.shelvesChanged());
     setSaveCheckHandler("option-display-random-bookmark", "display_random_bookmark",
         e => send.displayRandomBookmark({display: e.target.checked}));
     setSaveCheckHandler("option-show-firefox-bookmarks-mobile", "show_firefox_mobile");
@@ -56,6 +62,9 @@ function loadScrapyardSettings() {
     $("#option-shelf-list-max-height").val(settings.shelf_list_height());
     $("#option-show-firefox-bookmarks").prop("checked", settings.show_firefox_bookmarks());
     $("#option-show-firefox-bookmarks-toolbar").prop("checked", settings.show_firefox_toolbar());
+    $("#option-visually-emphasise-archives").prop("checked", settings.visually_emphasise_archives());
+    $("#option-archives-icon").prop("checked", settings.visual_archive_icon());
+    $("#option-archives-color").prop("checked", settings.visual_archive_color());
     $("#option-show-firefox-bookmarks-mobile").prop("checked", settings.show_firefox_mobile());
     $("#option-switch-to-bookmark").prop("checked", settings.switch_to_new_bookmark());
     $("#option-do-not-show-archive-toolbar").prop("checked", settings.do_not_show_archive_toolbar());

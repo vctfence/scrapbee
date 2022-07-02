@@ -388,12 +388,22 @@ class BookmarkTree {
                 "data-clickable": "true"
             };
 
-            if (node.type === NODE_TYPE_ARCHIVE)
-                jnode.li_attr.class += " archive-node";
-
             jnode.a_attr = {
                 class: node.has_notes? "has-notes": ""
             };
+
+            if (node.type === NODE_TYPE_ARCHIVE) {
+                jnode.li_attr.class += " archive-node";
+
+                if (settings.visually_emphasise_archives()) {
+                    if (settings.visual_archive_icon())
+                        jnode.a_attr.class += " archive-node-jar";
+
+                    if (settings.visual_archive_color())
+                        jnode.a_attr.class += " archive-node-color";
+                }
+
+            }
 
             if (node.todo_state) {
                 jnode.a_attr.class += BookmarkTree._styleTODO(node);
