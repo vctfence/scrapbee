@@ -7,7 +7,7 @@ import {askCSRPermission} from "./utils_browser.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
 import {UndoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
-import "./search.js";
+import * as search from "./search.js";
 import "./core_bookmarking.js";
 import "./core_import.js";
 import "./core_share.js";
