@@ -31,6 +31,9 @@ function saveHistory(nodeId, text, history) {
 window.onload = async function () {
     await systemInitialization;
 
+    const treeview = $("#treeview");
+    treeview.css("overflow-y", "auto");
+
     $("#sidebar-toggle").on("click", () => {
         browser.sidebarAction.toggle();
     });
@@ -79,7 +82,7 @@ window.onload = async function () {
 
     $("#bookmark-tags").focus();
 
-    $("#treeview").on("select_node.jstree", (e, {node: jnode}) => {
+    treeview.on("select_node.jstree", (e, {node: jnode}) => {
         let existing = $(`#bookmark-folder option[value='${jnode.id}']`);
 
         if (!existing.length) {
