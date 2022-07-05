@@ -47,13 +47,13 @@ export const TREE_STATE_PREFIX = "tree-state-";
 let o = n => n.data;
 
 class BookmarkTree {
-    constructor(element, inline= false) {
+    constructor(element, folderSelect = false) {
         this._element = element;
-        this._inline = inline;
+        this._folderSelect = folderSelect;
 
         let plugins = ["wholerow", "types", "state"];
 
-        if (!inline) {
+        if (!folderSelect) {
             plugins = plugins.concat(["contextmenu", "dnd"]);
         }
 
@@ -62,7 +62,7 @@ class BookmarkTree {
             core: {
                 worker: false,
                 animation: 0,
-                multiple: !inline,
+                multiple: !folderSelect,
                 check_callback: BookmarkTree.checkOperation.bind(this),
                 themes: {
                     name: "default",
@@ -98,8 +98,8 @@ class BookmarkTree {
                 }
             },
             state: {
-                key: inline? TREE_STATE_PREFIX + EVERYTHING: undefined,
-                _scrollable: inline
+                key: folderSelect? TREE_STATE_PREFIX + EVERYTHING: undefined,
+                _scrollable: folderSelect
             },
             dnd: {
                 inside_pos: "last"
@@ -167,7 +167,7 @@ class BookmarkTree {
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
 
-        if (!inline) {
+        if (!folderSelect) {
             browser.contextualIdentities.query({}).then(containers => {
                 this._containers = containers;
             });
@@ -212,6 +212,9 @@ class BookmarkTree {
     }
 
     handleMouseClick(e) {
+        if (this._folderSelect)
+            return;
+
         if (e.type === "click" && e.target._mousedown_fired) {
             e.target._mousedown_fired = false;
             return;
@@ -468,7 +471,7 @@ class BookmarkTree {
 
         let state;
 
-        if (this._inline || everything) {
+        if (this._folderSelect || everything) {
             this._everything = true;
             this._jstree.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
             state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING));
