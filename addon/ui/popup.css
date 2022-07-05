@@ -80,13 +80,14 @@ input:focus {
 	height: 200px;
     margin-top: 8px;
     margin-bottom: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #777;
+    border-radius: 3px;
 }
 
 #treeview {
 	width: 100%;
-	height: 100%;
-    border: 1px solid #777;
-    border-radius: 3px;
 }
 
 #new-folder {
