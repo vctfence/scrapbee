@@ -1,6 +1,7 @@
 import {merge} from "./utils.js";
 
 const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
+const SCRAPYARD_UPDATED_KEY = "scrapyard-updated";
 
 class ScrapyardSettings {
     constructor() {
@@ -43,13 +44,27 @@ class ScrapyardSettings {
         return browser.storage.local.set({[this._key]: this._bin});
     }
 
+    _setAddonUpdated() {
+        localStorage.setItem(SCRAPYARD_UPDATED_KEY, "true");
+    }
+
+    _isAddonUpdated() {
+        const updated = localStorage.getItem(SCRAPYARD_UPDATED_KEY) === "true";
+        localStorage.setItem(SCRAPYARD_UPDATED_KEY, "false");
+        return updated;
+    }
+
     get(target, key, receiver) {
         if (key === "load")
-            return v => this._load();
+            return v => this._load(); // sic !
         else if (key === "default")
             return this._default;
         else if (key === "platform")
             return this._platform;
+        else if (key === "setAddonUpdated")
+            return this._setAddonUpdated;
+        else if (key === "isAddonUpdated")
+            return this._isAddonUpdated;
 
         return val => {
             let bin = this._bin;

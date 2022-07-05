@@ -21,24 +21,14 @@ import "./core_sync.js";
 if (_MANIFEST_V3)
     import("./mv3_persistent.js");
 
-browser.runtime.onInstalled.addListener(async details => {
-    await settings.load();
-
-    if (details.reason === "install") {
-        settings.install_date(Date.now());
-        settings.install_version(browser.runtime.getManifest().version);
-    }
-    else if (details.reason === "update") {
-        //settings.pending_announcement("options.html#about");
-    }
-});
-
 receiveExternal.startListener(true);
 receive.startListener(true);
 
 (async () => {
     if (await navigator.storage.persist()) {
         await systemInitialization;
+
+        //showAnnouncement();
 
         if (_MANIFEST_V3) {
             // until there is no storage.session API,
@@ -54,6 +44,11 @@ receive.startListener(true);
             await performStartupInitialization();
     }
 })();
+
+function showAnnouncement() {
+    if (settings.isAddonUpdated())
+        settings.pending_announcement("options.html#about");
+}
 
 async function performStartupInitialization() {
     search.initializeOmnibox();
