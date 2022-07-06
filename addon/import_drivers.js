@@ -9,7 +9,7 @@ import {
     NODE_TYPE_SHELF
 } from "./storage.js";
 import {Group} from "./bookmarks_group.js";
-import UUID from "./lib/uuid.js";
+import UUID from "./uuid.js";
 import {formatShelfName} from "./bookmarking.js";
 import {Import} from "./import.js";
 

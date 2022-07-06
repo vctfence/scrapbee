@@ -1,6 +1,6 @@
 import {EntityIDB} from "./storage_idb.js";
 import {NODE_PROPERTIES} from "./storage.js";
-import UUID from "./lib/uuid.js";
+import UUID from "./uuid.js";
 
 export class NodeIDB extends EntityIDB {
     static newInstance() {

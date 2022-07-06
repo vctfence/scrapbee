@@ -1,4 +1,4 @@
-import UUID from "./lib/uuid.js"
+import UUID from "./uuid.js"
 import {settings} from "./settings.js"
 import {hasCSRPermission, showNotification} from "./utils_browser.js";
 

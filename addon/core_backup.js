@@ -2,7 +2,7 @@ import {send} from "./proxy.js";
 import {nativeBackend} from "./backend_native.js";
 import {isVirtualShelf} from "./storage.js";
 import {receive} from "./proxy.js"
-import UUID from "./lib/uuid.js";
+import UUID from "./uuid.js";
 import {sleep} from "./utils.js";
 import {Export, Import} from "./import.js";
 import {Query} from "./storage_query.js";

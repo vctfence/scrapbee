@@ -1,5 +1,5 @@
 import {nativeBackend} from "./backend_native.js";
-import UUID from "./lib/uuid.js";
+import UUID from "./uuid.js";
 import {
     isContainer, isBuiltInShelf, byPosition,
     TODO_NAMES, TODO_STATES,

@@ -55,13 +55,22 @@ UUID.generate = function(template) {
     });
 };
 
-UUID.iso = function() {
-    return UUID.generate('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx');
-};
+// UUID.iso = function() {
+//     return UUID.generate('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx');
+// };
 
 UUID.numeric = function() {
     return UUID.generate('xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx');
 };
+
+const firefoxVersion = parseInt(navigator.userAgent.match(/Firefox\/(\d+)/)?.[1]);
+
+if (!firefoxVersion || firefoxVersion >= 95)
+    UUID.numeric = function() {
+        let uuid = crypto.randomUUID();
+        uuid = uuid.replaceAll(/-/g, "");
+        return uuid.toUpperCase();
+    };
 
 UUID.date = function() {
     const d = new Date();

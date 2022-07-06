@@ -4,7 +4,7 @@ import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
 import {receive} from "./proxy.js";
-import UUID from "./lib/uuid.js";
+import UUID from "./uuid.js";
 import {sleep} from "./utils.js";
 import {Import, Export} from "./import.js";
 import {ExportArea} from "./storage_export.js";

@@ -1,4 +1,4 @@
-import UUID from "./lib/uuid.js";
+import UUID from "./uuid.js";
 import {nativeBackend} from "./backend_native.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {Archive, Node} from "./storage_entities.js";
