@@ -25,8 +25,9 @@ let editor;
 let editorChanged;
 let editorTimeout;
 
+$(init);
 
-window.onload = async function() {
+async function init() {
     await systemInitialization;
 
     const isInline = location.search.startsWith("?i");

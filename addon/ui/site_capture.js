@@ -3,7 +3,9 @@ var pageLinks = [];
 
 const DOMAIN_STUB = "INSERT_YOUR_DOMAIN";
 
-window.onload = function () {
+$(init);
+
+function init() {
     setUpMenu("include");
     setUpMenu("exclude");
 

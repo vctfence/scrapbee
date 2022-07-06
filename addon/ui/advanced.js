@@ -6,6 +6,20 @@ import {formatBytes} from "../utils.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {systemInitialization} from "../bookmarks_init.js";
 
+$(init);
+
+async function init() {
+    await systemInitialization;
+
+    initHelpMarks();
+    configureAutomationPanel();
+    configureDBPath();
+    configureBackupCompressionPanel();
+    configureMaintenancePanel();
+    configureImpExpPanel();
+}
+
+
 function initHelpMarks() {
     $(".help-mark").hover(function(e){
         $(this).next(".tips.hide").show().css({left: (e.pageX )+"px", top: (e.pageY) +"px"})
@@ -254,15 +268,4 @@ function configureImpExpPanel() {
         }
     });
 
-}
-
-window.onload = async function() {
-    await systemInitialization;
-
-    initHelpMarks();
-    configureAutomationPanel();
-    configureDBPath();
-    configureBackupCompressionPanel();
-    configureMaintenancePanel();
-    configureImpExpPanel();
 }

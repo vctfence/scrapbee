@@ -3,7 +3,6 @@ import {settings} from "../settings.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {confirm, showDlg} from "./dialog.js"
-
 import {
     SEARCH_MODE_COMMENTS,
     SEARCH_MODE_CONTENT,
@@ -14,7 +13,6 @@ import {
     SEARCH_MODE_TITLE, SEARCH_MODE_UNIVERSAL,
     SearchContext
 } from "../search.js";
-
 import {pathToNameExt} from "../utils.js";
 import {
     byPosition,
@@ -26,13 +24,14 @@ import {
     EVERYTHING,
     EVERYTHING_SHELF_ID,
     FIREFOX_SHELF_ID,
-    isBuiltInShelf,
-    isEndpoint, isVirtualShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
     NODE_TYPE_SHELF,
     TODO_SHELF_ID,
-    TODO_SHELF_NAME
+    TODO_SHELF_NAME,
+    isBuiltInShelf,
+    isVirtualShelf,
+    isEndpoint
 } from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
@@ -43,8 +42,8 @@ import {TODO} from "../bookmarks_todo.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Group} from "../bookmarks_group.js";
 import {Icon, Node} from "../storage_entities.js";
+import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
-import {UndoManager} from "../bookmarks_undo.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -62,7 +61,9 @@ window.addEventListener('DOMContentLoaded', () => {
     $("#shelves-icon").show();
 });
 
-window.onload = async function () {
+$(init);
+
+async function init() {
     await systemInitialization;
 
     shelfList = new ShelfList("#shelfList", {
@@ -87,7 +88,7 @@ window.onload = async function () {
     $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();
 
-        if (await UndoManager.canUndo())
+        if (await undoManager.canUndo())
             $("#shelf-menu-undo").show();
         else
             $("#shelf-menu-undo").hide();

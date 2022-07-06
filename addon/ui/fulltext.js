@@ -16,7 +16,9 @@ window.addEventListener('DOMContentLoaded', () => {
     searchScopePlaceholderDiv.show();
 });
 
-window.onload = async function() {
+$(init);
+
+async function init() {
     await systemInitialization;
 
     shelfList = new ShelfList("#search-scope", {

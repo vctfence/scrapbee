@@ -3,7 +3,9 @@ import {fetchText} from "../utils_io.js";
 import {injectCSS} from "../utils_html.js";
 import {systemInitialization} from "../bookmarks_init.js";
 
-window.onload = async function() {
+$(init);
+
+async function init() {
     await systemInitialization;
 
     window.onhashchange = switchPane;

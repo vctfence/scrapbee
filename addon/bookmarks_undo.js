@@ -4,7 +4,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Query} from "./storage_query.js";
 import {Node} from "./storage_entities.js";
 
-class _UndoManager {
+class UndoManager {
 
     async canUndo() {
         return (await Undo.peek()).stack >= 0;
@@ -76,4 +76,4 @@ class _UndoManager {
 
 }
 
-export const UndoManager = new _UndoManager();
+export const undoManager = new UndoManager();

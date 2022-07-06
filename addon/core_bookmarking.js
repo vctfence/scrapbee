@@ -25,7 +25,7 @@ import {Group} from "./bookmarks_group.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
-import {UndoManager} from "./bookmarks_undo.js";
+import {undoManager} from "./bookmarks_undo.js";
 import {Query} from "./storage_query.js";
 
 receive.createShelf = message => Shelf.add(message.name);
@@ -320,7 +320,7 @@ receive.performSiteCapture = (message, sender) => {
 receive.performUndo = async message => {
     send.startProcessingIndication();
     try {
-        const result = await UndoManager.undo();
+        const result = await undoManager.undo();
 
         switch (result.operation) {
             case UNDO_DELETE:

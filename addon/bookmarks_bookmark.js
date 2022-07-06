@@ -22,7 +22,7 @@ import {ishellBackend} from "./backend_ishell.js";
 import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {getFavicon} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
-import {UndoManager} from "./bookmarks_undo.js";
+import {undoManager} from "./bookmarks_undo.js";
 
 export class BookmarkManager extends EntityManager {
 
@@ -407,7 +407,7 @@ export class BookmarkManager extends EntityManager {
     }
 
     async _undoDelete(nodes, ids) {
-        await UndoManager.pushDeleted(ids, nodes);
+        await undoManager.pushDeleted(ids, nodes);
 
         return Node.deleteShallow(nodes.map(n => n.id));
     }

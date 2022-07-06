@@ -4,7 +4,7 @@ import {Query} from "./storage_query.js";
 
 // a proxy class that calls handlers of the registered external backends if they are implemented
 // an external backend may have the "initialize" method which is called after the settings are loaded
-// the backend is chosen by the first found value of the "external" field in any argument
+// the corresponding backend is chosen by the first found value of the "external" field in any argument
 export class PluginContainer {
     constructor() {
         this.externalBackends = {};
@@ -72,6 +72,7 @@ export class PluginContainer {
 
 export let plugins = new PluginContainer();
 
+// the base class for high-level bookmarking entities: Bookmark, Shelf, etc.
 export class EntityManager {
     constructor() {
         this.plugins = plugins;

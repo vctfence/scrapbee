@@ -5,7 +5,7 @@ import {cloudBackend} from "./backend_cloud_shelf.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
 import {askCSRPermission} from "./utils_browser.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
-import {UndoManager} from "./bookmarks_undo.js";
+import {undoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
 import "./core_bookmarking.js";
@@ -62,7 +62,7 @@ async function performStartupInitialization() {
     if (settings.sync_on_startup())
         sendLocal.performSync();
 
-    await UndoManager.commit();
+    await undoManager.commit();
 
     console.log("==> core.js initialized");
 }
