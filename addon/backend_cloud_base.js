@@ -141,4 +141,8 @@ export class BackendCloudBase {
         const content = db.serialize();
         this.uploadFile(path, content);
     }
+
+    _replaceSpecialChars(filename) {
+        return filename.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_");
+    }
 }

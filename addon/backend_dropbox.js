@@ -90,7 +90,7 @@ export class DropboxBackend extends BackendCloudBase {
     async share(path, filename, content) {
         await this.authenticate();
         return this.dbx.filesUpload({
-            path: path + filename.replace(/[\\\/:*?"<>|\[\]()^#%&!@:+={}'~]/g, "_"),
+            path: path + this._replaceSpecialChars(filename),
             mode: "add",
             autorename: true,
             mute: false,

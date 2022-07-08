@@ -221,6 +221,7 @@ export class OneDriveBackend extends BackendCloudBase {
         if (path === "/")
             path = "";
 
+        filename = this._replaceSpecialChars(filename);
         const requestPath = this._getDrivePath(`${path}/${filename}`);
         return this._uploadLargeFile(requestPath, bytes, "rename");
     };

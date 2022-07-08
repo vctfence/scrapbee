@@ -28,10 +28,11 @@ httpd = None
 
 message_mutex = threading.Lock()
 
+
 class Httpd(threading.Thread):
 
     def __init__(self, app, port):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.srv = make_server(host, port, app, True)
         self.ctx = app.app_context()
         self.ctx.push()
@@ -50,7 +51,6 @@ def start(a_port, an_auth):
     port = a_port
     auth_token = an_auth
     httpd = Httpd(app, a_port)
-    #httpd.setDaemon(True)
     httpd.start()
 
 
