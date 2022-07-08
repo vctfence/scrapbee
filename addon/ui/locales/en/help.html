@@ -96,8 +96,10 @@
         elt.parentElement.style.display = "none";
     }
 
-    const tocToggle = document.getElementById("for-read-more-table-of-contents");
-    tocToggle.parentElement.removeChild(tocToggle);
+    window.addEventListener('DOMContentLoaded', function() {
+        const tocToggle = document.getElementById("for-read-more-table-of-contents");
+        tocToggle.parentElement.removeChild(tocToggle);
+    });
 </script>
 
 <div id="help-container">
