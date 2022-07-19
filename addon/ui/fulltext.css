@@ -14,6 +14,7 @@ html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    height: 100%;
 }
 
 input {
@@ -30,6 +31,7 @@ input[type="text"] {
 
 #search-container {
     display: flex;
+    box-sizing: border-box;
     flex-direction: column;
     height: 100%;
 }
