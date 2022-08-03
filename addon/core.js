@@ -37,13 +37,21 @@ receive.startListener(true);
         //showAnnouncement();
 
         if (_MANIFEST_V3) {
-            // until there is no storage.session API,
-            // use an alarm as a flag to call the initialization function only once
-            const alarm = await browser.alarms.get("startup-flag-alarm");
-
-            if (!alarm) {
-                await performStartupInitialization();
-                browser.alarms.create("startup-flag-alarm", {periodInMinutes: 525960}); // one year
+            if (_BACKGROUND_PAGE) {
+                // until there is no storage.session API,
+                // use an alarm as a flag to call the initialization function only once
+                const alarm = await browser.alarms.get("startup-flag-alarm");
+                if (!alarm) {
+                    await performStartupInitialization();
+                    browser.alarms.create("startup-flag-alarm", {delayInMinutes: 525960}); // one year
+                }
+            }
+            else {
+                const initialized = await browser.storage.session.get("scrapyard-initialized")?.["scrapyard-initialized"];
+                if (!initialized) {
+                    await performStartupInitialization();
+                    await browser.storage.session.set({"scrapyard-initialized": true});
+                }
             }
         }
         else

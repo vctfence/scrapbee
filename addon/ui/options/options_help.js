@@ -31,7 +31,7 @@ function expandReadMore(evt) {
 
     if (elt.id === "for-read-more-table-of-contents") {
         $("#read-more-table-of-contents").toc({prefix: "help:"});
-        $("h1,h2,h3").append(" <a class='to-top' href='#'>&#x1F809;</a>");
+        $("#help-content h1, #help-content h2, #help-content h3").append(" <a class='to-top' href='#'>&#x1F809;</a>");
         $(".to-top").on("click", e => {
             e.preventDefault();
             $("#div-help").prop("scrollTop", 0)

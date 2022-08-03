@@ -46,27 +46,12 @@ class ReceiveHandler {
     }
 
     _createListener(isAsync) {
-        if (_BACKGROUND_PAGE) {
+        if (_BACKGROUND_PAGE)
             return isAsync
                 ? async (...args) => this._dispatch.apply(this, args)
                 : (...args) => this._dispatch.apply(this, args);
-        }
-        else {
-            return (...args) => {
-                const sendResponse = args[2];
-                let result = this._dispatch.apply(this, args);
-
-                if (result instanceof Promise) {
-                    (async () => { // Chrome does not like nested promises in message handlers
-                        result = await result;
-                        sendResponse(result)
-                    })();
-                    return true;
-                }
-                else
-                    sendResponse(result);
-            }
-        }
+        else
+            return (...args) => this._dispatch.apply(this, args);
     }
 
     _dispatch() {
@@ -74,8 +59,21 @@ class ReceiveHandler {
         const type = this.camelCase? message.type: snakeCaseToCamelCase(message.type);
         const method = this.methods.get(type);
 
-        if (method)
-            return method.apply(null, arguments);
+        if (method) {
+            if (_BACKGROUND_PAGE)
+                return method.apply(null, arguments);
+            else {
+                const sendResponse = arguments[2];
+                const result = method.apply(null, arguments);
+
+                if (result instanceof Promise) {
+                    result.then(sendResponse);
+                    return true;
+                }
+                else
+                    sendResponse(result);
+            }
+        }
         else
             if (DEBUG)
                 console.error(`No method for message type: ${message.type}`);
@@ -95,6 +93,7 @@ export let send = new Proxy({}, {
             //console.log(payload)
             //console.trace()
             payload.type = type;
+
             return browser.runtime.sendMessage(payload);
         };
     }

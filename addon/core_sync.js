@@ -98,12 +98,17 @@ async function performSync(initial) {
         syncOperations.initial = initial;
 
         if (areChangesPresent(syncOperations)) {
-            browser.browserAction.setIcon({path: "/icons/action-sync.svg"});
+            const action = _MANIFEST_V3? browser.action: browser.browserAction;
+
+            if (_BACKGROUND_PAGE)
+                action.setIcon({path: "/icons/action-sync.svg"});
+
             try {
                 await performOperations(syncOperations, sync_directory);
             }
             finally {
-                browser.browserAction.setIcon({path: "/icons/scrapyard.svg"});
+                if (_BACKGROUND_PAGE)
+                    action.setIcon({path: "/icons/scrapyard.svg"});
             }
         }
         else if (initial)
