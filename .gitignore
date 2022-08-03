@@ -12,7 +12,7 @@ backend/flask.bat
 .idea/httpRequests/http-requests-log.http
 addon/.web-extension-id
 addon/web-ext-artifacts
-addon/debug.log
+addon/_metadata
 __pycache__
 helper/build/
 helper/dist/

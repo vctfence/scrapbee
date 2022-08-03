@@ -29,11 +29,19 @@
         "webNavigation",
         "management",
         "cookies",
-        "scripting"
+        "scripting",
+        "declarativeNetRequest"
     ],
     "host_permissions": [
         "<all_urls>"
     ],
+    "declarative_net_request": {
+        "rule_resources": [{
+            "id": "ruleset_1",
+            "enabled": true,
+            "path": "net_rules.json"
+        }]
+    },
     "commands": {
         "toggle_sidebar_window": {
             "suggested_key": {

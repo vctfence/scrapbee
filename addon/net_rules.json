@@ -1,0 +1,11 @@
+[{
+    "id": 1,
+    "priority": 1,
+    "action": {
+        "type": "modifyHeaders",
+        "requestHeaders": [
+            { "header": "origin", "operation": "remove" }
+        ]
+    },
+    "condition": { "urlFilter": "login.microsoftonline.com", "resourceTypes": ["xmlhttprequest"] }
+}]
