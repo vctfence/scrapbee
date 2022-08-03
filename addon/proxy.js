@@ -54,10 +54,13 @@ class ReceiveHandler {
         else {
             return (...args) => {
                 const sendResponse = args[2];
-                const result = this._dispatch.apply(this, args);
+                let result = this._dispatch.apply(this, args);
 
                 if (result instanceof Promise) {
-                    result.then(sendResponse);
+                    (async () => { // Chrome does not like nested promises in message handlers
+                        result = await result;
+                        sendResponse(result)
+                    })();
                     return true;
                 }
                 else
@@ -72,7 +75,7 @@ class ReceiveHandler {
         const method = this.methods.get(type);
 
         if (method)
-            return Reflect.apply(method, null, arguments);
+            return method.apply(null, arguments);
         else
             if (DEBUG)
                 console.error(`No method for message type: ${message.type}`);

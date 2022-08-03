@@ -132,12 +132,12 @@ class NativeBackend {
 
     fetch(path, init) {
         init = this._injectAuth(init);
-        return window.fetch(this.url(path), init);
+        return globalThis.fetch(this.url(path), init);
     }
 
     async fetchText(path, init) {
         init = this._injectAuth(init);
-        let response = await window.fetch(this.url(path), init);
+        let response = await globalThis.fetch(this.url(path), init);
         if (response.ok)
             return response.text();
        else
@@ -146,7 +146,7 @@ class NativeBackend {
 
     async fetchJSON(path, init) {
         init = this._injectAuth(init);
-        let response = await window.fetch(this.url(path), init);
+        let response = await globalThis.fetch(this.url(path), init);
         if (response.ok)
             return response.json();
         else
