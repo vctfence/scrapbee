@@ -13,42 +13,6 @@ control from [iShell](https://gchristensen.github.io/ishell/), I decided to
 rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch to
 obtain the desired features.
 
-It is the 2020s now, and it may be the right time to abandon XML-based RDF and
-move towards databases, JSON, and cloud services. For an advanced user, Scrapyard
-may become a cloud bookmarking solution of choice. Please see the [online
-help](https://gchristensen.github.io/scrapyard/addon/ui/locales/en/help.html)
-for more details.
-
-### Objectives
-
-* [DONE] Store data at IndexedDB
-* [DONE] Replace "RDF" tree with [jsTree](https://www.jstree.com/)
-* [DONE] Add a fancy user-action popup with a tree of directories to add bookmarks into
-* [DONE] Since it is GPL, use [SavePageWE](https://addons.mozilla.org/en-US/firefox/addon/save-page-we/) engine to save pages in a DB record as a single file (many kudos to SavePageWE developers)
-* [DONE] Rework archive page editing tools to accommodate new storage method
-* [DONE] Store indexed content of downloaded HTML documents in the database
-* [DONE] Add search text input on the toolbar; search by tags, title, content, and other attributes
-* [DONE] Control from [iShell](https://gchristensen.github.io/ishell/)
-* [DONE] Basic TODO functionality a la ORG
-* [DONE] Import/export from .org
-* [DONE] Import from Firefox/Chrome .html bookmarks
-* [DONE] Rework settings page
-* [DONE] Dark theme
-* [DONE] Write help
-* [DONE] A little bit of Wiki functionality: editable notes in org markup and other formats
-* [DONE] Duplicate/rotten link checker
-* [DONE] Create an android application to share/pick up links to/from the cloud
-* [DONE] Create a helper application to transcend the limits of WebExtensions
-* [DONE] Import of ScrapBook RDF archives
-* [DONE] Multi-account containers support
-* [DONE] Automation API
-* [DONE] Full-text search/filtering through archived content, notes, and comments
-* [DONE] Backup management UI
-* [DONE] File-based synchronization
-* [DONE] Add the ability to browser synchronized bookmarks to the android application
-* [DONE] Add the ability to capture entire sites a la WebScrapBook
-* [DONE] Add the ability to undo bookmark deletions
-
 ### Manifest v3 Status
 
 The addon is successfully ported to manifest v3 as it is

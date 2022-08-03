@@ -85,6 +85,9 @@ function configureBackupCompressionPanel() {
 }
 
 function configureMaintenancePanel() {
+    if (!_BACKGROUND_PAGE)
+        $("#debug-settings-link").hide();
+
     $("#option-repair-icons").prop("checked", settings.repair_icons());
     $("#option-repair-icons").on("change", async e => {
         await settings.load();
@@ -194,9 +197,11 @@ function configureImpExpPanel() {
 
         let settings = await browser.storage.local.get();
 
-        delete settings["scrapyard-settings"]["ishell_presents"];
-        delete settings["scrapyard-settings"]["dropbox_refresh_token"];
-        delete settings["scrapyard-settings"]["pending_announcement"];
+        if (settings["scrapyard-settings"]) {
+            delete settings["scrapyard-settings"]["ishell_presents"];
+            delete settings["scrapyard-settings"]["dropbox_refresh_token"];
+            delete settings["scrapyard-settings"]["pending_announcement"];
+        }
 
         settings["localstorage-settings"] = {
             "editor-font-size": localStorage.getItem("editor-font-size"),

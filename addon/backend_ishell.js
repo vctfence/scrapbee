@@ -9,16 +9,16 @@ class IShellBackend {
     initialize() {
         this.enableInvalidation(settings.ishell_presents());
 
-        if (window.location.href.endsWith("background.html")) {
+        if (globalThis.location.href.endsWith("background.html")) {
             let initListener = event => {
                 if (event.data.type === "SCRAPYARD_ID_REQUESTED") {
                     if (event.data.sender.id === this.ISHELL_ID) {
                         this._listenIShell();
-                        window.removeEventListener("message", initListener);
+                        globalThis.removeEventListener("message", initListener);
                     }
                 }
             };
-            window.addEventListener("message", initListener, false);
+            globalThis.addEventListener("message", initListener, false);
         }
 
         browser.runtime.onMessage.addListener((request) => {
@@ -69,11 +69,11 @@ class IShellBackend {
     }
 
     enableInvalidation(enable) {
-        window.__iShellInvalidationEnabled = enable;
+        globalThis.__iShellInvalidationEnabled = enable;
     }
 
     isInvalidationEnabled() {
-        return window.__iShellInvalidationEnabled;
+        return globalThis.__iShellInvalidationEnabled;
     }
 
     invalidateCompletion() {

@@ -3,6 +3,7 @@ import {systemInitialization} from "./bookmarks_init.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
+import {toggleSidebarWindow} from "./utils_chrome.js";
 import {askCSRPermission} from "./utils_browser.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
 import {undoManager} from "./bookmarks_undo.js";
@@ -18,21 +19,24 @@ import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
 
-if (_MANIFEST_V3)
+if (_BACKGROUND_PAGE && _MANIFEST_V3)
     import("./mv3_persistent.js");
 
 receiveExternal.startListener(true);
 receive.startListener(true);
 
 (async () => {
-    if (await navigator.storage.persist()) {
+    const shouldAskForPersistence = typeof navigator.storage.persist === "function";
+    const canInitialize = !shouldAskForPersistence || shouldAskForPersistence && await navigator.storage.persist();
+
+    if (canInitialize) {
         await systemInitialization;
 
         //showAnnouncement();
 
         if (_MANIFEST_V3) {
             // until there is no storage.session API,
-            // use an alarm as a flag to call initialization function only once
+            // use an alarm as a flag to call the initialization function only once
             const alarm = await browser.alarms.get("startup-flag-alarm");
 
             if (!alarm) {
@@ -67,15 +71,16 @@ async function performStartupInitialization() {
     console.log("==> core.js initialized");
 }
 
-browser.webRequest.onBeforeSendHeaders.addListener(
-    (details) => {
-        return {
-            requestHeaders: details.requestHeaders.filter(x => !originWithId(x))
-        }
-    },
-    {urls: ["<all_urls>"]},
-    ["blocking", "requestHeaders"]
-);
+if (browser.webRequest)
+    browser.webRequest.onBeforeSendHeaders.addListener(
+        (details) => {
+            return {
+                requestHeaders: details.requestHeaders.filter(x => !originWithId(x))
+            }
+        },
+        {urls: ["<all_urls>"]},
+        ["blocking", "requestHeaders"]
+    );
 
 // remove the Origin header from add-on fetch requests
 function originWithId(header) {
@@ -83,6 +88,13 @@ function originWithId(header) {
 }
 
 browser.commands.onCommand.addListener(function(command) {
+    if (!_BACKGROUND_PAGE && command === "toggle_sidebar_window")
+        toggleSidebarWindow();
+    else
+        addBookmarkOnCommand(command);
+});
+
+function addBookmarkOnCommand(command) {
     let action = "createBookmark";
     if (command === "archive_to_default_shelf")
         action = "createArchive";
@@ -101,7 +113,7 @@ browser.commands.onCommand.addListener(function(command) {
             .catch(e => console.error(e));
     else
         addBookmark(action);
-});
+}
 
 async function addBookmark(event) {
     const payload = await getActiveTabMetadata();

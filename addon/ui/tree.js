@@ -42,7 +42,6 @@ import {Comments, Icon, Node} from "../storage_entities.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 
-
 // return the original Scrapyard node object stored in a jsTree node
 let o = n => n.data;
 
@@ -167,7 +166,7 @@ class BookmarkTree {
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
 
-        if (!folderSelect) {
+        if (!folderSelect && browser.contextualIdentities) {
             browser.contextualIdentities.query({}).then(containers => {
                 this._containers = containers;
             });
@@ -774,12 +773,7 @@ class BookmarkTree {
             });
         }
 
-        let containers =
-            ctxNode.type === NODE_TYPE_BOOKMARK
-                ? [/*{cookieStoreId: undefined, name: "Default", iconUrl: "../icons/containers.svg",
-                           colorCode: (lightTheme? "#666666": "#8C8C90") },*/ ...this._containers]
-                : this._containers;
-
+        let containers = this._containers || [];
         let containersSubmenu = {};
 
         for (let container of containers) {
@@ -1167,7 +1161,7 @@ class BookmarkTree {
                 action: async () => {
                     await settings.load();
                     let query = `?menu=true&repairIcons=${settings.repair_icons()}&scope=${ctxNode.id}`;
-                    openPage(`options.html${query}#checklinks`);
+                    openPage(`/ui/options.html${query}#checklinks`);
                 }
             },
             uploadItem: {
@@ -1485,6 +1479,9 @@ class BookmarkTree {
 
         if (!settings.debug_mode())
             delete items.debugItem;
+
+        if (!browser.contextualIdentities)
+            delete items.openInContainerItem;
 
         return items;
     }

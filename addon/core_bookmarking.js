@@ -5,7 +5,6 @@ import {getActiveTab, showNotification} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
 import {
-    browseNode,
     captureTab,
     finalizeCapture,
     isSpecialPage,
@@ -26,7 +25,7 @@ import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {Query} from "./storage_query.js";
+import {browseNode} from "./browse.js";
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -276,7 +275,10 @@ receive.uploadFiles = async message => {
 }
 
 receive.browseNode = message => {
-    browseNode(message.node, message);
+    if (_BACKGROUND_PAGE)
+        browseNode(message.node, message);
+    else
+        send.browseNodeSidebar(message);
 };
 
 receive.browseNotes = message => {

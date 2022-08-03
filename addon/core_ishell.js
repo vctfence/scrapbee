@@ -7,12 +7,13 @@ import {
     NODE_TYPE_SHELF, TODO_SHELF_NAME
 } from "./storage.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {browseNode, getActiveTabMetadata, isSpecialPage, notifySpecialPage} from "./bookmarking.js";
+import {getActiveTabMetadata} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Icon, Node} from "./storage_entities.js";
 import {Group} from "./bookmarks_group.js";
+import {browseNode} from "./browse.js";
 
 receiveExternal.scrapyardListShelvesIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))

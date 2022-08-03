@@ -78,9 +78,9 @@ async function init() {
 
     $("#btnLoad").on("click", () => loadShelves());
     $("#btnSync").on("click", () => performSync());
-    $("#btnSearch").on("click", () => openPage("fulltext.html"));
-    $("#btnSettings").on("click", () => openPage("options.html"));
-    $("#btnHelp").on("click", () => openPage("options.html#help"));
+    $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
+    $("#btnSettings").on("click", () => openPage("/ui/options.html"));
+    $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
 
     // in the case if settings are cleaned by user
     localStorage.setItem("sidebar-show-sync", settings.sync_enabled()? "show": "hide");
@@ -323,7 +323,8 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
     try {
         updateProgress(0);
         await shelfList.reload();
-        return switchShelf(selected || getLastShelf() || DEFAULT_SHELF_ID, synchronize, clearSelection);
+        const switchToId = selected || getLastShelf() || DEFAULT_SHELF_ID;
+        return switchShelf(switchToId, synchronize, clearSelection);
     }
     catch (e) {
         console.error(e);
@@ -820,6 +821,17 @@ function updateProgress(message) {
     else
         progressDiv.css("width", "0");
 }
+
+let browseNode;
+if (!_BACKGROUND_PAGE) {
+    const browseModule = await import("../browse.js");
+    browseNode = browseModule.browseNode;
+}
+
+receive.browseNodeSidebar = message => {
+    if (browseNode)
+        browseNode(message.node, message);
+};
 
 receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))

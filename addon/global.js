@@ -1,15 +1,22 @@
-window._MANIFEST_VERSION = browser.runtime.getManifest().manifest_version;
+const _MANIFEST = chrome.runtime.getManifest() // chrome.runtime should be used for compatibility
 
-window._MANIFEST_V3 = window._MANIFEST_VERSION === 3;
+globalThis._MANIFEST_VERSION = _MANIFEST.manifest_version;
 
-window.DEBUG = false;
+globalThis._MANIFEST_V3 = globalThis._MANIFEST_VERSION === 3;
 
-window.log = (...args) => console.log.apply(console, args);
+globalThis._BACKGROUND_PAGE = !!_MANIFEST.background?.page;
 
-window.logd = (...args) => window.DEBUG? console.log.apply(console, args): undefined;
+if (typeof browser === "undefined")
+    globalThis.browser = chrome;
 
-window._tm = (name = "timer") => console.time(name);
+globalThis.DEBUG = false;
 
-window._te = (name = "timer") => console.timeEnd(name);
+globalThis.log = console.log
 
-window._tr = () => console.trace();
+globalThis.logd = (...args) => globalThis.DEBUG? console.log.apply(console, args): undefined;
+
+globalThis._tm = (name = "timer") => console.time(name);
+
+globalThis._te = (name = "timer") => console.timeEnd(name);
+
+globalThis._tr = () => console.trace();

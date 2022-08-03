@@ -35,16 +35,34 @@ class ReceiveHandler {
         if (key === "startListener") {
             return isAsync => {
                 if (!this.listener) {
-                    this.listener =
-                        isAsync
-                            ? async (...args) => this._dispatch.apply(this, args)
-                            : (...args) => this._dispatch.apply(this, args);
+                    this.listener = this._createListener(isAsync);
                     target._handler.addListener(this.listener);
                 }
             };
         }
         else if (key === "methods") {
             return this.methods;
+        }
+    }
+
+    _createListener(isAsync) {
+        if (_BACKGROUND_PAGE) {
+            return isAsync
+                ? async (...args) => this._dispatch.apply(this, args)
+                : (...args) => this._dispatch.apply(this, args);
+        }
+        else {
+            return (...args) => {
+                const sendResponse = args[2];
+                const result = this._dispatch.apply(this, args);
+
+                if (result instanceof Promise) {
+                    result.then(sendResponse);
+                    return true;
+                }
+                else
+                    sendResponse(result);
+            }
         }
     }
 

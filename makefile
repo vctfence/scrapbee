@@ -12,6 +12,14 @@ build:
 sign:
 	cd addon; web-ext sign -i web-ext-artifacts .web-extension-id debug.log `cat $(HOME)/.amo/creds`
 
+.PHONY: firefox-mv2
+firefox-mv2:
+	cd addon; cp manifest.json.mv2 manifest.json
+
+.PHONY: chrome-mv3
+chrome-mv3:
+	cd addon; cp manifest.json.mv3.chrome manifest.json
+
 .PHONY: helper
 helper:
 	cd helper; rm -r -f build

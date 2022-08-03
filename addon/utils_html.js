@@ -140,7 +140,11 @@ export function indexString(string) {
 }
 
 export function indexHTML(string) {
-    return createIndex(string, extractTextRecursive)
+    const textExtractor = _BACKGROUND_PAGE
+        ? extractTextRecursive
+        : removeTags;
+
+    return createIndex(string, textExtractor)
 }
 
 function createIndex(string, textExtractor) {
@@ -179,6 +183,15 @@ function extractTextRecursive(string, parser) {
         });
 
     return text;
+}
+
+function removeTags(string) {
+    return string.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
+        .replace(/<title.*?<\/title>/igs, "")
+        .replace(/<style.*?<\/style>/igs, "")
+        .replace(/<script.*?<\/script>/igs, "")
+        .replace(/&[0-9#a-zA-Z]+;/igs, ' ')
+        .replace(/<[^>]+>/gs, ' ');
 }
 
 function removeScriptTags(doc) {

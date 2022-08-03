@@ -282,5 +282,4 @@ receive.computeStatistics = async message => {
     send.stopProcessingIndication();
 
     return {items, bookmarks, archives, notes, size};
-
 }

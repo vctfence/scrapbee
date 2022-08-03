@@ -16,12 +16,13 @@ import {getMimetypeExt} from "./utils.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
+import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Group} from "./bookmarks_group.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "./storage_entities.js";
+import {browseNode} from "./browse.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();

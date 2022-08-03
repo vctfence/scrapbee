@@ -48,13 +48,17 @@ export const scriptsAllowed = _MANIFEST_V3? scriptsAllowedMV3: scriptsAllowedMV2
 
 export function showNotification(args) {
     if (typeof arguments[0] === "string")
-        args = {message: arguments[0]}
+        args = {message: arguments[0]};
+
+    const iconUrl = _BACKGROUND_PAGE
+        ? "/icons/scrapyard.svg"
+        : "/icons/logo128.png";
 
     return browser.notifications.create(`sbi-notification-${args.type}`, {
         type: args.type ? args.type : "basic",
         title: args.title ? args.title : "Scrapyard",
         message: args.message,
-        iconUrl: "/icons/scrapyard.svg"
+        iconUrl
     });
 }
 
@@ -73,7 +77,12 @@ export async function updateTab(tab, url, preserveHistory) {
 
 export async function openContainerTab(url, container) {
     try {
-        return await browser.tabs.create({"url": url, cookieStoreId: container});
+        const options = {"url": url};
+
+        if (container)
+            options.cookieStoreId = container;
+
+        return await browser.tabs.create(options);
     } catch (e) {
         if (e.message?.includes("cookieStoreId"))
             showNotification("Invalid bookmark container.");
@@ -86,7 +95,9 @@ export const CONTEXT_BACKGROUND = 0;
 export const CONTEXT_FOREGROUND = 1;
 
 export function getContextType() {
-    return window.location.pathname === "/background.html"? CONTEXT_BACKGROUND: CONTEXT_FOREGROUND;
+    return typeof WorkerGlobalScope !== "undefined" || window.location.pathname === "/background.html"
+        ? CONTEXT_BACKGROUND
+        : CONTEXT_FOREGROUND;
 }
 
 export async function askCSRPermission() {
