@@ -10,7 +10,6 @@ import {undoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
 import "./core_bookmarking.js";
-import "./core_import.js";
 import "./core_share.js";
 import "./core_backup.js"
 import "./core_backends.js";
@@ -18,6 +17,9 @@ import "./core_maintenance.js";
 import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
+
+if (_BACKGROUND_PAGE)
+    import("./core_import.js");
 
 if (_BACKGROUND_PAGE && _MANIFEST_V3)
     import("./mv3_persistent.js");

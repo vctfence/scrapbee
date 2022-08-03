@@ -1,4 +1,4 @@
-import {receive, receiveExternal, send} from "../proxy.js";
+import {receive, receiveExternal, send, sendLocal} from "../proxy.js";
 import {settings} from "../settings.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
@@ -499,11 +499,15 @@ async function performSearch() {
         return context.search(input).then(nodes => tree.list(nodes));
 }
 
+if (!_BACKGROUND_PAGE)
+    import("../core_import.js");
+
 async function performImport(file, file_name, file_ext) {
     startProcessingIndication(true);
 
     try {
-        await send.importFile({file: file, file_name: file_name, file_ext: file_ext});
+        const sender = _BACKGROUND_PAGE? send: sendLocal;
+        await sender.importFile({file: file, file_name: file_name, file_ext: file_ext});
         stopProcessingIndication();
 
         if (file_name.toLocaleLowerCase() === EVERYTHING)
@@ -526,7 +530,8 @@ async function performExport() {
     startProcessingIndication(true);
 
     try {
-        await send.exportFile({shelf, uuid});
+        const sender = _BACKGROUND_PAGE? send: sendLocal;
+        await sender.exportFile({shelf, uuid});
         stopProcessingIndication();
     }
     catch (e) {

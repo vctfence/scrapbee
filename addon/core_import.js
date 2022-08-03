@@ -65,16 +65,16 @@ receive.exportFile = async message => {
         .setReportProgress(true)
         .setObjects(nodes);
 
-    const file_ext = `.${format === "json" ? "jsonl" : format}`;
-    const file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_") + file_ext;
+    const fileExt = `.${format === "json" ? "jsonl" : format}`;
+    const fileName = shelf.replace(/[\\\/:*?"<>|^#%&!@+={}'~]/g, "_") + fileExt;
 
     if (settings.use_helper_app_for_export() && await nativeBackend.probe())
-        await exportWithHelperApp(exportBuilder, file_name);
+        await exportWithHelperApp(exportBuilder, fileName, format);
     else
-        await exportStandalone(exportBuilder, file_name);
+        await exportStandalone(exportBuilder, fileName, format);
 };
 
-async function exportStandalone(exportBuilder, file_name) {
+async function exportStandalone(exportBuilder, fileName, format) {
     const MAX_BLOB_SIZE = 1024 * 1024 * 10; // ~20 mb of UTF-16
     const exportId = UUID.numeric();
 
@@ -103,12 +103,13 @@ async function exportStandalone(exportBuilder, file_name) {
     await exporter.export();
     await file.flush();
 
-    let blob = new Blob(await ExportArea.getBlobs(exportId), {type: "text/plain"});
+    const mimeType = format === "json"? "application/json": "text/plain";
+    let blob = new Blob(await ExportArea.getBlobs(exportId), {type: mimeType});
     let url = URL.createObjectURL(blob);
     let download;
 
     try {
-        download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+        download = await browser.downloads.download({url: url, filename: fileName, saveAs: true});
     } catch (e) {
         console.error(e);
         ExportArea.removeBlobs(exportId);
@@ -128,7 +129,7 @@ async function exportStandalone(exportBuilder, file_name) {
     }
 }
 
-async function exportWithHelperApp(exportBuilder, file_name) {
+async function exportWithHelperApp(exportBuilder, fileName, format) {
     try {
         nativeBackend.fetch("/export/initialize");
     } catch (e) {
@@ -160,7 +161,7 @@ async function exportWithHelperApp(exportBuilder, file_name) {
     let download;
 
     try {
-        download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+        download = await browser.downloads.download({url: url, filename: fileName, saveAs: true});
     } catch (e) {
         console.error(e);
         nativeBackend.fetch("/export/finalize");
