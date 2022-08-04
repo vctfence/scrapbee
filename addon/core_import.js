@@ -68,10 +68,7 @@ receive.exportFile = async message => {
     const fileExt = `.${format === "json" ? "jsonl" : format}`;
     const fileName = shelf.replace(/[\\\/:*?"<>|^#%&!@+={}'~]/g, "_") + fileExt;
 
-    if (settings.use_helper_app_for_export() && await nativeBackend.probe())
-        await exportWithHelperApp(exportBuilder, fileName, format);
-    else
-        await exportStandalone(exportBuilder, fileName, format);
+    await exportStandalone(exportBuilder, fileName, format);
 };
 
 async function exportStandalone(exportBuilder, fileName, format) {
@@ -122,57 +119,6 @@ async function exportStandalone(exportBuilder, fileName, format) {
                     browser.downloads.onChanged.removeListener(download_listener);
                     URL.revokeObjectURL(url);
                     ExportArea.removeBlobs(exportId);
-                }
-            }
-        };
-        browser.downloads.onChanged.addListener(download_listener);
-    }
-}
-
-async function exportWithHelperApp(exportBuilder, fileName, format) {
-    try {
-        nativeBackend.fetch("/export/initialize");
-    } catch (e) {
-        console.error(e);
-    }
-
-    const port = await nativeBackend.getPort();
-
-    const file = {
-        append: async function (text) { // write to a temp file (much faster than IDB)
-            port.postMessage({
-                type: "EXPORT_PUSH_TEXT",
-                text: text
-            })
-        }
-    };
-
-    await sleep(50);
-
-    exportBuilder.setStream(file);
-    const exporter = exportBuilder.build();
-    await exporter.export();
-
-    port.postMessage({
-        type: "EXPORT_FINISH"
-    });
-
-    let url = nativeBackend.url("/export/download");
-    let download;
-
-    try {
-        download = await browser.downloads.download({url: url, filename: fileName, saveAs: true});
-    } catch (e) {
-        console.error(e);
-        nativeBackend.fetch("/export/finalize");
-    }
-
-    if (download) {
-        let download_listener = delta => {
-            if (delta.id === download) {
-                if (delta.state && delta.state.current === "complete" || delta.error) {
-                    browser.downloads.onChanged.removeListener(download_listener);
-                    nativeBackend.fetch("/export/finalize");
                 }
             }
         };

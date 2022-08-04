@@ -1,6 +1,7 @@
 import traceback
 import threading
 import logging
+import queue
 import os
 from functools import wraps
 
@@ -27,6 +28,7 @@ port = None
 httpd = None
 
 message_mutex = threading.Lock()
+message_queue = queue.Queue()
 
 
 class Httpd(threading.Thread):
@@ -88,7 +90,6 @@ def add_header(r):
 
 from . import server_scrapbook
 from . import server_browse
-from . import server_export
 from . import server_backup
 from . import server_upload
 from . import server_utils
