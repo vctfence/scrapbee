@@ -7,7 +7,7 @@ import {
     openContainerTab,
     openPage,
     showNotification,
-    updateTab
+    updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
@@ -43,6 +43,7 @@ function configureArchiveTab(node, archiveTab) {
 async function configureArchivePage(tab, node) {
     if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
         await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
+        await injectScriptFile(tab.id, {file: "global.js", frameId: 0});
         await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
         await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
 
@@ -98,7 +99,7 @@ function revokeTrackedObjectURLs(tabId) {
 
 function openURL(url, options, newtabf = openPage) {
     if (options?.tab)
-        return updateTab(options.tab, url, options.preserveHistory);
+        return updateTabURL(options.tab, url, options.preserveHistory);
 
     return newtabf(url, options?.container);
 }

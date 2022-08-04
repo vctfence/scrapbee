@@ -1,3 +1,12 @@
+function makeReferenceURL(uuid) {
+    let referenceURL = `ext+scrapyard://${uuid}`;
+
+    if (!_BACKGROUND_PAGE)
+        referenceURL = browser.runtime.getURL(`/reference.html#${referenceURL}`);
+
+    return referenceURL;
+}
+
 function parseHtml(htmlText) {
     let doc = document.implementation.createHTMLDocument("")
         , doc_elt = doc.documentElement
@@ -17,10 +26,11 @@ function parseHtml(htmlText) {
 function installScrapyardURLs(doc, siteMap, blank) {
     doc.querySelectorAll("a").forEach(
         function (element) {
+            console.log(element)
             const url = element.getAttribute("data-scrapyard-href");
             const uuid = siteMap[url];
             if (uuid) {
-                element.href = "ext+scrapyard://" + uuid;
+                element.href = makeReferenceURL(uuid);
                 if (blank)
                     element.setAttribute("target", "_blank");
             }

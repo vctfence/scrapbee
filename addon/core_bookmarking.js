@@ -1,7 +1,7 @@
 import {formatBytes, getMimetypeExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
-import {getActiveTab, showNotification} from "./utils_browser.js";
+import {getActiveTab, showNotification, updateTabURL} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
 import {
@@ -283,10 +283,7 @@ receive.browseNode = message => {
 
 receive.browseNotes = message => {
     (message.tab
-        ? browser.tabs.update(message.tab.id, {
-            "url": "ui/notes.html#" + message.uuid + ":" + message.id,
-            "loadReplace": true
-        })
+        ? updateTabURL(message.tab, "ui/notes.html#" + message.uuid + ":" + message.id, false)
         : browser.tabs.create({"url": "ui/notes.html#" + message.uuid + ":" + message.id}));
 };
 

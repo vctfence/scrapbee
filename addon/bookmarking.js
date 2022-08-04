@@ -309,6 +309,9 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
         var packingTab = await browser.tabs.create({url: url, active: false});
 
+        if (!_BACKGROUND_PAGE)
+            await injectScriptFile(packingTab.id, {file: "/lib/browser-polyfill.js", allFrames: true});
+
         if (hide_tab)
             browser.tabs.hide(packingTab.id)
     });

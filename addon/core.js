@@ -4,7 +4,7 @@ import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
 import {toggleSidebarWindow} from "./utils_chrome.js";
-import {askCSRPermission} from "./utils_browser.js";
+import {askCSRPermission, grantPersistenceQuota, startupLatch} from "./utils_browser.js";
 import {DEFAULT_SHELF_ID} from "./storage.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
@@ -28,34 +28,12 @@ receiveExternal.startListener(true);
 receive.startListener(true);
 
 (async () => {
-    const shouldAskForPersistence = typeof navigator.storage.persist === "function";
-    const canInitialize = !shouldAskForPersistence || shouldAskForPersistence && await navigator.storage.persist();
-
-    if (canInitialize) {
+    if (await grantPersistenceQuota()) {
         await systemInitialization;
 
         //showAnnouncement();
 
-        if (_MANIFEST_V3) {
-            if (_BACKGROUND_PAGE) {
-                // until there is no storage.session API,
-                // use an alarm as a flag to call the initialization function only once
-                const alarm = await browser.alarms.get("startup-flag-alarm");
-                if (!alarm) {
-                    await performStartupInitialization();
-                    browser.alarms.create("startup-flag-alarm", {delayInMinutes: 525960}); // one year
-                }
-            }
-            else {
-                const initialized = await browser.storage.session.get("scrapyard-initialized")?.["scrapyard-initialized"];
-                if (!initialized) {
-                    await performStartupInitialization();
-                    await browser.storage.session.set({"scrapyard-initialized": true});
-                }
-            }
-        }
-        else
-            await performStartupInitialization();
+        await startupLatch(performStartupInitialization);
     }
 })();
 
@@ -81,7 +59,12 @@ async function performStartupInitialization() {
     console.log("==> core.js initialized");
 }
 
-if (browser.webRequest)
+if (browser.webRequest) {
+    // remove the Origin header from add-on fetch requests
+    function originWithId(header) {
+        return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
+    }
+
     browser.webRequest.onBeforeSendHeaders.addListener(
         (details) => {
             return {
@@ -91,10 +74,6 @@ if (browser.webRequest)
         {urls: ["<all_urls>"]},
         ["blocking", "requestHeaders"]
     );
-
-// remove the Origin header from add-on fetch requests
-function originWithId(header) {
-    return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
 }
 
 browser.commands.onCommand.addListener(function(command) {
@@ -109,10 +88,11 @@ function addBookmarkOnCommand(command) {
     if (command === "archive_to_default_shelf")
         action = "createArchive";
 
-    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
-        localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
-        browser.sidebarAction.open();
-    }
+    if (_BACKGROUND_PAGE)
+        if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
+            localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
+                browser.sidebarAction.open();
+        }
 
     if (action === "createArchive")
         askCSRPermission()

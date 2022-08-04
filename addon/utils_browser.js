@@ -71,8 +71,13 @@ export async function openPage(url) {
     return browser.tabs.create({"url": url});
 }
 
-export async function updateTab(tab, url, preserveHistory) {
-    return browser.tabs.update(tab.id, {"url": url, "loadReplace": !preserveHistory})
+export async function updateTabURL(tab, url, preserveHistory) {
+    const options = {url};
+
+    if (_BACKGROUND_PAGE)
+        options.loadReplace = !preserveHistory;
+
+    return browser.tabs.update(tab.id, options);
 }
 
 export async function openContainerTab(url, container) {
@@ -118,4 +123,32 @@ export async function hasCSRPermission(verbose = true) {
     }
 
     return true;
+}
+
+export async function grantPersistenceQuota() {
+    const shouldAskForPersistence = typeof navigator.storage.persist === "function";
+    return !shouldAskForPersistence || shouldAskForPersistence && await navigator.storage.persist();
+}
+
+export async function startupLatch(f) {
+    if (_MANIFEST_V3) {
+        if (_BACKGROUND_PAGE) {
+            // until there is no storage.session API,
+            // use an alarm as a flag to call the initialization function only once
+            const alarm = await browser.alarms.get("startup-flag-alarm");
+            if (!alarm) {
+                await f();
+                browser.alarms.create("startup-flag-alarm", {delayInMinutes: 525960}); // one year
+            }
+        }
+        else {
+            const initialized = await browser.storage.session.get("scrapyard-initialized")?.["scrapyard-initialized"];
+            if (!initialized) {
+                await f();
+                await browser.storage.session.set({"scrapyard-initialized": true});
+            }
+        }
+    }
+    else
+        await f();
 }

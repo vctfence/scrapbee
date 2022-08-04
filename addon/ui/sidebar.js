@@ -243,7 +243,7 @@ async function init() {
     receiveExternal.startListener();
 
     loadSidebar();
-};
+}
 
 window.onunload = async function() {
     if (settings.sync_enabled() && settings.sync_on_close_sidebar())

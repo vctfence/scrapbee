@@ -40,6 +40,15 @@ export function partition(items, size) {
     return result;
 }
 
+export function makeReferenceURL(uuid) {
+    let referenceURL = `ext+scrapyard://${uuid}`;
+
+    if (!_BACKGROUND_PAGE)
+        referenceURL = browser.runtime.getURL(`/reference.html#${referenceURL}`);
+
+    return referenceURL;
+}
+
 export function pathToNameExt(fullPath) {
 
     let startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));

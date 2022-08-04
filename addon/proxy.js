@@ -75,8 +75,7 @@ class ReceiveHandler {
             }
         }
         else
-            if (DEBUG)
-                console.error(`No method for message type: ${message.type}`);
+            console.error(`No method for message type: ${message.type}`);
     }
 }
 

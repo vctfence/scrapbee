@@ -85,7 +85,8 @@
         {
             "resources": [
                 "icons/lock.svg",
-                "ui/site_capture.html"
+                "ui/site_capture.html",
+                "reference.html"
             ],
             "matches": ["*://*/*"]
         }
