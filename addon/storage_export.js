@@ -1,5 +1,5 @@
 import {EntityIDB} from "./storage_idb.js";
-import {CLOUD_SHELF_ID, DEFAULT_SHELF_ID, FIREFOX_SHELF_ID} from "./storage.js";
+import {CLOUD_SHELF_ID, DEFAULT_SHELF_ID, BROWSER_SHELF_ID} from "./storage.js";
 import {Query} from "./storage_query.js";
 
 class ExportAreaIDB extends EntityIDB {
@@ -24,8 +24,8 @@ class ExportAreaIDB extends EntityIDB {
     }
 
     async prepareToImportEverything() {
-        const retain = [DEFAULT_SHELF_ID, FIREFOX_SHELF_ID, CLOUD_SHELF_ID,
-            ...(await Query.fullSubtreeOfIDs(FIREFOX_SHELF_ID)),
+        const retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
+            ...(await Query.fullSubtreeOfIDs(BROWSER_SHELF_ID)),
             ...(await Query.fullSubtreeOfIDs(CLOUD_SHELF_ID))];
 
         if (this._db.tables.some(t => t.name === "blobs"))

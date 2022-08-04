@@ -5,13 +5,13 @@ import {
     DEFAULT_SHELF_NAME,
     DEFAULT_SHELF_UUID,
     EVERYTHING,
-    FIREFOX_SHELF_UUID,
+    BROWSER_SHELF_UUID,
     NODE_TYPE_UNLISTED
 } from "./storage.js";
 import {settings} from "./settings.js";
 import {send} from "./proxy.js";
 
-const RESERVED_SHELVES = [CLOUD_SHELF_UUID, FIREFOX_SHELF_UUID, DEFAULT_SHELF_UUID];
+const RESERVED_SHELVES = [CLOUD_SHELF_UUID, BROWSER_SHELF_UUID, DEFAULT_SHELF_UUID];
 
 async function createRollbackNode(shelf) {
     let rollbackNode = {

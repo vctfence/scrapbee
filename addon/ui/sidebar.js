@@ -23,7 +23,7 @@ import {
     DONE_SHELF_NAME,
     EVERYTHING,
     EVERYTHING_SHELF_ID,
-    FIREFOX_SHELF_ID,
+    BROWSER_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
     NODE_TYPE_SHELF,
@@ -376,12 +376,12 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             }
             tree.openRoot();
         }
-        else if (shelf_id == FIREFOX_SHELF_ID) {
+        else if (shelf_id == BROWSER_SHELF_ID) {
             const nodes = await Shelf.listContent(path);
-            nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
+            nodes.splice(nodes.indexOf(nodes.find(n => n.id == BROWSER_SHELF_ID)), 1);
 
             for (let node of nodes) {
-                if (node.parent_id == FIREFOX_SHELF_ID) {
+                if (node.parent_id == BROWSER_SHELF_ID) {
                     node.type = NODE_TYPE_SHELF;
                     node.parent_id = null;
                 }
@@ -608,7 +608,7 @@ function sidebarRefresh() {
 function sidebarRefreshExternal() {
     let last_shelf = getLastShelf();
 
-    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === FIREFOX_SHELF_ID || last_shelf === CLOUD_SHELF_ID)
+    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === BROWSER_SHELF_ID || last_shelf === CLOUD_SHELF_ID)
         settings.load().then(() => loadShelves(last_shelf, false));
 }
 

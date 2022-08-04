@@ -1,7 +1,7 @@
 import {
     isContainer,
     EVERYTHING,
-    FIREFOX_SHELF_NAME,
+    BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     STORAGE_FORMAT,
@@ -250,7 +250,7 @@ class ORGObjectStream {
 
                 let dirName = orgItems[1].value;
 
-                if (level === 0 && this._shelf === EVERYTHING && dirName && dirName.toLowerCase() === FIREFOX_SHELF_NAME)
+                if (level === 0 && this._shelf === EVERYTHING && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
                     dirName = `${formatShelfName(dirName)} (imported)`;
 
                 if (level < orgItems[0].level)

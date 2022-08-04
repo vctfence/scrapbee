@@ -4,7 +4,7 @@ import {confirm} from "../dialog.js";
 import {ShelfList} from "../shelf_list.js";
 import {formatBytes, toHHMMSS} from "../../utils.js";
 import {showNotification} from "../../utils_browser.js";
-import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING, FIREFOX_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
+import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING, BROWSER_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
 import {Query} from "../../storage_query.js";
 
 export class BackupManager {
@@ -89,7 +89,7 @@ export class BackupManager {
         let notRestorable = () => {
             const selected = this.backupTree.get_selected(true);
             const name = jnode.data.name.toLowerCase();
-            return name === FIREFOX_SHELF_NAME || name === CLOUD_SHELF_NAME
+            return name === BROWSER_SHELF_NAME || name === CLOUD_SHELF_NAME
                 || name === TODO_SHELF_NAME.toLowerCase() || name === DONE_SHELF_NAME.toLowerCase()
                 || selected?.length > 1;
         };

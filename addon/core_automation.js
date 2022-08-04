@@ -5,7 +5,7 @@ import {
     TODO_NAMES, TODO_STATES,
     CLOUD_SHELF_NAME, CLOUD_SHELF_UUID,
     DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
-    FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES
 } from "./storage.js";
 import {settings} from "./settings.js";
@@ -331,7 +331,7 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
     else {
         const API_UUID_TO_DB = {
             [CLOUD_SHELF_NAME]: CLOUD_SHELF_UUID,
-            [FIREFOX_SHELF_NAME]: FIREFOX_SHELF_UUID,
+            [BROWSER_SHELF_NAME]: BROWSER_SHELF_UUID,
             [DEFAULT_SHELF_NAME]: DEFAULT_SHELF_UUID,
         };
 

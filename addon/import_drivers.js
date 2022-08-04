@@ -3,7 +3,7 @@ import {
     DEFAULT_SHELF_ID,
     DEFAULT_SHELF_NAME,
     EVERYTHING,
-    FIREFOX_SHELF_ID,
+    BROWSER_SHELF_ID,
     isContainer,
     NODE_TYPE_GROUP,
     NODE_TYPE_SHELF
@@ -247,7 +247,7 @@ export class StructuredStreamImporter {
     }
 
     _renameBuiltinShelves(node) {
-        if (node && node.id === FIREFOX_SHELF_ID)
+        if (node && node.id === BROWSER_SHELF_ID)
             node.name = `${formatShelfName(node.name)} (imported)`;
     }
 }

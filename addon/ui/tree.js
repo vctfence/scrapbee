@@ -13,8 +13,8 @@ import {
     FIREFOX_BOOKMARK_MOBILE,
     FIREFOX_BOOKMARK_TOOLBAR,
     FIREFOX_BOOKMARK_UNFILED,
-    FIREFOX_SHELF_ID,
-    FIREFOX_SHELF_NAME,
+    BROWSER_SHELF_ID,
+    BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -340,7 +340,10 @@ class BookmarkTree {
         if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_NAME) {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
-            jnode.icon = "/icons/firefox.svg";
+            if (settings.platform.firefox)
+                jnode.icon = "/icons/firefox.svg";
+            else
+                jnode.icon = "/icons/shelf.svg";
             if (!settings.show_firefox_bookmarks()) {
                 jnode.state = {hidden: true};
             }
@@ -646,7 +649,7 @@ class BookmarkTree {
         let jnode = this._jstree.get_node(nodeId);
         let odata = this.odata;
 
-        if (o(jnode)?.id === FIREFOX_SHELF_ID) {
+        if (o(jnode)?.id === BROWSER_SHELF_ID) {
             let unfiled = odata.find(n => n.external_id === FIREFOX_BOOKMARK_UNFILED)
             if (unfiled)
                 jnode = this._jstree.get_node(unfiled.id);
@@ -662,8 +665,8 @@ class BookmarkTree {
         if (operation === "copy_node") {
             return false;
         } else if (operation === "move_node") {
-            if (more.ref && more.ref.id == FIREFOX_SHELF_ID
-                    || jparent.id == FIREFOX_SHELF_ID || jnode.parent == FIREFOX_SHELF_ID)
+            if (more.ref && more.ref.id == BROWSER_SHELF_ID
+                    || jparent.id == BROWSER_SHELF_ID || jnode.parent == BROWSER_SHELF_ID)
                 return false;
 
             if (o(jnode)?.external !== RDF_EXTERNAL_NAME && o(jparent)?.external === RDF_EXTERNAL_NAME
@@ -1022,7 +1025,7 @@ class BookmarkTree {
             },
             pasteItem: {
                 label: "Paste",
-                separator_before: ctxNode.type === NODE_TYPE_SHELF || ctxNode.parent_id == FIREFOX_SHELF_ID,
+                separator_before: ctxNode.type === NODE_TYPE_SHELF || ctxNode.parent_id == BROWSER_SHELF_ID,
                 _disabled: !(tree.can_paste() && isContainer(ctxNode)),
                 action: async () => {
                     let buffer = tree.get_buffer();
@@ -1357,7 +1360,7 @@ class BookmarkTree {
                 delete items.shareItem;
                 delete items.newItem.submenu.newSeparatorItem;
                 delete items.newItem.submenu.newSiblingFolderItem;
-                if (ctxNode.id === FIREFOX_SHELF_ID) {
+                if (ctxNode.id === BROWSER_SHELF_ID) {
                     items = {};
                 }
                 if (ctxNode.external !== RDF_EXTERNAL_NAME) {

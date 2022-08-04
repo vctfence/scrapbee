@@ -4,6 +4,11 @@ import {selectricRefresh, simpleSelectric} from "../shelf_list.js";
 import {send} from "../../proxy.js";
 
 function configureScrapyardSettingsPage() {
+    if (!settings.platform.firefox) {
+        $("#option-show-firefox-bookmarks-toolbar").attr("disabled", true);
+        $("#option-open-sidebar-from-shortcut").attr("disabled", true);
+    }
+
     simpleSelectric("#option-sidebar-theme");
     simpleSelectric("#option-export-format");
 
