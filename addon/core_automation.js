@@ -10,7 +10,7 @@ import {
 } from "./storage.js";
 import {settings} from "./settings.js";
 import {getFavicon, getFaviconFromTab} from "./favicon.js";
-import {send, receiveExternal} from "./proxy.js";
+import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
 import {parseHtml} from "./utils_html.js";
@@ -48,7 +48,7 @@ receiveExternal.scrapyardGetVersion = (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
-    window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
+    sendLocal.scrapyardIdRequested({senderId: sender.id});
     return browser.runtime.getManifest().version;
 };
 
@@ -142,7 +142,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
 
     message.type = NODE_TYPE_ARCHIVE;
 
-    const node = await createBookmarkNode(message, sender, await getActiveTab());
+    const node = await createBookmarkNode(message, sender, activeTab);
     if (!node)
         return;
 
