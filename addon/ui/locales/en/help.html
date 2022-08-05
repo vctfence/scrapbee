@@ -113,7 +113,7 @@
     <ul id="read-more-table-of-contents" style="display: none;"></ul>
 
     <h2>What is Scrapyard?</h2>
-    <p>Scrapyard is a Firefox bookmarking extension where you can store and organize bookmarks, page
+    <p>Scrapyard is a bookmarking extension where you can store and organize bookmarks, page
         fragments, or complete HTML pages and PDF documents in unlimited quantities.
         Unlike most others ScrapBook alternatives, Scrapyard does not require installing external tools
         for most of its functionality by keeping the data in the browser internal storage.
@@ -128,27 +128,32 @@
 
     <p>Scrapyard is accessible through the dropdown menu of the <a
         href="https://support.mozilla.org/en-US/kb/use-firefox-sidebar-access-bookmarks-history-synced"
-        target="_blank">Firefox sidebar</a> as shown in the image below. The sidebar
-        itself could be opened with the corresponding toolbar button: <img
-            style="display: inline-block" src="images/sidebar-button.png">. In the more recent
-        versions of Firefox, it may be necessary to add this button to the toolbar manually by selecting "Customize Toolbar..."
-        at Main menu > More tools. This button is also available in the Scrapyard popup window.</p>
+        target="_blank">Firefox sidebar</a> as shown in the image below.</p>
+
+    <p style="text-align: center">
+        <img src="images/find-sidebar.png">
+    </p>
+
+    <p>The sidebar itself could be opened with the corresponding toolbar button: <img
+        style="display: inline-block" src="images/sidebar-button.png">. In the more recent versions
+        of Firefox, it may be necessary to add this button to the toolbar manually by selecting
+        "Customize Toolbar..." at Main menu > More tools. This button is also available in the
+        Scrapyard popup dialog.</p>
+
+    <p>In Chrome Scrapyard could be opened in a separate window through the <img
+        style="display: inline-block" src="images/sidebar-button.png"> button in the popup dialog.</p>
 
     <p>
         The <code>Alt+Y</code> keyboard shortcut allows to open Scrapyard directly.
         Keyboard shortcuts provided by any extension could be <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
-        customized</a> in Firefox settings.
-    </p>
-
-    <p style="text-align: center">
-        <img src="images/find-sidebar.png">
+        customized</a> in the browser settings.
     </p>
 
     <h2>Main Features</h2>
 
     <h3 id="page-capture-manual">Capturing Pages</h3>
     <p>
-        To capture a web page or its fragment, select the part of the page you want to archive, open the Scrapyard popup window
+        To capture a web page or its fragment, select the part of the page you want to archive, open the Scrapyard popup dialog
         by clicking its icon on the browser toolbar, choose the destination shelf and folder, then press the "Bookmark"
         or "Archive" button. The "Bookmark" button stores only web-page URLs as bookmarks. The "Archive" button captures
         the current selection, the whole page, if there is no active selection, or the whole document, if the opened
@@ -302,14 +307,14 @@
         (YYYY-MM-DD) date format is supported. Expired TODO items will be displayed first regardless
         of the assigned state.</p>
 
-    <h3>Firefox Bookmarks</h3>
+    <h3>Browser Bookmarks</h3>
     <p>
-        Scrapyard seamlessly integrates with Firefox bookmarks, so there is no need to switch to the
-        built-in bookmark manager. It is possible to attach comments and TODO states to Firefox
+        Scrapyard seamlessly integrates with the browser bookmarks, so there is no need to switch to the
+        built-in bookmark manager. It is possible to attach comments and TODO states to browser
         bookmarks displayed in Scrapyard, although they will be lost if the bookmarks are deleted
-        from the Firefox UI, or after the "Enable Firefox bookmarks integration" option in settings
-        is unchecked. Firefox bookmarks are included in the export as a separate shelf, so an import
-        will leave the current Firefox bookmark state intact.
+        from the browser UI, or after the "Enable browser bookmarks integration" option in settings
+        is unchecked. Browser bookmarks are included in the export as a separate shelf, so an import
+        will leave the current bookmark state intact.
     </p>
 
     <p style="text-align: center">
@@ -319,7 +324,7 @@
     <h3>Cloud Bookmarking</h3>
     <p>
         Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available
-        across different Firefox instances that use a cloud provider with the same credentials.
+        across different browser instances that use a cloud provider with the same credentials.
         Cloud providers are configurable at the addon settings. It is possible to authorize in several
         cloud providers and quickly switch between them (currently only Dropbox and OneDrive are supported).</p>
     <p><a href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
@@ -406,7 +411,7 @@
     <p>The text in the note editor is saved automatically, although you may save it at any time with the <code>Ctrl+S</code>
         keyboard shortcut.</p>
 
-    <h3 id="referencing-manual">Referencing to a bookmark or archive</h3>
+    <h3 id="referencing-manual">Referencing to a bookmark or archive (Firefox only)</h3>
     <p>To make a reference to a Scrapyard bookmark or archive from the note markup, create a link with the following URL:
         <b><code>ext+scrapyard://&lt;BOOKMARK UUID&gt;</code></b>, for example:</p>
     <p>&nbsp;&nbsp;&nbsp;&nbsp;<b><code>ext+scrapyard://A4D409A0D1034D9BA0863E9DA8CE8FE7</code></b>
@@ -450,7 +455,7 @@
 
     <h4>Search from URL-bar</h4>
 
-    <p>It is possible to search through all bookmarks by title or URL from the Firefox
+    <p>It is possible to search through all bookmarks by title or URL from the browser
         URL-bar after entering the special "scr" keyword followed by a space:</p>
 
     <p style="text-align: center">
@@ -458,7 +463,7 @@
     </p>
 
     <p>If URL-bar search query begins with a plus sign (+), Scrapyard will interpret the rest of the
-        text as a tag name and will search by tags instead. It is possible to activate Firefox URL-bar
+        text as a tag name and will search by tags instead. It is possible to activate browser URL-bar
         with the <code>Ctrl+L</code> keyboard shortcut.</p>
 
     <p style="text-align: center">
@@ -487,7 +492,7 @@
         automatic, and is not performed, for example, after you added or deleted a bookmark. To
         receive or send changes to the Sync storage on the disk you need to manually initiate
         synchronization with the corresponding sidebar button. There is an option to synchronize
-        automatically in the background for every hour. Please do not close Firefox while the
+        automatically in the background for every hour. Please do not close the browser while the
         Scrapyard synchronization indicator on the browser toolbar is active.
     </p>
 
@@ -506,7 +511,7 @@
     <p>Because this feature can introduce irreversible changes, please consider taking a full backup
         on every Firefox instance where you intend to enable it. If you need to reset Scrapyard or Sync
         storage to perform a clean synchronization, use the corresponding options at the <a
-            href="/ui/advanced.html">advanced settings</a>. "Cloud" and "Firefox" bookmark shelves
+            href="/ui/advanced.html">advanced settings</a>. "Cloud" and "Browser" bookmark shelves
         are excluded from synchronization and are not affected by the reset.</p>
 
     <h3>Import/Export</h3>

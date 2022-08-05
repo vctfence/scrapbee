@@ -41,7 +41,7 @@ function measureSelectricWidth(options) {
 
     meter.text(longestText);
 
-    if (longestText === EVERYTHING)
+    if (longestText.toLowerCase() === EVERYTHING)
         meter.addClass("option-builtin");
     else
         meter.removeClass("option-builtin");
