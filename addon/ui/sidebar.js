@@ -44,6 +44,7 @@ import {Group} from "../bookmarks_group.js";
 import {Icon, Node} from "../storage_entities.js";
 import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
+import {findSidebarWindow} from "../utils_sidebar.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -245,6 +246,15 @@ async function init() {
     loadSidebar();
 }
 
+window.onbeforeunload = function() {
+    if (!_BACKGROUND_PAGE) {
+        findSidebarWindow().then(w => {
+            const position = {top: w.top, left: w.left, height: w.height, width: w.width};
+            settings.sidebar_window_position(position);
+        });
+    }
+};
+
 window.onunload = async function() {
     if (settings.sync_enabled() && settings.sync_on_close_sidebar())
         send.performSync();
@@ -254,7 +264,7 @@ async function loadSidebar() {
     try {
         await shelfList.load();
 
-        const initialShelf = getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
+        const initialShelf = await getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
         await switchShelf(initialShelf, true, true);
 
         stopProcessingIndication();
@@ -306,12 +316,23 @@ function getLastShelf() {
     return DEFAULT_SHELF_ID;
 }
 
-function getExternalShelf() {
-    const externalShelf = localStorage.getItem("sidebar-select-shelf");
+async function getExternalShelf() {
+    if (settings.platform.firefox) {
+        const externalShelf = localStorage.getItem("sidebar-select-shelf");
 
-    if (externalShelf) {
-        localStorage.removeItem("sidebar-select-shelf");
-        return parseInt(externalShelf);
+        if (externalShelf) {
+            localStorage.removeItem("sidebar-select-shelf");
+            return parseInt(externalShelf);
+        }
+    }
+    else {
+        let externalShelf = await browser.storage.session.get("sidebar-select-shelf");
+        externalShelf = externalShelf?.["sidebar-select-shelf"];
+
+        if (externalShelf) {
+            browser.storage.session.remove("sidebar-select-shelf");
+            return externalShelf;
+        }
     }
 }
 

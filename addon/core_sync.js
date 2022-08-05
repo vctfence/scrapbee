@@ -102,6 +102,8 @@ async function performSync(initial) {
 
             if (_BACKGROUND_PAGE)
                 action.setIcon({path: "/icons/action-sync.svg"});
+            else
+                action.setIcon({path: "/icons/action-sync.png"});
 
             try {
                 await performOperations(syncOperations, sync_directory);
@@ -109,6 +111,8 @@ async function performSync(initial) {
             finally {
                 if (_BACKGROUND_PAGE)
                     action.setIcon({path: "/icons/scrapyard.svg"});
+                else
+                    action.setIcon({path: "/icons/logo128.png"});
             }
         }
         else if (initial)

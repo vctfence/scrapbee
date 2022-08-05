@@ -864,6 +864,13 @@ function addListeners()
 
                     if (this.status == 200)
                     {
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        if (!_BACKGROUND_PAGE && byteArray.byteLength > maxResourceSize*1024*1024) {
+                            chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "maxsize" },checkError);
+                            return;
+                        }
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
+
                         binaryString = "";
                         for (i = 0; i < byteArray.byteLength; i++) binaryString += String.fromCharCode(byteArray[i]);
 

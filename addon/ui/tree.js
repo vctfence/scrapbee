@@ -305,12 +305,16 @@ class BookmarkTree {
             jnode.li_attr = {"class": "browser-bookmark-menu"};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_UNFILED) {
+        else if (node.external === BROWSER_EXTERNAL_NAME
+                && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_UNFILED
+                        || settings.platform.chrome && node.external_id === "2")) {
             jnode.icon = "/icons/unfiledBookmarks.svg";
             jnode.li_attr = {"class": "browser-unfiled-bookmarks"};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
+        else if (node.external === BROWSER_EXTERNAL_NAME
+                && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_TOOLBAR
+                        || settings.platform.chrome && node.external_id === "1")) {
             jnode.icon = "/icons/bookmarksToolbar.svg";
             jnode.li_attr = {"class": "browser-bookmark-toolbar"};
             if (!settings.show_firefox_toolbar())
@@ -342,6 +346,8 @@ class BookmarkTree {
             jnode.li_attr = {"class": "browser-logo"};
             if (settings.platform.firefox)
                 jnode.icon = "/icons/firefox.svg";
+            else if (settings.platform.chrome)
+                jnode.icon = "/icons/chrome.svg";
             else
                 jnode.icon = "/icons/shelf.svg";
             if (!settings.show_firefox_bookmarks()) {
@@ -1485,6 +1491,10 @@ class BookmarkTree {
 
         if (!browser.contextualIdentities)
             delete items.openInContainerItem;
+
+        if (!_BACKGROUND_PAGE) {
+            delete items.newItem.submenu.newBookmarkItem;
+        }
 
         return items;
     }

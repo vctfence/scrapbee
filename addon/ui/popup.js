@@ -6,7 +6,7 @@ import {getFaviconFromTab} from "../favicon.js";
 import {Query} from "../storage_query.js";
 import {BookmarkTree} from "./tree.js";
 import {send} from "../proxy.js";
-import {toggleSidebarWindow} from "../utils_chrome.js";
+import {toggleSidebarWindow} from "../utils_sidebar.js";
 
 let tree;
 let bookmarkFolderSelect;

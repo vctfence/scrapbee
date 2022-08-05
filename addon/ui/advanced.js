@@ -200,6 +200,7 @@ function configureImpExpPanel() {
         if (settings["scrapyard-settings"]) {
             delete settings["scrapyard-settings"]["ishell_presents"];
             delete settings["scrapyard-settings"]["dropbox_refresh_token"];
+            delete settings["scrapyard-settings"]["onedrive_refresh_token"];
             delete settings["scrapyard-settings"]["pending_announcement"];
         }
 

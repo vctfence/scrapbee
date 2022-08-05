@@ -161,12 +161,13 @@ async function browseRDFArchive(node, options) {
 
 async function getBlobURL(node, blob) {
     if (settings.browse_with_helper()) {
-        const helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application v0.5+ is required.");
+        const alertText = _BACKGROUND_PAGE? "Scrapyard helper application v0.5+ is required.": undefined;
+        const helperApp = await nativeBackend.hasVersion("0.5", alertText);
 
         if (helperApp)
             return sendBlobToHelper(node, blob);
         else
-            return null;
+            return loadArchive(blob);
     }
 
     return loadArchive(blob);

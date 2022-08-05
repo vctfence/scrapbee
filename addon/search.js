@@ -1,7 +1,9 @@
 import {TREE_STATE_PREFIX} from "./ui/tree.js";
 import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_GROUP, NODE_TYPE_BOOKMARK} from "./storage.js";
-import {openContainerTab} from "./utils_browser.js";
+import {getActiveTab, openContainerTab, makeReferenceURL} from "./utils_browser.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
+import {escapeHtml} from "./utils_html.js";
+import {settings} from "./settings.js";
 
 export const SEARCH_MODE_UNIVERSAL = 0;
 export const SEARCH_MODE_TITLE = 1;
@@ -265,11 +267,14 @@ export function initializeOmnibox() {
     let suggestions;
 
     const makeSuggestion = function(node) {
-        let suggestion = {__node: node, description: node.name || ""};
+        let suggestion = {description: escapeHtml(node.name) || ""};
         if (node.type === NODE_TYPE_BOOKMARK)
             suggestion.content = node.uri;
         else
-            suggestion.content = "ext+scrapyard://" + node.uuid;
+            suggestion.content = makeReferenceURL(node.uuid);
+
+        if (settings.platform.firefox)
+            suggestion.__node = node;
 
         return suggestion;
     }
@@ -313,18 +318,20 @@ export function initializeOmnibox() {
     browser.omnibox.onInputEntered.addListener(async (text, disposition) => {
         let url = text;
 
-        let suggestion = findSuggestion(text);
-        suggestions = null;
+        if (settings.platform.firefox) {
+            let suggestion = findSuggestion(text);
+            suggestions = null;
 
-        if (suggestion) {
-            let activeTab = (await browser.tabs.query({currentWindow: true, active: true}))?.[0];
+            if (suggestion) {
+                let activeTab = await getActiveTab();
 
-            let node = suggestion.__node;
-            if (node.type === NODE_TYPE_BOOKMARK && node.container) {
-                if (activeTab && activeTab.url === "about:newtab")
-                    browser.tabs.remove(activeTab.id);
-                openContainerTab(url, node.container);
-                return;
+                let node = suggestion.__node;
+                if (node.type === NODE_TYPE_BOOKMARK && node.container) {
+                    if (activeTab && activeTab.url === "about:newtab")
+                        browser.tabs.remove(activeTab.id);
+                    openContainerTab(url, node.container);
+                    return;
+                }
             }
         }
 

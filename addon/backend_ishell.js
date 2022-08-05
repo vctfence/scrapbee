@@ -2,11 +2,8 @@ import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 
 class IShellBackend {
-    constructor() {
-        this.ISHELL_ID = `ishell${this._isExtensionLocal()? "": "-we"}@gchristensen.github.io`;
-    }
-
     initialize() {
+        this.ISHELL_ID = `ishell${this._isExtensionLocal()? "": "-we"}@gchristensen.github.io`;
         this.enableInvalidation(settings.ishell_presents());
 
         if (globalThis.location.href.endsWith("background.html")) {
@@ -60,10 +57,14 @@ class IShellBackend {
     }
 
     _isExtensionLocal() {
-        let id = browser.runtime.getManifest().applications?.gecko?.id;
+        let id = browser.runtime.id;
 
-        if (id)
-            return !id.includes("-we");
+        if (id) {
+            if (settings.platform.firefox)
+                return !id.includes("-we");
+            else
+                return id === "fhgomkcfijbifanbkppjhgmcdkmbacep";
+        }
 
         return false;
     }

@@ -2,10 +2,9 @@ import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
-import {getActiveTabMetadata} from "./bookmarking.js";
-import {toggleSidebarWindow} from "./utils_chrome.js";
-import {askCSRPermission, grantPersistenceQuota, startupLatch} from "./utils_browser.js";
-import {DEFAULT_SHELF_ID} from "./storage.js";
+import {addBookmarkOnCommand} from "./bookmarking.js";
+import {toggleSidebarWindow} from "./utils_sidebar.js";
+import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
@@ -31,14 +30,14 @@ receive.startListener(true);
     if (await grantPersistenceQuota()) {
         await systemInitialization;
 
-        //showAnnouncement();
+        await showAnnouncement();
 
         await startupLatch(performStartupInitialization);
     }
 })();
 
-function showAnnouncement() {
-    if (settings.isAddonUpdated())
+async function showAnnouncement() {
+    if (await settings.isAddonUpdated() && /^\d+\.\d+$/.test(_ADDON_VERSION))
         settings.pending_announcement("options.html#about");
 }
 
@@ -82,34 +81,5 @@ browser.commands.onCommand.addListener(function(command) {
     else
         addBookmarkOnCommand(command);
 });
-
-function addBookmarkOnCommand(command) {
-    let action = "createBookmark";
-    if (command === "archive_to_default_shelf")
-        action = "createArchive";
-
-    if (_BACKGROUND_PAGE)
-        if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
-            localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
-                browser.sidebarAction.open();
-        }
-
-    if (action === "createArchive")
-        askCSRPermission()
-            .then(response => {
-                if (response)
-                    addBookmark(action);
-            })
-            .catch(e => console.error(e));
-    else
-        addBookmark(action);
-}
-
-async function addBookmark(event) {
-    const payload = await getActiveTabMetadata();
-    payload.parent_id = DEFAULT_SHELF_ID;
-
-    return sendLocal[event]({node: payload});
-}
 
 console.log("==> core.js loaded");

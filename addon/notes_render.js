@@ -1,5 +1,6 @@
 import {escapeCSS, escapeHtml} from "./utils_html.js";
 import * as org from "./lib/org/org.js";
+import {marked} from "./lib/marked.js";
 
 export function org2html(org_text) {
     let doc = new org.Parser().parse(org_text);

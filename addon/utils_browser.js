@@ -1,3 +1,5 @@
+import {settings} from "./settings.js";
+
 async function injectCSSFileMV3(tabId, options) {
     return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
 }
@@ -44,7 +46,17 @@ async function scriptsAllowedMV2(tabId, frameId = 0) {
     } catch (e) {}
 }
 
-export const scriptsAllowed = _MANIFEST_V3? scriptsAllowedMV3: scriptsAllowedMV2;
+const scriptsAllowed = _MANIFEST_V3? scriptsAllowedMV3: scriptsAllowedMV2;
+
+export async function isHTMLTab(tab) {
+    if (settings.platform.firefox)
+        return scriptsAllowed(tab.id);
+    else {
+        const [{result}] = await browser.scripting.executeScript({target: {tabId: tab.id},
+                                                                  func: () => document.contentType});
+        return result.toLowerCase() === "text/html";
+    }
+}
 
 export function showNotification(args) {
     if (typeof arguments[0] === "string")
@@ -60,6 +72,15 @@ export function showNotification(args) {
         message: args.message,
         iconUrl
     });
+}
+
+export function makeReferenceURL(uuid) {
+    let referenceURL = `ext+scrapyard://${uuid}`;
+
+    if (!_BACKGROUND_PAGE)
+        referenceURL = browser.runtime.getURL(`/reference.html#${referenceURL}`);
+
+    return referenceURL;
 }
 
 export async function getActiveTab() {
@@ -132,20 +153,22 @@ export async function grantPersistenceQuota() {
 
 export async function startupLatch(f) {
     if (_MANIFEST_V3) {
-        if (_BACKGROUND_PAGE) {
+        if (browser.storage.session) {
+            let initialized = await browser.storage.session.get("scrapyard-initialized");
+            initialized = initialized?.["scrapyard-initialized"];
+
+            if (!initialized) {
+                await f();
+                await browser.storage.session.set({"scrapyard-initialized": true});
+            }
+        }
+        else {
             // until there is no storage.session API,
             // use an alarm as a flag to call the initialization function only once
             const alarm = await browser.alarms.get("startup-flag-alarm");
             if (!alarm) {
                 await f();
                 browser.alarms.create("startup-flag-alarm", {delayInMinutes: 525960}); // one year
-            }
-        }
-        else {
-            const initialized = await browser.storage.session.get("scrapyard-initialized")?.["scrapyard-initialized"];
-            if (!initialized) {
-                await f();
-                await browser.storage.session.set({"scrapyard-initialized": true});
             }
         }
     }

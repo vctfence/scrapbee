@@ -4,12 +4,12 @@ import {
     hasCSRPermission,
     injectCSSFile,
     injectScriptFile,
-    scriptsAllowed,
-    showNotification
+    showNotification,
+    isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
 import {capitalize, getMimetypeExt} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
-import {NODE_TYPE_ARCHIVE} from "./storage.js";
+import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE} from "./storage.js";
 import {fetchWithTimeout} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 import {getFaviconFromTab} from "./favicon.js";
@@ -17,6 +17,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
 import {Group} from "./bookmarks_group.js";
 import {isHTMLLink} from "./utils_html.js";
+import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -59,7 +60,7 @@ export async function captureTab(tab, bookmark) {
     if (isSpecialPage(tab.url))
         notifySpecialPage();
     else {
-        if (await scriptsAllowed(tab.id))
+        if (await isHTMLTab(tab))
             await captureHTMLTab(tab, bookmark)
         else
             await captureNonHTMLTab(tab, bookmark);
@@ -326,3 +327,50 @@ export async function packUrlExt(url, hide_tab) {
     return packPage(url, {}, b => b.__url_packing = true, resolver, hide_tab);
 }
 
+export function addBookmarkOnCommand(command) {
+    let action = command === "archive_to_default_shelf"? "createArchive": "createBookmark";
+
+    if (settings.platform.firefox)
+        addBookmarkOnCommandFirefox(action);
+    else
+        addBookmarkOnCommandNonFirefox(action);
+}
+
+function addBookmarkOnCommandFirefox(action) {
+    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
+        localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
+        browser.sidebarAction.open();
+    }
+
+    if (action === "createArchive")
+        askCSRPermission()// requires non-async function
+            .then(response => {
+                if (response)
+                    addBookmarkOnCommandSendPayload(action);
+            })
+            .catch(e => console.error(e));
+    else
+        addBookmarkOnCommandSendPayload(action);
+}
+
+async function addBookmarkOnCommandNonFirefox(action) {
+    const payload = await getActiveTabMetadata();
+    await addBookmarkOnCommandSendPayload(action, payload);
+
+    await settings.load();
+    if (settings.open_sidebar_from_shortcut()) {
+        const window = await findSidebarWindow();
+        if (!window) {
+            await browser.storage.session.set({"sidebar-select-shelf": DEFAULT_SHELF_ID});
+            await toggleSidebarWindow();
+        }
+    }
+}
+
+async function addBookmarkOnCommandSendPayload(action, payload) {
+    if (!payload)
+        payload = await getActiveTabMetadata();
+
+    payload.parent_id = DEFAULT_SHELF_ID;
+    return sendLocal[action]({node: payload});
+}

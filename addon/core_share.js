@@ -106,7 +106,7 @@ async function prepareForCloudSharing(node) {
         if (notes) {
             filename = node.name + ".html";
             content = `<html><head></head><body>`
-                + `${notes2html(notes.content, notes.format)}`
+                + `${notes2html(notes)}`
                 + `</body></html>`;
         }
     }
