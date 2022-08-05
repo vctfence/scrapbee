@@ -2,7 +2,7 @@ import {nativeBackend} from "./backend_native.js";
 import {getFaviconFromTab} from "./favicon.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
-import {send} from "./proxy.js";
+import {send, sendLocal} from "./proxy.js";
 import {packPage} from "./bookmarking.js";
 import {Group} from "./bookmarks_group.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
@@ -19,13 +19,18 @@ class RDFImporter {
     #cancelled = false;
     #progressCounter;
     #threads;
+    #sidebarSender;
 
     constructor(importOptions) {
         this.#options = importOptions;
+        this.#sidebarSender = importOptions.sidebarContext? sendLocal: send;
     }
 
     async import() {
-        const helperApp = await nativeBackend.probe(true);
+        let helperApp;
+
+        helperApp = await nativeBackend.probe(true);
+
         if (!helperApp)
             return;
 
@@ -183,7 +188,7 @@ class RDFImporter {
         else {
             this.#threads -= 1;
             if (this.#threads === 0)
-                send.nodesReady({shelf: this.#shelf});
+                this.#sidebarSender.nodesReady({shelf: this.#shelf});
         }
     }
 
@@ -207,7 +212,7 @@ class RDFImporter {
     }
 
     async #onFinish() {
-        send.nodesImported({shelf: this.#shelf});
+        this.#sidebarSender.nodesImported({shelf: this.#shelf});
 
         if (!this.#options.quick)
             this.#progressCounter.finish();

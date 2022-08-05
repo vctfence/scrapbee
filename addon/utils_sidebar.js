@@ -50,11 +50,11 @@ export async function toggleSidebarWindow() {
         await createSidebarWindow();
 }
 
-export async function ensureSidebarWindow() {
+export async function ensureSidebarWindow(sleepMs) {
     const sidebarWindow = await findSidebarWindow();
 
     if (!sidebarWindow) {
         await createSidebarWindow(false);
-        await sleep(500);
+        await sleep(sleepMs || 500);
     }
 }

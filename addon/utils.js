@@ -1,4 +1,4 @@
-import {send} from "./proxy.js";
+import {send, sendLocal} from "./proxy.js";
 
 export function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -270,13 +270,14 @@ export function cleanObject(object, forUpdate) {
 }
 
 export class ProgressCounter {
-    constructor(total, message, payload = {}) {
+    constructor(total, message, payload = {}, local) {
         this._total = total;
         this._last = total - 1;
         this._message = message;
         this._payload = payload;
         this._lastProgress = 0;
         this._counter = 0;
+        this._sender = local? sendLocal: send;
     }
 
     increment() {
@@ -288,11 +289,11 @@ export class ProgressCounter {
             progress = Math.round((this._counter / this._total) * 100);
             if (progress !== this._lastProgress) {
                 this._lastProgress = progress;
-                send[this._message](Object.assign({progress}, this._payload, payload));
+                this._sender[this._message](Object.assign({progress}, this._payload, payload));
             }
         }
         else if (progress) {
-            send[this._message](Object.assign({progress}, this._payload, payload));
+            this._sender[this._message](Object.assign({progress}, this._payload, payload));
         }
     }
 

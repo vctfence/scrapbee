@@ -34,6 +34,10 @@ receive.enableCloudBackgroundSync = async message => {
     cloudBackend.enableBackgroundSync(message.enable);
 };
 
+receive.helperAppProbe = message => {
+    return nativeBackend.probe(message.verbose);
+};
+
 receive.helperAppGetVersion = async message => {
     await nativeBackend.probe();
     return nativeBackend.getVersion();
@@ -43,4 +47,7 @@ receive.helperAppHasVersion = async message => {
     return nativeBackend.hasVersion(message.version);
 };
 
+receive.helperAppGetBackgroundAuth = message => {
+    return nativeBackend.auth;
+};
 

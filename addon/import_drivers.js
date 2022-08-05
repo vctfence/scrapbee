@@ -59,6 +59,11 @@ export class StreamExporterBuilder {
         return this;
     }
 
+    setSidebarContext(val) {
+        this._exportOptions.sidebarContext = val;
+        return this;
+    }
+
     _createExporter(options) {
         const exporter = new StreamExporter(this._marshaller);
         exporter._exportOptions = options;
@@ -83,8 +88,9 @@ export class StreamExporter {
         await marshaller.marshalMeta(this._exportOptions);
 
         if (objects.length) {
+            const local = !_BACKGROUND_PAGE && !muteSidebar;
             const progressCounter = progress
-                ? new ProgressCounter(objects.length, "exportProgress", {muteSidebar})
+                ? new ProgressCounter(objects.length, "exportProgress", {muteSidebar}, local)
                 : null;
 
             for (let object of objects) {
@@ -123,6 +129,11 @@ export class StreamImporterBuilder {
         return this;
     }
 
+    setSidebarContext(val) {
+        this._importOptions.sidebarContext = val;
+        return this;
+    }
+
     _createImporter(options) {
         const importer = new StreamImporter(this._unmarshaller);
         importer._importOptions = options;
@@ -148,8 +159,9 @@ export class StreamImporter {
 
         await Import.prepare(shelfName);
 
+        const local = !_BACKGROUND_PAGE && !muteSidebar;
         const progressCounter = progress && !!meta?.entities
-            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar})
+            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar}, local)
             : null;
 
         while (await unmarshaller.unmarshal())
@@ -190,8 +202,9 @@ export class StructuredStreamImporter {
         await Import.prepare(shelfName);
 
         progress = progress && !!meta.entities;
+        const local = !_BACKGROUND_PAGE && !muteSidebar;
         this._progressCounter = progress
-            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar})
+            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar}, local)
             : null;
 
         this._importParentId2DBParentId = new Map();

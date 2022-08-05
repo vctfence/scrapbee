@@ -2,10 +2,8 @@ import {isBuiltInShelf} from "./storage.js";
 import {LineStream, LineReader, readFile} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
-import {nativeBackend} from "./backend_native.js";
 import {receive} from "./proxy.js";
 import UUID from "./uuid.js";
-import {sleep} from "./utils.js";
 import {Import, Export} from "./import.js";
 import {ExportArea} from "./storage_export.js";
 
@@ -17,6 +15,7 @@ receive.importFile = async message => {
     if (importerBuilder) {
         importerBuilder.setName(shelf)
         importerBuilder.setReportProgress(true);
+        importerBuilder.setSidebarContext(!_BACKGROUND_PAGE);
 
         switch (format) {
             case "json":
@@ -63,7 +62,8 @@ receive.exportFile = async message => {
         .setUUID(message.uuid)
         .setLinksOnly(shallowExport)
         .setReportProgress(true)
-        .setObjects(nodes);
+        .setObjects(nodes)
+        .setSidebarContext(!_BACKGROUND_PAGE);
 
     const fileExt = `.${format === "json" ? "jsonl" : format}`;
     const fileName = shelf.replace(/[\\\/:*?"<>|^#%&!@+={}'~]/g, "_") + fileExt;

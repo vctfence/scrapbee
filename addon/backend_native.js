@@ -1,6 +1,7 @@
 import UUID from "./uuid.js"
 import {settings} from "./settings.js"
-import {hasCSRPermission, showNotification} from "./utils_browser.js";
+import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
+import {send} from "./proxy.js";
 
 class NativeBackend {
     constructor() {
@@ -54,7 +55,14 @@ class NativeBackend {
         }
     }
 
-    async probe(verbose = false) {
+    async probe(verbose) {
+        if (getContextType() === CONTEXT_BACKGROUND)
+            return this._probe(verbose);
+        else
+            return send.helperAppProbe({verbose});
+    }
+
+    async _probe(verbose = false) {
         if (!await hasCSRPermission())
             return false;
 
@@ -67,6 +75,9 @@ class NativeBackend {
     }
 
     getVersion() {
+        if (getContextType() !== CONTEXT_BACKGROUND)
+            throw new Error("Can not call this method in the foreground context.");
+
         if (this.port) {
             if (!this.version)
                 return "0.1";
@@ -75,6 +86,9 @@ class NativeBackend {
     }
 
     async hasVersion(version, msg) {
+        if (getContextType() !== CONTEXT_BACKGROUND)
+            throw new Error("Can not call this method in the foreground context.");
+
         if (!(await this.probe())) {
             if (msg)
                 showNotification(msg);
@@ -174,4 +188,8 @@ class NativeBackend {
 
 }
 
-export let nativeBackend = new NativeBackend();
+export const nativeBackend = new NativeBackend();
+
+if (getContextType() !== CONTEXT_BACKGROUND) {
+    send.helperAppGetBackgroundAuth().then(auth => nativeBackend.auth = auth);
+}

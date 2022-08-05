@@ -77,7 +77,7 @@ async function onStartRDFImport(e) {
     browser.runtime.onMessage.addListener(importListener);
 
     if (!_BACKGROUND_PAGE)
-        await ensureSidebarWindow();
+        await ensureSidebarWindow(1000);
 
     send.importFile({file: path, file_name: shelf, file_ext: "RDF",
         threads: $("#rdf-import-threads").val(),
