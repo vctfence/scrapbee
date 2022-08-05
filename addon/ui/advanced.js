@@ -85,8 +85,10 @@ function configureBackupCompressionPanel() {
 }
 
 function configureMaintenancePanel() {
-    if (!_BACKGROUND_PAGE)
+    if (!settings.platform.firefox) {
         $("#debug-settings-link").hide();
+        $("#optimize-database").hide();
+    }
 
     $("#option-repair-icons").prop("checked", settings.repair_icons());
     $("#option-repair-icons").on("change", async e => {

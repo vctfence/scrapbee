@@ -8,15 +8,15 @@ import {
     isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
 import {capitalize, getMimetypeExt} from "./utils.js";
-import {send, sendLocal} from "./proxy.js";
-import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE} from "./storage.js";
-import {fetchWithTimeout} from "./utils_io.js";
+import {receive, send, sendLocal} from "./proxy.js";
+import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {fetchText, fetchWithTimeout} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
-import {getFaviconFromTab} from "./favicon.js";
+import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
 import {Group} from "./bookmarks_group.js";
-import {isHTMLLink} from "./utils_html.js";
+import {isHTMLLink, parseHtml} from "./utils_html.js";
 import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
 
 export function formatShelfName(name) {
@@ -373,4 +373,40 @@ async function addBookmarkOnCommandSendPayload(action, payload) {
 
     payload.parent_id = DEFAULT_SHELF_ID;
     return sendLocal[action]({node: payload});
+}
+
+export async function createBookmarkFromURL (url, parentId) {
+    let options = {
+        parent_id: parentId,
+        uri: url,
+        name: "Untitled"
+    };
+
+    if (!/^https?:\/\/.*/.exec(options.uri))
+        options.uri = "http://" + options.uri;
+
+    sendLocal.startProcessingIndication();
+
+    try {
+        const html = await fetchText(options.uri);
+        let doc;
+        if (html)
+            doc = parseHtml(html);
+
+        if (doc) {
+            const title = doc.getElementsByTagName("title")[0]?.textContent;
+            options.name = title || options.uri;
+
+            const icon = await getFaviconFromContent(options.uri, doc);
+            if (icon)
+                options.icon = icon;
+        }
+    }
+    catch (e) {
+        console.error(e);
+    }
+
+    const bookmark = await Bookmark.add(options, NODE_TYPE_BOOKMARK);
+    await sendLocal.stopProcessingIndication();
+    sendLocal.bookmarkCreated({node: bookmark});
 }

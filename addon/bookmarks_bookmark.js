@@ -20,7 +20,7 @@ import {Path} from "./path.js";
 import {Group} from "./bookmarks_group.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
-import {getFavicon} from "./favicon.js";
+import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
 
@@ -511,7 +511,7 @@ export class BookmarkManager extends EntityManager {
 
     async storeIconFromURI(node) {
         try {
-            node.icon = await getFavicon(node.uri);
+            node.icon = await getFaviconFromContent(node.uri);
             await this.storeIcon(node);
         } catch (e) {
             console.error(e);

@@ -48,30 +48,41 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     return favicon;
 }
 
-export async function getFavicon(url, doc) {
+export async function getFaviconFromContent(url, doc) {
     if (!doc) {
         let timeout = settings.link_check_timeout()? settings.link_check_timeout() * 1000: 10000;
         try {
             const response = await fetchWithTimeout(url, {timeout});
-            if (response.ok)
-                doc = parseHtml(await response.text());
+            if (response.ok) {
+                if (_BACKGROUND_PAGE)
+                    doc = parseHtml(await response.text());
+                else
+                    doc = await response.text();
+            }
         }
         catch (e) {}
     }
-    else if (typeof doc === "string") {
+    else if (_BACKGROUND_PAGE && typeof doc === "string")
         doc = parseHtml(doc);
-    }
 
-    if (doc) {
-        try {
-            const origin = new URL(url).origin;
+    let favIcon;
+
+    try {
+        if (typeof doc === "string") {
+            const linkTag = doc.match(/<link[^>]*rel=['"](?:icon|shortcut)[^>]*>/i)?.[0];
+            if (linkTag)
+                favIcon = linkTag.match(/href=['"]?([^'" ]+)/i)?.[1];
+        }
+        else {
             const faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
-
-            return (faviconElt && await testFavicon(new URL(faviconElt.href, origin)))
-                || await testFavicon(new URL("/favicon.ico", origin));
-        }
-        catch (e) {
-            console.error(e);
+            if (faviconElt)
+                favIcon = faviconElt.href;
         }
     }
+    catch (e) {
+        console.error(e);
+    }
+
+    const origin = new URL(url).origin;
+    return favIcon && await testFavicon(new URL(favIcon, origin)) || await testFavicon(new URL("/favicon.ico", origin));
 }

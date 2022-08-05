@@ -2,7 +2,7 @@ import {settings} from "../../settings.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "../shelf_list.js";
 import {send} from "../../proxy.js";
 import {EVERYTHING, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../../storage.js";
-import {getFavicon} from "../../favicon.js";
+import {getFaviconFromContent} from "../../favicon.js";
 import {fetchWithTimeout} from "../../utils_io.js";
 import {confirm} from "../dialog.js";
 import {showNotification} from "../../utils_browser.js";
@@ -121,7 +121,7 @@ export class LinkChecker {
         checkResultTable.empty();
 
         async function updateIcon(node, html) {
-            let favicon = await getFavicon(node.uri, html);
+            let favicon = await getFaviconFromContent(node.uri, html);
 
             if (favicon) {
                 node.icon = favicon;

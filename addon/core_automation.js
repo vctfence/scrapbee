@@ -9,7 +9,7 @@ import {
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES
 } from "./storage.js";
 import {settings} from "./settings.js";
-import {getFavicon, getFaviconFromTab} from "./favicon.js";
+import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
@@ -98,17 +98,13 @@ receiveExternal.scrapyardAddBookmark = async (message, sender) => {
     if (node.icon === true || node.title === true) {
         try {
             const content = await fetchText(node.uri);
-            const doc = parseHtml(content);
 
             if (node.icon === true)
-                node.icon = await getFavicon(node.uri, doc);
+                node.icon = await getFaviconFromContent(node.uri, content);
 
             if (node.title === true) {
-                const titleElement = doc.querySelector("title");
-                if (titleElement)
-                    node.name = titleElement.textContent;
-                else
-                    node.name = "Untitled";
+                const title = content.match(/<title[^>]*>([^<]*)</i)?.[1];
+                node.name = title || "Untitled";
             }
         }
         catch (e) {

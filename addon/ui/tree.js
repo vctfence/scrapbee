@@ -36,7 +36,7 @@ import {
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
-import {formatShelfName} from "../bookmarking.js";
+import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 
@@ -958,7 +958,7 @@ class BookmarkTree {
                         action: async () => {
                             const options = await showDlg("prompt", {caption: "New Bookmark", label: "URL:"});
                             if (options && options.title)
-                                send.createBookmarkFromURL({url: options.title, parent_id: ctxNode.id});
+                                return createBookmarkFromURL(options.title, ctxNode.id);
                         }
                     },
                     newNotesItem: {
@@ -1491,10 +1491,6 @@ class BookmarkTree {
 
         if (!browser.contextualIdentities)
             delete items.openInContainerItem;
-
-        if (!_BACKGROUND_PAGE) {
-            delete items.newItem.submenu.newBookmarkItem;
-        }
 
         return items;
     }

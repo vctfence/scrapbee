@@ -7,6 +7,7 @@ import {Query} from "../storage_query.js";
 import {BookmarkTree} from "./tree.js";
 import {send} from "../proxy.js";
 import {toggleSidebarWindow} from "../utils_sidebar.js";
+import {isSpecialPage} from "../bookmarking.js";
 
 let tree;
 let bookmarkFolderSelect;
@@ -81,7 +82,9 @@ async function saveActiveTabProperties() {
         $("#bookmark-name").val(activeTab.title);
         $("#bookmark-url").val(activeTab.url);
 
-        let favicon = await getFaviconFromTab(activeTab);
+        let favicon;
+        if (!isSpecialPage(activeTab.url))
+             favicon = await getFaviconFromTab(activeTab);
 
         if (favicon)
             $("#bookmark-icon").val(favicon);

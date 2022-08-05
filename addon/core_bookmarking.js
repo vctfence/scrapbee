@@ -18,7 +18,7 @@ import {
 } from "./bookmarking.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
-import {getFavicon} from "./favicon.js";
+import {getFaviconFromContent} from "./favicon.js";
 import {TODO} from "./bookmarks_todo.js";
 import {Group} from "./bookmarks_group.js";
 import {Shelf} from "./bookmarks_shelf.js";
@@ -60,43 +60,6 @@ receive.createBookmark = message => {
     return send.beforeBookmarkAdded({node: node})
         .then(addBookmark)
         .catch(addBookmark);
-};
-
-receive.createBookmarkFromURL = async message => {
-    let options = {
-        parent_id: message.parent_id,
-        uri: message.url,
-        name: "Untitled"
-    };
-
-    if (!/^https?:\/\/.*/.exec(options.uri))
-        options.uri = "http://" + options.uri;
-
-    send.startProcessingIndication();
-
-    try {
-        const html = await fetchText(options.uri);
-        let doc;
-        if (html)
-            doc = parseHtml(html);
-
-        if (doc) {
-            const title = $("title", doc).text();
-            if (title)
-                options.name = title;
-
-            const icon = await getFavicon(options.uri, doc);
-            if (icon)
-                options.icon = icon;
-        }
-    }
-    catch (e) {
-        console.error(e);
-    }
-
-    const bookmark = await Bookmark.add(options, NODE_TYPE_BOOKMARK);
-    await send.stopProcessingIndication();
-    send.bookmarkCreated({node: bookmark});
 };
 
 receive.updateBookmark = message => Bookmark.update(message.node);
