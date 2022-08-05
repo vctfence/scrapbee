@@ -2,6 +2,7 @@ import UUID from "./uuid.js"
 import {settings} from "./settings.js"
 import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
 import {send} from "./proxy.js";
+import {getHelperAppPushBlobMessage, getHelperAppRdfPathMessage} from "./browse.js";
 
 class NativeBackend {
     constructor() {
@@ -86,9 +87,13 @@ class NativeBackend {
     }
 
     async hasVersion(version, msg) {
-        if (getContextType() !== CONTEXT_BACKGROUND)
-            throw new Error("Can not call this method in the foreground context.");
+        if (getContextType() === CONTEXT_BACKGROUND)
+            return this._hasVersion(version, msg);
+        else
+            return send.helperAppHasVersion({version, alert: msg});
+    }
 
+    async _hasVersion(version, msg) {
         if (!(await this.probe())) {
             if (msg)
                 showNotification(msg);
@@ -117,10 +122,17 @@ class NativeBackend {
     }
 
     static async incomingMessages(msg) {
-        // msg = JSON.parse(msg);
-        // switch (msg.type) {
-        //
-        // }
+        const port = await this.getPort();
+        msg = JSON.parse(msg);
+
+        switch (msg.type) {
+            case "REQUEST_PUSH_BLOB":
+                port.postMessage(await getHelperAppPushBlobMessage(msg.uuid));
+                break;
+            case "REQUEST_RDF_PATH":
+                port.postMessage(await getHelperAppRdfPathMessage(msg.uuid));
+                break;
+        }
     }
 
     url(path) {

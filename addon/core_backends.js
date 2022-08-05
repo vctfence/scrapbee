@@ -44,7 +44,7 @@ receive.helperAppGetVersion = async message => {
 };
 
 receive.helperAppHasVersion = async message => {
-    return nativeBackend.hasVersion(message.version);
+    return nativeBackend.hasVersion(message.version, message.alert);
 };
 
 receive.helperAppGetBackgroundAuth = message => {

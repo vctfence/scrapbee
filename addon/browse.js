@@ -11,7 +11,7 @@ import {
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
 import {nativeBackend} from "./backend_native.js";
-import {send} from "./proxy.js";
+import {send, sendLocal} from "./proxy.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
@@ -150,22 +150,31 @@ async function browseArchive(node, options) {
 }
 
 async function browseRDFArchive(node, options) {
-    let helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application v0.5+ is required.");
+    let helperApp = await nativeBackend.hasVersion("1.1", "Scrapyard helper application v1.1+ is required.");
 
     if (helperApp) {
-        await rdfBackend.pushRDFPath(node);
         const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
         return openURL(url, options);
     }
 }
 
+export async function getHelperAppRdfPathMessage(uuid) {
+    const node = await Node.getByUUID(uuid);
+    const path = await rdfBackend.getRDFPageDir(node);
+    return {
+        type: "RDF_PATH",
+        uuid: node.uuid,
+        rdf_directory: path
+    };
+}
+
 async function getBlobURL(node, blob) {
     if (settings.browse_with_helper()) {
-        const alertText = _BACKGROUND_PAGE? "Scrapyard helper application v0.5+ is required.": undefined;
-        const helperApp = await nativeBackend.hasVersion("0.5", alertText);
+        const alertText = _BACKGROUND_PAGE? "Scrapyard helper application v1.1+ is required.": undefined;
+        const helperApp = await nativeBackend.hasVersion("1.1", alertText);
 
         if (helperApp)
-            return sendBlobToHelper(node, blob);
+            return nativeBackend.url(`/browse/${node.uuid}`);
         else
             return loadArchive(blob);
     }
@@ -173,21 +182,17 @@ async function getBlobURL(node, blob) {
     return loadArchive(blob);
 }
 
-async function sendBlobToHelper(node, blob) {
-    const data = await Archive.reify(blob, true);
-
-    const fields = {
-        blob: data,
-        content_type: blob.type || "text/html",
+export async function getHelperAppPushBlobMessage(uuid) {
+    const node = await Node.getByUUID(uuid)
+    const archive = await Archive.get(node.id);
+    const content = await Archive.reify(archive, true);
+    return {
+        type: "PUSH_BLOB",
+        uuid: node.uuid,
+        content_type: archive.type || "text/html",
+        content: content,
+        byte_length: archive.byte_length || null
     };
-
-    if (blob.byte_length) {
-        fields.blob = btoa(fields.blob);
-        fields.byte_length = blob.byte_length;
-    }
-
-    await nativeBackend.post(`/browse/upload/${node.uuid}`, fields);
-    return nativeBackend.url(`/browse/${node.uuid}`);
 }
 
 async function loadArchive(blob) {
@@ -218,7 +223,7 @@ async function listSiteArchives(node) {
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
 }
 
-export async function browseNode(node, options) {
+export async function browseNodeInCurrentContext(node, options) {
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
             return browseBookmark(node, options);
@@ -232,4 +237,11 @@ export async function browseNode(node, options) {
         case NODE_TYPE_GROUP:
             return browseGroup(node, options);
     }
+}
+
+export async function browseNode(node) {
+    if (_BACKGROUND_PAGE)
+        return browseNodeInCurrentContext(node);
+    else
+        return sendLocal.browseNode({node});
 }

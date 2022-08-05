@@ -16,16 +16,14 @@ import {
     abortCrawling,
     archiveBookmark
 } from "./bookmarking.js";
-import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
-import {getFaviconFromContent} from "./favicon.js";
 import {TODO} from "./bookmarks_todo.js";
 import {Group} from "./bookmarks_group.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {browseNode} from "./browse.js";
+import {browseNodeInCurrentContext} from "./browse.js";
 import {ensureSidebarWindow} from "./utils_sidebar.js";
 
 receive.createShelf = message => Shelf.add(message.name);
@@ -240,7 +238,7 @@ receive.uploadFiles = async message => {
 
 receive.browseNode = async message => {
     if (_BACKGROUND_PAGE)
-        browseNode(message.node, message);
+        browseNodeInCurrentContext(message.node, message);
     else {
         await ensureSidebarWindow();
         send.browseNodeSidebar(message);

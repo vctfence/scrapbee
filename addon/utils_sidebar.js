@@ -55,6 +55,6 @@ export async function ensureSidebarWindow(sleepMs) {
 
     if (!sidebarWindow) {
         await createSidebarWindow(false);
-        await sleep(sleepMs || 500);
+        await sleep(sleepMs || 700);
     }
 }

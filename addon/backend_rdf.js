@@ -327,11 +327,6 @@ export class RDFBackend {
         const path = await Path.compute(node);
         return `${path[0].uri}/data/${node.external_id}/`;
     }
-
-    async pushRDFPath(node) {
-        await nativeBackend.post(`/rdf/browse/push/${node.uuid}`,
-            {rdf_directory: await this.getRDFPageDir(node)});
-    }
 }
 
 export let rdfBackend = new RDFBackend();

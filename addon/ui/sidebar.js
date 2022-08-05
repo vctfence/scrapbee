@@ -851,7 +851,7 @@ function updateProgress(message) {
 let browseNode;
 if (!_BACKGROUND_PAGE) {
     const browseModule = await import("../browse.js");
-    browseNode = browseModule.browseNode;
+    browseNode = browseModule.browseNodeInCurrentContext;
 }
 
 receive.browseNodeSidebar = message => {

@@ -1,5 +1,5 @@
 import {EntityIDB} from "./storage_idb.js";
-import {indexString, indexHTML} from "./utils_html.js";
+import {indexHTML} from "./utils_html.js";
 import {readBlob} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 
