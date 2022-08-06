@@ -1,5 +1,5 @@
 {
-    "version": "0.17",
+    "version": "$VERSION$",
     "manifest_version": 3,
     "name": "Scrapyard",
     "description": "__MSG_extensionDescription__",
@@ -20,7 +20,6 @@
         "activeTab",
         "alarms",
         "bookmarks",
-        "contextMenus",
         "downloads",
         "nativeMessaging",
         "notifications",
@@ -28,7 +27,6 @@
         "unlimitedStorage",
         "webNavigation",
         "management",
-        "cookies",
         "scripting",
         "declarativeNetRequest"
     ],

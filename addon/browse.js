@@ -151,9 +151,13 @@ async function browseArchive(node, options) {
 }
 
 async function browseRDFArchive(node, options) {
-    let helperApp = await nativeBackend.hasVersion("1.1", "Scrapyard helper application v1.1+ is required.");
+    const helperApp = await nativeBackend.probe(true);
 
     if (helperApp) {
+        const helperApp11 = await nativeBackend.hasVersion("1.1");
+        if (!helperApp11)
+            await rdfBackend.pushRDFPath(node);
+
         const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
         return openURL(url, options);
     }

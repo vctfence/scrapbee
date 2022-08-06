@@ -6,37 +6,87 @@ import os
 
 from pathlib import Path
 
-package = os.path.abspath(os.path.dirname(__file__))
-subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--user"])
 
-executable_path = site.getuserbase() + "/bin/scrapyard_helper"
+def check_binary(base_path, ext):
+    if os.path.exists(base_path + ext):
+        return base_path + ext
+    return None
 
 
-def write_manifest(template, destination):
+def get_binary_path(base_path):
+    binaries = [
+        check_binary(base_path, ".exe"),
+        check_binary(base_path, ".cmd"),
+        check_binary(base_path, ".bat"),
+        check_binary(base_path, ".sh"),
+    ]
+
+    return next((p for p in binaries if p is not None), base_path)
+
+
+def write_manifest(template, destination, executable_path):
     with open(template, "r") as manifest_in:
         manifest_text = manifest_in.read()
-        manifest_text = manifest_text.replace("$EXECUTABLE_PATH$", executable_path)
+
+        executable_manifest_path = executable_path
+        if platform.system() == "Windows":
+            executable_manifest_path = executable_path.replace("/", "\\")
+            executable_manifest_path = executable_manifest_path.replace("\\", "\\\\")
+
+        manifest_text = manifest_text.replace("$EXECUTABLE_PATH$", executable_manifest_path)
 
         Path(os.path.dirname(destination)).mkdir(parents=True, exist_ok=True)
         with open(destination, "w") as manifest_out:
             manifest_out.write(manifest_text)
 
 
+def write_reg_hkcu_value(path, value):
+    try:
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
+        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, winreg.KEY_WRITE)
+        winreg.SetValueEx(registry_key, "", 0, winreg.REG_SZ, value)
+        winreg.CloseKey(registry_key)
+    except WindowsError:
+        print("Can't access registry")
+
+
+package_path = os.path.abspath(os.path.dirname(__file__))
+subprocess.check_call([sys.executable, "-m", "pip", "install", package_path, "--user"])
+
+executable_base_path = site.getuserbase() + "/bin/scrapyard_helper"
+
+if platform.system() == "Windows":
+    executable_base_path = os.path.dirname(site.getusersitepackages()) + r"\Scripts\scrapyard_helper"
+
+executable_path = get_binary_path(executable_base_path)
+
 firefox_manifest_path = os.path.expanduser("~/.mozilla/native-messaging-hosts/scrapyard_helper.json")
 
-if platform.system() == "Darwin":
+if platform.system() == "Windows":
+    firefox_manifest_path = executable_base_path + ".json.firefox"
+elif platform.system() == "Darwin":
     firefox_manifest_path = \
         os.path.expanduser("~/Library/Application Support/Mozilla/NativeMessagingHosts/scrapyard_helper.json")
 
-write_manifest(package + "/manifests/scrapyard_helper.json.firefox", firefox_manifest_path)
+write_manifest(package_path + "/manifests/scrapyard_helper.json.firefox", firefox_manifest_path, executable_path)
 
 chrome_manifest_path = os.path.expanduser("~/.config/google-chrome/NativeMessagingHosts/scrapyard_helper.json")
 chromium_manifest_path = chrome_manifest_path.replace("google-chrome", "chromium")
 
-if platform.system() == "Darwin":
+if platform.system() == "Windows":
+    chrome_manifest_path = executable_base_path + ".json.chrome"
+elif platform.system() == "Darwin":
     chrome_manifest_path = \
         os.path.expanduser("~/Library/Application Support/Google/Chrome/NativeMessagingHosts/scrapyard_helper.json")
     chromium_manifest_path = chrome_manifest_path.replace("Chrome", "Chromium")
 
-write_manifest(package + "/manifests/scrapyard_helper.json.chrome", chrome_manifest_path)
-write_manifest(package + "/manifests/scrapyard_helper.json.chrome", chromium_manifest_path)
+write_manifest(package_path + "/manifests/scrapyard_helper.json.chrome", chrome_manifest_path, executable_path)
+
+if platform.system() != "Windows":
+    write_manifest(package_path + "/manifests/scrapyard_helper.json.chrome", chromium_manifest_path, executable_path)
+
+if platform.system() == "Windows":
+    import winreg
+
+    write_reg_hkcu_value(r"Software\Mozilla\NativeMessagingHosts\scrapyard_helper", firefox_manifest_path)
+    write_reg_hkcu_value(r"Software\Google\Chrome\NativeMessagingHosts\scrapyard_helper", chrome_manifest_path)

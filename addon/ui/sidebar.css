@@ -80,7 +80,6 @@ input:focus {
 
 .main-tools {
     width:fit-content;
-    width:-moz-fit-content;
     display:inline-block;
 }
 
@@ -169,7 +168,7 @@ input:focus {
 .dlg input, .dlg select, .dlg textarea {
     border: 1px solid #777;
     border-radius: 3px;
-    -moz-appearance: none;
+    appearance: none;
 }
 
 .dlg input.dialog-input, .dlg textarea {

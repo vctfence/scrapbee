@@ -1,9 +1,8 @@
-// To enable manifest v3 use this file as the addon manifest
 {
-    "version": "0.17",
+    "version": "$VERSION$",
     "applications": {
         "gecko": {
-            "id": "scrapyard@firefox",
+            "id": "scrapyard$ID_SUFFIX$@firefox",
             "strict_min_version": "91.0"
         }
     },

@@ -333,6 +333,7 @@ export function initializeOmnibox() {
                 if (node.type === NODE_TYPE_BOOKMARK && node.container) {
                     if (activeTab && activeTab.url === "about:newtab")
                         browser.tabs.remove(activeTab.id);
+
                     openContainerTab(url, node.container);
                     return;
                 }
