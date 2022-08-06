@@ -19,4 +19,5 @@ helper/dist/
 helper/scrapyard_helper.spec
 helper/*.exe
 helper/*.zip
+helper/*.tgz
 Scrapyard.zip

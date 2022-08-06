@@ -10,7 +10,7 @@ async function loadHelperAppLinks() {
 
     function setDownloadLinks(link1, link2) {
         const app = link1.endsWith(".exe")? link1: link2;
-        const archive = link1.endsWith(".zip")? link1: link2;
+        const archive = link1.endsWith(".tgz")? link1: link2;
         $("#helper-windows-inst").attr("href", app);
         $("#helper-manual-inst").attr("href", archive);
     }
