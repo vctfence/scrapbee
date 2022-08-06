@@ -76,7 +76,7 @@ if (browser.webRequest) {
 }
 
 browser.commands.onCommand.addListener(function(command) {
-    if (!_BACKGROUND_PAGE && command === "toggle_sidebar_window")
+    if (!_SIDEBAR && command === "toggle_sidebar_window")
         toggleSidebarWindow();
     else
         addBookmarkOnCommand(command);

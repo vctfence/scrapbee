@@ -63,8 +63,9 @@ class ScrapyardSettings {
     }
 
     _processSetSetting(key, val) {
-        if (key === "open_sidebar_from_shortcut") // in Firefox syc access to this setting is required
-            localStorage.setItem("option-open-sidebar-from-shortcut", val? "true": "false");
+        // in Firefox, synchronous access to this setting is required
+        if (this._platform.firefox && key === "open_sidebar_from_shortcut")
+            localStorage.setItem("option-open-sidebar-from-shortcut", val? "open": "");
     }
 
     get(target, key, receiver) {

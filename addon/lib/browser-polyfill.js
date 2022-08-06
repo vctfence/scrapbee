@@ -1,1 +1,2 @@
-globalThis.browser = chrome;
+if (!globalThis.browser)
+    globalThis.browser = chrome;

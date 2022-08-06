@@ -84,8 +84,7 @@ export function getThemeVar(v) {
     let vars = document.querySelector(":root");
     if (vars) {
         let style = window.getComputedStyle(vars);
-        let value = style.getPropertyValue(v);
-        return value;
+        return style.getPropertyValue(v);
     }
 }
 

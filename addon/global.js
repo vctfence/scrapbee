@@ -11,6 +11,8 @@ globalThis._MANIFEST_V3 = globalThis._MANIFEST_VERSION === 3;
 
 globalThis._BACKGROUND_PAGE = !!_MANIFEST.background?.page;
 
+globalThis._SIDEBAR = !!globalThis.browser.sidebarAction;
+
 globalThis._log = console.log;
 
 globalThis._tm = (name = "timer") => console.time(name);

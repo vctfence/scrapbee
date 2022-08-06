@@ -73,7 +73,7 @@ export async function getFaviconFromContent(url, doc) {
             if (linkTag)
                 favIcon = linkTag.match(/href=['"]?([^'" ]+)/i)?.[1];
         }
-        else {
+        else if (doc) {
             const faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
             if (faviconElt)
                 favIcon = faviconElt.href;
@@ -84,5 +84,7 @@ export async function getFaviconFromContent(url, doc) {
     }
 
     const origin = new URL(url).origin;
-    return favIcon && await testFavicon(new URL(favIcon, origin)) || await testFavicon(new URL("/favicon.ico", origin));
+    if (origin)
+        return favIcon && await testFavicon(new URL(favIcon, origin))
+            || await testFavicon(new URL("/favicon.ico", origin));
 }

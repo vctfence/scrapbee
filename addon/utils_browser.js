@@ -1,4 +1,5 @@
 import {settings} from "./settings.js";
+import {findSidebarWindow} from "./utils_sidebar.js";
 
 async function injectCSSFileMV3(tabId, options) {
     return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
@@ -86,6 +87,16 @@ export function makeReferenceURL(uuid) {
 export async function getActiveTab() {
     const tabs = await browser.tabs.query({lastFocusedWindow: true, active: true});
     return tabs && tabs.length ? tabs[0] : null;
+}
+
+export async function getActiveTabFromSidebar() {
+    if (_SIDEBAR)
+        return getActiveTab();
+    else {
+        const sidebarWindow = findSidebarWindow();
+        const tabs = await browser.tabs.query({active: true});
+        return tabs.find(t => t.windowId !== sidebarWindow.id);
+    }
 }
 
 export async function openPage(url) {

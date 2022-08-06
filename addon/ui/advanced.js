@@ -53,6 +53,11 @@ function configureAutomationPanel() {
 }
 
 async function configureDBPath() {
+    if (!settings.platform.firefox) {
+        $("#addon-db-path-input").prop("placeholder", "Only available in Firefox");
+        return;
+    }
+
     const idbPath = await send.getAddonIdbPath();
     if (idbPath)
         $("#addon-db-path-input").val(idbPath);
@@ -264,11 +269,17 @@ function configureImpExpPanel() {
 
                 delete imported["localstorage-settings"];
 
-                let settings = await browser.storage.local.get();
-                Object.assign(settings["savepage-settings"], imported["savepage-settings"]);
-                Object.assign(settings["scrapyard-settings"], imported["scrapyard-settings"]);
+                let scrapyardSettings = await browser.storage.local.get();
+                Object.assign(scrapyardSettings["savepage-settings"], imported["savepage-settings"]);
+                Object.assign(scrapyardSettings["scrapyard-settings"], imported["scrapyard-settings"]);
 
-                await browser.storage.local.set(settings);
+                await browser.storage.local.set(scrapyardSettings);
+
+                await settings.load();
+
+                // propagate to localstorage
+                if (settings.platform.firefox && settings.open_sidebar_from_shortcut())
+                    settings.open_sidebar_from_shortcut(true);
 
                 chrome.runtime.reload();
             };

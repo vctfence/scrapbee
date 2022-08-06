@@ -294,6 +294,9 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
                 browser.runtime.onMessage.addListener(initializationListener);
 
+                if (!_BACKGROUND_PAGE)
+                    await injectScriptFile(packingTab.id, {file: "/lib/browser-polyfill.js", allFrames: true});
+
                 await injectSavePageScripts(packingTab, reject);
             }
         };
@@ -309,9 +312,6 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
         browser.tabs.onRemoved.addListener(tabRemovedListener);
 
         var packingTab = await browser.tabs.create({url: url, active: false});
-
-        if (!_BACKGROUND_PAGE)
-            await injectScriptFile(packingTab.id, {file: "/lib/browser-polyfill.js", allFrames: true});
 
         if (hide_tab)
             browser.tabs.hide(packingTab.id)

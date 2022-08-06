@@ -34,7 +34,7 @@ import {
     DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_NAME
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
-import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
+import {getActiveTab, getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
 import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
@@ -251,7 +251,7 @@ class BookmarkTree {
             if (clickable && !e.ctrlKey && !e.shiftKey) {
                 if (node) {
                     if (settings.open_bookmark_in_active_tab()) {
-                        getActiveTab().then(activeTab => {
+                        getActiveTabFromSidebar().then(activeTab => {
                             activeTab = e.button === 0 && activeTab ? activeTab : undefined;
                             send.browseNode({node: node, tab: activeTab, preserveHistory: true});
                         });
@@ -1491,6 +1491,10 @@ class BookmarkTree {
 
         if (!browser.contextualIdentities)
             delete items.openInContainerItem;
+
+        if (settings.platform.chrome) {
+            delete items.uploadItem;
+        }
 
         return items;
     }

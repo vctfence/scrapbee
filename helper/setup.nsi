@@ -1,7 +1,7 @@
 Unicode True
 
 !define APPNAME "Scrapyard Helper"
-!define VERSION "1.0"
+!define VERSION "1.1"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
@@ -9,7 +9,7 @@ Unicode True
 Name "${APPNAMEANDVERSION}"
 InstallDir "$PROGRAMFILES\${APPNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" ""
-OutFile "scrapyard-helper-${VERSION}.exe"
+OutFile "scrapyard-helper-${VERSION}_x86_64.exe"
 
 ; Use compression
 SetCompressor LZMA
@@ -139,10 +139,10 @@ Section "Scrapyard Helper" Section1
 
     ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
     ${If} $0 != ""
-    ${AndIf} ${Cmd} `MessageBox MB_YESNO|MB_ICONQUESTION "Uninstall previous version?" /SD IDYES IDYES`
+    #${AndIf} ${Cmd} `MessageBox MB_YESNO|MB_ICONQUESTION "Uninstall previous version?" /SD IDYES IDYES`
         !insertmacro UninstallExisting $0 '"$0"'
         ${If} $1 <> 0
-            MessageBox MB_YESNO|MB_ICONSTOP "Failed to uninstall, continue anyway?" /SD IDYES IDYES +2
+            MessageBox MB_YESNO|MB_ICONSTOP "Failed to uninstall the previous version, continue anyway?" /SD IDYES IDYES +2
                 Abort
         ${EndIf}
     ${EndIf}
@@ -171,11 +171,22 @@ Section "Scrapyard Helper" Section1
     FileWrite $0 '}$\n'
     FileClose $0
 
+    FileOpen $0 manifest.json.chrome w
+    FileWrite $0 '{$\n'
+    FileWrite $0 '"name": "scrapyard_helper",$\n'
+    FileWrite $0 '"description": "Scrapyard helper application",$\n'
+    FileWrite $0 '"path": "$1",$\n'
+    FileWrite $0 '"type": "stdio",$\n'
+    FileWrite $0 '"allowed_origins": [ "chrome-extension://fhgomkcfijbifanbkppjhgmcdkmbacep/", "chrome-extension://jlpgjeiblkojkaedoobnfkgobdddimon/" ]$\n'
+    FileWrite $0 '}$\n'
+    FileClose $0
+
 SectionEnd
 
 Section -FinishSection
 
     WriteRegStr HKCU "Software\Mozilla\NativeMessagingHosts\scrapyard_helper" "" "$INSTDIR\manifest.json"
+    WriteRegStr HKCU "SOFTWARE\Google\Chrome\NativeMessagingHosts\scrapyard_helper" "" "$INSTDIR\manifest.json.chrome"
 
 	WriteRegStr HKLM "Software\${APPNAME}" "" "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"

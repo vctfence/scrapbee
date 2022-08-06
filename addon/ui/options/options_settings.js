@@ -47,11 +47,11 @@ function configureScrapyardSettingsPage() {
     setSaveCheckHandler("option-do-not-show-archive-toolbar", "do_not_show_archive_toolbar");
     setSaveCheckHandler("option-switch-to-bookmark", "switch_to_new_bookmark");
     setSaveCheckHandler("option-open-bookmark-in-active-tab", "open_bookmark_in_active_tab");
+    setSaveCheckHandler("option-open-sidebar-from-shortcut", "open_sidebar_from_shortcut");
     setSaveCheckHandler("option-do-not-switch-to-ff-bookmark", "do_not_switch_to_ff_bookmark");
     setSaveCheckHandler("option-use-helper-app-for-export", "use_helper_app_for_export");
     setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
     setSaveCheckHandler("option-browse-with-helper", "browse_with_helper");
-    setSaveCheckHandler("option-open-sidebar-from-shortcut", "open_sidebar_from_shortcut");
 }
 
 function loadScrapyardSettings() {

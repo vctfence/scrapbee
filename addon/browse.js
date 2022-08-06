@@ -43,8 +43,9 @@ function configureArchiveTab(node, archiveTab) {
 async function configureArchivePage(tab, node) {
     if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
         await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
-        await injectScriptFile(tab.id, {file: "global.js", frameId: 0});
         await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
+        if (!_BACKGROUND_PAGE)
+            await injectScriptFile(tab.id, {file: "lib/browser-polyfill.js", frameId: 0});
         await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
 
         if (settings.open_bookmark_in_active_tab())

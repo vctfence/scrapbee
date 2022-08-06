@@ -103,7 +103,7 @@ receiveExternal.scrapyardAddBookmark = async (message, sender) => {
                 node.icon = await getFaviconFromContent(node.uri, content);
 
             if (node.title === true) {
-                const title = content.match(/<title[^>]*>([^<]*)</i)?.[1];
+                const title = content.match(/<title[^>]*>([^<]*)</i)?.[1]?.trim();
                 node.name = title || "Untitled";
             }
         }

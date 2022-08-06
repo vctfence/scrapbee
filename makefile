@@ -7,7 +7,11 @@ test-nightly:
 	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard.nightly" --firefox=nightly --keep-profile-changes
 
 build:
-	cd addon; web-ext build -i web-ext-artifacts .web-extension-id debug.log
+	cd addon; web-ext build -i web-ext-artifacts .web-extension-id _metadata
+
+build-chrome:
+	rm -f Scrapyard.zip
+	7za a Scrapyard.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
 
 sign:
 	cd addon; web-ext sign -i web-ext-artifacts .web-extension-id debug.log `cat $(HOME)/.amo/creds`
@@ -15,6 +19,10 @@ sign:
 .PHONY: firefox-mv2
 firefox-mv2:
 	cd addon; cp manifest.json.mv2 manifest.json
+
+.PHONY: firefox-mv3
+firefox-mv3:
+	cd addon; cp manifest.json.mv3 manifest.json
 
 .PHONY: chrome-mv3
 chrome-mv3:

@@ -247,7 +247,7 @@ async function init() {
 }
 
 window.onbeforeunload = function() {
-    if (!_BACKGROUND_PAGE) {
+    if (!_SIDEBAR) {
         findSidebarWindow().then(w => {
             const position = {top: w.top, left: w.left, height: w.height, width: w.width};
             settings.sidebar_window_position(position);

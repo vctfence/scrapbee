@@ -267,7 +267,11 @@ export function initializeOmnibox() {
     let suggestions;
 
     const makeSuggestion = function(node) {
-        let suggestion = {description: escapeHtml(node.name) || ""};
+        let suggText = node.name;
+        if (suggText && settings.platform.chrome)
+            suggText = escapeHtml(suggText);
+
+        const suggestion = {description: suggText || ""};
         if (node.type === NODE_TYPE_BOOKMARK)
             suggestion.content = node.uri;
         else

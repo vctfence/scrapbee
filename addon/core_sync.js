@@ -100,7 +100,7 @@ async function performSync(initial) {
         if (areChangesPresent(syncOperations)) {
             const action = _MANIFEST_V3? browser.action: browser.browserAction;
 
-            if (_BACKGROUND_PAGE)
+            if (settings.platform.firefox)
                 action.setIcon({path: "/icons/action-sync.svg"});
             else
                 action.setIcon({path: "/icons/action-sync.png"});
@@ -109,7 +109,7 @@ async function performSync(initial) {
                 await performOperations(syncOperations, sync_directory);
             }
             finally {
-                if (_BACKGROUND_PAGE)
+                if (settings.platform.firefox)
                     action.setIcon({path: "/icons/scrapyard.svg"});
                 else
                     action.setIcon({path: "/icons/logo128.png"});

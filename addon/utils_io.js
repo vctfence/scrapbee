@@ -142,6 +142,7 @@ export async function fetchText(url, init) {
 
 export async function fetchWithTimeout(resource, options = {}) {
     const { timeout = 10000 } = options;
+    delete options.timeout;
 
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
