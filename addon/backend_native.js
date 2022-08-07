@@ -2,9 +2,10 @@ import UUID from "./uuid.js"
 import {settings} from "./settings.js"
 import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
 import {send} from "./proxy.js";
-import {getHelperAppPushBlobMessage, getHelperAppRdfPathMessage} from "./browse.js";
 
 class NativeBackend {
+    #externalEventHandlers = {};
+
     constructor() {
         this.auth = UUID.numeric();
         this.version = undefined;
@@ -27,7 +28,7 @@ class NativeBackend {
                     response = JSON.parse(response);
                     if (response.type === "INITIALIZED") {
                         port.onMessage.removeListener(initListener);
-                        port.onMessage.addListener(NativeBackend.incomingMessages.bind(this))
+                        port.onMessage.addListener(NativeBackend._incomingMessages.bind(this))
                         this.port = port;
                         this.version = response.version;
                         resolve(port);
@@ -121,18 +122,21 @@ class NativeBackend {
         }
     }
 
-    static async incomingMessages(msg) {
+    static async _incomingMessages(msg) {
         const port = await this.getPort();
         msg = JSON.parse(msg);
 
-        switch (msg.type) {
-            case "REQUEST_PUSH_BLOB":
-                port.postMessage(await getHelperAppPushBlobMessage(msg.uuid));
-                break;
-            case "REQUEST_RDF_PATH":
-                port.postMessage(await getHelperAppRdfPathMessage(msg.uuid));
-                break;
+        const handler = this.#externalEventHandlers[msg.type];
+
+        if (handler) {
+            const response = await handler(msg);
+            if (response !== undefined)
+                port.postMessage(response);
         }
+    }
+
+    addMessageHandler(name, handler) {
+        this.#externalEventHandlers[name] = handler;
     }
 
     url(path) {

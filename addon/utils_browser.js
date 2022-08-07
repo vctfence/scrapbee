@@ -1,6 +1,14 @@
 import {settings} from "./settings.js";
 import {findSidebarWindow} from "./utils_sidebar.js";
 
+export const ACTION_ICONS = {
+    16: "icons/logo16.png",
+    24: "icons/logo24.png",
+    32: "icons/logo32.png",
+    96: "icons/logo96.png",
+    128: "icons/logo128.png"
+};
+
 async function injectCSSFileMV3(tabId, options) {
     return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
 }

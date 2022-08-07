@@ -163,8 +163,8 @@ async function browseRDFArchive(node, options) {
     }
 }
 
-export async function getHelperAppRdfPathMessage(uuid) {
-    const node = await Node.getByUUID(uuid);
+export async function onRequestRdfPathMessage(msg) {
+    const node = await Node.getByUUID(msg.uuid);
     const path = await rdfBackend.getRDFPageDir(node);
     return {
         type: "RDF_PATH",
@@ -172,6 +172,8 @@ export async function getHelperAppRdfPathMessage(uuid) {
         rdf_directory: path
     };
 }
+
+nativeBackend.addMessageHandler("REQUEST_RDF_PATH", onRequestRdfPathMessage);
 
 async function getBlobURL(node, blob) {
     if (settings.browse_with_helper()) {
@@ -187,8 +189,8 @@ async function getBlobURL(node, blob) {
     return loadArchive(blob);
 }
 
-export async function getHelperAppPushBlobMessage(uuid) {
-    const node = await Node.getByUUID(uuid)
+export async function onRequestPushBlobMessage(msg) {
+    const node = await Node.getByUUID(msg.uuid)
     const archive = await Archive.get(node.id);
     const content = await Archive.reify(archive, true);
     return {
@@ -199,6 +201,8 @@ export async function getHelperAppPushBlobMessage(uuid) {
         byte_length: archive.byte_length || null
     };
 }
+
+nativeBackend.addMessageHandler("REQUEST_PUSH_BLOB", onRequestPushBlobMessage);
 
 async function loadArchive(blob) {
     if (blob.data) { // legacy string content
