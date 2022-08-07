@@ -478,10 +478,13 @@ async function browseArchive(node, options) {
 }
 
 async function browseRDFArchive(node, options) {
-    let helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application v0.5+ is required.");
+    const helperApp = await nativeBackend.probe(true);
 
     if (helperApp) {
-        await rdfBackend.pushRDFPath(node);
+        const helperApp11 = await nativeBackend.hasVersion("1.1");
+        if (!helperApp11)
+            await rdfBackend.pushRDFPath(node);
+
         const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
         return openURL(url, options);
     }
@@ -489,10 +492,11 @@ async function browseRDFArchive(node, options) {
 
 async function getBlobURL(node, blob) {
     if (settings.browse_with_helper()) {
-        const helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application v0.5+ is required.");
+        const helperApp = await nativeBackend.hasVersion("1.1", "Scrapyard helper application v1.1+ is required.");
 
         if (helperApp)
-            return sendBlobToBackend(node, blob);
+            return nativeBackend.url(`/browse/${node.uuid}`);
+            //return sendBlobToBackend(node, blob);
         else
             return null;
     }
@@ -543,4 +547,27 @@ async function listSiteArchives(node) {
     const parent = await Node.get(parentId);
     const pages = await Query.fullSubtree(parent.id, true);
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
+}
+
+export async function getHelperAppRdfPathMessage(uuid) {
+    const node = await Node.getByUUID(uuid);
+    const path = await rdfBackend.getRDFPageDir(node);
+    return {
+        type: "RDF_PATH",
+        uuid: node.uuid,
+        rdf_directory: path
+    };
+}
+
+export async function getHelperAppPushBlobMessage(uuid) {
+    const node = await Node.getByUUID(uuid)
+    const archive = await Archive.get(node.id);
+    const content = await Archive.reify(archive, true);
+    return {
+        type: "PUSH_BLOB",
+        uuid: node.uuid,
+        content_type: archive.type || "text/html",
+        content: content,
+        byte_length: archive.byte_length || null
+    };
 }

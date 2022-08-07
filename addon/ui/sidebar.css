@@ -5,9 +5,15 @@
     --themed-comments-filled-icon: url("../icons/comments-filled.svg");
     --themed-properties-icon: url("../icons/properties.svg");
     --themed-containers-icon: url("../icons/containers.svg");
+
+    box-sizing: border-box;
 }
 
-*{
+*, *::before, *::after, *::marker {
+    box-sizing: inherit;
+}
+
+* {
     font-family: "Helvetica",
     "Arial",
     "Lucida Sans Unicode",
@@ -19,11 +25,14 @@
     sans-serif;
 }
 
-html,body {
-    margin:0;
+html, body {
+    margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
+    width: 100%;
+    height: 100%;
 }
+
 
 input:focus {
     outline: none !important;
@@ -71,7 +80,6 @@ input:focus {
 
 .main-tools {
     width:fit-content;
-    width:-moz-fit-content;
     display:inline-block;
 }
 
@@ -160,7 +168,7 @@ input:focus {
 .dlg input, .dlg select, .dlg textarea {
     border: 1px solid #777;
     border-radius: 3px;
-    -moz-appearance: none;
+    appearance: none;
 }
 
 .dlg input.dialog-input, .dlg textarea {

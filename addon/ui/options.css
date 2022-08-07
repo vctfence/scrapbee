@@ -140,7 +140,7 @@ input[type='text'] {
 }
 
 input[type=button] {
-    padding: 4px 14px;
+    padding: 0 12px;
     appearance: none;
     border-radius: 5px;
     border: none;
@@ -148,6 +148,7 @@ input[type=button] {
     color: #fff;
     cursor: pointer;
     height: 22px;
+    box-sizing: content-box;
 }
 
 input[type=button].yellow-button {
@@ -255,7 +256,7 @@ h2 {
     background: #333;
     color: #eee;
     padding: 10px;
-    width: -moz-fit-content;
+    width: fit-content;
     margin: 5px 0;
 }
 
@@ -422,7 +423,7 @@ a, a:visited {
 }
 
 #option-shelf-list-max-height {
-    -moz-appearance: textfield;
+    appearance: textfield;
     width: 52px;
 }
 

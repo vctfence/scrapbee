@@ -1,6 +1,7 @@
 import UUID from "./uuid.js"
 import {settings} from "./settings.js"
 import {hasCSRPermission, showNotification} from "./utils_browser.js";
+import {getHelperAppPushBlobMessage, getHelperAppRdfPathMessage} from "./bookmarking.js";
 
 class NativeBackend {
     constructor() {
@@ -103,10 +104,17 @@ class NativeBackend {
     }
 
     static async incomingMessages(msg) {
-        // msg = JSON.parse(msg);
-        // switch (msg.type) {
-        //
-        // }
+        const port = await this.getPort();
+        msg = JSON.parse(msg);
+
+        switch (msg.type) {
+            case "REQUEST_PUSH_BLOB":
+                port.postMessage(await getHelperAppPushBlobMessage(msg.uuid));
+                break;
+            case "REQUEST_RDF_PATH":
+                port.postMessage(await getHelperAppRdfPathMessage(msg.uuid));
+                break;
+        }
     }
 
     url(path) {
