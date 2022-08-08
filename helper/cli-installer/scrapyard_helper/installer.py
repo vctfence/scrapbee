@@ -40,7 +40,7 @@ def write_manifest(template, destination, executable_path):
         manifest_text = manifest_text.replace("$EXECUTABLE_PATH$", executable_manifest_path)
 
         Path(os.path.dirname(destination)).mkdir(parents=True, exist_ok=True)
-        with open(destination, "w") as manifest_out:
+        with open(destination, "w", encoding="utf-8") as manifest_out:
             manifest_out.write(manifest_text)
 
 
