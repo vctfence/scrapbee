@@ -5,23 +5,24 @@ import {
     TODO_NAMES, TODO_STATES,
     CLOUD_SHELF_NAME, CLOUD_SHELF_UUID,
     DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
-    FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
     NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES
 } from "./storage.js";
 import {settings} from "./settings.js";
-import {getFavicon, getFaviconFromTab} from "./favicon.js";
-import {send, receiveExternal} from "./proxy.js";
+import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
+import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
 import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {browseNode, captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
+import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Group} from "./bookmarks_group.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "./storage_entities.js";
+import {browseNode} from "./browse.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
@@ -47,7 +48,7 @@ receiveExternal.scrapyardGetVersion = (message, sender) => {
     if (!isAutomationAllowed(sender))
         throw new Error();
 
-    window.postMessage({type: "SCRAPYARD_ID_REQUESTED", sender}, "*");
+    sendLocal.scrapyardIdRequested({senderId: sender.id});
     return browser.runtime.getManifest().version;
 };
 
@@ -97,17 +98,13 @@ receiveExternal.scrapyardAddBookmark = async (message, sender) => {
     if (node.icon === true || node.title === true) {
         try {
             const content = await fetchText(node.uri);
-            const doc = parseHtml(content);
 
             if (node.icon === true)
-                node.icon = await getFavicon(node.uri, doc);
+                node.icon = await getFaviconFromContent(node.uri, content);
 
             if (node.title === true) {
-                const titleElement = doc.querySelector("title");
-                if (titleElement)
-                    node.name = titleElement.textContent;
-                else
-                    node.name = "Untitled";
+                const title = content.match(/<title[^>]*>([^<]*)</i)?.[1]?.trim();
+                node.name = title || "Untitled";
             }
         }
         catch (e) {
@@ -141,7 +138,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
 
     message.type = NODE_TYPE_ARCHIVE;
 
-    const node = await createBookmarkNode(message, sender, await getActiveTab());
+    const node = await createBookmarkNode(message, sender, activeTab);
     if (!node)
         return;
 
@@ -330,7 +327,7 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
     else {
         const API_UUID_TO_DB = {
             [CLOUD_SHELF_NAME]: CLOUD_SHELF_UUID,
-            [FIREFOX_SHELF_NAME]: FIREFOX_SHELF_UUID,
+            [BROWSER_SHELF_NAME]: BROWSER_SHELF_UUID,
             [DEFAULT_SHELF_NAME]: DEFAULT_SHELF_UUID,
         };
 

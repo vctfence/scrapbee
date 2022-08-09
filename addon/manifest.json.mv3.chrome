@@ -1,0 +1,95 @@
+{
+    "version": "$VERSION$",
+    "manifest_version": 3,
+    "name": "Scrapyard",
+    "description": "__MSG_extensionDescription__",
+    "homepage_url": "https://gchristensen.github.io/scrapyard",
+    "default_locale": "en",
+    "icons": {
+        "16": "icons/logo16.png",
+        "24": "icons/logo24.png",
+        "32": "icons/logo32.png",
+        "96": "icons/logo96.png",
+        "128": "icons/logo128.png"
+    },
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "permissions": [
+        "tabs",
+        "activeTab",
+        "alarms",
+        "bookmarks",
+        "downloads",
+        "nativeMessaging",
+        "notifications",
+        "storage",
+        "unlimitedStorage",
+        "webNavigation",
+        "management",
+        "scripting",
+        "declarativeNetRequest"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "declarative_net_request": {
+        "rule_resources": [{
+            "id": "ruleset_1",
+            "enabled": true,
+            "path": "net_rules.json"
+        }]
+    },
+    "commands": {
+        "toggle_sidebar_window": {
+            "suggested_key": {
+                "default": "Alt+Y"
+            },
+            "description": "Open Scrapyard in sidebar"
+        },
+        "bookmark_to_default_shelf": {
+            "suggested_key": {
+                "default": "Alt+Q"
+            },
+            "description": "Bookmark the current tab to the default shelf"
+        },
+        "archive_to_default_shelf": {
+            "suggested_key": {
+                "default": "Alt+W"
+            },
+            "description": "Archive the current tab to the default shelf"
+        }
+    },
+    "background": {
+        "service_worker": "background_worker.js",
+        "type": "module"
+    },
+    "action": {
+        "default_icon": {
+            "16": "icons/logo16.png",
+            "24": "icons/logo24.png",
+            "32": "icons/logo32.png",
+            "96": "icons/logo96.png",
+            "128": "icons/logo128.png"
+        },
+        "default_title": "Scrapyard",
+        "default_popup": "ui/popup.html"
+    },
+    "options_ui": {
+        "open_in_tab": true,
+        "page": "ui/options.html"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "icons/lock.svg",
+                "ui/site_capture.html",
+                "reference.html"
+            ],
+            "matches": ["*://*/*"]
+        }
+    ],
+    "omnibox": {
+        "keyword": "scr"
+    }
+}

@@ -2,6 +2,7 @@ import {send} from "../../proxy.js";
 import {isBuiltInShelf} from "../../storage.js";
 import {showNotification} from "../../utils_browser.js";
 import {Query} from "../../storage_query.js";
+import {ensureSidebarWindow} from "../../utils_sidebar.js";
 
 let importing = false;
 async function onStartRDFImport(e) {
@@ -74,6 +75,9 @@ async function onStartRDFImport(e) {
     };
 
     browser.runtime.onMessage.addListener(importListener);
+
+    if (!_BACKGROUND_PAGE)
+        await ensureSidebarWindow(1000);
 
     send.importFile({file: path, file_name: shelf, file_ext: "RDF",
         threads: $("#rdf-import-threads").val(),

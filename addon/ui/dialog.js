@@ -82,7 +82,7 @@ function showDlg(name, data, callback) {
 
     // handle bookmark containers
     let containers_icon = $dlg.find("#prop-dlg-containers-icon").first();
-    if (containers_icon.length && data.type !== NODE_TYPE_NOTES) {
+    if (browser.contextualIdentities && containers_icon.length && data.type !== NODE_TYPE_NOTES) {
         containers_icon.click(() => {
             $("#containers-menu", $dlg).toggle();
         });
@@ -95,15 +95,16 @@ function showDlg(name, data, callback) {
 
         containers_menu.append(container_item);
 
-        for (let container of data.containers) {
-            icon_style = `mask-image: url("${container.iconUrl}"); mask-size: contain; `
-                + `mask-repeat: no-repeat; mask-position: center; background-color: ${container.colorCode} !important;`
+        if (data.containers)
+            for (let container of data.containers) {
+                icon_style = `mask-image: url("${container.iconUrl}"); mask-size: contain; `
+                    + `mask-repeat: no-repeat; mask-position: center; background-color: ${container.colorCode} !important;`
 
-            container_item = `<div class="container-item" id="${container.cookieStoreId}">`
-                           +`<i class="container-icon" style='${icon_style}'></i>${container.name}</div>`;
+                container_item = `<div class="container-item" id="${container.cookieStoreId}">`
+                               +`<i class="container-icon" style='${icon_style}'></i>${container.name}</div>`;
 
-            containers_menu.append(container_item);
-        }
+                containers_menu.append(container_item);
+            }
 
         let makeButtonStyle = (elt) => {
             let style = $("i", elt).attr("style") + "background-image: none; ";

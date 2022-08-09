@@ -13,8 +13,8 @@ import { getBaseURL, httpHeaderSafeJson } from './utils.js';
 import { parseDownloadResponse, parseResponse } from './response.js';
 
 let fetch;
-if (typeof window !== 'undefined') {
-  fetch = window.fetch.bind(window);
+if (typeof globalThis !== 'undefined') {
+  fetch = globalThis.fetch.bind(globalThis);
 } else {
   fetch = require('node-fetch'); // eslint-disable-line global-require
 }

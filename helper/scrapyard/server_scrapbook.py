@@ -1,4 +1,5 @@
 import os
+import json
 import threading
 
 from pathlib import Path
@@ -6,7 +7,8 @@ from pathlib import Path
 import flask
 from flask import request, abort
 
-from .server import app, requires_auth
+from . import browser
+from .server import app, requires_auth, message_mutex, message_queue
 
 
 # Scrapbook RDF support
@@ -28,31 +30,22 @@ def rdf_import_files(file):
     return flask.send_from_directory(rdf_import_directory, file)
 
 
-directory_mutex = threading.Lock()
 rdf_page_directories = {}
-
-
-@app.route("/rdf/browse/push/<uuid>", methods=['POST'])
-def rdf_browse_push(uuid):
-    directory_mutex.acquire()
-    rdf_page_directories[uuid] = request.form["rdf_directory"]
-    directory_mutex.release()
-    return "OK"
 
 
 @app.route("/rdf/browse/<uuid>/<path:file>", methods=['GET'])
 def rdf_browse(uuid, file):
-    directory_mutex.acquire()
-    rdf_directory = rdf_page_directories.get(uuid, None)
-    directory_mutex.release()
+    if file == "_":
+        message_mutex.acquire()
+        rdf_path_msg = json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid})
+        browser.send_message(rdf_path_msg)
+        msg = message_queue.get()
+        message_mutex.release()
 
-    if rdf_directory is not None:
-        if file == "_":
-            return flask.send_from_directory(rdf_directory, f"index.html")
-        else:
-            return flask.send_from_directory(rdf_directory, file)
+        rdf_page_directories[uuid] = msg["rdf_directory"]
+        return flask.send_from_directory(rdf_page_directories[uuid], "index.html")
     else:
-        abort(404)
+        return flask.send_from_directory(rdf_page_directories[uuid], file)
 
 
 # Get Scrapbook rdf file for a given node uuid

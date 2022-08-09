@@ -1,11 +1,10 @@
 import {formatBytes, getMimetypeExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
-import {getActiveTab, showNotification} from "./utils_browser.js";
+import {getActiveTab, showNotification, updateTabURL} from "./utils_browser.js";
 import {nativeBackend} from "./backend_native.js";
 import {settings} from "./settings.js";
 import {
-    browseNode,
     captureTab,
     finalizeCapture,
     isSpecialPage,
@@ -17,16 +16,15 @@ import {
     abortCrawling,
     archiveBookmark
 } from "./bookmarking.js";
-import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
-import {getFavicon} from "./favicon.js";
 import {TODO} from "./bookmarks_todo.js";
 import {Group} from "./bookmarks_group.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {Query} from "./storage_query.js";
+import {browseNodeInCurrentContext} from "./browse.js";
+import {ensureSidebarWindow} from "./utils_sidebar.js";
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -60,43 +58,6 @@ receive.createBookmark = message => {
     return send.beforeBookmarkAdded({node: node})
         .then(addBookmark)
         .catch(addBookmark);
-};
-
-receive.createBookmarkFromURL = async message => {
-    let options = {
-        parent_id: message.parent_id,
-        uri: message.url,
-        name: "Untitled"
-    };
-
-    if (!/^https?:\/\/.*/.exec(options.uri))
-        options.uri = "http://" + options.uri;
-
-    send.startProcessingIndication();
-
-    try {
-        const html = await fetchText(options.uri);
-        let doc;
-        if (html)
-            doc = parseHtml(html);
-
-        if (doc) {
-            const title = $("title", doc).text();
-            if (title)
-                options.name = title;
-
-            const icon = await getFavicon(options.uri, doc);
-            if (icon)
-                options.icon = icon;
-        }
-    }
-    catch (e) {
-        console.error(e);
-    }
-
-    const bookmark = await Bookmark.add(options, NODE_TYPE_BOOKMARK);
-    await send.stopProcessingIndication();
-    send.bookmarkCreated({node: bookmark});
 };
 
 receive.updateBookmark = message => Bookmark.update(message.node);
@@ -275,16 +236,18 @@ receive.uploadFiles = async message => {
     }
 }
 
-receive.browseNode = message => {
-    browseNode(message.node, message);
+receive.browseNode = async message => {
+    if (_BACKGROUND_PAGE)
+        browseNodeInCurrentContext(message.node, message);
+    else {
+        await ensureSidebarWindow();
+        send.browseNodeSidebar(message);
+    }
 };
 
 receive.browseNotes = message => {
     (message.tab
-        ? browser.tabs.update(message.tab.id, {
-            "url": "ui/notes.html#" + message.uuid + ":" + message.id,
-            "loadReplace": true
-        })
+        ? updateTabURL(message.tab, "ui/notes.html#" + message.uuid + ":" + message.id, false)
         : browser.tabs.create({"url": "ui/notes.html#" + message.uuid + ":" + message.id}));
 };
 

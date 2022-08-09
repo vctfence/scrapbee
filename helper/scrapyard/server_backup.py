@@ -6,7 +6,7 @@ from pathlib import Path
 from flask import request, abort
 
 from . import browser
-from .server import app, requires_auth, message_mutex
+from .server import app, requires_auth, message_mutex, message_queue
 
 # Backup routines
 
@@ -86,13 +86,13 @@ def backup_initialize():
         message_mutex.acquire()
         try:
             while True:
-                msg = browser.get_message()
-                if msg["type"] == "BACKUP_PUSH_TEXT":
+                text = message_queue.get()
+                if text is not None:
                     if encode:
-                        backup.write(msg["text"].encode("utf-8"))
+                        backup.write(text.encode("utf-8"))
                     else:
-                        backup.write(msg["text"])
-                elif msg["type"] == "BACKUP_FINISH":
+                        backup.write(text)
+                else:
                     break
         finally:
             message_mutex.release()

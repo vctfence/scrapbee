@@ -1,3 +1,14 @@
+import {settings} from "./settings.js";
+import {findSidebarWindow} from "./utils_sidebar.js";
+
+export const ACTION_ICONS = {
+    16: "icons/logo16.png",
+    24: "icons/logo24.png",
+    32: "icons/logo32.png",
+    96: "icons/logo96.png",
+    128: "icons/logo128.png"
+};
+
 async function injectCSSFileMV3(tabId, options) {
     return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
 }
@@ -44,18 +55,41 @@ async function scriptsAllowedMV2(tabId, frameId = 0) {
     } catch (e) {}
 }
 
-export const scriptsAllowed = _MANIFEST_V3? scriptsAllowedMV3: scriptsAllowedMV2;
+const scriptsAllowed = _MANIFEST_V3? scriptsAllowedMV3: scriptsAllowedMV2;
+
+export async function isHTMLTab(tab) {
+    if (settings.platform.firefox)
+        return scriptsAllowed(tab.id);
+    else {
+        const [{result}] = await browser.scripting.executeScript({target: {tabId: tab.id},
+                                                                  func: () => document.contentType});
+        return result.toLowerCase() === "text/html";
+    }
+}
 
 export function showNotification(args) {
     if (typeof arguments[0] === "string")
-        args = {message: arguments[0]}
+        args = {message: arguments[0]};
+
+    const iconUrl = _BACKGROUND_PAGE
+        ? "/icons/scrapyard.svg"
+        : "/icons/logo128.png";
 
     return browser.notifications.create(`sbi-notification-${args.type}`, {
         type: args.type ? args.type : "basic",
         title: args.title ? args.title : "Scrapyard",
         message: args.message,
-        iconUrl: "/icons/scrapyard.svg"
+        iconUrl
     });
+}
+
+export function makeReferenceURL(uuid) {
+    let referenceURL = `ext+scrapyard://${uuid}`;
+
+    if (!_BACKGROUND_PAGE)
+        referenceURL = browser.runtime.getURL(`/reference.html#${referenceURL}`);
+
+    return referenceURL;
 }
 
 export async function getActiveTab() {
@@ -63,17 +97,37 @@ export async function getActiveTab() {
     return tabs && tabs.length ? tabs[0] : null;
 }
 
+export async function getActiveTabFromSidebar() {
+    if (_SIDEBAR)
+        return getActiveTab();
+    else {
+        const sidebarWindow = findSidebarWindow();
+        const tabs = await browser.tabs.query({active: true});
+        return tabs.find(t => t.windowId !== sidebarWindow.id);
+    }
+}
+
 export async function openPage(url) {
     return browser.tabs.create({"url": url});
 }
 
-export async function updateTab(tab, url, preserveHistory) {
-    return browser.tabs.update(tab.id, {"url": url, "loadReplace": !preserveHistory})
+export async function updateTabURL(tab, url, preserveHistory) {
+    const options = {url};
+
+    if (_BACKGROUND_PAGE)
+        options.loadReplace = !preserveHistory;
+
+    return browser.tabs.update(tab.id, options);
 }
 
 export async function openContainerTab(url, container) {
     try {
-        return await browser.tabs.create({"url": url, cookieStoreId: container});
+        const options = {"url": url};
+
+        if (container)
+            options.cookieStoreId = container;
+
+        return await browser.tabs.create(options);
     } catch (e) {
         if (e.message?.includes("cookieStoreId"))
             showNotification("Invalid bookmark container.");
@@ -86,7 +140,9 @@ export const CONTEXT_BACKGROUND = 0;
 export const CONTEXT_FOREGROUND = 1;
 
 export function getContextType() {
-    return window.location.pathname === "/background.html"? CONTEXT_BACKGROUND: CONTEXT_FOREGROUND;
+    return typeof WorkerGlobalScope !== "undefined" || window.location.pathname === "/background.html"
+        ? CONTEXT_BACKGROUND
+        : CONTEXT_FOREGROUND;
 }
 
 export async function askCSRPermission() {
@@ -107,4 +163,34 @@ export async function hasCSRPermission(verbose = true) {
     }
 
     return true;
+}
+
+export async function grantPersistenceQuota() {
+    const shouldAskForPersistence = typeof navigator.storage.persist === "function";
+    return !shouldAskForPersistence || shouldAskForPersistence && await navigator.storage.persist();
+}
+
+export async function startupLatch(f) {
+    if (_MANIFEST_V3) {
+        if (browser.storage.session) {
+            let initialized = await browser.storage.session.get("scrapyard-initialized");
+            initialized = initialized?.["scrapyard-initialized"];
+
+            if (!initialized) {
+                await f();
+                await browser.storage.session.set({"scrapyard-initialized": true});
+            }
+        }
+        else {
+            // until there is no storage.session API,
+            // use an alarm as a flag to call the initialization function only once
+            const alarm = await browser.alarms.get("startup-flag-alarm");
+            if (!alarm) {
+                await f();
+                browser.alarms.create("startup-flag-alarm", {delayInMinutes: 525960}); // one year
+            }
+        }
+    }
+    else
+        await f();
 }

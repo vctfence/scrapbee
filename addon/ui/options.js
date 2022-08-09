@@ -16,7 +16,7 @@ async function init() {
 
     if (settings.debug_mode())
         $("a.settings-menu-item[href='#debug']").show();
-};
+}
 
 async function switchPane() {
     $(".settings-content").hide();

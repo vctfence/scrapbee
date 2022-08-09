@@ -13,8 +13,8 @@ import {
     FIREFOX_BOOKMARK_MOBILE,
     FIREFOX_BOOKMARK_TOOLBAR,
     FIREFOX_BOOKMARK_UNFILED,
-    FIREFOX_SHELF_ID,
-    FIREFOX_SHELF_NAME,
+    BROWSER_SHELF_ID,
+    BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_GROUP,
@@ -34,14 +34,13 @@ import {
     DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_NAME
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
-import {getActiveTab, openContainerTab, openPage, showNotification} from "../utils_browser.js";
+import {getActiveTab, getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
-import {formatShelfName} from "../bookmarking.js";
+import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
-
 
 // return the original Scrapyard node object stored in a jsTree node
 let o = n => n.data;
@@ -167,7 +166,7 @@ class BookmarkTree {
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
 
-        if (!folderSelect) {
+        if (!folderSelect && browser.contextualIdentities) {
             browser.contextualIdentities.query({}).then(containers => {
                 this._containers = containers;
             });
@@ -252,7 +251,7 @@ class BookmarkTree {
             if (clickable && !e.ctrlKey && !e.shiftKey) {
                 if (node) {
                     if (settings.open_bookmark_in_active_tab()) {
-                        getActiveTab().then(activeTab => {
+                        getActiveTabFromSidebar().then(activeTab => {
                             activeTab = e.button === 0 && activeTab ? activeTab : undefined;
                             send.browseNode({node: node, tab: activeTab, preserveHistory: true});
                         });
@@ -306,12 +305,16 @@ class BookmarkTree {
             jnode.li_attr = {"class": "browser-bookmark-menu"};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_UNFILED) {
+        else if (node.external === BROWSER_EXTERNAL_NAME
+                && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_UNFILED
+                        || settings.platform.chrome && node.external_id === "2")) {
             jnode.icon = "/icons/unfiledBookmarks.svg";
             jnode.li_attr = {"class": "browser-unfiled-bookmarks"};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_TOOLBAR) {
+        else if (node.external === BROWSER_EXTERNAL_NAME
+                && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_TOOLBAR
+                        || settings.platform.chrome && node.external_id === "1")) {
             jnode.icon = "/icons/bookmarksToolbar.svg";
             jnode.li_attr = {"class": "browser-bookmark-toolbar"};
             if (!settings.show_firefox_toolbar())
@@ -341,7 +344,12 @@ class BookmarkTree {
         if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_NAME) {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
-            jnode.icon = "/icons/firefox.svg";
+            if (settings.platform.firefox)
+                jnode.icon = "/icons/firefox.svg";
+            else if (settings.platform.chrome)
+                jnode.icon = "/icons/chrome.svg";
+            else
+                jnode.icon = "/icons/shelf.svg";
             if (!settings.show_firefox_bookmarks()) {
                 jnode.state = {hidden: true};
             }
@@ -647,7 +655,7 @@ class BookmarkTree {
         let jnode = this._jstree.get_node(nodeId);
         let odata = this.odata;
 
-        if (o(jnode)?.id === FIREFOX_SHELF_ID) {
+        if (o(jnode)?.id === BROWSER_SHELF_ID) {
             let unfiled = odata.find(n => n.external_id === FIREFOX_BOOKMARK_UNFILED)
             if (unfiled)
                 jnode = this._jstree.get_node(unfiled.id);
@@ -663,8 +671,8 @@ class BookmarkTree {
         if (operation === "copy_node") {
             return false;
         } else if (operation === "move_node") {
-            if (more.ref && more.ref.id == FIREFOX_SHELF_ID
-                    || jparent.id == FIREFOX_SHELF_ID || jnode.parent == FIREFOX_SHELF_ID)
+            if (more.ref && more.ref.id == BROWSER_SHELF_ID
+                    || jparent.id == BROWSER_SHELF_ID || jnode.parent == BROWSER_SHELF_ID)
                 return false;
 
             if (o(jnode)?.external !== RDF_EXTERNAL_NAME && o(jparent)?.external === RDF_EXTERNAL_NAME
@@ -774,12 +782,7 @@ class BookmarkTree {
             });
         }
 
-        let containers =
-            ctxNode.type === NODE_TYPE_BOOKMARK
-                ? [/*{cookieStoreId: undefined, name: "Default", iconUrl: "../icons/containers.svg",
-                           colorCode: (lightTheme? "#666666": "#8C8C90") },*/ ...this._containers]
-                : this._containers;
-
+        let containers = this._containers || [];
         let containersSubmenu = {};
 
         for (let container of containers) {
@@ -955,7 +958,7 @@ class BookmarkTree {
                         action: async () => {
                             const options = await showDlg("prompt", {caption: "New Bookmark", label: "URL:"});
                             if (options && options.title)
-                                send.createBookmarkFromURL({url: options.title, parent_id: ctxNode.id});
+                                return createBookmarkFromURL(options.title, ctxNode.id);
                         }
                     },
                     newNotesItem: {
@@ -1028,7 +1031,7 @@ class BookmarkTree {
             },
             pasteItem: {
                 label: "Paste",
-                separator_before: ctxNode.type === NODE_TYPE_SHELF || ctxNode.parent_id == FIREFOX_SHELF_ID,
+                separator_before: ctxNode.type === NODE_TYPE_SHELF || ctxNode.parent_id == BROWSER_SHELF_ID,
                 _disabled: !(tree.can_paste() && isContainer(ctxNode)),
                 action: async () => {
                     let buffer = tree.get_buffer();
@@ -1167,7 +1170,7 @@ class BookmarkTree {
                 action: async () => {
                     await settings.load();
                     let query = `?menu=true&repairIcons=${settings.repair_icons()}&scope=${ctxNode.id}`;
-                    openPage(`options.html${query}#checklinks`);
+                    openPage(`/ui/options.html${query}#checklinks`);
                 }
             },
             uploadItem: {
@@ -1363,7 +1366,7 @@ class BookmarkTree {
                 delete items.shareItem;
                 delete items.newItem.submenu.newSeparatorItem;
                 delete items.newItem.submenu.newSiblingFolderItem;
-                if (ctxNode.id === FIREFOX_SHELF_ID) {
+                if (ctxNode.id === BROWSER_SHELF_ID) {
                     items = {};
                 }
                 if (ctxNode.external !== RDF_EXTERNAL_NAME) {
@@ -1485,6 +1488,13 @@ class BookmarkTree {
 
         if (!settings.debug_mode())
             delete items.debugItem;
+
+        if (!browser.contextualIdentities)
+            delete items.openInContainerItem;
+
+        if (settings.platform.chrome) {
+            delete items.uploadItem;
+        }
 
         return items;
     }

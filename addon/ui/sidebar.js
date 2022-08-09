@@ -1,4 +1,4 @@
-import {receive, receiveExternal, send} from "../proxy.js";
+import {receive, receiveExternal, send, sendLocal} from "../proxy.js";
 import {settings} from "../settings.js"
 import {ishellBackend} from "../backend_ishell.js"
 import {BookmarkTree} from "./tree.js"
@@ -23,7 +23,7 @@ import {
     DONE_SHELF_NAME,
     EVERYTHING,
     EVERYTHING_SHELF_ID,
-    FIREFOX_SHELF_ID,
+    BROWSER_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
     NODE_TYPE_SHELF,
@@ -44,6 +44,7 @@ import {Group} from "../bookmarks_group.js";
 import {Icon, Node} from "../storage_entities.js";
 import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
+import {findSidebarWindow} from "../utils_sidebar.js";
 
 const INPUT_TIMEOUT = 1000;
 
@@ -78,9 +79,9 @@ async function init() {
 
     $("#btnLoad").on("click", () => loadShelves());
     $("#btnSync").on("click", () => performSync());
-    $("#btnSearch").on("click", () => openPage("fulltext.html"));
-    $("#btnSettings").on("click", () => openPage("options.html"));
-    $("#btnHelp").on("click", () => openPage("options.html#help"));
+    $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
+    $("#btnSettings").on("click", () => openPage("/ui/options.html"));
+    $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
 
     // in the case if settings are cleaned by user
     localStorage.setItem("sidebar-show-sync", settings.sync_enabled()? "show": "hide");
@@ -243,6 +244,15 @@ async function init() {
     receiveExternal.startListener();
 
     loadSidebar();
+}
+
+window.onbeforeunload = function() {
+    if (!_SIDEBAR) {
+        findSidebarWindow().then(w => {
+            const position = {top: w.top, left: w.left, height: w.height, width: w.width};
+            settings.sidebar_window_position(position);
+        });
+    }
 };
 
 window.onunload = async function() {
@@ -254,7 +264,7 @@ async function loadSidebar() {
     try {
         await shelfList.load();
 
-        const initialShelf = getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
+        const initialShelf = await getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
         await switchShelf(initialShelf, true, true);
 
         stopProcessingIndication();
@@ -306,12 +316,23 @@ function getLastShelf() {
     return DEFAULT_SHELF_ID;
 }
 
-function getExternalShelf() {
-    const externalShelf = localStorage.getItem("sidebar-select-shelf");
+async function getExternalShelf() {
+    if (settings.platform.firefox) {
+        const externalShelf = localStorage.getItem("sidebar-select-shelf");
 
-    if (externalShelf) {
-        localStorage.removeItem("sidebar-select-shelf");
-        return parseInt(externalShelf);
+        if (externalShelf) {
+            localStorage.removeItem("sidebar-select-shelf");
+            return parseInt(externalShelf);
+        }
+    }
+    else {
+        let externalShelf = await browser.storage.session.get("sidebar-select-shelf");
+        externalShelf = externalShelf?.["sidebar-select-shelf"];
+
+        if (externalShelf) {
+            browser.storage.session.remove("sidebar-select-shelf");
+            return externalShelf;
+        }
     }
 }
 
@@ -323,7 +344,8 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
     try {
         updateProgress(0);
         await shelfList.reload();
-        return switchShelf(selected || getLastShelf() || DEFAULT_SHELF_ID, synchronize, clearSelection);
+        const switchToId = selected || getLastShelf() || DEFAULT_SHELF_ID;
+        return switchShelf(switchToId, synchronize, clearSelection);
     }
     catch (e) {
         console.error(e);
@@ -375,12 +397,12 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             }
             tree.openRoot();
         }
-        else if (shelf_id == FIREFOX_SHELF_ID) {
+        else if (shelf_id == BROWSER_SHELF_ID) {
             const nodes = await Shelf.listContent(path);
-            nodes.splice(nodes.indexOf(nodes.find(n => n.id == FIREFOX_SHELF_ID)), 1);
+            nodes.splice(nodes.indexOf(nodes.find(n => n.id == BROWSER_SHELF_ID)), 1);
 
             for (let node of nodes) {
-                if (node.parent_id == FIREFOX_SHELF_ID) {
+                if (node.parent_id == BROWSER_SHELF_ID) {
                     node.type = NODE_TYPE_SHELF;
                     node.parent_id = null;
                 }
@@ -498,11 +520,15 @@ async function performSearch() {
         return context.search(input).then(nodes => tree.list(nodes));
 }
 
+if (!_BACKGROUND_PAGE)
+    import("../core_import.js");
+
 async function performImport(file, file_name, file_ext) {
     startProcessingIndication(true);
 
     try {
-        await send.importFile({file: file, file_name: file_name, file_ext: file_ext});
+        const sender = _BACKGROUND_PAGE? send: sendLocal;
+        await sender.importFile({file: file, file_name: file_name, file_ext: file_ext});
         stopProcessingIndication();
 
         if (file_name.toLocaleLowerCase() === EVERYTHING)
@@ -525,7 +551,8 @@ async function performExport() {
     startProcessingIndication(true);
 
     try {
-        await send.exportFile({shelf, uuid});
+        const sender = _BACKGROUND_PAGE? send: sendLocal;
+        await sender.exportFile({shelf, uuid});
         stopProcessingIndication();
     }
     catch (e) {
@@ -602,7 +629,7 @@ function sidebarRefresh() {
 function sidebarRefreshExternal() {
     let last_shelf = getLastShelf();
 
-    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === FIREFOX_SHELF_ID || last_shelf === CLOUD_SHELF_ID)
+    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === BROWSER_SHELF_ID || last_shelf === CLOUD_SHELF_ID)
         settings.load().then(() => loadShelves(last_shelf, false));
 }
 
@@ -820,6 +847,17 @@ function updateProgress(message) {
     else
         progressDiv.css("width", "0");
 }
+
+let browseNode;
+if (!_BACKGROUND_PAGE) {
+    const browseModule = await import("../browse.js");
+    browseNode = browseModule.browseNodeInCurrentContext;
+}
+
+receive.browseNodeSidebar = message => {
+    if (browseNode)
+        browseNode(message.node, message);
+};
 
 receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
     if (!ishellBackend.isIShell(sender.id))

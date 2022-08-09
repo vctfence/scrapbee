@@ -2,14 +2,13 @@ import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserBackend} from "./backend_browser.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
-import {getActiveTabMetadata} from "./bookmarking.js";
-import {askCSRPermission} from "./utils_browser.js";
-import {DEFAULT_SHELF_ID} from "./storage.js";
+import {addBookmarkOnCommand} from "./bookmarking.js";
+import {toggleSidebarWindow} from "./utils_sidebar.js";
+import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
 import "./core_bookmarking.js";
-import "./core_import.js";
 import "./core_share.js";
 import "./core_backup.js"
 import "./core_backends.js";
@@ -18,35 +17,27 @@ import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
 
-if (_MANIFEST_V3)
+if (_BACKGROUND_PAGE)
+    import("./core_import.js");
+
+if (_BACKGROUND_PAGE && _MANIFEST_V3)
     import("./mv3_persistent.js");
 
 receiveExternal.startListener(true);
 receive.startListener(true);
 
 (async () => {
-    if (await navigator.storage.persist()) {
+    if (await grantPersistenceQuota()) {
         await systemInitialization;
 
-        //showAnnouncement();
+        await showAnnouncement();
 
-        if (_MANIFEST_V3) {
-            // until there is no storage.session API,
-            // use an alarm as a flag to call initialization function only once
-            const alarm = await browser.alarms.get("startup-flag-alarm");
-
-            if (!alarm) {
-                await performStartupInitialization();
-                browser.alarms.create("startup-flag-alarm", {periodInMinutes: 525960}); // one year
-            }
-        }
-        else
-            await performStartupInitialization();
+        await startupLatch(performStartupInitialization);
     }
 })();
 
-function showAnnouncement() {
-    if (settings.isAddonUpdated())
+async function showAnnouncement() {
+    if (await settings.isAddonUpdated() && /^\d+\.\d+$/.test(_ADDON_VERSION))
         settings.pending_announcement("options.html#about");
 }
 
@@ -67,47 +58,28 @@ async function performStartupInitialization() {
     console.log("==> core.js initialized");
 }
 
-browser.webRequest.onBeforeSendHeaders.addListener(
-    (details) => {
-        return {
-            requestHeaders: details.requestHeaders.filter(x => !originWithId(x))
-        }
-    },
-    {urls: ["<all_urls>"]},
-    ["blocking", "requestHeaders"]
-);
+if (browser.webRequest) {
+    // remove the Origin header from add-on fetch requests
+    function originWithId(header) {
+        return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
+    }
 
-// remove the Origin header from add-on fetch requests
-function originWithId(header) {
-    return header.name.toLowerCase() === 'origin' && header.value.startsWith('moz-extension://');
+    browser.webRequest.onBeforeSendHeaders.addListener(
+        (details) => {
+            return {
+                requestHeaders: details.requestHeaders.filter(x => !originWithId(x))
+            }
+        },
+        {urls: ["<all_urls>"]},
+        ["blocking", "requestHeaders"]
+    );
 }
 
 browser.commands.onCommand.addListener(function(command) {
-    let action = "createBookmark";
-    if (command === "archive_to_default_shelf")
-        action = "createArchive";
-
-    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
-        localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
-        browser.sidebarAction.open();
-    }
-
-    if (action === "createArchive")
-        askCSRPermission()
-            .then(response => {
-                if (response)
-                    addBookmark(action);
-            })
-            .catch(e => console.error(e));
+    if (!_SIDEBAR && command === "toggle_sidebar_window")
+        toggleSidebarWindow();
     else
-        addBookmark(action);
+        addBookmarkOnCommand(command);
 });
-
-async function addBookmark(event) {
-    const payload = await getActiveTabMetadata();
-    payload.parent_id = DEFAULT_SHELF_ID;
-
-    return sendLocal[event]({node: payload});
-}
 
 console.log("==> core.js loaded");

@@ -1,9 +1,11 @@
 import UUID from "./uuid.js"
 import {settings} from "./settings.js"
-import {hasCSRPermission, showNotification} from "./utils_browser.js";
-import {getHelperAppPushBlobMessage, getHelperAppRdfPathMessage} from "./bookmarking.js";
+import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
+import {send} from "./proxy.js";
 
 class NativeBackend {
+    #externalEventHandlers = {};
+
     constructor() {
         this.auth = UUID.numeric();
         this.version = undefined;
@@ -26,7 +28,7 @@ class NativeBackend {
                     response = JSON.parse(response);
                     if (response.type === "INITIALIZED") {
                         port.onMessage.removeListener(initListener);
-                        port.onMessage.addListener(NativeBackend.incomingMessages.bind(this))
+                        port.onMessage.addListener(NativeBackend._incomingMessages.bind(this))
                         this.port = port;
                         this.version = response.version;
                         resolve(port);
@@ -55,7 +57,14 @@ class NativeBackend {
         }
     }
 
-    async probe(verbose = false) {
+    async probe(verbose) {
+        if (getContextType() === CONTEXT_BACKGROUND)
+            return this._probe(verbose);
+        else
+            return send.helperAppProbe({verbose});
+    }
+
+    async _probe(verbose = false) {
         if (!await hasCSRPermission())
             return false;
 
@@ -68,6 +77,9 @@ class NativeBackend {
     }
 
     getVersion() {
+        if (getContextType() !== CONTEXT_BACKGROUND)
+            throw new Error("Can not call this method in the foreground context.");
+
         if (this.port) {
             if (!this.version)
                 return "0.1";
@@ -76,6 +88,13 @@ class NativeBackend {
     }
 
     async hasVersion(version, msg) {
+        if (getContextType() === CONTEXT_BACKGROUND)
+            return this._hasVersion(version, msg);
+        else
+            return send.helperAppHasVersion({version, alert: msg});
+    }
+
+    async _hasVersion(version, msg) {
         if (!(await this.probe())) {
             if (msg)
                 showNotification(msg);
@@ -103,18 +122,21 @@ class NativeBackend {
         }
     }
 
-    static async incomingMessages(msg) {
+    static async _incomingMessages(msg) {
         const port = await this.getPort();
         msg = JSON.parse(msg);
 
-        switch (msg.type) {
-            case "REQUEST_PUSH_BLOB":
-                port.postMessage(await getHelperAppPushBlobMessage(msg.uuid));
-                break;
-            case "REQUEST_RDF_PATH":
-                port.postMessage(await getHelperAppRdfPathMessage(msg.uuid));
-                break;
+        const handler = this.#externalEventHandlers[msg.type];
+
+        if (handler) {
+            const response = await handler(msg);
+            if (response !== undefined)
+                port.postMessage(response);
         }
+    }
+
+    addMessageHandler(name, handler) {
+        this.#externalEventHandlers[name] = handler;
     }
 
     url(path) {
@@ -140,12 +162,12 @@ class NativeBackend {
 
     fetch(path, init) {
         init = this._injectAuth(init);
-        return window.fetch(this.url(path), init);
+        return globalThis.fetch(this.url(path), init);
     }
 
     async fetchText(path, init) {
         init = this._injectAuth(init);
-        let response = await window.fetch(this.url(path), init);
+        let response = await globalThis.fetch(this.url(path), init);
         if (response.ok)
             return response.text();
        else
@@ -154,7 +176,7 @@ class NativeBackend {
 
     async fetchJSON(path, init) {
         init = this._injectAuth(init);
-        let response = await window.fetch(this.url(path), init);
+        let response = await globalThis.fetch(this.url(path), init);
         if (response.ok)
             return response.json();
         else
@@ -182,4 +204,8 @@ class NativeBackend {
 
 }
 
-export let nativeBackend = new NativeBackend();
+export const nativeBackend = new NativeBackend();
+
+if (getContextType() !== CONTEXT_BACKGROUND) {
+    send.helperAppGetBackgroundAuth().then(auth => nativeBackend.auth = auth);
+}

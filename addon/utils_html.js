@@ -63,8 +63,8 @@ export function isElementInViewport(el) {
     return (
         rect.top >= 0 &&
         rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
     );
 }
 
@@ -84,8 +84,7 @@ export function getThemeVar(v) {
     let vars = document.querySelector(":root");
     if (vars) {
         let style = window.getComputedStyle(vars);
-        let value = style.getPropertyValue(v);
-        return value;
+        return style.getPropertyValue(v);
     }
 }
 
@@ -140,7 +139,11 @@ export function indexString(string) {
 }
 
 export function indexHTML(string) {
-    return createIndex(string, extractTextRecursive)
+    const textExtractor = _BACKGROUND_PAGE
+        ? extractTextRecursive
+        : removeTags;
+
+    return createIndex(string, textExtractor)
 }
 
 function createIndex(string, textExtractor) {
@@ -179,6 +182,15 @@ function extractTextRecursive(string, parser) {
         });
 
     return text;
+}
+
+function removeTags(string) {
+    return string.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
+        .replace(/<title.*?<\/title>/igs, "")
+        .replace(/<style.*?<\/style>/igs, "")
+        .replace(/<script.*?<\/script>/igs, "")
+        .replace(/&[0-9#a-zA-Z]+;/igs, ' ')
+        .replace(/<[^>]+>/gs, ' ');
 }
 
 function removeScriptTags(doc) {

@@ -26,7 +26,7 @@ async function keepAlive() {
         try {
             await browser.scripting.executeScript({
                 target: { tabId: tab.id },
-                func: () => browser.runtime.connect({ name: "keepAlive" }),
+                func: () => chrome.runtime.connect({ name: "keepAlive" }),
             });
             browser.tabs.onUpdated.removeListener(retryOnTabUpdate);
             return;

@@ -2,7 +2,7 @@ import {receive, send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
 import {nativeBackend} from "./backend_native.js";
-import {showNotification} from "./utils_browser.js";
+import {ACTION_ICONS, showNotification} from "./utils_browser.js";
 import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent} from "./storage.js";
 import {SYNC_VERSION} from "./marshaller_json.js";
 import {ProgressCounter} from "./utils.js";
@@ -98,12 +98,21 @@ async function performSync(initial) {
         syncOperations.initial = initial;
 
         if (areChangesPresent(syncOperations)) {
-            browser.browserAction.setIcon({path: "/icons/action-sync.svg"});
+            const action = _MANIFEST_V3? browser.action: browser.browserAction;
+
+            if (settings.platform.firefox)
+                action.setIcon({path: "/icons/action-sync.svg"});
+            else
+                action.setIcon({path: "/icons/action-sync.png"});
+
             try {
                 await performOperations(syncOperations, sync_directory);
             }
             finally {
-                browser.browserAction.setIcon({path: "/icons/scrapyard.svg"});
+                if (settings.platform.firefox)
+                    action.setIcon({path: "/icons/scrapyard.svg"});
+                else
+                    action.setIcon({path: ACTION_ICONS});
             }
         }
         else if (initial)

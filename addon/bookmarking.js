@@ -1,31 +1,23 @@
 import {settings} from "./settings.js";
 import {
-    getActiveTab, hasCSRPermission, injectCSSFile, injectScriptFile,
-    openContainerTab,
-    openPage,
-    scriptsAllowed,
+    getActiveTab,
+    hasCSRPermission,
+    injectCSSFile,
+    injectScriptFile,
     showNotification,
-    updateTab
+    isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
-import {capitalize, getMimetypeExt, sleep} from "./utils.js";
-import {send, sendLocal} from "./proxy.js";
-import {
-    NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP,
-    NODE_TYPE_NOTES,
-    RDF_EXTERNAL_NAME
-} from "./storage.js";
-import {nativeBackend} from "./backend_native.js";
-import {fetchWithTimeout} from "./utils_io.js";
-import {Archive, Node} from "./storage_entities.js";
-import {rdfBackend} from "./backend_rdf.js";
-import {getFaviconFromTab} from "./favicon.js";
+import {capitalize, getMimetypeExt} from "./utils.js";
+import {receive, send, sendLocal} from "./proxy.js";
+import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {fetchText, fetchWithTimeout} from "./utils_io.js";
+import {Node} from "./storage_entities.js";
+import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
 import {Group} from "./bookmarks_group.js";
-import {Query} from "./storage_query.js";
-import {isHTMLLink} from "./utils_html.js";
+import {isHTMLLink, parseHtml} from "./utils_html.js";
+import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -38,16 +30,12 @@ export function isSpecialPage(url) {
     return (url.startsWith("about:")
         || url.startsWith("view-source:") || url.startsWith("moz-extension:")
         || url.startsWith("https://addons.mozilla.org") || url.startsWith("https://support.mozilla.org")
-        /*|| url.substr(0, 17) === "chrome-extension:" || url.substr(0, 34) === "https://chrome.google.com/webstore"*/);
+        || url.startsWith("chrome:") || url.startsWith("chrome-extension:")
+        || url.startsWith("https://chrome.google.com/webstore"));
 }
 
 export function notifySpecialPage() {
-    showNotification("Scrapyard cannot be used with special pages:\n" +
-        "about:, moz-extension:, " + "view-source:\n" +
-        "https://addons.mozilla.org, https://support.mozilla.org\n"
-        /* + "chrome:, chrome-extension:,\n" +
-        "https://chrome.google.com/webstore,\n" */
-    );
+    showNotification("Scrapyard cannot be used with special pages.");
 }
 
 export async function getTabMetadata(tab) {
@@ -72,7 +60,7 @@ export async function captureTab(tab, bookmark) {
     if (isSpecialPage(tab.url))
         notifySpecialPage();
     else {
-        if (await scriptsAllowed(tab.id))
+        if (await isHTMLTab(tab))
             await captureHTMLTab(tab, bookmark)
         else
             await captureNonHTMLTab(tab, bookmark);
@@ -103,6 +91,8 @@ async function extractSelection(tab, bookmark) {
 }
 
 async function captureHTMLTab(tab, bookmark) {
+    if (!_BACKGROUND_PAGE)
+        await injectScriptFile(tab.id, {file: "/lib/browser-polyfill.js", allFrames: true});
 
     let response;
     const selection = await extractSelection(tab, bookmark);
@@ -216,6 +206,9 @@ export async function archiveBookmark(node) {
 
 export async function showSiteCaptureOptions(tab, bookmark) {
     try {
+        if (!_BACKGROUND_PAGE)
+            await injectScriptFile(tab.id, {file: "/lib/browser-polyfill.js", allFrames: true});
+
         await injectScriptFile(tab.id, {file: "/savepage/content-frame.js", allFrames: true});
         await injectCSSFile(tab.id, {file: "/ui/site_capture_content.css"});
         await injectScriptFile(tab.id, {file: "/ui/site_capture_content.js", frameId: 0});
@@ -301,6 +294,9 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 
                 browser.runtime.onMessage.addListener(initializationListener);
 
+                if (!_BACKGROUND_PAGE)
+                    await injectScriptFile(packingTab.id, {file: "/lib/browser-polyfill.js", allFrames: true});
+
                 await injectSavePageScripts(packingTab, reject);
             }
         };
@@ -331,243 +327,86 @@ export async function packUrlExt(url, hide_tab) {
     return packPage(url, {}, b => b.__url_packing = true, resolver, hide_tab);
 }
 
-function configureArchiveTab(node, archiveTab) {
-    var tabUpdateListener = async (id, changed, tab) => {
-        if (tab.id === archiveTab.id) {
-            if (changed?.hasOwnProperty("attention"))
-                return;
+export function addBookmarkOnCommand(command) {
+    let action = command === "archive_to_default_shelf"? "createArchive": "createBookmark";
 
-            if (changed.status === "complete")
-                configureArchivePage(tab, node);
-        }
-    };
-
-    browser.tabs.onUpdated.addListener(tabUpdateListener);
-
-    function tabRemoveListener(tabId) {
-        if (tabId === archiveTab.id) {
-            revokeTrackedObjectURLs(tabId);
-
-            browser.tabs.onRemoved.removeListener(tabRemoveListener);
-            browser.tabs.onUpdated.removeListener(tabUpdateListener);
-        }
-    }
-
-    browser.tabs.onRemoved.addListener(tabRemoveListener);
-}
-
-async function configureArchivePage(tab, node) {
-    if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
-        await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
-        await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
-        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
-
-        if (settings.open_bookmark_in_active_tab())
-            node = await Node.getByUUID(tab.url.replace(/^.*#/, "").split(":")[0])
-
-        if (await Bookmark.isSitePage(node))
-            await configureSiteLinks(node, tab);
-    }
-}
-
-async function configureSiteLinks(node, tab) {
-    await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
-    const siteMap = await buildSiteMap(node);
-    browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap});
-}
-
-async function buildSiteMap(node) {
-    const archives = await listSiteArchives(node);
-    return archives.reduce((acc, n) => {acc[n.uri] = n.uuid; return acc;}, {});
-}
-
-var archiveTabs = {};
-
-function trackArchiveTab(tabId, url) {
-    let urls = archiveTabs[tabId];
-    if (!urls) {
-        urls = new Set([url]);
-        archiveTabs[tabId] = urls;
-    }
+    if (settings.platform.firefox)
+        addBookmarkOnCommandFirefox(action);
     else
-        urls.add(url);
+        addBookmarkOnCommandNonFirefox(action);
 }
 
-function isArchiveTabTracked(tabId) {
-    return !!archiveTabs[tabId];
-}
-
-function revokeTrackedObjectURLs(tabId) {
-    const objectURLs = archiveTabs[tabId];
-
-    if (objectURLs) {
-        delete archiveTabs[tabId];
-
-        for (const url of objectURLs)
-            if (url.startsWith("blob:"))
-                URL.revokeObjectURL(url);
+function addBookmarkOnCommandFirefox(action) {
+    if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
+        localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
+        browser.sidebarAction.open();
     }
+
+    if (action === "createArchive")
+        askCSRPermission()// requires non-async function
+            .then(response => {
+                if (response)
+                    addBookmarkOnCommandSendPayload(action);
+            })
+            .catch(e => console.error(e));
+    else
+        addBookmarkOnCommandSendPayload(action);
 }
 
-export async function browseNode(node, options) {
-    switch (node.type) {
-        case NODE_TYPE_BOOKMARK:
-            return browseBookmark(node, options);
+async function addBookmarkOnCommandNonFirefox(action) {
+    const payload = await getActiveTabMetadata();
+    await addBookmarkOnCommandSendPayload(action, payload);
 
-        case NODE_TYPE_ARCHIVE:
-            return browseArchive(node, options);
-
-        case NODE_TYPE_NOTES:
-            return openURL("ui/notes.html#" + node.uuid + ":" + node.id, options);
-
-        case NODE_TYPE_GROUP:
-            return browseGroup(node, options);
-    }
-}
-
-function openURL(url, options, newtabf = openPage) {
-    if (options?.tab)
-        return updateTab(options.tab, url, options.preserveHistory);
-
-    return newtabf(url, options?.container);
-}
-
-function browseBookmark(node, options) {
-    let url = node.uri;
-    if (url) {
-        try {
-            new URL(url);
-        } catch (e) {
-            url = "http://" + url;
-        }
-
-        if (options)
-            options.container = options.container || node.container;
-        else
-            options = {container: node.container};
-
-        return openURL(url, options, openContainerTab);
-    }
-}
-
-async function browseArchive(node, options) {
-    if (node.__tentative)
-        return;
-
-    if (node.external === RDF_EXTERNAL_NAME)
-        return await browseRDFArchive(node, options);
-
-    const blob = await Archive.get(node.id);
-    if (blob) {
-        let objectURL = await getBlobURL(node, blob);
-
-        if (objectURL) {
-            const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
-            const archiveTab = await openURL(archiveURL, options);
-            const tabTracked = isArchiveTabTracked(archiveTab.id);
-
-            // configureArchiveTab depends on the tracked url
-            trackArchiveTab(archiveTab.id, objectURL);
-
-            if (!tabTracked)
-                configureArchiveTab(node, archiveTab);
+    await settings.load();
+    if (settings.open_sidebar_from_shortcut()) {
+        const window = await findSidebarWindow();
+        if (!window) {
+            await browser.storage.session.set({"sidebar-select-shelf": DEFAULT_SHELF_ID});
+            await toggleSidebarWindow();
         }
     }
-    else
-        showNotification({message: "No data is stored."});
 }
 
-async function browseRDFArchive(node, options) {
-    const helperApp = await nativeBackend.probe(true);
+async function addBookmarkOnCommandSendPayload(action, payload) {
+    if (!payload)
+        payload = await getActiveTabMetadata();
 
-    if (helperApp) {
-        const helperApp11 = await nativeBackend.hasVersion("1.1");
-        if (!helperApp11)
-            await rdfBackend.pushRDFPath(node);
-
-        const url = nativeBackend.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
-        return openURL(url, options);
-    }
+    payload.parent_id = DEFAULT_SHELF_ID;
+    return sendLocal[action]({node: payload});
 }
 
-async function getBlobURL(node, blob) {
-    if (settings.browse_with_helper()) {
-        const helperApp = await nativeBackend.hasVersion("1.1", "Scrapyard helper application v1.1+ is required.");
-
-        if (helperApp)
-            return nativeBackend.url(`/browse/${node.uuid}`);
-            //return sendBlobToBackend(node, blob);
-        else
-            return null;
-    }
-
-    return loadArchive(blob);
-}
-
-async function sendBlobToBackend(node, blob) {
-    const data = await Archive.reify(blob, true);
-
-    const fields = {
-        blob: data,
-        content_type: blob.type || "text/html",
+export async function createBookmarkFromURL (url, parentId) {
+    let options = {
+        parent_id: parentId,
+        uri: url,
+        name: "Untitled"
     };
 
-    if (blob.byte_length) {
-        fields.blob = btoa(fields.blob);
-        fields.byte_length = blob.byte_length;
+    if (!/^https?:\/\/.*/.exec(options.uri))
+        options.uri = "http://" + options.uri;
+
+    sendLocal.startProcessingIndication();
+
+    try {
+        const html = await fetchText(options.uri);
+        let doc;
+        if (html)
+            doc = parseHtml(html);
+
+        if (doc) {
+            const title = doc.getElementsByTagName("title")[0]?.textContent;
+            options.name = title || options.uri;
+
+            const icon = await getFaviconFromContent(options.uri, doc);
+            if (icon)
+                options.icon = icon;
+        }
+    }
+    catch (e) {
+        console.error(e);
     }
 
-    await nativeBackend.post(`/browse/upload/${node.uuid}`, fields);
-    return nativeBackend.url(`/browse/${node.uuid}`);
-}
-
-async function loadArchive(blob) {
-    if (blob.data) { // legacy string content
-        let object = new Blob([await Archive.reify(blob)],
-            {type: blob.type? blob.type: "text/html"});
-        return URL.createObjectURL(object);
-    }
-    else
-        return URL.createObjectURL(blob.object);
-}
-
-async function browseGroup(node, options) {
-    if (node.__filtering)
-        send.selectNode({node, open: true, forceScroll: true});
-    else if (node.site) {
-        const archives = await listSiteArchives(node);
-        const page = archives[0];
-        if (page)
-            return browseArchive(page, options);
-    }
-}
-
-async function listSiteArchives(node) {
-    const parentId = node.type === NODE_TYPE_ARCHIVE? node.parent_id: node.id;
-    const parent = await Node.get(parentId);
-    const pages = await Query.fullSubtree(parent.id, true);
-    return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
-}
-
-export async function getHelperAppRdfPathMessage(uuid) {
-    const node = await Node.getByUUID(uuid);
-    const path = await rdfBackend.getRDFPageDir(node);
-    return {
-        type: "RDF_PATH",
-        uuid: node.uuid,
-        rdf_directory: path
-    };
-}
-
-export async function getHelperAppPushBlobMessage(uuid) {
-    const node = await Node.getByUUID(uuid)
-    const archive = await Archive.get(node.id);
-    const content = await Archive.reify(archive, true);
-    return {
-        type: "PUSH_BLOB",
-        uuid: node.uuid,
-        content_type: archive.type || "text/html",
-        content: content,
-        byte_length: archive.byte_length || null
-    };
+    const bookmark = await Bookmark.add(options, NODE_TYPE_BOOKMARK);
+    await sendLocal.stopProcessingIndication();
+    sendLocal.bookmarkCreated({node: bookmark});
 }

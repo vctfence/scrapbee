@@ -1,25 +1,10 @@
-import {send} from "./proxy.js";
+import {receive, send} from "./proxy.js";
 import {settings} from "./settings.js";
 
 class IShellBackend {
-    constructor() {
-        this.ISHELL_ID = `ishell${this._isExtensionLocal()? "": "-we"}@gchristensen.github.io`;
-    }
-
     initialize() {
+        this.ISHELL_ID = this._getIShellID();
         this.enableInvalidation(settings.ishell_presents());
-
-        if (window.location.href.endsWith("background.html")) {
-            let initListener = event => {
-                if (event.data.type === "SCRAPYARD_ID_REQUESTED") {
-                    if (event.data.sender.id === this.ISHELL_ID) {
-                        this._listenIShell();
-                        window.removeEventListener("message", initListener);
-                    }
-                }
-            };
-            window.addEventListener("message", initListener, false);
-        }
 
         browser.runtime.onMessage.addListener((request) => {
             if (request.type === "ishellEnableInvalidation") {
@@ -28,7 +13,38 @@ class IShellBackend {
         });
     }
 
-    _listenIShell() {
+    _getIShellID() {
+        if (settings.platform.firefox)
+            return `ishell${this._isExtensionPrivate()? "": "-we"}@gchristensen.github.io`;
+        else if (settings.platform.chrome) {
+            return this._isExtensionPrivate()? "ofekoiaebgjkhfbcafmllpgffadbpphb": "hdjdmgedflhjhbflaijohpnognlhacoc";
+        }
+    }
+
+    _isExtensionPrivate() {
+        let id = browser.runtime.id;
+
+        if (id) {
+            if (settings.platform.firefox)
+                return !id.includes("-we");
+            else
+                return id === "fhgomkcfijbifanbkppjhgmcdkmbacep";
+        }
+
+        return false;
+    }
+
+    isIShell(id) {
+        if (!id)
+            return false;
+
+        if (settings.platform.firefox)
+            return /^ishell(:?-we)?@gchristensen.github.io$/.test(id);
+        else if (settings.platform.chrome)
+            return id === this.ISHELL_ID;
+    }
+
+    listenIShell() {
         if (!this._initialized) {
             this._initialized = true;
             this.enableInvalidation(true);
@@ -38,19 +54,23 @@ class IShellBackend {
     }
 
     _installManagementListeners() {
-        browser.management.onInstalled.addListener((info) => {
-            if (info.id === this.ISHELL_ID) {
-                this.enableInvalidation(true);
-                this._notifyOtherInstances(true);
-            }
-        });
+        if (!this._managementListenersInstalled) {
+            this._managementListenersInstalled = true;
 
-        browser.management.onUninstalled.addListener((info) => {
-            if (info.id === this.ISHELL_ID) {
-                this.enableInvalidation(false);
-                this._notifyOtherInstances(false);
-            }
-        });
+            browser.management.onInstalled.addListener((info) => {
+                if (info.id === this.ISHELL_ID) {
+                    this.enableInvalidation(true);
+                    this._notifyOtherInstances(true);
+                }
+            });
+
+            browser.management.onUninstalled.addListener((info) => {
+                if (info.id === this.ISHELL_ID) {
+                    this.enableInvalidation(false);
+                    this._notifyOtherInstances(false);
+                }
+            });
+        }
     }
 
     _notifyOtherInstances(enable) {
@@ -59,21 +79,12 @@ class IShellBackend {
         send.ishellEnableInvalidation({enable: enable});
     }
 
-    _isExtensionLocal() {
-        let id = browser.runtime.getManifest().applications?.gecko?.id;
-
-        if (id)
-            return !id.includes("-we");
-
-        return false;
-    }
-
     enableInvalidation(enable) {
-        window.__iShellInvalidationEnabled = enable;
+        globalThis.__iShellInvalidationEnabled = enable;
     }
 
     isInvalidationEnabled() {
-        return window.__iShellInvalidationEnabled;
+        return globalThis.__iShellInvalidationEnabled;
     }
 
     invalidateCompletion() {
@@ -86,13 +97,11 @@ class IShellBackend {
             }
         }
     }
-
-    isIShell(id) {
-        if (!id)
-            return false;
-
-        return /^ishell(:?-we)?@gchristensen.github.io$/.test(id);
-    }
 }
 
-export let ishellBackend = new IShellBackend();
+export const ishellBackend = new IShellBackend();
+
+receive.scrapyardIdRequested = message => {
+    if (message.senderId === ishellBackend.ISHELL_ID)
+        ishellBackend.listenIShell();
+}

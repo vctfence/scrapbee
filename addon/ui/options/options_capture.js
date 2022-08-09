@@ -1,4 +1,5 @@
 import {send} from "../../proxy.js";
+import {settings} from "../../settings.js";
 
 async function loadCaptureSettings() {
     let object = await browser.storage.local.get("savepage-settings");
@@ -104,6 +105,13 @@ function configureCaptureSettingsPage() {
     $(`#div-capture input[type="checkbox"]`).on("click", storeCaptureSettings);
     $(`#div-capture input[type="radio"]`).on("click", storeCaptureSettings);
     $(`#div-capture input[type="number"]`).on("input", storeCaptureSettings);
+
+    if (!settings.platform.firefox) {
+        $("#options-originonly").prop("disabled", true);
+        $("#options-originpath").prop("disabled", true);
+        $("label[for='options-originonly']").css("color", "grey");
+        $("label[for='options-originpath']").css("color", "grey");
+    }
 }
 
 export async function load() {

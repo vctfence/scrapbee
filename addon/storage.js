@@ -46,7 +46,7 @@ export const DEFAULT_SHELF_ID = 1;
 export const EVERYTHING_SHELF_ID = -1;
 export const DONE_SHELF_ID = -2;
 export const TODO_SHELF_ID = -3;
-export const FIREFOX_SHELF_ID = -4;
+export const BROWSER_SHELF_ID = -4;
 export const CLOUD_SHELF_ID = -5;
 
 export const TODO_SHELF_NAME = "TODO";
@@ -59,8 +59,8 @@ export const EVERYTHING = "everything";
 export const DEFAULT_SHELF_NAME = "default";
 export const DEFAULT_SHELF_UUID = DEFAULT_SHELF_ID.toString();
 
-export const FIREFOX_SHELF_NAME = "firefox";
-export const FIREFOX_SHELF_UUID = "browser_bookmarks";
+export const BROWSER_SHELF_NAME = "browser";
+export const BROWSER_SHELF_UUID = "browser_bookmarks";
 export const FIREFOX_BOOKMARK_MENU = "menu________";
 export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
 export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
@@ -68,7 +68,7 @@ export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
 export const FIREFOX_SPECIAL_FOLDERS = [FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_TOOLBAR];
 
-export const BROWSER_EXTERNAL_NAME = FIREFOX_SHELF_NAME;
+export const BROWSER_EXTERNAL_NAME = BROWSER_SHELF_NAME;
 
 export const CLOUD_SHELF_NAME = "cloud";
 export const CLOUD_SHELF_UUID = CLOUD_SHELF_NAME;
@@ -76,7 +76,7 @@ export const CLOUD_EXTERNAL_NAME = CLOUD_SHELF_NAME;
 
 export const RDF_EXTERNAL_NAME = "rdf";
 
-export const NON_IMPORTABLE_SHELVES = [FIREFOX_SHELF_UUID, CLOUD_SHELF_UUID];
+export const NON_IMPORTABLE_SHELVES = [BROWSER_SHELF_UUID, CLOUD_SHELF_UUID];
 
 export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME];
 
@@ -132,7 +132,7 @@ export function isVirtualShelf(name) {
 export function isBuiltInShelf(name) {
     name = name?.toLocaleUpperCase();
     return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
-        || name === FIREFOX_SHELF_NAME.toLocaleUpperCase()
+        || name === BROWSER_SHELF_NAME.toLocaleUpperCase()
         || name === CLOUD_SHELF_NAME.toLocaleUpperCase()
         || name === EVERYTHING.toLocaleUpperCase()
         || name === TODO_SHELF_NAME.toLocaleUpperCase()

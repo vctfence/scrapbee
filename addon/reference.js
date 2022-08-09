@@ -1,6 +1,7 @@
 import {send} from "./proxy.js";
 import {Node} from "./storage_entities.js";
 import {systemInitialization} from "./bookmarks_init.js";
+import {updateTabURL} from "./utils_browser.js";
 
 async function openReference(tab) {
     await systemInitialization;
@@ -12,8 +13,7 @@ async function openReference(tab) {
 
         switch (id) {
             case "advanced":
-                browser.tabs.update(tab.id, {"url": browser.runtime.getURL("ui/advanced.html"), "loadReplace": true});
-                return;
+                return updateTabURL(tab, browser.runtime.getURL("ui/advanced.html"), false);
         }
 
         let [prefix, uuid] = id.includes(":")? id.split(":"): [null, id];

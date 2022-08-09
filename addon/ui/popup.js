@@ -6,6 +6,8 @@ import {getFaviconFromTab} from "../favicon.js";
 import {Query} from "../storage_query.js";
 import {BookmarkTree} from "./tree.js";
 import {send} from "../proxy.js";
+import {toggleSidebarWindow} from "../utils_sidebar.js";
+import {isSpecialPage} from "../bookmarking.js";
 
 let tree;
 let bookmarkFolderSelect;
@@ -31,7 +33,7 @@ async function init() {
     $("#new-folder").on("click", createNewFolder);
     $("#crawler-check").on("click", switchCrawlerMode);
     $("#treeview").on("select_node.jstree", onTreeFolderSelected);
-    $("#sidebar-toggle").on("click", () => browser.sidebarAction.toggle());
+    $("#sidebar-toggle").on("click", toggleSidebar);
     $("#create-bookmark").on("click", async () => await addBookmark(NODE_TYPE_BOOKMARK));
     $("#create-archive").on("click", async e => await addBookmark(NODE_TYPE_ARCHIVE));
     bookmarkFolderSelect.on("change", () => tree.selectNode(bookmarkFolderSelect.val(), false, true));
@@ -75,13 +77,18 @@ function initBookmarkFolderSelect(bookmarkFolderSelect, folderHistory) {
 
 async function saveActiveTabProperties() {
     const activeTab = await getActiveTab();
-    $("#bookmark-name").val(activeTab.title);
-    $("#bookmark-url").val(activeTab.url);
 
-    let favicon = await getFaviconFromTab(activeTab);
+    if (activeTab) {
+        $("#bookmark-name").val(activeTab.title);
+        $("#bookmark-url").val(activeTab.url);
 
-    if (favicon)
-        $("#bookmark-icon").val(favicon);
+        let favicon;
+        if (!isSpecialPage(activeTab.url))
+             favicon = await getFaviconFromTab(activeTab);
+
+        if (favicon)
+            $("#bookmark-icon").val(favicon);
+    }
 }
 
 function onTreeFolderSelected(e, {node: jnode}) {
@@ -145,6 +152,13 @@ async function addBookmark(nodeType) {
         await send.createBookmark({node: payload});
 
     window.close();
+}
+
+function toggleSidebar() {
+    if (browser.sidebarAction)
+        browser.sidebarAction.toggle();
+    else
+        toggleSidebarWindow();
 }
 
 console.log("==> popup.js loaded");

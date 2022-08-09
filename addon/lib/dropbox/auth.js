@@ -7,14 +7,14 @@ import { parseResponse } from './response.js';
 
 let fetch;
 if (isBrowserEnv()) {
-  fetch = window.fetch.bind(window);
+  fetch = globalThis.fetch.bind(globalThis);
 } else {
   fetch = require('node-fetch'); // eslint-disable-line global-require
 }
 
 let crypto;
 if (isBrowserEnv()) {
-  crypto = window.crypto || window.msCrypto; // for IE11
+  crypto = globalThis.crypto || globalThis.msCrypto; // for IE11
 } else {
   crypto = require('crypto'); // eslint-disable-line global-require
 }
@@ -384,13 +384,13 @@ export default class DropboxAuth {
     this.getAuthenticationUrl(redirectUrl)
       .then((url) => {
         let removed = false;
-        const browser = window.open(url, '_blank');
+        const browser = globalThis.open(url, '_blank');
 
         function onLoadError(event) {
           // Workaround to fix wrong behavior on cordova-plugin-inappbrowser
           if (event.code !== -999) {
             // Try to avoid a browser crash on browser.close().
-            window.setTimeout(() => { browser.close(); }, 10);
+            globalThis.setTimeout(() => { browser.close(); }, 10);
             errorCallback();
           }
         }
@@ -401,7 +401,7 @@ export default class DropboxAuth {
 
           if (errorIndex > -1) {
             // Try to avoid a browser crash on browser.close().
-            window.setTimeout(() => { browser.close(); }, 10);
+            globalThis.setTimeout(() => { browser.close(); }, 10);
             errorCallback();
           } else {
             const tokenLabel = '#access_token=';
@@ -410,7 +410,7 @@ export default class DropboxAuth {
             if (tokenIndex > -1) {
               tokenIndex += tokenLabel.length;
               // Try to avoid a browser crash on browser.close().
-              window.setTimeout(() => { browser.close(); }, 10);
+              globalThis.setTimeout(() => { browser.close(); }, 10);
 
               const accessToken = event.url.substring(tokenIndex, tokenTypeIndex);
               successCallback(accessToken);

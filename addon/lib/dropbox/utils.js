@@ -25,13 +25,13 @@ export function isWindowOrWorker() {
     )
     || (
       typeof module === 'undefined'
-      || typeof window !== 'undefined'
+      || typeof globalThis !== 'undefined'
     )
   );
 }
 
 export function isBrowserEnv() {
-  return typeof window !== 'undefined';
+  return typeof globalThis !== 'undefined';
 }
 
 export function createBrowserSafeString(toBeConverted) {

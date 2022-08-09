@@ -1,15 +1,22 @@
-window._MANIFEST_VERSION = browser.runtime.getManifest().manifest_version;
+if (typeof browser === "undefined")
+    globalThis.browser = chrome;
 
-window._MANIFEST_V3 = window._MANIFEST_VERSION === 3;
+const _MANIFEST = chrome.runtime.getManifest();
 
-window.DEBUG = false;
+globalThis._ADDON_VERSION = _MANIFEST.version;
 
-window.log = (...args) => console.log.apply(console, args);
+globalThis._MANIFEST_VERSION = _MANIFEST.manifest_version;
 
-window.logd = (...args) => window.DEBUG? console.log.apply(console, args): undefined;
+globalThis._MANIFEST_V3 = globalThis._MANIFEST_VERSION === 3;
 
-window._tm = (name = "timer") => console.time(name);
+globalThis._BACKGROUND_PAGE = !!_MANIFEST.background?.page;
 
-window._te = (name = "timer") => console.timeEnd(name);
+globalThis._SIDEBAR = !!globalThis.browser.sidebarAction;
 
-window._tr = () => console.trace();
+globalThis._log = console.log;
+
+globalThis._tm = (name = "timer") => console.time(name);
+
+globalThis._te = (name = "timer") => console.timeEnd(name);
+
+globalThis._tr = () => console.trace();

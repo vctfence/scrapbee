@@ -47,14 +47,11 @@ function configureScrapyardSettingsPage() {
     setSaveCheckHandler("option-do-not-show-archive-toolbar", "do_not_show_archive_toolbar");
     setSaveCheckHandler("option-switch-to-bookmark", "switch_to_new_bookmark");
     setSaveCheckHandler("option-open-bookmark-in-active-tab", "open_bookmark_in_active_tab");
+    setSaveCheckHandler("option-open-sidebar-from-shortcut", "open_sidebar_from_shortcut");
     setSaveCheckHandler("option-do-not-switch-to-ff-bookmark", "do_not_switch_to_ff_bookmark");
     setSaveCheckHandler("option-use-helper-app-for-export", "use_helper_app_for_export");
     setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
     setSaveCheckHandler("option-browse-with-helper", "browse_with_helper");
-
-    $("#option-open-sidebar-from-shortcut").on("change", e => {
-        localStorage.setItem("option-open-sidebar-from-shortcut", e.target.checked? "open": "not-open");
-    });
 }
 
 function loadScrapyardSettings() {
@@ -71,8 +68,7 @@ function loadScrapyardSettings() {
     $("#option-do-not-switch-to-ff-bookmark").prop("checked", settings.do_not_switch_to_ff_bookmark());
     $("#option-display-random-bookmark").prop("checked", settings.display_random_bookmark());
     $("#option-open-bookmark-in-active-tab").prop("checked", settings.open_bookmark_in_active_tab());
-    $("#option-open-sidebar-from-shortcut").prop("checked",
-        localStorage.getItem("option-open-sidebar-from-shortcut") === "open");
+    $("#option-open-sidebar-from-shortcut").prop("checked", settings.open_sidebar_from_shortcut());
     $("#option-capitalize-builtin-shelf-names").prop("checked", settings.capitalize_builtin_shelf_names());
     $("#option-export-format").val(settings.export_format());
     $("#option-use-helper-app-for-export").prop("checked", settings.use_helper_app_for_export());

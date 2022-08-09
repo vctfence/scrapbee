@@ -3,7 +3,7 @@
 var UUID = {};
 
 UUID.trueRandom = (function() {
-    var crypt = window.crypto;
+    var crypt = globalThis.crypto;
 
     // if we have a crypto library, use it
     var random = function(min, max) {

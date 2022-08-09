@@ -10,9 +10,9 @@ import {
     DONE_SHELF_NAME,
     EVERYTHING,
     EVERYTHING_SHELF_ID,
-    FIREFOX_SHELF_ID,
-    FIREFOX_SHELF_NAME,
-    FIREFOX_SHELF_UUID,
+    BROWSER_SHELF_ID,
+    BROWSER_SHELF_NAME,
+    BROWSER_SHELF_UUID,
     TODO_SHELF_ID,
     TODO_SHELF_NAME, DEFAULT_SHELF_UUID
 } from "../storage.js";
@@ -114,8 +114,8 @@ export class ShelfList {
                              value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`;
 
         if (settings.show_firefox_bookmarks())
-            html += `<option class=\"option-builtin\" data-uuid="${FIREFOX_SHELF_UUID}"
-                             value=\"${FIREFOX_SHELF_ID}\">${formatShelfName(FIREFOX_SHELF_NAME)}</option>`;
+            html += `<option class=\"option-builtin\" data-uuid="${BROWSER_SHELF_UUID}"
+                             value=\"${BROWSER_SHELF_ID}\">${formatShelfName(BROWSER_SHELF_NAME)}</option>`;
 
         let shelves = await Query.allShelves();
 
@@ -123,7 +123,7 @@ export class ShelfList {
         if (cloudShelf)
             shelves.splice(shelves.indexOf(cloudShelf), 1);
 
-        let firefoxShelf = shelves.find(s => s.id === FIREFOX_SHELF_ID);
+        let firefoxShelf = shelves.find(s => s.id === BROWSER_SHELF_ID);
         if (firefoxShelf)
             shelves.splice(shelves.indexOf(firefoxShelf), 1);
 

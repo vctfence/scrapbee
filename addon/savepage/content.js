@@ -4410,6 +4410,10 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
             // Scrapyard //////////////////////////////////////////////////////////////////
             htmltext = prefix + `<meta charset="utf-8">`;
             htmlStrings[htmlStrings.length] = htmltext;
+
+            // Undo style alterations made by Chrome
+            htmltext = prefix + `<style>body {font-family: initial; font-size: initial;}</style>`;
+            htmlStrings[htmlStrings.length] = htmltext;
             ////////////////////////////////////////////////////////////////// Scrapyard //
 
             /* Add first favicon from document head or if none add favicon from website root */

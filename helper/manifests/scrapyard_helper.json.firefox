@@ -1,7 +1,7 @@
 {
     "name": "scrapyard_helper",
     "description": "Scrapyard helper application",
-    "path": "/usr/bin/scrapyard_helper",
+    "path": "$EXECUTABLE_PATH$",
     "type": "stdio",
     "allowed_extensions": [ "scrapyard@firefox", "scrapyard-we@firefox" ]
 }

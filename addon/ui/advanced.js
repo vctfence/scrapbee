@@ -53,6 +53,11 @@ function configureAutomationPanel() {
 }
 
 async function configureDBPath() {
+    if (!settings.platform.firefox) {
+        $("#addon-db-path-input").prop("placeholder", "Only available in Firefox");
+        return;
+    }
+
     const idbPath = await send.getAddonIdbPath();
     if (idbPath)
         $("#addon-db-path-input").val(idbPath);
@@ -85,6 +90,11 @@ function configureBackupCompressionPanel() {
 }
 
 function configureMaintenancePanel() {
+    if (!settings.platform.firefox) {
+        $("#debug-settings-link").hide();
+        $("#optimize-database").hide();
+    }
+
     $("#option-repair-icons").prop("checked", settings.repair_icons());
     $("#option-repair-icons").on("change", async e => {
         await settings.load();
@@ -194,9 +204,12 @@ function configureImpExpPanel() {
 
         let settings = await browser.storage.local.get();
 
-        delete settings["scrapyard-settings"]["ishell_presents"];
-        delete settings["scrapyard-settings"]["dropbox_refresh_token"];
-        delete settings["scrapyard-settings"]["pending_announcement"];
+        if (settings["scrapyard-settings"]) {
+            delete settings["scrapyard-settings"]["ishell_presents"];
+            delete settings["scrapyard-settings"]["dropbox_refresh_token"];
+            delete settings["scrapyard-settings"]["onedrive_refresh_token"];
+            delete settings["scrapyard-settings"]["pending_announcement"];
+        }
 
         settings["localstorage-settings"] = {
             "editor-font-size": localStorage.getItem("editor-font-size"),
@@ -256,11 +269,17 @@ function configureImpExpPanel() {
 
                 delete imported["localstorage-settings"];
 
-                let settings = await browser.storage.local.get();
-                Object.assign(settings["savepage-settings"], imported["savepage-settings"]);
-                Object.assign(settings["scrapyard-settings"], imported["scrapyard-settings"]);
+                let scrapyardSettings = await browser.storage.local.get();
+                Object.assign(scrapyardSettings["savepage-settings"], imported["savepage-settings"]);
+                Object.assign(scrapyardSettings["scrapyard-settings"], imported["scrapyard-settings"]);
 
-                await browser.storage.local.set(settings);
+                await browser.storage.local.set(scrapyardSettings);
+
+                await settings.load();
+
+                // propagate to localstorage
+                if (settings.platform.firefox && settings.open_sidebar_from_shortcut())
+                    settings.open_sidebar_from_shortcut(true);
 
                 chrome.runtime.reload();
             };

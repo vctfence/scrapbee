@@ -2,10 +2,8 @@ import {isBuiltInShelf} from "./storage.js";
 import {LineStream, LineReader, readFile} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {settings} from "./settings.js";
-import {nativeBackend} from "./backend_native.js";
 import {receive} from "./proxy.js";
 import UUID from "./uuid.js";
-import {sleep} from "./utils.js";
 import {Import, Export} from "./import.js";
 import {ExportArea} from "./storage_export.js";
 
@@ -17,6 +15,7 @@ receive.importFile = async message => {
     if (importerBuilder) {
         importerBuilder.setName(shelf)
         importerBuilder.setReportProgress(true);
+        importerBuilder.setSidebarContext(!_BACKGROUND_PAGE);
 
         switch (format) {
             case "json":
@@ -63,18 +62,16 @@ receive.exportFile = async message => {
         .setUUID(message.uuid)
         .setLinksOnly(shallowExport)
         .setReportProgress(true)
-        .setObjects(nodes);
+        .setObjects(nodes)
+        .setSidebarContext(!_BACKGROUND_PAGE);
 
-    const file_ext = `.${format === "json" ? "jsonl" : format}`;
-    const file_name = shelf.replace(/[\\\/:*?"<>|^#%&!@:+={}'~]/g, "_") + file_ext;
+    const fileExt = `.${format === "json" ? "jsonl" : format}`;
+    const fileName = shelf.replace(/[\\\/:*?"<>|^#%&!@+={}'~]/g, "_") + fileExt;
 
-    if (settings.use_helper_app_for_export() && await nativeBackend.probe())
-        await exportWithHelperApp(exportBuilder, file_name);
-    else
-        await exportStandalone(exportBuilder, file_name);
+    await exportStandalone(exportBuilder, fileName, format);
 };
 
-async function exportStandalone(exportBuilder, file_name) {
+async function exportStandalone(exportBuilder, fileName, format) {
     const MAX_BLOB_SIZE = 1024 * 1024 * 10; // ~20 mb of UTF-16
     const exportId = UUID.numeric();
 
@@ -103,12 +100,13 @@ async function exportStandalone(exportBuilder, file_name) {
     await exporter.export();
     await file.flush();
 
-    let blob = new Blob(await ExportArea.getBlobs(exportId), {type: "text/plain"});
+    const mimeType = format === "json"? "application/json": "text/plain";
+    let blob = new Blob(await ExportArea.getBlobs(exportId), {type: mimeType});
     let url = URL.createObjectURL(blob);
     let download;
 
     try {
-        download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
+        download = await browser.downloads.download({url: url, filename: fileName, saveAs: true});
     } catch (e) {
         console.error(e);
         ExportArea.removeBlobs(exportId);
@@ -121,57 +119,6 @@ async function exportStandalone(exportBuilder, file_name) {
                     browser.downloads.onChanged.removeListener(download_listener);
                     URL.revokeObjectURL(url);
                     ExportArea.removeBlobs(exportId);
-                }
-            }
-        };
-        browser.downloads.onChanged.addListener(download_listener);
-    }
-}
-
-async function exportWithHelperApp(exportBuilder, file_name) {
-    try {
-        nativeBackend.fetch("/export/initialize");
-    } catch (e) {
-        console.error(e);
-    }
-
-    const port = await nativeBackend.getPort();
-
-    const file = {
-        append: async function (text) { // write to a temp file (much faster than IDB)
-            port.postMessage({
-                type: "EXPORT_PUSH_TEXT",
-                text: text
-            })
-        }
-    };
-
-    await sleep(50);
-
-    exportBuilder.setStream(file);
-    const exporter = exportBuilder.build();
-    await exporter.export();
-
-    port.postMessage({
-        type: "EXPORT_FINISH"
-    });
-
-    let url = nativeBackend.url("/export/download");
-    let download;
-
-    try {
-        download = await browser.downloads.download({url: url, filename: file_name, saveAs: true});
-    } catch (e) {
-        console.error(e);
-        nativeBackend.fetch("/export/finalize");
-    }
-
-    if (download) {
-        let download_listener = delta => {
-            if (delta.id === download) {
-                if (delta.state && delta.state.current === "complete" || delta.error) {
-                    browser.downloads.onChanged.removeListener(download_listener);
-                    nativeBackend.fetch("/export/finalize");
                 }
             }
         };

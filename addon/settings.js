@@ -13,7 +13,9 @@ class ScrapyardSettings {
             switch_to_new_bookmark: true,
             enable_backup_compression: true,
             visual_archive_icon: true,
-            visual_archive_color: true
+            visual_archive_color: true,
+            show_firefox_toolbar: !_BACKGROUND_PAGE,
+            browse_with_helper: !_BACKGROUND_PAGE
         };
 
         this._bin = {};
@@ -26,6 +28,9 @@ class ScrapyardSettings {
             this._platform = {[platformInfo.os]: true};
             if (navigator.userAgent.indexOf("Firefox") >= 0) {
                 this._platform.firefox = true;
+            }
+            if (navigator.userAgent.indexOf("Chrome") >= 0) {
+                this._platform.chrome = true;
             }
         }
     }
@@ -44,14 +49,23 @@ class ScrapyardSettings {
         return browser.storage.local.set({[this._key]: this._bin});
     }
 
-    _setAddonUpdated() {
-        localStorage.setItem(SCRAPYARD_UPDATED_KEY, "true");
+    async _isAddonUpdated() {
+        let updated;
+        if (browser.storage.session) {
+            updated = await browser.storage.session.get(SCRAPYARD_UPDATED_KEY);
+            updated = updated?.[SCRAPYARD_UPDATED_KEY];
+        }
+        else {
+            updated = localStorage.getItem(SCRAPYARD_UPDATED_KEY) === "true";
+            localStorage.setItem(SCRAPYARD_UPDATED_KEY, "false");
+        }
+        return updated;
     }
 
-    _isAddonUpdated() {
-        const updated = localStorage.getItem(SCRAPYARD_UPDATED_KEY) === "true";
-        localStorage.setItem(SCRAPYARD_UPDATED_KEY, "false");
-        return updated;
+    _processSetSetting(key, val) {
+        // in Firefox, synchronous access to this setting is required
+        if (this._platform.firefox && key === "open_sidebar_from_shortcut")
+            localStorage.setItem("option-open-sidebar-from-shortcut", val? "open": "");
     }
 
     get(target, key, receiver) {
@@ -61,8 +75,6 @@ class ScrapyardSettings {
             return this._default;
         else if (key === "platform")
             return this._platform;
-        else if (key === "setAddonUpdated")
-            return this._setAddonUpdated;
         else if (key === "isAddonUpdated")
             return this._isAddonUpdated;
 
@@ -81,6 +93,7 @@ class ScrapyardSettings {
                 bin[key] = val;
 
             let result = key in bin? bin[key]: deleted;
+            this._processSetSetting(key, val);
             return this._save().then(() => result);
         }
     }

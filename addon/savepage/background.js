@@ -495,7 +495,7 @@ function(PlatformInfo)
 
     // Scrapyard //////////////////////////////////////////////////////////////////
     chrome.storage.local.get("savepage-settings",
-        function(object) {
+       async function(object) {
             object = object["savepage-settings"] || {};
 
             object["environment-platformos"] = platformOS;
@@ -508,17 +508,15 @@ function(PlatformInfo)
 
             object["environment-isfirefox"] = isFirefox;
 
-            if (!isFirefox)
+            if (isFirefox) {
+                const info = await browser.runtime.getBrowserInfo();
+                ffVersion = info.version.substr(0, info.version.indexOf("."));
+                object["environment-ffversion"] = ffVersion;
+            }
+            else
                 gcVersion = navigator.userAgent.match(/Chrom(?:e|ium)\/([0-9]+)/)[1];
 
-            chrome.runtime.getBrowserInfo(
-                function (info) {
-                    ffVersion = info.version.substr(0, info.version.indexOf("."));
-
-                    object["environment-ffversion"] = ffVersion;
-
-                    chrome.storage.local.set({"savepage-settings": object}, initialize);
-                });
+           chrome.storage.local.set({"savepage-settings": object}, initialize);
         });
     ////////////////////////////////////////////////////////////////// Scrapyard //
 });
@@ -734,21 +732,24 @@ function addListeners()
 
     extraInfo = (isFirefox || gcVersion < 72) ? ["blocking","requestHeaders"] : ["blocking","requestHeaders","extraHeaders"];
 
-    chrome.webRequest.onBeforeSendHeaders.addListener(
-    function(details)
-    {
-        var i,j;
-
-        for (i = 0; i < details.requestHeaders.length; i++)
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    if (chrome.webRequest)
+    ////////////////////////////////////////////////////////////////// Scrapyard //
+        chrome.webRequest.onBeforeSendHeaders.addListener(
+        function(details)
         {
-            if (details.requestHeaders[i].name == "savepage-referer") details.requestHeaders[i].name = "Referer";
+            var i,j;
 
-            if (details.requestHeaders[i].name == "savepage-origin") details.requestHeaders[i].name = "Origin";
-        }
+            for (i = 0; i < details.requestHeaders.length; i++)
+            {
+                if (details.requestHeaders[i].name == "savepage-referer") details.requestHeaders[i].name = "Referer";
 
-        return { requestHeaders: details.requestHeaders };
-    },
-    { urls: ["<all_urls>"], types: ["xmlhttprequest"] },extraInfo);
+                if (details.requestHeaders[i].name == "savepage-origin") details.requestHeaders[i].name = "Origin";
+            }
+
+            return { requestHeaders: details.requestHeaders };
+        },
+        { urls: ["<all_urls>"], types: ["xmlhttprequest"] },extraInfo);
 
     /* Message received listener */
 
@@ -863,6 +864,13 @@ function addListeners()
 
                     if (this.status == 200)
                     {
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        if (!_BACKGROUND_PAGE && byteArray.byteLength > maxResourceSize*1024*1024) {
+                            chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "maxsize" },checkError);
+                            return;
+                        }
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
+
                         binaryString = "";
                         for (i = 0; i < byteArray.byteLength; i++) binaryString += String.fromCharCode(byteArray[i]);
 

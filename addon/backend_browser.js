@@ -2,7 +2,7 @@ import {send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {
     FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
-    FIREFOX_SHELF_ID, FIREFOX_SHELF_NAME, FIREFOX_SHELF_UUID,
+    BROWSER_SHELF_ID, BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
     NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF, NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
     isContainer, isEndpoint, FIREFOX_SPECIAL_FOLDERS, BROWSER_EXTERNAL_NAME,
@@ -12,6 +12,7 @@ import {Path} from "./path.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {CONTEXT_FOREGROUND, getContextType} from "./utils_browser.js";
+import {Shelf} from "./bookmarks_shelf.js";
 
 const CATEGORY_ADDED = 0;
 const CATEGORY_CHANGED = 1;
@@ -41,15 +42,22 @@ export class BrowserBackend {
     }
 
     newBrowserRootNode() {
-        return {id: FIREFOX_SHELF_ID,
+        return {id: BROWSER_SHELF_ID,
                 pos: -1,
-                name: FIREFOX_SHELF_NAME,
-                uuid: FIREFOX_SHELF_UUID,
+                name: BROWSER_SHELF_NAME,
+                uuid: BROWSER_SHELF_UUID,
                 type: NODE_TYPE_SHELF,
                 external: BROWSER_EXTERNAL_NAME};
     }
 
     _convertType(node) {
+        if (!node.type) {
+            if (node.children)
+                node.type = "folder";
+            else
+                node.type = "bookmark";
+        }
+
         return ({"folder": NODE_TYPE_GROUP,
                  "bookmark": NODE_TYPE_BOOKMARK,
                  "separator": NODE_TYPE_SEPARATOR})[node.type];
@@ -206,7 +214,7 @@ export class BrowserBackend {
             return;
 
         let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME);
-        //let other_nodes = nodes.filter(n => n.external !== FIREFOX_SHELF_NAME);
+        //let other_nodes = nodes.filter(n => n.external !== BROWSER_SHELF_NAME);
 
         return this.muteBrowserListeners(async () => {
             if (dest.external === BROWSER_EXTERNAL_NAME) {
@@ -474,11 +482,11 @@ export class BrowserBackend {
     async saveFirefoxBookmarkFolderNames() {
         const bookmarkMenu = await ExternalNode.get(FIREFOX_BOOKMARK_MENU, BROWSER_EXTERNAL_NAME);
         if (bookmarkMenu)
-            Path.storeSubstitute("@", FIREFOX_SHELF_NAME + "/" + bookmarkMenu.name);
+            Path.storeSubstitute("@", BROWSER_SHELF_NAME + "/" + bookmarkMenu.name);
 
         const unfiledMenu = await ExternalNode.get(FIREFOX_BOOKMARK_UNFILED, BROWSER_EXTERNAL_NAME);
         if (unfiledMenu)
-            Path.storeSubstitute("@@", FIREFOX_SHELF_NAME + "/" + unfiledMenu.name);
+            Path.storeSubstitute("@@", BROWSER_SHELF_NAME + "/" + unfiledMenu.name);
     }
 
     // should only be called in the background script through message
@@ -512,7 +520,7 @@ export class BrowserBackend {
                         iconsToGet.push([node.id, node.uri])
                 }
 
-                if (browserNode.type === "folder")
+                if (browserNode.type === "folder" || browserNode.children)
                     await reconcile(node, browserNode);
             }
         };
@@ -522,12 +530,21 @@ export class BrowserBackend {
 
             this.removeBrowserListeners();
 
-            let dbRoot = await Node.get(FIREFOX_SHELF_ID);
+            let dbRoot = await Node.get(BROWSER_SHELF_ID);
             if (!dbRoot) {
                 const node = this.newBrowserRootNode();
                 Node.resetDates(node);
                 dbRoot = await Node.import(node);
                 send.shelvesChanged();
+            }
+            else {
+                if (dbRoot.name === "firefox") {
+                    const nodes = await Shelf.listContent("firefox");
+                    await Node.batchUpdate(n => n.external = BROWSER_EXTERNAL_NAME, nodes.map(n => n.id));
+                    dbRoot.name = BROWSER_SHELF_NAME;
+                    dbRoot.external = BROWSER_EXTERNAL_NAME;
+                    Node.update(dbRoot);
+                }
             }
 
             let [browserRoot] = await browser.bookmarks.getTree();
