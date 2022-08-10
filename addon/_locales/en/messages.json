@@ -4,7 +4,7 @@
         "description": "Name of the extension."
     },
     "extensionDescription": {
-        "message": "Advanced bookmark manager with page archiving functionality",
+        "message": "Advanced bookmark manager with page archiving functionality.",
         "description": "Description of the extension."
     }
 }
