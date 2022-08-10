@@ -8,17 +8,17 @@ test-nightly:
 
 build:
 	cd addon; python ../scripts/mkmanifest.py manifest.json.mv2 manifest.json `cat version.txt` --public
-	cd addon; web-ext build -i web-ext-artifacts .web-extension-id _metadata version.txt
+	cd addon; web-ext build -a ../build -i web-ext-artifacts .web-extension-id _metadata version.txt
 	make firefox-mv2
 
 build-chrome:
 	make chrome-mv3
-	rm -f Scrapyard.zip
-	7za a Scrapyard.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
+	rm -f build/Scrapyard.zip
+	7za a build/Scrapyard.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
 
 sign:
 	make firefox-mv2
-	cd addon; web-ext sign -i web-ext-artifacts .web-extension-id _metadata version.txt `cat $(HOME)/.amo/creds`
+	cd addon; web-ext sign -a ../build -i web-ext-artifacts .web-extension-id _metadata version.txt `cat $(HOME)/.amo/creds`
 
 .PHONY: firefox-mv2
 firefox-mv2:

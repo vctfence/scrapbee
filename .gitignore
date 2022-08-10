@@ -4,6 +4,7 @@
 *.bak
 bin
 node_modules
+/build
 /package.json
 /package-lock.json
 image/donate/
