@@ -13,8 +13,7 @@ def main():
 
 def process_message(msg):
     if msg["type"] == "INITIALIZE":
-        server.start(msg["port"], msg["auth"])
-        browser.send_message(json.dumps({"type": "INITIALIZED", "version": VERSION}))
+        start_server(msg)
     elif msg["type"] == "BACKUP_PUSH_TEXT":
         server.message_queue.put(msg["text"])
     elif msg["type"] == "BACKUP_FINISH":
@@ -23,6 +22,16 @@ def process_message(msg):
         server.message_queue.put(msg)
     elif msg["type"] == "RDF_PATH":
         server.message_queue.put(msg)
+
+
+def start_server(msg):
+    start_success = server.start(msg["port"], msg["auth"])
+    response = {"type": "INITIALIZED", "version": VERSION}
+
+    if not start_success:
+        response["error"] = "address_in_use"
+
+    browser.send_message(json.dumps(response))
 
 
 if __name__ == "__main__":

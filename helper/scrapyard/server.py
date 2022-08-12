@@ -1,9 +1,12 @@
 import traceback
 import threading
 import logging
+import socket
 import queue
+import time
 import os
 from functools import wraps
+from contextlib import closing
 
 import flask
 from flask import request, abort
@@ -52,13 +55,41 @@ def start(a_port, an_auth):
     global auth_token
     port = a_port
     auth_token = an_auth
+
+    if not wait_for_port(port):
+        return False
+
     httpd = Httpd(app, a_port)
     httpd.start()
+
+    return True
 
 
 def stop():
     global httpd
     httpd.shutdown()
+
+
+def port_available(port):
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        sock.settimeout(0.1)
+        result = sock.connect_ex(("127.0.0.1", port))
+        if result == 0:
+            return False
+        else:
+            return True
+
+
+def wait_for_port(port):
+    ctr = 10
+
+    while ctr > 0:
+        if port_available(port):
+            return True
+        ctr -= 1
+        time.sleep(0.1)
+
+    return False
 
 
 def requires_auth(f):

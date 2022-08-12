@@ -29,8 +29,7 @@ class NativeBackend {
                     if (response.type === "INITIALIZED") {
                         port.onMessage.removeListener(initListener);
 
-                        this.port = port;
-                        await this._onInitialized(response);
+                        await this._onInitialized(response, port);
 
                         resolve(port);
                     }
@@ -58,15 +57,13 @@ class NativeBackend {
         }
     }
 
-    async _onInitialized(msg) {
+    async _onInitialized(msg, port) {
+        this.port = port;
         this.version = msg.version;
-
-        const response = await this.fetch("/ping");
-
-        if (response.status === 401)
-            showNotification(`The helper application HTTP port ${settings.helper_port_number()} is not available.`);
-
         port.onMessage.addListener(NativeBackend._incomingMessages.bind(this));
+
+        if (msg.error === "address_in_use")
+            showNotification(`The helper application HTTP port ${settings.helper_port_number()} is not available.`);
     }
 
     async probe(verbose) {
