@@ -101,6 +101,12 @@ def root():
     return "Scrapyard helper application"
 
 
+@app.route("/ping")
+@requires_auth
+def ping():
+    return "OK"
+
+
 @app.route("/exit")
 @requires_auth
 def exit_app():

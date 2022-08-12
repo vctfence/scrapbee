@@ -188,7 +188,7 @@ export class BackupManager {
             }
             catch (e) {
                 error = true;
-                this.setStatus("Error connecting helper application.");
+                this.setStatus("Error connecting the helper application.");
             }
             finally {
                 this.listingBackups = false;
