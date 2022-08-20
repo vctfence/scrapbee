@@ -1,7 +1,7 @@
 Unicode True
 
 !define APPNAME "Scrapyard Helper"
-!define VERSION "1.1"
+!define VERSION "1.2"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
