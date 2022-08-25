@@ -19,4 +19,4 @@ globalThis._tm = (name = "timer") => console.time(name);
 
 globalThis._te = (name = "timer") => console.timeEnd(name);
 
-globalThis._tr = () => console.trace();
+globalThis._tr = console.trace;

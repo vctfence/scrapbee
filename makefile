@@ -6,11 +6,14 @@ test:
 test-nightly:
 	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard.nightly" --firefox=nightly --keep-profile-changes
 
+
+.PHONY: build
 build:
 	cd addon; python ../scripts/mkmanifest.py manifest.json.mv2 manifest.json `cat version.txt` --public
 	cd addon; web-ext build -a ../build -i web-ext-artifacts .web-extension-id _metadata version.txt
 	make firefox-mv2
 
+.PHONY: build-chrome
 build-chrome:
 	make chrome-mv3
 	rm -f build/Scrapyard.zip
