@@ -226,12 +226,45 @@ if(!window.scrapbee_injected){
                 }catch(e){
                     if(e.name == "SecurityError") {
                         try{
-                            var request = new XMLHttpRequest();
-                            request.open('GET', sheet.href, false);  // `false` makes the request synchronous
-                            request.send(null);
-                            if (request.status === 200) {
-                                css.push(request.responseText);
+                            // var response = await browser.runtime.sendMessage({type: "DOWNLOAD_FILE_INTERNAL", url: sheet.href});
+                            // css.push(response.responseText);
+
+                            
+                            // todo: how to request this kind of resource without security problems???
+                            if(sheet.href == 'resource://content-accessible/plaintext.css'){
+                                css.push(`
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  -moz-control-character-visibility: visible;
+}
+.nowrap pre {
+  white-space: pre;
+}
+html:not([dir]) pre {
+  unicode-bidi: plaintext;
+}
+@-moz-document unobservable-document() {
+  :root {
+    color-scheme: light dark;
+  }
+}
+@media (width: 0) or (height: 0) {
+  :root {
+    display: none;
+  }
+}
+`);
+                            }else{
+                                
+                                var request = new XMLHttpRequest();
+                                request.open('GET', sheet.href, false);  // `false` makes the request synchronous
+                                request.send(null);
+                                if (request.status === 200) {
+                                    css.push(request.responseText);
+                                }
                             }
+                            
                         }catch(e){
                             log.error(`error process css ${sheet.href}: ${e.message}`);
                         }

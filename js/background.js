@@ -210,6 +210,9 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }else{
             return ajaxFormPost(CONF.getBackendAddress() + "savebinfile", {filename, file, pwd: CONF.getItem("backend.pwd")});
         }
+    }else if(request.type == 'DOWNLOAD_FILE_INTERNAL'){
+        let {url} = request;
+        return downloadFile(url);
     }else if(request.type == 'DOWNLOAD_FILE'){
         let {url, itemId, filename} = request;
         return ajaxFormPost(CONF.getBackendAddress() + "download", {url, itemId, filename, pwd: CONF.getItem("backend.pwd")});
@@ -501,3 +504,5 @@ browser.tabs.onCreated.addListener(function(tabInfo){
 // browser.tabs.query({currentWindow: true, active: true}).then(function(tabs){
 //     var saving = browser.tabs.saveAsPDF({});
 // });
+
+
