@@ -15,33 +15,17 @@ layout: default
     </p>
 
     <script>
-        // function watch() {
-        //     document.getElementById('placeholder').style.display='none';
-        //     document.getElementById('webm').style.display='block';
-        //     var video = document.querySelector('#webm video');
-        //     video.play();
-        //     setTimeout(function () {
-        //         document.getElementById('webm').style.display = 'none';
-        //         document.getElementById('placeholder').style.display = 'block';
-        //     }, 25000);
-        // }
-        //
-        // setTimeout(function() {
-        //     if (navigator.userAgent.search("Chrome") >= 0
-        //         || navigator.userAgent.search("Firefox") >= 0) {
-        //         watch();
-        //     }
-        // }, 1000);
-
-        function watch() {
-            delayedPlayProductVideo("product-poster", "product-video", 25000, 1000);
+        function watch(delay) {
+            delayedPlayProductVideo("product-poster", "product-video", 25000, delay);
         }
+
+        watch(1000);
     </script>
 
     <div id="product-poster" class="video-placeholder">
-        <div class="poster-container" onclick="watch()">
+        <div class="poster-container" onclick="watch(0)">
             <img class="poster" src="/scrapyard/media/screen.png" alt="screen"/>
-            <div class="play-button-container" onclick="watch()"><!--
+            <div class="play-button-container" onclick="watch(0)"><!--
             --><img class="play-button" src="/images/play_video.png"></div>
         </div>
     </div>
