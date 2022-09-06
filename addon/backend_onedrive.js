@@ -228,6 +228,7 @@ export class OneDriveBackend extends BackendCloudBase {
 
     async reset() {
         try {
+            // TODO: add suport for @odata.nextLink
             const requestPath = this._getDrivePath(BackendCloudBase.CLOUD_SHELF_PATH) + ":/children";
             const driveItems = await this._makeJSONRequest(requestPath);
 
