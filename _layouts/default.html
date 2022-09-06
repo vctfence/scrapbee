@@ -53,17 +53,6 @@
         </p>
 
         <script>
-            // var xhr = new XMLHttpRequest();
-            // xhr.onreadystatechange = function () {
-            //     if (this.readyState == 4 && this.status == 200) {
-            //         var release = JSON.parse(this.responseText);
-            //         var link = document.getElementById("xpi-link");
-            //         link.href = release.assets[0].browser_download_url;
-            //     }
-            // };
-            // xhr.open('GET', 'https://api.github.com/repos/gchristensen/scrapyard/releases/latest');
-            // xhr.send();
-
             function watch() {
                 document.getElementById('placeholder').style.display='none';
                 document.getElementById('webm').style.display='block';
@@ -78,7 +67,6 @@
             setTimeout(function() {
                 if (navigator.userAgent.search("Chrome") >= 0
                     || navigator.userAgent.search("Firefox") >= 0) {
-
                     watch();
                 }
             }, 1000);
