@@ -71,7 +71,7 @@ async function appendSearchResult(query, node, occurrences) {
     const fallbackIcon = "/icons/globe.svg";
 
     let icon = node.icon;
-    if (node.stored_icon)
+    if (node.has_stored_icon)
         icon = await Icon.get(node.id);
 
     if (!icon)
@@ -98,7 +98,7 @@ async function appendSearchResult(query, node, occurrences) {
 
     foundItems.append(html);
 
-    if (!node.stored_icon && node.icon) {
+    if (!node.has_stored_icon && node.icon) {
         let image = new Image();
         image.onerror = e => {
             $(`#icon_${node.id}`).prop("src", fallbackIcon);

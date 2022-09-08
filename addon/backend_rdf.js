@@ -1,6 +1,6 @@
 import UUID from "./uuid.js";
-import {nativeBackend} from "./backend_native.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
+import {helperApp} from "./helper_app.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {Archive, Node} from "./storage_entities.js";
 import {Path} from "./path.js";
 import {RDFNamespaces} from "./utils_html.js";
@@ -54,7 +54,7 @@ class RDFDoc {
         try {
             let content = this._formatXML(this.doc)
             if (content) {
-                await nativeBackend.post(`/rdf/xml/save/${this.uuid}`,
+                await helperApp.post(`/rdf/xml/save/${this.uuid}`,
                     {rdf_content: content, rdf_file: this.path});
             }
         }
@@ -64,7 +64,7 @@ class RDFDoc {
     }
 
     static async fromNode(node) {
-        const helperApp = await nativeBackend.hasVersion("0.5");
+        const helperApp = await helperApp.hasVersion("0.5");
         if (!helperApp)
             return null;
 
@@ -73,7 +73,7 @@ class RDFDoc {
         let xml = null;
 
         try {
-            const resp = await nativeBackend.post(`/rdf/xml/${node.uuid}`, {rdf_file: rdf_path});
+            const resp = await helperApp.post(`/rdf/xml/${node.uuid}`, {rdf_file: rdf_path});
 
             if (!resp.ok)
                 return null;
@@ -139,7 +139,7 @@ class RDFDoc {
         if (liNode)
             liNode.parentNode.removeChild(liNode);
 
-        if (node.type === NODE_TYPE_GROUP) {
+        if (node.type === NODE_TYPE_FOLDER) {
             query = `//RDF:Seq[@RDF:about='urn:scrapbook:item${node.external_id}']`;
             let seqNode = this._selectFirst(query);
             if (seqNode)
@@ -279,7 +279,7 @@ export class RDFBackend {
 
                     if (node.type === NODE_TYPE_ARCHIVE) {
                         try {
-                            await nativeBackend.post(`/rdf/delete_item/${node.uuid}`,
+                            await helperApp.post(`/rdf/delete_item/${node.uuid}`,
                                 {rdf_directory: await this.getRDFPageDir(node)});
                         } catch (e) {
                             console.error(e);
@@ -314,7 +314,7 @@ export class RDFBackend {
         await Archive.delete(node.id);
 
         try {
-            await nativeBackend.post(`/rdf/save_item/${node.uuid}`,
+            await helperApp.post(`/rdf/save_item/${node.uuid}`,
                 {item_content: data,
                 rdf_directory: await this.getRDFPageDir(node)});
         }
@@ -329,7 +329,7 @@ export class RDFBackend {
     }
 
     async pushRDFPath(node) {
-        await nativeBackend.post(`/rdf/browse/push/${node.uuid}`,
+        await helperApp.post(`/rdf/browse/push/${node.uuid}`,
             {rdf_directory: await this.getRDFPageDir(node)});
     }
 }

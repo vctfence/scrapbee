@@ -181,7 +181,7 @@ function showDlg(name, data, callback) {
                     if (!["prop-row-icon", "prop-row-size"].some(id => this.id === id))
                         return true;
 
-                    if (this.id === "prop-row-icon" && !data.stored_icon && data.icon && data.type !== NODE_TYPE_NOTES)
+                    if (this.id === "prop-row-icon" && !data.has_stored_icon && data.icon && data.type !== NODE_TYPE_NOTES)
                         return true;
 
                     if (this.id === "prop-row-size" && data.size)

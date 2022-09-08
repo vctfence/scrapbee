@@ -1,5 +1,5 @@
 import {send} from "./proxy.js";
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import {isVirtualShelf} from "./storage.js";
 import {receive} from "./proxy.js"
 import UUID from "./uuid.js";
@@ -12,7 +12,7 @@ receive.listBackups = message => {
     let form = new FormData();
     form.append("directory", message.directory);
 
-    return nativeBackend.fetchJSON(`/backup/list`, {method: "POST", body: form});
+    return helperApp.fetchJSON(`/backup/list`, {method: "POST", body: form});
 };
 
 receive.backupShelf = async message => {
@@ -30,7 +30,7 @@ receive.backupShelf = async message => {
 
     let backupFile = `${UUID.date()}_${shelfUUID}.jsonl`
 
-    const process = nativeBackend.post("/backup/initialize", {
+    const process = helperApp.post("/backup/initialize", {
         directory: message.directory,
         file: backupFile,
         compress: message.compress,
@@ -38,7 +38,7 @@ receive.backupShelf = async message => {
         level: message.level
     });
 
-    const port = await nativeBackend.getPort();
+    const port = await helperApp.getPort();
 
     const file = {
         append: async function (text) {
@@ -80,7 +80,7 @@ receive.restoreShelf = async message => {
     let shelf;
 
     try {
-        await nativeBackend.post("/restore/initialize", {
+        await helperApp.post("/restore/initialize", {
             directory: message.directory,
             file: message.meta.file
         });
@@ -88,7 +88,7 @@ receive.restoreShelf = async message => {
         const Reader = class {
             async* lines() {
                 while (true) {
-                    const response = await nativeBackend.fetch("/restore/get_line");
+                    const response = await helperApp.fetch("/restore/get_line");
                     if (response.ok) {
                         const line = await response.text();
                         if (line)
@@ -116,7 +116,7 @@ receive.restoreShelf = async message => {
         error = e;
     }
     finally {
-        await nativeBackend.fetch("/restore/finalize");
+        await helperApp.fetch("/restore/finalize");
         send.stopProcessingIndication();
         send.nodesImported({shelf});
     }
@@ -129,7 +129,7 @@ receive.deleteBackup = async message => {
     send.startProcessingIndication({noWait: true});
 
     try {
-        await nativeBackend.post("/backup/delete", {
+        await helperApp.post("/backup/delete", {
             directory: message.directory,
             file: message.meta.file
         });

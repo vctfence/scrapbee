@@ -21,7 +21,7 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_ID,
     DONE_SHELF_NAME,
-    EVERYTHING,
+    EVERYTHING_SHELF_UUID,
     EVERYTHING_SHELF_ID,
     BROWSER_SHELF_ID,
     NODE_TYPE_ARCHIVE,
@@ -31,7 +31,7 @@ import {
     TODO_SHELF_NAME,
     isBuiltInShelf,
     isVirtualShelf,
-    isEndpoint
+    isContentNode
 } from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
@@ -40,7 +40,7 @@ import {Path} from "../path.js";
 import {Shelf} from "../bookmarks_shelf.js";
 import {TODO} from "../bookmarks_todo.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
-import {Group} from "../bookmarks_group.js";
+import {Folder} from "../bookmarks_folder.js";
 import {Icon, Node} from "../storage_entities.js";
 import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
@@ -383,7 +383,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            const nodes = await Shelf.listContent(EVERYTHING);
+            const nodes = await Shelf.listContent(EVERYTHING_SHELF_UUID);
             tree.update(nodes, true, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
@@ -438,7 +438,7 @@ async function renameShelf() {
         const options = await showDlg("prompt", {caption: "Rename", label: "Name", title: name});
         let newName = options?.title;
         if (newName && !isBuiltInShelf(newName)) {
-            await send.renameGroup({id, name: newName});
+            await send.renameFolder({id, name: newName});
             tree.renameRoot(newName);
             shelfList.renameShelf(id, newName);
         }
@@ -484,7 +484,7 @@ async function importShelf(e) {
         let {name, ext} = pathToNameExt($("#file-picker").val());
         let lname = name.toLocaleLowerCase();
 
-        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isBuiltInShelf(lname)) {
+        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING_SHELF_UUID || !isBuiltInShelf(lname)) {
             if (shelfList.hasShelf(name)) {
                 if (await confirm("Warning", "This will replace '" + name + "'.")) {
                     await performImport(e.target.files[0], name, ext);
@@ -531,7 +531,7 @@ async function performImport(file, file_name, file_ext) {
         await sender.importFile({file: file, file_name: file_name, file_ext: file_ext});
         stopProcessingIndication();
 
-        if (file_name.toLocaleLowerCase() === EVERYTHING)
+        if (file_name.toLocaleLowerCase() === EVERYTHING_SHELF_UUID)
             await loadShelves(EVERYTHING_SHELF_ID);
         else {
             const shelf = await Query.shelf(file_name);
@@ -592,14 +592,14 @@ async function selectOrCreatePath(path) {
         const shelfNode = await Query.shelf(shelf);
 
         if (shelfNode) {
-            const group = await Group.getOrCreateByPath(normalized_path);
+            const folder = await Folder.getOrCreateByPath(normalized_path);
             await switchShelf(shelfNode.id);
-            tree.selectNode(group.id, true);
+            tree.selectNode(folder.id, true);
         }
         else {
             if (isVirtualShelf(shelf)) {
                 switch (shelf.toUpperCase()) {
-                    case EVERYTHING.toUpperCase():
+                    case EVERYTHING_SHELF_UUID.toUpperCase():
                         await switchShelf(EVERYTHING_SHELF_ID);
                         break;
                     case TODO_SHELF_NAME:
@@ -613,9 +613,9 @@ async function selectOrCreatePath(path) {
             else {
                 const shelfNode = await Shelf.add(shelf);
                 if (shelfNode) {
-                    let group = await Group.getOrCreateByPath(normalized_path);
+                    let folder = await Folder.getOrCreateByPath(normalized_path);
                     await loadShelves(shelfNode.id);
-                    tree.selectNode(group.id, true);
+                    tree.selectNode(folder.id, true);
                 }
             }
         }
@@ -644,7 +644,7 @@ async function getRandomBookmark() {
         const id = Math.floor(Math.random() * (ids.length - 1));
         const node = await Node.get(ids[id]);
 
-        if (isEndpoint(node))
+        if (isContentNode(node))
             return node;
 
         ctr -= 1;
@@ -673,7 +673,7 @@ async function displayRandomBookmark() {
             $("#random-bookmark-link").prop('title', `${bookmark.name}\x0A${bookmark.uri}`);
         }
 
-        if (bookmark.stored_icon) {
+        if (bookmark.has_stored_icon) {
             icon = `url("${await Icon.get(bookmark.id)}")`;
         }
         else if (bookmark.icon) {
@@ -866,14 +866,14 @@ receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
     await selectOrCreatePath(message.name);
 };
 
-async function switchAfterCopy(message, external_path, group, topNodes) {
+async function switchAfterCopy(message, external_path, folder, topNodes) {
     if (message.action === "switching") {
         const [shelf, ...path] = external_path.split("/");
         const shelfNode = await Query.shelf(shelf);
 
         await loadShelves(shelfNode.id);
 
-        tree.openNode(group.id)
+        tree.openNode(folder.id)
         tree.selectNode(topNodes);
     }
     else
@@ -894,11 +894,11 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
         selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const group = await Group.getOrCreateByPath(external_path);
-        let newNodes = await send.copyNodes({node_ids: selection, dest_id: group.id, move_last: true});
+        const folder = await Folder.getOrCreateByPath(external_path);
+        let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
         let topNodes = newNodes.filter(n => selection.some(id => id === n.old_id)).map(n => n.id);
 
-        await switchAfterCopy(message, external_path, group, topNodes);
+        await switchAfterCopy(message, external_path, folder, topNodes);
     }
 };
 
@@ -915,9 +915,9 @@ receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
         selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const group = await Group.getOrCreateByPath(external_path);
-        await send.moveNodes({node_ids: selection, dest_id: group.id, move_last: true});
-        await switchAfterCopy(message, external_path, group, selection);
+        const folder = await Folder.getOrCreateByPath(external_path);
+        await send.moveNodes({node_ids: selection, dest_id: folder.id, move_last: true});
+        await switchAfterCopy(message, external_path, folder, selection);
     }
 };
 

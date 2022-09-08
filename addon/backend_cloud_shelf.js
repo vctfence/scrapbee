@@ -3,11 +3,11 @@ import {settings} from "./settings.js";
 import {dropboxBackend} from "./backend_dropbox.js";
 import {oneDriveBackend} from "./backend_onedrive.js";
 import {
-    CLOUD_EXTERNAL_NAME,
+    CLOUD_EXTERNAL_TYPE,
     CLOUD_SHELF_ID,
     CLOUD_SHELF_NAME,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SHELF,
-    isContainer, CLOUD_SHELF_UUID
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_FOLDER, NODE_TYPE_SHELF,
+    isContainerNode, CLOUD_SHELF_UUID
 } from "./storage.js";
 import {CONTEXT_BACKGROUND, getContextType, showNotification} from "./utils_browser.js";
 import {ExternalNode} from "./storage_node_external.js";
@@ -51,7 +51,7 @@ export class CloudBackend {
                 name: CLOUD_SHELF_NAME,
                 uuid: CLOUD_SHELF_UUID,
                 type: NODE_TYPE_SHELF,
-                external: CLOUD_EXTERNAL_NAME};
+                external: CLOUD_EXTERNAL_TYPE};
     }
 
     getRemoteLastModified() {
@@ -108,7 +108,7 @@ export class CloudBackend {
 
     async _createBookmarkInternal(db, node, parent) {
         try {
-            node.external = CLOUD_EXTERNAL_NAME;
+            node.external = CLOUD_EXTERNAL_TYPE;
             node.external_id = node.uuid;
             await Node.update(node);
 
@@ -133,15 +133,15 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
-        let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE);
+        let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_TYPE);
 
         return this.withCloudDB(async db => {
-            if (dest.external === CLOUD_EXTERNAL_NAME) {
+            if (dest.external === CLOUD_EXTERNAL_TYPE) {
                 await Promise.all(cloudNodes.map(n => db.moveNode(n, dest)));
 
                 return Promise.all(otherNodes.map(n => {
-                    if (isContainer(n)) {
+                    if (isContainerNode(n)) {
                         return Bookmark.traverse(n, (parent, node) =>
                             this._createBookmarkInternal(db, node, parent || dest));
                     }
@@ -155,7 +155,7 @@ export class CloudBackend {
                     await Node.update(n);
 
                     try {
-                        if (isContainer(n)) {
+                        if (isContainerNode(n)) {
                             await Bookmark.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = undefined;
@@ -185,12 +185,12 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE);
 
-        if (dest.external === CLOUD_EXTERNAL_NAME) {
+        if (dest.external === CLOUD_EXTERNAL_TYPE) {
             return this.withCloudDB(async db => {
                 for (let n of nodes) {
-                    if (isContainer(n)) {
+                    if (isContainerNode(n)) {
                         await Bookmark.traverse(n, (parent, node) =>
                             this._createBookmarkInternal(db, node, parent || dest));
                     } else
@@ -205,7 +205,7 @@ export class CloudBackend {
                 await Node.update(n);
 
                 try {
-                    if (isContainer(n)) {
+                    if (isContainerNode(n)) {
                         await Bookmark.traverse(n, async (parent, node) => {
                             if (parent) {
                                 node.external = undefined;
@@ -226,7 +226,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE);
 
         if (cloudNodes.length)
             return this.withCloudDB(async db => {
@@ -247,7 +247,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME);
+        let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE);
 
         if (cloudNodes.length) {
             return this.withCloudDB(async db => {
@@ -261,7 +261,7 @@ export class CloudBackend {
         if (!settings.cloud_enabled())
             return;
 
-        nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_NAME && n.external_id);
+        nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE && n.external_id);
 
         if (nodes.length) {
             if (this._provider.ID === dropboxBackend.ID)
@@ -350,7 +350,7 @@ export class CloudBackend {
             try {
                 const remoteDB = await this._provider.downloadDB();
                 let remoteIDs = remoteDB.nodes.map(n => n.external_id);
-                await ExternalNode.deleteMissingIn(remoteIDs, CLOUD_EXTERNAL_NAME);
+                await ExternalNode.deleteMissingIn(remoteIDs, CLOUD_EXTERNAL_TYPE);
 
                 const objects = remoteDB.objects;
                 const progressCounter = new ProgressCounter(objects.length, "cloudSyncProgress");
@@ -380,7 +380,7 @@ export class CloudBackend {
             }
         }
         else {
-            await ExternalNode.delete(CLOUD_EXTERNAL_NAME);
+            await ExternalNode.delete(CLOUD_EXTERNAL_TYPE);
             send.shelvesChanged();
         }
     }

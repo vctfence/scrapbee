@@ -4,7 +4,7 @@ import {
     CLOUD_SHELF_UUID,
     DEFAULT_SHELF_NAME,
     DEFAULT_SHELF_UUID,
-    EVERYTHING,
+    EVERYTHING_SHELF_UUID,
     BROWSER_SHELF_UUID,
     NODE_TYPE_UNLISTED
 } from "./storage.js";
@@ -49,8 +49,8 @@ async function unmaskUUIDs(rollbackNode) {
 }
 
 export async function createRollback(shelf) {
-    if (shelf === EVERYTHING) {
-        const rollbackNode = await createRollbackNode(EVERYTHING);
+    if (shelf === EVERYTHING_SHELF_UUID) {
+        const rollbackNode = await createRollbackNode(EVERYTHING_SHELF_UUID);
         let shelves = await Query.allShelves();
         shelves = shelves.filter(n => !RESERVED_SHELVES.some(uuid => uuid === n.uuid));
         await relocateNodes(shelves, rollbackNode);
@@ -81,7 +81,7 @@ async function cleanRollback() {
 }
 
 async function undoFailedImport(shelf, exists) {
-    if (shelf === EVERYTHING) {
+    if (shelf === EVERYTHING_SHELF_UUID) {
         let shelves = await Query.allShelves();
         shelves = shelves.filter(n => !RESERVED_SHELVES.some(uuid => uuid === n.uuid));
 
@@ -106,10 +106,10 @@ async function undoFailedImport(shelf, exists) {
 }
 
 async function rollbackImport(shelf, exists) {
-    if (shelf === EVERYTHING) {
-        await undoFailedImport(EVERYTHING, true);
+    if (shelf === EVERYTHING_SHELF_UUID) {
+        await undoFailedImport(EVERYTHING_SHELF_UUID, true);
 
-        const rollbackNode = await Query.unlisted("_" + EVERYTHING);
+        const rollbackNode = await Query.unlisted("_" + EVERYTHING_SHELF_UUID);
         await unmaskUUIDs(rollbackNode);
         const shelves = await Node.getChildren(rollbackNode.id);
         await relocateNodes(shelves, null);
@@ -133,7 +133,7 @@ async function rollbackImport(shelf, exists) {
 }
 
 export async function importTransaction(shelf, importer) {
-    const exists = shelf === EVERYTHING || !!await Query.shelf(shelf);
+    const exists = shelf === EVERYTHING_SHELF_UUID || !!await Query.shelf(shelf);
     const useTransaction = settings.undo_failed_imports();
 
     if (exists && useTransaction) {

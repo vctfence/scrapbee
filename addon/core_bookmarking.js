@@ -2,7 +2,7 @@ import {formatBytes, getMimetypeExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
 import {getActiveTab, showNotification, updateTabURL} from "./utils_browser.js";
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import {
     captureTab,
@@ -18,7 +18,7 @@ import {
 } from "./bookmarking.js";
 import {fetchText} from "./utils_io.js";
 import {TODO} from "./bookmarks_todo.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
@@ -28,9 +28,9 @@ import {ensureSidebarWindow} from "./utils_sidebar.js";
 
 receive.createShelf = message => Shelf.add(message.name);
 
-receive.createGroup = message => Group.add(message.parent, message.name);
+receive.createFolder = message => Folder.add(message.parent, message.name);
 
-receive.renameGroup = message => Group.rename(message.id, message.name);
+receive.renameFolder = message => Folder.rename(message.id, message.name);
 
 receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
@@ -183,13 +183,13 @@ receive.uploadFiles = async message => {
     send.startProcessingIndication();
 
     try {
-        const helperApp = await nativeBackend.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
+        const helperApp = await helperApp.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
 
         if (helperApp) {
-            const uuids = await nativeBackend.fetchJSON("/upload/open_file_dialog");
+            const uuids = await helperApp.fetchJSON("/upload/open_file_dialog");
 
             for (const [uuid, file] of Object.entries(uuids)) {
-                const url = nativeBackend.url(`/serve/file/${uuid}/`);
+                const url = helperApp.url(`/serve/file/${uuid}/`);
                 const isHtml = /\.html?$/i.test(file);
 
                 let bookmark = {uri: "", parent_id: message.parent_id};
@@ -225,7 +225,7 @@ receive.uploadFiles = async message => {
                     showNotification(`Can not upload ${bookmark.name}`);
                 }
 
-                await nativeBackend.fetch(`/serve/release_path/${uuid}`);
+                await helperApp.fetch(`/serve/release_path/${uuid}`);
             }
             if (Object.entries(uuids).length)
                 send.nodesUpdated();

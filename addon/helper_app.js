@@ -3,7 +3,7 @@ import {settings} from "./settings.js"
 import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
 import {send} from "./proxy.js";
 
-class NativeBackend {
+class HelperApp {
     #externalEventHandlers = {};
 
     constructor() {
@@ -17,7 +17,7 @@ class NativeBackend {
         }
         else {
             this.port = new Promise(async (resolve, reject) => {
-                let port = browser.runtime.connectNative("scrapyard_helper");
+                let port = browser.runtime.connectNative("scrapyard2_helper");
 
                 port.onDisconnect.addListener(error => {
                     resolve(null);
@@ -60,7 +60,7 @@ class NativeBackend {
     async _onInitialized(msg, port) {
         this.port = port;
         this.version = msg.version;
-        port.onMessage.addListener(NativeBackend._incomingMessages.bind(this));
+        port.onMessage.addListener(HelperApp._incomingMessages.bind(this));
 
         if (msg.error === "address_in_use")
             showNotification(`The helper application HTTP port ${settings.helper_port_number()} is not available.`);
@@ -179,8 +179,8 @@ class NativeBackend {
         let response = await globalThis.fetch(this.url(path), init);
         if (response.ok)
             return response.text();
-       else
-           return this._handleHTTPError(response);
+        else
+            return this._handleHTTPError(response);
     }
 
     async fetchJSON(path, init) {
@@ -213,8 +213,8 @@ class NativeBackend {
 
 }
 
-export const nativeBackend = new NativeBackend();
+export const helperApp = new HelperApp();
 
 if (getContextType() !== CONTEXT_BACKGROUND) {
-    send.helperAppGetBackgroundAuth().then(auth => nativeBackend.auth = auth);
+    send.helperAppGetBackgroundAuth().then(auth => helperApp.auth = auth);
 }

@@ -1,4 +1,4 @@
-import {isContainer} from "./storage.js";
+import {isContainerNode} from "./storage.js";
 import {Node} from "./storage_entities.js";
 import {Query} from "./storage_query.js";
 
@@ -81,7 +81,7 @@ export class EntityManager {
     async traverse(root, visitor) {
         let doTraverse = async (parent, root) => {
             await visitor(parent, root);
-            let children = isContainer(root)
+            let children = isContainerNode(root)
                 ? await Node.getChildren(root.id)
                 : null;
             if (children)

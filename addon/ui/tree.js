@@ -3,66 +3,62 @@ import {cloudBackend} from "../backend_cloud_shelf.js"
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "../settings.js";
 import {
-    isContainer,
-    isEndpoint,
+    isContainerNode,
+    isContentNode,
     isBuiltInShelf,
-    CLOUD_EXTERNAL_NAME,
-    ENDPOINT_TYPES,
-    EVERYTHING,
+    CLOUD_EXTERNAL_TYPE,
+    CONTENT_NODE_TYPES,
+    EVERYTHING_SHELF_UUID,
     FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_MOBILE,
     FIREFOX_BOOKMARK_TOOLBAR,
     FIREFOX_BOOKMARK_UNFILED,
     BROWSER_SHELF_ID,
-    BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP,
+    NODE_TYPE_FOLDER,
     NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF,
     RDF_EXTERNAL_NAME,
-    TODO_NAMES,
+    TODO_STATE_NAMES,
     TODO_STATE_CANCELLED,
     TODO_STATE_DONE,
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    EVERYTHING_SHELF_ID,
-    TODO_SHELF_ID,
-    DONE_SHELF_ID,
-    DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_NAME
+    DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_TYPE
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
-import {getActiveTab, getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
+import {getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
 import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
+const FOLDER_SELECT_STATE = "folder-select";
 
 // return the original Scrapyard node object stored in a jsTree node
 let o = n => n.data;
 
 class BookmarkTree {
-    constructor(element, folderSelect = false) {
-        this._element = element;
-        this._folderSelect = folderSelect;
+    constructor(elementId, foldersOnly = false) {
+        this._elementId = elementId;
+        this._foldersOnly = foldersOnly;
 
         let plugins = ["wholerow", "types", "state"];
 
-        if (!folderSelect) {
+        if (!foldersOnly)
             plugins = plugins.concat(["contextmenu", "dnd"]);
-        }
 
-        $(element).jstree({
+        const jstree = $(elementId).jstree({
             plugins: plugins,
             core: {
                 worker: false,
                 animation: 0,
-                multiple: !folderSelect,
-                check_callback: BookmarkTree.checkOperation.bind(this),
+                multiple: !foldersOnly,
+                check_callback: this.#checkOperation.bind(this),
                 themes: {
                     name: "default",
                     dots: false,
@@ -78,10 +74,10 @@ class BookmarkTree {
                     "valid_children": [NODE_TYPE_SHELF]
                 },
                 [NODE_TYPE_SHELF]: {
-                    "valid_children": [NODE_TYPE_GROUP, ...ENDPOINT_TYPES, NODE_TYPE_SEPARATOR]
+                    "valid_children": [NODE_TYPE_FOLDER, ...CONTENT_NODE_TYPES, NODE_TYPE_SEPARATOR]
                 },
-                [NODE_TYPE_GROUP]: {
-                    "valid_children": [NODE_TYPE_GROUP, ...ENDPOINT_TYPES, NODE_TYPE_SEPARATOR]
+                [NODE_TYPE_FOLDER]: {
+                    "valid_children": [NODE_TYPE_FOLDER, ...CONTENT_NODE_TYPES, NODE_TYPE_SEPARATOR]
                 },
                 [NODE_TYPE_BOOKMARK]: {
                     "valid_children": []
@@ -97,76 +93,32 @@ class BookmarkTree {
                 }
             },
             state: {
-                key: folderSelect? TREE_STATE_PREFIX + EVERYTHING: undefined,
-                _scrollable: folderSelect
+                key: foldersOnly? TREE_STATE_PREFIX + FOLDER_SELECT_STATE: undefined,
+                _scrollable: foldersOnly
             },
             dnd: {
                 inside_pos: "last"
             }
-        }).on("move_node.jstree", BookmarkTree.moveNode.bind(this));
+        });
 
-        this._jstree = $(element).jstree(true);
-
-        this.iconCache = new Map();
-
-        this._jstree.__icon_set_hook = (jnode) => {
-            if (jnode.icon.startsWith("var("))
-                return jnode.icon;
-            else if (jnode.icon.startsWith("/"))
-                return `url("${jnode.icon}")`;
-            else {
-                if (o(jnode)?.stored_icon) {
-                    let icon = this.iconCache.get(jnode.icon);
-                    if (icon)
-                        return `url("${icon}")`;
-                    else
-                        return null;
-                }
-                else
-                    return `url("${jnode.icon}")`;
-            }
-        }
-
-        this._jstree.__icon_check_hook = (a_element, jnode) => {
-            if (jnode.__icon_validated || !jnode.icon || (jnode.icon && jnode.icon.startsWith("var("))
-                || (jnode.icon && jnode.icon.startsWith("/")))
-                return;
-
-            setTimeout(async () => {
-                if (o(jnode)?.stored_icon) {
-                    const cached = this.iconCache.get(jnode.icon);
-                    const base64Url = cached || (await Icon.get(o(jnode).id));
-
-                    if (base64Url) {
-                        if (!cached)
-                            this.iconCache.set(jnode.icon, base64Url);
-                        let iconElement = await this._getIconElement(a_element);
-                        if (iconElement)
-                            iconElement.style.backgroundImage = `url("${base64Url}")`;
-                    }
-                }
-                else {
-                    let image = new Image();
-
-                    image.onerror = async e => {
-                        const fallback_icon = "var(--themed-globe-icon)";
-                        jnode.icon = fallback_icon;
-                        let iconElement = await this._getIconElement(a_element);
-                        if (iconElement)
-                            iconElement.style.backgroundImage = fallback_icon;
-                    };
-                    image.src = jnode.icon;
-                }
-            }, 0);
-
-            jnode.__icon_validated = true;
-        }
+        jstree.on("move_node.jstree", this.#moveNode.bind(this));
 
         $(document).on("mousedown", ".jstree-node", e => this.handleMouseClick(e));
         $(document).on("click", ".jstree-anchor", e => this.handleMouseClick(e));
         // $(document).on("auxclick", ".jstree-anchor", e => e.preventDefault());
 
-        if (!folderSelect && browser.contextualIdentities) {
+        this.iconCache = new Map();
+
+        this._jstree = jstree.jstree(true);
+        this._jstree.__icon_set_hook = this.#iconSetHook.bind(this);
+        this._jstree.__icon_check_hook = this.#iconCheckHook.bind(this);
+
+        if (!foldersOnly)
+            this.#loadContainers();
+    }
+
+    #loadContainers() {
+        if (browser.contextualIdentities) {
             browser.contextualIdentities.query({}).then(containers => {
                 this._containers = containers;
             });
@@ -185,7 +137,60 @@ class BookmarkTree {
         }
     }
 
-    _getIconElement(a_element) {
+    #iconSetHook(jnode) {
+        if (jnode.icon.startsWith("var("))
+            return jnode.icon;
+        else if (jnode.icon.startsWith("/"))
+            return `url("${jnode.icon}")`;
+        else {
+            if (o(jnode)?.has_stored_icon) {
+                let icon = this.iconCache.get(jnode.icon);
+                if (icon)
+                    return `url("${icon}")`;
+                else
+                    return null;
+            }
+            else
+                return `url("${jnode.icon}")`;
+        }
+    }
+
+    #iconCheckHook(a_element, jnode) {
+        if (jnode.__icon_validated || !jnode.icon || (jnode.icon && jnode.icon.startsWith("var("))
+            || (jnode.icon && jnode.icon.startsWith("/")))
+            return;
+
+        setTimeout(async () => {
+            if (o(jnode)?.has_stored_icon) {
+                const cached = this.iconCache.get(jnode.icon);
+                const base64Url = cached || (await Icon.get(o(jnode).id));
+
+                if (base64Url) {
+                    if (!cached)
+                        this.iconCache.set(jnode.icon, base64Url);
+                    let iconElement = await this.#getIconElement(a_element);
+                    if (iconElement)
+                        iconElement.style.backgroundImage = `url("${base64Url}")`;
+                }
+            }
+            else {
+                let image = new Image();
+
+                image.onerror = async e => {
+                    const fallback_icon = "var(--themed-globe-icon)";
+                    jnode.icon = fallback_icon;
+                    let iconElement = await this.#getIconElement(a_element);
+                    if (iconElement)
+                        iconElement.style.backgroundImage = fallback_icon;
+                };
+                image.src = jnode.icon;
+            }
+        }, 0);
+
+        jnode.__icon_validated = true;
+    }
+
+    #getIconElement(a_element) {
         const a_element2 = document.getElementById(a_element.id);
         if (a_element2)
             return a_element2.childNodes[0];
@@ -205,13 +210,12 @@ class BookmarkTree {
         }
     }
 
-
     clearIconCache() {
         this.iconCache = new Map();
     }
 
     handleMouseClick(e) {
-        if (this._folderSelect)
+        if (this._foldersOnly)
             return;
 
         if (e.type === "click" && e.target._mousedown_fired) {
@@ -272,7 +276,7 @@ class BookmarkTree {
         if (node.todo_state)
             return " todo-state-" + (node.__overdue
                 ? "overdue"
-                : TODO_NAMES[node.todo_state].toLowerCase());
+                : TODO_STATE_NAMES[node.todo_state].toLowerCase());
 
         return "";
     }
@@ -300,19 +304,19 @@ class BookmarkTree {
     }
 
     static styleFirefoxFolders(node, jnode) {
-        if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_MENU) {
+        if (node.external === BROWSER_EXTERNAL_TYPE && node.external_id === FIREFOX_BOOKMARK_MENU) {
             jnode.icon = "/icons/bookmarksMenu.svg";
             jnode.li_attr = {"class": "browser-bookmark-menu"};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME
+        else if (node.external === BROWSER_EXTERNAL_TYPE
                 && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_UNFILED
                         || settings.platform.chrome && node.external_id === "2")) {
             jnode.icon = "/icons/unfiledBookmarks.svg";
             jnode.li_attr = {"class": "browser-unfiled-bookmarks"};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME
+        else if (node.external === BROWSER_EXTERNAL_TYPE
                 && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_TOOLBAR
                         || settings.platform.chrome && node.external_id === "1")) {
             jnode.icon = "/icons/bookmarksToolbar.svg";
@@ -321,7 +325,7 @@ class BookmarkTree {
                 jnode.state = {hidden: true};
             node.special_browser_folder = true;
         }
-        else if (node.external === BROWSER_EXTERNAL_NAME && node.external_id === FIREFOX_BOOKMARK_MOBILE) {
+        else if (node.external === BROWSER_EXTERNAL_TYPE && node.external_id === FIREFOX_BOOKMARK_MOBILE) {
             if (!settings.show_firefox_mobile())
                 jnode.state = {hidden: true};
             node.special_browser_folder = true;
@@ -341,7 +345,7 @@ class BookmarkTree {
         if (!jnode.parent)
             jnode.parent = "#";
 
-        if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_NAME) {
+        if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_TYPE) {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
             if (settings.platform.firefox)
@@ -355,7 +359,7 @@ class BookmarkTree {
             }
             BookmarkTree.styleFirefoxFolders(node, jnode);
         }
-        else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME) {
+        else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_TYPE) {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "cloud-shelf"};
             jnode.icon = "var(--themed-cloud-icon)";
@@ -370,13 +374,13 @@ class BookmarkTree {
             jnode.icon = "/icons/shelf.svg";
             jnode.li_attr = {"class": "scrapyard-shelf"};
         }
-        else if (node.type === NODE_TYPE_GROUP) {
+        else if (node.type === NODE_TYPE_FOLDER) {
             jnode.icon = "/icons/group.svg";
             jnode.li_attr = {
                 class: "scrapyard-group",
             };
 
-            if (node.site) {
+            if (node.is_site) {
                 jnode.li_attr["data-clickable"] = "true";
                 jnode.li_attr["class"] += " scrapyard-site"
                 jnode.icon = "/icons/web.svg";
@@ -479,10 +483,10 @@ class BookmarkTree {
 
         let state;
 
-        if (this._folderSelect || everything) {
+        if (/*this._foldersOnly || */everything) {
             this._everything = true;
-            this._jstree.settings.state.key = TREE_STATE_PREFIX + EVERYTHING;
-            state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING));
+            this._jstree.settings.state.key = TREE_STATE_PREFIX + EVERYTHING_SHELF_UUID;
+            state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + EVERYTHING_SHELF_UUID));
         }
         else {
             this._everything = false;
@@ -567,7 +571,7 @@ class BookmarkTree {
             jnode.original = BookmarkTree.toJsTreeNode(node);
             this.data.push(jnode.original);
 
-            if (node.icon && node.stored_icon) {
+            if (node.icon && node.has_stored_icon) {
                 this.iconCache.set(node.icon, jnode.icon);
                 jnode.icon = node.icon;
             }
@@ -604,17 +608,17 @@ class BookmarkTree {
 
         if (forceScroll) {
             domNode.scrollIntoView();
-            $(this._element).scrollLeft(0);
+            $(this._elementId).scrollLeft(0);
         }
         else {
             if (!isElementInViewport(domNode)) {
                 domNode.scrollIntoView();
-                $(this._element).scrollLeft(0);
+                $(this._elementId).scrollLeft(0);
             }
         }
     }
 
-    async createNewGroupUnderSelection(id) {
+    async createNewFolderUnderSelection(id) {
         let selectedJNode = this.selected?.[0];
 
         if (!selectedJNode)
@@ -623,7 +627,7 @@ class BookmarkTree {
         let jnode = this._jstree.create_node(selectedJNode, {
             id: id,
             text: "New Folder",
-            type: NODE_TYPE_GROUP,
+            type: NODE_TYPE_FOLDER,
             icon: "/icons/group.svg",
             li_attr: {"class": "scrapyard-group"}
         });
@@ -638,13 +642,13 @@ class BookmarkTree {
                     resolve(null);
                 }
                 else {
-                    const group = await send.createGroup({parent: parseInt(selectedJNode.id), name: jnode.text});
-                    if (group) {
-                        this._jstree.set_id(jnode.id, group.id);
-                        jnode.original = BookmarkTree.toJsTreeNode(group);
-                        this._jstree.rename_node(jnode, group.name);
+                    const folder = await send.createFolder({parent: parseInt(selectedJNode.id), name: jnode.text});
+                    if (folder) {
+                        this._jstree.set_id(jnode.id, folder.id);
+                        jnode.original = BookmarkTree.toJsTreeNode(folder);
+                        this._jstree.rename_node(jnode, folder.name);
                         //this.reorderNodes(selectedJNode);
-                        resolve(group);
+                        resolve(folder);
                     }
                 }
             });
@@ -666,7 +670,7 @@ class BookmarkTree {
         return jnode;
     }
 
-    static checkOperation(operation, jnode, jparent, position, more) {
+    #checkOperation(operation, jnode, jparent, position, more) {
         // disable dnd copy
         if (operation === "copy_node") {
             return false;
@@ -684,7 +688,7 @@ class BookmarkTree {
         return true;
     }
 
-    static async moveNode(_, data) {
+    async #moveNode(_, data) {
         let tree = this._jstree;
         let jparent = tree.get_node(data.parent);
 
@@ -752,13 +756,13 @@ class BookmarkTree {
         const multiselect = selectedNodes.length > 1;
 
         const setTODOState = async state => {
-            let selectedIds = selectedNodes.map(n => o(n).type === NODE_TYPE_GROUP || o(n).type === NODE_TYPE_SHELF
+            let selectedIds = selectedNodes.map(n => o(n).type === NODE_TYPE_FOLDER || o(n).type === NODE_TYPE_SHELF
                                                         ? n.children
                                                         : o(n).id);
             let nodes = [];
             let changedNodes = selectedIds.flat().map(id => tree.get_node(id));
 
-            selectedIds = changedNodes.filter(n => isEndpoint(o(n))).map(n => parseInt(n.id));
+            selectedIds = changedNodes.filter(n => isContentNode(o(n))).map(n => parseInt(n.id));
 
             selectedNodes = changedNodes.filter(n => selectedIds.some(id => id === o(n).id)).map(n => o(n));
 
@@ -792,8 +796,8 @@ class BookmarkTree {
                 _istyle: `mask-image: url("${container.iconUrl}"); mask-size: 16px 16px; `
                        + `mask-repeat: no-repeat; mask-position: center; background-color: ${container.colorCode};`,
                 action: async obj => {
-                    if (ctxNode.type === NODE_TYPE_SHELF || ctxNode.type === NODE_TYPE_GROUP) {
-                        let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isEndpoint(n));
+                    if (ctxNode.type === NODE_TYPE_SHELF || ctxNode.type === NODE_TYPE_FOLDER) {
+                        let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isContentNode(n));
                         children = children.filter(c => c.type !== NODE_TYPE_NOTES);
                         children.forEach(c => c.type = NODE_TYPE_BOOKMARK);
                         children.sort(byPosition);
@@ -805,7 +809,7 @@ class BookmarkTree {
                     else {
                         for (let n of selectedNodes) {
                             let node = o(n);
-                            if (!isEndpoint(node) || !node.uri)
+                            if (!isContentNode(node) || !node.uri)
                                 continue;
                             node.type = NODE_TYPE_BOOKMARK;
                             await send.browseNode({node, container: obj.item.__container_id});
@@ -861,7 +865,7 @@ class BookmarkTree {
                 label: "Open All",
                 separator_before: ctxNode.__filtering && ctxNode.type,
                 action: async () => {
-                    let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isEndpoint(n));
+                    let children = this.odata.filter(n => ctxJNode.children.some(id => id == n.id) && isContentNode(n));
                     children.sort(byPosition);
 
                     for (let node of children)
@@ -891,27 +895,27 @@ class BookmarkTree {
                         label: "Folder",
                         icon: `/icons/group${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            let group = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                            let folder = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_FOLDER, name: "New Folder",
                                          parent_id: ctxNode.id};
-                            const groupPending = send.createGroup({parent: ctxNode, name: group.name});
+                            const folderPending = send.createFolder({parent: ctxNode, name: folder.name});
 
-                            let jgroup = BookmarkTree.toJsTreeNode(group);
+                            let jfolder = BookmarkTree.toJsTreeNode(folder);
                             tree.deselect_all(true);
 
-                            let groupJNode = tree.get_node(tree.create_node(ctxJNode, jgroup, 0));
-                            tree.select_node(groupJNode);
+                            let folderJNode = tree.get_node(tree.create_node(ctxJNode, jfolder, 0));
+                            tree.select_node(folderJNode);
 
-                            tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
+                            tree.edit(folderJNode, null, async (jnode, success, cancelled) => {
                                 this.startProcessingIndication();
-                                group = await groupPending;
-                                tree.set_id(groupJNode.id, group.id);
+                                folder = await folderPending;
+                                tree.set_id(folderJNode.id, folder.id);
 
                                 if (success && !cancelled && jnode.text)
-                                    group = await send.renameGroup({id: group.id, name: jnode.text});
+                                    folder = await send.renameFolder({id: folder.id, name: jnode.text});
 
-                                tree.rename_node(jnode, group.name);
-                                Object.assign(o(jnode), group);
-                                jnode.original = BookmarkTree.toJsTreeNode(group);
+                                tree.rename_node(jnode, folder.name);
+                                Object.assign(o(jnode), folder);
+                                jnode.original = BookmarkTree.toJsTreeNode(folder);
                                 await this.reorderNodes(ctxJNode);
 
                                 this.stopProcessingIndication();
@@ -925,27 +929,27 @@ class BookmarkTree {
                             let jparent = tree.get_node(ctxJNode.parent);
                             let position = $.inArray(ctxJNode.id, jparent.children);
 
-                            let group = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_GROUP, name: "New Folder",
+                            let folder = {id: Bookmark.setTentativeId({}), type: NODE_TYPE_FOLDER, name: "New Folder",
                                 parent_id: o(jparent).id};
-                            const groupPending = send.createGroup({parent: o(jparent), name: group.name});
+                            const folderPending = send.createFolder({parent: o(jparent), name: folder.name});
 
-                            let jgroup = BookmarkTree.toJsTreeNode(group);
+                            let jfolder = BookmarkTree.toJsTreeNode(folder);
                             tree.deselect_all(true);
 
-                            let groupJNode = tree.get_node(tree.create_node(jparent, jgroup, position + 1));
-                            tree.select_node(groupJNode);
+                            let folderJNode = tree.get_node(tree.create_node(jparent, jfolder, position + 1));
+                            tree.select_node(folderJNode);
 
-                            tree.edit(groupJNode, null, async (jnode, success, cancelled) => {
+                            tree.edit(folderJNode, null, async (jnode, success, cancelled) => {
                                 this.startProcessingIndication();
-                                group = await groupPending;
-                                tree.set_id(groupJNode.id, group.id);
+                                folder = await folderPending;
+                                tree.set_id(folderJNode.id, folder.id);
 
                                 if (success && !cancelled && jnode.text)
-                                    group = await send.renameGroup({id: group.id, name: jnode.text});
+                                    folder = await send.renameFolder({id: folder.id, name: jnode.text});
 
-                                tree.rename_node(jnode, group.name);
-                                Object.assign(o(jnode), group);
-                                jnode.original = BookmarkTree.toJsTreeNode(group);
+                                tree.rename_node(jnode, folder.name);
+                                Object.assign(o(jnode), folder);
+                                jnode.original = BookmarkTree.toJsTreeNode(folder);
                                 await this.reorderNodes(jparent);
 
                                 this.stopProcessingIndication();
@@ -965,7 +969,7 @@ class BookmarkTree {
                         label: "Notes",
                         icon: `/icons/notes${lightTheme? "": "2"}.svg`,
                         action: async () => {
-                            if (isEndpoint(ctxNode)) {
+                            if (isContentNode(ctxNode)) {
                                 send.browseNotes({id: ctxNode.id, uuid: ctxNode.uuid});
                                 return;
                             }
@@ -1032,7 +1036,7 @@ class BookmarkTree {
             pasteItem: {
                 label: "Paste",
                 separator_before: ctxNode.type === NODE_TYPE_SHELF || ctxNode.parent_id == BROWSER_SHELF_ID,
-                _disabled: !(tree.can_paste() && isContainer(ctxNode)),
+                _disabled: !(tree.can_paste() && isContainerNode(ctxNode)),
                 action: async () => {
                     let buffer = tree.get_buffer();
                     let selection = Array.isArray(buffer.node)? buffer.node.map(n => o(n)): [o(buffer.node)];
@@ -1225,7 +1229,7 @@ class BookmarkTree {
                 separator_before: true,
                 label: "Properties...",
                 action: async () => {
-                    if (isEndpoint(ctxNode)) {
+                    if (isContentNode(ctxNode)) {
                         let properties = await Node.get(ctxNode.id);
 
                         properties.comments = await Comments.get(properties.id);
@@ -1243,7 +1247,7 @@ class BookmarkTree {
 
                             if (!properties.icon) {
                                 properties.icon = undefined;
-                                properties.stored_icon = undefined;
+                                properties.has_stored_icon = undefined;
                             }
 
                             this.startProcessingIndication();
@@ -1298,7 +1302,7 @@ class BookmarkTree {
                                     }
 
                                     this.startProcessingIndication();
-                                    await send.renameGroup({id: node.id, name: jnode.text})
+                                    await send.renameFolder({id: node.id, name: jnode.text})
                                     this.stopProcessingIndication();
                                     node.name = ctxJNode.original.text = jnode.text;
                                     tree.rename_node(jnode.id, jnode.text);
@@ -1306,14 +1310,14 @@ class BookmarkTree {
                                 }
                             });
                             break;
-                        case NODE_TYPE_GROUP:
+                        case NODE_TYPE_FOLDER:
                             tree.edit(ctxJNode, null, async (jnode, success, cancelled) => {
                                 if (success && !cancelled) {
                                     this.startProcessingIndication();
-                                    const group = await send.renameGroup({id: node.id, name: jnode.text});
+                                    const folder = await send.renameFolder({id: node.id, name: jnode.text});
                                     this.stopProcessingIndication();
-                                    node.name = ctxJNode.original.text = group.name;
-                                    tree.rename_node(ctxJNode, group.name);
+                                    node.name = ctxJNode.original.text = folder.name;
+                                    tree.rename_node(ctxJNode, folder.name);
                                 }
                             });
                             break;
@@ -1372,7 +1376,7 @@ class BookmarkTree {
                 if (ctxNode.external !== RDF_EXTERNAL_NAME) {
                     delete items.rdfPathItem;
                 }
-            case NODE_TYPE_GROUP:
+            case NODE_TYPE_FOLDER:
                 //delete items.newSeparatorItem;
                 delete items.openOriginalItem;
                 delete items.propertiesItem;
@@ -1383,9 +1387,9 @@ class BookmarkTree {
                     delete items.shareItem.submenu.dropboxItem;
                     delete items.shareItem.submenu.oneDriveItem;
                 }
-                if (ctxNode.type === NODE_TYPE_GROUP)
+                if (ctxNode.type === NODE_TYPE_FOLDER)
                     delete items.rdfPathItem;
-                if (ctxNode.external && ctxNode.external !== CLOUD_EXTERNAL_NAME)
+                if (ctxNode.external && ctxNode.external !== CLOUD_EXTERNAL_TYPE)
                     delete items.newItem.submenu.newNotesItem;
                 if (ctxNode.special_browser_folder) {
                     delete items.cutItem;
@@ -1449,7 +1453,7 @@ class BookmarkTree {
             delete items.openItem;
         }
 
-        if (isEndpoint(ctxNode)) {
+        if (isContentNode(ctxNode)) {
             delete items.newItem.submenu.newBookmarkItem;
 
             if (!ctxNode.has_notes || ctxNode.type === NODE_TYPE_NOTES) {

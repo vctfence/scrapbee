@@ -1,5 +1,5 @@
 {
-    "name": "scrapyard_helper",
+    "name": "scrapyard2_helper",
     "description": "Scrapyard helper application",
     "path": "$EXECUTABLE_PATH$",
     "type": "stdio",

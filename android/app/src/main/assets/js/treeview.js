@@ -493,7 +493,7 @@ function extractSyncNode(node) {
     node.id = node.uuid;
     if (node.type === NODE_TYPE_SHELF && node.uuid === DEFAULT_SHELF_UUID)
         node.pos = -1;
-    if (node.stored_icon)
+    if (node.has_stored_icon)
         node.download_icon = true;
     return node;
 }

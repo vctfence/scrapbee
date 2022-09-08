@@ -1,10 +1,10 @@
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import {getFaviconFromTab} from "./favicon.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
 import {packPage} from "./bookmarking.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {StreamImporterBuilder} from "./import_drivers.js";
@@ -29,7 +29,7 @@ class RDFImporter {
     async import() {
         let helperApp;
 
-        helperApp = await nativeBackend.probe(true);
+        helperApp = await helperApp.probe(true);
 
         if (!helperApp)
             return;
@@ -106,7 +106,7 @@ class RDFImporter {
             form.append("rdf_file", rdfFile);
             form.append("rdf_directory", rdfDirectory);
 
-            xml = await nativeBackend.fetchText(`/rdf/import/${rdfFile}`, {method: "POST", body: form});
+            xml = await helperApp.fetchText(`/rdf/import/${rdfFile}`, {method: "POST", body: form});
         } catch (e) {
             console.error(e);
         }
@@ -179,7 +179,7 @@ class RDFImporter {
 
             if (bookmark.icon && bookmark.icon.startsWith("resource://scrapbook/")) {
                 bookmark.icon = bookmark.icon.replace("resource://scrapbook/", "");
-                bookmark.icon = nativeBackend.url(`/rdf/import/files/${bookmark.icon}`);
+                bookmark.icon = helperApp.url(`/rdf/import/files/${bookmark.icon}`);
                 await Bookmark.storeIcon(bookmark);
             }
 
@@ -193,7 +193,7 @@ class RDFImporter {
     }
 
     async #importRDFArchive(node, scrapbookId) {
-        let root = nativeBackend.url(`/rdf/import/files/`)
+        let root = helperApp.url(`/rdf/import/files/`)
         let base = `${root}data/${scrapbookId}/`
         let index = `${base}index.html`;
 
@@ -222,7 +222,7 @@ class RDFImporter {
     }
 
     async #createShelf(path) {
-        const shelfNode = await Group.getOrCreateByPath(this.#options.name);
+        const shelfNode = await Folder.getOrCreateByPath(this.#options.name);
 
         if (shelfNode) {
             if (this.#options.quick) {
@@ -244,7 +244,7 @@ class RDFImporter {
             uri: node.__sb_source,
             name: node.__sb_title,
             type: node.__sb_type === "folder"
-                ? NODE_TYPE_GROUP
+                ? NODE_TYPE_FOLDER
                 : (node.__sb_type === "separator"
                     ? NODE_TYPE_SEPARATOR
                     : NODE_TYPE_ARCHIVE),
@@ -265,7 +265,7 @@ class RDFImporter {
 
         this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
 
-        if (data.type === NODE_TYPE_GROUP)
+        if (data.type === NODE_TYPE_FOLDER)
             this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
         else if (data.type === NODE_TYPE_ARCHIVE) {
             this.#nodeID_SY2SB.set(bookmark.id, node.__sb_id);

@@ -1,7 +1,7 @@
 import {receive, send} from "./proxy.js";
 import {settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
 import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent} from "./storage.js";
 import {SYNC_VERSION} from "./marshaller_json.js";
@@ -16,10 +16,10 @@ let syncing = false;
 receive.checkSyncDirectory = async message => {
     try {
         send.startProcessingIndication({noWait: true});
-        const helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application 0.5+ is required for this feature.");
+        const helperApp = await helperApp.hasVersion("0.5", "Scrapyard helper application 0.5+ is required for this feature.");
 
         if (helperApp) {
-            const status = await nativeBackend.jsonPost("/sync/check_directory",
+            const status = await helperApp.jsonPost("/sync/check_directory",
                 {sync_directory: message.sync_directory});
 
             if (status)
@@ -64,7 +64,7 @@ browser.alarms.onAlarm.addListener(alarm => {
 async function performSync(initial) {
     await settings.load();
 
-    if (syncing || !settings.sync_enabled() || !await nativeBackend.probe(true))
+    if (syncing || !settings.sync_enabled() || !await helperApp.probe(true))
         return;
 
     if (initial)
@@ -87,7 +87,7 @@ async function performSync(initial) {
             last_sync_date: settings.last_sync_date() || -1
         };
 
-        const syncOperations = await nativeBackend.jsonPost("/sync/compute", syncParams);
+        const syncOperations = await helperApp.jsonPost("/sync/compute", syncParams);
 
         if (!syncOperations) {
             showNotification("Synchronization could not be performed because of an error.");
@@ -124,7 +124,7 @@ async function performSync(initial) {
 }
 
 async function isSynchronizationPossible(sync_directory, initial) {
-    const syncProperties = await nativeBackend.jsonPost("/sync/get_metadata", {sync_directory});
+    const syncProperties = await helperApp.jsonPost("/sync/get_metadata", {sync_directory});
 
     if (!syncProperties || syncProperties.error === "error") {
         showNotification("Error initializing synchronization.");
@@ -193,7 +193,7 @@ async function getNodesForSync() {
 }
 
 async function performOperations(syncOperations, sync_directory) {
-    await nativeBackend.post("/sync/open_session", {sync_directory});
+    await helperApp.post("/sync/open_session", {sync_directory});
 
     let errors = false;
 
@@ -208,7 +208,7 @@ async function performOperations(syncOperations, sync_directory) {
     const total = syncOperations.push.length + syncOperations.pull.length + syncOperations.delete.length;
     const progress = new ProgressCounter(total, "syncProgress");
 
-    const syncMarshaller = new MarshallerSync(nativeBackend, syncOperations.initial);
+    const syncMarshaller = new MarshallerSync(helperApp, syncOperations.initial);
     for (const syncNode of syncOperations.push)
         try {
             await syncMarshaller.marshal(syncNode);
@@ -219,7 +219,7 @@ async function performOperations(syncOperations, sync_directory) {
             console.error(e);
         }
 
-    const syncUnmarshaller = new UnmarshallerSync(nativeBackend);
+    const syncUnmarshaller = new UnmarshallerSync(helperApp);
     for (const syncNode of syncOperations.pull)
         try {
             await syncUnmarshaller.unmarshall(syncNode)
@@ -234,7 +234,7 @@ async function performOperations(syncOperations, sync_directory) {
 
     progress.finish();
 
-    await nativeBackend.fetch("/sync/close_session");
+    await helperApp.fetch("/sync/close_session");
 
     await settings.load();
     settings.last_sync_date(Date.now());
@@ -245,7 +245,7 @@ async function performOperations(syncOperations, sync_directory) {
 
 async function deleteSyncNodes(syncNodes) {
     if (syncNodes.length)
-        await nativeBackend.post("/sync/delete", {nodes: JSON.stringify(syncNodes)});
+        await helperApp.post("/sync/delete", {nodes: JSON.stringify(syncNodes)});
 }
 
 async function deleteNodes(syncNodes) {

@@ -32,8 +32,26 @@ export class MarshallerJSON extends Marshaller {
 
     async marshal(object) {
         const content = await this.preprocessContent(object);
+
+        this.#convertToScrapyard_v1(content);
+
         const output = "\n" + JSON.stringify(content);
+
         return this._stream.append(output);
+    }
+
+    #convertToScrapyard_v1(object) {
+        const node = object.node;
+
+        if (node.hasOwnProperty("has_stored_icon")) {
+            node.stored_icon = node.has_stored_icon;
+            delete node.has_stored_icon;
+        }
+
+        if (node.hasOwnProperty("is_site")) {
+            node.site = node.is_site;
+            delete node.is_site;
+        }
     }
 }
 
@@ -79,8 +97,24 @@ export class StructuredUnmarshallerJSON extends Unmarshaller {
 
         if (input) {
             const object = this.parseJSONObjectImpl(input);
+
+            this.#convertToScrapyard_v2(object);
             object.persist = () => this.storeContent(object);
             return object;
+        }
+    }
+
+    #convertToScrapyard_v2(object) {
+        const node = object.node;
+
+        if (node.hasOwnProperty("stored_icon")) {
+            node.has_stored_icon = node.stored_icon;
+            delete node.stored_icon;
+        }
+
+        if (node.hasOwnProperty("site")) {
+            node.is_site = node.site;
+            delete node.site;
         }
     }
 }

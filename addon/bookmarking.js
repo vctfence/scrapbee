@@ -15,7 +15,7 @@ import {Node} from "./storage_entities.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {isHTMLLink, parseHtml} from "./utils_html.js";
 import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
 
@@ -220,8 +220,8 @@ export async function showSiteCaptureOptions(tab, bookmark) {
 
 export async function performSiteCapture(bookmark) {
     if (crawler.initialize(bookmark)) {
-        const group = await Group.addSite(bookmark.parent_id, bookmark.name);
-        bookmark.parent_id = group.id;
+        const folder = await Folder.addSite(bookmark.parent_id, bookmark.name);
+        bookmark.parent_id = folder.id;
 
         sendLocal.createArchive({node: bookmark});
     }

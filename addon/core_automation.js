@@ -1,8 +1,8 @@
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import UUID from "./uuid.js";
 import {
-    isContainer, isBuiltInShelf, byPosition,
-    TODO_NAMES, TODO_STATES,
+    isContainerNode, isBuiltInShelf, byPosition,
+    TODO_STATE_NAMES, TODO_STATES,
     CLOUD_SHELF_NAME, CLOUD_SHELF_UUID,
     DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
     BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
@@ -13,13 +13,12 @@ import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
-import {parseHtml} from "./utils_html.js";
 import {fetchText} from "./utils_io.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "./storage_entities.js";
 import {browseNode} from "./browse.js";
@@ -78,8 +77,8 @@ export async function createBookmarkNode(message, sender, activeTab) {
         node.icon = await getFaviconFromTab(activeTab);
 
     const path = Path.expand(node.path);
-    const group = await Group.getOrCreateByPath(path);
-    node.parent_id = group.id;
+    const folder = await Folder.getOrCreateByPath(path);
+    node.parent_id = folder.id;
     delete node.path;
 
     return node;
@@ -235,12 +234,12 @@ async function setUpLocalFileCapture(message) {
         throw new Error("HTTP URL is processed as a local path.");
 
     let local_uri;
-    if (await nativeBackend.probe()) {
+    if (await helperApp.probe()) {
         message.uri = message.uri.replace(/^file:\/+/i, "");
 
         message.__local_uuid = UUID.numeric();
-        await nativeBackend.post(`/serve/set_path/${message.__local_uuid}`, {path: message.uri});
-        local_uri = nativeBackend.url(`/serve/file/${message.__local_uuid}/`);
+        await helperApp.post(`/serve/set_path/${message.__local_uuid}`, {path: message.uri});
+        local_uri = helperApp.url(`/serve/file/${message.__local_uuid}/`);
         message.uri = "";
         return local_uri;
     }
@@ -251,7 +250,7 @@ async function setUpLocalFileCapture(message) {
 
 async function cleanUpLocalFileCapture(message) {
     if (message.local)
-        await nativeBackend.fetch(`/serve/release_path/${message.__local_uuid}`);
+        await helperApp.fetch(`/serve/release_path/${message.__local_uuid}`);
 }
 
 async function nodeToAPIObject(node) {
@@ -262,14 +261,11 @@ async function nodeToAPIObject(node) {
                 : undefined;
 
         const icon =
-            node.stored_icon
+            node.has_stored_icon
                 ? await Icon.get(node.id)
                 : node.icon;
 
-        const uuid =
-            isBuiltInShelf(node.name)
-                ? node.name.toLowerCase()
-                : node.uuid;
+        const uuid = node.uuid;
 
         const options = {
             type: NODE_TYPE_NAMES[node.type],
@@ -290,7 +286,7 @@ async function nodeToAPIObject(node) {
             options.details = node.details;
 
         if (node.todo_state)
-            options.todo_state = TODO_NAMES[node.todo_state];
+            options.todo_state = TODO_STATE_NAMES[node.todo_state];
 
         if (node.todo_date)
             options.todo_date = node.todo_date;
@@ -325,19 +321,9 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
         container = true;
     }
     else {
-        const API_UUID_TO_DB = {
-            [CLOUD_SHELF_NAME]: CLOUD_SHELF_UUID,
-            [BROWSER_SHELF_NAME]: BROWSER_SHELF_UUID,
-            [DEFAULT_SHELF_NAME]: DEFAULT_SHELF_UUID,
-        };
+        const node = await Node.getByUUID(message.uuid);
+        container = node && isContainerNode(node);
 
-        const uuid =
-            isBuiltInShelf(message.uuid)
-                ? API_UUID_TO_DB[message.uuid]
-                : message.uuid;
-
-        const node = await Node.getByUUID(uuid);
-        container = node && isContainer(node);
         if (container)
             entries = await Node.getChildren(node.id);
         else
@@ -361,14 +347,17 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
 
     let entries;
     let container;
+
     if (message.path === "/") {
         entries = await Query.allShelves();
         container = true;
     }
     else {
         const path = Path.expand(message.path);
-        const node = await Group.getByPath(path);
+        const node = await Folder.getByPath(path);
+
         container = !!node;
+
         if (container)
             entries = await Node.getChildren(node.id);
         else
@@ -422,7 +411,7 @@ receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
 
     if (message.icon === "") {
         message.icon = undefined;
-        message.stored_icon = undefined;
+        message.has_stored_icon = undefined;
     }
     else if (message.icon)
         await Bookmark.storeIcon(node);

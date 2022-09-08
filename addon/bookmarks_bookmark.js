@@ -1,14 +1,14 @@
 import {EntityManager} from "./bookmarks.js";
 import {
-    byDateDesc,
+    byDateAddedDesc,
     byPosition,
     DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
-    EVERYTHING,
-    isEndpoint, isNodeHasContent, isVirtualShelf,
+    EVERYTHING_SHELF_UUID,
+    isContentNode, isNodeHasContent, isVirtualShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    NODE_TYPE_GROUP, NODE_TYPE_NOTES,
+    NODE_TYPE_FOLDER, NODE_TYPE_NOTES,
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
     TODO_SHELF_NAME, DEFAULT_POSITION,
@@ -17,7 +17,7 @@ import {
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
@@ -100,10 +100,10 @@ export class BookmarkManager extends EntityManager {
             type: NODE_TYPE_NOTES
         });
 
-        let group = await Node.get(parentId);
+        let folder = await Node.get(parentId);
 
         try {
-            await this.plugins.createBookmark(node, group);
+            await this.plugins.createBookmark(node, folder);
         }
         catch (e) {
             console.error(e);
@@ -117,7 +117,7 @@ export class BookmarkManager extends EntityManager {
             return;
 
         if (data.type !== NODE_TYPE_SHELF)
-            data.parent_id = data.parent_id || (await Group.getOrCreateByPath(data.path)).id;
+            data.parent_id = data.parent_id || (await Folder.getOrCreateByPath(data.path)).id;
 
         data = Object.assign({}, data);
 
@@ -185,14 +185,14 @@ export class BookmarkManager extends EntityManager {
                        // period, // chronological period: "between", "before", "after"
                        // types,  // filter for node types (array of integers)
                        // limit,  // limit for the returned record number
-                       // depth,  // specify depth of search: "group", "subtree" or "root+subtree"
+                       // depth,  // specify depth of search: "group" (sic!, a folder, used in external api), "subtree" or "root+subtree"
                        // order   // order mode to sort the output if specified: "custom", "todo", "date_desc"
                        // content // search in content instead of node name (boolean)
                        // index   // index to use: "content", "comments", "notes"
                        //}
     ) {
-        const path = options.path || EVERYTHING;
-        let group = isVirtualShelf(path)? null: await Group.getByPath(path);
+        const path = options.path || EVERYTHING_SHELF_UUID;
+        let folder = isVirtualShelf(path)? null: await Folder.getByPath(path);
 
         if (!options.depth)
             options.depth = "subtree";
@@ -209,20 +209,20 @@ export class BookmarkManager extends EntityManager {
             if (path) {
                 subtree = [];
 
-                if (path.toLowerCase() === EVERYTHING)
+                if (path.toLowerCase() === EVERYTHING_SHELF_UUID)
                     subtree = null;
                 else if (path.toUpperCase() === TODO_SHELF_NAME)
                     subtree = (await Query.todo()).map(n => n.id);
                 else if (path.toUpperCase() === DONE_SHELF_NAME)
                     subtree = (await Query.done()).map(n => n.id);
                 else
-                    await Query.selectAllChildrenIdsOf(group.id, subtree);
+                    await Query.selectAllChildrenIdsOf(folder.id, subtree);
             }
 
             result = await Query.nodesByIndex(subtree, search, options.index);
         }
         else {
-            result = await Query.nodes(group, options);
+            result = await Query.nodes(folder, options);
         }
 
         if (path?.toUpperCase() === TODO_SHELF_NAME || path?.toUpperCase() === DONE_SHELF_NAME) {
@@ -242,7 +242,7 @@ export class BookmarkManager extends EntityManager {
         if (options.order === "custom")
             result.sort(byPosition);
         else if (options.order === "date_desc")
-            result.sort(byDateDesc);
+            result.sort(byDateAddedDesc);
 
         return result;
     }
@@ -289,7 +289,7 @@ export class BookmarkManager extends EntityManager {
             await Node.update(n);
         }
 
-        if (nodes.some(n => n.type === NODE_TYPE_GROUP))
+        if (nodes.some(n => n.type === NODE_TYPE_FOLDER))
             ishellBackend.invalidateCompletion();
 
         return Query.fullSubtree(ids, true);
@@ -322,7 +322,7 @@ export class BookmarkManager extends EntityManager {
             newNodes.push(Object.assign(n, await Node.add(n)));
 
             try {
-                if (isEndpoint(n) && n.type !== NODE_TYPE_SEPARATOR) {
+                if (isContentNode(n) && n.type !== NODE_TYPE_SEPARATOR) {
                     let notes = await Notes.get(old_id);
                     if (notes) {
                         delete notes.id;
@@ -337,7 +337,7 @@ export class BookmarkManager extends EntityManager {
                         comments = null;
                     }
 
-                    if (n.stored_icon) {
+                    if (n.has_stored_icon) {
                         let icon = await Icon.get(old_id);
                         if (icon) {
                             await Icon.add(n.id, icon);
@@ -363,7 +363,7 @@ export class BookmarkManager extends EntityManager {
         try {
             await this.plugins.copyBookmarks(dest, rootNodes);
 
-            if (rootNodes.some(n => n.type === NODE_TYPE_GROUP))
+            if (rootNodes.some(n => n.type === NODE_TYPE_FOLDER))
                 ishellBackend.invalidateCompletion();
         }
         catch (e) {
@@ -383,7 +383,7 @@ export class BookmarkManager extends EntityManager {
 
         await deletef(nodes);
 
-        if (nodes.some(n => n.type === NODE_TYPE_GROUP || n.type === NODE_TYPE_SHELF))
+        if (nodes.some(n => n.type === NODE_TYPE_FOLDER || n.type === NODE_TYPE_SHELF))
             ishellBackend.invalidateCompletion();
     }
 
@@ -449,7 +449,7 @@ export class BookmarkManager extends EntityManager {
         };
 
         const updateNode = async (node, iconUrl) => {
-            node.stored_icon = true;
+            node.has_stored_icon = true;
             node.icon = "hash:" + (await computeSHA1(iconUrl));
             if (node.id)
                 await Node.update(node);
@@ -493,7 +493,7 @@ export class BookmarkManager extends EntityManager {
                         }
                         catch (e) {
                             node.icon = undefined;
-                            node.stored_icon = undefined;
+                            node.has_stored_icon = undefined;
                             if (node.id)
                                 await Node.update(node);
                             console.error(e);
@@ -544,7 +544,7 @@ export class BookmarkManager extends EntityManager {
 
     async isSitePage(node) {
         const parent = await Node.get(node.parent_id);
-        return parent.site;
+        return parent.is_site;
     }
 }
 

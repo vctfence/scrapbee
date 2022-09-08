@@ -1,7 +1,7 @@
 import {browserBackend} from "./backend_browser.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import {receive} from "./proxy.js";
 
 receive.uiLockGet = message => {
@@ -35,19 +35,19 @@ receive.enableCloudBackgroundSync = async message => {
 };
 
 receive.helperAppProbe = message => {
-    return nativeBackend.probe(message.verbose);
+    return helperApp.probe(message.verbose);
 };
 
 receive.helperAppGetVersion = async message => {
-    await nativeBackend.probe();
-    return nativeBackend.getVersion();
+    await helperApp.probe();
+    return helperApp.getVersion();
 };
 
 receive.helperAppHasVersion = async message => {
-    return nativeBackend.hasVersion(message.version, message.alert);
+    return helperApp.hasVersion(message.version, message.alert);
 };
 
 receive.helperAppGetBackgroundAuth = message => {
-    return nativeBackend.auth;
+    return helperApp.auth;
 };
 

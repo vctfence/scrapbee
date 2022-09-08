@@ -2,13 +2,13 @@ import {ProgressCounter} from "./utils.js";
 import {
     DEFAULT_SHELF_ID,
     DEFAULT_SHELF_NAME,
-    EVERYTHING,
+    EVERYTHING_SHELF_UUID,
     BROWSER_SHELF_ID,
-    isContainer,
-    NODE_TYPE_GROUP,
+    isContainerNode,
+    NODE_TYPE_FOLDER,
     NODE_TYPE_SHELF
 } from "./storage.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import UUID from "./uuid.js";
 import {formatShelfName} from "./bookmarking.js";
 import {Import} from "./import.js";
@@ -209,8 +209,8 @@ export class StructuredStreamImporter {
 
         this._importParentId2DBParentId = new Map();
         this._importParentId2DBParentId.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
-        this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING;
-        this._shelfNode = shelfName !== EVERYTHING? await Group.getOrCreateByPath(shelfName): null;
+        this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING_SHELF_UUID;
+        this._shelfNode = shelfName !== EVERYTHING_SHELF_UUID? await Folder.getOrCreateByPath(shelfName): null;
 
         if (this._shelfNode) // first object contains id of its parent shelf (not everything) if a shelf is imported
             this._importParentId2DBParentId.set(firstObject.node.parent_id, this._shelfNode.id);
@@ -235,7 +235,7 @@ export class StructuredStreamImporter {
 
         // importing the default shelf
         if (object.node.type === NODE_TYPE_SHELF && object.node.name?.toLowerCase() === DEFAULT_SHELF_NAME) {
-            if (_everythingAsShelf) // import default shelf as a group
+            if (_everythingAsShelf) // import default shelf as a folder
                 object.node.uuid = UUID.numeric();
             else { // do not import default shelf because it is always there
                 _progressCounter?.incrementAndNotify();
@@ -246,14 +246,14 @@ export class StructuredStreamImporter {
         if (object.node.parent_id)
             object.node.parent_id = _importParentId2DBParentId.get(object.node.parent_id);
         else if (_everythingAsShelf && object.node.type === NODE_TYPE_SHELF) {
-            object.node.type = NODE_TYPE_GROUP;
+            object.node.type = NODE_TYPE_FOLDER;
             object.node.parent_id = _shelfNode.id;
         }
 
         let objectImportId = object.node.id;
         const node = await object.persist();
 
-        if (objectImportId && isContainer(node))
+        if (objectImportId && isContainerNode(node))
             _importParentId2DBParentId.set(objectImportId, node.id);
 
         _progressCounter?.incrementAndNotify();

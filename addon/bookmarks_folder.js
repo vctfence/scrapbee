@@ -1,13 +1,13 @@
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {EntityManager} from "./bookmarks.js";
-import {NODE_TYPE_GROUP, NODE_TYPE_SHELF} from "./storage.js";
+import {NODE_TYPE_FOLDER, NODE_TYPE_SHELF} from "./storage.js";
 import {ishellBackend} from "./backend_ishell.js";
 import {Node} from "./storage_entities.js";
 
-class GroupManager extends EntityManager {
+class FolderManager extends EntityManager {
 
-    async add(parent, name, nodeType = NODE_TYPE_GROUP) {
+    async add(parent, name, nodeType = NODE_TYPE_FOLDER) {
         if (parent && typeof parent === "number")
             parent = await Node.get(parent);
 
@@ -23,7 +23,7 @@ class GroupManager extends EntityManager {
 
         return this._addNode({
             name,
-            type: NODE_TYPE_GROUP,
+            type: NODE_TYPE_FOLDER,
             parent_id: parentId,
             site: true
         }, parent);
@@ -46,47 +46,47 @@ class GroupManager extends EntityManager {
         return node;
     }
 
-    // returns map of groups the function was able to find in the path
-    async _queryGroups(pathList) {
+    // returns map of folders the function was able to find in the path
+    async _queryFolders(pathList) {
         pathList = pathList.slice(0);
 
-        let groups = {};
+        let folders = {};
         let shelfName = pathList.shift();
         let shelf = await Query.shelf(shelfName);
 
         if (shelf)
-            groups[shelf.name.toLocaleLowerCase()] = shelf;
+            folders[shelf.name.toLocaleLowerCase()] = shelf;
         else
             return {};
 
         let parent = shelf;
         for (let name of pathList) {
             if (parent) {
-                let group = await Query.subgroup(parent.id, name);
-                groups[name.toLocaleLowerCase()] = group;
-                parent = group;
+                let folder = await Query.subfolder(parent.id, name);
+                folders[name.toLocaleLowerCase()] = folder;
+                parent = folder;
             }
             else
                 break;
         }
 
-        return groups;
+        return folders;
     }
 
-    // returns the last group in the path if it exists
+    // returns the last folder in the path if it exists
     async getByPath(path) {
         let pathList = Path.split(path);
-        let groups = await this._queryGroups(pathList);
+        let folders = await this._queryFolders(pathList);
 
-        return groups[pathList[pathList.length - 1].toLocaleLowerCase()];
+        return folders[pathList[pathList.length - 1].toLocaleLowerCase()];
     }
 
-    // creates all non-existent groups in the path
+    // creates all non-existent folders in the path
     async getOrCreateByPath(path) {
         let pathList = Path.split(path);
-        let groups = await this._queryGroups(pathList);
+        let folders = await this._queryFolders(pathList);
         let shelfName = pathList.shift();
-        let parent = groups[shelfName.toLowerCase()];
+        let parent = folders[shelfName.toLowerCase()];
 
         if (!parent) {
             parent = await Node.add({
@@ -97,16 +97,16 @@ class GroupManager extends EntityManager {
         }
 
         for (let name of pathList) {
-            let group = groups[name.toLowerCase()];
+            let folder = folders[name.toLowerCase()];
 
-            if (group) {
-                parent = group;
+            if (folder) {
+                parent = folder;
             }
             else {
                 let node = await Node.add({
                     parent_id: parent.id,
                     name: name,
-                    type: NODE_TYPE_GROUP
+                    type: NODE_TYPE_FOLDER
                 });
 
                 try {
@@ -125,27 +125,27 @@ class GroupManager extends EntityManager {
     }
 
     async rename(id, newName) {
-        let group = await Node.get(id);
+        let folder = await Node.get(id);
 
-        if (group.name !== newName) {
-            if (group.name.toLocaleUpperCase() !== newName.toLocaleUpperCase())
-                group.name = await this.ensureUniqueName(group.parent_id, newName, group.name);
+        if (folder.name !== newName) {
+            if (folder.name.toLocaleUpperCase() !== newName.toLocaleUpperCase())
+                folder.name = await this.ensureUniqueName(folder.parent_id, newName, folder.name);
             else
-                group.name = newName;
+                folder.name = newName;
 
             try {
-                await this.plugins.renameBookmark(group);
+                await this.plugins.renameBookmark(folder);
                 ishellBackend.invalidateCompletion();
             }
             catch (e) {
                 console.error(e);
             }
 
-            await Node.update(group);
+            await Node.update(folder);
         }
-        return group;
+        return folder;
     }
 
 }
 
-export let Group = new GroupManager();
+export let Folder = new FolderManager();

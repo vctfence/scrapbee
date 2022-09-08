@@ -11,11 +11,9 @@ class ScrapyardSettings {
             helper_port_number: 20202,
             show_firefox_bookmarks: true,
             switch_to_new_bookmark: true,
-            enable_backup_compression: true,
             visual_archive_icon: true,
             visual_archive_color: true,
-            show_firefox_toolbar: !_BACKGROUND_PAGE,
-            browse_with_helper: !_BACKGROUND_PAGE
+            show_firefox_toolbar: !_BACKGROUND_PAGE
         };
 
         this._bin = {};
@@ -25,10 +23,13 @@ class ScrapyardSettings {
     async _loadPlatform() {
         if (!this._platform) {
             const platformInfo = await browser.runtime.getPlatformInfo();
+
             this._platform = {[platformInfo.os]: true};
+
             if (navigator.userAgent.indexOf("Firefox") >= 0) {
                 this._platform.firefox = true;
             }
+
             if (navigator.userAgent.indexOf("Chrome") >= 0) {
                 this._platform.chrome = true;
             }
@@ -51,6 +52,7 @@ class ScrapyardSettings {
 
     async _isAddonUpdated() {
         let updated;
+
         if (browser.storage.session) {
             updated = await browser.storage.session.get(SCRAPYARD_UPDATED_KEY);
             updated = updated?.[SCRAPYARD_UPDATED_KEY];
@@ -59,6 +61,7 @@ class ScrapyardSettings {
             updated = localStorage.getItem(SCRAPYARD_UPDATED_KEY) === "true";
             localStorage.setItem(SCRAPYARD_UPDATED_KEY, "false");
         }
+
         return updated;
     }
 
@@ -78,7 +81,7 @@ class ScrapyardSettings {
         else if (key === "isAddonUpdated")
             return this._isAddonUpdated;
 
-        return val => {
+        return (val, save = true) => {
             let bin = this._bin;
 
             if (val === undefined)
@@ -94,7 +97,11 @@ class ScrapyardSettings {
 
             let result = key in bin? bin[key]: deleted;
             this._processSetSetting(key, val);
-            return this._save().then(() => result);
+
+            if (save)
+                return this._save().then(() => result);
+            else
+                return result;
         }
     }
 

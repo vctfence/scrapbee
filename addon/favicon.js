@@ -10,9 +10,11 @@ export async function testFavicon(url) {
             return "https://en.wikipedia.org/favicon.ico";
 
         let response = await fetch(url)
+
         if (response.ok) {
             let type = response.headers.get("content-type") || "image";
             //let length = response.headers.get("content-length") || "0";
+
             if (type.startsWith("image") /*&& parseInt(length) > 0*/)
                 return url.toString();
         }
@@ -36,8 +38,8 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     try {
         let icon = await injectScriptFile(tab.id, {file: "/content_favicon.js"});
 
-        if (icon && icon.length && icon[0]) // TODO: leave only .result in MV3
-            favicon = await testFavicon(new URL(icon[0].result || icon[0], origin));
+        if (icon && icon.length && icon[0])
+            favicon = await testFavicon(new URL(icon[0].result || icon[0], origin)); // TODO: leave only .result in MV3
     } catch (e) {
         console.error(e);
     }
@@ -53,6 +55,7 @@ export async function getFaviconFromContent(url, doc) {
         let timeout = settings.link_check_timeout()? settings.link_check_timeout() * 1000: 10000;
         try {
             const response = await fetchWithTimeout(url, {timeout});
+
             if (response.ok) {
                 if (_BACKGROUND_PAGE)
                     doc = parseHtml(await response.text());
@@ -70,11 +73,13 @@ export async function getFaviconFromContent(url, doc) {
     try {
         if (typeof doc === "string") {
             const linkTag = doc.match(/<link[^>]*rel=['"](?:icon|shortcut)[^>]*>/i)?.[0];
+
             if (linkTag)
                 favIcon = linkTag.match(/href=['"]?([^'" ]+)/i)?.[1];
         }
         else if (doc) {
             const faviconElt = doc.querySelector("link[rel*='icon'], link[rel*='shortcut']");
+
             if (faviconElt)
                 favIcon = faviconElt.href;
         }

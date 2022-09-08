@@ -3,9 +3,9 @@ import {settings} from "./settings.js";
 import {
     FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED,
     BROWSER_SHELF_ID, BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
-    NODE_TYPE_BOOKMARK, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF, NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, NODE_TYPE_SHELF, NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
-    isContainer, isEndpoint, FIREFOX_SPECIAL_FOLDERS, BROWSER_EXTERNAL_NAME,
+    isContainerNode, isContentNode, FIREFOX_SPECIAL_FOLDERS, BROWSER_EXTERNAL_TYPE,
 } from "./storage.js";
 import {ExternalNode} from "./storage_node_external.js";
 import {Path} from "./path.js";
@@ -47,7 +47,7 @@ export class BrowserBackend {
                 name: BROWSER_SHELF_NAME,
                 uuid: BROWSER_SHELF_UUID,
                 type: NODE_TYPE_SHELF,
-                external: BROWSER_EXTERNAL_NAME};
+                external: BROWSER_EXTERNAL_TYPE};
     }
 
     _convertType(node) {
@@ -58,13 +58,13 @@ export class BrowserBackend {
                 node.type = "bookmark";
         }
 
-        return ({"folder": NODE_TYPE_GROUP,
+        return ({"folder": NODE_TYPE_FOLDER,
                  "bookmark": NODE_TYPE_BOOKMARK,
                  "separator": NODE_TYPE_SEPARATOR})[node.type];
     }
 
     _toBrowserType(node) {
-        return ({[NODE_TYPE_GROUP]: "folder",
+        return ({[NODE_TYPE_FOLDER]: "folder",
                  [NODE_TYPE_SHELF]: "folder",
                  [NODE_TYPE_ARCHIVE]: "bookmark",
                  [NODE_TYPE_BOOKMARK]: "bookmark",
@@ -106,13 +106,13 @@ export class BrowserBackend {
             type: this._convertType(bookmark),
             parent_id: parent.id,
             date_added: bookmark.dateAdded,
-            external: BROWSER_EXTERNAL_NAME,
+            external: BROWSER_EXTERNAL_TYPE,
             external_id: bookmark.id
         };
     }
 
     async createBrowserBookmark(node, parentId) {
-        if (!node.uri && !isContainer(node))
+        if (!node.uri && !isContainerNode(node))
             return;
 
         const type = this._toBrowserType(node);
@@ -126,7 +126,7 @@ export class BrowserBackend {
 
         this.markUIBookmarks(bookmark.id, CATEGORY_ADDED);
 
-        node.external = BROWSER_EXTERNAL_NAME;
+        node.external = BROWSER_EXTERNAL_TYPE;
         node.external_id = bookmark.id;
         return Node.update(node);
     }
@@ -157,11 +157,11 @@ export class BrowserBackend {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME);
-        let otherNodes = nodes.filter(n => n.external !== BROWSER_EXTERNAL_NAME);
+        let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_TYPE);
+        let otherNodes = nodes.filter(n => n.external !== BROWSER_EXTERNAL_TYPE);
 
         return this.muteBrowserListeners(async () => {
-            if (dest.external === BROWSER_EXTERNAL_NAME) {
+            if (dest.external === BROWSER_EXTERNAL_TYPE) {
                 await Promise.all(browserNodes.map(n => {
                         this.markUIBookmarks(n.external_id, CATEGORY_MOVED);
                         return browser.bookmarks.move(n.external_id, {parentId: dest.external_id, index: n.pos})
@@ -169,7 +169,7 @@ export class BrowserBackend {
                 ));
 
                 return Promise.all(otherNodes.map(n => {
-                    if (isContainer(n)) {
+                    if (isContainerNode(n)) {
                         return Bookmark.traverse(n, (parent, node) =>
                             this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id));
                     }
@@ -185,7 +185,7 @@ export class BrowserBackend {
                     await Node.update(n);
 
                     try {
-                        if (isContainer(n)) {
+                        if (isContainerNode(n)) {
                             await Bookmark.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = undefined;
@@ -213,13 +213,13 @@ export class BrowserBackend {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME);
+        let browserNodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_TYPE);
         //let other_nodes = nodes.filter(n => n.external !== BROWSER_SHELF_NAME);
 
         return this.muteBrowserListeners(async () => {
-            if (dest.external === BROWSER_EXTERNAL_NAME) {
+            if (dest.external === BROWSER_EXTERNAL_TYPE) {
                 return Promise.all(nodes.map(async n => {
-                    if (isContainer(n)) {
+                    if (isContainerNode(n)) {
                         return Bookmark.traverse(n, (parent, node) =>
                             this.createBrowserBookmark(node, parent? parent.external_id: dest.external_id));
                     }
@@ -233,7 +233,7 @@ export class BrowserBackend {
                     await Node.update(n);
 
                     try {
-                        if (isContainer(n)) {
+                        if (isContainerNode(n)) {
                             await Bookmark.traverse(n, async (parent, node) => {
                                 if (parent) {
                                     node.external = undefined;
@@ -255,14 +255,14 @@ export class BrowserBackend {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        let externalEndpoints = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME
-                                                        && (isEndpoint(n) || n.type === NODE_TYPE_SEPARATOR));
+        let externalEndpoints = nodes.filter(n => n.external === BROWSER_EXTERNAL_TYPE
+                                                        && (isContentNode(n) || n.type === NODE_TYPE_SEPARATOR));
 
-        let externalGroups = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME &&  n.type === NODE_TYPE_GROUP);
+        let externalContainers = nodes.filter(n => n.external === BROWSER_EXTERNAL_TYPE &&  n.type === NODE_TYPE_FOLDER);
 
-        if (externalEndpoints.length || externalGroups.length)
+        if (externalEndpoints.length || externalContainers.length)
             return this.muteBrowserListeners(async () => {
-                await Promise.all(externalGroups.map(n => {
+                await Promise.all(externalContainers.map(n => {
                     try {
                         this.markUIBookmarks(n.external_id, CATEGORY_REMOVED);
                         return browser.bookmarks.removeTree(n.external_id);
@@ -297,7 +297,7 @@ export class BrowserBackend {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
 
-        nodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_NAME && n.external_id);
+        nodes = nodes.filter(n => n.external === BROWSER_EXTERNAL_TYPE && n.external_id);
 
         if (nodes.length)
             return this.muteBrowserListeners(async () => {
@@ -315,7 +315,7 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_NAME);
+            let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_TYPE);
             if (parent) {
                 let node = this.convertBookmark(bookmark, parent);
                 node = await Node.add(node);
@@ -337,7 +337,7 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let node = await ExternalNode.get(id, BROWSER_EXTERNAL_NAME);
+            let node = await ExternalNode.get(id, BROWSER_EXTERNAL_TYPE);
             if (node) {
                 await Bookmark.delete([node.id]);
                 send.externalNodeRemoved({node: node});
@@ -355,7 +355,7 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let node = await ExternalNode.get(id, BROWSER_EXTERNAL_NAME);
+            let node = await ExternalNode.get(id, BROWSER_EXTERNAL_TYPE);
             if (node) {
                 node.uri = bookmark.url;
                 node.name = bookmark.title;
@@ -375,7 +375,7 @@ export class BrowserBackend {
         this.getListenerLock();
 
         try {
-            let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_NAME);
+            let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_TYPE);
 
             if (parent) {
                 let browserBookmarks = await browser.bookmarks.getChildren(bookmark.parentId);
@@ -383,7 +383,7 @@ export class BrowserBackend {
                 let updatedNode;
 
                 for (let browserBookmark of browserBookmarks) {
-                    let dbBookmark = await ExternalNode.get(browserBookmark.id, BROWSER_EXTERNAL_NAME);
+                    let dbBookmark = await ExternalNode.get(browserBookmark.id, BROWSER_EXTERNAL_TYPE);
 
                     if (dbBookmark) {
                         if (browserBookmark.id === id) {
@@ -480,11 +480,11 @@ export class BrowserBackend {
     }
 
     async saveFirefoxBookmarkFolderNames() {
-        const bookmarkMenu = await ExternalNode.get(FIREFOX_BOOKMARK_MENU, BROWSER_EXTERNAL_NAME);
+        const bookmarkMenu = await ExternalNode.get(FIREFOX_BOOKMARK_MENU, BROWSER_EXTERNAL_TYPE);
         if (bookmarkMenu)
             Path.storeSubstitute("@", BROWSER_SHELF_NAME + "/" + bookmarkMenu.name);
 
-        const unfiledMenu = await ExternalNode.get(FIREFOX_BOOKMARK_UNFILED, BROWSER_EXTERNAL_NAME);
+        const unfiledMenu = await ExternalNode.get(FIREFOX_BOOKMARK_UNFILED, BROWSER_EXTERNAL_TYPE);
         if (unfiledMenu)
             Path.storeSubstitute("@@", BROWSER_SHELF_NAME + "/" + unfiledMenu.name);
     }
@@ -540,16 +540,16 @@ export class BrowserBackend {
             else {
                 if (dbRoot.name === "firefox") {
                     const nodes = await Shelf.listContent("firefox");
-                    await Node.batchUpdate(n => n.external = BROWSER_EXTERNAL_NAME, nodes.map(n => n.id));
+                    await Node.batchUpdate(n => n.external = BROWSER_EXTERNAL_TYPE, nodes.map(n => n.id));
                     dbRoot.name = BROWSER_SHELF_NAME;
-                    dbRoot.external = BROWSER_EXTERNAL_NAME;
+                    dbRoot.external = BROWSER_EXTERNAL_TYPE;
                     Node.update(dbRoot);
                 }
             }
 
             let [browserRoot] = await browser.bookmarks.getTree();
 
-            dbPool = new Map((await ExternalNode.get(BROWSER_EXTERNAL_NAME)).map(n => [n.external_id, n]));
+            dbPool = new Map((await ExternalNode.get(BROWSER_EXTERNAL_TYPE)).map(n => [n.external_id, n]));
 
             try {
                 await reconcile(dbRoot, browserRoot);
@@ -558,7 +558,7 @@ export class BrowserBackend {
 
                 await this.saveFirefoxBookmarkFolderNames();
 
-                await ExternalNode.deleteMissingIn(browserIds, BROWSER_EXTERNAL_NAME);
+                await ExternalNode.deleteMissingIn(browserIds, BROWSER_EXTERNAL_TYPE);
 
                 send.externalNodesReady();
 
@@ -579,7 +579,7 @@ export class BrowserBackend {
         }
         else {
             this.removeBrowserListeners();
-            await ExternalNode.delete(BROWSER_EXTERNAL_NAME);
+            await ExternalNode.delete(BROWSER_EXTERNAL_TYPE);
             send.shelvesChanged();
         }
     }

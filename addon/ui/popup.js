@@ -19,7 +19,7 @@ $(init);
 async function init() {
     await systemInitialization;
 
-    const nodes = await Query.allGroups();
+    const nodes = await Query.allFolders();
     tree = new BookmarkTree("#treeview", true);
     bookmarkFolderSelect = simpleSelectric("#bookmark-folder");
     folderHistory = loadFolderHistory(nodes);
@@ -106,13 +106,13 @@ function onTreeFolderSelected(e, {node: jnode}) {
 }
 
 async function createNewFolder() {
-    const group = await tree.createNewGroupUnderSelection("$new_node$");
+    const folder = await tree.createNewFolderUnderSelection("$new_node$");
 
-    if (group) {
+    if (folder) {
         let newOption = $(`#bookmark-folder option[value='$new_node$']`);
-        newOption.text(group.name);
-        newOption.val(group.id);
-        bookmarkFolderSelect.val(group.id);
+        newOption.text(folder.name);
+        newOption.val(folder.id);
+        bookmarkFolderSelect.val(folder.id);
         selectricRefresh(bookmarkFolderSelect)
     }
 }

@@ -1,5 +1,5 @@
 import {cleanObject} from "./utils.js";
-import {BROWSER_EXTERNAL_NAME, NODE_TYPE_ARCHIVE} from "./storage.js";
+import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_ARCHIVE} from "./storage.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
@@ -28,7 +28,7 @@ export class Marshaller {
             if (key.endsWith("_added") || key.endsWith("_modified"))
                 node[key] = this._date2UnixTime(node[key]);
 
-        if (node.external === BROWSER_EXTERNAL_NAME) {
+        if (node.external === BROWSER_EXTERNAL_TYPE) {
             delete node.external;
             delete node.external_id;
         }
@@ -54,7 +54,7 @@ export class Marshaller {
         if (node.has_comments)
             result.comments = this.preprocessComments(await Comments.get(node.id));
 
-        if (node.icon && node.stored_icon)
+        if (node.icon && node.has_stored_icon)
             result.icon = this.preprocessIcon(await Icon.get(node.id));
 
         return result;
@@ -138,7 +138,7 @@ export class Unmarshaller {
         if (icon)
             await Icon.import.add(node.id, icon.data_url);
         else {
-            if (node.icon && !node.stored_icon) // may appear from android application
+            if (node.icon && !node.has_stored_icon) // may appear from android application
                 await Bookmark.storeIcon(node);
         }
 

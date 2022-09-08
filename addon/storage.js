@@ -1,7 +1,7 @@
 export const STORAGE_FORMAT = "Scrapyard";
 
 export const NODE_TYPE_SHELF = 1;
-export const NODE_TYPE_GROUP = 2;
+export const NODE_TYPE_FOLDER = 2;
 export const NODE_TYPE_BOOKMARK = 3;
 export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
@@ -10,15 +10,15 @@ export const NODE_TYPE_UNLISTED = 7;
 
 export const NODE_TYPE_NAMES = {
     [NODE_TYPE_SHELF]: "shelf",
-    [NODE_TYPE_GROUP]: "folder",
+    [NODE_TYPE_FOLDER]: "folder",
     [NODE_TYPE_BOOKMARK]: "bookmark",
     [NODE_TYPE_ARCHIVE]: "archive",
     [NODE_TYPE_SEPARATOR]: "separator",
     [NODE_TYPE_NOTES]: "notes"
 };
 
-export const ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
-export const CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP, NODE_TYPE_UNLISTED];
+export const CONTAINER_NODE_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_FOLDER, NODE_TYPE_UNLISTED];
+export const CONTENT_NODE_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
 
 export const TODO_STATE_TODO = 1;
 export const TODO_STATE_DONE = 4;
@@ -26,7 +26,7 @@ export const TODO_STATE_WAITING = 2;
 export const TODO_STATE_POSTPONED = 3;
 export const TODO_STATE_CANCELLED = 5;
 
-export const TODO_NAMES = {
+export const TODO_STATE_NAMES = {
     [TODO_STATE_TODO]: "TODO",
     [TODO_STATE_WAITING]: "WAITING",
     [TODO_STATE_POSTPONED]: "POSTPONED",
@@ -54,13 +54,16 @@ export const TODO_SHELF_UUID = TODO_SHELF_NAME;
 export const DONE_SHELF_NAME = "DONE";
 export const DONE_SHELF_UUID = DONE_SHELF_NAME;
 
-export const EVERYTHING = "everything";
+export const EVERYTHING_SHELF_NAME = "everything";
+export const EVERYTHING_SHELF_UUID = "everything";
 
 export const DEFAULT_SHELF_NAME = "default";
-export const DEFAULT_SHELF_UUID = DEFAULT_SHELF_ID.toString();
+export const DEFAULT_SHELF_UUID = "default";
 
 export const BROWSER_SHELF_NAME = "browser";
-export const BROWSER_SHELF_UUID = "browser_bookmarks";
+export const BROWSER_SHELF_UUID = "browser";
+export const BROWSER_EXTERNAL_TYPE = "browser";
+
 export const FIREFOX_BOOKMARK_MENU = "menu________";
 export const FIREFOX_BOOKMARK_UNFILED = "unfiled_____";
 export const FIREFOX_BOOKMARK_TOOLBAR = "toolbar_____";
@@ -68,17 +71,15 @@ export const FIREFOX_BOOKMARK_MOBILE = "mobile______"
 
 export const FIREFOX_SPECIAL_FOLDERS = [FIREFOX_BOOKMARK_MENU, FIREFOX_BOOKMARK_UNFILED, FIREFOX_BOOKMARK_TOOLBAR];
 
-export const BROWSER_EXTERNAL_NAME = BROWSER_SHELF_NAME;
-
 export const CLOUD_SHELF_NAME = "cloud";
-export const CLOUD_SHELF_UUID = CLOUD_SHELF_NAME;
-export const CLOUD_EXTERNAL_NAME = CLOUD_SHELF_NAME;
+export const CLOUD_SHELF_UUID = "cloud";
+export const CLOUD_EXTERNAL_TYPE = "cloud";
 
-export const RDF_EXTERNAL_NAME = "rdf";
+export const RDF_EXTERNAL_NAME = "RDF";
 
 export const NON_IMPORTABLE_SHELVES = [BROWSER_SHELF_UUID, CLOUD_SHELF_UUID];
 
-export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME];
+export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_TYPE, CLOUD_EXTERNAL_TYPE];
 
 export const DEFAULT_POSITION = 2147483647;
 
@@ -102,7 +103,7 @@ export const NODE_PROPERTIES =
      "date_added",
      "date_modified",
      "content_modified",
-     "stored_icon",
+     "has_stored_icon",
      "has_notes",
      "has_comments",
      "external",
@@ -111,36 +112,63 @@ export const NODE_PROPERTIES =
      "content_type",
      "_uuid",
      "_unlisted",
-     "site"
+     "is_site"
     ];
 
-export function isContainer(node) {
-    return node && CONTAINER_TYPES.some(t => t == node.type);
+export function isContainerNode(node) {
+    return node && CONTAINER_NODE_TYPES.some(t => t == node.type);
 }
 
-export function isEndpoint(node) {
-    return node && ENDPOINT_TYPES.some(t => t == node.type);
-}
-
-export function isVirtualShelf(name) {
-    name = name?.toLocaleUpperCase();
-    return name === EVERYTHING.toLocaleUpperCase()
-        || name === TODO_SHELF_NAME.toLocaleUpperCase()
-        || name === DONE_SHELF_NAME.toLocaleUpperCase();
-}
-
-export function isBuiltInShelf(name) {
-    name = name?.toLocaleUpperCase();
-    return name === DEFAULT_SHELF_NAME.toLocaleUpperCase()
-        || name === BROWSER_SHELF_NAME.toLocaleUpperCase()
-        || name === CLOUD_SHELF_NAME.toLocaleUpperCase()
-        || name === EVERYTHING.toLocaleUpperCase()
-        || name === TODO_SHELF_NAME.toLocaleUpperCase()
-        || name === DONE_SHELF_NAME.toLocaleUpperCase();
+export function isContentNode(node) {
+    return node && CONTENT_NODE_TYPES.some(t => t == node.type);
 }
 
 export function isNodeHasContent(node) {
-    return node.type === NODE_TYPE_ARCHIVE || node.stored_icon || node.has_notes || node.has_comments;
+    return node.type === NODE_TYPE_ARCHIVE || node.has_stored_icon || node.has_notes || node.has_comments;
+}
+
+const VIRTUAL_SHELVES = [
+    getBuiltInShelfName(EVERYTHING_SHELF_UUID),
+    getBuiltInShelfName(TODO_SHELF_UUID),
+    getBuiltInShelfName(DONE_SHELF_UUID),
+].map(s => s.toLocaleLowerCase());
+
+export function isVirtualShelf(name) {
+    name = name?.toLocaleLowerCase();
+
+    return VIRTUAL_SHELVES.some(s => s === name);
+}
+
+const BUILTIN_SHELVES = [
+    getBuiltInShelfName(EVERYTHING_SHELF_UUID),
+    getBuiltInShelfName(TODO_SHELF_UUID),
+    getBuiltInShelfName(DONE_SHELF_UUID),
+    getBuiltInShelfName(DEFAULT_SHELF_UUID),
+    getBuiltInShelfName(BROWSER_SHELF_UUID),
+    getBuiltInShelfName(CLOUD_SHELF_UUID)
+].map(s => s.toLocaleLowerCase());
+
+export function isBuiltInShelf(name) {
+    name = name?.toLocaleLowerCase();
+
+    return BUILTIN_SHELVES.some(s => s === name);
+}
+
+export function getBuiltInShelfName(uuid) {
+    switch(uuid) {
+        case EVERYTHING_SHELF_UUID:
+            return EVERYTHING_SHELF_NAME;
+        case DEFAULT_SHELF_UUID:
+            return DEFAULT_SHELF_NAME;
+        case BROWSER_SHELF_UUID:
+            return BROWSER_SHELF_NAME;
+        case CLOUD_SHELF_UUID:
+            return CLOUD_SHELF_NAME;
+        case TODO_SHELF_UUID:
+            return TODO_SHELF_NAME;
+        case DONE_SHELF_UUID:
+            return DONE_SHELF_NAME;
+    }
 }
 
 export function byPosition(a, b) {
@@ -149,14 +177,14 @@ export function byPosition(a, b) {
     return a_pos - b_pos;
 }
 
-export function byDateDesc(a, b) {
+export function byDateAddedDesc(a, b) {
     if (a.date_added && b.date_added)
         return b.date_added - a.date_added;
 
     return 0;
 }
 
-export function byDateAsc(a, b) {
+export function byDateAddedAsc(a, b) {
     if (a.date_added && b.date_added)
         return a.date_added - b.date_added;
 

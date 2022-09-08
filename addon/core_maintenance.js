@@ -1,6 +1,6 @@
 import {send, receive} from "./proxy.js";
 import {
-    isEndpoint,
+    isContentNode,
     DEFAULT_SHELF_NAME,
     DEFAULT_SHELF_UUID,
     NODE_TYPE_ARCHIVE,
@@ -10,7 +10,6 @@ import {
 } from "./storage.js";
 import {computeSHA1} from "./utils.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
-import {nativeBackend} from "./backend_native.js";
 import {parseHtml, fixDocumentEncoding, indexString, indexHTML} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
@@ -19,14 +18,14 @@ import {ExportArea} from "./storage_export.js";
 import {settings} from "./settings.js";
 
 receive.getAddonIdbPath = async message => {
-    let helperApp = await nativeBackend.probe();
+    let helperApp = await helperApp.probe();
 
     if (!helperApp)
         return;
 
     const addonId = browser.runtime.getURL("/").split("/")[2];
 
-    return nativeBackend.fetchText(`/request/idb_path/${addonId}`)
+    return helperApp.fetchText(`/request/idb_path/${addonId}`)
 };
 
 receive.optimizeDatabase = async message => {
@@ -64,13 +63,13 @@ receive.optimizeDatabase = async message => {
             let actionTaken = false;
 
             const bookmarkNode = node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK;
-            if (bookmarkNode && node.icon && !node.stored_icon) {
+            if (bookmarkNode && node.icon && !node.has_stored_icon) {
                 await Bookmark.storeIcon(node);
 
                 if (DEBUG)
                     console.log("storing icon");
 
-                if (!node.stored_icon) {
+                if (!node.has_stored_icon) {
                     node.icon = undefined;
 
                     if (DEBUG)
@@ -79,13 +78,13 @@ receive.optimizeDatabase = async message => {
 
                 actionTaken = true;
             }
-            else if (bookmarkNode && node.icon && node.stored_icon && !node.icon.startsWith("hash:")) {
+            else if (bookmarkNode && node.icon && node.has_stored_icon && !node.icon.startsWith("hash:")) {
                 const icon = await Icon.get(node.id);
                 if (icon)
                     node.icon = "hash:" + (await computeSHA1(icon));
                 else {
                     node.icon = undefined;
-                    node.stored_icon = undefined;
+                    node.has_stored_icon = undefined;
                 }
 
                 if (DEBUG)
@@ -95,7 +94,7 @@ receive.optimizeDatabase = async message => {
             }
             else if (!bookmarkNode) {
                 node.icon = undefined;
-                node.stored_icon = undefined;
+                node.has_stored_icon = undefined;
 
                 if (DEBUG)
                     console.log("deleted icon");
@@ -225,13 +224,13 @@ receive.resetSync = async message => {
     if (!settings.sync_directory())
         return;
 
-    const helperApp = nativeBackend.probe(true);
+    const helperApp = helperApp.probe(true);
 
     if (helperApp) {
         send.startProcessingIndication({noWait: true});
 
         try {
-            await nativeBackend.post("/sync/reset", {sync_directory: settings.sync_directory()});
+            await helperApp.post("/sync/reset", {sync_directory: settings.sync_directory()});
             settings.sync_enabled(false);
             settings.last_sync_date(null);
             send.syncStateChanged({enabled: false});
@@ -262,7 +261,7 @@ receive.computeStatistics = async message => {
     send.startProcessingIndication();
 
     await Node.iterate(node => {
-        if (isEndpoint(node))
+        if (isContentNode(node))
             items += 1;
 
         if (node.type === NODE_TYPE_BOOKMARK)

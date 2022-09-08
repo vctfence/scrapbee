@@ -4,7 +4,7 @@ import {
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
-    EVERYTHING,
+    EVERYTHING_SHELF_UUID,
     FIREFOX_BOOKMARK_MOBILE,
     TODO_SHELF_NAME
 } from "./storage.js";
@@ -48,7 +48,7 @@ export class Export {
             return nodes;
         }
 
-        const everything = isShelfName && shelf === EVERYTHING;
+        const everything = isShelfName && shelf === EVERYTHING_SHELF_UUID;
 
         if (!everything && isShelfName)
             shelf = await Query.shelf(shelf);
@@ -104,7 +104,7 @@ export class Import {
         if (settings.undo_failed_imports())
             return;
 
-        if (shelf === EVERYTHING) {
+        if (shelf === EVERYTHING_SHELF_UUID) {
             return ExportArea.prepareToImportEverything();
         }
         else {

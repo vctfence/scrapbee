@@ -1,11 +1,11 @@
 import {
-    isContainer,
-    EVERYTHING,
+    isContainerNode,
+    EVERYTHING_SHELF_UUID,
     BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     STORAGE_FORMAT,
-    TODO_NAMES,
+    TODO_STATE_NAMES,
     TODO_STATES
 } from "./storage.js";
 import * as org from "./lib/org/org.js";
@@ -14,7 +14,7 @@ import {Marshaller, Unmarshaller} from "./marshaller.js";
 import {transformFromV1ToV3} from "./import_versions.js";
 
 const FORMAT_VERSION = 2;
-const ORG_EXPORTED_KEYS = ["uuid", "icon", "stored_icon", "type", "size", "details", "date_added", "date_modified",
+const ORG_EXPORTED_KEYS = ["uuid", "icon", "has_stored_icon", "type", "size", "details", "date_added", "date_modified",
     "content_modified", "external", "external_id", "container", "content_type"];
 
 export class MarshallerORG extends Marshaller {
@@ -46,7 +46,7 @@ export class MarshallerORG extends Marshaller {
     async marshal(object) {
         let output;
 
-        if (isContainer(object))
+        if (isContainerNode(object))
             output = this._processContainer(object);
         else
             output = await this._processEndpoint(object);
@@ -85,7 +85,7 @@ export class MarshallerORG extends Marshaller {
         let line = "\n" + "*".repeat(level);
 
         if (node.todo_state)
-            line += " " + TODO_NAMES[node.todo_state];
+            line += " " + TODO_STATE_NAMES[node.todo_state];
 
         let title = node.name || "";
         if (title) {
@@ -217,7 +217,7 @@ class ORGObjectStream {
 
     *objects() {
         let level = 0;
-        let path = this._shelf === EVERYTHING ? [] : [this._shelf];
+        let path = this._shelf === EVERYTHING_SHELF_UUID ? [] : [this._shelf];
 
         let lastObject;
         let orgNodes = this.orgLines.nodes;
@@ -250,7 +250,7 @@ class ORGObjectStream {
 
                 let dirName = orgItems[1].value;
 
-                if (level === 0 && this._shelf === EVERYTHING && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
+                if (level === 0 && this._shelf === EVERYTHING_SHELF_UUID && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
                     dirName = `${formatShelfName(dirName)} (imported)`;
 
                 if (level < orgItems[0].level)
@@ -318,7 +318,7 @@ class ORGObjectStream {
                     if (property.value)
                         object[property.name] = parseInt(property.value);
                     break;
-                case "stored_icon":
+                case "has_stored_icon":
                     if (property.value)
                         object[property.name] = property.value === "true";
                     break;

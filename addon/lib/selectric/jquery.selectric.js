@@ -44,7 +44,7 @@
   var $win = $(window);
 
   var pluginName = 'selectric';
-  var classList = 'Input Items Open Disabled TempShow HideSelect Wrapper Focus Hover Responsive Above Below Scroll Group GroupLabel';
+  var classList = 'Input Items Open Disabled TempShow HideSelect Wrapper Focus Hover Responsive Above Below Scroll Folder GroupLabel';
   var eventNamespaceSuffix = '.sl';
 
   var chars = ['a', 'e', 'i', 'o', 'u', 'n', 'c', 'y'];
