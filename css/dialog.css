@@ -118,6 +118,7 @@
     align-items: center;
 }
 .scrapbee-dlg-container {
+    visibility: visible !important;
     z-index:2147483641 !important;
     height:100% !important;
     width:100% !important;

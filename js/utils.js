@@ -212,12 +212,12 @@ function ajaxFormPost(url, json){
     });
 }
 
-function downloadFile(url){
+function downloadFile(url, responseType='blob'){
     return new Promise((resolve, reject)=>{
         try{
             var request = new XMLHttpRequest();
             request.open("GET", url, true);
-            request.responseType = "blob";
+            request.responseType = responseType;
             // request.onload = function(oEvent) {
             //     if(request.response){
             //         resolve(request.response);

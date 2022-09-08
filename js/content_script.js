@@ -226,9 +226,6 @@ if(!window.scrapbee_injected){
                 }catch(e){
                     if(e.name == "SecurityError") {
                         try{
-                            // var response = await browser.runtime.sendMessage({type: "DOWNLOAD_FILE_INTERNAL", url: sheet.href});
-                            // css.push(response.responseText);
-
                             
                             // todo: how to request this kind of resource without security problems???
                             if(sheet.href == 'resource://content-accessible/plaintext.css'){
@@ -426,10 +423,11 @@ html:not([dir]) pre {
         /* hack css for dialog in shadowRoot */
         if(!DLG_CSS){
             var DLG_CSS = await loadAssetText(("/css/dialog.css"));
+
             var icon = browser.extension.getURL("/icons/bee.png");
             DLG_CSS += `.scrapbee-dlg-title{background-image:url(${icon}) !important;}`;
         }
-        
+
         var dlgDownload = new DialogDownloadTable('Download', 'Waiting...', function(r){ // on ok event
             unlock();
             dlgDownload.remove();
