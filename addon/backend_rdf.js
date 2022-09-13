@@ -1,6 +1,6 @@
 import UUID from "./uuid.js";
 import {helperApp} from "./helper_app.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_TYPE} from "./storage.js";
 import {Archive, Node} from "./storage_entities.js";
 import {Path} from "./path.js";
 import {RDFNamespaces} from "./utils_html.js";
@@ -64,8 +64,8 @@ class RDFDoc {
     }
 
     static async fromNode(node) {
-        const helperApp = await helperApp.hasVersion("0.5");
-        if (!helperApp)
+        const helper = await helperApp.hasVersion("0.5");
+        if (!helper)
             return null;
 
         const rdf_path = `${(await Path.compute(node))[0].uri}/scrapbook.rdf`;
@@ -222,7 +222,7 @@ export class RDFBackend {
     }
 
     async createBookmarkFolder(node, parent) {
-        node.external = RDF_EXTERNAL_NAME;
+        node.external = RDF_EXTERNAL_TYPE;
         node.external_id = UUID.date();
         await Node.update(node);
 
@@ -234,7 +234,7 @@ export class RDFBackend {
     }
 
     async createBookmark(node, parent) {
-        node.external = RDF_EXTERNAL_NAME;
+        node.external = RDF_EXTERNAL_TYPE;
         node.external_id = UUID.date();
         await Node.update(node);
 
@@ -254,7 +254,7 @@ export class RDFBackend {
     }
 
     async moveBookmarks(dest, nodes) {
-        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME);
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_TYPE);
 
         if (rdfNodes.length) {
             const rdfDoc = await RDFDoc.fromNode(dest);
@@ -266,10 +266,10 @@ export class RDFBackend {
     }
 
     async deleteBookmarks(nodes) {
-        if (nodes.some(n => n.external === RDF_EXTERNAL_NAME && !n.external_id))
+        if (nodes.some(n => n.external === RDF_EXTERNAL_TYPE && !n.external_id))
             return; // do not delete all from root
 
-        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_TYPE && n.external_id);
 
         if (rdfNodes.length) {
             const rdf_doc = await RDFDoc.fromNode(rdfNodes[0]);
@@ -300,7 +300,7 @@ export class RDFBackend {
     }
 
     async reorderBookmarks(nodes) {
-        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_NAME && n.external_id);
+        let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_TYPE && n.external_id);
         if (rdfNodes.length) {
             const rdfDoc = await RDFDoc.fromNode(nodes[0]);
             if (rdfDoc) {
@@ -311,7 +311,7 @@ export class RDFBackend {
     }
 
     async storeBookmarkData(node, data) {
-        await Archive.delete(node.id);
+        await Archive.delete(node);
 
         try {
             await helperApp.post(`/rdf/save_item/${node.uuid}`,

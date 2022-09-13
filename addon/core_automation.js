@@ -150,7 +150,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
     let saveContent = (bookmark, content) => {
         const contentType = node.pack? "text/html": node.content_type;
 
-        return Bookmark.storeArchive(bookmark.id, content, contentType, bookmark.__index)
+        return Bookmark.storeArchive(bookmark, content, contentType, bookmark.__index)
             .then(() => {
                 if (node.select)
                     send.bookmarkCreated({node: bookmark});
@@ -257,11 +257,11 @@ async function nodeToAPIObject(node) {
     if (node) {
         const comments =
             node.has_comments
-                ? await Comments.get(node.id)
+                ? await Comments.get(node)
                 : undefined;
 
         const icon =
-            node.has_stored_icon
+            node.stored_icon
                 ? await Icon.get(node.id)
                 : node.icon;
 
@@ -411,7 +411,7 @@ receiveExternal.scrapyardUpdateUuid = async (message, sender) => {
 
     if (message.icon === "") {
         message.icon = undefined;
-        message.has_stored_icon = undefined;
+        message.stored_icon = undefined;
     }
     else if (message.icon)
         await Bookmark.storeIcon(node);

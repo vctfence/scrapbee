@@ -174,32 +174,6 @@ class HelperApp {
         return globalThis.fetch(this.url(path), init);
     }
 
-    async fetchText(path, init) {
-        init = this._injectAuth(init);
-        let response = await globalThis.fetch(this.url(path), init);
-        if (response.ok)
-            return response.text();
-        else
-            return this._handleHTTPError(response);
-    }
-
-    async fetchJSON(path, init) {
-        init = this._injectAuth(init);
-        let response = await globalThis.fetch(this.url(path), init);
-        if (response.ok)
-            return response.json();
-        else
-            return this._handleHTTPError(response);
-    }
-
-    async jsonPost(path, init) {
-        let response = await this.post(path, init);
-        if (response.ok)
-            return response.json();
-        else
-            return this._handleHTTPError(response);
-    }
-
     async post(path, fields) {
         let form = new FormData();
 
@@ -211,6 +185,45 @@ class HelperApp {
         return this.fetch(path, init);
     }
 
+    async postJSON(path, fields) {
+        const init = this._injectAuth({
+            method: "POST",
+            body: JSON.stringify(fields),
+            headers: {"content-type": "application/json"}
+        });
+
+        return this.fetch(path, init);
+    }
+
+    async fetchText(path, init) {
+        init = this._injectAuth(init);
+        let response = await globalThis.fetch(this.url(path), init);
+
+        if (response.ok)
+            return response.text();
+        else
+            return this._handleHTTPError(response);
+    }
+
+    async fetchJSON(path, init) {
+        init = this._injectAuth(init);
+        let response = await globalThis.fetch(this.url(path), init);
+
+        if (response.ok)
+            return response.json();
+        else
+            return this._handleHTTPError(response);
+    }
+
+
+    async fetchJSON_postJSON(path, fields) {
+        let response = await this.postJSON(path, fields);
+
+        if (response.ok)
+            return response.json();
+        else
+            return this._handleHTTPError(response);
+    }
 }
 
 export const helperApp = new HelperApp();

@@ -2,105 +2,113 @@ import {EntityIDB} from "./storage_idb.js";
 import {indexHTML} from "./utils_html.js";
 import {readBlob} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
+import {delegateProxy} from "./proxy.js";
+import {StorageAdapterDisk} from "./storage_adapter_disk.js";
+import {ArchiveProxy} from "./storage_archive_proxy.js";
 
 export class ArchiveIDB extends EntityIDB {
     static newInstance() {
         const instance = new ArchiveIDB();
-        instance.import = new ArchiveIDB();
+
+        instance.import = delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), new ArchiveIDB());
         instance.import._importer = true;
-        return instance;
+
+        instance.idb = {import: new ArchiveIDB()};
+        instance.idb.import._importer = true;
+
+        return delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), instance);
     }
 
-    async _storeIndex(nodeId, words) {
-        return this._db.index.add({
-            node_id: nodeId,
-            words: words
-        });
-    }
+    entity(node, data, contentType, byteLength) {
+        contentType = contentType || "text/html";
 
-    async updateIndex(nodeId, words) {
-        const exists = await this._db.index.where("node_id").equals(nodeId).count();
-
-        if (exists)
-            return this._db.index.where("node_id").equals(nodeId).modify({
-                words: words
-            });
-        else
-            return this._storeIndex(nodeId, words);
-    }
-
-    async fetchIndex(nodeId) {
-        return this._db.index.where("node_id").equals(nodeId).first();
-    }
-
-    compose(data, contentType, byteLength) {
         if (typeof data !== "string" && data?.byteLength) // from ArrayBuffer
             byteLength = data.byteLength;
         else if (typeof data === "string" && byteLength) // from binary string (presumably may come only form import)
             data = this._binaryString2Array(data);
 
-        let object = data instanceof Blob? data: new Blob([data], {type: contentType});
-
-        return {
+        const object = data instanceof Blob? data: new Blob([data], {type: contentType});
+        const result = {
             object,
-            data: undefined,
-            byte_length: byteLength, // presence of this field indicates that the the object is binary
-            type: contentType || "text/html"
+            byte_length: byteLength, // presence of this field indicates that the object is binary
+            type: contentType
+        };
+
+        if (node)
+            result.node_id = node.id;
+
+        return result;
+    }
+
+    indexEntity(node, words) {
+        return {
+            node_id: node.id,
+            words: words
         };
     }
 
-    async _addRaw(nodeId, data, contentType, byteLength) {
-        let options = this.compose(data, contentType, byteLength);
-        options.node_id = nodeId;
+    async storeIndex(node, words) {
+        const exists = await this._db.index_content.where("node_id").equals(node.id).count();
+        const entity = this.indexEntity(node, words);
 
-        const exists = await this._db.blobs.where("node_id").equals(nodeId).count();
         if (exists)
-            await this._db.blobs.where("node_id").equals(nodeId).modify(options);
+            return this._db.index_content.where("node_id").equals(node.id).modify(entity);
         else
-            await this._db.blobs.add(options);
-
-        if (!this._importer) {
-            const node = {id: nodeId, size: options.object.size, content_type: options.type};
-            await Node.contentUpdate(node);
-        }
+            return this._db.index_content.add(entity);
     }
 
-    async add(nodeId, data, contentType, byteLength, index) {
-        await this._addRaw(nodeId, data, contentType, byteLength);
+    async fetchIndex(node) {
+        return this._db.index_content.where("node_id").equals(node.id).first();
+    }
+
+    async _add(node, data, contentType, byteLength) {
+        let entity = this.entity(node, data, contentType, byteLength);
+
+        const exists = await this._db.blobs.where("node_id").equals(node.id).count();
+        if (exists)
+            await this._db.blobs.where("node_id").equals(node.id).modify(entity);
+        else
+            await this._db.blobs.add(entity);
+
+        return entity;
+    }
+
+    async add(node, data, contentType, byteLength, index) {
+        const entity = await this._add(node, data, contentType, byteLength);
+        await this.updateContentModified(node, entity);
 
         if (index?.words)
-            await this._storeIndex(nodeId, index.words);
+            await this.storeIndex(node, index.words);
         else if (typeof data === "string" && !byteLength)
-            await this.updateIndex(nodeId, indexHTML(data));
+            await this.storeIndex(node, indexHTML(data));
     }
 
-    async updateHTML(nodeId, data) {
-        const object = new Blob([data], {type: "text/html"});
-
-        await this._db.blobs.where("node_id").equals(nodeId).modify({
-            object,
-            data: undefined // undefined removes fields from IDB
-        });
-
-        await this.updateIndex(nodeId, indexHTML(data));
-
+    async updateContentModified(node, entity) {
         if (!this._importer) {
-            const node = {id: nodeId, size: object.size};
-            await Node.contentUpdate(node);
+            node.size = entity.object.size;
+            node.content_type = entity.type;
+            await Node.updateContentModified(node);
         }
     }
 
-    async get(nodeId, isUUID = false) {
-        nodeId = isUUID? await Node.getIdFromUUID(nodeId): nodeId;
-        return this._db.blobs.where("node_id").equals(nodeId).first();
+    async updateHTML(node, data) {
+        const entity = await this._add(node, data);
+
+        await this.storeIndex(node, indexHTML(data));
+
+        return this.updateContentModified(node, entity);
     }
 
-    async delete(nodeId) {
+    async get(node) {
+        return this._db.blobs.where("node_id").equals(node.id).first();
+    }
+
+    async delete(node) {
         if (this._db.tables.some(t => t.name === "blobs"))
-            await this._db.blobs.where("node_id").equals(nodeId).delete();
+            await this._db.blobs.where("node_id").equals(node.id).delete();
 
         if (this._db.tables.some(t => t.name === "index"))
-            await this._db.index.where("node_id").equals(nodeId).delete();
+            await this._db.index_content.where("node_id").equals(node.id).delete();
     }
 
     _binaryString2Array(bs) {

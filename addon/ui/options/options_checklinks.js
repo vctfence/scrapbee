@@ -127,7 +127,7 @@ export class LinkChecker {
                 node.icon = favicon;
                 await Bookmark.storeIcon(node);
             }
-            else if (node.icon && !node.has_stored_icon) {
+            else if (node.icon && !node.stored_icon) {
                 node.icon = undefined;
                 await Node.update(node);
             }
@@ -221,7 +221,7 @@ export class LinkChecker {
                 this.resultCount += 1;
                 await displayLinkError(error, node);
 
-                if (networkError && updateIcons && node.icon && !node.has_stored_icon) {
+                if (networkError && updateIcons && node.icon && !node.stored_icon) {
                     node.icon = undefined;
                     await Node.update(node);
                 }

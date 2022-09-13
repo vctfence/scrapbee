@@ -154,7 +154,7 @@ function createIndex(string, textExtractor) {
 
         let words = string.split(" ")
             .filter(s => s && s.length > 2)
-            .map(s => s.toLocaleUpperCase())
+            .map(s => s.toLocaleLowerCase())
 
         return Array.from(new Set(words));
     }

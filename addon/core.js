@@ -16,6 +16,7 @@ import "./core_maintenance.js";
 import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
+import {helperApp} from "./helper_app.js";
 
 if (_BACKGROUND_PAGE)
     import("./core_import.js");
@@ -44,14 +45,11 @@ async function showAnnouncement() {
 async function performStartupInitialization() {
     search.initializeOmnibox();
 
+    await helperApp.probe();
+
     await browserBackend.reconcileBrowserBookmarksDB();
+
     await cloudBackend.enableBackgroundSync(settings.cloud_background_sync());
-
-    if (settings.background_sync())
-        await sendLocal.enableBackgroundSync({enable: true});
-
-    if (settings.sync_on_startup())
-        sendLocal.performSync();
 
     await undoManager.commit();
 

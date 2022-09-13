@@ -70,9 +70,9 @@ export class BackupManager {
     }
 
     async init() {
-        const helperApp = await send.helperAppHasVersion({version: "0.3"});
+        const helper = await send.helperAppHasVersion({version: "0.4"});
 
-        if (helperApp) {
+        if (helper) {
             await this.listBackups();
             $("#backup-button").attr("disabled", false);
         }
@@ -289,16 +289,7 @@ export class BackupManager {
 
         let progressIndication = false;
         let importListener = message => {
-            if (message.type === "importInitializingTransaction") {
-                $("#backup-progress-container").html("Saving database state...");
-            }
-            else if (message.type === "importFinalizingTransaction") {
-                $("#backup-progress-container").html("Cleaning up...");
-            }
-            else if (message.type === "importRollingBack") {
-                $("#backup-progress-container").html("Restoring database...");
-            }
-            else if (message.type === "importProgress") {
+            if (message.type === "importProgress") {
                 if (!progressIndication) {
                     $("#backup-progress-container").html(PROGRESS_BAR_HTML);
                     progressIndication = true;

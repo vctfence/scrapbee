@@ -4,7 +4,6 @@ import {
     BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    STORAGE_FORMAT,
     TODO_STATE_NAMES,
     TODO_STATES
 } from "./storage.js";
@@ -13,9 +12,10 @@ import {formatShelfName} from "./bookmarking.js";
 import {Marshaller, Unmarshaller} from "./marshaller.js";
 import {transformFromV1ToV3} from "./import_versions.js";
 
+const STORAGE_FORMAT = "Scrapyard";
 const FORMAT_VERSION = 2;
-const ORG_EXPORTED_KEYS = ["uuid", "icon", "has_stored_icon", "type", "size", "details", "date_added", "date_modified",
-    "content_modified", "external", "external_id", "container", "content_type"];
+const ORG_EXPORTED_KEYS = ["uuid", "icon", "stored_icon", "type", "size", "details", "date_added", "date_modified",
+    "content_modified", "external", "external_id", "container", "content_type", "site"];
 
 export class MarshallerORG extends Marshaller {
     configure(options) {
@@ -318,7 +318,7 @@ class ORGObjectStream {
                     if (property.value)
                         object[property.name] = parseInt(property.value);
                     break;
-                case "has_stored_icon":
+                case "stored_icon":
                     if (property.value)
                         object[property.name] = property.value === "true";
                     break;

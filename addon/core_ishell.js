@@ -68,7 +68,7 @@ receiveExternal.scrapyardListNodesIshell = async (message, sender) => {
             renderPath(node, nodes);
         }
 
-        if (node.has_stored_icon)
+        if (node.stored_icon)
             node.icon = await Icon.get(node.id);
     }
     if (no_shelves)

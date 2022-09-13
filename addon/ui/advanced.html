@@ -74,13 +74,6 @@
             </fieldset>
         </form>
     </div>
-    <div class="panel" id="db-path-panel">
-        <p class="panel-title">Addon Database Path <i class="help-mark"></i>
-            <span class="tips hide" style="font-weight: normal">The helper application is required for this feature.<br>
-                Please do not modify, delete or create any additional files in this directory!</span></p>
-        <input id="addon-db-path-input" type="text" disabled/>
-        <img id="db-path-copy-button" width="16px" height="16px" src="../icons/copy.svg" title="Copy"/>
-    </div>
     <div class="panel" id="experimental-panel">
         <p class="panel-title">Backup Compression</p>
         <div class="double-container">
@@ -130,12 +123,6 @@
             <fieldset style="border: none;">
                 <div class="double-container">
                     <div class="double-first">
-                        <div id="optimize-database" class="action-link">
-                            <a id="optimize-database-link" href="#">Optimize database</a>
-                            <i class="help-mark"></i>
-                            <span class="tips hide">Database optimization may improve Scrapyard performance if the add-on was installed before version 0.12.</span>
-                            &nbsp;<span id="optimize-database-progress"></span>
-                        </div>
                         <div id="reindex-content" class="action-link">
                             <a id="reindex-content-link" href="#">Rebuild search index</a>
                             &nbsp;<span id="reindex-content-progress"></span>
@@ -146,9 +133,6 @@
                         </div>
                         <div id="reset-cloud" class="action-link">
                             <a id="reset-cloud-link" href="#">Reset Cloud</a>
-                        </div>
-                        <div id="reset-sync" class="action-link">
-                            <a id="reset-sync-link" href="#">Reset Sync</a>
                         </div>
                     </div>
                     <div class="double-last">

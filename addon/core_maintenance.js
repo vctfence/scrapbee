@@ -1,154 +1,24 @@
 import {send, receive} from "./proxy.js";
 import {
     isContentNode,
-    DEFAULT_SHELF_NAME,
-    DEFAULT_SHELF_UUID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    NODE_TYPE_NOTES,
-    NODE_TYPE_SHELF
+    NODE_TYPE_NOTES
 } from "./storage.js";
-import {computeSHA1} from "./utils.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
-import {parseHtml, fixDocumentEncoding, indexString, indexHTML} from "./utils_html.js";
-import {Query} from "./storage_query.js";
-import {Bookmark} from "./bookmarks_bookmark.js";
+import {indexString, indexHTML} from "./utils_html.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
-import {ExportArea} from "./storage_export.js";
-import {settings} from "./settings.js";
+import {Database} from "./storage_database.js";
 
 receive.getAddonIdbPath = async message => {
-    let helperApp = await helperApp.probe();
+    let helper = await helperApp.probe();
 
-    if (!helperApp)
+    if (!helper)
         return;
 
     const addonId = browser.runtime.getURL("/").split("/")[2];
 
     return helperApp.fetchText(`/request/idb_path/${addonId}`)
-};
-
-receive.optimizeDatabase = async message => {
-    const DEBUG = false;
-
-    let fixDate = (node, key) => {
-        if (!(node[key] instanceof Date)) {
-            if (node[key]) {
-                node[key] = new Date(node[key]);
-                if (isNaN(node[key]))
-                    node[key] = new Date(0);
-            }
-            else
-                node[key] = new Date(0);
-        }
-    }
-
-    send.startProcessingIndication({noWait: true});
-
-    const defaultShelf = await Node.get(1);
-    if (defaultShelf.type === NODE_TYPE_SHELF && defaultShelf.name === DEFAULT_SHELF_NAME
-            && defaultShelf.uuid !== DEFAULT_SHELF_UUID) {
-        defaultShelf.uuid = DEFAULT_SHELF_UUID;
-        await Node.update(defaultShelf);
-    }
-
-    const nodeIDs = await Query.allNodeIDs();
-    //const nodeIDs = await bookmarkManager.queryFullSubtree(1, true);
-    let currentProgress = 0;
-    let ctr = 0;
-
-    for (let id of nodeIDs) {
-        try {
-            const node = await Node.get(id);
-            let actionTaken = false;
-
-            const bookmarkNode = node.type === NODE_TYPE_ARCHIVE || node.type === NODE_TYPE_BOOKMARK;
-            if (bookmarkNode && node.icon && !node.has_stored_icon) {
-                await Bookmark.storeIcon(node);
-
-                if (DEBUG)
-                    console.log("storing icon");
-
-                if (!node.has_stored_icon) {
-                    node.icon = undefined;
-
-                    if (DEBUG)
-                        console.log("nullified icon");
-                }
-
-                actionTaken = true;
-            }
-            else if (bookmarkNode && node.icon && node.has_stored_icon && !node.icon.startsWith("hash:")) {
-                const icon = await Icon.get(node.id);
-                if (icon)
-                    node.icon = "hash:" + (await computeSHA1(icon));
-                else {
-                    node.icon = undefined;
-                    node.has_stored_icon = undefined;
-                }
-
-                if (DEBUG)
-                    console.log("hashing icon");
-
-                actionTaken = true;
-            }
-            else if (!bookmarkNode) {
-                node.icon = undefined;
-                node.has_stored_icon = undefined;
-
-                if (DEBUG)
-                    console.log("deleted icon");
-
-                actionTaken = true;
-            }
-
-            fixDate(node,"date_added");
-            fixDate(node,"date_modified");
-
-            Bookmark.clean(node);
-
-            if (node.type === NODE_TYPE_ARCHIVE) {
-                const blob = await Archive.get(node.id);
-
-                if (blob) {
-                    let content = await Archive.reify(blob);
-
-                    if (!blob.type && typeof content === "string" && !blob.byte_length
-                            || blob.type && blob.type.startsWith("text/html")) {
-                        blob.type = "text/html";
-                        const doc = parseHtml(content);
-                        fixDocumentEncoding(doc);
-                        content = doc.documentElement.outerHTML;
-                    }
-
-                    await Archive.delete(node.id);
-                    await Archive.add(node.id, content, blob.type, blob.byte_length);
-                    actionTaken = true;
-                }
-            }
-
-            await Node.update(node);
-
-            if (actionTaken) {
-                if (DEBUG)
-                    console.log("Processed: %s", node.name);
-            }
-
-            ctr += 1;
-            const newProgress = Math.round((ctr / nodeIDs.length) * 100);
-            if (newProgress !== currentProgress) {
-                currentProgress = newProgress;
-                send.databaseOptimizationProgress({progress: currentProgress});
-            }
-        }
-        catch (e) {
-            console.error(e);
-        }
-    }
-
-    send.stopProcessingIndication();
-
-    send.databaseOptimizationFinished();
 };
 
 receive.reindexArchiveContent = async message => {
@@ -164,30 +34,28 @@ receive.reindexArchiveContent = async message => {
 
         try {
             if (node.type === NODE_TYPE_ARCHIVE) {
-                const blob = await Archive.get(node.id);
+                const archive = await Archive.get(node);
 
-                if (blob && !blob.byte_length && blob.data && typeof blob.data === "string")
-                    await Archive.updateIndex(node.id, indexHTML(blob.data));
-                else if (blob && !blob.byte_length && blob.object) {
-                    let text = await Archive.reify(blob);
+                if (archive && !archive.byte_length && archive.object) {
+                    let text = await Archive.reify(archive);
                     if (text)
-                        await Archive.updateIndex(node.id, indexHTML(text));
+                        await Archive.storeIndex(node, indexHTML(text));
                 }
             }
 
             if (node.has_notes) {
-                const notes = await Notes.get(node.id);
+                const notes = await Notes.get(node);
                 if (notes) {
                     delete notes.id;
-                    await Notes.add(notes);
+                    await Notes.add(node, notes);
                 }
             }
 
             if (node.has_comments) {
-                const comments = await Comments.get(node.id);
+                const comments = await Comments.get(node);
                 if (comments) {
                     const words = indexString(comments);
-                    await Comments.updateIndex(node.id, words);
+                    await Comments.storeIndex(node.id, words);
                 }
             }
 
@@ -220,35 +88,14 @@ receive.resetCloud = async message => {
     return true;
 }
 
-receive.resetSync = async message => {
-    if (!settings.sync_directory())
-        return;
-
-    const helperApp = helperApp.probe(true);
-
-    if (helperApp) {
-        send.startProcessingIndication({noWait: true});
-
-        try {
-            await helperApp.post("/sync/reset", {sync_directory: settings.sync_directory()});
-            settings.sync_enabled(false);
-            settings.last_sync_date(null);
-            send.syncStateChanged({enabled: false});
-        }
-        finally {
-            send.stopProcessingIndication();
-        }
-    }
-}
-
 receive.resetScrapyard = async message => {
     send.startProcessingIndication({noWait: true});
 
-    await ExportArea.prepareToImportEverything();
+    await Database.wipeImportable();
 
     send.stopProcessingIndication();
 
-    send.shelvesChanged();
+    send.shelvesChanged({synchronize: false});
 }
 
 receive.computeStatistics = async message => {

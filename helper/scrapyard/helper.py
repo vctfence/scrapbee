@@ -22,6 +22,8 @@ def process_message(msg):
         server.message_queue.put(msg)
     elif msg["type"] == "RDF_PATH":
         server.message_queue.put(msg)
+    elif msg["type"] == "DATA_PATH":
+        server.message_queue.put(msg)
 
 
 def start_server(msg):

@@ -128,15 +128,16 @@ class EditToolbar {
 
         this._fixDocumentEncoding(doc);
 
+        const uuid = location.href.split("/").at(-1);
+
         browser.runtime.sendMessage({
             type: "updateArchive",
-            id: parseInt(location.hash.split(":")[1]),
+            uuid,
             data: "<!DOCTYPE html>" + doc.outerHTML
         }).then(async () => {
             return browser.runtime.sendMessage({
                 type: "getBookmarkInfo",
-                uuid: location.hash.split(":")[0].substring(1),
-                id: parseInt(location.hash.split(":")[1])
+                uuid
             });
         })
         .then(node => {
@@ -299,10 +300,11 @@ class EditToolbar {
         const originalURLText = append(`<input id="scrapyard-original-url-text" type="text" readonly="readonly">`)[0];
         const originalURLLink = append(`<a id="scrapyard-original-url-link" target="_blank" href="#"></a>`)[0];
 
+        const uuid = location.href.split("/").at(-1);
+
         browser.runtime.sendMessage({
             type: "getBookmarkInfo",
-            uuid: location.hash.split(":")[0].substring(1),
-            id: parseInt(location.hash.split(":")[1])
+            uuid
         }).then(node => {
             originalURLText.value = node?.uri || "";
             originalURLLink.href = node?.uri || "#";

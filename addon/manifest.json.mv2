@@ -2,8 +2,8 @@
     "version": "$VERSION$",
     "applications": {
         "gecko": {
-            "id": "scrapyard$ID_SUFFIX$@gchristensen.github.io",
-            "strict_min_version": "91.0"
+            "id": "scrapyard$ID_SUFFIX$@firefox",
+            "strict_min_version": "102.0"
         }
     },
     "manifest_version": 2,

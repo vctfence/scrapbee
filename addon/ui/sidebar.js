@@ -78,13 +78,9 @@ async function init() {
     shelfList.change(function () { switchShelf(this.value, true, true) });
 
     $("#btnLoad").on("click", () => loadShelves());
-    $("#btnSync").on("click", () => performSync());
     $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
     $("#btnSettings").on("click", () => openPage("/ui/options.html"));
     $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
-
-    // in the case if settings are cleaned by user
-    localStorage.setItem("sidebar-show-sync", settings.sync_enabled()? "show": "hide");
 
     $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();
@@ -255,10 +251,8 @@ window.onbeforeunload = function() {
     }
 };
 
-window.onunload = async function() {
-    if (settings.sync_enabled() && settings.sync_on_close_sidebar())
-        send.performSync();
-};
+// window.onunload = async function() {
+// };
 
 async function loadSidebar() {
     try {
@@ -343,6 +337,10 @@ function setLastShelf(id) {
 async function loadShelves(selected, synchronize = true, clearSelection = false) {
     try {
         updateProgress(0);
+
+        if (synchronize)
+            await performSync();
+
         await shelfList.reload();
         const switchToId = selected || getLastShelf() || DEFAULT_SHELF_ID;
         return switchShelf(switchToId, synchronize, clearSelection);
@@ -567,11 +565,7 @@ async function performSync(verbose = true) {
     if (getLastShelf() === CLOUD_SHELF_ID)
         await switchShelf(CLOUD_SHELF_ID);
     else {
-        await settings.load();
-        if (settings.sync_enabled())
-            send.performSync();
-        else if (verbose)
-            showNotification("Synchronization is not configured.");
+        send.performSync();
     }
 }
 
@@ -673,7 +667,7 @@ async function displayRandomBookmark() {
             $("#random-bookmark-link").prop('title', `${bookmark.name}\x0A${bookmark.uri}`);
         }
 
-        if (bookmark.has_stored_icon) {
+        if (bookmark.stored_icon) {
             icon = `url("${await Icon.get(bookmark.id)}")`;
         }
         else if (bookmark.icon) {
@@ -807,17 +801,6 @@ receive.reloadSidebar = message => {
     browser.sidebarAction.setPanel({panel: sidebarUrl});
 };
 
-receive.syncStateChanged = message => {
-    if (message.enabled) {
-        $("#btnSync").css("display", "inline-block");
-        localStorage.setItem("sidebar-show-sync", "show");
-    }
-    else {
-        $("#btnSync").hide();
-        localStorage.setItem("sidebar-show-sync", "hide");
-    }
-};
-
 receive.toggleAbortMenu = message => {
     if (message.show)
         $("#shelf-menu-abort").show();
@@ -896,7 +879,7 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
 
         const folder = await Folder.getOrCreateByPath(external_path);
         let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
-        let topNodes = newNodes.filter(n => selection.some(id => id === n.old_id)).map(n => n.id);
+        let topNodes = newNodes.filter(n => selection.some(id => id === n.source_node_id)).map(n => n.id);
 
         await switchAfterCopy(message, external_path, folder, topNodes);
     }

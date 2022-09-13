@@ -1,4 +1,4 @@
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_FOLDER, NODE_TYPE_NOTES, RDF_EXTERNAL_NAME} from "./storage.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_FOLDER, NODE_TYPE_NOTES, RDF_EXTERNAL_TYPE} from "./storage.js";
 import {Archive, Node} from "./storage_entities.js";
 import {Query} from "./storage_query.js";
 import {
@@ -40,7 +40,7 @@ function configureArchiveTab(node, archiveTab) {
     browser.tabs.onRemoved.addListener(tabRemoveListener);
 }
 
-async function configureArchivePage(tab, node) {
+async function configureArchivePage_v1(tab, node) {
     if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
         await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
         await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
@@ -55,6 +55,23 @@ async function configureArchivePage(tab, node) {
             await configureSiteLinks(node, tab);
     }
 }
+
+async function configureArchivePage(tab, node) {
+    await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
+    await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
+    if (!_BACKGROUND_PAGE)
+        await injectScriptFile(tab.id, {file: "lib/browser-polyfill.js", frameId: 0});
+    await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
+
+    if (settings.open_bookmark_in_active_tab()) {
+        const uuid = tab.url.split("/").at(-1);
+        node = await Node.getByUUID(uuid);
+    }
+
+    if (await Bookmark.isSitePage(node))
+        await configureSiteLinks(node, tab);
+}
+
 
 async function configureSiteLinks(node, tab) {
     await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
@@ -123,14 +140,14 @@ function browseBookmark(node, options) {
     }
 }
 
-async function browseArchive(node, options) {
+async function browseArchive_v1(node, options) {
     if (node.__tentative)
         return;
 
-    if (node.external === RDF_EXTERNAL_NAME)
+    if (node.external === RDF_EXTERNAL_TYPE)
         return await browseRDFArchive(node, options);
 
-    const blob = await Archive.get(node.id);
+    const blob = await Archive.get(node);
     if (blob) {
         let objectURL = await getBlobURL(node, blob);
 
@@ -150,10 +167,31 @@ async function browseArchive(node, options) {
         showNotification({message: "No data is stored."});
 }
 
-async function browseRDFArchive(node, options) {
-    const helperApp = await helperApp.probe(true);
+async function browseArchive(node, options) {
+    if (node.__tentative)
+        return;
 
-    if (helperApp) {
+    if (node.external === RDF_EXTERNAL_TYPE)
+        return await browseRDFArchive(node, options);
+
+    const archiveURL = helperApp.url(`/browse/${node.uuid}`);
+    const archiveTab = await openURL(archiveURL, options);
+    return configureArchiveTab(node, archiveTab);
+}
+
+helperApp.addMessageHandler("REQUEST_DATA_PATH", onRequestDataPathMessage);
+
+export async function onRequestDataPathMessage(msg) {
+    return {
+        type: "DATA_PATH",
+        data_path: settings.data_folder_path()
+    };
+}
+
+async function browseRDFArchive(node, options) {
+    const helper = await helperApp.probe(true);
+
+    if (helper) {
         const helperApp11 = await helperApp.hasVersion("1.1");
         if (!helperApp11)
             await rdfBackend.pushRDFPath(node);
@@ -178,9 +216,9 @@ helperApp.addMessageHandler("REQUEST_RDF_PATH", onRequestRdfPathMessage);
 async function getBlobURL(node, blob) {
     if (settings.browse_with_helper()) {
         const alertText = _BACKGROUND_PAGE? "Scrapyard helper application v1.1+ is required.": undefined;
-        const helperApp = await helperApp.hasVersion("1.1", alertText);
+        const helper = await helperApp.hasVersion("1.1", alertText);
 
-        if (helperApp)
+        if (helper)
             return helperApp.url(`/browse/${node.uuid}`);
         else
             return loadArchive(blob);
@@ -191,7 +229,7 @@ async function getBlobURL(node, blob) {
 
 export async function onRequestPushBlobMessage(msg) {
     const node = await Node.getByUUID(msg.uuid)
-    const archive = await Archive.get(node.id);
+    const archive = await Archive.get(node);
     const content = await Archive.reify(archive, true);
     return {
         type: "PUSH_BLOB",
@@ -217,7 +255,7 @@ async function loadArchive(blob) {
 async function browseFolder(node, options) {
     if (node.__filtering)
         send.selectNode({node, open: true, forceScroll: true});
-    else if (node.is_site) {
+    else if (node.site) {
         const archives = await listSiteArchives(node);
         const page = archives[0];
         if (page)

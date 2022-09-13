@@ -40,21 +40,21 @@ export class Marshaller {
         const result = {node: this.preprocessNode(node)};
 
         if (node.type === NODE_TYPE_ARCHIVE) {
-            let archive = await Archive.get(node.id);
+            let archive = await Archive.get(node);
             if (archive)
                 result.archive = await this.preprocessArchive(archive);
         }
 
         if (node.has_notes) {
-            let notes = await Notes.get(node.id);
+            let notes = await Notes.get(node);
             if (notes)
                 result.notes = this.preprocessNotes(notes);
         }
 
         if (node.has_comments)
-            result.comments = this.preprocessComments(await Comments.get(node.id));
+            result.comments = this.preprocessComments(await Comments.get(node));
 
-        if (node.icon && node.has_stored_icon)
+        if (node.icon && node.stored_icon)
             result.icon = this.preprocessIcon(await Icon.get(node.id));
 
         return result;
@@ -64,7 +64,6 @@ export class Marshaller {
         let content = await Archive.reify(archive, true);
 
         delete archive.id;
-        delete archive.data;
         delete archive.node_id;
 
         if (archive.byte_length)
@@ -104,9 +103,7 @@ export class Unmarshaller {
         this._forceIcons = true;
     }
 
-    async storeContent(content) {
-        let {node, icon, archive, notes, comments} = content;
-
+    preprocessNode(node) {
         delete node.id;
 
         if (!node.name)
@@ -116,29 +113,44 @@ export class Unmarshaller {
             if (key.endsWith("_added") || key.endsWith("_modified"))
                 node[key] = new Date(node[key]);
 
+        return node;
+    }
+
+    preprocessArchive(archive) {
+        if (archive.byte_length && archive.object) {
+            archive.object = atob(archive.object);
+            archive.byte_length = archive.object.length;
+        }
+
+        return archive;
+    }
+
+    async storeContent(content) {
+        let {node, icon, archive, notes, comments} = content;
+
+        node = this.preprocessNode(node);
         node = await Bookmark.import(node, this._sync);
 
         if (this._forceIcons)
             await Bookmark.storeIconFromURI(node);
 
         if (node.type === NODE_TYPE_ARCHIVE && archive) {
-            if (archive.byte_length)
-                archive.object = atob(archive.object);
-            await Archive.import.add(node.id, archive.object, archive.type, archive.byte_length);
+            archive = this.preprocessArchive(archive);
+            await Archive.import.add(node, archive.object, archive.type, archive.byte_length);
         }
 
         if (notes) {
             notes.node_id = node.id;
-            await Notes.import.add(notes);
+            await Notes.import.add(node, notes);
         }
 
         if (comments)
-            await Comments.import.add(node.id, comments.text);
+            await Comments.import.add(node, comments.text);
 
         if (icon)
-            await Icon.import.add(node.id, icon.data_url);
+            await Icon.import.add(node, icon.data_url);
         else {
-            if (node.icon && !node.has_stored_icon) // may appear from android application
+            if (node.icon && !node.stored_icon) // may appear from android application
                 await Bookmark.storeIcon(node);
         }
 

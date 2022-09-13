@@ -1,5 +1,3 @@
-export const STORAGE_FORMAT = "Scrapyard";
-
 export const NODE_TYPE_SHELF = 1;
 export const NODE_TYPE_FOLDER = 2;
 export const NODE_TYPE_BOOKMARK = 3;
@@ -15,6 +13,15 @@ export const NODE_TYPE_NAMES = {
     [NODE_TYPE_ARCHIVE]: "archive",
     [NODE_TYPE_SEPARATOR]: "separator",
     [NODE_TYPE_NOTES]: "notes"
+};
+
+export const NODE_TYPES = {
+    "shelf": NODE_TYPE_SHELF,
+    "folder": NODE_TYPE_FOLDER,
+    "bookmark": NODE_TYPE_BOOKMARK,
+    "archive": NODE_TYPE_ARCHIVE,
+    "separator": NODE_TYPE_SEPARATOR,
+    "notes": NODE_TYPE_NOTES
 };
 
 export const CONTAINER_NODE_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_FOLDER, NODE_TYPE_UNLISTED];
@@ -75,7 +82,7 @@ export const CLOUD_SHELF_NAME = "cloud";
 export const CLOUD_SHELF_UUID = "cloud";
 export const CLOUD_EXTERNAL_TYPE = "cloud";
 
-export const RDF_EXTERNAL_NAME = "RDF";
+export const RDF_EXTERNAL_TYPE = "rdf";
 
 export const NON_IMPORTABLE_SHELVES = [BROWSER_SHELF_UUID, CLOUD_SHELF_UUID];
 
@@ -103,16 +110,15 @@ export const NODE_PROPERTIES =
      "date_added",
      "date_modified",
      "content_modified",
-     "has_stored_icon",
+     "stored_icon",
      "has_notes",
      "has_comments",
      "external",
      "external_id",
      "container",
      "content_type",
-     "_uuid",
      "_unlisted",
-     "is_site"
+     "site"
     ];
 
 export function isContainerNode(node) {
@@ -124,13 +130,13 @@ export function isContentNode(node) {
 }
 
 export function isNodeHasContent(node) {
-    return node.type === NODE_TYPE_ARCHIVE || node.has_stored_icon || node.has_notes || node.has_comments;
+    return node.type === NODE_TYPE_ARCHIVE || node.stored_icon || node.has_notes || node.has_comments;
 }
 
 const VIRTUAL_SHELVES = [
-    getBuiltInShelfName(EVERYTHING_SHELF_UUID),
-    getBuiltInShelfName(TODO_SHELF_UUID),
-    getBuiltInShelfName(DONE_SHELF_UUID),
+    EVERYTHING_SHELF_NAME,
+    TODO_SHELF_NAME,
+    DONE_SHELF_NAME,
 ].map(s => s.toLocaleLowerCase());
 
 export function isVirtualShelf(name) {
@@ -140,12 +146,12 @@ export function isVirtualShelf(name) {
 }
 
 const BUILTIN_SHELVES = [
-    getBuiltInShelfName(EVERYTHING_SHELF_UUID),
-    getBuiltInShelfName(TODO_SHELF_UUID),
-    getBuiltInShelfName(DONE_SHELF_UUID),
-    getBuiltInShelfName(DEFAULT_SHELF_UUID),
-    getBuiltInShelfName(BROWSER_SHELF_UUID),
-    getBuiltInShelfName(CLOUD_SHELF_UUID)
+    EVERYTHING_SHELF_NAME,
+    TODO_SHELF_NAME,
+    DONE_SHELF_NAME,
+    DEFAULT_SHELF_NAME,
+    BROWSER_SHELF_NAME,
+    CLOUD_SHELF_NAME
 ].map(s => s.toLocaleLowerCase());
 
 export function isBuiltInShelf(name) {

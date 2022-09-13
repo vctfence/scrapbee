@@ -1,6 +1,5 @@
-import {settings} from "./settings.js"
-
 import {
+    BROWSER_SHELF_ID,
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
@@ -9,22 +8,22 @@ import {
     TODO_SHELF_NAME
 } from "./storage.js";
 import {Query} from "./storage_query.js";
-import {ExportArea} from "./storage_export.js";
 import {TODO} from "./bookmarks_todo.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
-import {MarshallerJSON, StructuredUnmarshallerJSON} from "./marshaller_json.js";
 import {MarshallerORG, UnmarshallerORG} from "./marshaller_org.js";
 import {NetscapeImporterBuilder} from "./import_html.js";
 import {RDFImporterBuilder} from "./import_rdf.js";
 import {StreamExporterBuilder, StreamImporterBuilder, StructuredStreamImporterBuilder} from "./import_drivers.js";
-import {importTransaction} from "./import_transaction.js";
 import {undoManager} from "./bookmarks_undo.js";
+import {Database} from "./storage_database.js";
+import {Disk} from "./storage_disk.js";
+import {MarshallerJSONScrapbook, UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 
 export class Export {
     static create(format) {
         switch (format) {
             case "json":
-                return new StreamExporterBuilder(new MarshallerJSON());
+                return new StreamExporterBuilder(new MarshallerJSONScrapbook());
             case "org":
                 return new StreamExporterBuilder(new MarshallerORG());
         }
@@ -37,14 +36,18 @@ export class Export {
 
         if (isShelfName && shelf.toUpperCase() === TODO_SHELF_NAME) {
             nodes = await TODO.listTODO();
+
             if (computeLevel)
                 nodes.forEach(n => n.__level = 1)
+
             return nodes;
         }
         else if (isShelfName && shelf.toUpperCase() === DONE_SHELF_NAME) {
             nodes = await TODO.listDONE();
+
             if (computeLevel)
                 nodes.forEach(n => n.__level = 1)
+
             return nodes;
         }
 
@@ -58,8 +61,14 @@ export class Export {
         if (everything) {
             const shelves = await Query.allShelves();
             const cloud = shelves.find(s => s.id === CLOUD_SHELF_ID);
+
             if (cloud)
                 shelves.splice(shelves.indexOf(cloud), 1);
+
+            const browser = shelves.find(s => s.id === BROWSER_SHELF_ID);
+            if (browser)
+                shelves.splice(shelves.indexOf(browser), 1);
+
             nodes = await Query.fullSubtree(shelves.map(s => s.id), true, level);
         }
         else {
@@ -70,8 +79,10 @@ export class Export {
         const mobileBookmarks = nodes.find(n => n.external_id === FIREFOX_BOOKMARK_MOBILE);
         if (mobileBookmarks) {
             const mobileSubtree = nodes.filter(n => n.parent_id === mobileBookmarks.id);
+
             for (const n of mobileSubtree)
                 nodes.splice(nodes.indexOf(n), 1);
+
             nodes.splice(nodes.indexOf(mobileBookmarks), 1);
         }
 
@@ -84,7 +95,7 @@ export class Import {
         switch (format) {
             case "json":
             case "jsonl":
-                return new StructuredStreamImporterBuilder(new StructuredUnmarshallerJSON());
+                return new StructuredStreamImporterBuilder(new UnmarshallerJSONScrapbook());
             case "org":
                 return new StreamImporterBuilder(new UnmarshallerORG());
             case "html":
@@ -101,11 +112,9 @@ export class Import {
             console.error(e);
         }
 
-        if (settings.undo_failed_imports())
-            return;
-
         if (shelf === EVERYTHING_SHELF_UUID) {
-            return ExportArea.prepareToImportEverything();
+            await Database.wipeImportable();
+            await Disk.wipeStorage();
         }
         else {
             shelf = await Query.shelf(shelf);
@@ -119,7 +128,13 @@ export class Import {
     }
 
     static async transaction(shelf, importer) {
-        return importTransaction(shelf, importer);
+        try {
+            await Disk.openBatchSession();
+            await importer.import();
+        }
+        finally {
+            await Disk.closeBatchSession();
+        }
     }
 }
 

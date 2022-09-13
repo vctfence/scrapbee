@@ -297,7 +297,7 @@ export class CloudBackend {
     }
 
     async _storeDataInternal(db, node, data, contentType) {
-        const archive = Archive.compose(data, contentType);
+        const archive = Archive.entity(node, data, contentType);
         return this._marshaller.marshalArchive(db, node, archive);
     }
 

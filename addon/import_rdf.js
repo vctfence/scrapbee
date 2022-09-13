@@ -1,6 +1,6 @@
 import {helperApp} from "./helper_app.js";
 import {getFaviconFromTab} from "./favicon.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
+import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_TYPE} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
 import {packPage} from "./bookmarking.js";
@@ -27,21 +27,18 @@ class RDFImporter {
     }
 
     async import() {
-        let helperApp;
+        const helper = await helperApp.probe(true);
 
-        helperApp = await helperApp.probe(true);
+        if (helper) {
+            const path = this.#options.stream.replace(/\\/g, "/");
+            const xml = await this.#getRDFXML(path);
 
-        if (!helperApp)
-            return;
+            if (!xml)
+                return Promise.reject(new Error("RDF file not found."));
 
-        const path = this.#options.stream.replace(/\\/g, "/");
-        const xml = await this.#getRDFXML(path);
-
-        if (!xml)
-            return Promise.reject(new Error("RDF file not found."));
-
-        await this.#buildBookmarkTree(path, xml);
-        await this.#importArchives();
+            await this.#buildBookmarkTree(path, xml);
+            await this.#importArchives();
+        }
     }
 
     #traverseRDFTree(doc, visitor, data) {
@@ -226,7 +223,7 @@ class RDFImporter {
 
         if (shelfNode) {
             if (this.#options.quick) {
-                shelfNode.external = RDF_EXTERNAL_NAME;
+                shelfNode.external = RDF_EXTERNAL_TYPE;
                 shelfNode.uri = path.substring(0, path.lastIndexOf("/"));
                 await Node.update(shelfNode);
             }
@@ -257,7 +254,7 @@ class RDFImporter {
         };
 
         if (this.#options.quick) {
-            data.external = RDF_EXTERNAL_NAME;
+            data.external = RDF_EXTERNAL_TYPE;
             data.external_id = node.__sb_id;
         }
 

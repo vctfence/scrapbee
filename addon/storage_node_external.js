@@ -24,20 +24,18 @@ class ExternalNodeIDB extends EntityIDB {
     }
 
     async delete(kind) {
-        const ids = [];
-        await this._db.nodes.where("external").equals(kind).each(n => ids.push(n.id));
-        return Node.delete(ids);
+        const nodes = await this._db.nodes.where("external").equals(kind).toArray();
+        return Node.delete(nodes);
     }
 
     async deleteMissingIn(retainExternalIDs, kind) {
         const retain = new Set(retainExternalIDs);
 
-        const ids = [];
-        await this._db.nodes.where("external").equals(kind)
+        const nodes = await this._db.nodes.where("external").equals(kind)
             .and(n => n.external_id && !retain.has(n.external_id))
-            .each(n => ids.push(n.id));
+            .toArray();
 
-        return Node.delete(ids);
+        return Node.delete(nodes);
     }
 }
 

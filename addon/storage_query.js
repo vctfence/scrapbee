@@ -222,7 +222,7 @@ class QueryIDB extends EntityIDB {
                 case "comments":
                     return this._db.index_comments;
                 default:
-                    return this._db.index;
+                    return this._db.index_content;
             }
         };
 

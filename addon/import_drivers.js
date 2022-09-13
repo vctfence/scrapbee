@@ -12,6 +12,7 @@ import {Folder} from "./bookmarks_folder.js";
 import UUID from "./uuid.js";
 import {formatShelfName} from "./bookmarking.js";
 import {Import} from "./import.js";
+import {SCRAPYARD_STORAGE_FORMAT, StructuredUnmarshallerJSON} from "./marshaller_json.js";
 
 export class StreamExporterBuilder {
     constructor(marshaller) {
@@ -186,16 +187,21 @@ export class StructuredStreamImporter {
     }
 
     async import() {
-        const unmarshaller = this._unmarshaller;
+        let unmarshaller = this._unmarshaller;
         const meta = await unmarshaller.unmarshalMeta();
 
         if (!meta)
-            throw new Error("invalid file format");
+            throw new Error("Invalid file format.");
+
+        if (meta.export === SCRAPYARD_STORAGE_FORMAT) {
+            unmarshaller = new StructuredUnmarshallerJSON(meta);
+            unmarshaller.configure(this._importOptions);
+        }
 
         let firstObject = await unmarshaller.unmarshal();
 
         if (!firstObject)
-            throw new Error("invalid file format");
+            throw new Error("Invalid file format.");
 
         let {name: shelfName, progress, muteSidebar} = this._importOptions;
 
@@ -212,7 +218,7 @@ export class StructuredStreamImporter {
         this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING_SHELF_UUID;
         this._shelfNode = shelfName !== EVERYTHING_SHELF_UUID? await Folder.getOrCreateByPath(shelfName): null;
 
-        if (this._shelfNode) // first object contains id of its parent shelf (not everything) if a shelf is imported
+        if (this._shelfNode) // first object contains id of its parent shelf if a shelf (not everything) is imported
             this._importParentId2DBParentId.set(firstObject.node.parent_id, this._shelfNode.id);
 
         await this._importObject(firstObject);
@@ -237,7 +243,7 @@ export class StructuredStreamImporter {
         if (object.node.type === NODE_TYPE_SHELF && object.node.name?.toLowerCase() === DEFAULT_SHELF_NAME) {
             if (_everythingAsShelf) // import default shelf as a folder
                 object.node.uuid = UUID.numeric();
-            else { // do not import default shelf because it is always there
+            else { // do not import default shelf because it is always there (TODO: find default shelf by UUID)
                 _progressCounter?.incrementAndNotify();
                 return;
             }

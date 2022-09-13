@@ -81,7 +81,7 @@ async function prepareForCloudSharing(node) {
     let filename, content;
 
     if (node.type === NODE_TYPE_ARCHIVE) {
-        let archive = await Archive.get(node.id);
+        let archive = await Archive.get(node);
         if (archive) {
             const type = archive.type? archive.type: "text/html";
             filename = node.name
@@ -101,7 +101,7 @@ async function prepareForCloudSharing(node) {
         content = "[InternetShortcut]\nURL=" + node.uri;
     }
     else if (node.type === NODE_TYPE_NOTES) {
-        let notes = await Notes.get(node.id);
+        let notes = await Notes.get(node);
 
         if (notes) {
             filename = node.name + ".html";

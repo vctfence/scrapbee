@@ -12,19 +12,34 @@ import {
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
     TODO_SHELF_NAME, DEFAULT_POSITION,
-    RDF_EXTERNAL_NAME
+    RDF_EXTERNAL_TYPE
 } from "./storage.js";
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Folder} from "./bookmarks_folder.js";
 import {ishellBackend} from "./backend_ishell.js";
-import {cleanObject, computeSHA1, getMimetypeExt} from "./utils.js";
+import {cleanObject, getMimetypeExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
+import {Disk} from "./storage_disk.js";
 
 export class BookmarkManager extends EntityManager {
+    _Node;
+
+    static newInstance() {
+        const instance = new BookmarkManager();
+
+        instance.idb = new BookmarkManager();
+
+        return instance;
+    }
+
+    configure() {
+        this._Node = Node;
+        this.idb._Node = Node.idb;
+    }
 
     _splitTags(tags, separator = ",") {
         if (tags && typeof tags === "string")
@@ -49,7 +64,7 @@ export class BookmarkManager extends EntityManager {
 
         const parent = await Node.get(data.parent_id);
 
-        if (nodeType === NODE_TYPE_BOOKMARK && parent.external === RDF_EXTERNAL_NAME)
+        if (nodeType === NODE_TYPE_BOOKMARK && parent.external === RDF_EXTERNAL_TYPE)
             throw new Error("Only archives could be added to an RDF file");
 
         data.name = await this.ensureUniqueName(data.parent_id, data.name);
@@ -58,15 +73,17 @@ export class BookmarkManager extends EntityManager {
         data.tag_list = this._splitTags(data.tags);
         //await this.addTags(data.tag_list);
 
-        const iconId = await this.storeIcon(data);
+        const [iconId, dataUrl] = await this.storeIcon(data);
 
         if (iconId)
             data.content_modified = new Date();
 
         const node = await Node.add(data);
 
-        if (iconId)
+        if (iconId) {
             await Icon.update(iconId, {node_id: node.id});
+            await Icon.persist(node, dataUrl);
+        }
 
         await this.plugins.createBookmark(node, parent);
 
@@ -148,10 +165,10 @@ export class BookmarkManager extends EntityManager {
         if (sync && exists) {
             const node = await Node.getByUUID(data.uuid);
             data.id = node.id;
-            result = Node.update(data, false);
+            result = this._Node.update(data, false);
         }
         else
-            result = Node.import(data);
+            result = this._Node.import(data);
 
         return result;
     }
@@ -259,7 +276,7 @@ export class BookmarkManager extends EntityManager {
         await Node.batchUpdate(n => n.pos = id2pos.get(n.id), Array.from(id2pos.keys()));
     }
 
-    async move(ids, destId, moveLast) {
+    async _move(ids, destId, moveLast) {
         const dest = await Node.get(destId);
         const nodes = await Node.get(ids);
 
@@ -295,20 +312,35 @@ export class BookmarkManager extends EntityManager {
         return Query.fullSubtree(ids, true);
     }
 
-    async copy(ids, destId, moveLast) {
+    async move(ids, destId, moveLast) {
+        let result;
+
+        try {
+            await Disk.openBatchSession();
+            result = await this._move(ids, destId, moveLast);
+        }
+        finally {
+            await Disk.closeBatchSession();
+        }
+
+        return result;
+    }
+
+    async _copy(ids, destId, moveLast) {
         const dest = await Node.get(destId);
         let all_nodes = await Query.fullSubtree(ids, true);
         let newNodes = [];
 
         for (let n of all_nodes) {
-            let old_id = n.old_id = n.id;
+            const source_node = {...n};
+            const source_node_id = n.source_node_id = n.id;
 
-            if (ids.some(id => id === old_id)) {
+            if (ids.some(id => id === source_node_id)) {
                 n.parent_id = destId;
                 n.name = await this.ensureUniqueName(destId, n.name);
             }
             else {
-                let new_parent = newNodes.find(nn => nn.old_id === n.parent_id);
+                let new_parent = newNodes.find(nn => nn.source_node_id === n.parent_id);
                 if (new_parent)
                     n.parent_id = new_parent.id;
             }
@@ -316,41 +348,41 @@ export class BookmarkManager extends EntityManager {
             delete n.id;
             delete n.date_modified;
 
-            if (moveLast && ids.some(id => id === n.old_id))
+            if (moveLast && ids.some(id => id === n.source_node_id))
                 n.pos = DEFAULT_POSITION;
 
             newNodes.push(Object.assign(n, await Node.add(n)));
 
             try {
                 if (isContentNode(n) && n.type !== NODE_TYPE_SEPARATOR) {
-                    let notes = await Notes.get(old_id);
+                    let notes = await Notes.get(source_node);
                     if (notes) {
                         delete notes.id;
                         notes.node_id = n.id;
-                        await Notes.add(notes);
+                        await Notes.add(n, notes);
                         notes = null;
                     }
 
-                    let comments = await Comments.get(old_id);
+                    let comments = await Comments.get(source_node);
                     if (comments) {
-                        await Comments.add(n.id, comments);
+                        await Comments.add(n, comments);
                         comments = null;
                     }
 
-                    if (n.has_stored_icon) {
-                        let icon = await Icon.get(old_id);
+                    if (n.stored_icon) {
+                        let icon = await Icon.get(source_node_id);
                         if (icon) {
-                            await Icon.add(n.id, icon);
+                            await Icon.add(n, icon);
                         }
                     }
                 }
 
                 if (n.type === NODE_TYPE_ARCHIVE) {
-                    let blob = await Archive.get(old_id);
-                    if (blob) {
-                        let index = await Archive.fetchIndex(old_id);
-                        await Archive.add(n.id, blob.data || blob.object, blob.type, blob.byte_length, index);
-                        blob = null;
+                    let archive = await Archive.get(source_node);
+                    if (archive) {
+                        let index = await Archive.fetchIndex(source_node);
+                        await Archive.add(n, archive.object, archive.type, archive.byte_length, index);
+                        archive = null;
                     }
                 }
             } catch (e) {
@@ -358,7 +390,7 @@ export class BookmarkManager extends EntityManager {
             }
         }
 
-        let rootNodes = newNodes.filter(n => ids.some(id => id === n.old_id));
+        let rootNodes = newNodes.filter(n => ids.some(id => id === n.source_node_id));
 
         try {
             await this.plugins.copyBookmarks(dest, rootNodes);
@@ -371,6 +403,20 @@ export class BookmarkManager extends EntityManager {
         }
 
         return newNodes;
+    }
+
+    async copy(ids, destId, moveLast) {
+        let result;
+
+        try {
+            await Disk.openBatchSession();
+            result = await this._copy(ids, destId, moveLast);
+        }
+        finally {
+            await Disk.closeBatchSession();
+        }
+
+        return result;
     }
 
     async _delete(nodes, deletef) {
@@ -388,7 +434,7 @@ export class BookmarkManager extends EntityManager {
     }
 
     async _hardDelete(nodes) {
-        return this._delete(nodes, nodes => Node.delete(nodes.map(n => n.id)));
+        return this._delete(nodes, nodes => Node.delete(nodes));
     }
 
     async delete(ids) {
@@ -400,7 +446,7 @@ export class BookmarkManager extends EntityManager {
     async softDelete(ids) {
         const nodes = await Query.fullSubtree(ids);
 
-        if (nodes.some(n => n.external === RDF_EXTERNAL_NAME))
+        if (nodes.some(n => n.external === RDF_EXTERNAL_TYPE))
             return this._hardDelete(nodes);
 
         return this._delete(nodes, this._undoDelete.bind(this));
@@ -409,13 +455,13 @@ export class BookmarkManager extends EntityManager {
     async _undoDelete(nodes, ids) {
         await undoManager.pushDeleted(ids, nodes);
 
-        return Node.deleteShallow(nodes.map(n => n.id));
+        return Node.deleteShallow(nodes);
     }
 
     async deleteChildren(id) {
         let all_nodes = await Query.fullSubtree(id);
 
-        await Node.delete(all_nodes.map(n => n.id).filter(i => i !== id));
+        await Node.delete(all_nodes.filter(n => n.id !== id));
 
         ishellBackend.invalidateCompletion();
     }
@@ -442,25 +488,27 @@ export class BookmarkManager extends EntityManager {
 
                 let iconUrl = `data:${contentType};base64,${btoa(binaryString)}`;
 
-                const id = await Icon.add(node.id, iconUrl);
+                const id = await Icon.add(node, iconUrl);
 
                 return [id, iconUrl];
             }
         };
 
         const updateNode = async (node, iconUrl) => {
-            node.has_stored_icon = true;
-            node.icon = "hash:" + (await computeSHA1(iconUrl));
+            node.stored_icon = true;
+            node.icon = await Icon.computeHash(iconUrl);
             if (node.id)
                 await Node.update(node);
         };
 
         let iconId;
+        let dataUrl;
 
         if (node.icon) {
             try {
                 if (node.icon.startsWith("data:")) {
-                    iconId = await Icon.add(node.id, node.icon);
+                    iconId = await Icon.add(node, node.icon);
+                    dataUrl = node.icon;
                     await updateNode(node, node.icon);
                 }
                 else {
@@ -468,6 +516,7 @@ export class BookmarkManager extends EntityManager {
                         const [id, iconUrl] = await convertAndStore(iconData, contentType);
                         await updateNode(node, iconUrl);
                         iconId = id;
+                        dataUrl = iconUrl;
                     }
                     else {
                         try {
@@ -487,13 +536,14 @@ export class BookmarkManager extends EntityManager {
                                         const [id, iconUrl] = await convertAndStore(buffer, type);
                                         await updateNode(node, iconUrl);
                                         iconId = id;
+                                        dataUrl = iconUrl;
                                     }
                                 }
                             }
                         }
                         catch (e) {
                             node.icon = undefined;
-                            node.has_stored_icon = undefined;
+                            node.stored_icon = undefined;
                             if (node.id)
                                 await Node.update(node);
                             console.error(e);
@@ -506,7 +556,7 @@ export class BookmarkManager extends EntityManager {
             }
         }
 
-        return iconId;
+        return [iconId, dataUrl];
     }
 
     async storeIconFromURI(node) {
@@ -518,36 +568,36 @@ export class BookmarkManager extends EntityManager {
         }
     }
 
-    async storeArchive(nodeId, data, contentType, index) {
-        await Archive.add(nodeId, data, contentType, null, index);
-        const node = await Node.get(nodeId);
+    async storeArchive(node, data, contentType, index) {
+        await Archive.add(node, data, contentType, null, index);
+        //const node = await Node.get(node);
         await this.plugins.storeBookmarkData(node, data, contentType);
     }
 
-    async updateArchive(nodeId, data) {
-        await Archive.updateHTML(nodeId, data);
-        const node = await Node.get(nodeId);
+    async updateArchive(uuid, data) {
+        const node = await Node.getByUUID(uuid);
+        await Archive.updateHTML(node, data);
         await this.plugins.updateBookmarkData(node, data);
     }
 
     async storeNotes(options, propertyChange) {
-        await Notes.add(options, propertyChange);
         const node = await Node.get(options.node_id);
+        await Notes.add(node, options, propertyChange);
         await this.plugins.storeBookmarkNotes(node, options, propertyChange);
     }
 
     async storeComments(nodeId, comments) {
-        await Comments.add(nodeId, comments);
         const node = await Node.get(nodeId);
+        await Comments.add(node, comments);
         await this.plugins.storeBookmarkComments(node, comments);
     }
 
     async isSitePage(node) {
         const parent = await Node.get(node.parent_id);
-        return parent.is_site;
+        return parent.site;
     }
 }
 
-export let Bookmark = new BookmarkManager();
+export let Bookmark = BookmarkManager.newInstance();
 
 

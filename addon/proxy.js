@@ -1,29 +1,31 @@
 import {snakeCaseToCamelCase} from "./utils.js";
 
-export function delegateProxy (target, origin) {
-    return new Proxy(target, {
+export function delegateProxy(proxy, wrapped) {
+    proxy.wrapped = wrapped;
+
+    return new Proxy(wrapped, {
         get (target, key, receiver) {
-            if (key in target)
-                return Reflect.get(target, key, receiver);
+            if (key in proxy) {
+                const value = proxy[key];
 
-            const value = origin[key];
+                return "function" === typeof value
+                    ? (...args) => value.apply(proxy, args)
+                    : value;
+            }
 
-            return "function" === typeof value
-                ? function method () {
-                      return value.apply(origin, arguments)
-                  }
-                : value;
+            return Reflect.get(target, key, receiver);
         },
-        set (target, key, value, receiver) {
-            if (key in target)
-                return Reflect.set(target, key, value, receiver);
 
-            origin[key] = value;
-            return true;
+        set (target, key, value, receiver) {
+            if (key in proxy) {
+                proxy[key] = value;
+                return true;
+            }
+
+            return Reflect.set(target, key, value, receiver);
         }
     })
 }
-
 
 class ReceiveHandler {
     constructor(camelCase = true) {

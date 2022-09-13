@@ -12,7 +12,7 @@ import flask
 from flask import request, abort
 from werkzeug.serving import make_server
 
-DEBUG = False
+DEBUG = True
 
 app = flask.Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -81,7 +81,7 @@ def port_available(port):
 
 
 def wait_for_port(port):
-    ctr = 10
+    ctr = 20
 
     while ctr > 0:
         if port_available(port):
@@ -119,12 +119,12 @@ def add_header(r):
     return r
 
 
-from . import server_scrapbook
+from . import server_rdf
 from . import server_browse
 from . import server_backup
 from . import server_upload
 from . import server_utils
-from . import server_sync
+from . import server_storage
 
 
 @app.route("/")

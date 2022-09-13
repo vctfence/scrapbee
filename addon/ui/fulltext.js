@@ -38,7 +38,7 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
-    const blob = await Archive.get(node.id);
+    const blob = await Archive.get(node);
     const text = await Archive.reify(blob);
     const doc = parseHtml(text);
     const mark = new Mark(doc.body);
@@ -71,7 +71,7 @@ async function appendSearchResult(query, node, occurrences) {
     const fallbackIcon = "/icons/globe.svg";
 
     let icon = node.icon;
-    if (node.has_stored_icon)
+    if (node.stored_icon)
         icon = await Icon.get(node.id);
 
     if (!icon)
@@ -98,7 +98,7 @@ async function appendSearchResult(query, node, occurrences) {
 
     foundItems.append(html);
 
-    if (!node.has_stored_icon && node.icon) {
+    if (!node.stored_icon && node.icon) {
         let image = new Image();
         image.onerror = e => {
             $(`#icon_${node.id}`).prop("src", fallbackIcon);
@@ -122,7 +122,7 @@ function markSearch(query, nodes, across, progressCallback, finishCallback) {
     }
 
     let node = nodes.shift();
-    Archive.get(node.id)
+    Archive.get(node)
         .then(blob => {
             Archive.reify(blob)
                 .then(text => {

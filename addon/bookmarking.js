@@ -164,7 +164,7 @@ async function captureNonHTMLTab(tab, bookmark) {
 
             bookmark.content_type = contentType;
 
-            await Bookmark.storeArchive(bookmark.id, await response.arrayBuffer(), contentType);
+            await Bookmark.storeArchive(bookmark, await response.arrayBuffer(), contentType);
         }
     }
     catch (e) {
@@ -200,7 +200,7 @@ export async function archiveBookmark(node) {
         }
 
         if (response.ok)
-           await Bookmark.storeArchive(bookmark.id, await response.blob(), response.headers.get("content-type"));
+           await Bookmark.storeArchive(bookmark, await response.blob(), response.headers.get("content-type"));
     }
 }
 

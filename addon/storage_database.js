@@ -1,29 +1,9 @@
 import {EntityIDB} from "./storage_idb.js";
-import {CLOUD_SHELF_ID, DEFAULT_SHELF_ID, BROWSER_SHELF_ID} from "./storage.js";
+import {BROWSER_SHELF_ID, DEFAULT_SHELF_ID, CLOUD_SHELF_ID} from "./storage.js";
 import {Query} from "./storage_query.js";
 
-class ExportAreaIDB extends EntityIDB {
-    addBlob(exportId, blob) {
-        return this._db.export_storage.add({
-            process_id: exportId,
-            blob
-        });
-    }
-
-    async getBlobs(exportId) {
-        const blobs = await this._db.export_storage.where("process_id").equals(exportId).sortBy("id")
-        return blobs.map(b => b.blob);
-    }
-
-    removeBlobs(exportId) {
-        return this._db.export_storage.where("process_id").equals(exportId).delete();
-    }
-
-    wipe() {
-        return this._db.export_storage.clear();
-    }
-
-    async prepareToImportEverything() {
+class StorageDatabase extends EntityIDB {
+    async wipeImportable() {
         const retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
             ...(await Query.fullSubtreeOfIDs(BROWSER_SHELF_ID)),
             ...(await Query.fullSubtreeOfIDs(CLOUD_SHELF_ID))];
@@ -62,4 +42,4 @@ class ExportAreaIDB extends EntityIDB {
     }
 }
 
-export let ExportArea = new ExportAreaIDB();
+export const Database = new StorageDatabase();

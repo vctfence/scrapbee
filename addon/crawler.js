@@ -265,7 +265,7 @@ class Crawler {
         const node = await Bookmark.add(bookmark, NODE_TYPE_ARCHIVE);
         const content = result.content || "";
         const contentType = result.contentType || "text/html";
-        return Bookmark.storeArchive(node.id, content, contentType, result.bookmark.__index);
+        return Bookmark.storeArchive(node, content, contentType, result.bookmark.__index);
     }
 }
 

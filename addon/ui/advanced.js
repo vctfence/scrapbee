@@ -13,7 +13,6 @@ async function init() {
 
     initHelpMarks();
     configureAutomationPanel();
-    configureDBPath();
     configureBackupCompressionPanel();
     configureMaintenancePanel();
     configureImpExpPanel();
@@ -90,11 +89,6 @@ function configureBackupCompressionPanel() {
 }
 
 function configureMaintenancePanel() {
-    if (!settings.platform.firefox) {
-        $("#debug-settings-link").hide();
-        $("#optimize-database").hide();
-    }
-
     $("#option-repair-icons").prop("checked", settings.repair_icons());
     $("#option-repair-icons").on("change", async e => {
         await settings.load();
@@ -105,30 +99,6 @@ function configureMaintenancePanel() {
     $("#option-enable-debug").on("change", async e => {
         await settings.load();
         settings.debug_mode(e.target.checked);
-    });
-
-
-    $("#optimize-database-link").on("click", async e => {
-        e.preventDefault();
-
-        if (await confirm("Warning", "It is recommended to make a full backup before the optimization. Continue?")) {
-
-            let progressListener = message => {
-                if (message.type === "databaseOptimizationProgress") {
-                    $("#optimize-database-progress").text(`Progress: ${message.progress}%`);
-                }
-                else if (message.type === "databaseOptimizationFinished") {
-                    $("#optimize-database-progress").text(``);
-                    browser.runtime.onMessage.removeListener(progressListener);
-                }
-            };
-
-            browser.runtime.onMessage.addListener(progressListener);
-
-            send.optimizeDatabase();
-            $("#optimize-database-link").off("click");
-            $("#optimize-database-progress").text(`Progress: 0%`);
-        }
     });
 
     $("#reindex-content-link").on("click", e => {
@@ -162,18 +132,11 @@ function configureMaintenancePanel() {
         }
     });
 
-    $("#reset-sync-link").on("click", async e => {
-        e.preventDefault();
-
-        if (await confirm("Warning", "This will reset all contents of the Sync storage on disk. Continue?"))
-            await send.resetSync();
-    });
-
-
     $("#reset-scrapyard-link").on("click", async e => {
         e.preventDefault();
 
-        if (await confirm("Warning", "This will remove all contents in Scrapyard. Continue?"))
+        if (await confirm("Warning",
+            "This will reset the Scrapyard browser internal storage. All archived content will be left intact. Continue?"))
             await send.resetScrapyard();
     });
 

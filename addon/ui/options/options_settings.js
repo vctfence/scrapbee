@@ -7,15 +7,31 @@ function configureScrapyardSettingsPage() {
     simpleSelectric("#option-sidebar-theme");
     simpleSelectric("#option-export-format");
 
+    let dataFolderInputTimeout;
+    $("#option-data-folder-path").on("input", e => {
+        clearTimeout(dataFolderInputTimeout);
+        dataFolderInputTimeout = setTimeout(async () => {
+            await settings.load();
+
+            const path = e.target.value
+            await settings.data_folder_path(path);
+
+            const status = await send.checkSyncDirectory({path});
+
+            if (status)
+                send.shelvesChanged();
+        }, 1000)
+    });
+
     $("#option-sidebar-theme").on("change", e => {
         localStorage.setItem("scrapyard-sidebar-theme", e.target.value);
         send.sidebarThemeChanged({theme: e.target.value});
     });
 
-    let inputTimeout;
+    let listHeightInputTimeout;
     $("#option-shelf-list-max-height").on("input", e => {
-        clearTimeout(inputTimeout);
-        inputTimeout = setTimeout(async () => {
+        clearTimeout(listHeightInputTimeout);
+        listHeightInputTimeout = setTimeout(async () => {
             await settings.load();
             await settings.shelf_list_height(+e.target.value);
             send.reloadSidebar({height: +e.target.value});
@@ -24,7 +40,7 @@ function configureScrapyardSettingsPage() {
 
     $("#option-helper-port").on("input", async e => {
         await settings.load();
-        settings.helper_port_number(+e.target.value)
+        settings.helper_port_number(+e.target.value);
     });
 
     setSaveSelectHandler("option-export-format", "export_format");
@@ -55,6 +71,7 @@ function configureScrapyardSettingsPage() {
 }
 
 function loadScrapyardSettings() {
+    $("#option-data-folder-path").val(settings.data_folder_path() || "");
     $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
     $("#option-shelf-list-max-height").val(settings.shelf_list_height());
     $("#option-show-firefox-bookmarks").prop("checked", settings.show_firefox_bookmarks());

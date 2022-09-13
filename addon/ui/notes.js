@@ -65,7 +65,7 @@ async function init() {
                 send.browseNode({node: node});
             });
 
-        let notes = await Notes.get(NODE_ID);
+        let notes = await Notes.get(node);
         if (notes) {
             format = notes.format || "org";
             $("#notes-format").val(format === "html"? "delta": format);

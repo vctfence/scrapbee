@@ -109,12 +109,12 @@ receive.archiveBookmarks = async message => {
     }
 };
 
-receive.updateArchive = message => Bookmark.updateArchive(message.id, message.data);
+receive.updateArchive = message => Bookmark.updateArchive(message.uuid, message.data);
 
 receive.setTODOState = message => TODO.setState(message.nodes);
 
 receive.getBookmarkInfo = async message => {
-    let node = await Node.get(message.id);
+    let node = await Node.getByUUID(message.uuid);
     node.__formatted_size = node.size ? formatBytes(node.size) : null;
     node.__formatted_date = node.date_added
         ? node.date_added.toString().replace(/:[^:]*$/, "")
@@ -155,7 +155,7 @@ receive.storePageHtml = message => {
     if (message.bookmark.__url_packing)
         return;
 
-    Bookmark.storeArchive(message.bookmark.id, message.data, "text/html", message.bookmark.__index)
+    Bookmark.storeArchive(message.bookmark, message.data, "text/html", message.bookmark.__index)
         .then(() => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
@@ -183,9 +183,9 @@ receive.uploadFiles = async message => {
     send.startProcessingIndication();
 
     try {
-        const helperApp = await helperApp.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
+        const helper = await helperApp.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
 
-        if (helperApp) {
+        if (helper) {
             const uuids = await helperApp.fetchJSON("/upload/open_file_dialog");
 
             for (const [uuid, file] of Object.entries(uuids)) {
@@ -217,7 +217,7 @@ receive.uploadFiles = async message => {
 
                     bookmark = await Bookmark.add(bookmark, NODE_TYPE_ARCHIVE);
                     if (content)
-                        await Bookmark.storeArchive(bookmark.id, content, contentType);
+                        await Bookmark.storeArchive(bookmark, content, contentType);
                     else
                         throw new Error();
                 } catch (e) {
