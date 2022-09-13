@@ -1,4 +1,4 @@
-import {NODE_TYPE_NOTES} from "../storage.js";
+import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_NOTES} from "../storage.js";
 import {formatBytes} from "../utils.js";
 
 const DEFAULT_CONTAINER = "--default-container";
@@ -54,6 +54,9 @@ function showDlg(name, data, callback) {
     // handle bookmark comments
     let comments_icon = $dlg.find("#prop-dlg-comments-icon").first();
     if (comments_icon.length) {
+        if (data.external === BROWSER_EXTERNAL_TYPE)
+            comments_icon.hide();
+
         let comments_container = $dlg.find(" #dlg-comments-container").first();
         let dlg_title = $dlg.find(" #prop-dlg-title-text").first();
 

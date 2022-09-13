@@ -43,6 +43,10 @@ export class NodeProxy {
         return result;
     }
 
+    async unpersist(node) {
+        return this.#unpersistNode(node);
+    }
+
     async deleteShallow(nodes) {
         const result = await this.wrapped.deleteShallow(nodes);
 
@@ -91,6 +95,16 @@ export class NodeProxy {
             };
 
             /*return*/ this.#adapter.updateNodes(params);
+        }
+    }
+
+    async #unpersistNode(node) {
+        if (this.#adapter.accepts(node)) {
+            const params = {
+                node_uuids: [node.uuid]
+            };
+
+            /*return*/ this.#adapter.deleteNodes(params);
         }
     }
 

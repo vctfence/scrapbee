@@ -56,6 +56,14 @@ def update_nodes():
     return "", 204
 
 
+@app.route("/storage/delete_nodes", methods=['POST'])
+@requires_auth
+def delete_nodes():
+    request_queue.add(storage_manager.delete_nodes, request.json)
+    #storage_manager.delete_nodes(request.json)
+    return "", 204
+
+
 @app.route("/storage/delete_nodes_shallow", methods=['POST'])
 @requires_auth
 def delete_nodes_shallow():

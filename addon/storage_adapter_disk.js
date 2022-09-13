@@ -42,6 +42,10 @@ export class StorageAdapterDisk {
         return this._postJSON("/storage/update_nodes", params);
     }
 
+    async deleteNodes(params) {
+        return this._postJSON("/storage/delete_nodes", params);
+    }
+
     async deleteNodesShallow(params) {
         return this._postJSON("/storage/delete_nodes_shallow", params);
     }

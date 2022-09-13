@@ -3,11 +3,7 @@ import {BROWSER_SHELF_ID, DEFAULT_SHELF_ID, CLOUD_SHELF_ID} from "./storage.js";
 import {Query} from "./storage_query.js";
 
 class StorageDatabase extends EntityIDB {
-    async wipeImportable() {
-        const retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
-            ...(await Query.fullSubtreeOfIDs(BROWSER_SHELF_ID)),
-            ...(await Query.fullSubtreeOfIDs(CLOUD_SHELF_ID))];
-
+    async #wipe(retain) {
         if (this._db.tables.some(t => t.name === "blobs"))
             await this._db.blobs.where("node_id").noneOf(retain).delete();
 
@@ -39,6 +35,18 @@ class StorageDatabase extends EntityIDB {
             await this._db.metadata.clear();
 
         return this._db.nodes.where("id").noneOf(retain).delete();
+    }
+
+    async wipeEverything() {
+        return this.#wipe([DEFAULT_SHELF_ID]);
+    }
+
+    async wipeImportable() {
+        const retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
+            ...(await Query.fullSubtreeOfIDs(BROWSER_SHELF_ID)),
+            ...(await Query.fullSubtreeOfIDs(CLOUD_SHELF_ID))];
+
+        return this.#wipe(retain);
     }
 }
 

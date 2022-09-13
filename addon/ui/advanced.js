@@ -244,7 +244,7 @@ function configureImpExpPanel() {
                 if (settings.platform.firefox && settings.open_sidebar_from_shortcut())
                     settings.open_sidebar_from_shortcut(true);
 
-                chrome.runtime.reload();
+                browser.runtime.reload();
             };
             reader.readAsText(e.target.files[0]);
         }

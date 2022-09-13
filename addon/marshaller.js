@@ -55,7 +55,7 @@ export class Marshaller {
             result.comments = this.preprocessComments(await Comments.get(node));
 
         if (node.icon && node.stored_icon)
-            result.icon = this.preprocessIcon(await Icon.get(node.id));
+            result.icon = this.preprocessIcon(await Icon.get(node));
 
         return result;
     }

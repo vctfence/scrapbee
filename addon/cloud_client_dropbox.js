@@ -3,11 +3,11 @@ import {settings} from "./settings.js";
 import DropboxAuth from "./lib/dropbox/auth.js";
 import Dropbox from "./lib/dropbox/dropbox.js"
 import {readBlob} from "./utils_io.js";
-import {BackendCloudBase, CloudItemNotFoundError} from "./backend_cloud_base.js";
+import {CloudClientBase, CloudItemNotFoundError} from "./cloud_client_base.js";
 
 const APP_KEY = "0y7co3j1k4oc7up";
 
-export class DropboxBackend extends BackendCloudBase {
+export class DropboxClient extends CloudClientBase {
     constructor() {
         super()
         this.ID = "dropbox";
@@ -38,13 +38,13 @@ export class DropboxBackend extends BackendCloudBase {
     }
 
     _getAuthorizationUrl() {
-        return this.dbxAuth.getAuthenticationUrl(BackendCloudBase.REDIRECT_URL, undefined,
+        return this.dbxAuth.getAuthenticationUrl(CloudClientBase.REDIRECT_URL, undefined,
             'code', 'offline', undefined, undefined, true);
     }
 
     async _obtainRefreshToken(url) {
         const code = url.match(/.*code=(.*)$/i)[1];
-        let response = await this.dbxAuth.getAccessTokenFromCode(BackendCloudBase.REDIRECT_URL, code);
+        let response = await this.dbxAuth.getAccessTokenFromCode(CloudClientBase.REDIRECT_URL, code);
         const refreshToken = response.result.refresh_token;
         this.dbxAuth.setRefreshToken(refreshToken);
 
@@ -101,7 +101,7 @@ export class DropboxBackend extends BackendCloudBase {
 
     async reset() {
         try {
-            const {result: {entries}} = await this.dbx.filesListFolder({path: BackendCloudBase.CLOUD_SHELF_PATH});
+            const {result: {entries}} = await this.dbx.filesListFolder({path: CloudClientBase.CLOUD_SHELF_PATH});
 
             if (entries && entries.length) {
                 const files = {entries: entries.map(f => ({path: f.path_display}))};
@@ -116,7 +116,7 @@ export class DropboxBackend extends BackendCloudBase {
     async getLastModified() {
         try {
             const {result: meta} = await this.dbx.filesGetMetadata({
-                path: `${BackendCloudBase.CLOUD_SHELF_PATH}/${BackendCloudBase.CLOUD_SHELF_INDEX}`
+                path: `${CloudClientBase.CLOUD_SHELF_PATH}/${CloudClientBase.CLOUD_SHELF_INDEX}`
             });
 
             if (meta && meta.server_modified)
@@ -130,4 +130,4 @@ export class DropboxBackend extends BackendCloudBase {
     }
 }
 
-export let dropboxBackend = new DropboxBackend();
+export let dropboxClient = new DropboxClient();

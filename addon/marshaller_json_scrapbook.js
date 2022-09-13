@@ -197,7 +197,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
             result.comments = this.serializeComments(await Comments.get(node));
 
         if (node.icon && node.stored_icon) {
-            const icon = Icon.entity(node, await Icon.get(node.id));
+            const icon = Icon.entity(node, await Icon.get(node));
             result.icon = this.serializeIcon(icon);
         }
 

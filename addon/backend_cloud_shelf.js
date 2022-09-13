@@ -1,7 +1,7 @@
 import {receive, send} from "./proxy.js";
 import {settings} from "./settings.js";
-import {dropboxBackend} from "./backend_dropbox.js";
-import {oneDriveBackend} from "./backend_onedrive.js";
+import {dropboxClient} from "./cloud_client_dropbox.js";
+import {oneDriveClient} from "./cloud_client_onedrive.js";
 import {
     CLOUD_EXTERNAL_TYPE,
     CLOUD_SHELF_ID,
@@ -15,7 +15,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Archive, Node} from "./storage_entities.js";
 import {MarshallerCloud, UnmarshallerCloud} from "./marshaller_cloud.js";
 import {ProgressCounter, sleep} from "./utils.js";
-import {CloudError} from "./backend_cloud_base.js";
+import {CloudError} from "./cloud_client_base.js";
 
 const CLOUD_SYNC_ALARM_NAME = "cloud-sync-alarm";
 const CLOUD_SYNC_ALARM_PERIOD = 60;
@@ -27,18 +27,18 @@ export class CloudBackend {
     }
 
     initialize() {
-        dropboxBackend.initialize();
-        oneDriveBackend.initialize();
+        dropboxClient.initialize();
+        oneDriveClient.initialize();
         this.selectProvider(settings.active_cloud_provider())
         this._marshaller = new MarshallerCloud();
         this._unmarshaller = new UnmarshallerCloud();
     }
 
     selectProvider(providerID) {
-        if (providerID === oneDriveBackend.ID)
-            this._provider = oneDriveBackend;
+        if (providerID === oneDriveClient.ID)
+            this._provider = oneDriveClient;
         else
-            this._provider = dropboxBackend;
+            this._provider = dropboxClient;
     }
 
     async reset() {
@@ -82,7 +82,7 @@ export class CloudBackend {
         return this._provider.signOut();
     }
 
-    async cleanBookmarkAssets(db, node) {
+    async _cleanBookmarkAssets(db, node) {
         if (node.has_notes) {
             await db.deleteNotes(node);
             await db.deleteView(node);
@@ -162,13 +162,13 @@ export class CloudBackend {
                                     node.external_id = undefined;
                                     await Node.update(node);
 
-                                    await this.cleanBookmarkAssets(db, node);
+                                    await this._cleanBookmarkAssets(db, node);
                                 }
                                 return db.deleteNodes(n);
                             });
                         }
                         else {
-                            await this.cleanBookmarkAssets(db, n);
+                            await this._cleanBookmarkAssets(db, n);
                             return db.deleteNodes(n);
                         }
                     }
@@ -231,7 +231,7 @@ export class CloudBackend {
         if (cloudNodes.length)
             return this.withCloudDB(async db => {
                 for (let node of cloudNodes)
-                    await this.cleanBookmarkAssets(db, node);
+                    await this._cleanBookmarkAssets(db, node);
 
                 return db.deleteNodes(cloudNodes);
             }, e => showNotification(CLOUD_ERROR_MESSAGE));
@@ -264,7 +264,7 @@ export class CloudBackend {
         nodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE && n.external_id);
 
         if (nodes.length) {
-            if (this._provider.ID === dropboxBackend.ID)
+            if (this._provider.ID === dropboxClient.ID)
                 await sleep(1000);
 
             return this.withCloudDB(async db => {

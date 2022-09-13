@@ -4,8 +4,8 @@ import {settings} from "./settings.js";
 import {showNotification} from "./utils_browser.js";
 import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES} from "./storage.js";
 import {notes2html} from "./notes_render.js";
-import {dropboxBackend} from "./backend_dropbox.js";
-import {oneDriveBackend} from "./backend_onedrive.js";
+import {dropboxClient} from "./cloud_client_dropbox.js";
+import {oneDriveClient} from "./cloud_client_onedrive.js";
 import {CONTENT_TYPE_TO_EXT} from "./utils.js";
 import {Archive, Notes} from "./storage_entities.js";
 
@@ -53,7 +53,7 @@ receive.shareToDropbox = async message => {
 
         if (filename && content) {
             shared = true;
-            await dropboxBackend.share("/", filename, content);
+            await dropboxClient.share("/", filename, content);
         }
     }
 
@@ -69,7 +69,7 @@ receive.shareToOneDrive = async message => {
 
         if (filename && content) {
             shared = true;
-            await oneDriveBackend.share("/", filename, content);
+            await oneDriveClient.share("/", filename, content);
         }
     }
 

@@ -1,6 +1,6 @@
 import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
-import {browserBackend} from "./backend_browser.js";
+import {browserBackend} from "./backend_browser_shelf.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {addBookmarkOnCommand} from "./bookmarking.js";
 import {toggleSidebarWindow} from "./utils_sidebar.js";

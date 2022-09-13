@@ -1,7 +1,7 @@
 import {settings} from "../../settings.js";
 import {setSaveCheckHandler} from "../options.js"
-import {oneDriveBackend} from "../../backend_onedrive.js";
-import {dropboxBackend} from "../../backend_dropbox.js";
+import {oneDriveClient} from "../../cloud_client_onedrive.js";
+import {dropboxClient} from "../../cloud_client_dropbox.js";
 import {send} from "../../proxy.js";
 
 async function configureCloudSettingsPage() {
@@ -9,10 +9,10 @@ async function configureCloudSettingsPage() {
     const oneDriveRadio = $("#provider-onedrive");
 
     let activeProvider;
-    if (settings.active_cloud_provider() === oneDriveBackend.ID)
-        activeProvider = oneDriveBackend;
+    if (settings.active_cloud_provider() === oneDriveClient.ID)
+        activeProvider = oneDriveClient;
     else
-        activeProvider = dropboxBackend;
+        activeProvider = dropboxClient;
 
     $("input[name=cloud-providers][value=" + activeProvider.ID + "]").prop('checked', true);
 
@@ -24,8 +24,8 @@ async function configureCloudSettingsPage() {
             send.shelvesChanged({synchronize: true})
     }
 
-    dropboxRadio.on("change", e => setActiveProvider(dropboxBackend));
-    oneDriveRadio.on("change", e => setActiveProvider(oneDriveBackend));
+    dropboxRadio.on("change", e => setActiveProvider(dropboxClient));
+    oneDriveRadio.on("change", e => setActiveProvider(oneDriveClient));
 
     const enableCloudCheck = $("#option-enable-cloud");
     enableCloudCheck.prop("checked", settings.cloud_enabled());
@@ -46,9 +46,9 @@ async function configureCloudSettingsPage() {
         send.enableCloudBackgroundSync({enable: e.target.checked});
     });
 
-    if (dropboxBackend.isAuthenticated())
+    if (dropboxClient.isAuthenticated())
         $(`#auth-dropbox`).val("Sign out");
-    if (oneDriveBackend.isAuthenticated())
+    if (oneDriveClient.isAuthenticated())
         $(`#auth-onedrive`).val("Sign out");
 
     function providerAuthHandler(provider) {
@@ -62,8 +62,8 @@ async function configureCloudSettingsPage() {
         };
     }
 
-    $("#auth-dropbox").on("click", providerAuthHandler(dropboxBackend));
-    $("#auth-onedrive").on("click", providerAuthHandler(oneDriveBackend));
+    $("#auth-dropbox").on("click", providerAuthHandler(dropboxClient));
+    $("#auth-onedrive").on("click", providerAuthHandler(oneDriveClient));
 }
 
 export async function load() {
