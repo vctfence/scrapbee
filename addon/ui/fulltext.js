@@ -72,7 +72,7 @@ async function appendSearchResult(query, node, occurrences) {
 
     let icon = node.icon;
     if (node.stored_icon)
-        icon = await Icon.get(node.id);
+        icon = await Icon.get(node);
 
     if (!icon)
         icon = fallbackIcon;

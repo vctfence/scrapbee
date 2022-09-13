@@ -103,6 +103,10 @@ class StorageManager:
 
         self.with_node_db(params, update)
 
+    def delete_nodes(self, params):
+        self.delete_nodes_shallow(params)
+        self.delete_node_content(params)
+
     def delete_nodes_shallow(self, params):
         def delete(node_db):
             for uuid in params["node_uuids"]:

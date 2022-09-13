@@ -1,6 +1,6 @@
 import {settings} from "./settings.js";
 import {BROWSER_EXTERNAL_TYPE, CLOUD_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE} from "./storage.js";
-import {browserBackend} from "./backend_browser.js";
+import {browserBackend} from "./backend_browser_shelf.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {rdfBackend} from "./backend_rdf.js";
 import {ishellBackend} from "./backend_ishell.js";

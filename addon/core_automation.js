@@ -262,7 +262,7 @@ async function nodeToAPIObject(node) {
 
         const icon =
             node.stored_icon
-                ? await Icon.get(node.id)
+                ? await Icon.get(node)
                 : node.icon;
 
         const uuid = node.uuid;

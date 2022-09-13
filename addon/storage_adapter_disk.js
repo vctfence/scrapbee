@@ -27,7 +27,10 @@ export class StorageAdapterDisk {
     }
 
     accepts(node) {
-        return node && !(node.external && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external))
+        return node && !(
+            (node.external || node.__parent_external)
+                && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external || ex === node.__parent_external)
+        )
     }
 
     async persistNode(params) {
@@ -40,6 +43,10 @@ export class StorageAdapterDisk {
 
     async updateNodes(params) {
         return this._postJSON("/storage/update_nodes", params);
+    }
+
+    async deleteNodes(params) {
+        return this._postJSON("/storage/delete_nodes", params);
     }
 
     async deleteNodesShallow(params) {

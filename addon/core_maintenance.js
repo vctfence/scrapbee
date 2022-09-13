@@ -91,7 +91,9 @@ receive.resetCloud = async message => {
 receive.resetScrapyard = async message => {
     send.startProcessingIndication({noWait: true});
 
-    await Database.wipeImportable();
+    await Database.wipeEverything();
+
+    browser.runtime.reload();
 
     send.stopProcessingIndication();
 

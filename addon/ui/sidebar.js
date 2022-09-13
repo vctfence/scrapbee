@@ -668,7 +668,7 @@ async function displayRandomBookmark() {
         }
 
         if (bookmark.stored_icon) {
-            icon = `url("${await Icon.get(bookmark.id)}")`;
+            icon = `url("${await Icon.get(bookmark)}")`;
         }
         else if (bookmark.icon) {
             let image = new Image();

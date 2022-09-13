@@ -10,8 +10,9 @@ export class NodeProxy {
     }
 
     async _add(node) {
+        _log({...node})
         const result = await this.wrapped._add(node);
-
+        _log({...node})
         await this.#persistNode(node);
 
         return result;
@@ -41,6 +42,10 @@ export class NodeProxy {
         await this.#updateNodes(nodes);
 
         return result;
+    }
+
+    async unpersist(node) {
+        return this.#unpersistNode(node);
     }
 
     async deleteShallow(nodes) {
@@ -91,6 +96,16 @@ export class NodeProxy {
             };
 
             /*return*/ this.#adapter.updateNodes(params);
+        }
+    }
+
+    async #unpersistNode(node) {
+        if (this.#adapter.accepts(node)) {
+            const params = {
+                node_uuids: [node.uuid]
+            };
+
+            /*return*/ this.#adapter.deleteNodes(params);
         }
     }
 

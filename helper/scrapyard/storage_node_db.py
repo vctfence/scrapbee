@@ -134,6 +134,8 @@ class NodeDB:
                         del node[field]
 
             self.nodes[update["uuid"]] = node
+        else:
+            self.nodes[update["uuid"]] = update
 
     def delete_node(self, uuid):
         if uuid in self.nodes:

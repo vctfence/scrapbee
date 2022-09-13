@@ -67,6 +67,7 @@ export class BookmarkManager extends EntityManager {
         if (nodeType === NODE_TYPE_BOOKMARK && parent.external === RDF_EXTERNAL_TYPE)
             throw new Error("Only archives could be added to an RDF file");
 
+        data.external = parent.external;
         data.name = await this.ensureUniqueName(data.parent_id, data.name);
 
         data.type = nodeType;
@@ -91,16 +92,18 @@ export class BookmarkManager extends EntityManager {
     }
 
     async addSeparator(parentId) {
+        const parent = await Node.get(parentId);
         const options = {
             name: "-",
             type: NODE_TYPE_SEPARATOR,
-            parent_id: parentId
+            parent_id: parentId,
+            external: parent.external
         };
 
         let node = await Node.add(options);
 
         try {
-            await this.plugins.createBookmark(node, await Node.get(parentId));
+            await this.plugins.createBookmark(node, parent);
         }
         catch (e) {
             console.error(e);
@@ -110,14 +113,14 @@ export class BookmarkManager extends EntityManager {
     }
 
     async addNotes(parentId, name) {
+        let folder = await Node.get(parentId);
         let node = await Node.add({
             parent_id: parentId,
             name: name,
             //has_notes: true,
-            type: NODE_TYPE_NOTES
+            type: NODE_TYPE_NOTES,
+            external: folder.external
         });
-
-        let folder = await Node.get(parentId);
 
         try {
             await this.plugins.createBookmark(node, folder);
@@ -280,6 +283,8 @@ export class BookmarkManager extends EntityManager {
         const dest = await Node.get(destId);
         const nodes = await Node.get(ids);
 
+        nodes.forEach(node => node.__parent_external = dest.external);
+
         try {
             await this.plugins.moveBookmarks(dest, nodes);
         }
@@ -328,60 +333,61 @@ export class BookmarkManager extends EntityManager {
 
     async _copy(ids, destId, moveLast) {
         const dest = await Node.get(destId);
-        let all_nodes = await Query.fullSubtree(ids, true);
+        let sourceNodes = await Query.fullSubtree(ids, true);
         let newNodes = [];
 
-        for (let n of all_nodes) {
-            const source_node = {...n};
-            const source_node_id = n.source_node_id = n.id;
+        for (let newNode of sourceNodes) {
+            const sourceNode = {...newNode};
+            const sourceNodeId = newNode.source_node_id = newNode.id;
 
-            if (ids.some(id => id === source_node_id)) {
-                n.parent_id = destId;
-                n.name = await this.ensureUniqueName(destId, n.name);
+            if (ids.some(id => id === sourceNodeId)) {
+                newNode.parent_id = destId;
+                newNode.name = await this.ensureUniqueName(destId, newNode.name);
             }
             else {
-                let new_parent = newNodes.find(nn => nn.source_node_id === n.parent_id);
-                if (new_parent)
-                    n.parent_id = new_parent.id;
+                let newParent = newNodes.find(nn => nn.source_node_id === newNode.parent_id);
+                if (newParent)
+                    newNode.parent_id = newParent.id;
             }
 
-            delete n.id;
-            delete n.date_modified;
+            delete newNode.id;
+            delete newNode.date_modified;
+            newNode.__parent_external = dest.external;
 
-            if (moveLast && ids.some(id => id === n.source_node_id))
-                n.pos = DEFAULT_POSITION;
+            if (moveLast && ids.some(id => id === newNode.source_node_id))
+                newNode.pos = DEFAULT_POSITION;
 
-            newNodes.push(Object.assign(n, await Node.add(n)));
+            newNodes.push(Object.assign(newNode, await Node.add(newNode)));
 
             try {
-                if (isContentNode(n) && n.type !== NODE_TYPE_SEPARATOR) {
-                    let notes = await Notes.get(source_node);
+                if (isContentNode(newNode) && newNode.type !== NODE_TYPE_SEPARATOR) {
+                    let notes = await Notes.get(sourceNode);
                     if (notes) {
                         delete notes.id;
-                        notes.node_id = n.id;
-                        await Notes.add(n, notes);
+                        notes.node_id = newNode.id;
+                        await Notes.add(newNode, notes);
                         notes = null;
                     }
 
-                    let comments = await Comments.get(source_node);
+                    let comments = await Comments.get(sourceNode);
                     if (comments) {
-                        await Comments.add(n, comments);
+                        await Comments.add(newNode, comments);
                         comments = null;
                     }
 
-                    if (n.stored_icon) {
-                        let icon = await Icon.get(source_node_id);
+                    if (newNode.stored_icon) {
+                        let icon = await Icon.get(sourceNode);
                         if (icon) {
-                            await Icon.add(n, icon);
+                            await Icon.add(newNode, icon);
                         }
                     }
                 }
 
-                if (n.type === NODE_TYPE_ARCHIVE) {
-                    let archive = await Archive.get(source_node);
+                if (newNode.type === NODE_TYPE_ARCHIVE) {
+                    let archive = await Archive.get(sourceNode);
                     if (archive) {
-                        let index = await Archive.fetchIndex(source_node);
-                        await Archive.add(n, archive.object, archive.type, archive.byte_length, index);
+                        let index = await Archive.fetchIndex(sourceNode);
+                        await Archive.add(newNode, archive.object, archive.type, archive.byte_length, index);
                         archive = null;
                     }
                 }

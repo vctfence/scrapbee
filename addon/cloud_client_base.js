@@ -1,4 +1,4 @@
-import {CloudStorage} from "./storage_cloud.js";
+import {CloudStorage} from "./cloud_node_db.js";
 
 export class CloudError {
     constructor(message) {
@@ -9,7 +9,7 @@ export class CloudError {
 export class CloudItemNotFoundError extends CloudError {
 }
 
-export class BackendCloudBase {
+export class CloudClientBase {
     static CLOUD_SHELF_PATH = "/Cloud";
     static CLOUD_SHELF_INDEX = "index.jsonl";
     static REDIRECT_URL = "https://gchristensen.github.io/scrapyard/";
@@ -27,7 +27,7 @@ export class BackendCloudBase {
                     let authTab = await browser.tabs.create({url: await this._getAuthorizationUrl()});
 
                     let listener = async (id, changed, tab) => {
-                        if (id === authTab.id && changed.url?.startsWith(BackendCloudBase.REDIRECT_URL)) {
+                        if (id === authTab.id && changed.url?.startsWith(CloudClientBase.REDIRECT_URL)) {
                             await browser.tabs.onUpdated.removeListener(listener);
                             browser.tabs.remove(authTab.id);
 
@@ -58,7 +58,7 @@ export class BackendCloudBase {
         let storeAsset = ext => {
             return async (node, data) => {
                 try {
-                    const path = `${BackendCloudBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
+                    const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
                     await this.uploadFile(path, data);
                 } catch (e) {
                     console.error(e);
@@ -69,7 +69,7 @@ export class BackendCloudBase {
         let fetchAsset = ext => {
             return async (node) => {
                 try {
-                    const path = `${BackendCloudBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
+                    const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
                     return await this.downloadFile(path)
                 }
                 catch (e) {
@@ -81,7 +81,7 @@ export class BackendCloudBase {
         let deleteAsset = ext => {
             return async (node) => {
                 try {
-                    const path = `${BackendCloudBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
+                    const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
                     await this.deleteFile(path)
                 }
                 catch (e) {
@@ -119,7 +119,7 @@ export class BackendCloudBase {
         let storage = null;
 
         try {
-            const path = `${BackendCloudBase.CLOUD_SHELF_PATH}/${BackendCloudBase.CLOUD_SHELF_INDEX}`;
+            const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${CloudClientBase.CLOUD_SHELF_INDEX}`;
             const content = await this.downloadFile(path);
             storage = CloudStorage.deserialize(content);
         }
@@ -137,7 +137,7 @@ export class BackendCloudBase {
     }
 
     async persistDB(db) {
-        const path = `${BackendCloudBase.CLOUD_SHELF_PATH}/${BackendCloudBase.CLOUD_SHELF_INDEX}`;
+        const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${CloudClientBase.CLOUD_SHELF_INDEX}`;
         const content = db.serialize();
         this.uploadFile(path, content);
     }

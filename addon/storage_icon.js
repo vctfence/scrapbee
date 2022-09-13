@@ -49,8 +49,8 @@ export class IconIDB extends EntityIDB {
         await this._db.icons.update(iconId, options);
     }
 
-    async get(nodeId) {
-        const icon = await this._db.icons.where("node_id").equals(nodeId).first();
+    async get(node) {
+        const icon = await this._db.icons.where("node_id").equals(node.id).first();
 
         if (icon)
             return icon.data_url;

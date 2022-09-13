@@ -163,7 +163,7 @@ class BookmarkTree {
         setTimeout(async () => {
             if (o(jnode)?.stored_icon) {
                 const cached = this.iconCache.get(jnode.icon);
-                const base64Url = cached || (await Icon.get(o(jnode).id));
+                const base64Url = cached || (await Icon.get(o(jnode)));
 
                 if (base64Url) {
                     if (!cached)
@@ -1498,6 +1498,10 @@ class BookmarkTree {
 
         if (settings.platform.chrome) {
             delete items.uploadItem;
+        }
+
+        if (ctxNode.external === BROWSER_EXTERNAL_TYPE) {
+            delete items.newItem.submenu.newNotesItem;
         }
 
         return items;

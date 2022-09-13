@@ -2,14 +2,14 @@
 // to reproduce log out from OneDrive and try to log in again; some wait time (probably lifetime of a refresh token) helps
 // to login successfully
 
-import {BackendCloudBase, CloudError, CloudItemNotFoundError} from "./backend_cloud_base.js";
+import {CloudClientBase, CloudError, CloudItemNotFoundError} from "./cloud_client_base.js";
 import {PKCE} from "./lib/PKCE.js";
 import {settings} from "./settings.js";
 import {send} from "./proxy.js";
 
 const GRAPH_API_ENDPOINT = "https://graph.microsoft.com/v1.0";
 
-export class OneDriveBackend extends BackendCloudBase {
+export class OneDriveClient extends CloudClientBase {
     constructor() {
         super()
         this.ID = "onedrive"
@@ -229,11 +229,11 @@ export class OneDriveBackend extends BackendCloudBase {
     async reset() {
         try {
             // TODO: add suport for @odata.nextLink
-            const requestPath = this._getDrivePath(BackendCloudBase.CLOUD_SHELF_PATH) + ":/children";
+            const requestPath = this._getDrivePath(CloudClientBase.CLOUD_SHELF_PATH) + ":/children";
             const driveItems = await this._makeJSONRequest(requestPath);
 
             for (let item of driveItems.value) {
-                const path = `${BackendCloudBase.CLOUD_SHELF_PATH}/${item.name}`;
+                const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${item.name}`;
                 await this.deleteFile(path);
             }
         }
@@ -244,7 +244,7 @@ export class OneDriveBackend extends BackendCloudBase {
 
     async getLastModified() {
         const requestPath =
-            this._getDrivePath(`${BackendCloudBase.CLOUD_SHELF_PATH}/${BackendCloudBase.CLOUD_SHELF_INDEX}`);
+            this._getDrivePath(`${CloudClientBase.CLOUD_SHELF_PATH}/${CloudClientBase.CLOUD_SHELF_INDEX}`);
 
         try {
             const driveItem = await this._makeJSONRequest(requestPath);
@@ -259,4 +259,4 @@ export class OneDriveBackend extends BackendCloudBase {
 }
 
 
-export let oneDriveBackend = new OneDriveBackend();
+export let oneDriveClient = new OneDriveClient();

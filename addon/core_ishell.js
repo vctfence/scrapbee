@@ -69,7 +69,7 @@ receiveExternal.scrapyardListNodesIshell = async (message, sender) => {
         }
 
         if (node.stored_icon)
-            node.icon = await Icon.get(node.id);
+            node.icon = await Icon.get(node);
     }
     if (no_shelves)
         return nodes.filter(n => n.type !== NODE_TYPE_SHELF);

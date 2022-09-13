@@ -1,4 +1,4 @@
-import {browserBackend} from "./backend_browser.js";
+import {browserBackend} from "./backend_browser_shelf.js";
 import {settings} from "./settings.js";
 import {cloudBackend} from "./backend_cloud_shelf.js";
 import {helperApp} from "./helper_app.js";
@@ -13,7 +13,7 @@ receive.uiLockRelease = message => {
 };
 
 receive.memorizeUIBookmarks = message => {
-    browserBackend.markUIBookmarks(message.bookmarks, message.category);
+    browserBackend.lockUIBookmarks(message.bookmarks, message.category);
 }
 
 receive.getListenerLockState = message => {

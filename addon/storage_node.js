@@ -74,6 +74,10 @@ export class NodeIDB extends EntityIDB {
         return this._db.nodes.put(this.sanitized(node));
     }
 
+    async unpersist(node) {
+        // NOP, used in proxy
+    }
+
     exists(node) {
         if (!node.uuid)
             return false;
