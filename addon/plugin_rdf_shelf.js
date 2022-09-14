@@ -217,7 +217,7 @@ class RDFDoc {
     }
 }
 
-export class RDFBackend {
+export class RDFShelfPlugin {
     constructor() {
     }
 
@@ -334,4 +334,4 @@ export class RDFBackend {
     }
 }
 
-export let rdfBackend = new RDFBackend();
+export let rdfShelf = new RDFShelfPlugin();

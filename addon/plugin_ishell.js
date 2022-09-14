@@ -1,7 +1,7 @@
 import {receive, send} from "./proxy.js";
 import {settings} from "./settings.js";
 
-class IShellBackend {
+class IShellPlugin {
     initialize() {
         this.ISHELL_ID = this._getIShellID();
         this.enableInvalidation(settings.ishell_presents());
@@ -99,9 +99,9 @@ class IShellBackend {
     }
 }
 
-export const ishellBackend = new IShellBackend();
+export const ishellPlugin = new IShellPlugin();
 
 receive.scrapyardIdRequested = message => {
-    if (message.senderId === ishellBackend.ISHELL_ID)
-        ishellBackend.listenIShell();
+    if (message.senderId === ishellPlugin.ISHELL_ID)
+        ishellPlugin.listenIShell();
 }

@@ -18,7 +18,7 @@ import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Folder} from "./bookmarks_folder.js";
-import {ishellBackend} from "./backend_ishell.js";
+import {ishellPlugin} from "./plugin_ishell.js";
 import {cleanObject, getMimetypeExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
@@ -312,7 +312,7 @@ export class BookmarkManager extends EntityManager {
         }
 
         if (nodes.some(n => n.type === NODE_TYPE_FOLDER))
-            ishellBackend.invalidateCompletion();
+            ishellPlugin.invalidateCompletion();
 
         return Query.fullSubtree(ids, true);
     }
@@ -374,7 +374,7 @@ export class BookmarkManager extends EntityManager {
             await this.plugins.copyBookmarks(dest, rootNodes);
 
             if (rootNodes.some(n => n.type === NODE_TYPE_FOLDER))
-                ishellBackend.invalidateCompletion();
+                ishellPlugin.invalidateCompletion();
         }
         catch (e) {
             console.error(e);
@@ -440,7 +440,7 @@ export class BookmarkManager extends EntityManager {
         await deletef(nodes);
 
         if (nodes.some(n => n.type === NODE_TYPE_FOLDER || n.type === NODE_TYPE_SHELF))
-            ishellBackend.invalidateCompletion();
+            ishellPlugin.invalidateCompletion();
     }
 
     async _hardDelete(nodes) {
@@ -473,7 +473,7 @@ export class BookmarkManager extends EntityManager {
 
         await Node.delete(all_nodes.filter(n => n.id !== id));
 
-        ishellBackend.invalidateCompletion();
+        ishellPlugin.invalidateCompletion();
     }
 
     async restore(node) {

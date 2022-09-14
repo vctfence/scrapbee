@@ -19,13 +19,13 @@ const CATEGORY_CHANGED = 1;
 const CATEGORY_MOVED = 2;
 const CATEGORY_REMOVED = 3;
 
-export class BrowserBackend {
+export class BrowserShelfPlugin {
 
     constructor() {
-        this._browserListenerOnBookmarkCreated = BrowserBackend.onBookmarkCreated.bind(this);
-        this._browserListenerOnBookmarkRemoved = BrowserBackend.onBookmarkRemoved.bind(this);
-        this._browserListenerOnBookmarkChanged = BrowserBackend.onBookmarkChanged.bind(this);
-        this._browserListenerOnBookmarkMoved = BrowserBackend.onBookmarkMoved.bind(this);
+        this._browserListenerOnBookmarkCreated = BrowserShelfPlugin.onBookmarkCreated.bind(this);
+        this._browserListenerOnBookmarkRemoved = BrowserShelfPlugin.onBookmarkRemoved.bind(this);
+        this._browserListenerOnBookmarkChanged = BrowserShelfPlugin.onBookmarkChanged.bind(this);
+        this._browserListenerOnBookmarkMoved = BrowserShelfPlugin.onBookmarkMoved.bind(this);
         this._listenersInstalled = false;
 
         this._uiSemaphore = 0;
@@ -611,4 +611,4 @@ export class BrowserBackend {
 
 }
 
-export let browserBackend = new BrowserBackend();
+export let browserShelf = new BrowserShelfPlugin();

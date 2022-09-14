@@ -16,7 +16,11 @@ def process_message(msg):
         start_server(msg)
     elif msg["type"] == "BACKUP_PUSH_TEXT":
         server.message_queue.put(msg["text"])
+    elif msg["type"] == "EXPORT_PUSH_TEXT":
+        server.message_queue.put(msg["text"])
     elif msg["type"] == "BACKUP_FINISH":
+        server.message_queue.put(None)
+    elif msg["type"] == "EXPORT_FINISH":
         server.message_queue.put(None)
     elif msg["type"] == "RDF_PATH":
         server.message_queue.put(msg)

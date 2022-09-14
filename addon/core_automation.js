@@ -14,7 +14,7 @@ import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
 import {fetchText} from "./utils_io.js";
-import {ishellBackend} from "./backend_ishell.js";
+import {ishellPlugin} from "./plugin_ishell.js";
 import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
@@ -26,7 +26,7 @@ import {browseNode} from "./browse.js";
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
 
-    return ishellBackend.isIShell(sender.id)
+    return ishellPlugin.isIShell(sender.id)
         || (settings.enable_automation() && (!extension_whitelist
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
 }

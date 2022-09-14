@@ -5,7 +5,7 @@ import {
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES
 } from "./storage.js";
-import {cloudBackend} from "./backend_cloud_shelf.js";
+import {cloudShelfPlugin} from "./plugin_cloud_shelf.js";
 import {indexString, indexHTML} from "./utils_html.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
@@ -76,12 +76,12 @@ receive.reindexArchiveContent = async message => {
 };
 
 receive.resetCloud = async message => {
-    if (!cloudBackend.isAuthenticated())
+    if (!cloudShelfPlugin.isAuthenticated())
         return false;
 
     send.startProcessingIndication({noWait: true});
 
-    await cloudBackend.reset();
+    await cloudShelfPlugin.reset();
 
     send.stopProcessingIndication();
 

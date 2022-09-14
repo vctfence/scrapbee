@@ -2,7 +2,7 @@ import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {EntityManager} from "./bookmarks.js";
 import {NODE_TYPE_FOLDER, NODE_TYPE_SHELF} from "./storage.js";
-import {ishellBackend} from "./backend_ishell.js";
+import {ishellPlugin} from "./plugin_ishell.js";
 import {Node} from "./storage_entities.js";
 
 class FolderManager extends EntityManager {
@@ -35,7 +35,7 @@ class FolderManager extends EntityManager {
         node = await Node.add(node);
 
         try {
-            ishellBackend.invalidateCompletion();
+            ishellPlugin.invalidateCompletion();
 
             if (parent)
                 await this.plugins.createBookmarkFolder(node, parent);
@@ -94,7 +94,7 @@ class FolderManager extends EntityManager {
                 name: shelfName,
                 type: NODE_TYPE_SHELF
             });
-            ishellBackend.invalidateCompletion();
+            ishellPlugin.invalidateCompletion();
         }
 
         for (let name of pathList) {
@@ -113,7 +113,7 @@ class FolderManager extends EntityManager {
 
                 try {
                     await this.plugins.createBookmarkFolder(node, parent);
-                    ishellBackend.invalidateCompletion();
+                    ishellPlugin.invalidateCompletion();
                 }
                 catch (e) {
                     console.error(e);
@@ -137,7 +137,7 @@ class FolderManager extends EntityManager {
 
             try {
                 await this.plugins.renameBookmark(folder);
-                ishellBackend.invalidateCompletion();
+                ishellPlugin.invalidateCompletion();
             }
             catch (e) {
                 console.error(e);

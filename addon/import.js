@@ -95,6 +95,7 @@ export class Import {
         switch (format) {
             case "json":
             case "jsonl":
+            case "jsbk":
                 return new StructuredStreamImporterBuilder(new UnmarshallerJSONScrapbook());
             case "org":
                 return new StreamImporterBuilder(new UnmarshallerORG());

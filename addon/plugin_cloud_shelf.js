@@ -23,7 +23,7 @@ const CLOUD_SYNC_ALARM_PERIOD = 60;
 
 export const CLOUD_ERROR_MESSAGE = "Error accessing cloud.";
 
-export class CloudBackend {
+export class CloudShelfPlugin {
     constructor() {
     }
 
@@ -273,15 +273,15 @@ export class CloudBackend {
     }
 }
 
-export let cloudBackend = new CloudBackend();
+export let cloudShelfPlugin = new CloudShelfPlugin();
 
 if (getContextType() === CONTEXT_BACKGROUND) {
     browser.alarms.onAlarm.addListener(alarm => {
         if (alarm.name === CLOUD_SYNC_ALARM_NAME)
-            cloudBackend.reconcileCloudBookmarksDB();
+            cloudShelfPlugin.reconcileCloudBookmarksDB();
     });
 
     receive.cloudProviderChanged = message => {
-        cloudBackend.selectProvider(message.provider);
+        cloudShelfPlugin.selectProvider(message.provider);
     };
 }

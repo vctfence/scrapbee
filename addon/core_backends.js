@@ -1,37 +1,37 @@
-import {browserBackend} from "./backend_browser_shelf.js";
+import {browserShelf} from "./plugin_browser_shelf.js";
 import {settings} from "./settings.js";
-import {cloudBackend} from "./backend_cloud_shelf.js";
+import {cloudShelfPlugin} from "./plugin_cloud_shelf.js";
 import {helperApp} from "./helper_app.js";
 import {receive} from "./proxy.js";
 
 receive.uiLockGet = message => {
-    browserBackend.getUILock();
+    browserShelf.getUILock();
 };
 
 receive.uiLockRelease = message => {
-    browserBackend.releaseUILock();
+    browserShelf.releaseUILock();
 };
 
 receive.memorizeUIBookmarks = message => {
-    browserBackend.lockUIBookmarks(message.bookmarks, message.category);
+    browserShelf.lockUIBookmarks(message.bookmarks, message.category);
 }
 
 receive.getListenerLockState = message => {
-    return browserBackend.isLockedByListeners();
+    return browserShelf.isLockedByListeners();
 };
 
 receive.reconcileBrowserBookmarkDb = async message => {
     await settings.load()
-    browserBackend.reconcileBrowserBookmarksDB();
+    browserShelf.reconcileBrowserBookmarksDB();
 };
 
 receive.reconcileCloudBookmarkDb = async message => {
     await settings.load();
-    cloudBackend.reconcileCloudBookmarksDB(message.verbose);
+    cloudShelfPlugin.reconcileCloudBookmarksDB(message.verbose);
 };
 
 receive.enableCloudBackgroundSync = async message => {
-    cloudBackend.enableBackgroundSync(message.enable);
+    cloudShelfPlugin.enableBackgroundSync(message.enable);
 };
 
 receive.helperAppProbe = message => {

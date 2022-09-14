@@ -19,7 +19,7 @@ import {
 import {settings} from "./settings.js";
 import {helperApp} from "./helper_app.js";
 import {send, sendLocal} from "./proxy.js";
-import {rdfBackend} from "./backend_rdf.js";
+import {rdfShelf} from "./plugin_rdf_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
 function configureArchiveTab(node, archiveTab) {
@@ -222,7 +222,7 @@ async function browseRDFArchive(node, options) {
     if (helper) {
         const helperApp11 = await helperApp.hasVersion("1.1");
         if (!helperApp11)
-            await rdfBackend.pushRDFPath(node);
+            await rdfShelf.pushRDFPath(node);
 
         const url = helperApp.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
         return openURL(url, options);
@@ -231,7 +231,7 @@ async function browseRDFArchive(node, options) {
 
 export async function onRequestRdfPathMessage(msg) {
     const node = await Node.getByUUID(msg.uuid);
-    const path = await rdfBackend.getRDFPageDir(node);
+    const path = await rdfShelf.getRDFPageDir(node);
     return {
         type: "RDF_PATH",
         uuid: node.uuid,

@@ -21,7 +21,7 @@ export class CloudItemNotFoundError extends CloudError {
 
 export class CloudClientBase {
     static CLOUD_SHELF_PATH = "/CloudShelf";
-    static CLOUD_SHELF_INDEX = "cloud.jsonl";
+    static CLOUD_SHELF_INDEX = "cloud.jsbk";
     static REDIRECT_URL = "https://gchristensen.github.io/scrapyard/";
 
     constructor() {

@@ -13,7 +13,7 @@ from .storage_node_db import NodeDB
 
 
 OBJECT_DIRECTORY = "objects"
-NODE_DB_FILE = "scrapbook.jsonl"
+NODE_DB_FILE = "scrapbook.jsbk"
 ICON_OBJECT_FILE = "icon.json"
 ARCHIVE_INDEX_OBJECT_FILE = "archive_index.json"
 ARCHIVE_OBJECT_FILE = "archive.json"
@@ -211,13 +211,13 @@ class StorageManager:
         if archive_object["type"] == StorageManager.ARCHIVE_TYPE_BYTES:
             with open(content_file_path, "rb") as content_file:
                 archive_content = content_file.read()
-                archive_content = base64.b64encode(archive_content)
+                archive_content = base64.b64encode(archive_content).decode("ascii")
         else:
             with open(content_file_path, "r", encoding="utf-8") as content_file:
                 archive_content = content_file.read()
 
         archive_object["content"] = archive_content
-
+        logging.debug(archive_object)
         return archive_object
 
     def persist_icon(self, params):
