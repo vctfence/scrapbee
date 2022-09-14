@@ -98,7 +98,7 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
         node = await this.deserializeNode(node);
         node = this.preprocessNode(node);
 
-        await this._findParentNode(node);
+        await this._findParentInIDB(node);
 
         if (icon) {
             icon = this.deserializeIcon(icon);
@@ -125,17 +125,4 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
             Comments.idb.import.storeIndex(node, comments_index.words);
         }
     }
-
-    async _findParentNode(node) {
-        if (node.parent) {
-            const parent = await Node.getByUUID(node.parent);
-            delete node.parent;
-
-            if (parent)
-                node.parent_id = parent.id;
-            else
-                throw new Error(`No parent for node: ${node.uuid}`);
-        }
-    }
-
 }

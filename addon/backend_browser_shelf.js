@@ -173,9 +173,12 @@ export class BrowserBackend {
                     if (isContainerNode(n))
                         return Bookmark.traverse(n, async (parent, node) => {
                             await this._createBrowserBookmark(node, parent? parent.external_id: dest.external_id);
+                            await this._unpersistNode(node);
                         });
-                    else
+                    else {
                         await this._createBrowserBookmark(n, dest.external_id);
+                        await this._unpersistNode(n);
+                    }
                 }));
             } else {
                 return Promise.all(browserNodes.map(async n => {
@@ -254,6 +257,13 @@ export class BrowserBackend {
                 }));
             }
         });
+    }
+
+    async _unpersistNode(node) {
+        node = {...node};
+        node.external = undefined;
+        node.__parent_external = undefined;
+        return Node.unpersist(node);
     }
 
     async _persistNodeIcon(node) {

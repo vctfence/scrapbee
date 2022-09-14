@@ -13,6 +13,7 @@ export class PluginContainer {
         this._addHandler("createBookmark");
         this._addHandler("renameBookmark");
         this._addHandler("moveBookmarks");
+        this._addHandler("beforeBookmarkCopied")
         this._addHandler("copyBookmarks");
         this._addHandler("deleteBookmarks");
         this._addHandler("updateBookmark");

@@ -99,6 +99,10 @@ export class Unmarshaller {
         this._sync = true;
     }
 
+    setIDBOnlyMode() {
+        this._idbOnly = true;
+    }
+
     setForceLoadIcons() {
         this._forceIcons = true;
     }
@@ -127,12 +131,19 @@ export class Unmarshaller {
 
     async storeContent(content) {
         let {node, icon, archive, notes, comments} = content;
+        let _Bookmark = Bookmark;
+        let _Icon = Icon;
+
+        if (this._idbOnly) {
+            _Bookmark = Bookmark.idb;
+            _Icon = Icon.idb;
+        }
 
         node = this.preprocessNode(node);
-        node = await Bookmark.import(node, this._sync);
+        node = await _Bookmark.import(node, this._sync);
 
         if (this._forceIcons)
-            await Bookmark.storeIconFromURI(node);
+            await _Bookmark.storeIconFromURI(node);
 
         if (node.type === NODE_TYPE_ARCHIVE && archive) {
             archive = this.preprocessArchive(archive);
@@ -148,10 +159,10 @@ export class Unmarshaller {
             await Comments.import.add(node, comments.text);
 
         if (icon)
-            await Icon.import.add(node, icon.data_url);
+            await _Icon.import.add(node, icon.data_url);
         else {
             if (node.icon && !node.stored_icon) // may appear from android application
-                await Bookmark.storeIcon(node);
+                await _Bookmark.storeIcon(node);
         }
 
         return node;

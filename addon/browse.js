@@ -1,4 +1,11 @@
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_FOLDER, NODE_TYPE_NOTES, RDF_EXTERNAL_TYPE} from "./storage.js";
+import {
+    CLOUD_EXTERNAL_TYPE,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_FOLDER,
+    NODE_TYPE_NOTES,
+    RDF_EXTERNAL_TYPE
+} from "./storage.js";
 import {Archive, Node} from "./storage_entities.js";
 import {Query} from "./storage_query.js";
 import {
@@ -179,13 +186,34 @@ async function browseArchive(node, options) {
     return configureArchiveTab(node, archiveTab);
 }
 
-helperApp.addMessageHandler("REQUEST_DATA_PATH", onRequestDataPathMessage);
+helperApp.addMessageHandler("REQUEST_ARCHIVE", onRequestArchiveMessage);
 
-export async function onRequestDataPathMessage(msg) {
-    return {
-        type: "DATA_PATH",
-        data_path: settings.data_folder_path()
-    };
+export async function onRequestArchiveMessage(msg) {
+    const node = await Node.getByUUID(msg.uuid)
+    const result = {type: "ARCHIVE_INFO", kind: "empty"};
+
+    if (node.external === CLOUD_EXTERNAL_TYPE) {
+        try {
+            const archive = await Archive.get(node);
+
+            if (archive) {
+                const content = await Archive.reify(archive, true);
+
+                result.kind = "content";
+                result.content_type = archive.type || "text/html";
+                result.content = content;
+                result.byte_length = archive.byte_length || null;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    else {
+        result.kind = "data_path";
+        result.data_path = settings.data_folder_path() || null;
+    }
+
+    return result;
 }
 
 async function browseRDFArchive(node, options) {
@@ -226,21 +254,6 @@ async function getBlobURL(node, blob) {
 
     return loadArchive(blob);
 }
-
-export async function onRequestPushBlobMessage(msg) {
-    const node = await Node.getByUUID(msg.uuid)
-    const archive = await Archive.get(node);
-    const content = await Archive.reify(archive, true);
-    return {
-        type: "PUSH_BLOB",
-        uuid: node.uuid,
-        content_type: archive.type || "text/html",
-        content: content,
-        byte_length: archive.byte_length || null
-    };
-}
-
-helperApp.addMessageHandler("REQUEST_PUSH_BLOB", onRequestPushBlobMessage);
 
 async function loadArchive(blob) {
     if (blob.data) { // legacy string content

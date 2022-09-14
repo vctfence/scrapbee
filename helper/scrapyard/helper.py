@@ -18,11 +18,9 @@ def process_message(msg):
         server.message_queue.put(msg["text"])
     elif msg["type"] == "BACKUP_FINISH":
         server.message_queue.put(None)
-    elif msg["type"] == "PUSH_BLOB":
-        server.message_queue.put(msg)
     elif msg["type"] == "RDF_PATH":
         server.message_queue.put(msg)
-    elif msg["type"] == "DATA_PATH":
+    elif msg["type"] == "ARCHIVE_INFO":
         server.message_queue.put(msg)
 
 

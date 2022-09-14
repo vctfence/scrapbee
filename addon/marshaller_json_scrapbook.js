@@ -1,19 +1,19 @@
 import {Marshaller, Unmarshaller} from "./marshaller.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {
+    ARCHIVE_TYPE_BYTES,
+    ARCHIVE_TYPE_TEXT,
+    createJSONScrapBookMeta,
     DEFAULT_SHELF_UUID,
+    JSON_SCRAPBOOK_FORMAT,
+    JSON_SCRAPBOOK_VERSION,
+    NODE_TYPE_ARCHIVE,
     NODE_TYPE_NAMES,
     NODE_TYPES,
-    TODO_STATES,
     TODO_STATE_NAMES,
-    NODE_TYPE_ARCHIVE
+    TODO_STATES,
+    updateJSONScrapBookMeta
 } from "./storage.js";
-
-export const JSON_SCRAPBOOK_FORMAT = "JSON Scrapbook";
-export const JSON_SCRAPBOOK_VERSION = 1;
-
-const ARCHIVE_TYPE_BYTES = "bytes";
-const ARCHIVE_TYPE_TEXT = "text";
 
 const SERIALIZED_FIELD_ORDER = [
     "type",
@@ -160,17 +160,10 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
     async marshalMeta(options) {
         const {comment, uuid, objects, name} = options;
+        const meta = createJSONScrapBookMeta("export");
         const now = new Date();
 
-        const meta = {
-            format: JSON_SCRAPBOOK_FORMAT,
-            version: JSON_SCRAPBOOK_VERSION,
-            type: "export",
-            uuid: uuid,
-            entities: objects.length,
-            timestamp: now.getTime(),
-            date: now.toISOString()
-        };
+        updateJSONScrapBookMeta(meta, objects.length, uuid, comment);
 
         if (comment)
             meta.comment = comment;
@@ -222,7 +215,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         this._uuidToId.set(DEFAULT_SHELF_UUID, 1);
     }
 
-    async deserializeNode(node) {
+    deserializeNode(node) {
         const deserializedNode = {...node};
 
         deserializedNode.uri = node.url;
@@ -320,7 +313,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
 
     async deserializeContent(object) {
         object.node = await this.deserializeNode(object.node);
-        this._findParentNode(object.node);
+        this.#findParentInStream(object.node);
 
         if (object.archive)
             object.archive = await this.deserializeArchive(object.archive);
@@ -339,7 +332,17 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return object;
     }
 
-    _findParentNode(node) {
+    async _findParentInIDB(node) {
+        const parent = await Node.getByUUID(node.parent);
+        delete node.parent;
+
+        if (parent)
+            node.parent_id = parent.id;
+        else
+            throw new Error(`No parent for node: ${node.uuid}`)
+    }
+
+    #findParentInStream(node) {
         node.id = this._nextId++;
         this._uuidToId.set(node.uuid, node.id);
 

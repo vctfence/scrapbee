@@ -48,17 +48,17 @@ export class ArchiveIDB extends EntityIDB {
     }
 
     async storeIndex(node, words) {
-        const exists = await this._db.index_content.where("node_id").equals(node.id).count();
+        const exists = await this._db.index.where("node_id").equals(node.id).count();
         const entity = this.indexEntity(node, words);
 
         if (exists)
-            return this._db.index_content.where("node_id").equals(node.id).modify(entity);
+            return this._db.index.where("node_id").equals(node.id).modify(entity);
         else
-            return this._db.index_content.add(entity);
+            return this._db.index.add(entity);
     }
 
     async fetchIndex(node) {
-        return this._db.index_content.where("node_id").equals(node.id).first();
+        return this._db.index.where("node_id").equals(node.id).first();
     }
 
     async _add(node, data, contentType, byteLength) {
@@ -108,7 +108,7 @@ export class ArchiveIDB extends EntityIDB {
             await this._db.blobs.where("node_id").equals(node.id).delete();
 
         if (this._db.tables.some(t => t.name === "index"))
-            await this._db.index_content.where("node_id").equals(node.id).delete();
+            await this._db.index.where("node_id").equals(node.id).delete();
     }
 
     _binaryString2Array(bs) {
@@ -131,9 +131,9 @@ export class ArchiveIDB extends EntityIDB {
                 else
                     result = this._binaryString2Array(archive.data);
             }
-            else if (archive.object) { // archive.object is an instance of Blob
+            else if (archive.object) {
                 if (binarystring)
-                    result = await readBlob(archive.object, "binarystring")
+                    result = await readBlob(archive.object, "binarystring");
                 else
                     result = await readBlob(archive.object, "binary")
             }

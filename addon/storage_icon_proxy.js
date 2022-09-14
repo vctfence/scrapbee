@@ -1,12 +1,8 @@
 import {MarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
+import {StorageProxy} from "./storage_proxy.js";
 
-export class IconProxy {
+export class IconProxy extends StorageProxy {
     #marshaller = new MarshallerJSONScrapbook();
-    #adapter;
-
-    constructor(adapter) {
-        this.#adapter = adapter;
-    }
 
     async add(node, dataUrl) {
         const result = await this.wrapped.add(node, dataUrl);
@@ -22,7 +18,9 @@ export class IconProxy {
     }
 
     async #persistIcon(node, dataUrl) {
-        if (this.#adapter.accepts(node)) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
             let icon = this.wrapped.entity(node, dataUrl);
             icon = this.#marshaller.serializeIcon(icon);
 
@@ -31,7 +29,7 @@ export class IconProxy {
                 icon_json: JSON.stringify(icon)
             };
 
-            return this.#adapter.persistIcon(params);
+            return adapter.persistIcon(params);
         }
     }
 }

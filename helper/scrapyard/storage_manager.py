@@ -198,6 +198,7 @@ class StorageManager:
         object_file_path = os.path.join(object_directory_path, ARCHIVE_OBJECT_FILE)
         content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 
+        archive_object = None
         if os.path.exists(object_file_path):
             with open(object_file_path, "r", encoding="utf-8") as object_file:
                 archive_object = object_file.read()
@@ -206,6 +207,7 @@ class StorageManager:
         if meta_only:
             return archive_object
 
+        archive_content = None
         if archive_object["type"] == StorageManager.ARCHIVE_TYPE_BYTES:
             with open(content_file_path, "rb") as content_file:
                 archive_content = content_file.read()

@@ -26,6 +26,10 @@ export class StorageAdapterDisk {
         }
     }
 
+    get concurrent() {
+        return true;
+    }
+
     accepts(node) {
         return node && !(
             (node.external || node.__parent_external)
@@ -66,6 +70,10 @@ export class StorageAdapterDisk {
     }
 
     async persistArchive(params) {
+        params.archive_json = JSON.stringify(params.archive);
+        delete params.archive;
+        delete params.entity;
+
         return this._postJSON("/storage/persist_archive", params);
     }
 

@@ -64,12 +64,12 @@ export class DropboxClient extends CloudClientBase {
         });
     }
 
-    async downloadFile(path) {
+    async downloadFile(path, binary) {
         let result = null;
 
         try {
             const {result: {fileBlob}} = await this.dbx.filesDownload({path});
-            result = readBlob(fileBlob);
+            result = readBlob(fileBlob, binary? "binary": null);
         }
         catch (e) {
             if (e.status === 409) { // no index.js file

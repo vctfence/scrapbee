@@ -1,122 +1,79 @@
 import {NODE_TYPE_ARCHIVE} from "./storage.js";
-import {Marshaller, Unmarshaller} from "./marshaller.js";
-import {Node} from "./storage_entities.js";
-import {notes2html} from "./notes_render.js";
+import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
+import {UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 
-export class MarshallerCloud extends Marshaller {
-    async marshalContent(db, node, parent) {
-        const {node: exportedNode, icon, archive, notes, comments} = await this.preprocessContent(node);
-        exportedNode.parent_id = parent.uuid;
-        delete exportedNode.id;
-
-        const nodeObject = {node: exportedNode};
-        if (icon)
-            nodeObject.icon = icon;
-
-        db.addNode(nodeObject);
-
-        if (archive)
-            await db.storeData(node, JSON.stringify(archive));
-
-        if (notes)
-            await this._marshalNotes(db, node, notes);
-
-        if (comments)
-            await db.storeComments(node, JSON.stringify(comments));
-    }
-
-    async marshalNodeUpdate(db, node) {
-        const parent = await Node.get(node.parent_id);
-        const exportedNode = this.preprocessNode(node);
-        exportedNode.parent_id = parent.uuid;
-        delete exportedNode.id;
-        db.updateNode(exportedNode);
-    }
-
-    async marshalArchive(db, node, archive) {
-        archive = await this.preprocessArchive(archive);
-        await this.marshalNodeUpdate(db, node);
-        await db.storeData(node, JSON.stringify(archive));
-    }
-
-    async marshalNotes(db, node, notes) {
-        notes = this.preprocessNotes(notes);
-        await this.marshalNodeUpdate(db, node);
-        await this._marshalNotes(db, node, notes);
-    }
-
-    async _marshalNotes(db, node, notes) {
-        await db.storeNotes(node, JSON.stringify(notes));
-
-        if (notes.content) {
-            let isHtml = notes.format === "html" || notes.format === "delta";
-            let view = `<html><head></head><body class="${isHtml? "format-html": ""}">${notes2html(notes)}</body></html>`;
-            await db.storeView(node, view);
-        }
-    }
-
-    async marshalComments(db, node, comments) {
-        comments = this.preprocessComments(comments);
-        await this.marshalNodeUpdate(db, node);
-        await db.storeComments(node, JSON.stringify(comments));
-    }
-}
-
-export class UnmarshallerCloud extends Unmarshaller {
+export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
     constructor() {
         super();
         this.setSyncMode();
+        this.setIDBOnlyMode();
     }
 
-    async unmarshal(db, object) {
-        const {node: importedNode, icon} = object;
-        const node = await Node.getByUUID(importedNode.uuid);
+    async unmarshal(provider, cloudNode) {
+        cloudNode = this.deserializeNode(cloudNode);
+        await this._findParentInIDB(cloudNode);
+
+        const content = {node: cloudNode};
+        let node = await Node.getByUUID(cloudNode.uuid);
 
         if (node) {
-            if (importedNode.date_modified > node.date_modified) {
-                await this._findParent(importedNode);
-                const content = {node: importedNode, icon};
-                if (importedNode.content_modified > node.date_modified)
-                    Object.assign(content, await this._unmarshalContent(db, importedNode))
-                await this.storeContent(content);
+            if (cloudNode.date_modified > node.date_modified) {
+                if (cloudNode.content_modified > node.date_modified)
+                    Object.assign(content, await this._unmarshalContent(provider, cloudNode));
+
+                node = await this.storeContent(content);
+                await this._storeIndexes(provider, node);
             }
         }
         else {
-            await this._findParent(importedNode);
-            const content = Object.assign({node: importedNode, icon}, await this._unmarshalContent(db, importedNode));
-            await this.storeContent(content);
+            Object.assign(content, await this._unmarshalContent(provider, cloudNode));
+            const node = await this.storeContent(content);
+            await this._storeIndexes(provider, node);
         }
     }
 
-    async _findParent(node) {
-        const parent = await Node.getByUUID(node.parent_id);
-        if (parent)
-            node.parent_id = parent.id;
-        else
-            throw new Error(`No parent for node: ${node.uuid}`)
-    }
-
-    async _unmarshalContent(db, node) {
+    async _unmarshalContent(provider, node) {
         const content = {};
 
-        if (node.type === NODE_TYPE_ARCHIVE) {
-            const archive = await db.fetchData(node);
-            if (archive)
-                content.archive = JSON.parse(archive);
-        }
-
-        if (node.has_notes) {
-            const notes = await db.fetchNotes(node);
-            if (notes)
-                content.notes = JSON.parse(notes);
-        }
-
-        if (node.has_comments) {
-            const comments = await db.fetchComments(node);
-            if (comments)
-                content.comments = JSON.parse(comments);
+        if (node.stored_icon) {
+            let icon = await provider.assets.fetchIcon(node.uuid);
+            if (icon) {
+                icon = JSON.parse(icon);
+                icon = this.deserializeIcon(icon);
+                node.icon = await Icon.computeHash(icon.data_url);
+                content.icon = icon;
+            }
         }
 
         return content;
+    }
+
+    async _storeIndexes(provider, node) {
+        if (node.type === NODE_TYPE_ARCHIVE) {
+            let archiveIndex = await provider.assets.fetchArchiveIndex(node.uuid);
+            if (archiveIndex) {
+                archiveIndex = JSON.parse(archiveIndex);
+                archiveIndex = this.deserializeIndex(archiveIndex);
+                Archive.idb.import.storeIndex(node, archiveIndex.words);
+            }
+        }
+
+        if (node.has_notes) {
+            let notesIndex = await provider.assets.fetchNotesIndex(node.uuid);
+            if (notesIndex) {
+                notesIndex = JSON.parse(notesIndex);
+                notesIndex = this.deserializeIndex(notesIndex);
+                Notes.idb.import.storeIndex(node, notesIndex.words);
+            }
+        }
+
+        if (node.has_comments) {
+            let commentsIndex = await provider.assets.fetchCommentsIndex(node.uuid);
+            if (commentsIndex) {
+                commentsIndex = JSON.parse(commentsIndex);
+                commentsIndex = this.deserializeIndex(commentsIndex);
+                Comments.idb.import.storeIndex(node, commentsIndex.words);
+            }
+        }
     }
 }

@@ -196,3 +196,35 @@ export function byDateAddedAsc(a, b) {
 
     return 0;
 }
+
+export const JSON_SCRAPBOOK_FORMAT = "JSON Scrapbook";
+export const JSON_SCRAPBOOK_VERSION = 1;
+
+export function createJSONScrapBookMeta(type) {
+    const now = new Date();
+
+    return {
+        format: JSON_SCRAPBOOK_FORMAT,
+        version: JSON_SCRAPBOOK_VERSION,
+        type: type,
+        timestamp: now.getTime(),
+        date: now.toISOString()
+    };
+}
+
+export function updateJSONScrapBookMeta(meta, entities, uuid, comment) {
+    const now = new Date();
+
+    if (uuid)
+        meta.uuid = uuid;
+
+    meta.entities = entities;
+    meta.timestamp = now.getTime();
+    meta.date = now.toISOString();
+
+    if (comment)
+        meta.comment = comment;
+}
+
+export const ARCHIVE_TYPE_BYTES = "bytes";
+export const ARCHIVE_TYPE_TEXT = "text";

@@ -155,7 +155,7 @@ receive.storePageHtml = message => {
     if (message.bookmark.__url_packing)
         return;
 
-    Bookmark.storeArchive(message.bookmark, message.data, "text/html", message.bookmark.__index)
+    return Bookmark.storeArchive(message.bookmark, message.data, "text/html", message.bookmark.__index)
         .then(() => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});

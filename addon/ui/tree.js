@@ -1232,15 +1232,18 @@ class BookmarkTree {
                     if (isContentNode(ctxNode)) {
                         let properties = await Node.get(ctxNode.id);
 
-                        properties.comments = await Comments.get(properties);
-                        let commentsPresent = !!properties.comments;
+                        if (properties.has_comments)
+                            properties.comments = await Comments.get(properties);
+                        else
+                            properties.comments = "";
+
+                        let hasComments = !!properties.comments;
 
                         properties.containers = this._containers;
 
                         let newProperties = await showDlg("properties", properties);
 
                         if (newProperties) {
-
                             delete properties.containers;
 
                             Object.assign(properties, newProperties);
@@ -1254,7 +1257,7 @@ class BookmarkTree {
 
                             properties.has_comments = !!properties.comments;
 
-                            if (commentsPresent || properties.has_comments)
+                            if (hasComments || properties.has_comments)
                                 await Bookmark.storeComments(properties.id, properties.comments);
 
                             delete properties.comments;

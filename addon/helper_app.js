@@ -139,6 +139,7 @@ class HelperApp {
 
         if (handler) {
             const response = await handler(msg);
+
             if (response !== undefined)
                 port.postMessage(response);
         }

@@ -38,6 +38,7 @@ async function configureCloudSettingsPage() {
             if (success)
                 $(`#auth-${activeProvider.ID}`).val("Sign out");
         }
+
         send.reconcileCloudBookmarkDb()
     });
 

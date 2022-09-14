@@ -78,7 +78,7 @@ dexie.version(8).stores({
     tags: `++id,name`,
     icons: `++id,&node_id`,
     comments: `++id,&node_id`,
-    index_content: `++id,&node_id,*words`,
+    index: `++id,&node_id,*words`,
     index_notes: `++id,&node_id,*words`,
     index_comments: `++id,&node_id,*words`,
     export_storage: `++id,process_id`,

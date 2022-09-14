@@ -357,40 +357,12 @@ export class BookmarkManager extends EntityManager {
             if (moveLast && ids.some(id => id === newNode.source_node_id))
                 newNode.pos = DEFAULT_POSITION;
 
+            await this.plugins.beforeBookmarkCopied(dest, newNode);
+
             newNodes.push(Object.assign(newNode, await Node.add(newNode)));
 
             try {
-                if (isContentNode(newNode) && newNode.type !== NODE_TYPE_SEPARATOR) {
-                    let notes = await Notes.get(sourceNode);
-                    if (notes) {
-                        delete notes.id;
-                        notes.node_id = newNode.id;
-                        await Notes.add(newNode, notes);
-                        notes = null;
-                    }
-
-                    let comments = await Comments.get(sourceNode);
-                    if (comments) {
-                        await Comments.add(newNode, comments);
-                        comments = null;
-                    }
-
-                    if (newNode.stored_icon) {
-                        let icon = await Icon.get(sourceNode);
-                        if (icon) {
-                            await Icon.add(newNode, icon);
-                        }
-                    }
-                }
-
-                if (newNode.type === NODE_TYPE_ARCHIVE) {
-                    let archive = await Archive.get(sourceNode);
-                    if (archive) {
-                        let index = await Archive.fetchIndex(sourceNode);
-                        await Archive.add(newNode, archive.object, archive.type, archive.byte_length, index);
-                        archive = null;
-                    }
-                }
+                await this.copyContent(sourceNode, newNode);
             } catch (e) {
                 console.error(e);
             }
@@ -409,6 +381,38 @@ export class BookmarkManager extends EntityManager {
         }
 
         return newNodes;
+    }
+
+    async copyContent(sourceNode, newNode) {
+        if (newNode.type === NODE_TYPE_ARCHIVE) {
+            let archive = await Archive.get(sourceNode);
+
+            if (archive) {
+                let index = await Archive.fetchIndex(sourceNode);
+                await Archive.add(newNode, archive.object, archive.type, archive.byte_length, index);
+            }
+        }
+
+        if (sourceNode.has_notes) {
+            let notes = await Notes.get(sourceNode);
+            if (notes) {
+                delete notes.id;
+                notes.node_id = newNode.id;
+                await Notes.add(newNode, notes);
+            }
+        }
+
+        if (sourceNode.has_comments) {
+            let comments = await Comments.get(sourceNode);
+            if (comments)
+                await Comments.add(newNode, comments);
+        }
+
+        if (sourceNode.stored_icon) {
+            let icon = await Icon.get(sourceNode);
+            if (icon)
+                await Icon.add(newNode, icon);
+        }
     }
 
     async copy(ids, destId, moveLast) {
@@ -576,7 +580,6 @@ export class BookmarkManager extends EntityManager {
 
     async storeArchive(node, data, contentType, index) {
         await Archive.add(node, data, contentType, null, index);
-        //const node = await Node.get(node);
         await this.plugins.storeBookmarkData(node, data, contentType);
     }
 

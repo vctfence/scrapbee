@@ -1,13 +1,9 @@
 import {MarshallerJSONScrapbook, UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
+import {StorageProxy} from "./storage_proxy.js";
 
-export class NotesProxy {
+export class NotesProxy extends StorageProxy {
     #marshaller = new MarshallerJSONScrapbook();
     #unmarshaller = new UnmarshallerJSONScrapbook();
-    #adapter;
-
-    constructor(adapter) {
-        this.#adapter = adapter;
-    }
 
     async storeIndex(node, words) {
         const result = await this.wrapped.storeIndex(node, words);
@@ -22,13 +18,19 @@ export class NotesProxy {
     }
 
     async get(node) {
-        const notes = await this.#adapter.fetchNotes({uuid: node.uuid});
-        if (notes)
-            return this.#unmarshaller.deserializeNotes(notes);
+        const adapter = this.adapter(node);
+
+        if (adapter) {
+            const notes = await adapter.fetchNotes({uuid: node.uuid});
+            if (notes)
+                return this.#unmarshaller.deserializeNotes(notes);
+        }
     }
 
     async #persistNotesIndex(node, words) {
-        if (this.#adapter.accepts(node)) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
             let index = this.wrapped.indexEntity(node, words);
             index = await this.#marshaller.serializeIndex(index);
 
@@ -37,12 +39,14 @@ export class NotesProxy {
                 index_json: JSON.stringify(index)
             };
 
-            return this.#adapter.persistNotesIndex(params);
+            return adapter.persistNotesIndex(params);
         }
     }
 
     async #persistNotes(node, options) {
-        if (this.#adapter.accepts(node)) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
             const notes = await this.#marshaller.serializeNotes(options);
 
             const params = {
@@ -50,7 +54,7 @@ export class NotesProxy {
                 notes_json: JSON.stringify(notes)
             };
 
-            await this.#adapter.persistNotes(params);
+            await adapter.persistNotes(params);
         }
     }
 }

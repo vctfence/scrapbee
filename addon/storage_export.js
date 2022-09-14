@@ -32,7 +32,7 @@ class ExportAreaIDB extends EntityIDB {
             await this._db.blobs.where("node_id").noneOf(retain).delete();
 
         if (this._db.tables.some(t => t.name === "index"))
-            await this._db.index_content.where("node_id").noneOf(retain).delete();
+            await this._db.index.where("node_id").noneOf(retain).delete();
 
         if (this._db.tables.some(t => t.name === "notes"))
             await this._db.notes.where("node_id").noneOf(retain).delete();
@@ -42,9 +42,6 @@ class ExportAreaIDB extends EntityIDB {
 
         if (this._db.tables.some(t => t.name === "comments"))
             await this._db.comments.where("node_id").noneOf(retain).delete();
-
-        if (this._db.tables.some(t => t.name === "index_content"))
-            await this._db.index_notes.where("node_id").noneOf(retain).delete();
 
         if (this._db.tables.some(t => t.name === "index_notes"))
             await this._db.index_notes.where("node_id").noneOf(retain).delete();

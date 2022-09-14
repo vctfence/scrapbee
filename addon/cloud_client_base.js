@@ -1,5 +1,15 @@
 import {CloudStorage} from "./cloud_node_db.js";
 
+const OBJECT_DIRECTORY = "objects";
+const ICON_OBJECT_FILE = "icon.json";
+const ARCHIVE_INDEX_OBJECT_FILE = "archive_index.json";
+const ARCHIVE_OBJECT_FILE = "archive.json";
+const ARCHIVE_CONTENT_FILE = "archive_content.blob";
+const NOTES_INDEX_OBJECT_FILE = "notes_index.json";
+const NOTES_OBJECT_FILE = "notes.json";
+const COMMENTS_INDEX_OBJECT_FILE = "comments_index.json";
+const COMMENTS_OBJECT_FILE = "comments.json";
+
 export class CloudError {
     constructor(message) {
         this.message = message;
@@ -10,12 +20,16 @@ export class CloudItemNotFoundError extends CloudError {
 }
 
 export class CloudClientBase {
-    static CLOUD_SHELF_PATH = "/Cloud";
-    static CLOUD_SHELF_INDEX = "index.jsonl";
+    static CLOUD_SHELF_PATH = "/CloudShelf";
+    static CLOUD_SHELF_INDEX = "cloud.jsonl";
     static REDIRECT_URL = "https://gchristensen.github.io/scrapyard/";
 
     constructor() {
         this._assetMethods = this._createAssetMethods();
+    }
+
+    get assets() {
+        return this._assetMethods;
     }
 
     async authenticate() {
@@ -54,11 +68,19 @@ export class CloudClientBase {
         });
     }
 
+    _getObjectDirectory(uuid) {
+        return `${CloudClientBase.CLOUD_SHELF_PATH}/${OBJECT_DIRECTORY}/${uuid}`;
+    }
+
+    _getAssetPath(uuid, asset) {
+        return `${CloudClientBase.CLOUD_SHELF_PATH}/${OBJECT_DIRECTORY}/${uuid}/${asset}`;
+    }
+
     _createAssetMethods() {
-        let storeAsset = ext => {
-            return async (node, data) => {
+        const storeAsset = asset => {
+            return async (uuid, data) => {
                 try {
-                    const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
+                    const path = this._getAssetPath(uuid, asset);
                     await this.uploadFile(path, data);
                 } catch (e) {
                     console.error(e);
@@ -66,11 +88,11 @@ export class CloudClientBase {
             };
         }
 
-        let fetchAsset = ext => {
-            return async (node) => {
+        const fetchAsset = (asset, binary) => {
+            return async (uuid) => {
                 try {
-                    const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
-                    return await this.downloadFile(path)
+                    const path = this._getAssetPath(uuid, asset);
+                    return await this.downloadFile(path, binary);
                 }
                 catch (e) {
                     console.error(e);
@@ -78,41 +100,42 @@ export class CloudClientBase {
             };
         }
 
-        let deleteAsset = ext => {
-            return async (node) => {
-                try {
-                    const path = `${CloudClientBase.CLOUD_SHELF_PATH}/${node.uuid}.${ext}`
-                    await this.deleteFile(path)
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            };
-        }
+        const fetchBinaryAsset = (asset, binary) => fetchAsset(asset, true);
 
         let methods = {};
 
-        methods.storeNotes = storeAsset("notes");
-        methods.fetchNotes = fetchAsset("notes")
-        methods.deleteNotes = deleteAsset("notes");
+        methods.storeNotes = storeAsset(NOTES_OBJECT_FILE);
+        methods.fetchNotes = fetchAsset(NOTES_OBJECT_FILE);
+        methods.storeNotesIndex = storeAsset(NOTES_INDEX_OBJECT_FILE);
+        methods.fetchNotesIndex = fetchAsset(NOTES_INDEX_OBJECT_FILE);
 
-        methods.storeData = storeAsset("data");
-        methods.fetchData = fetchAsset("data")
-        methods.deleteData = deleteAsset("data");
+        methods.storeArchiveObject = storeAsset(ARCHIVE_OBJECT_FILE);
+        methods.fetchArchiveObject = fetchAsset(ARCHIVE_OBJECT_FILE);
+        methods.storeArchiveContent = storeAsset(ARCHIVE_CONTENT_FILE);
+        methods.fetchArchiveContent = fetchBinaryAsset(ARCHIVE_CONTENT_FILE);
+        methods.storeArchiveIndex = storeAsset(ARCHIVE_INDEX_OBJECT_FILE);
+        methods.fetchArchiveIndex = fetchAsset(ARCHIVE_INDEX_OBJECT_FILE);
 
-        methods.storeIcon = storeAsset("icon");
-        methods.fetchIcon = fetchAsset("icon")
-        methods.deleteIcon = deleteAsset("icon");
+        methods.storeIcon = storeAsset(ICON_OBJECT_FILE);
+        methods.fetchIcon = fetchAsset(ICON_OBJECT_FILE);
 
-        methods.storeComments = storeAsset("comments");
-        methods.fetchComments = fetchAsset("comments")
-        methods.deleteComments = deleteAsset("comments");
-
-        methods.storeView = storeAsset("view");
-        methods.fetchView = fetchAsset("view");
-        methods.deleteView = deleteAsset("view");
+        methods.storeComments = storeAsset(COMMENTS_OBJECT_FILE);
+        methods.fetchComments = fetchAsset(COMMENTS_OBJECT_FILE);
+        methods.storeCommentsIndex = storeAsset(COMMENTS_INDEX_OBJECT_FILE);
+        methods.fetchCommentsIndex = fetchAsset(COMMENTS_INDEX_OBJECT_FILE);
 
         return methods;
+    }
+
+    async deleteAssets(uuids) {
+        for (const uuid of uuids) {
+            try {
+                const path = this._getObjectDirectory(uuid);
+                await this.deleteFile(path);
+            } catch (e) {
+                console.error(e);
+            }
+        }
     }
 
     async downloadDB() {
@@ -124,8 +147,9 @@ export class CloudClientBase {
             storage = CloudStorage.deserialize(content);
         }
         catch (e) {
-            if (e instanceof CloudItemNotFoundError)
-                storage = new CloudStorage({cloud: "Scrapyard"});
+            if (e instanceof CloudItemNotFoundError) {
+                storage = new CloudStorage();
+            }
             else if (e instanceof CloudError)
                 throw e;
         }

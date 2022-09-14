@@ -3,10 +3,9 @@ import {settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
 import {helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
-import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent} from "./storage.js";
+import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent, JSON_SCRAPBOOK_VERSION} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
 import {UnmarshallerSync} from "./marshaller_sync.js";
-import {JSON_SCRAPBOOK_VERSION} from "./marshaller_json_scrapbook.js";
 import {Metadata} from "./storage_metadata.js";
 import {Database} from "./storage_database.js";
 
@@ -93,7 +92,11 @@ async function getStorageMetadata(syncDirectory) {
         return;
     }
     else if (storageMetadata.error === "empty" || !storageMetadata.entities) {
-        showNotification("The disk database is empty.");
+        showNotification("The disk storage is missing or empty.");
+        return;
+    }
+    else if (storageMetadata.type !== "index") {
+        showNotification("Unknown storage format type.");
         return;
     }
     else if (typeof storageMetadata.version === "number" && storageMetadata.version > JSON_SCRAPBOOK_VERSION) {

@@ -1,18 +1,12 @@
 import {Node} from "./storage_entities.js";
 import {MarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
+import {StorageProxy} from "./storage_proxy.js";
 
-export class NodeProxy {
+export class NodeProxy extends StorageProxy {
     #marshaller = new MarshallerJSONScrapbook();
-    #adapter;
-
-    constructor(adapter) {
-        this.#adapter = adapter;
-    }
 
     async _add(node) {
-        _log({...node})
         const result = await this.wrapped._add(node);
-        _log({...node})
         await this.#persistNode(node);
 
         return result;
@@ -65,18 +59,23 @@ export class NodeProxy {
     }
 
     async #persistNode(node) {
-        if (this.#adapter.accepts(node)) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
             const params = {
                 node: await this.#marshaller.serializeNode(node)
             };
 
-            // async, since requests are queued in the helper
-            /*return*/ this.#adapter.persistNode(params);
+            const result = adapter.persistNode(params);
+            if (!adapter.concurrent)
+                return result;
         }
     }
 
     async #updateNode(node) {
-        if (this.#adapter.accepts(node)) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
             if (!node.uuid)
                 node.uuid = await Node.getUUIDFromId(node.id);
 
@@ -85,27 +84,37 @@ export class NodeProxy {
                 node: await this.#marshaller.serializeNode(node)
             };
 
-            /*return*/ this.#adapter.updateNode(params);
+            const result = adapter.updateNode(params);
+            if (!adapter.concurrent)
+                return result;
         }
     }
 
     async #updateNodes(nodes) {
-        if (this.#adapter.accepts(nodes?.[0])) {
+        const adapter = this.adapter(nodes);
+
+        if (adapter) {
             const params = {
                 nodes: await Promise.all(nodes.map(n => this.#marshaller.serializeNode(n)))
             };
 
-            /*return*/ this.#adapter.updateNodes(params);
+            const result = adapter.updateNodes(params);
+            if (!adapter.concurrent)
+                return result;
         }
     }
 
     async #unpersistNode(node) {
-        if (this.#adapter.accepts(node)) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
             const params = {
                 node_uuids: [node.uuid]
             };
 
-            /*return*/ this.#adapter.deleteNodes(params);
+            const result = adapter.deleteNodes(params);
+            if (!adapter.concurrent)
+                return result;
         }
     }
 
@@ -113,14 +122,16 @@ export class NodeProxy {
         if (!Array.isArray(nodes))
             nodes = [nodes];
 
-        nodes = nodes.filter(n => this.#adapter.accepts(n));
+        const adapter = this.adapter(nodes);
 
-        if (nodes.length) {
+        if (adapter) {
             const params = {
                 node_uuids: nodes.map(n => n.uuid)
             };
 
-            /*return*/ this.#adapter.deleteNodesShallow(params);
+            const result = adapter.deleteNodesShallow(params);
+            if (!adapter.concurrent)
+                return result;
         }
     }
 
@@ -128,14 +139,14 @@ export class NodeProxy {
         if (!Array.isArray(nodes))
             nodes = [nodes];
 
-        nodes = nodes.filter(n => this.#adapter.accepts(n));
+        const adapter = this.adapter(nodes);
 
-        if (nodes.length) {
+        if (adapter) {
             const params = {
                 node_uuids: nodes.map(n => n.uuid)
             };
 
-            return this.#adapter.deleteNodeContent(params);
+            return adapter.deleteNodeContent(params);
         }
     }
 }

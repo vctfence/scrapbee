@@ -71,7 +71,8 @@ export class NodeIDB extends EntityIDB {
     }
 
     async put(node) {
-        return this._db.nodes.put(this.sanitized(node));
+        await this._db.nodes.put(this.sanitized(node));
+        return node;
     }
 
     async unpersist(node) {
@@ -178,7 +179,7 @@ export class NodeIDB extends EntityIDB {
         await this._db.notes?.where("node_id").anyOf(ids).delete();
         await this._db.icons?.where("node_id").anyOf(ids).delete();
         await this._db.comments?.where("node_id").anyOf(ids).delete();
-        await this._db.index_content?.where("node_id").anyOf(ids).delete();
+        await this._db.index?.where("node_id").anyOf(ids).delete();
         await this._db.index_notes?.where("node_id").anyOf(ids).delete();
         await this._db.index_comments?.where("node_id").anyOf(ids).delete();
     }

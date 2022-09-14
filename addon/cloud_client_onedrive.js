@@ -116,12 +116,17 @@ export class OneDriveClient extends CloudClientBase {
 
     async _makeTextRequest(path, params) {
         const response = await this._makeRequest(path, params);
-        return response.text()
+        return response.text();
+    }
+
+    async _makeBinaryRequest(path, params) {
+        const response = await this._makeRequest(path, params);
+        return response.arrayBuffer();
     }
 
     async _makeJSONRequest(path, params) {
         const response = await this._makeRequest(path, params);
-        return response.json()
+        return response.json();
     }
 
     _getDrivePath(path) {
@@ -177,9 +182,13 @@ export class OneDriveClient extends CloudClientBase {
     }
 
     async uploadFile(path, data) {
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(data)
         const requestPath = this._getDrivePath(path);
+        let bytes = data;
+
+        if (typeof data === "string") {
+            const encoder = new TextEncoder();
+            bytes = encoder.encode(data);
+        }
 
         if (bytes.byteLength < 4 * 1024 * 1024)
             return this._uploadSmallFile(requestPath, bytes)
@@ -187,10 +196,13 @@ export class OneDriveClient extends CloudClientBase {
             return this._uploadLargeFile(requestPath, bytes);
     }
 
-    async downloadFile(path) {
+    async downloadFile(path, binary) {
         const requestPath = this._getDrivePath(path) + ":/content";
         try {
-            return await this._makeTextRequest(requestPath);
+            if (binary)
+                return await this._makeBinaryRequest(requestPath);
+            else
+                return await this._makeTextRequest(requestPath);
         }
         catch (e) {
             if (e instanceof CloudError)
