@@ -172,19 +172,19 @@ export class BrowserShelfPlugin {
                 return Promise.all(otherNodes.map(async n => {
                     if (isContainerNode(n))
                         return Bookmark.traverse(n, async (parent, node) => {
+                            await Node.unpersist(node);
                             await this._createBrowserBookmark(node, parent? parent.external_id: dest.external_id);
-                            await this._unpersistNode(node);
                         });
                     else {
+                        await Node.unpersist(n);
                         await this._createBrowserBookmark(n, dest.external_id);
-                        await this._unpersistNode(n);
                     }
                 }));
             } else {
                 return Promise.all(browserNodes.map(async n => {
                     let id = n.external_id;
 
-                    n.external = undefined;
+                    n.external = dest.external;
                     n.external_id = undefined;
                     await Node.update(n);
                     await this._persistNodeIcon(n);
@@ -193,7 +193,7 @@ export class BrowserShelfPlugin {
                         if (isContainerNode(n)) {
                             await Bookmark.traverse(n, async (parent, node) => {
                                 if (parent) {
-                                    node.external = undefined;
+                                    node.external = dest.external;
                                     node.external_id = undefined;
                                     await Node.update(node);
                                     await this._persistNodeIcon(node);
@@ -214,7 +214,7 @@ export class BrowserShelfPlugin {
             }
         });
     }
-
+    
     async copyBookmarks(dest, nodes) {
         if (!settings.show_firefox_bookmarks() || await this.isLockedByListeners())
             return;
@@ -234,7 +234,7 @@ export class BrowserShelfPlugin {
                 }));
             } else {
                 return Promise.all(browserNodes.map(async n => {
-                    n.external = undefined;
+                    n.external = dest.external;
                     n.external_id = undefined;
                     await Node.update(n);
                     await this._persistNodeIcon(n);
@@ -243,7 +243,7 @@ export class BrowserShelfPlugin {
                         if (isContainerNode(n)) {
                             await Bookmark.traverse(n, async (parent, node) => {
                                 if (parent) {
-                                    node.external = undefined;
+                                    node.external = dest.external;
                                     node.external_id = undefined;
                                     await Node.update(node);
                                     await this._persistNodeIcon(node);
@@ -257,13 +257,6 @@ export class BrowserShelfPlugin {
                 }));
             }
         });
-    }
-
-    async _unpersistNode(node) {
-        node = {...node};
-        node.external = undefined;
-        node.__dest_external = undefined;
-        return Node.unpersist(node);
     }
 
     async _persistNodeIcon(node) {

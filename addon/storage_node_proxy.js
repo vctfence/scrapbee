@@ -62,8 +62,11 @@ export class NodeProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter) {
+            node = this.#marshaller.preprocessNode(node);
+            node = await this.#marshaller.serializeNode(node);
+
             const params = {
-                node: await this.#marshaller.serializeNode(node)
+                node: node
             };
 
             const result = adapter.persistNode(params);
@@ -79,9 +82,12 @@ export class NodeProxy extends StorageProxy {
             if (!node.uuid)
                 node.uuid = await Node.getUUIDFromId(node.id);
 
+            node = this.#marshaller.preprocessNode(node);
+            node = await this.#marshaller.serializeNode(node);
+
             const params = {
                 remove_fields: Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined),
-                node: await this.#marshaller.serializeNode(node)
+                node: node
             };
 
             const result = adapter.updateNode(params);
@@ -95,7 +101,11 @@ export class NodeProxy extends StorageProxy {
 
         if (adapter) {
             const params = {
-                nodes: await Promise.all(nodes.map(n => this.#marshaller.serializeNode(n)))
+                nodes: await Promise.all(nodes.map(async node => {
+                    node = this.#marshaller.preprocessNode(node);
+                    node = this.#marshaller.serializeNode(node);
+                    return node;
+                }))
             };
 
             const result = adapter.updateNodes(params);

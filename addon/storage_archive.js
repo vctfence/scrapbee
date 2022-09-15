@@ -1,6 +1,6 @@
 import {EntityIDB} from "./storage_idb.js";
 import {indexHTML} from "./utils_html.js";
-import {readBlob} from "./utils_io.js";
+import {arrayToBinaryString, binaryString2Array, readBlob} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 import {delegateProxy} from "./proxy.js";
 import {StorageAdapterDisk} from "./storage_adapter_disk.js";
@@ -24,12 +24,13 @@ export class ArchiveIDB extends EntityIDB {
 
         if (typeof data !== "string" && data?.byteLength) // from ArrayBuffer
             byteLength = data.byteLength;
-        else if (typeof data === "string" && byteLength) // from binary string (presumably may come only form import)
-            data = this._binaryString2Array(data);
+        // else if (typeof data === "string" && byteLength) // from binary string
+        //     data = this._binaryString2Array(data);
+        //
+        // data = data instanceof Blob? data: new Blob([data], {type: contentType});
 
-        const object = data instanceof Blob? data: new Blob([data], {type: contentType});
         const result = {
-            object,
+            object: data,
             byte_length: byteLength, // presence of this field indicates that the object is binary
             type: contentType
         };
@@ -111,15 +112,7 @@ export class ArchiveIDB extends EntityIDB {
             await this._db.index.where("node_id").equals(node.id).delete();
     }
 
-    _binaryString2Array(bs) {
-        let byteArray = new Uint8Array(bs.length);
-
-        for (let i = 0; i < bs.length; ++i)
-            byteArray[i] = bs.charCodeAt(i);
-
-        return byteArray;
-    }
-
+    // reifying for JSON storage, leaves string (no byte_length) as is even if binarystring is specified
     async reify(archive, binarystring = false) {
         let result;
 
@@ -143,7 +136,13 @@ export class ArchiveIDB extends EntityIDB {
                 if (binarystring)
                     result = archive.object;
                 else
-                    result = this._binaryString2Array(archive.object);
+                    result = binaryString2Array(archive.object);
+            }
+            else {
+                if (binarystring)
+                    result = arrayToBinaryString(archive.object);
+                else
+                    result = archive.object;
             }
         }
         else {
@@ -151,11 +150,15 @@ export class ArchiveIDB extends EntityIDB {
                 result = archive.data;
             else if (archive.object instanceof Blob)
                 result = await readBlob(archive.object, "text");
-            else
+            else if (typeof archive.object === "string")
                 result = archive.object;
+            else
+                result = arrayToBinaryString(archive.object);
         }
 
         return result;
     }
+
+
 }
 

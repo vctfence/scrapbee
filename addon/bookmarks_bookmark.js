@@ -350,7 +350,6 @@ export class BookmarkManager extends EntityManager {
 
             delete newNode.id;
             delete newNode.date_modified;
-            newNode.__dest_external = dest.external;
 
             if (moveLast && ids.some(id => id === newNode.source_node_id))
                 newNode.pos = DEFAULT_POSITION;
@@ -382,7 +381,7 @@ export class BookmarkManager extends EntityManager {
     }
 
     async copyContent(sourceNode, newNode) {
-        if (newNode.type === NODE_TYPE_ARCHIVE) {
+        if (sourceNode.type === NODE_TYPE_ARCHIVE) {
             let archive = await Archive.get(sourceNode);
 
             if (archive) {

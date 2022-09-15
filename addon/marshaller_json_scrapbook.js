@@ -4,8 +4,8 @@ import {
     ARCHIVE_TYPE_BYTES,
     ARCHIVE_TYPE_TEXT,
     createJSONScrapBookMeta,
-    DEFAULT_SHELF_UUID,
-    JSON_SCRAPBOOK_FORMAT,
+    DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME, JSON_SCRAPBOOK_EVERYTHING,
+    JSON_SCRAPBOOK_FORMAT, JSON_SCRAPBOOK_SHELF,
     JSON_SCRAPBOOK_VERSION,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NAMES,
@@ -49,18 +49,16 @@ export class MarshallerJSONScrapbook extends Marshaller {
         if (node.uuid === DEFAULT_SHELF_UUID)
             node.uuid = FORMAT_DEFAULT_SHELF_UUID;
 
-        if (parent && node.parent === DEFAULT_SHELF_UUID)
+        if (node.parent && node.parent === DEFAULT_SHELF_UUID)
             node.parent = FORMAT_DEFAULT_SHELF_UUID;
     }
 
     async serializeNode(node) {
-        node = {...node};
-
-        this._resetNodeDates(node);
-
-        const serializedNode = this.preprocessNode(node);
+        const serializedNode = {...node};
 
         delete serializedNode.id;
+        this._resetNodeDates(serializedNode);
+
         if (node.parent_id) {
             serializedNode.parent = await Node.getUUIDFromId(node.parent_id);
             delete serializedNode.parent_id;
@@ -82,7 +80,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
         serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
 
-        this.convertUUIDsToFormat(node);
+        this.convertUUIDsToFormat(serializedNode);
 
         return this._reorderFields(serializedNode);
     }
@@ -142,8 +140,6 @@ export class MarshallerJSONScrapbook extends Marshaller {
         delete archive.id;
         delete archive.node_id;
 
-        archive = await this.preprocessArchive(archive);
-
         if (archive.type)
             archive.content_type = archive.type || "text/html";
 
@@ -172,10 +168,11 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
     async marshalMeta(options) {
         const {comment, uuid, objects, name} = options;
-        const meta = createJSONScrapBookMeta("export");
-        const now = new Date();
+        const contains = name === EVERYTHING_SHELF_NAME? JSON_SCRAPBOOK_EVERYTHING: JSON_SCRAPBOOK_SHELF;
+        const meta = createJSONScrapBookMeta("export", contains);
 
         updateJSONScrapBookMeta(meta, objects.length, uuid, comment);
+        this.convertUUIDsToFormat(meta);
 
         if (comment)
             meta.comment = comment;
@@ -184,12 +181,14 @@ export class MarshallerJSONScrapbook extends Marshaller {
     }
 
     async assembleContent(node) {
-        const result = {node: await this.serializeNode(node)};
+        const result = {node: null};
 
         if (node.type === NODE_TYPE_ARCHIVE) {
             let archive = await Archive.get(node);
-            if (archive)
+            if (archive) {
+                archive = await this.preprocessArchive(archive);
                 result.archive = await this.serializeArchive(archive);
+            }
         }
 
         if (node.has_notes) {
@@ -205,6 +204,9 @@ export class MarshallerJSONScrapbook extends Marshaller {
             const icon = Icon.entity(node, await Icon.get(node));
             result.icon = this.serializeIcon(icon);
         }
+
+        node = this.preprocessNode(node);
+        result.node = await this.serializeNode(node);
 
         return result;
     }
@@ -231,7 +233,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         if (node.uuid === FORMAT_DEFAULT_SHELF_UUID)
             node.uuid = DEFAULT_SHELF_UUID;
 
-        if (node.parent === FORMAT_DEFAULT_SHELF_UUID)
+        if (node.parent && node.parent === FORMAT_DEFAULT_SHELF_UUID)
             node.parent = DEFAULT_SHELF_UUID;
     }
 

@@ -199,14 +199,18 @@ export function byDateAddedAsc(a, b) {
 
 export const JSON_SCRAPBOOK_FORMAT = "JSON Scrapbook";
 export const JSON_SCRAPBOOK_VERSION = 1;
+export const JSON_SCRAPBOOK_EVERYTHING = "everything";
+export const JSON_SCRAPBOOK_SHELF = "shelf";
 
-export function createJSONScrapBookMeta(type) {
+
+export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_EVERYTHING) {
     const now = new Date();
 
     return {
         format: JSON_SCRAPBOOK_FORMAT,
         version: JSON_SCRAPBOOK_VERSION,
         type: type,
+        contains: contains,
         timestamp: now.getTime(),
         date: now.toISOString()
     };

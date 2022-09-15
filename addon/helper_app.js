@@ -178,8 +178,14 @@ class HelperApp {
     async post(path, fields) {
         let form = new FormData();
 
-        for (const [k, v] of Object.entries(fields))
-            form.append(k, v + "");
+        for (let [k, v] of Object.entries(fields)) {
+            if (v instanceof Blob)
+                form.append(k, v, k);
+            else {
+                v = v + "";
+                form.append(k, v);
+            }
+        }
 
         const init = this._injectAuth({method: "POST", body: form});
 

@@ -22,10 +22,13 @@ def browse(uuid):
     msg = message_queue.get()
     message_mutex.release()
 
-    if msg["type"] == "ARCHIVE_INFO" and msg["kind"] == "data_path" and msg["data_path"]:
-        return serve_from_file(msg, uuid)
-    elif msg["type"] == "ARCHIVE_INFO" and msg["kind"] == "content":
-        return serve_content(msg, uuid)
+    try:
+        if msg["type"] == "ARCHIVE_INFO" and msg["kind"] == "data_path" and msg["data_path"]:
+            return serve_from_file(msg, uuid)
+        elif msg["type"] == "ARCHIVE_INFO" and msg["kind"] == "content":
+            return serve_content(msg, uuid)
+    except Exception as e:
+        logging.error(e)
 
     return "", 404
 

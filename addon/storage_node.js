@@ -75,6 +75,7 @@ export class NodeIDB extends EntityIDB {
         return node;
     }
 
+    // retains node in IDB, but removes from storage
     async unpersist(node) {
         // NOP, used in proxy
     }

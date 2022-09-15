@@ -51,6 +51,7 @@ class NodeDB:
             "format": "JSON ScrapBook",
             "version": NodeDB.FORMAT_VERSION,
             "type": "index",
+            "contains": "everything",
             "generator": "Scrapyard",
             "uuid": NodeDB.generate_uuid(),
             "entities": 0

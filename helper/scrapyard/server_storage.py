@@ -100,20 +100,38 @@ def persist_content_index():
     return "", 204
 
 
-@app.route("/storage/persist_archive", methods=['POST'])
+@app.route("/storage/persist_archive_object", methods=['POST'])
 @requires_auth
-def persist_archive():
-    storage_manager.persist_archive(request.json)
+def persist_archive_object():
+    storage_manager.persist_archive_object(request.json)
     return "", 204
 
 
-@app.route("/storage/fetch_archive", methods=['POST'])
+@app.route("/storage/persist_archive_content", methods=['POST'])
 @requires_auth
-def fetch_archive():
-    json_text = storage_manager.fetch_archive(request.json)
+def persist_archive_content():
+    storage_manager.persist_archive_content(request.form, request.files)
+    return "", 204
+
+
+@app.route("/storage/fetch_archive_object", methods=['POST'])
+@requires_auth
+def fetch_archive_object():
+    json_text = storage_manager.fetch_archive_object(request.json)
 
     if json_text:
         return json_text
+    else:
+        return "", 404
+
+
+@app.route("/storage/fetch_archive_content", methods=['POST'])
+@requires_auth
+def fetch_archive_content():
+    result = storage_manager.fetch_archive_content(request.form)
+
+    if result:
+        return result
     else:
         return "", 404
 

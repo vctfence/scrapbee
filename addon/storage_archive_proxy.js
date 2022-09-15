@@ -26,7 +26,6 @@ export class ArchiveProxy extends StorageProxy {
 
             if (archive) {
                 archive = this.#unmarshaller.deserializeArchive(archive);
-                archive = this.#unmarshaller.preprocessArchive(archive);
                 return Archive.entity(null, archive.object, archive.type, archive.byte_length);
             }
         }
@@ -49,16 +48,19 @@ export class ArchiveProxy extends StorageProxy {
     }
 
     async #persistArchive(node, data, contentType, byteLength) {
-        const entity = this.wrapped.entity(node, data, contentType, byteLength);
         const adapter = this.adapter(node);
+        const entity = this.wrapped.entity(node, data, contentType, byteLength);
+        let content = await Archive.reify(entity);
 
         if (adapter) {
             const archive = await this.#marshaller.serializeArchive(entity);
 
+            delete archive.content;
+
             const params = {
                 uuid: node.uuid,
-                archive: archive,
-                entity: entity
+                archive_json: JSON.stringify(archive),
+                content: content
             };
 
             await adapter.persistArchive(params);

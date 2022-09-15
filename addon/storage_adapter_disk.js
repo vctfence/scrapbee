@@ -1,6 +1,6 @@
 import {helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
-import {NON_SYNCHRONIZED_EXTERNALS} from "./storage.js";
+import {ARCHIVE_TYPE_TEXT, NON_SYNCHRONIZED_EXTERNALS} from "./storage.js";
 
 export class StorageAdapterDisk {
     async _postJSON(path, fields) {
@@ -32,8 +32,7 @@ export class StorageAdapterDisk {
 
     accepts(node) {
         return node && !(
-            (node.external || node.__dest_external)
-                && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external || ex === node.__dest_external)
+            node.external && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external)
         )
     }
 
@@ -70,15 +69,48 @@ export class StorageAdapterDisk {
     }
 
     async persistArchive(params) {
-        params.archive_json = JSON.stringify(params.archive);
-        delete params.archive;
-        delete params.entity;
+        const content = params.content;
 
-        return this._postJSON("/storage/persist_archive", params);
+        delete params.content;
+        await this._postJSON("/storage/persist_archive_object", params);
+
+        const fields = {
+            data_path: settings.data_folder_path(),
+            content: new Blob([content]),
+            uuid: params.uuid
+        };
+
+        try {
+            return helperApp.post(`/storage/persist_archive_content`, fields);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     async fetchArchive(params) {
-        return this._fetchJSON("/storage/fetch_archive", params);
+        const archive = await this._fetchJSON("/storage/fetch_archive_object", params);
+
+        if (archive) {
+            params.data_path = settings.data_folder_path();
+
+            try {
+                const response = await helperApp.post(`/storage/fetch_archive_content`, params);
+
+                if (response.ok) {
+                    archive.content = await response.arrayBuffer();
+
+                    if (archive.type === ARCHIVE_TYPE_TEXT) {
+                        const decoder = new TextDecoder();
+                        archive.content = decoder.decode(archive.content);
+                    }
+
+                    return archive;
+                }
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
     }
 
     async persistNotesIndex(params) {

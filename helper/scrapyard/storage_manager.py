@@ -139,12 +139,6 @@ class StorageManager:
             logging.error(e)
 
     def persist_object(self, object_file_name, params, param_name):
-        if object_file_name == ARCHIVE_OBJECT_FILE:
-            self.persist_archive_content(params)
-        else:
-            self.persist_object_content(object_file_name, params, param_name)
-
-    def persist_object_content(self, object_file_name, params, param_name):
         object_directory_path = self.get_object_directory(params, params["uuid"])
         object_file_path = os.path.join(object_directory_path, object_file_name)
 
@@ -152,37 +146,13 @@ class StorageManager:
         with open(object_file_path, "w", encoding="utf-8") as object_file:
             object_file.write(params[param_name])
 
-    def persist_archive_content(self, params):
+    def persist_archive_content(self, params, files):
         object_directory_path = self.get_object_directory(params, params["uuid"])
-        object_file_path = os.path.join(object_directory_path, ARCHIVE_OBJECT_FILE)
         content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 
-        archive_object = json.loads(params["archive_json"])
-        archive_content = archive_object["content"]
-        archive_type = archive_object["type"]
-
-        del archive_object["content"]
-        archive_object = json.dumps(archive_object)
-
-        Path(object_directory_path).mkdir(parents=True, exist_ok=True)
-        with open(object_file_path, "w", encoding="utf-8") as object_file:
-            object_file.write(archive_object)
-
-        if archive_type == StorageManager.ARCHIVE_TYPE_BYTES:
-            archive_content = base64.b64decode(archive_content)
-            with open(content_file_path, "wb") as content_file:
-                content_file.write(archive_content)
-        else:
-            with open(content_file_path, "w", encoding="utf-8") as content_file:
-                content_file.write(archive_content)
+        files["content"].save(content_file_path)
 
     def fetch_object(self, object_file_name, params):
-        if object_file_name == ARCHIVE_OBJECT_FILE:
-            return self.fetch_archive_content(params)
-        else:
-            return self.fetch_object_content(object_file_name, params)
-
-    def fetch_object_content(self, object_file_name, params):
         object_directory_path = self.get_object_directory(params, params["uuid"])
         object_file_path = os.path.join(object_directory_path, object_file_name)
 
@@ -193,32 +163,16 @@ class StorageManager:
 
         return result
 
-    def fetch_archive_content(self, params, meta_only=False):
+    def fetch_archive_content(self, params):
         object_directory_path = self.get_object_directory(params, params["uuid"])
-        object_file_path = os.path.join(object_directory_path, ARCHIVE_OBJECT_FILE)
         content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 
-        archive_object = None
-        if os.path.exists(object_file_path):
-            with open(object_file_path, "r", encoding="utf-8") as object_file:
-                archive_object = object_file.read()
-                archive_object = json.loads(archive_object)
-
-        if meta_only:
-            return archive_object
-
-        archive_content = None
-        if archive_object["type"] == StorageManager.ARCHIVE_TYPE_BYTES:
+        result = None
+        if os.path.exists(content_file_path):
             with open(content_file_path, "rb") as content_file:
-                archive_content = content_file.read()
-                archive_content = base64.b64encode(archive_content).decode("ascii")
-        else:
-            with open(content_file_path, "r", encoding="utf-8") as content_file:
-                archive_content = content_file.read()
+                return content_file.read()
 
-        archive_object["content"] = archive_content
-        logging.debug(archive_object)
-        return archive_object
+        return result
 
     def persist_icon(self, params):
         self.persist_object(ICON_OBJECT_FILE, params, "icon_json")
@@ -226,14 +180,15 @@ class StorageManager:
     def persist_archive_index(self, params):
         self.persist_object(ARCHIVE_INDEX_OBJECT_FILE, params, "index_json")
 
-    def persist_archive(self, params):
+    def persist_archive_object(self, params):
         self.persist_object(ARCHIVE_OBJECT_FILE, params, "archive_json")
 
-    def fetch_archive(self, params):
+    def fetch_archive_object(self, params):
         return self.fetch_object(ARCHIVE_OBJECT_FILE, params)
 
     def fetch_archive_metadata(self, params):
-        return self.fetch_archive_content(params, True)
+        archive_object_json = self.fetch_object(ARCHIVE_OBJECT_FILE, params)
+        return json.loads(archive_object_json)
 
     def persist_notes_index(self, params):
         self.persist_object(NOTES_INDEX_OBJECT_FILE, params, "index_json")

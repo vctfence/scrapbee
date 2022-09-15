@@ -69,14 +69,8 @@ export class StorageAdapterCloud {
     }
 
     async persistArchive(params) {
-        const content = await Archive.reify(params.entity);
-        let object = params.archive;
-
-        delete object.content;
-        object = JSON.stringify(object);
-
-        await this._provider.assets.storeArchiveObject(params.uuid, object);
-        return this._provider.assets.storeArchiveContent(params.uuid, content);
+        await this._provider.assets.storeArchiveObject(params.uuid, params.archive_json);
+        return this._provider.assets.storeArchiveContent(params.uuid, params.content);
     }
 
     async fetchArchive(params) {
@@ -86,24 +80,13 @@ export class StorageAdapterCloud {
         object = JSON.parse(object)
 
         if (object.type === ARCHIVE_TYPE_BYTES)
-            object.content = this._arrayBufferToBase64(content);
+            object.content = content;
         else {
             const decoder = new TextDecoder();
             object.content = decoder.decode(content);
         }
 
         return object;
-    }
-
-    _arrayBufferToBase64(buffer) {
-        let binary = "";
-        const bytes = new Uint8Array(buffer);
-        const len = bytes.byteLength;
-
-        for (let i = 0; i < len; i++)
-            binary += String.fromCharCode(bytes[i]);
-
-        return window.btoa(binary);
     }
 
     async persistNotesIndex(params) {

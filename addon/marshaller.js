@@ -28,11 +28,6 @@ export class Marshaller {
             if (key.endsWith("_added") || key.endsWith("_modified"))
                 node[key] = this._date2UnixTime(node[key]);
 
-        if (node.external === BROWSER_EXTERNAL_TYPE) {
-            delete node.external;
-            delete node.external_id;
-        }
-
         return node;
     }
 
