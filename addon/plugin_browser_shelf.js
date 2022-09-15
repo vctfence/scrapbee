@@ -262,7 +262,7 @@ export class BrowserShelfPlugin {
     async _unpersistNode(node) {
         node = {...node};
         node.external = undefined;
-        node.__parent_external = undefined;
+        node.__dest_external = undefined;
         return Node.unpersist(node);
     }
 
@@ -587,8 +587,8 @@ export class BrowserShelfPlugin {
 
                 send.externalNodesReady();
 
-                for (let tuple of iconsToGet) {
-                    let node = await Node.get(tuple[0]);
+                for (const tuple of iconsToGet) {
+                    const node = await Node.get(tuple[0]);
                     await Bookmark.storeIconFromURI(node);
                 }
 

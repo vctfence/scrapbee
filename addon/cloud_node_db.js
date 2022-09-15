@@ -42,7 +42,7 @@ export class CloudStorage {
         object = {...object};
 
         delete object.external;
-        delete object.__parent_external;
+        delete object.__dest_external;
         delete object.external_id;
 
         return object;

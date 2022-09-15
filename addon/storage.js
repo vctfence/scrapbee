@@ -65,10 +65,10 @@ export const EVERYTHING_SHELF_NAME = "everything";
 export const EVERYTHING_SHELF_UUID = "everything";
 
 export const DEFAULT_SHELF_NAME = "default";
-export const DEFAULT_SHELF_UUID = "default";
+export const DEFAULT_SHELF_UUID = "1";
 
 export const BROWSER_SHELF_NAME = "browser";
-export const BROWSER_SHELF_UUID = "browser";
+export const BROWSER_SHELF_UUID = "browser_bookmarks";
 export const BROWSER_EXTERNAL_TYPE = "browser";
 
 export const FIREFOX_BOOKMARK_MENU = "menu________";

@@ -116,13 +116,13 @@ export class CloudShelfPlugin {
             return Promise.all(otherNodes.map(async n => {
                 if (isContainerNode(n)) {
                     return Bookmark.traverse(n, async (parent, node) => {
+                        await this._moveNodeToCloud(dest, node);
                         await this._createBookmarkInternal(node);
-                        await this._moveNodeToCloud(node);
                     });
                 }
                 else {
+                    await this._moveNodeToCloud(dest, n);
                     await this._createBookmarkInternal(n);
-                    await this._moveNodeToCloud(n);
                 }
             }));
         } else {
@@ -130,11 +130,11 @@ export class CloudShelfPlugin {
                 try {
                     if (isContainerNode(n)) {
                         await Bookmark.traverse(n, async (parent, node) => {
-                            await this._moveNodeToDisk(node);
+                            await this._moveNodeToDisk(dest, node);
                         });
                     }
                     else {
-                        await this._moveNodeToDisk(n);
+                        await this._moveNodeToDisk(dest, n);
                     }
                 }
                 catch (e) {
@@ -144,45 +144,53 @@ export class CloudShelfPlugin {
         }
     }
 
-    async _moveNodeToCloud(cloudNode) {
-        const storedNode = {...cloudNode};
-        storedNode.external = undefined;
-        storedNode.__parent_external = undefined;
+    async _moveNodeToCloud(dest, storedNode) {
+        const cloudNode = {...storedNode};
+        cloudNode.external = CLOUD_EXTERNAL_TYPE;
         await Bookmark.copyContent(storedNode, cloudNode);
         return Node.unpersist(storedNode);
     }
 
-    async _moveNodeToDisk(cloudNode) {
+    async _moveNodeToDisk(dest, cloudNode) {
         const storedNode = {...cloudNode};
-        storedNode.external = undefined;
-        storedNode.__parent_external = undefined;
+        storedNode.external = dest.external;
         await Bookmark.copyContent(cloudNode, storedNode);
         await Node.unpersist(cloudNode);
-        cloudNode.external = undefined;
-        cloudNode.__parent_external = undefined;
+        cloudNode.external = dest.external;
     }
 
     async beforeBookmarkCopied(dest, node) {
-        if (!dest.external && node.external === CLOUD_EXTERNAL_TYPE) {
-            node.external = undefined;
-            node.external_id = undefined;
+        if (dest.external !== CLOUD_EXTERNAL_TYPE && node.external === CLOUD_EXTERNAL_TYPE) {
+            node.external = dest.external;
+            node.external_id = dest.external;
         }
-        else if (dest.external === CLOUD_EXTERNAL_TYPE && !node.external) {
+        else if (dest.external === CLOUD_EXTERNAL_TYPE && node.external !== CLOUD_EXTERNAL_TYPE) {
             node.external = CLOUD_EXTERNAL_TYPE;
             node.external_id = node.uuid;
         }
     }
 
-    async _isRemoteDBModified(cloudShelf) {
+    async _isRemoteDBModified(cloudShelfNode) {
         const remoteLastModified = await this.getRemoteLastModified();
-        const modified = cloudShelf.date_modified?.getTime() !== remoteLastModified?.getTime();
+        const modified = cloudShelfNode.date_modified?.getTime() !== remoteLastModified?.getTime();
 
         if (modified) {
-            cloudShelf.date_modified = remoteLastModified;
-            await Node.idb.update(cloudShelf, false);
+            cloudShelfNode.date_modified = remoteLastModified;
+            await Node.idb.update(cloudShelfNode, false);
         }
 
         return modified;
+    }
+
+    async createCloudShelf() {
+        const node = this.newCloudRootNode();
+        Node.resetDates(node);
+        return Node.idb.import(node);
+    }
+
+    async createIfMissing() {
+        if (!await Node.get(CLOUD_SHELF_ID))
+            return this.createCloudShelf();
     }
 
     // should only be called in the background script through message
@@ -204,16 +212,14 @@ export class CloudShelfPlugin {
 
         if (settings.cloud_enabled()) {
             let beginTime = Date.now();
-            let cloudShelf = await Node.get(CLOUD_SHELF_ID);
+            let cloudShelfNode = await Node.get(CLOUD_SHELF_ID);
 
-            if (!cloudShelf) {
-                const node = this.newCloudRootNode();
-                Node.resetDates(node);
-                cloudShelf = await Node.idb.import(node);
+            if (!cloudShelfNode) {
+                cloudShelfNode = await this.createCloudShelf();
                 try {await send.shelvesChanged()} catch (e) {console.error(e)}
             }
 
-            if (!await this._isRemoteDBModified(cloudShelf))
+            if (!await this._isRemoteDBModified(cloudShelfNode))
                 return;
 
             send.cloudSyncStart();
@@ -273,15 +279,15 @@ export class CloudShelfPlugin {
     }
 }
 
-export let cloudShelfPlugin = new CloudShelfPlugin();
+export let cloudShelf = new CloudShelfPlugin();
 
 if (getContextType() === CONTEXT_BACKGROUND) {
     browser.alarms.onAlarm.addListener(alarm => {
         if (alarm.name === CLOUD_SYNC_ALARM_NAME)
-            cloudShelfPlugin.reconcileCloudBookmarksDB();
+            cloudShelf.reconcileCloudBookmarksDB();
     });
 
     receive.cloudProviderChanged = message => {
-        cloudShelfPlugin.selectProvider(message.provider);
+        cloudShelf.selectProvider(message.provider);
     };
 }

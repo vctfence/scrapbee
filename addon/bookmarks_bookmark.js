@@ -18,7 +18,7 @@ import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Folder} from "./bookmarks_folder.js";
-import {ishellPlugin} from "./plugin_ishell.js";
+import {ishellConnector} from "./plugin_ishell.js";
 import {cleanObject, getMimetypeExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
@@ -283,8 +283,6 @@ export class BookmarkManager extends EntityManager {
         const dest = await Node.get(destId);
         const nodes = await Node.get(ids);
 
-        nodes.forEach(node => node.__parent_external = dest.external);
-
         try {
             await this.plugins.moveBookmarks(dest, nodes);
         }
@@ -312,7 +310,7 @@ export class BookmarkManager extends EntityManager {
         }
 
         if (nodes.some(n => n.type === NODE_TYPE_FOLDER))
-            ishellPlugin.invalidateCompletion();
+            ishellConnector.invalidateCompletion();
 
         return Query.fullSubtree(ids, true);
     }
@@ -352,7 +350,7 @@ export class BookmarkManager extends EntityManager {
 
             delete newNode.id;
             delete newNode.date_modified;
-            newNode.__parent_external = dest.external;
+            newNode.__dest_external = dest.external;
 
             if (moveLast && ids.some(id => id === newNode.source_node_id))
                 newNode.pos = DEFAULT_POSITION;
@@ -374,7 +372,7 @@ export class BookmarkManager extends EntityManager {
             await this.plugins.copyBookmarks(dest, rootNodes);
 
             if (rootNodes.some(n => n.type === NODE_TYPE_FOLDER))
-                ishellPlugin.invalidateCompletion();
+                ishellConnector.invalidateCompletion();
         }
         catch (e) {
             console.error(e);
@@ -389,7 +387,7 @@ export class BookmarkManager extends EntityManager {
 
             if (archive) {
                 let index = await Archive.fetchIndex(sourceNode);
-                await Archive.add(newNode, archive.object, archive.type, archive.byte_length, index);
+                await Archive.add(newNode, archive.data || archive.object, archive.type, archive.byte_length, index);
             }
         }
 
@@ -440,7 +438,7 @@ export class BookmarkManager extends EntityManager {
         await deletef(nodes);
 
         if (nodes.some(n => n.type === NODE_TYPE_FOLDER || n.type === NODE_TYPE_SHELF))
-            ishellPlugin.invalidateCompletion();
+            ishellConnector.invalidateCompletion();
     }
 
     async _hardDelete(nodes) {
@@ -473,7 +471,7 @@ export class BookmarkManager extends EntityManager {
 
         await Node.delete(all_nodes.filter(n => n.id !== id));
 
-        ishellPlugin.invalidateCompletion();
+        ishellConnector.invalidateCompletion();
     }
 
     async restore(node) {

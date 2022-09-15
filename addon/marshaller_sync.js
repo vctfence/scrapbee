@@ -1,18 +1,53 @@
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
-import {DEFAULT_SHELF_UUID} from "./storage.js";
-import {UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
+import {
+    FORMAT_DEFAULT_SHELF_UUID,
+    MarshallerJSONScrapbook,
+    UnmarshallerJSONScrapbook
+} from "./marshaller_json_scrapbook.js";
 import {helperApp} from "./helper_app.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {settings} from "./settings.js";
+import {DEFAULT_SHELF_UUID, isNodeHasContent} from "./storage.js";
 
 
-// export class MarshallerSync extends MarshallerJSONScrapbook {
-//     constructor(backend, initial) {
-//         super();
-//         this._backend = backend;
-//         this._initial = initial;
-//     }
-//
+export class MarshallerSync extends MarshallerJSONScrapbook {
+    _id2uuid = new Map();
+
+    createSyncNode(node) {
+        const syncNode = {
+            id: node.id,
+            uuid: node.uuid,
+            parent_id: node.parent_id,
+            date_modified: node.date_modified,
+            content_modified: node.content_modified
+        };
+
+        if (syncNode.date_modified && syncNode.date_modified instanceof Date)
+            syncNode.date_modified = syncNode.date_modified.getTime();
+        else
+            syncNode.date_modified = 0;
+
+        if (!node.content_modified && isNodeHasContent(node))
+            syncNode.content_modified = syncNode.date_modified;
+        else if (syncNode.content_modified)
+            syncNode.content_modified = syncNode.content_modified.getTime();
+
+        this._id2uuid.set(syncNode.id, syncNode.uuid);
+
+        if (syncNode.parent_id) {
+            syncNode.parent = this._id2uuid.get(syncNode.parent_id);
+            delete syncNode.parent_id;
+        }
+        delete syncNode.id;
+
+        if (syncNode.uuid === DEFAULT_SHELF_UUID)
+            syncNode.date_modified = 0;
+
+        this.convertUUIDsToFormat(syncNode);
+
+        return syncNode;
+    }
+
 //     async marshal(syncNode) {
 //         const node = await Node.getByUUID(syncNode.uuid);
 //         await this._resetExportedNodeDates(syncNode, node);
@@ -76,7 +111,7 @@ import {settings} from "./settings.js";
 //
 //         return result;
 //     }
-// }
+}
 
 export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
     constructor() {
@@ -85,7 +120,7 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
     }
 
     async unmarshall(syncNode) {
-        if (syncNode.uuid === DEFAULT_SHELF_UUID)
+        if (syncNode.uuid === FORMAT_DEFAULT_SHELF_UUID)
             return;
 
         const payload = await helperApp.fetchJSON_postJSON("/storage/sync_pull_objects", {
@@ -97,7 +132,6 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
 
         node = await this.deserializeNode(node);
         node = this.preprocessNode(node);
-
         await this._findParentInIDB(node);
 
         if (icon) {

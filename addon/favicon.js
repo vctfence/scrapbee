@@ -89,6 +89,7 @@ export async function getFaviconFromContent(url, doc) {
     }
 
     const origin = new URL(url).origin;
+
     if (origin)
         return favIcon && await testFavicon(new URL(favIcon, origin))
             || await testFavicon(new URL("/favicon.ico", origin));

@@ -1,6 +1,6 @@
 import {isBuiltInShelf} from "./storage.js";
 import {LineStream, LineReader, readFile} from "./utils_io.js";
-import {ishellPlugin} from "./plugin_ishell.js";
+import {ishellConnector} from "./plugin_ishell.js";
 import {settings} from "./settings.js";
 import {receive} from "./proxy.js";
 import {Import, Export} from "./import.js";
@@ -36,11 +36,11 @@ receive.importFile = async message => {
 
         const importer = importerBuilder.build();
 
-        let invalidationState = ishellPlugin.isInvalidationEnabled();
-        ishellPlugin.enableInvalidation(false);
+        let invalidationState = ishellConnector.isInvalidationEnabled();
+        ishellConnector.enableInvalidation(false);
         return Import.transaction(shelf, importer).finally(() => {
-            ishellPlugin.enableInvalidation(invalidationState);
-            ishellPlugin.invalidateCompletion();
+            ishellConnector.enableInvalidation(invalidationState);
+            ishellConnector.invalidateCompletion();
         });
     }
 };

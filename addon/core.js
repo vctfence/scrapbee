@@ -1,7 +1,7 @@
 import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserShelf} from "./plugin_browser_shelf.js";
-import {cloudShelfPlugin} from "./plugin_cloud_shelf.js";
+import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {addBookmarkOnCommand} from "./bookmarking.js";
 import {toggleSidebarWindow} from "./utils_sidebar.js";
 import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
@@ -49,7 +49,10 @@ async function performStartupInitialization() {
 
     await browserShelf.reconcileBrowserBookmarksDB();
 
-    await cloudShelfPlugin.enableBackgroundSync(settings.cloud_background_sync());
+    if (settings.cloud_enabled()) {
+        await cloudShelf.createIfMissing();
+        await cloudShelf.enableBackgroundSync(settings.cloud_background_sync());
+    }
 
     await undoManager.commit();
 

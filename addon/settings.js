@@ -1,5 +1,7 @@
 import {merge} from "./utils.js";
 
+export const SCRAPYARD_SYNC_METADATA = "scrapyard-sync-metadata";
+
 const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
 const SCRAPYARD_UPDATED_KEY = "scrapyard-updated";
 
@@ -50,6 +52,15 @@ class ScrapyardSettings {
         return browser.storage.local.set({[this._key]: this._bin});
     }
 
+    async _get(k) {
+        const v = await browser.storage.local.get(k);
+        if (v)
+            return v[k];
+        return null;
+    }
+
+    async _set(k, v) { return browser.storage.local.set({[k]: v}) }
+
     async _isAddonUpdated() {
         let updated;
 
@@ -78,6 +89,10 @@ class ScrapyardSettings {
             return this._default;
         else if (key === "platform")
             return this._platform;
+        else if (key === "get")
+            return this._get;
+        else if (key === "set")
+            return this._set;
         else if (key === "isAddonUpdated")
             return this._isAddonUpdated;
 

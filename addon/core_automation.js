@@ -14,7 +14,7 @@ import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
 import {getMimetypeExt} from "./utils.js";
 import {fetchText} from "./utils_io.js";
-import {ishellPlugin} from "./plugin_ishell.js";
+import {ishellConnector} from "./plugin_ishell.js";
 import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
@@ -26,7 +26,7 @@ import {browseNode} from "./browse.js";
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
 
-    return ishellPlugin.isIShell(sender.id)
+    return ishellConnector.isIShell(sender.id)
         || (settings.enable_automation() && (!extension_whitelist
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
 }
@@ -321,9 +321,19 @@ receiveExternal.scrapyardListUuid = async (message, sender) => {
         container = true;
     }
     else {
-        const node = await Node.getByUUID(message.uuid);
-        container = node && isContainerNode(node);
+        const API_UUID_TO_DB = {
+            [CLOUD_SHELF_NAME]: CLOUD_SHELF_UUID,
+            [BROWSER_SHELF_NAME]: BROWSER_SHELF_UUID,
+            [DEFAULT_SHELF_NAME]: DEFAULT_SHELF_UUID,
+        };
 
+        const uuid =
+            isBuiltInShelf(message.uuid)
+                ? API_UUID_TO_DB[message.uuid]
+                : message.uuid;
+
+        const node = await Node.getByUUID(uuid);
+        container = node && isContainer(node);
         if (container)
             entries = await Node.getChildren(node.id);
         else

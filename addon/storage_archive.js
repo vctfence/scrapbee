@@ -113,8 +113,10 @@ export class ArchiveIDB extends EntityIDB {
 
     _binaryString2Array(bs) {
         let byteArray = new Uint8Array(bs.length);
+
         for (let i = 0; i < bs.length; ++i)
             byteArray[i] = bs.charCodeAt(i);
+
         return byteArray;
     }
 
@@ -131,18 +133,26 @@ export class ArchiveIDB extends EntityIDB {
                 else
                     result = this._binaryString2Array(archive.data);
             }
-            else if (archive.object) {
+            else if (archive.object instanceof Blob) {
                 if (binarystring)
                     result = await readBlob(archive.object, "binarystring");
                 else
                     result = await readBlob(archive.object, "binary")
             }
+            else if (typeof archive.object === "string") {
+                if (binarystring)
+                    result = archive.object;
+                else
+                    result = this._binaryString2Array(archive.object);
+            }
         }
         else {
             if (archive.data)
                 result = archive.data;
-            else if (archive.object)
+            else if (archive.object instanceof Blob)
                 result = await readBlob(archive.object, "text");
+            else
+                result = archive.object;
         }
 
         return result;

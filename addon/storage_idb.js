@@ -71,20 +71,6 @@ dexie.version(7).stores({
     export_storage: `++id,process_id`,
     undo: `++id,operation,stack`
 });
-dexie.version(8).stores({
-    nodes: `++id,&uuid,parent_id,type,name,uri,tag_list,date_added,date_modified,todo_state,todo_date,external,external_id`,
-    blobs: `++id,&node_id,size`,
-    notes: `++id,&node_id`,
-    tags: `++id,name`,
-    icons: `++id,&node_id`,
-    comments: `++id,&node_id`,
-    index: `++id,&node_id,*words`,
-    index_notes: `++id,&node_id,*words`,
-    index_comments: `++id,&node_id,*words`,
-    export_storage: `++id,process_id`,
-    undo: `++id,operation,stack`,
-    metadata: `id`
-});
 
 dexie.on('populate', () => {
     dexie.nodes.add({name: DEFAULT_SHELF_NAME, type: NODE_TYPE_SHELF, uuid: DEFAULT_SHELF_UUID, date_added: new Date(),

@@ -1,6 +1,6 @@
 import {receive, receiveExternal, send, sendLocal} from "../proxy.js";
 import {settings} from "../settings.js"
-import {ishellPlugin} from "../plugin_ishell.js"
+import {ishellConnector} from "../plugin_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {confirm, showDlg} from "./dialog.js"
 import {
@@ -843,7 +843,7 @@ receive.browseNodeSidebar = message => {
 };
 
 receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     await selectOrCreatePath(message.name);
@@ -864,7 +864,7 @@ async function switchAfterCopy(message, external_path, folder, topNodes) {
 }
 
 receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let external_path = Path.expand(message.path);
@@ -886,7 +886,7 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
 };
 
 receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let external_path = Path.expand(message.path);

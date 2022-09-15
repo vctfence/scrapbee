@@ -1,12 +1,11 @@
 import {receive, send} from "./proxy.js";
-import {settings} from "./settings.js";
+import {SCRAPYARD_SYNC_METADATA, settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
 import {helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
 import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent, JSON_SCRAPBOOK_VERSION} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
-import {UnmarshallerSync} from "./marshaller_sync.js";
-import {Metadata} from "./storage_metadata.js";
+import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
 import {Database} from "./storage_database.js";
 
 let syncing = false;
@@ -56,7 +55,7 @@ async function performSync() {
         let storageMetadata = await getStorageMetadata(syncDirectory);
 
         if (storageMetadata) {
-            const dbMetadata = await Metadata.get(Metadata.STORAGE);
+            const dbMetadata = await settings.get(SCRAPYARD_SYNC_METADATA);
 
             if (await prepareDatabase(storageMetadata, dbMetadata)) {
 
@@ -65,7 +64,7 @@ async function performSync() {
                 if (syncOperations) {
                     await syncWithStorage(syncOperations, syncDirectory);
                     await helperApp.fetch("/storage/sync_close_session");
-                    await Metadata.add(Metadata.STORAGE, storageMetadata);
+                    await settings.set(SCRAPYARD_SYNC_METADATA, storageMetadata);
                 }
                 else
                     showNotification("Synchronization could not be performed because of an error.");
@@ -127,53 +126,18 @@ async function computeSync(syncDirectory) {
 
 async function getNodesForSync() {
     const syncNodes = [];
-    const id2uuid = new Map();
+    const marshaller = new MarshallerSync();
 
     await Node.iterate(node => {
         const nonSyncable = node.external && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external);
 
         if (!nonSyncable) {
-            const syncNode = createSyncNode(node);
+            const syncNode = marshaller.createSyncNode(node);
             syncNodes.push(syncNode);
-            id2uuid.set(node.id, node.uuid);
         }
-    })
-
-    for (let syncNode of syncNodes) {
-        if (syncNode.parent_id) {
-            syncNode.parent = id2uuid.get(syncNode.parent_id);
-            delete syncNode.parent_id;
-        }
-        delete syncNode.id;
-    }
-
-    const defaultShelf = syncNodes.find(n => n.uuid === DEFAULT_SHELF_UUID);
-    if (defaultShelf)
-        defaultShelf.date_modified = 0;
+    });
 
     return syncNodes;
-}
-
-function createSyncNode(node) {
-    const syncNode = {
-        id: node.id,
-        uuid: node.uuid,
-        parent_id: node.parent_id,
-        date_modified: node.date_modified,
-        content_modified: node.content_modified
-    };
-
-    if (syncNode.date_modified && syncNode.date_modified instanceof Date)
-        syncNode.date_modified = syncNode.date_modified.getTime();
-    else
-        syncNode.date_modified = 0;
-
-    if (!node.content_modified && isNodeHasContent(node))
-        syncNode.content_modified = syncNode.date_modified;
-    else if (syncNode.content_modified)
-        syncNode.content_modified = syncNode.content_modified.getTime();
-
-    return syncNode;
 }
 
 async function prepareDatabase(storageMetadata, dbMetadata) {

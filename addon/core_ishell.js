@@ -6,7 +6,7 @@ import {
     NODE_TYPE_FOLDER,
     NODE_TYPE_SHELF, TODO_SHELF_NAME
 } from "./storage.js";
-import {ishellPlugin} from "./plugin_ishell.js";
+import {ishellConnector} from "./plugin_ishell.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
@@ -16,7 +16,7 @@ import {Folder} from "./bookmarks_folder.js";
 import {browseNode} from "./browse.js";
 
 receiveExternal.scrapyardListShelvesIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let shelves = await Query.allShelves();
@@ -24,7 +24,7 @@ receiveExternal.scrapyardListShelvesIshell = async (message, sender) => {
 };
 
 receiveExternal.scrapyardListGroupsIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let shelves = await Query.allShelves();
@@ -41,7 +41,7 @@ receiveExternal.scrapyardListGroupsIshell = async (message, sender) => {
 };
 
 receiveExternal.scrapyardListTagsIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let tags = []; //await bookmarkManager.queryTags();
@@ -49,7 +49,7 @@ receiveExternal.scrapyardListTagsIshell = async (message, sender) => {
 };
 
 receiveExternal.scrapyardListNodesIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     delete message.type;
@@ -78,7 +78,7 @@ receiveExternal.scrapyardListNodesIshell = async (message, sender) => {
 };
 
 receiveExternal.scrapyardBrowseNodeIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     if (message.node.uuid)
@@ -116,21 +116,21 @@ function renderPath(node, nodes) {
 }
 
 receiveExternal.scrapyardAddBookmarkIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     addBookmarkFromIshell(message, NODE_TYPE_BOOKMARK);
 }
 
 receiveExternal.scrapyardAddArchiveIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     addBookmarkFromIshell(message, NODE_TYPE_ARCHIVE);
 }
 
 receiveExternal.scrapyardAddSiteIshell = async (message, sender) => {
-    if (!ishellPlugin.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     message.__crawl = true;

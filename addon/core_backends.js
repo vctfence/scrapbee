@@ -1,6 +1,6 @@
 import {browserShelf} from "./plugin_browser_shelf.js";
 import {settings} from "./settings.js";
-import {cloudShelfPlugin} from "./plugin_cloud_shelf.js";
+import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {helperApp} from "./helper_app.js";
 import {receive} from "./proxy.js";
 
@@ -27,11 +27,11 @@ receive.reconcileBrowserBookmarkDb = async message => {
 
 receive.reconcileCloudBookmarkDb = async message => {
     await settings.load();
-    cloudShelfPlugin.reconcileCloudBookmarksDB(message.verbose);
+    cloudShelf.reconcileCloudBookmarksDB(message.verbose);
 };
 
 receive.enableCloudBackgroundSync = async message => {
-    cloudShelfPlugin.enableBackgroundSync(message.enable);
+    cloudShelf.enableBackgroundSync(message.enable);
 };
 
 receive.helperAppProbe = message => {

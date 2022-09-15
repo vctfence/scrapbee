@@ -38,9 +38,19 @@ const SERIALIZED_FIELD_ORDER = [
     "pos"
 ];
 
+export const FORMAT_DEFAULT_SHELF_UUID = "default";
+
 export class MarshallerJSONScrapbook extends Marshaller {
     configure(options) {
         this._stream = options.stream;
+    }
+
+    convertUUIDsToFormat(node) {
+        if (node.uuid === DEFAULT_SHELF_UUID)
+            node.uuid = FORMAT_DEFAULT_SHELF_UUID;
+
+        if (parent && node.parent === DEFAULT_SHELF_UUID)
+            node.parent = FORMAT_DEFAULT_SHELF_UUID;
     }
 
     async serializeNode(node) {
@@ -71,6 +81,8 @@ export class MarshallerJSONScrapbook extends Marshaller {
         delete serializedNode.stored_icon;
 
         serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
+
+        this.convertUUIDsToFormat(node);
 
         return this._reorderFields(serializedNode);
     }
@@ -215,8 +227,18 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         this._uuidToId.set(DEFAULT_SHELF_UUID, 1);
     }
 
+    convertUUIDsFromFormat(node) {
+        if (node.uuid === FORMAT_DEFAULT_SHELF_UUID)
+            node.uuid = DEFAULT_SHELF_UUID;
+
+        if (node.parent === FORMAT_DEFAULT_SHELF_UUID)
+            node.parent = DEFAULT_SHELF_UUID;
+    }
+
     deserializeNode(node) {
         const deserializedNode = {...node};
+
+        this.convertUUIDsFromFormat(deserializedNode);
 
         deserializedNode.uri = node.url;
         delete deserializedNode.url;
@@ -333,13 +355,15 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
     }
 
     async _findParentInIDB(node) {
-        const parent = await Node.getByUUID(node.parent);
-        delete node.parent;
+        if (node.parent) {
+            const parent = await Node.getByUUID(node.parent);
+            delete node.parent;
 
-        if (parent)
-            node.parent_id = parent.id;
-        else
-            throw new Error(`No parent for node: ${node.uuid}`)
+            if (parent)
+                node.parent_id = parent.id;
+            else
+                throw new Error(`No parent for node: ${node.uuid}`)
+        }
     }
 
     #findParentInStream(node) {

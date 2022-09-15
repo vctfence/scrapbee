@@ -5,10 +5,11 @@ import {
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES
 } from "./storage.js";
-import {cloudShelfPlugin} from "./plugin_cloud_shelf.js";
+import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {indexString, indexHTML} from "./utils_html.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
+import {settings} from "./settings.js";
 
 receive.getAddonIdbPath = async message => {
     let helper = await helperApp.probe();
@@ -76,12 +77,12 @@ receive.reindexArchiveContent = async message => {
 };
 
 receive.resetCloud = async message => {
-    if (!cloudShelfPlugin.isAuthenticated())
+    if (!cloudShelf.isAuthenticated())
         return false;
 
     send.startProcessingIndication({noWait: true});
 
-    await cloudShelfPlugin.reset();
+    await cloudShelf.reset();
 
     send.stopProcessingIndication();
 
@@ -92,6 +93,7 @@ receive.resetScrapyard = async message => {
     send.startProcessingIndication({noWait: true});
 
     await Database.wipeEverything();
+    await settings.last_sync_date(null);
 
     browser.runtime.reload();
 

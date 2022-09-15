@@ -119,13 +119,13 @@ export class ShelfList {
 
         let shelves = await Query.allShelves();
 
-        let cloudShelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
-        if (cloudShelf)
-            shelves.splice(shelves.indexOf(cloudShelf), 1);
+        let cloudShelfNode = shelves.find(s => s.id === CLOUD_SHELF_ID);
+        if (cloudShelfNode)
+            shelves.splice(shelves.indexOf(cloudShelfNode), 1);
 
-        let firefoxShelf = shelves.find(s => s.id === BROWSER_SHELF_ID);
-        if (firefoxShelf)
-            shelves.splice(shelves.indexOf(firefoxShelf), 1);
+        let browserShelfNode = shelves.find(s => s.id === BROWSER_SHELF_ID);
+        if (browserShelfNode)
+            shelves.splice(shelves.indexOf(browserShelfNode), 1);
 
         let defaultShelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(defaultShelf), 1);

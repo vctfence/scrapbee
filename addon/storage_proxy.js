@@ -16,7 +16,7 @@ export class StorageProxy {
     adapter(node) {
         if (Array.isArray(node)) {
             const distinctExternals = node
-                .map(n => n.external || n.__parent_external)
+                .map(n => n.external || n.__dest_external)
                 .filter((v, i, a) => a.indexOf(v) === i);
 
             if (distinctExternals.length > 1)
@@ -28,9 +28,9 @@ export class StorageProxy {
         if (!node)
             return;
 
-        if (node.external === CLOUD_EXTERNAL_TYPE || node.__parent_external === CLOUD_EXTERNAL_TYPE)
+        if (node.external === CLOUD_EXTERNAL_TYPE || node.__dest_external === CLOUD_EXTERNAL_TYPE)
             return StorageProxy._adapterCloud;
-        else if (node.external !== BROWSER_EXTERNAL_TYPE && node.__parent_external !== BROWSER_EXTERNAL_TYPE)
+        else if (node.external !== BROWSER_EXTERNAL_TYPE && node.__dest_external !== BROWSER_EXTERNAL_TYPE)
             return StorageProxy._adapterDisk;
     }
 

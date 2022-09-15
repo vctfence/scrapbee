@@ -1,5 +1,5 @@
 import {send} from "../proxy.js";
-import {cloudShelfPlugin} from "../plugin_cloud_shelf.js"
+import {cloudShelf} from "../plugin_cloud_shelf.js"
 import {showDlg, confirm} from "./dialog.js"
 import {settings} from "../settings.js";
 import {
@@ -1082,7 +1082,7 @@ class BookmarkTree {
                     cloudItem: {
                         label: "Cloud",
                         icon: (lightTheme? "/icons/cloud.png": "/icons/cloud2.png"),
-                        _disabled: !settings.cloud_enabled() || !cloudShelfPlugin.isAuthenticated(),
+                        _disabled: !settings.cloud_enabled() || !cloudShelf.isAuthenticated(),
                         action: async () => {
                             this.startProcessingIndication(true);
                             let selectedIds = selectedNodes.map(n => o(n).id);

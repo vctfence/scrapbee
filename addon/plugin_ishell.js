@@ -99,9 +99,9 @@ class IShellPlugin {
     }
 }
 
-export const ishellPlugin = new IShellPlugin();
+export const ishellConnector = new IShellPlugin();
 
 receive.scrapyardIdRequested = message => {
-    if (message.senderId === ishellPlugin.ISHELL_ID)
-        ishellPlugin.listenIShell();
+    if (message.senderId === ishellConnector.ISHELL_ID)
+        ishellConnector.listenIShell();
 }

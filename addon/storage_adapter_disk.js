@@ -32,8 +32,8 @@ export class StorageAdapterDisk {
 
     accepts(node) {
         return node && !(
-            (node.external || node.__parent_external)
-                && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external || ex === node.__parent_external)
+            (node.external || node.__dest_external)
+                && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external || ex === node.__dest_external)
         )
     }
 
