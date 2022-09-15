@@ -70,7 +70,7 @@ export class MarshallerORG extends Marshaller {
         if (!this._linksOnly) {
             lines.push(prependSpaces(":PROPERTIES:", level + 1));
 
-            const content = await this.preprocessContent(object);
+            const content = await this.serializeContent(object);
             let property_lines = this._formatProperties(content);
             property_lines = property_lines.map(l => prependSpaces(l, level + 3));
             lines = lines.concat(property_lines);

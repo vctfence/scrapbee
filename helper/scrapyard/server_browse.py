@@ -1,20 +1,23 @@
 import json
 import base64
 import logging
+import os
 
 import flask
-from flask import abort, send_file
+from flask import abort, send_file, send_from_directory
 
 from . import browser
+from .cache_dict import CacheDict
 from .server import app, message_mutex, message_queue
 from .storage_manager import StorageManager
 
 # Browse regular scrapyard archives
 
 storage_manager = StorageManager()
+unpacked_archives = CacheDict()
 
 
-@app.route("/browse/<uuid>")
+@app.route("/browse/<uuid>/")
 def browse(uuid):
     message_mutex.acquire()
     msg = json.dumps({"type": "REQUEST_ARCHIVE", "uuid": uuid})
@@ -39,9 +42,14 @@ def serve_from_file(params, uuid):
     object_directory = storage_manager.get_object_directory(params, uuid)
     archive_content_path = storage_manager.get_archive_content_path(object_directory)
     archive_metadata = storage_manager.fetch_archive_metadata(params)
-
+    unpacked_archives["uuu"] = "aaa"
     if archive_metadata:
-        return send_file(archive_content_path, mimetype=archive_metadata["content_type"])
+        if archive_metadata["type"] == StorageManager.ARCHIVE_TYPE_UNPACKED:
+            unpacked_content_path = os.path.join(object_directory, "archive")
+            unpacked_archives[uuid] = unpacked_content_path
+            return send_from_directory(unpacked_content_path, "index.html")
+        else:
+            return send_file(archive_content_path, mimetype=archive_metadata["content_type"])
     else:
         return abort(404)
 
@@ -53,3 +61,8 @@ def serve_content(params, uuid):
         content = content.encode("latin1")
 
     return flask.Response(content, mimetype=params["content_type"])
+
+
+@app.route("/browse/<uuid>/<path:file>")
+def browse_unpacked(uuid, file):
+    return send_from_directory(unpacked_archives[uuid], file)

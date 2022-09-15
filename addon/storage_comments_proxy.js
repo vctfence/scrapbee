@@ -23,7 +23,7 @@ export class CommentsProxy extends StorageProxy {
         if (adapter) {
             const comments = await adapter.fetchComments({uuid: node.uuid});
             if (comments)
-                return this.#unmarshaller.deserializeComments(comments)?.text;
+                return this.#unmarshaller.unconvertComments(comments)?.text;
         }
     }
 
@@ -32,7 +32,7 @@ export class CommentsProxy extends StorageProxy {
 
         if (adapter) {
             let index = this.wrapped.indexEntity(node, words);
-            index = await this.#marshaller.serializeIndex(index);
+            index = await this.#marshaller.convertIndex(index);
 
             const params = {
                 uuid: node.uuid,
@@ -47,7 +47,7 @@ export class CommentsProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter) {
-            const comments = await this.#marshaller.serializeComments(text);
+            const comments = await this.#marshaller.convertComments(text);
 
             const params = {
                 uuid: node.uuid,

@@ -27,6 +27,7 @@ COMMENTS_OBJECT_FILE = "comments.json"
 class StorageManager:
     ARCHIVE_TYPE_BYTES = "bytes"
     ARCHIVE_TYPE_TEXT = "text"
+    ARCHIVE_TYPE_UNPACKED = "unpacked"
 
     def __init__(self):
         self.bach_node_db = None
@@ -188,7 +189,8 @@ class StorageManager:
 
     def fetch_archive_metadata(self, params):
         archive_object_json = self.fetch_object(ARCHIVE_OBJECT_FILE, params)
-        return json.loads(archive_object_json)
+        if archive_object_json:
+            return json.loads(archive_object_json)
 
     def persist_notes_index(self, params):
         self.persist_object(NOTES_INDEX_OBJECT_FILE, params, "index_json")

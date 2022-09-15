@@ -10,7 +10,7 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
     }
 
     async unmarshal(provider, cloudNode) {
-        cloudNode = this.deserializeNode(cloudNode);
+        cloudNode = this.unconvertNode(cloudNode);
         await this._findParentInIDB(cloudNode);
 
         const content = {node: cloudNode};
@@ -39,7 +39,7 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
             let icon = await provider.assets.fetchIcon(node.uuid);
             if (icon) {
                 icon = JSON.parse(icon);
-                icon = this.deserializeIcon(icon);
+                icon = this.unconvertIcon(icon);
                 node.icon = await Icon.computeHash(icon.data_url);
                 content.icon = icon;
             }
@@ -53,7 +53,7 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
             let archiveIndex = await provider.assets.fetchArchiveIndex(node.uuid);
             if (archiveIndex) {
                 archiveIndex = JSON.parse(archiveIndex);
-                archiveIndex = this.deserializeIndex(archiveIndex);
+                archiveIndex = this.unconvertIndex(archiveIndex);
                 Archive.idb.import.storeIndex(node, archiveIndex.words);
             }
         }
@@ -62,7 +62,7 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
             let notesIndex = await provider.assets.fetchNotesIndex(node.uuid);
             if (notesIndex) {
                 notesIndex = JSON.parse(notesIndex);
-                notesIndex = this.deserializeIndex(notesIndex);
+                notesIndex = this.unconvertIndex(notesIndex);
                 Notes.idb.import.storeIndex(node, notesIndex.words);
             }
         }
@@ -71,7 +71,7 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
             let commentsIndex = await provider.assets.fetchCommentsIndex(node.uuid);
             if (commentsIndex) {
                 commentsIndex = JSON.parse(commentsIndex);
-                commentsIndex = this.deserializeIndex(commentsIndex);
+                commentsIndex = this.unconvertIndex(commentsIndex);
                 Comments.idb.import.storeIndex(node, commentsIndex.words);
             }
         }

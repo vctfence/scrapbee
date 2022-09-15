@@ -224,7 +224,7 @@ async function browseRDFArchive(node, options) {
         if (!helperApp11)
             await rdfShelf.pushRDFPath(node);
 
-        const url = helperApp.url(`/rdf/browse/${node.uuid}/_#${node.uuid}:${node.id}:${node.external_id}`);
+        const url = helperApp.url(`/rdf/browse/${node.uuid}/`);
         return openURL(url, options);
     }
 }
@@ -247,7 +247,7 @@ async function getBlobURL(node, blob) {
         const helper = await helperApp.hasVersion("1.1", alertText);
 
         if (helper)
-            return helperApp.url(`/browse/${node.uuid}`);
+            return helperApp.url(`/browse/${node.uuid}/`);
         else
             return loadArchive(blob);
     }

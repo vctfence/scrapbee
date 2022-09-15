@@ -1,5 +1,5 @@
 import {cleanObject} from "./utils.js";
-import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_ARCHIVE} from "./storage.js";
+import {NODE_TYPE_ARCHIVE} from "./storage.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
@@ -16,7 +16,7 @@ export class Marshaller {
         return date;
     }
 
-    preprocessNode(node) {
+    serializeNode(node) {
         node = Node.sanitized(node);
         cleanObject(node);
         Node.strip(node);
@@ -31,31 +31,31 @@ export class Marshaller {
         return node;
     }
 
-    async preprocessContent(node) {
-        const result = {node: this.preprocessNode(node)};
+    async serializeContent(node) {
+        const result = {node: this.serializeNode(node)};
 
         if (node.type === NODE_TYPE_ARCHIVE) {
             let archive = await Archive.get(node);
             if (archive)
-                result.archive = await this.preprocessArchive(archive);
+                result.archive = await this.serializeArchive(archive);
         }
 
         if (node.has_notes) {
             let notes = await Notes.get(node);
             if (notes)
-                result.notes = this.preprocessNotes(notes);
+                result.notes = this.serializeNotes(notes);
         }
 
         if (node.has_comments)
-            result.comments = this.preprocessComments(await Comments.get(node));
+            result.comments = this.serializeComments(await Comments.get(node));
 
         if (node.icon && node.stored_icon)
-            result.icon = this.preprocessIcon(await Icon.get(node));
+            result.icon = this.serializeIcon(await Icon.get(node));
 
         return result;
     }
 
-    async preprocessArchive(archive) {
+    async serializeArchive(archive) {
         let content = await Archive.reify(archive, true);
 
         delete archive.id;
@@ -68,18 +68,18 @@ export class Marshaller {
         return cleanObject(archive);
     }
 
-    preprocessNotes(notes) {
+    serializeNotes(notes) {
         delete notes.id;
         delete notes.node_id;
         return cleanObject(notes);
     }
 
-    preprocessComments(comments) {
+    serializeComments(comments) {
         if (comments)
             return {text: comments};
     }
 
-    preprocessIcon(icon) {
+    serializeIcon(icon) {
         if (icon)
             return {data_url: icon};
     }
@@ -102,7 +102,7 @@ export class Unmarshaller {
         this._forceIcons = true;
     }
 
-    preprocessNode(node) {
+    deserializeNode(node) {
         delete node.id;
 
         if (!node.name)
@@ -115,7 +115,7 @@ export class Unmarshaller {
         return node;
     }
 
-    preprocessArchive(archive) {
+    deserializeArchive(archive) {
         if (archive.byte_length && archive.object) {
             archive.object = atob(archive.object);
             archive.byte_length = archive.object.length;
@@ -134,14 +134,14 @@ export class Unmarshaller {
             _Icon = Icon.idb;
         }
 
-        node = this.preprocessNode(node);
+        node = this.deserializeNode(node);
         node = await _Bookmark.import(node, this._sync);
 
         if (this._forceIcons)
             await _Bookmark.storeIconFromURI(node);
 
         if (node.type === NODE_TYPE_ARCHIVE && archive) {
-            archive = this.preprocessArchive(archive);
+            archive = this.deserializeArchive(archive);
             await Archive.import.add(node, archive.object, archive.type, archive.byte_length);
         }
 

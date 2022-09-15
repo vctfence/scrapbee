@@ -25,7 +25,7 @@ export class ArchiveProxy extends StorageProxy {
             let archive = await adapter.fetchArchive({uuid: node.uuid});
 
             if (archive) {
-                archive = this.#unmarshaller.deserializeArchive(archive);
+                archive = this.#unmarshaller.unconvertArchive(archive);
                 return Archive.entity(null, archive.object, archive.type, archive.byte_length);
             }
         }
@@ -36,7 +36,7 @@ export class ArchiveProxy extends StorageProxy {
 
         if (adapter) {
             let index = this.wrapped.indexEntity(node, words);
-            index = await this.#marshaller.serializeIndex(index);
+            index = await this.#marshaller.convertIndex(index);
 
             const params = {
                 uuid: node.uuid,
@@ -53,7 +53,7 @@ export class ArchiveProxy extends StorageProxy {
         let content = await Archive.reify(entity);
 
         if (adapter) {
-            const archive = await this.#marshaller.serializeArchive(entity);
+            const archive = await this.#marshaller.convertArchive(entity);
 
             delete archive.content;
 

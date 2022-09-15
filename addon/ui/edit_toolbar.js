@@ -128,7 +128,7 @@ class EditToolbar {
 
         this._fixDocumentEncoding(doc);
 
-        const uuid = location.href.split("/").at(-1);
+        const uuid = location.href.split("/").at(-2);
 
         browser.runtime.sendMessage({
             type: "updateArchive",
@@ -300,7 +300,7 @@ class EditToolbar {
         const originalURLText = append(`<input id="scrapyard-original-url-text" type="text" readonly="readonly">`)[0];
         const originalURLLink = append(`<a id="scrapyard-original-url-link" target="_blank" href="#"></a>`)[0];
 
-        const uuid = location.href.split("/").at(-1);
+        const uuid = location.href.split("/").at(-2);
 
         browser.runtime.sendMessage({
             type: "getBookmarkInfo",

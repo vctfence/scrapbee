@@ -56,11 +56,11 @@ export class MarshallerSync extends MarshallerJSONScrapbook {
 //         let exportedNode;
 //
 //         if (syncNode.push_content) {
-//             content = await this.preprocessContent(node);
+//             content = await this.serializeContent(node);
 //             exportedNode = content.node;
 //         }
 //         else
-//             exportedNode = this.preprocessNode(node);
+//             exportedNode = this.serializeNode(node);
 //
 //         delete exportedNode.id;
 //         exportedNode.parent_id = syncNode.parent_id;
@@ -130,12 +130,12 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
 
         let {node, icon, archive_index, notes_index, comments_index} = payload;
 
-        node = await this.deserializeNode(node);
-        node = this.preprocessNode(node);
+        node = await this.unconvertNode(node);
+        node = this.deserializeNode(node);
         await this._findParentInIDB(node);
 
         if (icon) {
-            icon = this.deserializeIcon(icon);
+            icon = this.unconvertIcon(icon);
             node.icon = await Icon.computeHash(icon.data_url);
         }
 
@@ -145,17 +145,17 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
             await Icon.idb.import.add(node, icon.data_url);
 
         if (archive_index) {
-            archive_index = this.deserializeIndex(archive_index);
+            archive_index = this.unconvertIndex(archive_index);
             Archive.idb.import.storeIndex(node, archive_index.words);
         }
 
         if (notes_index) {
-            notes_index = this.deserializeIndex(notes_index);
+            notes_index = this.unconvertIndex(notes_index);
             Notes.idb.import.storeIndex(node, notes_index.words);
         }
 
         if (comments_index) {
-            comments_index = this.deserializeIndex(comments_index);
+            comments_index = this.unconvertIndex(comments_index);
             Comments.idb.import.storeIndex(node, comments_index.words);
         }
     }

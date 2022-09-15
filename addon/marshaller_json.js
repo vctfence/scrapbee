@@ -30,7 +30,7 @@ export class MarshallerJSON extends Marshaller {
     }
 
     async marshal(object) {
-        const content = await this.preprocessContent(object);
+        const content = await this.serializeContent(object);
 
         const output = "\n" + JSON.stringify(content);
 

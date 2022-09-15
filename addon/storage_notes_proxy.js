@@ -23,7 +23,7 @@ export class NotesProxy extends StorageProxy {
         if (adapter) {
             const notes = await adapter.fetchNotes({uuid: node.uuid});
             if (notes)
-                return this.#unmarshaller.deserializeNotes(notes);
+                return this.#unmarshaller.unconvertNotes(notes);
         }
     }
 
@@ -32,7 +32,7 @@ export class NotesProxy extends StorageProxy {
 
         if (adapter) {
             let index = this.wrapped.indexEntity(node, words);
-            index = await this.#marshaller.serializeIndex(index);
+            index = await this.#marshaller.convertIndex(index);
 
             const params = {
                 uuid: node.uuid,
@@ -47,7 +47,7 @@ export class NotesProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter) {
-            const notes = await this.#marshaller.serializeNotes(options);
+            const notes = await this.#marshaller.convertNotes(options);
 
             const params = {
                 uuid: node.uuid,

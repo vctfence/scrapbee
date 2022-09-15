@@ -8,6 +8,7 @@ import flask
 from flask import request, abort
 
 from . import browser
+from .cache_dict import CacheDict
 from .server import app, requires_auth, message_mutex, message_queue
 
 
@@ -30,22 +31,24 @@ def rdf_import_files(file):
     return flask.send_from_directory(rdf_import_directory, file)
 
 
-rdf_page_directories = {}
+rdf_page_directories = CacheDict()
+
+
+@app.route("/rdf/browse/<uuid>/", methods=['GET'])
+def rdf_browse(uuid):
+    message_mutex.acquire()
+    rdf_path_msg = json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid})
+    browser.send_message(rdf_path_msg)
+    msg = message_queue.get()
+    message_mutex.release()
+
+    rdf_page_directories[uuid] = msg["rdf_directory"]
+    return flask.send_from_directory(rdf_page_directories[uuid], "index.html")
 
 
 @app.route("/rdf/browse/<uuid>/<path:file>", methods=['GET'])
-def rdf_browse(uuid, file):
-    if file == "_":
-        message_mutex.acquire()
-        rdf_path_msg = json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid})
-        browser.send_message(rdf_path_msg)
-        msg = message_queue.get()
-        message_mutex.release()
-
-        rdf_page_directories[uuid] = msg["rdf_directory"]
-        return flask.send_from_directory(rdf_page_directories[uuid], "index.html")
-    else:
-        return flask.send_from_directory(rdf_page_directories[uuid], file)
+def rdf_browse_content(uuid, file):
+    return flask.send_from_directory(rdf_page_directories[uuid], file)
 
 
 # Get Scrapbook rdf file for a given node uuid

@@ -222,10 +222,10 @@ export class OneDriveClient extends CloudClientBase {
     async share(path, filename, content) {
         await this.authenticate();
 
-        let bytes;
+        let bytes = content;
         if (content instanceof Blob)
             bytes = await content.arrayBuffer();
-        else {
+        else if (typeof content === "string") {
             const encoder = new TextEncoder();
             bytes = encoder.encode(content);
         }

@@ -22,7 +22,7 @@ export class IconProxy extends StorageProxy {
 
         if (adapter) {
             let icon = this.wrapped.entity(node, dataUrl);
-            icon = this.#marshaller.serializeIcon(icon);
+            icon = this.#marshaller.convertIcon(icon);
 
             const params = {
                 uuid: node.uuid,

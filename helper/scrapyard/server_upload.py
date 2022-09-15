@@ -9,6 +9,7 @@ import os
 import flask
 from flask import request, abort
 
+from .cache_dict import CacheDict
 from .server import app, requires_auth
 
 
@@ -64,7 +65,7 @@ def upload_show_dialog():
 
 # Serve a local file (used to upload local files from automation API)
 
-serve_path_map = {}
+serve_path_map = CacheDict()
 serve_mutex = threading.Lock()
 
 

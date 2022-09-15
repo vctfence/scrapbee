@@ -53,7 +53,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
             node.parent = FORMAT_DEFAULT_SHELF_UUID;
     }
 
-    async serializeNode(node) {
+    async convertNode(node) {
         const serializedNode = {...node};
 
         delete serializedNode.id;
@@ -110,7 +110,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
         return Object.fromEntries(orderedEntries);
     }
 
-    serializeIcon(icon) {
+    convertIcon(icon) {
         icon = {...icon};
 
         delete icon.id;
@@ -122,7 +122,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
         return icon;
     }
 
-    serializeIndex(index) {
+    convertIndex(index) {
         index = {...index};
 
         delete index.id;
@@ -134,7 +134,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
         return index;
     }
 
-    async serializeArchive(archive) {
+    async convertArchive(archive) {
         archive = {...archive};
 
         delete archive.id;
@@ -152,7 +152,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
         return archive;
     }
 
-    serializeNotes(notes) {
+    convertNotes(notes) {
         notes = {...notes};
 
         delete notes.id;
@@ -160,7 +160,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
         return notes;
     }
 
-    serializeComments(text) {
+    convertComments(text) {
         const comments = {content: text};
 
         return comments;
@@ -186,27 +186,27 @@ export class MarshallerJSONScrapbook extends Marshaller {
         if (node.type === NODE_TYPE_ARCHIVE) {
             let archive = await Archive.get(node);
             if (archive) {
-                archive = await this.preprocessArchive(archive);
-                result.archive = await this.serializeArchive(archive);
+                archive = await this.serializeArchive(archive);
+                result.archive = await this.convertArchive(archive);
             }
         }
 
         if (node.has_notes) {
             let notes = await Notes.get(node);
             if (notes)
-                result.notes = this.serializeNotes(notes);
+                result.notes = this.convertNotes(notes);
         }
 
         if (node.has_comments)
-            result.comments = this.serializeComments(await Comments.get(node));
+            result.comments = this.convertComments(await Comments.get(node));
 
         if (node.icon && node.stored_icon) {
             const icon = Icon.entity(node, await Icon.get(node));
-            result.icon = this.serializeIcon(icon);
+            result.icon = this.convertIcon(icon);
         }
 
-        node = this.preprocessNode(node);
-        result.node = await this.serializeNode(node);
+        node = this.serializeNode(node);
+        result.node = await this.convertNode(node);
 
         return result;
     }
@@ -237,7 +237,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
             node.parent = DEFAULT_SHELF_UUID;
     }
 
-    deserializeNode(node) {
+    unconvertNode(node) {
         const deserializedNode = {...node};
 
         this.convertUUIDsFromFormat(deserializedNode);
@@ -258,7 +258,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return deserializedNode;
     }
 
-    deserializeIcon(icon) {
+    unconvertIcon(icon) {
         icon = {...icon};
 
         icon.data_url = icon.url;
@@ -267,7 +267,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return icon;
     }
 
-    deserializeIndex(index) {
+    unconvertIndex(index) {
         index = {...index};
 
         index.words = index.content;
@@ -276,7 +276,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return index;
     }
 
-    deserializeArchive(archive) {
+    unconvertArchive(archive) {
         archive = {...archive};
         const archiveType = archive.type;
 
@@ -292,11 +292,11 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return archive;
     }
 
-    deserializeNotes(notes) {
+    unconvertNotes(notes) {
         return notes;
     }
 
-    deserializeComments(comments) {
+    unconvertComments(comments) {
         comments.text = comments.content;
         delete comments.content;
 
@@ -328,28 +328,28 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         if (input) {
             const object = JSON.parse(input);
 
-            await this.deserializeContent(object);
+            await this.unconvertContent(object);
 
             object.persist = () => this.storeContent(object);
             return object;
         }
     }
 
-    async deserializeContent(object) {
-        object.node = await this.deserializeNode(object.node);
+    async unconvertContent(object) {
+        object.node = await this.unconvertNode(object.node);
         this.#findParentInStream(object.node);
 
         if (object.archive)
-            object.archive = await this.deserializeArchive(object.archive);
+            object.archive = await this.unconvertArchive(object.archive);
 
         if (object.notes)
-            object.notes = this.deserializeNotes(object.notes);
+            object.notes = this.unconvertNotes(object.notes);
 
         if (object.comments)
-            object.comments = this.deserializeComments(object.comments);
+            object.comments = this.unconvertComments(object.comments);
 
         if (object.icon) {
-            object.icon = this.deserializeIcon(object.icon);
+            object.icon = this.unconvertIcon(object.icon);
             object.node.icon = await Icon.computeHash(object.icon.data_url)
         }
 
