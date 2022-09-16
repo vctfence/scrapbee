@@ -90,8 +90,9 @@ class NodeDB:
                     self.header = json.loads(header_json)
 
                 for node_json in nodes_json:
-                    node = json.loads(node_json)
-                    self.nodes[node["uuid"]] = node
+                    if node_json:
+                        node = json.loads(node_json)
+                        self.nodes[node["uuid"]] = node
 
         if not self.header:
             self.header = self.create_format_header()

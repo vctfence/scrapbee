@@ -4,11 +4,21 @@ import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} 
 import {send} from "./proxy.js";
 
 class HelperApp {
+    #auth;
     #externalEventHandlers = {};
 
     constructor() {
         this.auth = UUID.numeric();
         this.version = undefined;
+    }
+
+    get auth() {
+        return this.#auth;
+    }
+
+    set auth(uuid) {
+        this.#auth = uuid;
+        this.authHeader = "Basic " + btoa("default:" + uuid);
     }
 
     async getPort() {
@@ -156,7 +166,7 @@ class HelperApp {
     _injectAuth(init) {
         init = init || {};
         init.headers = init.headers || {};
-        init.headers["Authorization"] = "Basic " + btoa("default:" + this.auth);
+        init.headers["Authorization"] = this.authHeader;
         return init;
     }
 

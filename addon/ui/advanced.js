@@ -51,21 +51,6 @@ function configureAutomationPanel() {
     });
 }
 
-async function configureDBPath() {
-    if (!settings.platform.firefox) {
-        $("#addon-db-path-input").prop("placeholder", "Only available in Firefox");
-        return;
-    }
-
-    const idbPath = await send.getAddonIdbPath();
-    if (idbPath)
-        $("#addon-db-path-input").val(idbPath);
-
-    $("#db-path-copy-button").on("click", e => {
-        navigator.clipboard.writeText($("#addon-db-path-input").val());
-    });
-}
-
 function configureBackupCompressionPanel() {
     const compMethod = $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
     const compLevel = $("#option-compression-level").val(settings.backup_compression_level() || "5");

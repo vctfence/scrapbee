@@ -65,7 +65,7 @@ def upload_show_dialog():
 
 # Serve a local file (used to upload local files from automation API)
 
-serve_path_map = CacheDict()
+serve_path_map = dict()
 serve_mutex = threading.Lock()
 
 

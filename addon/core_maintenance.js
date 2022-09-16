@@ -11,17 +11,6 @@ import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
 import {settings} from "./settings.js";
 
-receive.getAddonIdbPath = async message => {
-    let helper = await helperApp.probe();
-
-    if (!helper)
-        return;
-
-    const addonId = browser.runtime.getURL("/").split("/")[2];
-
-    return helperApp.fetchText(`/request/idb_path/${addonId}`)
-};
-
 receive.reindexArchiveContent = async message => {
     send.startProcessingIndication({noWait: true});
 

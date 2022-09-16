@@ -43,6 +43,7 @@ class Httpd(threading.Thread):
         self.ctx.push()
 
     def run(self):
+        #serve(app, host='0.0.0.0', port=port,  _quiet=True)
         self.srv.serve_forever()
 
     def shutdown(self):
@@ -124,7 +125,6 @@ from . import server_browse
 from . import server_export
 from . import server_backup
 from . import server_upload
-from . import server_utils
 from . import server_storage
 
 
