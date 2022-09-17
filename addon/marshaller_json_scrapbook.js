@@ -140,10 +140,12 @@ export class MarshallerJSONScrapbook extends Marshaller {
         delete archive.id;
         delete archive.node_id;
 
-        if (archive.type)
+        if (archive.type) {
             archive.content_type = archive.type || "text/html";
+            delete archive.type;
+        }
 
-        archive.type = archive.byte_length? ARCHIVE_TYPE_BYTES: ARCHIVE_TYPE_TEXT;
+        archive.contains =  archive.contains || (archive.byte_length? ARCHIVE_TYPE_BYTES: undefined);
         delete archive.byte_length;
 
         archive.content = archive.object;
@@ -169,7 +171,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
     async marshalMeta(options) {
         const {comment, uuid, objects, name} = options;
         const contains = name === EVERYTHING_SHELF_NAME? JSON_SCRAPBOOK_EVERYTHING: JSON_SCRAPBOOK_SHELF;
-        const meta = createJSONScrapBookMeta("export", contains);
+        const meta = createJSONScrapBookMeta("export", contains, name);
 
         updateJSONScrapBookMeta(meta, objects.length, uuid, comment);
         this.convertUUIDsToFormat(meta);
@@ -178,6 +180,13 @@ export class MarshallerJSONScrapbook extends Marshaller {
             meta.comment = comment;
 
         await this._stream.append(JSON.stringify(meta));
+    }
+
+    async marshal(object) {
+        const content = await this.assembleContent(object);
+        const output = "\n" + JSON.stringify(content);
+
+        return this._stream.append(output);
     }
 
     async assembleContent(node) {
@@ -209,13 +218,6 @@ export class MarshallerJSONScrapbook extends Marshaller {
         result.node = await this.convertNode(node);
 
         return result;
-    }
-
-    async marshal(object) {
-        const content = await this.assembleContent(object);
-        const output = "\n" + JSON.stringify(content);
-
-        return this._stream.append(output);
     }
 }
 
@@ -278,7 +280,6 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
 
     unconvertArchive(archive) {
         archive = {...archive};
-        const archiveType = archive.type;
 
         archive.type = archive.content_type;
         delete archive.content_type;
@@ -286,7 +287,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         archive.object = archive.content;
         delete archive.content;
 
-        if (archiveType === ARCHIVE_TYPE_BYTES)
+        if (archive.contains && archive.contains !== ARCHIVE_TYPE_TEXT)
             archive.byte_length = true;
 
         return archive;

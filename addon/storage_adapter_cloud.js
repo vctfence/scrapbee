@@ -1,6 +1,5 @@
-import {settings} from "./settings.js";
-import {ARCHIVE_TYPE_BYTES, CLOUD_EXTERNAL_TYPE} from "./storage.js";
-import {Archive} from "./storage_entities.js";
+import {ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT, CLOUD_EXTERNAL_TYPE} from "./storage.js";
+import {unzip} from "./lib/unzipit.js";
 
 export class StorageAdapterCloud {
     _provider;
@@ -69,24 +68,40 @@ export class StorageAdapterCloud {
     }
 
     async persistArchive(params) {
-        await this._provider.assets.storeArchiveObject(params.uuid, params.archive_json);
-        return this._provider.assets.storeArchiveContent(params.uuid, params.content);
+        //await this._provider.assets.storeArchiveObject(params.uuid, params.archive_json);
+
+        if (params.contains === ARCHIVE_TYPE_FILES) {
+            const {entries} = await unzip(params.content);
+
+            for (const [name, entry] of Object.entries(entries)) {
+                const filePath = `archive/${name.startsWith("/")? name.substring(1): name}`;
+                const bytes = await entry.arrayBuffer();
+                await this._provider.assets.storeArchiveFile(params.uuid, bytes, filePath);
+            }
+
+            return this._provider.assets.storeArchiveContent(params.uuid, params.content);
+        }
+        else
+            return this._provider.assets.storeArchiveContent(params.uuid, params.content);
     }
 
     async fetchArchive(params) {
-        let object = await this._provider.assets.fetchArchiveObject(params.uuid);
+        const node = params.node;
+        let archive = {contains: node.contains, content_type: node.content_type};
+        //archive = archive || await this._provider.assets.fetchArchiveObject(params.uuid);
+
         const content = await this._provider.assets.fetchArchiveContent(params.uuid);
 
-        object = JSON.parse(object)
+        //archive = JSON.parse(archive);
 
-        if (object.type === ARCHIVE_TYPE_BYTES)
-            object.content = content;
-        else {
+        if (!archive.contains || archive.contains === ARCHIVE_TYPE_TEXT) {
             const decoder = new TextDecoder();
-            object.content = decoder.decode(content);
+            archive.content = decoder.decode(content);
         }
+        else
+            archive.content = content;
 
-        return object;
+        return archive;
     }
 
     async persistNotesIndex(params) {

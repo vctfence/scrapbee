@@ -16,7 +16,7 @@ import {RDFImporterBuilder} from "./import_rdf.js";
 import {StreamExporterBuilder, StreamImporterBuilder, StructuredStreamImporterBuilder} from "./import_drivers.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {Database} from "./storage_database.js";
-import {Disk} from "./storage_disk.js";
+import {DiskStorage} from "./storage_external.js";
 import {MarshallerJSONScrapbook, UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 
 export class Export {
@@ -115,7 +115,7 @@ export class Import {
 
         if (shelf === EVERYTHING_SHELF_UUID) {
             await Database.wipeImportable();
-            await Disk.wipeStorage();
+            await DiskStorage.wipeStorage();
         }
         else {
             shelf = await Query.shelf(shelf);
@@ -130,11 +130,11 @@ export class Import {
 
     static async transaction(shelf, importer) {
         try {
-            await Disk.openBatchSession();
+            await DiskStorage.openBatchSession();
             await importer.import();
         }
         finally {
-            await Disk.closeBatchSession();
+            await DiskStorage.closeBatchSession();
         }
     }
 }

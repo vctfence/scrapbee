@@ -18,13 +18,7 @@ export class NotesProxy extends StorageProxy {
     }
 
     async get(node) {
-        const adapter = this.adapter(node);
-
-        if (adapter) {
-            const notes = await adapter.fetchNotes({uuid: node.uuid});
-            if (notes)
-                return this.#unmarshaller.unconvertNotes(notes);
-        }
+        return await this.#fetchNotes(node);
     }
 
     async #persistNotesIndex(node, words) {
@@ -55,6 +49,16 @@ export class NotesProxy extends StorageProxy {
             };
 
             await adapter.persistNotes(params);
+        }
+    }
+
+    async #fetchNotes(node) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
+            const notes = await adapter.fetchNotes({uuid: node.uuid});
+            if (notes)
+                return this.#unmarshaller.unconvertNotes(notes);
         }
     }
 }

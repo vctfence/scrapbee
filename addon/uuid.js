@@ -5,7 +5,7 @@ export default class UUID {
         return uuid.toUpperCase();
     }
 
-    date() {
+    static date() {
         const d = new Date();
 
         return d.getFullYear()

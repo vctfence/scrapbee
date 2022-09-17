@@ -18,13 +18,7 @@ export class CommentsProxy extends StorageProxy {
     }
 
     async get(node) {
-        const adapter = this.adapter(node);
-
-        if (adapter) {
-            const comments = await adapter.fetchComments({uuid: node.uuid});
-            if (comments)
-                return this.#unmarshaller.unconvertComments(comments)?.text;
-        }
+        return await this.#fetchComments(node);
     }
 
     async #persistCommentsIndex(node, words) {
@@ -55,6 +49,16 @@ export class CommentsProxy extends StorageProxy {
             };
 
             await adapter.persistComments(params);
+        }
+    }
+
+    async #fetchComments(node) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
+            const comments = await adapter.fetchComments({uuid: node.uuid});
+            if (comments)
+                return this.#unmarshaller.unconvertComments(comments)?.text;
         }
     }
 }

@@ -23,7 +23,7 @@ import {cleanObject, getMimetypeExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {Disk} from "./storage_disk.js";
+import {DiskStorage} from "./storage_external.js";
 
 export class BookmarkManager extends EntityManager {
     _Node;
@@ -319,11 +319,11 @@ export class BookmarkManager extends EntityManager {
         let result;
 
         try {
-            await Disk.openBatchSession();
+            await DiskStorage.openBatchSession();
             result = await this._move(ids, destId, moveLast);
         }
         finally {
-            await Disk.closeBatchSession();
+            await DiskStorage.closeBatchSession();
         }
 
         return result;
@@ -385,8 +385,8 @@ export class BookmarkManager extends EntityManager {
             let archive = await Archive.get(sourceNode);
 
             if (archive) {
-                let index = await Archive.fetchIndex(sourceNode);
-                await Archive.add(newNode, archive.data || archive.object, archive.type, archive.byte_length, index);
+                const index = await Archive.fetchIndex(sourceNode);
+                await Archive.add(newNode, archive, index);
             }
         }
 
@@ -416,11 +416,11 @@ export class BookmarkManager extends EntityManager {
         let result;
 
         try {
-            await Disk.openBatchSession();
+            await DiskStorage.openBatchSession();
             result = await this._copy(ids, destId, moveLast);
         }
         finally {
-            await Disk.closeBatchSession();
+            await DiskStorage.closeBatchSession();
         }
 
         return result;
@@ -576,7 +576,8 @@ export class BookmarkManager extends EntityManager {
     }
 
     async storeArchive(node, data, contentType, index) {
-        await Archive.add(node, data, contentType, null, index);
+        const archive = Archive.entity(node, data, contentType)
+        await Archive.add(node, archive, index);
         await this.plugins.storeBookmarkData(node, data, contentType);
     }
 

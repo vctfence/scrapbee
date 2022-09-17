@@ -117,6 +117,8 @@ export const NODE_PROPERTIES =
      "external_id",
      "container",
      "content_type",
+     "contains",
+     "encoding",
      "_unlisted",
      "site"
     ];
@@ -203,7 +205,7 @@ export const JSON_SCRAPBOOK_EVERYTHING = "everything";
 export const JSON_SCRAPBOOK_SHELF = "shelf";
 
 
-export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_EVERYTHING) {
+export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_EVERYTHING, title) {
     const now = new Date();
 
     return {
@@ -211,18 +213,19 @@ export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_EVERYTHI
         version: JSON_SCRAPBOOK_VERSION,
         type: type,
         contains: contains,
+        title: title,
         timestamp: now.getTime(),
         date: now.toISOString()
     };
 }
 
 export function updateJSONScrapBookMeta(meta, entities, uuid, comment) {
-    const now = new Date();
-
     if (uuid)
         meta.uuid = uuid;
 
     meta.entities = entities;
+
+    const now = new Date();
     meta.timestamp = now.getTime();
     meta.date = now.toISOString();
 
@@ -232,4 +235,4 @@ export function updateJSONScrapBookMeta(meta, entities, uuid, comment) {
 
 export const ARCHIVE_TYPE_BYTES = "bytes";
 export const ARCHIVE_TYPE_TEXT = "text";
-export const ARCHIVE_TYPE_UNPACKED = "unpacked";
+export const ARCHIVE_TYPE_FILES = "files";

@@ -1,5 +1,5 @@
 import {cleanObject} from "./utils.js";
-import {NODE_TYPE_ARCHIVE} from "./storage.js";
+import {DEFAULT_SHELF_ID, DEFAULT_SHELF_UUID, NODE_TYPE_ARCHIVE, NODE_TYPE_SHELF} from "./storage.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
@@ -127,22 +127,30 @@ export class Unmarshaller {
     async storeContent(content) {
         let {node, icon, archive, notes, comments} = content;
         let _Bookmark = Bookmark;
+        let _Node = Node;
         let _Icon = Icon;
 
         if (this._idbOnly) {
             _Bookmark = Bookmark.idb;
+            _Node = Node.idb;
             _Icon = Icon.idb;
         }
 
         node = this.deserializeNode(node);
-        node = await _Bookmark.import(node, this._sync);
+
+        if (node.type === NODE_TYPE_SHELF && node.uuid === DEFAULT_SHELF_UUID) {
+            node.id = DEFAULT_SHELF_ID;
+            node = await _Node.put(node);
+        }
+        else
+            node = await _Bookmark.import(node, this._sync);
 
         if (this._forceIcons)
             await _Bookmark.storeIconFromURI(node);
 
         if (node.type === NODE_TYPE_ARCHIVE && archive) {
             archive = this.deserializeArchive(archive);
-            await Archive.import.add(node, archive.object, archive.type, archive.byte_length);
+            await Archive.import.add(node, archive);
         }
 
         if (notes) {

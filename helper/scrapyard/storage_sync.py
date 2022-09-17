@@ -15,59 +15,59 @@ def compute_sync(storage_manager, client_id, params):
     last_sync_date = int(params["last_sync_date"])
 
     uuid2node_incoming = dict()
-    uuid2node_db = dict()
-    from_db = set()
+    uuid2node_storage = dict()
+    from_storage = set()
     incoming = set()
     common = set()
-    new_in_db = set()
+    new_in_storage = set()
     new_incoming = set()
-    updated_in_db = set()
+    updated_in_storage = set()
     updated_incoming = set()
-    deleted_in_db = set()
+    deleted_in_storage = set()
     deleted_incoming = set()
 
     for node in nodes_incoming:
         incoming.add(node["uuid"])
         uuid2node_incoming[node["uuid"]] = node
 
-    uuid2node_db = dict()
+    uuid2node_storage = dict()
 
-    def add_db_node(node):
-        uuid2node_db[node["uuid"]] = make_sync_node(node)
+    def read_storage_node(node):
+        uuid2node_storage[node["uuid"]] = make_sync_node(node)
 
-    NodeDB.iterate(node_db_path, add_db_node)
+    NodeDB.iterate(node_db_path, read_storage_node)
 
-    from_db = set(uuid2node_db.keys())
+    from_storage = set(uuid2node_storage.keys())
 
-    common = from_db & incoming
+    common = from_storage & incoming
 
     for uuid in common:
         incoming_node = uuid2node_incoming[uuid]
-        db_node = uuid2node_db[uuid]
+        db_node = uuid2node_storage[uuid]
 
         if incoming_node["date_modified"] > db_node["date_modified"]:
             updated_incoming.add(uuid)
         elif incoming_node["date_modified"] < db_node["date_modified"]:
-            updated_in_db.add(uuid)
+            updated_in_storage.add(uuid)
 
     new_incoming = incoming - common
-    new_in_db = from_db - common
+    new_in_storage = from_storage - common
 
     for uuid in new_incoming:
         if uuid2node_incoming[uuid]["date_modified"] < last_sync_date:
             deleted_incoming.add(uuid)
 
-    for uuid in new_in_db:
-        if uuid2node_db[uuid]["date_modified"] < last_sync_date:
-            deleted_in_db.add(uuid)
+    for uuid in new_in_storage:
+        if uuid2node_storage[uuid]["date_modified"] < last_sync_date:
+            deleted_in_storage.add(uuid)
 
     # new_incoming -= deleted_incoming
-    new_in_db -= deleted_in_db
+    new_in_storage -= deleted_in_storage
 
     # push = new_incoming | updated_incoming
-    pull = new_in_db | updated_in_db
+    pull = new_in_storage | updated_in_storage
 
-    db_tree = tree_sort_database(uuid2node_db)
+    db_tree = tree_sort_database(uuid2node_storage)
 
     # keeping the correct order
     # push_nodes = [n for n in nodes_incoming if n["uuid"] in push]
@@ -78,7 +78,7 @@ def compute_sync(storage_manager, client_id, params):
     #                                                      or n["content_modified"] > last_sync_date)
 
     for n in pull_nodes:
-        n["pull_content"] = "content_modified" in n and (n["uuid"] in new_in_db
+        n["pull_content"] = "content_modified" in n and (n["uuid"] in new_in_storage
                                                          or n["content_modified"] > last_sync_date)
 
     global g_sync_operations
@@ -86,7 +86,7 @@ def compute_sync(storage_manager, client_id, params):
         "push": [], # push_nodes,
         "pull": pull_nodes,
         "delete": [uuid2node_incoming[n] for n in deleted_incoming],
-        "delete_in_storage": [] # [uuid2node_db[n] for n in deleted_in_db]
+        "delete_in_storage": [] # [uuid2node_storage[n] for n in deleted_in_storage]
     }
 
     return g_sync_operations[client_id]

@@ -1,6 +1,7 @@
 import {ProgressCounter} from "./utils.js";
 import {
     DEFAULT_SHELF_ID,
+    DEFAULT_SHELF_UUID,
     DEFAULT_SHELF_NAME,
     EVERYTHING_SHELF_UUID,
     BROWSER_SHELF_ID,
@@ -12,7 +13,7 @@ import {Folder} from "./bookmarks_folder.js";
 import UUID from "./uuid.js";
 import {formatShelfName} from "./bookmarking.js";
 import {Import} from "./import.js";
-import {SCRAPYARD_STORAGE_FORMAT, StructuredUnmarshallerJSON} from "./marshaller_json.js";
+import {SCRAPYARD_STORAGE_FORMAT, UnmarshallerJSON} from "./marshaller_json.js";
 
 export class StreamExporterBuilder {
     constructor(marshaller) {
@@ -194,7 +195,7 @@ export class StructuredStreamImporter {
             throw new Error("Invalid file format.");
 
         if (meta.export === SCRAPYARD_STORAGE_FORMAT) {
-            unmarshaller = new StructuredUnmarshallerJSON(meta);
+            unmarshaller = new UnmarshallerJSON(meta);
             unmarshaller.configure(this._importOptions);
         }
 
@@ -243,9 +244,10 @@ export class StructuredStreamImporter {
         if (object.node.type === NODE_TYPE_SHELF && object.node.name?.toLowerCase() === DEFAULT_SHELF_NAME) {
             if (_everythingAsShelf) // import default shelf as a folder
                 object.node.uuid = UUID.numeric();
-            else { // do not import default shelf because it is always there (TODO: find default shelf by UUID)
-                _progressCounter?.incrementAndNotify();
-                return;
+            else { // force import to the external storage
+                object.node.id = DEFAULT_SHELF_ID;
+                object.node.uuid = DEFAULT_SHELF_UUID;
+                object.node.date_modified = 0;
             }
         }
 

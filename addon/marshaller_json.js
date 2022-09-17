@@ -1,5 +1,6 @@
 import {parseJSONObject_v1, parseJSONObject_v2} from "./import_versions.js"
 import {Marshaller, Unmarshaller} from "./marshaller.js";
+import {ARCHIVE_TYPE_BYTES} from "./storage.js";
 
 export const SCRAPYARD_STORAGE_FORMAT = "Scrapyard";
 const FORMAT_VERSION = 3;
@@ -38,7 +39,7 @@ export class MarshallerJSON extends Marshaller {
     }
 }
 
-export class StructuredUnmarshallerJSON extends Unmarshaller {
+export class UnmarshallerJSON extends Unmarshaller {
     constructor(meta) {
         super();
 
@@ -68,11 +69,21 @@ export class StructuredUnmarshallerJSON extends Unmarshaller {
             input = undefined;
 
         if (input) {
-            const object = this.parseJSONObjectImpl(input);
+            let object = this.parseJSONObjectImpl(input);
 
+            object = this.convertToScrapyard_v2(object);
             object.persist = () => this.storeContent(object);
             return object;
         }
+    }
+
+    convertToScrapyard_v2(object) {
+        if (object.archive) {
+            object.archive.contains = object.archive.byte_length? ARCHIVE_TYPE_BYTES: undefined;
+            object.node.contains = object.archive.contains;
+        }
+
+        return object;
     }
 }
 

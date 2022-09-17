@@ -192,6 +192,8 @@ export async function onRequestArchiveMessage(msg) {
     const node = await Node.getByUUID(msg.uuid)
     const result = {type: "ARCHIVE_INFO", kind: "empty"};
 
+    result.data_path = settings.data_folder_path() || null;
+
     if (node.external === CLOUD_EXTERNAL_TYPE) {
         try {
             const archive = await Archive.get(node);
@@ -200,17 +202,19 @@ export async function onRequestArchiveMessage(msg) {
                 const content = await Archive.reify(archive, true);
 
                 result.kind = "content";
-                result.content_type = archive.type || "text/html";
+                result.uuid = node.uuid;
+                result.content_type = node.content_type || "text/html";
                 result.content = content;
-                result.byte_length = archive.byte_length || null;
+                result.contains = node.contains|| null;
             }
         } catch (e) {
             console.error(e);
         }
     }
     else {
-        result.kind = "data_path";
-        result.data_path = settings.data_folder_path() || null;
+        result.kind = "metadata";
+        result.content_type = node.content_type || "text/html";
+        result.contains = node.contains || null;
     }
 
     return result;
@@ -220,10 +224,6 @@ async function browseRDFArchive(node, options) {
     const helper = await helperApp.probe(true);
 
     if (helper) {
-        const helperApp11 = await helperApp.hasVersion("1.1");
-        if (!helperApp11)
-            await rdfShelf.pushRDFPath(node);
-
         const url = helperApp.url(`/rdf/browse/${node.uuid}/`);
         return openURL(url, options);
     }

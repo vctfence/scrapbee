@@ -17,6 +17,7 @@ import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
 import {helperApp} from "./helper_app.js";
+import {DiskStorage} from "./storage_external.js";
 
 if (_BACKGROUND_PAGE)
     import("./core_import.js");
@@ -45,7 +46,7 @@ async function showAnnouncement() {
 async function performStartupInitialization() {
     search.initializeOmnibox();
 
-    await helperApp.probe();
+    const helper = await helperApp.probe();
 
     await browserShelf.reconcileBrowserBookmarksDB();
 
@@ -55,6 +56,9 @@ async function performStartupInitialization() {
     }
 
     await undoManager.commit();
+
+    if (helper)
+        await DiskStorage.cleanTempDirectory();
 
     console.log("==> core.js initialized");
 }

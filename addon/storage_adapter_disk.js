@@ -71,12 +71,13 @@ export class StorageAdapterDisk {
     async persistArchive(params) {
         const content = params.content;
 
-        delete params.content;
-        await this._postJSON("/storage/persist_archive_object", params);
+        //delete params.content;
+        //await this._postJSON("/storage/persist_archive_object", params);
 
         const fields = {
             data_path: settings.data_folder_path(),
             content: new Blob([content]),
+            contains: params.contains,
             uuid: params.uuid
         };
 
@@ -88,7 +89,9 @@ export class StorageAdapterDisk {
     }
 
     async fetchArchive(params) {
-        const archive = await this._fetchJSON("/storage/fetch_archive_object", params);
+        const node = params.node;
+        let archive = {contains: node.contains, content_type: node.content_type};
+        //archive = archive || await this._fetchJSON("/storage/fetch_archive_object", params);
 
         if (archive) {
             params.data_path = settings.data_folder_path();
@@ -99,7 +102,7 @@ export class StorageAdapterDisk {
                 if (response.ok) {
                     archive.content = await response.arrayBuffer();
 
-                    if (archive.type === ARCHIVE_TYPE_TEXT) {
+                    if (!archive.contains || archive.contains === ARCHIVE_TYPE_TEXT) {
                         const decoder = new TextDecoder();
                         archive.content = decoder.decode(archive.content);
                     }

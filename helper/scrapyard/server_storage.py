@@ -18,6 +18,13 @@ def check_directory():
     return result, 200
 
 
+@app.route("/storage/clean_temp_directory", methods=['POST'])
+@requires_auth
+def clean_temp_directory():
+    storage_manager.clean_temp_directory(request.json)
+    return "", 200
+
+
 @app.route("/storage/open_batch_session", methods=['POST'])
 @requires_auth
 def open_batch_session():

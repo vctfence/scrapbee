@@ -88,6 +88,15 @@ export class CloudClientBase {
             };
         }
 
+        const storeFile = async (uuid, data, file) => {
+            try {
+                const path = this._getAssetPath(uuid, file);
+                await this.uploadFile(path, data);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
         const fetchAsset = (asset, binary) => {
             return async (uuid) => {
                 try {
@@ -112,6 +121,7 @@ export class CloudClientBase {
         methods.storeArchiveObject = storeAsset(ARCHIVE_OBJECT_FILE);
         methods.fetchArchiveObject = fetchAsset(ARCHIVE_OBJECT_FILE);
         methods.storeArchiveContent = storeAsset(ARCHIVE_CONTENT_FILE);
+        methods.storeArchiveFile = storeFile;
         methods.fetchArchiveContent = fetchBinaryAsset(ARCHIVE_CONTENT_FILE);
         methods.storeArchiveIndex = storeAsset(ARCHIVE_INDEX_OBJECT_FILE);
         methods.fetchArchiveIndex = fetchAsset(ARCHIVE_INDEX_OBJECT_FILE);

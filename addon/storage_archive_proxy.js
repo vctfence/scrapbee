@@ -14,21 +14,12 @@ export class ArchiveProxy extends StorageProxy {
         return result;
     }
 
-    async _add(node, data, contentType, byteLength) {
-        return this.#persistArchive(node, data, contentType, byteLength);
+    async _add(node, archive) {
+        return this.#persistArchive(node, archive);
     }
 
     async get(node) {
-        const adapter = this.adapter(node);
-
-        if (adapter) {
-            let archive = await adapter.fetchArchive({uuid: node.uuid});
-
-            if (archive) {
-                archive = this.#unmarshaller.unconvertArchive(archive);
-                return Archive.entity(null, archive.object, archive.type, archive.byte_length);
-            }
-        }
+        return this.#fetchArchive(node);
     }
 
     async #persistArchiveIndex(node, words) {
@@ -47,26 +38,39 @@ export class ArchiveProxy extends StorageProxy {
         }
     }
 
-    async #persistArchive(node, data, contentType, byteLength) {
+    async #persistArchive(node, archive) {
         const adapter = this.adapter(node);
-        const entity = this.wrapped.entity(node, data, contentType, byteLength);
-        let content = await Archive.reify(entity);
+        let content = await Archive.reify(archive);
 
         if (adapter) {
-            const archive = await this.#marshaller.convertArchive(entity);
+            archive = await this.#marshaller.convertArchive(archive);
 
             delete archive.content;
 
             const params = {
                 uuid: node.uuid,
                 archive_json: JSON.stringify(archive),
-                content: content
+                content: content,
+                contains: node.contains
             };
 
             await adapter.persistArchive(params);
         }
 
-        return entity;
+        return archive;
+    }
+
+    async #fetchArchive(node) {
+        const adapter = this.adapter(node);
+
+        if (adapter) {
+            let archive = await adapter.fetchArchive({uuid: node.uuid, node});
+
+            if (archive) {
+                archive = this.#unmarshaller.unconvertArchive(archive);
+                return Archive.entity(null, archive.object, archive.type, archive.byte_length);
+            }
+        }
     }
 }
 

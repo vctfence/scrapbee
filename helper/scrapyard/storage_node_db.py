@@ -67,7 +67,7 @@ class NodeDB:
         return {
             "type": "shelf",
             "uuid": DEFAULT_SHELF_UUID,
-            "name": DEFAULT_SHELF_NAME,
+            "title": DEFAULT_SHELF_NAME,
             "date_added": int(datetime.now().timestamp() * 1000),
             "date_modified": 0,
             "pos": 1

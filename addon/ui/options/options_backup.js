@@ -119,6 +119,7 @@ export class BackupManager {
         date = date.toISOString().split("T")[0];
         let comment = node.comment? `<span class="backup-comment">${node.comment}</span>`: "";
 
+        node.name = node.name || node.title;
         node.alt_name = `${node.name} [${date}]`;
 
         jnode.id = `${node.uuid}-${node.timestamp}`;

@@ -1,9 +1,11 @@
-import base64
+import io
 import os
 import json
-import shutil
-import logging
 import time
+import shutil
+import base64
+import logging
+import zipfile
 
 from pathlib import Path
 from datetime import datetime
@@ -11,8 +13,9 @@ from datetime import datetime
 from . import storage_sync
 from .storage_node_db import NodeDB
 
-
+CLOUD_DIRECTORY = "cloud"
 OBJECT_DIRECTORY = "objects"
+ARCHIVE_DIRECTORY = "archive"
 NODE_DB_FILE = "scrapbook.jsbk"
 ICON_OBJECT_FILE = "icon.json"
 ARCHIVE_INDEX_OBJECT_FILE = "archive_index.json"
@@ -27,7 +30,7 @@ COMMENTS_OBJECT_FILE = "comments.json"
 class StorageManager:
     ARCHIVE_TYPE_BYTES = "bytes"
     ARCHIVE_TYPE_TEXT = "text"
-    ARCHIVE_TYPE_UNPACKED = "unpacked"
+    ARCHIVE_TYPE_FILES = "files"
 
     def __init__(self):
         self.bach_node_db = None
@@ -41,6 +44,13 @@ class StorageManager:
 
     def get_object_directory(self, params, uuid):
         return os.path.join(params["data_path"], OBJECT_DIRECTORY, uuid)
+
+    def get_temp_directory(self, params):
+        return os.path.join(params["data_path"], "_temp")
+
+    def get_cloud_archive_temp_directory(self, params):
+        temp_directory = self.get_temp_directory(params)
+        return os.path.join(temp_directory, CLOUD_DIRECTORY, params["uuid"], ARCHIVE_DIRECTORY)
 
     def get_icon_object_path(self, object_directory):
         return os.path.join(object_directory, ICON_OBJECT_FILE)
@@ -84,6 +94,12 @@ class StorageManager:
             return dict(status="populated")
         else:
             return dict(error="empty")
+
+    def clean_temp_directory(self, params):
+        temp_directory = self.get_temp_directory(params)
+
+        if os.path.exists(temp_directory):
+            shutil.rmtree(temp_directory)
 
     def persist_node(self, params):
         def persist(node_db):
@@ -149,9 +165,15 @@ class StorageManager:
 
     def persist_archive_content(self, params, files):
         object_directory_path = self.get_object_directory(params, params["uuid"])
-        content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 
-        files["content"].save(content_file_path)
+        if params.get("contains", None) == StorageManager.ARCHIVE_TYPE_FILES:
+            archive_directory_path = os.path.join(object_directory_path, ARCHIVE_DIRECTORY)
+            with zipfile.ZipFile(files["content"], "r", zipfile.ZIP_DEFLATED, False) as zip_file:
+                zip_file.extractall(archive_directory_path)
+        else:
+            Path(object_directory_path).mkdir(parents=True, exist_ok=True)
+            content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
+            files["content"].save(content_file_path)
 
     def fetch_object(self, object_file_name, params):
         object_directory_path = self.get_object_directory(params, params["uuid"])
@@ -166,6 +188,14 @@ class StorageManager:
 
     def fetch_archive_content(self, params):
         object_directory_path = self.get_object_directory(params, params["uuid"])
+        archive_directory_path = os.path.join(object_directory_path, ARCHIVE_DIRECTORY)
+
+        if os.path.exists(archive_directory_path):
+            return self.fetch_unpacked_archive(archive_directory_path)
+        else:
+            return self.fetch_packed_archive(object_directory_path)
+
+    def fetch_packed_archive(self, object_directory_path):
         content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 
         result = None
@@ -174,6 +204,22 @@ class StorageManager:
                 return content_file.read()
 
         return result
+
+    def fetch_unpacked_archive(self, archive_directory_path):
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for root, dirs, files in os.walk(archive_directory_path):
+                for file in files:
+                    archive_filename = os.path.join(root.replace(archive_directory_path, ""), file)
+                    filename = os.path.join(root, file)
+
+                    with open(filename, "rb") as content_file:
+                        file_content = content_file.read()
+
+                    zip_file.writestr(archive_filename, file_content)
+
+        return zip_buffer.getvalue()
 
     def persist_icon(self, params):
         self.persist_object(ICON_OBJECT_FILE, params, "icon_json")
@@ -189,6 +235,7 @@ class StorageManager:
 
     def fetch_archive_metadata(self, params):
         archive_object_json = self.fetch_object(ARCHIVE_OBJECT_FILE, params)
+
         if archive_object_json:
             return json.loads(archive_object_json)
 
@@ -239,6 +286,7 @@ class StorageManager:
 
     def sync_pull_objects(self, client_id, params):
         return storage_sync.pull_sync_objects(self, client_id, params)
+
 
 
 

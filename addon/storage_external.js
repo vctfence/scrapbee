@@ -5,6 +5,10 @@ class StorageDisk extends StorageAdapterDisk {
         return this._postJSON("/storage/wipe", {});
     }
 
+    cleanTempDirectory() {
+        return this._postJSON("/storage/clean_temp_directory", {});
+    }
+
     openBatchSession() {
         return this._postJSON("/storage/open_batch_session", {});
     }
@@ -14,4 +18,4 @@ class StorageDisk extends StorageAdapterDisk {
     }
 }
 
-export const Disk = new StorageDisk();
+export const DiskStorage = new StorageDisk();
