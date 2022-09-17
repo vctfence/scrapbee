@@ -222,17 +222,21 @@ abstract class BookmarkBrowserFragment : Fragment() {
         fun downloadIcon(uuid: String?, elementId: String?, hash: String?) {
             CoroutineScope(Dispatchers.IO).launch {
                 var url: String? = null
+                var newHash: String? = null
 
                 try {
                     url = _cloudDB.downloadIcon(uuid!!)
+
+                    if (url != null)
+                        newHash = "hash:" + SHA1(url)
                 }
                 catch (e: Exception) {
                     e.printStackTrace()
                 }
 
                 withContext(Dispatchers.Main) {
-                    val script = if (url == null) "setNodeIconExternal(null, \"$elementId\", \"$hash\")"
-                                 else "setNodeIconExternal(\"$url\", \"$elementId\", \"$hash\")"
+                    val script = if (url == null) "setNodeIconExternal(null, \"$elementId\", undefined)"
+                                 else "setNodeIconExternal(\"$url\", \"$elementId\", \"$newHash\")"
                     _browser.evaluateJavascript(script, null)
                 }
             }

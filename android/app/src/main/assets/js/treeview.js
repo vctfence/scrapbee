@@ -1,42 +1,28 @@
 var DEFAULT_POSITION = 2147483647;
 
-var NODE_TYPE_SHELF = 1;
-var NODE_TYPE_GROUP = 2;
-var NODE_TYPE_BOOKMARK = 3;
-var NODE_TYPE_ARCHIVE = 4;
-var NODE_TYPE_SEPARATOR = 5;
-var NODE_TYPE_NOTES = 6;
+var FORMAT_TYPE_CLOUD = "cloud";
+var FORMAT_TYPE_INDEX = "index";
 
-var DEFAULT_SHELF_UUID = "1"
+var NODE_TYPE_SHELF = "shelf";
+var NODE_TYPE_FOLDER = "folder";
+var NODE_TYPE_BOOKMARK = "bookmark";
+var NODE_TYPE_ARCHIVE = "archive";
+var NODE_TYPE_SEPARATOR = "separator";
+var NODE_TYPE_NOTES = "notes";
+
+var DEFAULT_SHELF_UUID = "default"
 
 var CLOUD_SHELF_ID = -5;
 var CLOUD_SHELF_NAME = "cloud";
 var CLOUD_EXTERNAL_NAME = "cloud";
 
-var BROWSER_EXTERNAL_NAME = "firefox";
-var RDF_EXTERNAL_NAME = "rdf";
+var RDF_EXTERNAL_TYPE = "rdf";
 
-var TODO_STATE_TODO = 1;
-var TODO_STATE_DONE = 4;
-var TODO_STATE_WAITING = 2;
-var TODO_STATE_POSTPONED = 3;
-var TODO_STATE_CANCELLED = 5;
-
-var TODO_NAMES = {
-    1: "TODO",
-    2: "WAITING",
-    3: "POSTPONED",
-    5: "CANCELLED",
-    4: "DONE"
-};
-
-var TODO_STATES = {
-    "TODO": TODO_STATE_TODO,
-    "WAITING": TODO_STATE_WAITING,
-    "POSTPONED": TODO_STATE_POSTPONED,
-    "CANCELLED": TODO_STATE_CANCELLED,
-    "DONE": TODO_STATE_DONE
-};
+var TODO_STATE_TODO = "TODO";
+var TODO_STATE_DONE = "DONE";
+var TODO_STATE_WAITING = "WAITING";
+var TODO_STATE_POSTPONED = "POSTPONED";
+var TODO_STATE_CANCELLED = "CANCELLED";
 
 var IMAGE_FORMATS = [
     "image/png",
@@ -49,8 +35,12 @@ var IMAGE_FORMATS = [
     "image/svg+xml"
 ];
 
-var ENDPOINT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
-var CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_GROUP];
+var CONTENT_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
+var CONTAINER_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_FOLDER];
+
+var NOTES_OBJECT_FILE = "notes.json"
+var ARCHIVE_CONTENT_FILE = "archive_content.blob"
+var ARCHIVE_CONTENT_FILES = "files"
 
 function o(n) { return n.data; }
 
@@ -58,7 +48,7 @@ function _styleTODO(node) {
     if (node.todo_state)
         return " todo-state-" + (node._overdue
             ? "overdue"
-            : TODO_NAMES[node.todo_state].toLowerCase());
+            : node.todo_state.toLowerCase());
 
     return "";
 }
@@ -66,25 +56,21 @@ function _styleTODO(node) {
 function toJsTreeNode(node) {
     var jnode = {};
 
-    jnode.id = node.id;
-    jnode.text = node.name || "";
+    jnode.id = node.uuid;
+    jnode.text = node.title || "";
     jnode.type = node.type;
     jnode.icon = node.icon;
     jnode.data = node; // store the original Scrapyard node
-    jnode.parent = node.parent_id;
+    jnode.parent = node.parent;
 
     if (!jnode.parent)
         jnode.parent = "#";
 
-    if (node.type === NODE_TYPE_SHELF && node.external === BROWSER_EXTERNAL_NAME) {
-        jnode.li_attr = {"class": "browser-logo"};
-        jnode.icon = "icons/firefox.svg";
-    }
-    else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME) {
+    if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_NAME) {
         jnode.li_attr = {"class": "cloud-shelf"};
         jnode.icon = "icons/cloud.svg";
     }
-    else if (node.type === NODE_TYPE_SHELF && node.external === RDF_EXTERNAL_NAME) {
+    else if (node.type === NODE_TYPE_SHELF && node.external === RDF_EXTERNAL_TYPE) {
         jnode.li_attr = {"class": "rdf-archive"};
         jnode.icon = "icons/tape.svg";
     }
@@ -92,7 +78,7 @@ function toJsTreeNode(node) {
         jnode.icon = "icons/shelf.svg";
         jnode.li_attr = {"class": "scrapyard-shelf"};
     }
-    else if (node.type === NODE_TYPE_GROUP) {
+    else if (node.type === NODE_TYPE_FOLDER) {
         jnode.icon = "icons/group.svg";
         jnode.li_attr = {
             class: "scrapyard-group",
@@ -125,17 +111,19 @@ function toJsTreeNode(node) {
         if (node.type === NODE_TYPE_NOTES)
             jnode.li_attr.class += " scrapyard-notes";
 
-        if (!node.icon) {
-            if (node.type === NODE_TYPE_NOTES)
-                jnode.icon = "icons/notes.svg";
-            else if (node.content_type === "application/pdf")
-                jnode.icon = "icons/format-pdf.svg";
-            else if (IMAGE_FORMATS.some(function (f) { return f === node.content_type; }))
-                jnode.icon = "icons/format-image.svg";
-            else {
-                jnode.icon = "icons/globe.svg";
-                jnode.a_attr.class += " generic-icon";
-            }
+        if (node.type === NODE_TYPE_NOTES)
+            jnode.icon = "icons/notes.svg";
+        else if (node.content_type === "application/pdf")
+            jnode.icon = "icons/format-pdf.svg";
+        else if (IMAGE_FORMATS.some(function (f) { return f === node.content_type; }))
+            jnode.icon = "icons/format-image.svg";
+
+        if (!jnode.icon && !node.has_icon) {
+            jnode.icon = "icons/globe.svg";
+            jnode.a_attr.class += " generic-icon";
+        }
+        else if (node.has_icon) {
+            jnode.icon = node.uuid;
         }
     }
 
@@ -143,7 +131,7 @@ function toJsTreeNode(node) {
 }
 
 function _formatNodeTooltip(node) {
-    return node.name + (node.uri? "\x0A" + node.uri: "");
+    return node.title + (node.url? "\x0A" + node.url: "");
 }
 
 function createTree() {
@@ -188,14 +176,14 @@ function contextMenu(jnode) {
         openOriginalItem: {
             label: "Open Original URL",
             action: function () {
-                if (node.uri)
-                    document.location.href = node.uri;
+                if (node.url)
+                    document.location.href = node.url;
             }
         },
         viewNotesItem: {
             label: "View notes",
             action: function() {
-                Android.openArchive(node.uuid, "view");
+                Android.openArchive(node.uuid, NOTES_OBJECT_FILE);
             }
         },
         deleteItem: {
@@ -230,20 +218,22 @@ function handleMouseClick(e) {
         var node = o(jnode);
 
         if (node.type === NODE_TYPE_BOOKMARK) {
-            document.location.href = node.uri;
+            document.location.href = node.url;
         }
         else if (node.type === NODE_TYPE_ARCHIVE) {
-            if (node.content_type && node.content_type.indexOf("text/html") >= 0)
-                Android.openArchive(node.uuid, "data");
+            if (node.contains === ARCHIVE_CONTENT_FILES)
+                Android.openArchive(node.uuid, ARCHIVE_CONTENT_FILES);
+            else if (node.content_type && node.content_type.indexOf("text/html") >= 0)
+                Android.openArchive(node.uuid, ARCHIVE_CONTENT_FILE);
             else if (node.content_type)
-                Android.downloadArchive(node.uuid, node.name, node.content_type);
+                Android.downloadArchive(node.uuid, node.title, node.content_type);
             else
-                document.location.href = node.uri;
+                document.location.href = node.url;
         }
         else if (node.type === NODE_TYPE_NOTES) {
-            Android.openArchive(node.uuid, "view");
+            Android.openArchive(node.uuid, NOTES_OBJECT_FILE);
         }
-        else if (node.type === NODE_TYPE_GROUP || node.type === NODE_TYPE_SHELF) {
+        else if (node.type === NODE_TYPE_FOLDER || node.type === NODE_TYPE_SHELF) {
             window.tree.toggle_node(jnode.id);
         }
     }
@@ -281,9 +271,9 @@ function performSearch(text) {
             text = text.toLocaleLowerCase();
             var results = tree.__nodes.filter(function (jnode) {
                 var node = o(jnode);
-                return ENDPOINT_TYPES.some(function (t) { return t == node.type })
-                    && (node.name && node.name.toLocaleLowerCase().indexOf(text) >= 0
-                        ||  node.uri && node.uri.toLocaleLowerCase().indexOf(text) >= 0);
+                return CONTENT_TYPES.some(function (t) { return t == node.type })
+                    && (node.title && node.title.toLocaleLowerCase().indexOf(text) >= 0
+                        ||  node.url && node.url.toLocaleLowerCase().indexOf(text) >= 0);
             });
 
             listTreeNodes(results);
@@ -309,13 +299,15 @@ function listTreeNodes(nodes) {
 tree.iconCache = {}
 
 tree.__icon_set_hook = function(jnode) {
-    if (jnode.icon.startsWith("icons/"))
+    if (jnode.icon && jnode.icon.startsWith("icons/")) {
         return "url(\"" + jnode.icon + "\")";
+    }
     else {
         var node = o(jnode)
 
         if (node && node.download_icon) {
             var icon = this.iconCache[node.icon];
+
             if (icon)
                 return "url(\"" + icon + "\")";
             else
@@ -327,7 +319,7 @@ tree.__icon_set_hook = function(jnode) {
 };
 
 tree.__icon_check_hook = function(a_element, jnode) {
-    if (jnode.__icon_validated || !jnode.icon || (jnode.icon && jnode.icon.startsWith("icons/")))
+    if (jnode.__icon_validated || (jnode.icon && jnode.icon.startsWith("icons/")))
         return;
 
     setTimeout(function () {
@@ -402,7 +394,7 @@ function downloadIcon(node, elementId) {
 
 var root = {id: CLOUD_SHELF_NAME,
             pos: -2,
-            name: CLOUD_SHELF_NAME,
+            title: CLOUD_SHELF_NAME,
             uuid: CLOUD_SHELF_NAME,
             type: NODE_TYPE_SHELF,
             external: CLOUD_EXTERNAL_NAME
@@ -424,23 +416,24 @@ function injectCloudBookmarks(bookmarks) {
     if (metaJSON)
         meta = JSON.parse(metaJSON);
 
-    if (meta && meta.cloud)
-        injectCloudShelfBookmarks(lines.shift())
-    else if (meta && meta.sync)
-        injectSyncBookmarks(lines.shift())
+    if (meta && meta.type === FORMAT_TYPE_CLOUD)
+        injectCloudShelfBookmarks(lines)
+    else if (meta && meta.type === FORMAT_TYPE_INDEX)
+        injectSyncBookmarks(lines)
 
     hideLoadingAnimation();
 }
 
-function injectCloudShelfBookmarks(json) {
+function injectCloudShelfBookmarks(lines) {
     var nodes = [root];
-    var content;
 
-    if (json)
-        content = JSON.parse(json);
-
-    if (content && content.nodes)
-        nodes = nodes.concat(content.nodes.map(extractCloudShelfNode));
+    if (lines) {
+        lines.forEach(function (line) {
+            var node = JSON.parse(line);
+            node.download_icon = node.has_icon;
+            nodes.push(node);
+        });
+    }
 
     nodes.sort(byPosition);
 
@@ -450,23 +443,19 @@ function injectCloudShelfBookmarks(json) {
     tree.open_node(CLOUD_SHELF_NAME);
 }
 
-function extractCloudShelfNode(bookmark) {
-    var node = bookmark.node;
-    node.id = node.uuid;
-    if (bookmark.icon)
-        node.icon = bookmark.icon.data_url;
-    return node;
-}
-
-function injectSyncBookmarks(json) {
+function injectSyncBookmarks(lines) {
     var nodes = [];
-    var content;
 
-    if (json)
-        content = JSON.parse(json);
+    if (lines) {
+        lines.forEach(function (line) {
+            var node = JSON.parse(line);
 
-    if (content && content.nodes)
-        nodes = content.nodes.map(extractSyncNode);
+            if (node.type === NODE_TYPE_SHELF && node.uuid === DEFAULT_SHELF_UUID)
+                node.pos = -1;
+            node.download_icon = node.has_icon;
+            nodes.push(node);
+        });
+    }
 
     nodes.sort(byPosition);
 
@@ -480,22 +469,20 @@ function addNodesToTree(nodes) {
     tree.settings.core.data = nodes;
 
     if (window.rememberTreeState) {
-        var state = JSON.parse(localStorage.getItem(tree.settings.state.key));
-        tree.refresh(true, function() {return state.state});
+        var stateJSON = localStorage.getItem(tree.settings.state.key);
+
+        if (stateJSON) {
+            var state = JSON.parse(stateJSON);
+
+            tree.refresh(true, function() {return state.state});
+        }
+        else
+            tree.refresh(true);
     }
     else
         tree.refresh(true)
 
     tree.deselect_all()
-}
-
-function extractSyncNode(node) {
-    node.id = node.uuid;
-    if (node.type === NODE_TYPE_SHELF && node.uuid === DEFAULT_SHELF_UUID)
-        node.pos = -1;
-    if (node.stored_icon)
-        node.download_icon = true;
-    return node;
 }
 
 function handleEmptyContent(dbType) {

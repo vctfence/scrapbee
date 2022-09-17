@@ -24,6 +24,7 @@
     <string name="no_internet">No Internet connection</string>
     <string name="configure_cloud_provider">A cloud provider needs to be configured</string>
     <string name="can_not_share_to_empty_sync">Can not share to the empty Sync storage</string>
+    <string name="sharing_failure">Sharing failure</string>
 
     <string name="bookmark_title">Title:</string>
     <string name="bookmark_details">Details:</string>

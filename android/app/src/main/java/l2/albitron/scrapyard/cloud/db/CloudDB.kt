@@ -3,23 +3,31 @@ package l2.albitron.scrapyard.cloud.db
 import android.content.Context
 import l2.albitron.scrapyard.cloud.db.model.Node
 import l2.albitron.scrapyard.cloud.providers.CloudProvider
+import java.io.InputStream
 
 interface CloudDB {
+    val size: Int
     fun isEmpty(): Boolean
     fun download()
     fun persist()
     fun reset()
 
     fun downloadRaw(): String?
-    fun downloadAssetRaw(uuid: String, asset: String): String?
-    fun downloadIcon(uuid: String): String?
+    fun downloadAsset(uuid: String, asset: String): String?
+    fun downloadUnpackedIndex(uuid: String): String?
+    fun downloadUnpackedAsset(uuid: String, assetPath: String): InputStream?
 
-    fun getOrCreateSharingFodler(name: String): Node
+    fun downloadIcon(uuid: String): String?
+    fun storeIcon(node: Node, dataURL: String)
+
+    fun getOrCreateSharingFolder(name: String): Node
     fun addNode(node: Node, parent: Node): Node
     fun deleteNode(uuid: String?)
 
-    fun storeNewBookmarkData(node: Node, text: String)
+    fun storeNewBookmarkArchive(node: Node, text: String)
+    fun storeArchiveIndex(node: Node, text: String)
     fun storeNewBookmarkNotes(node: Node, text: String)
+    fun storeNotesIndex(node: Node, text: String)
     fun getArchiveBytes(uuid: String): ByteArray?
 
     fun getType(): String

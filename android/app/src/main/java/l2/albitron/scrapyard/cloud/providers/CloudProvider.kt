@@ -6,9 +6,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import l2.albitron.scrapyard.Settings
+import java.io.InputStream
 
 interface CloudProvider {
     suspend fun initialize(context: Context)
+    fun downloadInputStream(path: String): InputStream?
+    fun downloadBinaryFile(path: String): ByteArray?
     fun downloadTextFile(path: String): String?
     fun downloadRange(path: String, start: Long, length: Long): String?
     fun writeTextFile(path: String, content: String)
