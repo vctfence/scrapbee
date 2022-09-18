@@ -185,7 +185,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
     }
 
     async assembleContent(node) {
-        const result = {node: null};
+        const result = {item: null};
 
         if (node.type === NODE_TYPE_ARCHIVE) {
             let archive = await Archive.get(node);
@@ -210,7 +210,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
         }
 
         node = this.serializeNode(node);
-        result.node = await this.convertNode(node);
+        result.item = await this.convertNode(node);
 
         return result;
     }
@@ -332,7 +332,9 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
     }
 
     async unconvertContent(object) {
-        object.node = await this.unconvertNode(object.node);
+        object.node = await this.unconvertNode(object.item);
+        delete object.item;
+
         this.#findParentInStream(object.node);
 
         if (object.archive)

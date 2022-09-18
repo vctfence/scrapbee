@@ -25,7 +25,12 @@ class NodeDB:
     @classmethod
     def with_file(cls, path, f):
         node_db = cls.from_file(path)
-        f(node_db)
+
+        try:
+            f(node_db)
+        except Exception as e:
+            logging.error(e)
+
         node_db.write(path)
 
     @classmethod
@@ -37,7 +42,11 @@ class NodeDB:
                 node_json = node_db_file.readline()
 
                 while node_json != "":
-                    f(json.loads(node_json))
+                    try:
+                        f(json.loads(node_json))
+                    except Exception as e:
+                        logging.error(e)
+
                     node_json = node_db_file.readline()
 
     @classmethod
@@ -126,18 +135,21 @@ class NodeDB:
 
     def update_node(self, update, remove_fields):
         node = self.nodes.get(update["uuid"], None)
+        result = update
 
         if node:
-            node = {**node, **update}
+            result = {**node, **update}
 
             if remove_fields:
                 for field in remove_fields:
-                    if field in node:
-                        del node[field]
+                    if field in result:
+                        del result[field]
 
-            self.nodes[update["uuid"]] = node
+            self.nodes[update["uuid"]] = result
         else:
             self.nodes[update["uuid"]] = update
+
+        return result
 
     def delete_node(self, uuid):
         if uuid in self.nodes:

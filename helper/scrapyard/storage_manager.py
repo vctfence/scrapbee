@@ -6,6 +6,7 @@ import shutil
 import base64
 import logging
 import zipfile
+import tempfile
 
 from pathlib import Path
 from datetime import datetime
@@ -13,10 +14,12 @@ from datetime import datetime
 from . import storage_sync
 from .storage_node_db import NodeDB
 
+SCRAPYARD_DIRECTORY = "scrapyard"
 CLOUD_DIRECTORY = "cloud"
 OBJECT_DIRECTORY = "objects"
 ARCHIVE_DIRECTORY = "archive"
 NODE_DB_FILE = "scrapbook.jsbk"
+NODE_OBJECT_FILE = "item.json"
 ICON_OBJECT_FILE = "icon.json"
 ARCHIVE_INDEX_OBJECT_FILE = "archive_index.json"
 ARCHIVE_OBJECT_FILE = "archive.json"
@@ -46,11 +49,14 @@ class StorageManager:
         return os.path.join(params["data_path"], OBJECT_DIRECTORY, uuid)
 
     def get_temp_directory(self, params):
-        return os.path.join(params["data_path"], "_temp")
+        return os.path.join(tempfile.gettempdir(), SCRAPYARD_DIRECTORY)
 
     def get_cloud_archive_temp_directory(self, params):
         temp_directory = self.get_temp_directory(params)
         return os.path.join(temp_directory, CLOUD_DIRECTORY, params["uuid"], ARCHIVE_DIRECTORY)
+
+    def get_node_object_path(self, object_directory):
+        return os.path.join(object_directory, NODE_OBJECT_FILE)
 
     def get_icon_object_path(self, object_directory):
         return os.path.join(object_directory, ICON_OBJECT_FILE)
@@ -82,7 +88,10 @@ class StorageManager:
 
     def with_node_db(self, params, f):
         if self.bach_node_db:
-            f(self.bach_node_db)
+            try:
+                f(self.bach_node_db)
+            except Exception as e:
+                logging.error(e)
         else:
             node_db_path = self.get_node_db_path(params)
             NodeDB.with_file(node_db_path, f)
@@ -104,19 +113,23 @@ class StorageManager:
     def persist_node(self, params):
         def persist(node_db):
             node_db.add_node(params["node"])
+            self.persist_node_object(params)
 
         self.with_node_db(params, persist)
 
     def update_node(self, params):
         def update(node_db):
-            node_db.update_node(params["node"], params["remove_fields"])
+            params["node"] = node_db.update_node(params["node"], params["remove_fields"])
+            self.persist_node_object(params)
 
         self.with_node_db(params, update)
 
     def update_nodes(self, params):
         def update(node_db):
             for node in params["nodes"]:
-                node_db.update_node(node, None)
+                updated_node = node_db.update_node(node, None)
+                params["node"] = updated_node
+                self.persist_node_object(params)
 
         self.with_node_db(params, update)
 
@@ -162,6 +175,11 @@ class StorageManager:
         Path(object_directory_path).mkdir(parents=True, exist_ok=True)
         with open(object_file_path, "w", encoding="utf-8") as object_file:
             object_file.write(params[param_name])
+
+    def persist_node_object(self, params):
+        params["uuid"] = params["node"]["uuid"]
+        params["node_json"] = json.dumps(params["node"])
+        self.persist_object(NODE_OBJECT_FILE, params, "node_json")
 
     def persist_archive_content(self, params, files):
         object_directory_path = self.get_object_directory(params, params["uuid"])
@@ -275,17 +293,17 @@ class StorageManager:
 
         return result
 
-    def sync_open_session(self, client_id, params):
-        storage_sync.open_session(self, client_id, params)
+    def sync_open_session(self, params):
+        storage_sync.open_session(self, params)
 
-    def sync_close_session(self, client_id):
-        storage_sync.close_session(client_id)
+    def sync_close_session(self):
+        storage_sync.close_session()
 
-    def sync_compute(self, client_id, params):
-        return storage_sync.compute_sync(self, client_id, params)
+    def sync_compute(self, params):
+        return storage_sync.compute_sync(self, params)
 
-    def sync_pull_objects(self, client_id, params):
-        return storage_sync.pull_sync_objects(self, client_id, params)
+    def sync_pull_objects(self, params):
+        return storage_sync.pull_sync_objects(self, params)
 
 
 

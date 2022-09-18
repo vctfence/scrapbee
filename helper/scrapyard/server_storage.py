@@ -207,8 +207,7 @@ def get_metadata():
 @app.route("/storage/sync_compute", methods=['POST'])
 @requires_auth
 def sync_get_metadata():
-    client_id = request.authorization["password"]
-    json_object = storage_manager.sync_compute(client_id, request.json)
+    json_object = storage_manager.sync_compute(request.json)
 
     if json_object:
         return json_object
@@ -219,24 +218,21 @@ def sync_get_metadata():
 @app.route("/storage/sync_open_session", methods=['POST'])
 @requires_auth
 def sync_open_session():
-    client_id = request.authorization["password"]
-    storage_manager.sync_open_session(client_id, request.json)
+    storage_manager.sync_open_session(request.json)
     return "{}", 200
 
 
 @app.route("/storage/sync_close_session", methods=['GET'])
 @requires_auth
 def sync_close_session():
-    client_id = request.authorization["password"]
-    storage_manager.sync_close_session(client_id)
+    storage_manager.sync_close_session()
     return "", 204
 
 
 @app.route("/storage/sync_pull_objects", methods=['POST'])
 @requires_auth
 def sync_pull_objects():
-    client_id = request.authorization["password"]
-    json_text = storage_manager.sync_pull_objects(client_id, request.json)
+    json_text = storage_manager.sync_pull_objects(request.json)
 
     if json_text:
         return json_text

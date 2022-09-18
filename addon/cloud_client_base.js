@@ -1,6 +1,7 @@
 import {CloudStorage} from "./cloud_node_db.js";
 
 const OBJECT_DIRECTORY = "objects";
+const NODE_OBJECT_FILE = "item.json";
 const ICON_OBJECT_FILE = "icon.json";
 const ARCHIVE_INDEX_OBJECT_FILE = "archive_index.json";
 const ARCHIVE_OBJECT_FILE = "archive.json";
@@ -112,6 +113,8 @@ export class CloudClientBase {
         const fetchBinaryAsset = (asset, binary) => fetchAsset(asset, true);
 
         let methods = {};
+
+        methods.storeNode = storeAsset(NODE_OBJECT_FILE);
 
         methods.storeNotes = storeAsset(NOTES_OBJECT_FILE);
         methods.fetchNotes = fetchAsset(NOTES_OBJECT_FILE);

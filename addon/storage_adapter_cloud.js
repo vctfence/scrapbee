@@ -29,6 +29,8 @@ export class StorageAdapterCloud {
     }
 
     async persistNode(params) {
+        const nodeJSON = JSON.stringify(params.node);
+        await this._provider.assets.storeNode(params.node.uuid, nodeJSON);
         return this.withCloudDB(db => db.addNode(params.node));
     }
 

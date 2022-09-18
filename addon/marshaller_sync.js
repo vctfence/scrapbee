@@ -128,7 +128,7 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
             sync_node: JSON.stringify(syncNode)
         });
 
-        let {node, icon, archive_index, notes_index, comments_index} = payload;
+        let {item: node, icon, archive_index, notes_index, comments_index} = payload;
 
         node = await this.unconvertNode(node);
         node = this.deserializeNode(node);

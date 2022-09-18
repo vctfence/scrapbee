@@ -9,7 +9,7 @@ from .storage_node_db import NodeDB
 g_sync_operations = dict()
 
 
-def compute_sync(storage_manager, client_id, params):
+def compute_sync(storage_manager, params):
     node_db_path = storage_manager.get_node_db_path(params)
     nodes_incoming = json.loads(params["nodes"])
     last_sync_date = int(params["last_sync_date"])
@@ -82,14 +82,14 @@ def compute_sync(storage_manager, client_id, params):
                                                          or n["content_modified"] > last_sync_date)
 
     global g_sync_operations
-    g_sync_operations[client_id] = {
+    g_sync_operations = {
         "push": [], # push_nodes,
         "pull": pull_nodes,
         "delete": [uuid2node_incoming[n] for n in deleted_incoming],
         "delete_in_storage": [] # [uuid2node_storage[n] for n in deleted_in_storage]
     }
 
-    return g_sync_operations[client_id]
+    return g_sync_operations
 
 
 def make_sync_node(node):
@@ -141,46 +141,27 @@ def tree_sort_database(nodes):
     return result
 
 
-g_pulled_nodes = dict()
+def open_session(storage_manager, params):
+    pass
 
 
-def open_session(storage_manager, client_id, params):
-    global g_pulled_nodes
+def close_session():
     global g_sync_operations
-    node_db_path = storage_manager.get_node_db_path(params)
-
-    nodes_to_pull = set([n["uuid"] for n in g_sync_operations[client_id]["pull"]])
-    g_pulled_nodes[client_id] = dict()
-
-    def load_node(node):
-        uuid = node["uuid"]
-        if uuid in nodes_to_pull:
-            g_pulled_nodes[client_id][uuid] = node
-
-    NodeDB.iterate(node_db_path, load_node)
+    g_sync_operations = None
 
 
-def close_session(client_id):
-    global g_pulled_nodes
-    global g_sync_operations
-
-    if client_id in g_pulled_nodes:
-        del g_pulled_nodes[client_id]
-
-    if client_id in g_sync_operations:
-        del g_sync_operations[client_id]
-
-
-def pull_sync_objects(storage_manager, client_id, params):
+def pull_sync_objects(storage_manager, params):
     sync_node = json.loads(params["sync_node"])
     uuid = sync_node["uuid"]
+    result = "{"
 
-    nodes = g_pulled_nodes[client_id]
-    result = "{\"node\":" + json.dumps(nodes[uuid])
+    object_directory_path = storage_manager.get_object_directory(params, uuid)
+    node_object_path = storage_manager.get_node_object_path(object_directory_path)
+    node_object = read_object_file(node_object_path)
+    if node_object:
+        result += "\"item\":" + node_object
 
     if sync_node["pull_content"]:
-        object_directory_path = storage_manager.get_object_directory(params, uuid)
-
         icon_object_path = storage_manager.get_icon_object_path(object_directory_path)
         icon_object = read_object_file(icon_object_path)
         if icon_object:
