@@ -5,7 +5,7 @@ import {send} from "../../proxy.js";
 
 function configureScrapyardSettingsPage() {
     simpleSelectric("#option-sidebar-theme");
-    simpleSelectric("#option-export-format");
+    //simpleSelectric("#option-export-format");
 
     let dataFolderInputTimeout;
     $("#option-data-folder-path").on("input", e => {
@@ -43,7 +43,7 @@ function configureScrapyardSettingsPage() {
         settings.helper_port_number(+e.target.value);
     });
 
-    setSaveSelectHandler("option-export-format", "export_format");
+    //setSaveSelectHandler("option-export-format", "export_format");
 
     setSaveCheckHandler("option-capitalize-builtin-shelf-names", "capitalize_builtin_shelf_names",
         () => send.shelvesChanged());
@@ -65,9 +65,8 @@ function configureScrapyardSettingsPage() {
     setSaveCheckHandler("option-open-bookmark-in-active-tab", "open_bookmark_in_active_tab");
     setSaveCheckHandler("option-open-sidebar-from-shortcut", "open_sidebar_from_shortcut");
     setSaveCheckHandler("option-do-not-switch-to-ff-bookmark", "do_not_switch_to_ff_bookmark");
-    setSaveCheckHandler("option-use-helper-app-for-export", "use_helper_app_for_export");
     setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
-    setSaveCheckHandler("option-browse-with-helper", "browse_with_helper");
+    setSaveCheckHandler("option-sidebar-filter-partial-match", "sidebar_filter_partial_match");
 }
 
 function loadScrapyardSettings() {
@@ -87,14 +86,13 @@ function loadScrapyardSettings() {
     $("#option-open-bookmark-in-active-tab").prop("checked", settings.open_bookmark_in_active_tab());
     $("#option-open-sidebar-from-shortcut").prop("checked", settings.open_sidebar_from_shortcut());
     $("#option-capitalize-builtin-shelf-names").prop("checked", settings.capitalize_builtin_shelf_names());
-    $("#option-export-format").val(settings.export_format());
-    $("#option-use-helper-app-for-export").prop("checked", settings.use_helper_app_for_export());
+    $("#option-sidebar-filter-partial-match").prop("checked", settings.sidebar_filter_partial_match());
+    //$("#option-export-format").val(settings.export_format());
     $("#option-undo-failed-imports").prop("checked", settings.undo_failed_imports());
-    $("#option-browse-with-helper").prop("checked", settings.browse_with_helper());
     $("#option-helper-port").val(settings.helper_port_number());
 
     selectricRefresh($("#option-sidebar-theme"));
-    selectricRefresh($("#option-export-format"));
+    //selectricRefresh($("#option-export-format"));
 }
 
 export function load() {

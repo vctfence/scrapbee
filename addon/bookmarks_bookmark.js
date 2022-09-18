@@ -209,6 +209,7 @@ export class BookmarkManager extends EntityManager {
                        // order   // order mode to sort the output if specified: "custom", "todo", "date_desc"
                        // content // search in content instead of node name (boolean)
                        // index   // index to use: "content", "comments", "notes"
+                       // partial // partially match words (boolean)
                        //}
     ) {
         const path = options.path || EVERYTHING_SHELF_UUID;
@@ -239,7 +240,7 @@ export class BookmarkManager extends EntityManager {
                     await Query.selectAllChildrenIdsOf(folder.id, subtree);
             }
 
-            result = await Query.nodesByIndex(subtree, search, options.index);
+            result = await Query.nodesByIndex(subtree, search, options.index, options.partial);
         }
         else {
             result = await Query.nodes(folder, options);

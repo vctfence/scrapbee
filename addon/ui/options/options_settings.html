@@ -133,19 +133,15 @@
         </td>
     </tr>
     <tr>
-        <td>Import/Export</td>
+        <td>Search</td>
         <td>
             <div class="panel double-container" id="export">
                 <div class="double-first">
                     <form>
                         <fieldset style="border: none;">
-                            <div style="display: flex;">
-                                Export format:&nbsp;&nbsp;&nbsp;
-                                <select id="option-export-format" type="select" style="color: black">
-                                    <option value="json">JSON</option>
-                                    <option value="org">ORG</option>
-                                    <option value="org_shallow">ORG (links only)</option>
-                                </select>
+                            <div class="align-checkbox">
+                                <input id="option-sidebar-filter-partial-match" type="checkbox"/><label for="option-sidebar-filter-partial-match"
+                            >Use partial word matching in the sidebar filter (slower)</label>
                             </div>
                         </fieldset>
                     </form>
@@ -153,15 +149,6 @@
                 <div class="double-last">
                     <form>
                         <fieldset style="border: none;">
-                            <!--input id="option-use-helper-app-for-export" type="checkbox"/><label for="option-use-helper-app-for-export"
-                        >Use the helper application to accelerate export</label><br-->
-                            <div class="align-checkbox">
-                                <input id="option-undo-failed-imports" type="checkbox"/><label for="option-undo-failed-imports"
-                            >Undo failed imports</label>
-                                <i class="help-mark"></i>
-                                <span class="tips hide">Return the Scrapyard database at the state before a failed import or backup restore.<br>
-                                            This may require twice as much time and disk space as the size of the imported content.</span>
-                            </div>
                         </fieldset>
                     </form>
                 </div>
@@ -183,15 +170,6 @@
                 <div class="double-last">
                     <form>
                         <fieldset style="border: none;">
-                            <div class="align-checkbox">
-                                <input id="option-browse-with-helper" type="checkbox"
-                                /><label for="option-browse-with-helper">Use the helper application to browse archives</label>
-                                <i class="help-mark"></i>
-                                <div class="tips hide">Check this only if you need to execute saved scripts or load<br>
-                                    embedded content and shadow DOM.
-                                    Note that scripts are <br>not saved by default (see the page
-                                    capture settings).</div>
-                            </div>
                         </fieldset>
                     </form>
                 </div>

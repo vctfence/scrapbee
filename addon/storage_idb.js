@@ -1,6 +1,6 @@
 import {DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID, NODE_TYPE_SHELF,} from "./storage.js";
 
-import Dexie from "./lib/dexie.js"
+import {Dexie} from "./lib/dexie.js";
 
 const dexie = new Dexie("scrapyard");
 

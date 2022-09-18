@@ -171,6 +171,7 @@ async function performSearch() {
             search: searchQuery,
             content: true,
             index: "content",
+            partial: true,
             order: "date_desc",
             path: shelfList.selectedShelfName
         });

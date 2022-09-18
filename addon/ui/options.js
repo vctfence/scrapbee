@@ -37,8 +37,10 @@ async function loadOptionsModule(moduleName) {
     const moduleDiv = $(`#div-${moduleName}`);
 
     let module = moduleDiv.data("module");
+
     if (!module) {
-        injectCSS(`options/options_${moduleName}.css`)
+        injectCSS(`options/options_${moduleName}.css`);
+
         try {
             let html = await fetchText(`options/options_${moduleName}.html`);
             moduleDiv.html(html);
@@ -46,6 +48,7 @@ async function loadOptionsModule(moduleName) {
         catch (e) {
             console.info(e)
         }
+
         module = await import(`./options/options_${moduleName}.js`);
         moduleDiv.data("module", module);
         initHelpMarks(`#div-${moduleName}`);

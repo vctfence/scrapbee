@@ -64,7 +64,7 @@ defined by the `url` parameter.
 
 Returns UUID of the newly created bookmark.
 
-Note: if you have [Python](https://www.python.org) installed, a local server could be started simply by
+Note: if you have [Python](https://www.python.org) installed, a local server could be started by
 executing `python3 -m http.server` in the desired directory.
 
 #### SCRAPYARD_ADD_ARCHIVE
