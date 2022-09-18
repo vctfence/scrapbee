@@ -20,7 +20,7 @@ export class ArchiveIDB extends EntityIDB {
         return delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), instance);
     }
 
-    entity(node, data, contentType, byteLength, contains) {
+    entity(node, data, contentType, byteLength) {
         contentType = contentType || "text/html";
 
         if (typeof data !== "string" && data?.byteLength) // from ArrayBuffer
@@ -33,8 +33,7 @@ export class ArchiveIDB extends EntityIDB {
         const result = {
             object: data,
             byte_length: byteLength, // presence of this field indicates that the object is binary
-            type: contentType,
-            contains: contains
+            type: contentType
         };
 
         if (node)

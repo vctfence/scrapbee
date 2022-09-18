@@ -90,7 +90,7 @@ export class StorageAdapterDisk {
 
     async fetchArchive(params) {
         const node = params.node;
-        let archive = {contains: node.contains, content_type: node.content_type};
+        let archive = {};
         //archive = archive || await this._fetchJSON("/storage/fetch_archive_object", params);
 
         if (archive) {
@@ -102,7 +102,7 @@ export class StorageAdapterDisk {
                 if (response.ok) {
                     archive.content = await response.arrayBuffer();
 
-                    if (!archive.contains || archive.contains === ARCHIVE_TYPE_TEXT) {
+                    if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
                         const decoder = new TextDecoder();
                         archive.content = decoder.decode(archive.content);
                     }

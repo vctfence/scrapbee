@@ -22,6 +22,7 @@ const SERIALIZED_FIELD_ORDER = [
     "title",
     "url",
     "content_type",
+    "contains",
     "size",
     "tags",
     "date_added",
@@ -139,13 +140,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
         delete archive.id;
         delete archive.node_id;
-
-        if (archive.type) {
-            archive.content_type = archive.type || "text/html";
-            delete archive.type;
-        }
-
-        archive.contains =  archive.contains || (archive.byte_length? ARCHIVE_TYPE_BYTES: undefined);
+        delete archive.type;
         delete archive.byte_length;
 
         archive.content = archive.object;
@@ -278,16 +273,16 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return index;
     }
 
-    unconvertArchive(archive) {
+    unconvertArchive(node, archive) {
         archive = {...archive};
 
-        archive.type = archive.content_type;
+        archive.type = node.content_type;
         delete archive.content_type;
 
         archive.object = archive.content;
         delete archive.content;
 
-        if (archive.contains && archive.contains !== ARCHIVE_TYPE_TEXT)
+        if (node.contains && node.contains !== ARCHIVE_TYPE_TEXT)
             archive.byte_length = true;
 
         return archive;
@@ -341,7 +336,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         this.#findParentInStream(object.node);
 
         if (object.archive)
-            object.archive = await this.unconvertArchive(object.archive);
+            object.archive = await this.unconvertArchive(object.node, object.archive);
 
         if (object.notes)
             object.notes = this.unconvertNotes(object.notes);

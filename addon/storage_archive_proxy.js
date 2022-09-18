@@ -66,10 +66,8 @@ export class ArchiveProxy extends StorageProxy {
         if (adapter) {
             let archive = await adapter.fetchArchive({uuid: node.uuid, node});
 
-            if (archive) {
-                archive = this.#unmarshaller.unconvertArchive(archive);
-                return Archive.entity(null, archive.object, archive.type, archive.byte_length);
-            }
+            if (archive)
+                return this.#unmarshaller.unconvertArchive(node, archive);
         }
     }
 }

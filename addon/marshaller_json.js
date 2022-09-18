@@ -79,8 +79,7 @@ export class UnmarshallerJSON extends Unmarshaller {
 
     convertToScrapyard_v2(object) {
         if (object.archive) {
-            object.archive.contains = object.archive.byte_length? ARCHIVE_TYPE_BYTES: undefined;
-            object.node.contains = object.archive.contains;
+            object.node.contains = object.archive.byte_length? ARCHIVE_TYPE_BYTES: undefined;
         }
 
         return object;

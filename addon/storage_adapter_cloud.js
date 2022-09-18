@@ -87,14 +87,14 @@ export class StorageAdapterCloud {
 
     async fetchArchive(params) {
         const node = params.node;
-        let archive = {contains: node.contains, content_type: node.content_type};
+        let archive = {};
         //archive = archive || await this._provider.assets.fetchArchiveObject(params.uuid);
 
         const content = await this._provider.assets.fetchArchiveContent(params.uuid);
 
         //archive = JSON.parse(archive);
 
-        if (!archive.contains || archive.contains === ARCHIVE_TYPE_TEXT) {
+        if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
             const decoder = new TextDecoder();
             archive.content = decoder.decode(content);
         }

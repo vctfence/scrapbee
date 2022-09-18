@@ -214,6 +214,8 @@ export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_EVERYTHI
         type: type,
         contains: contains,
         title: title,
+        uuid: undefined,
+        entities: undefined,
         timestamp: now.getTime(),
         date: now.toISOString()
     };
