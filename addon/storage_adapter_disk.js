@@ -88,31 +88,28 @@ export class StorageAdapterDisk {
         }
     }
 
-    async fetchArchive(params) {
+    async fetchArchiveContent(params) {
         const node = params.node;
-        let archive = {};
         //archive = archive || await this._fetchJSON("/storage/fetch_archive_object", params);
 
-        if (archive) {
-            params.data_path = settings.data_folder_path();
+        params.data_path = settings.data_folder_path();
 
-            try {
-                const response = await helperApp.post(`/storage/fetch_archive_content`, params);
+        try {
+            const response = await helperApp.post(`/storage/fetch_archive_content`, params);
 
-                if (response.ok) {
-                    archive.content = await response.arrayBuffer();
+            if (response.ok) {
+                let content = await response.arrayBuffer();
 
-                    if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
-                        const decoder = new TextDecoder();
-                        archive.content = decoder.decode(archive.content);
-                    }
-
-                    return archive;
+                if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
+                    const decoder = new TextDecoder();
+                    content = decoder.decode(content);
                 }
 
-            } catch (e) {
-                console.error(e);
+                return content;
             }
+
+        } catch (e) {
+            console.error(e);
         }
     }
 

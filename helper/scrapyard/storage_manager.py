@@ -61,6 +61,9 @@ class StorageManager:
     def get_icon_object_path(self, object_directory):
         return os.path.join(object_directory, ICON_OBJECT_FILE)
 
+    def get_archive_unpacked_path(self, object_directory):
+        return os.path.join(object_directory, ARCHIVE_DIRECTORY)
+
     def get_archive_object_path(self, object_directory):
         return os.path.join(object_directory, ARCHIVE_OBJECT_FILE)
 
@@ -178,7 +181,7 @@ class StorageManager:
 
     def persist_node_object(self, params):
         params["uuid"] = params["node"]["uuid"]
-        params["node_json"] = json.dumps(params["node"])
+        params["node_json"] = json.dumps(params["node"], ensure_ascii=False, separators=(',', ':'))
         self.persist_object(NODE_OBJECT_FILE, params, "node_json")
 
     def persist_archive_content(self, params, files):

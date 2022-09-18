@@ -9,22 +9,18 @@ from flask import abort, send_file, send_from_directory
 
 from . import browser
 from .cache_dict import CacheDict
-from .server import app, message_mutex, message_queue
+from .server import app, send_native_message, storage_manager
 from .storage_manager import StorageManager
 
 # Browse regular scrapyard archives
 
-storage_manager = StorageManager()
+
 unpacked_archives = CacheDict()
 
 
 @app.route("/browse/<uuid>/")
 def browse(uuid):
-    message_mutex.acquire()
-    msg = json.dumps({"type": "REQUEST_ARCHIVE", "uuid": uuid})
-    browser.send_message(msg)
-    msg = message_queue.get()
-    message_mutex.release()
+    msg = send_native_message({"type": "REQUEST_ARCHIVE", "uuid": uuid})
 
     try:
         if msg["type"] == "ARCHIVE_INFO" and msg["kind"] == "metadata" and msg["data_path"]:

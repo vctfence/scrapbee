@@ -1,18 +1,18 @@
+import logging
 import os
-import json
-import threading
+import shutil
 
 from pathlib import Path
 
 import flask
-from flask import request, abort
+from flask import request
 
-from . import browser
 from .cache_dict import CacheDict
-from .server import app, requires_auth, message_mutex, message_queue
-
+from .import_rdf import import_rdf_archive
+from .server import app, requires_auth, send_native_message
 
 # Scrapbook RDF support
+
 
 rdf_import_directory = None
 
@@ -31,17 +31,30 @@ def rdf_import_files(file):
     return flask.send_from_directory(rdf_import_directory, file)
 
 
+def _copyfileobj_patched(fsrc, fdst, length=16*1024*1024):
+    """Patches shutil method to hugely improve copy speed"""
+    while 1:
+        buf = fsrc.read(length)
+        if not buf:
+            break
+        fdst.write(buf)
+
+
+shutil.copyfileobj = _copyfileobj_patched
+
+
+@app.route("/rdf/import/archive", methods=['POST'])
+@requires_auth
+def rdf_import_archive():
+    return import_rdf_archive(request.json)
+
+
 rdf_page_directories = CacheDict()
 
 
 @app.route("/rdf/browse/<uuid>/", methods=['GET'])
 def rdf_browse(uuid):
-    message_mutex.acquire()
-    rdf_path_msg = json.dumps({"type": "REQUEST_RDF_PATH", "uuid": uuid})
-    browser.send_message(rdf_path_msg)
-    msg = message_queue.get()
-    message_mutex.release()
-
+    msg = send_native_message({"type": "REQUEST_RDF_PATH", "uuid": uuid})
     rdf_page_directories[uuid] = msg["rdf_directory"]
     return flask.send_from_directory(rdf_page_directories[uuid], "index.html")
 
@@ -51,7 +64,7 @@ def rdf_browse_content(uuid, file):
     return flask.send_from_directory(rdf_page_directories[uuid], file)
 
 
-# Get Scrapbook rdf file for a given node uuid
+# Get Scrapbook rdf file for the given node uuid
 
 @app.route("/rdf/xml/<uuid>", methods=['POST'])
 @requires_auth
@@ -60,7 +73,7 @@ def rdf_xml(uuid):
     return flask.send_file(rdf_file)
 
 
-# Save Scrapbook rdf file for a given node uuid
+# Save Scrapbook rdf file for the given node uuid
 
 @app.route("/rdf/xml/save/<uuid>", methods=['POST'])
 @requires_auth

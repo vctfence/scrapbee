@@ -233,8 +233,10 @@ class QueryIDB extends EntityIDB {
 
             for (let i = 0; i < idx.words.length; ++i)
                 for (let w = 0; w < words.length; ++w)
-                    if (idx.words[i].indexOf(words[w]) !== -1)
+                    if (idx.words[i].indexOf(words[w]) !== -1) {
                         foundWords[w] = true;
+                        break;
+                    }
 
             if (foundWords.every(w => w))
                 matchingNodeIds.push(idx.node_id);
@@ -256,8 +258,10 @@ class QueryIDB extends EntityIDB {
 
             for (let i = 0; i < idx.words.length; ++i)
                 for (let w = 0; w < words.length; ++w)
-                    if (idx.words[i].startsWith(words[w]))
+                    if (idx.words[i].startsWith(words[w])) {
                         foundWords[w] = true;
+                        break;
+                    }
 
             if (foundWords.every(w => w))
                 matchingNodeIds.push(idx.node_id);

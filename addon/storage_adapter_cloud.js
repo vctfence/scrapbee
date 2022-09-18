@@ -87,23 +87,20 @@ export class StorageAdapterCloud {
             return this._provider.assets.storeArchiveContent(params.uuid, params.content);
     }
 
-    async fetchArchive(params) {
+    async fetchArchiveContent(params) {
         const node = params.node;
-        let archive = {};
         //archive = archive || await this._provider.assets.fetchArchiveObject(params.uuid);
 
-        const content = await this._provider.assets.fetchArchiveContent(params.uuid);
+        let content = await this._provider.assets.fetchArchiveContent(params.uuid);
 
         //archive = JSON.parse(archive);
 
         if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
             const decoder = new TextDecoder();
-            archive.content = decoder.decode(content);
+            content = decoder.decode(content);
         }
-        else
-            archive.content = content;
 
-        return archive;
+        return content;
     }
 
     async persistNotesIndex(params) {

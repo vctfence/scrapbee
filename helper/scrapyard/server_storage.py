@@ -2,12 +2,10 @@
 from flask import request, abort
 
 from .request_queue import RequestQueue
-from .server import app, requires_auth, message_mutex, message_queue
-from .storage_manager import StorageManager
+from .server import app, requires_auth, storage_manager
 
 # JSON Scrapbook support
 
-storage_manager = StorageManager()
 request_queue = RequestQueue()
 
 

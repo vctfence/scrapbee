@@ -149,8 +149,8 @@ export function indexHTML(string) {
 function createIndex(string, textExtractor) {
     try {
         string = textExtractor(string);
-        string = string.replace(/\n/g, ' ')
-            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
+        string = string.replace(/\n/g, " ")
+            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, " ");
 
         let words = string.split(" ")
             .filter(s => s && s.length > 2)

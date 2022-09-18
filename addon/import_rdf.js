@@ -1,14 +1,20 @@
 import {helperApp} from "./helper_app.js";
-import {getFaviconFromTab} from "./favicon.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_TYPE} from "./storage.js";
+import {
+    ARCHIVE_TYPE_FILES,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_FOLDER,
+    NODE_TYPE_SEPARATOR,
+    RDF_EXTERNAL_TYPE
+} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
-import {packPage} from "./bookmarking.js";
 import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
-import {Node} from "./storage_entities.js";
+import {Archive, Comments, Node} from "./storage_entities.js";
 import {StreamImporterBuilder} from "./import_drivers.js";
 import {RDFNamespaces} from "./utils_html.js";
+import {settings} from "./settings.js";
+import {UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 
 class RDFImporter {
     #options;
@@ -20,6 +26,7 @@ class RDFImporter {
     #progressCounter;
     #threads;
     #sidebarSender;
+    #unmarshaller = new UnmarshallerJSONScrapbook();
 
     constructor(importOptions) {
         this.#options = importOptions;
@@ -31,13 +38,15 @@ class RDFImporter {
 
         if (helper) {
             const path = this.#options.stream.replace(/\\/g, "/");
-            const xml = await this.#getRDFXML(path);
+            const rdfFile = path.split("/").at(-1);
+            const rdfDirectory = path.substring(0, path.lastIndexOf("/"));
+            const xml = await this.#getRDFXML(rdfFile, rdfDirectory);
 
             if (!xml)
                 return Promise.reject(new Error("RDF file not found."));
 
             await this.#buildBookmarkTree(path, xml);
-            await this.#importArchives();
+            await this.#importArchives(rdfDirectory);
         }
     }
 
@@ -93,9 +102,7 @@ class RDFImporter {
         return result;
     }
 
-    async #getRDFXML(path) {
-        const rdfFile = path.split("/").at(-1);
-        const rdfDirectory = path.substring(0, path.lastIndexOf("/"));
+    async #getRDFXML(rdfFile, rdfDirectory) {
         let xml = null;
 
         try {
@@ -118,7 +125,7 @@ class RDFImporter {
         await this.#traverseRDFTree(rdfDoc, this.#createBookmark.bind(this), {pos: 0});
     }
 
-    async #importArchives() {
+    async #importArchives(path) {
         let cancelListener = (message, sender, sendResponse) => {
             if (message.type === "cancelRdfImport")
                 this.#cancelled = true;
@@ -128,7 +135,7 @@ class RDFImporter {
         try {
             if (!this.#options.quick) {
                 this.#progressCounter = new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
-                await this.#startThreads(this.#importThread.bind(this));
+                await this.#startThreads(this.#importThread.bind(this, path), this.#options.threads);
             }
             else
                 await this.#onFinish();
@@ -137,31 +144,31 @@ class RDFImporter {
         }
     }
 
-    async #startThreads(threadf) {
+    async #startThreads(threadf, amount) {
         const bookmarks = [...this.#bookmarks];
-        this.#threads = Math.min(this.#options.threads, this.#bookmarks.length);
+        this.#threads = Math.min(amount, this.#bookmarks.length);
 
         const promises = [];
-        for (let i = 0; i < this.#threads; ++i)
+        for (let i = 0; i < amount; ++i)
             promises.push(threadf(bookmarks));
 
         return Promise.all(promises);
     }
 
-    async #importThread(bookmarks) {
+    async #importThread(path, bookmarks) {
         if (bookmarks.length && !this.#cancelled) {
             let bookmark = bookmarks.shift();
 
             try {
                 let scrapbookId = this.#nodeID_SY2SB.get(bookmark.id);
-                await this.#importRDFArchive(bookmark, scrapbookId);
+                await this.#importRDFArchive(path, bookmark, scrapbookId);
             } catch (e) {
                 send.rdfImportError({bookmark: bookmark, error: e.message});
             }
 
             this.#progressCounter.incrementAndNotify();
 
-            return this.#importThread(bookmarks);
+            return this.#importThread(path, bookmarks);
         }
         else {
             this.#threads -= 1;
@@ -189,23 +196,31 @@ class RDFImporter {
         }
     }
 
-    async #importRDFArchive(node, scrapbookId) {
-        let root = helperApp.url(`/rdf/import/files/`)
-        let base = `${root}data/${scrapbookId}/`
-        let index = `${base}index.html`;
+    async #importRDFArchive(path, node, scrapbookId) {
+        const params = {
+            data_path: settings.data_folder_path(),
+            rdf_directory: path,
+            uuid: node.uuid,
+            scrapbook_id: scrapbookId
+        };
 
-        let initializer = async (bookmark, tab) => {
-            let icon = await getFaviconFromTab(tab, true);
+        try {
+            const response = await helperApp.fetchJSON_postJSON("/rdf/import/archive", params);
 
-            if (icon) {
-                bookmark.icon = icon;
-                await Bookmark.storeIcon(bookmark);
+            if (response?.archive_index) {
+                const archiveIndex = this.#unmarshaller.unconvertIndex(response.archive_index);
+                Archive.idb.import.storeIndex(node, archiveIndex.words);
             }
 
-            node.__mute_ui = true;
+            if (response?.comments) {
+                await Comments.idb.import.storeIndex(node, response.comments_index);
+                await Comments.idb.import.add(node, response.comments);
+                node.has_comments = true;
+                await Node.idb.update(node);
+            }
+        } catch (e) {
+            console.error(e);
         }
-
-        return packPage(index, node, initializer, _ => null, false);
     }
 
     async #onFinish() {
@@ -215,7 +230,7 @@ class RDFImporter {
             this.#progressCounter.finish();
 
         send.obtainingIcons({shelf: this.#shelf});
-        await this.#startThreads(this.#iconImportThread.bind(this));
+        await this.#startThreads(this.#iconImportThread.bind(this), this.#options.threads);
     }
 
     async #createShelf(path) {
@@ -245,9 +260,10 @@ class RDFImporter {
                 : (node.__sb_type === "separator"
                     ? NODE_TYPE_SEPARATOR
                     : NODE_TYPE_ARCHIVE),
-            details: node.__sb_comment,
             parent_id: parent ? this.#nodeID_SB2SY.get(parent.__sb_id) : this.#shelf.id,
             todo_state: node.__sb_type === "marked" ? 1 : undefined,
+            contains: ARCHIVE_TYPE_FILES,
+            content_type: "text/html",
             icon: node.__sb_icon,
             date_added: now,
             date_modified: now

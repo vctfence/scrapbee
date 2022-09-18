@@ -9,7 +9,7 @@ setup(
     author='gchristnsn',
     author_email='gchristnsn@gmail.com',
     description='',
-    install_requires=['Flask'],
+    install_requires=['Flask', 'bs4', 'regex'],
     entry_points = {
         'console_scripts': ['scrapyard_helper=scrapyard.helper:main'],
     },

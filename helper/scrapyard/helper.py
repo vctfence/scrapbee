@@ -2,6 +2,7 @@ import json
 
 from . import server, browser
 
+
 VERSION = "2.0"
 
 
@@ -9,7 +10,6 @@ def main():
     while True:
         msg = browser.get_message()
         process_message(msg)
-
 
 def process_message(msg):
     if msg["type"] == "INITIALIZE":

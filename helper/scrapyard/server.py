@@ -1,3 +1,4 @@
+import json
 import traceback
 import threading
 import logging
@@ -11,6 +12,8 @@ from contextlib import closing
 import flask
 from flask import request, abort
 from werkzeug.serving import make_server
+
+from .storage_manager import StorageManager
 
 DEBUG = True
 
@@ -33,6 +36,7 @@ httpd = None
 message_mutex = threading.Lock()
 message_queue = queue.Queue()
 
+storage_manager = StorageManager()
 
 class Httpd(threading.Thread):
 
@@ -120,6 +124,16 @@ def add_header(r):
     return r
 
 
+def send_native_message(msg):
+    message_mutex.acquire()
+    msg_json = json.dumps(msg)
+    browser.send_message(msg_json)
+    response = message_queue.get()
+    message_mutex.release()
+    return response
+
+
+from . import browser
 from . import server_rdf
 from . import server_browse
 from . import server_export
@@ -137,4 +151,3 @@ def root():
 @requires_auth
 def exit_app():
     os._exit(0)
-
