@@ -126,11 +126,17 @@ def add_header(r):
 
 def send_native_message(msg):
     message_mutex.acquire()
-    msg_json = json.dumps(msg)
-    browser.send_message(msg_json)
-    response = message_queue.get()
-    message_mutex.release()
+    response = {}
+
+    try:
+        msg_json = json.dumps(msg)
+        browser.send_message(msg_json)
+        response = message_queue.get()
+    finally:
+        message_mutex.release()
+
     return response
+
 
 
 from . import browser

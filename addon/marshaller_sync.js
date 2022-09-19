@@ -128,7 +128,7 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
             sync_node: JSON.stringify(syncNode)
         });
 
-        let {item: node, icon, archive_index, notes_index, comments_index} = payload;
+        let {item: node, icon, comments, archive_index, notes_index, comments_index} = payload;
 
         node = await this.unconvertNode(node);
         node = this.deserializeNode(node);
@@ -147,6 +147,11 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
         if (archive_index) {
             archive_index = this.unconvertIndex(archive_index);
             Archive.idb.import.storeIndex(node, archive_index.words);
+        }
+
+        if (comments) {
+            comments = this.unconvertComments(comments);
+            Comments.idb.import.add(node, comments.text);
         }
 
         if (notes_index) {

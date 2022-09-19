@@ -61,6 +61,9 @@ class StorageManager:
     def get_icon_object_path(self, object_directory):
         return os.path.join(object_directory, ICON_OBJECT_FILE)
 
+    def get_comments_object_path(self, object_directory):
+        return os.path.join(object_directory, COMMENTS_OBJECT_FILE)
+
     def get_archive_unpacked_path(self, object_directory):
         return os.path.join(object_directory, ARCHIVE_DIRECTORY)
 

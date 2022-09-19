@@ -3,7 +3,7 @@ import {StorageProxy} from "./storage_proxy.js";
 
 export class CommentsProxy extends StorageProxy {
     #marshaller = new MarshallerJSONScrapbook();
-    #unmarshaller = new UnmarshallerJSONScrapbook();
+    //#unmarshaller = new UnmarshallerJSONScrapbook();
 
     async storeIndex(node, words) {
         const result = await this.wrapped.storeIndex(node, words);
@@ -14,12 +14,16 @@ export class CommentsProxy extends StorageProxy {
     }
 
     async _add(node, text) {
-        return this.#persistComments(node, text);
+        const result = await this.wrapped._add(node, text);
+
+        await this.#persistComments(node, text);
+
+        return result;
     }
 
-    async get(node) {
-        return await this.#fetchComments(node);
-    }
+    // async get(node) {
+    //     return await this.#fetchComments(node);
+    // }
 
     async #persistCommentsIndex(node, words) {
         const adapter = this.adapter(node);
@@ -52,13 +56,13 @@ export class CommentsProxy extends StorageProxy {
         }
     }
 
-    async #fetchComments(node) {
-        const adapter = this.adapter(node);
-
-        if (adapter) {
-            const comments = await adapter.fetchComments({uuid: node.uuid});
-            if (comments)
-                return this.#unmarshaller.unconvertComments(comments)?.text;
-        }
-    }
+    // async #fetchComments(node) {
+    //     const adapter = this.adapter(node);
+    //
+    //     if (adapter) {
+    //         const comments = await adapter.fetchComments({uuid: node.uuid});
+    //         if (comments)
+    //             return this.#unmarshaller.unconvertComments(comments)?.text;
+    //     }
+    // }
 }

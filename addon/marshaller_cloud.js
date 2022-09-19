@@ -45,6 +45,14 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
             }
         }
 
+        if (node.has_comments) {
+            let comments = await provider.assets.fetchComments(node.uuid);
+            if (comments) {
+                comments = JSON.parse(comments);
+                content.comments = this.unconvertComments(comments);
+            }
+        }
+
         return content;
     }
 

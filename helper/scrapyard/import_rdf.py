@@ -3,14 +3,22 @@ import logging
 import os
 import shutil
 import threading
+import regex
 
-from SCons.Tool.tex import regex
 from bs4 import BeautifulSoup
 
 from .server import storage_manager
 
 
 archive_import_mutex = threading.Lock()
+
+
+def with_mutex(f):
+    archive_import_mutex.acquire()
+    try:
+        f()
+    finally:
+        archive_import_mutex.release()
 
 
 def import_rdf_archive(params):
@@ -25,12 +33,10 @@ def import_rdf_archive(params):
     result = dict()
 
     if os.path.exists(rdf_archive_directory):
-        archive_import_mutex.acquire()
-        shutil.copytree(rdf_archive_directory, unpacked_archive_directory, dirs_exist_ok=True)
-        archive_import_mutex.release()
-
+        with_mutex(lambda: shutil.copytree(rdf_archive_directory, unpacked_archive_directory, dirs_exist_ok=True))
         words = build_archive_index(rdf_archive_directory)
-        result["archive_index"] = store_archive_index(params, words)
+        store_archive_index(params, words)
+        result["archive_index"] = words
 
         read_rdf_metadata(rdf_archive_directory, result)
         if result.get("comments", None):
@@ -86,15 +92,14 @@ def read_rdf_metadata(rdf_archive_directory, result):
 def store_archive_comments(params, result):
     comments = {"content": result["comments"]}
     params["comments_json"] = json.dumps(comments, ensure_ascii=False, separators=(',', ':'))
-    storage_manager.persist_comments(params)
+    with_mutex(lambda: storage_manager.persist_comments(params))
 
     comments_index = {"content": result["comments_index"]}
     params["index_json"] = json.dumps(comments_index, ensure_ascii=False, separators=(',', ':'))
-    storage_manager.persist_comments_index(params)
+    with_mutex(lambda: storage_manager.persist_comments_index(params))
 
 
 def store_archive_index(params, words):
     index = {"content": words}
     params["index_json"] = json.dumps(index, ensure_ascii=False, separators=(',', ':'))
-    storage_manager.persist_archive_index(params)
-    return index
+    with_mutex(lambda: storage_manager.persist_archive_index(params))

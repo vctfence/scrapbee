@@ -26,7 +26,6 @@ class RDFImporter {
     #progressCounter;
     #threads;
     #sidebarSender;
-    #unmarshaller = new UnmarshallerJSONScrapbook();
 
     constructor(importOptions) {
         this.#options = importOptions;
@@ -207,10 +206,8 @@ class RDFImporter {
         try {
             const response = await helperApp.fetchJSON_postJSON("/rdf/import/archive", params);
 
-            if (response?.archive_index) {
-                const archiveIndex = this.#unmarshaller.unconvertIndex(response.archive_index);
-                Archive.idb.import.storeIndex(node, archiveIndex.words);
-            }
+            if (response?.archive_index)
+                Archive.idb.import.storeIndex(node, response.archive_index);
 
             if (response?.comments) {
                 await Comments.idb.import.storeIndex(node, response.comments_index);

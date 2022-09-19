@@ -167,6 +167,11 @@ def pull_sync_objects(storage_manager, params):
         if icon_object:
             result += ",\"icon\":" + icon_object
 
+        comments_object_path = storage_manager.get_comments_object_path(object_directory_path)
+        comments_object = read_object_file(comments_object_path)
+        if comments_object:
+            result += ",\"comments\":" + comments_object
+
         archive_index_object_path = storage_manager.get_archive_index_object_path(object_directory_path)
         archive_index_object = read_object_file(archive_index_object_path)
         if archive_index_object:
