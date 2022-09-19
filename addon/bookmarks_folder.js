@@ -31,7 +31,7 @@ class FolderManager extends EntityManager {
 
     async _addNode(node, parent) {
         node.name = await this.ensureUniqueName(parent?.id, node.name);
-        node.external = parent.external;
+        node.external = parent?.external;
         node = await Node.add(node);
 
         try {

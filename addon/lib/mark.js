@@ -74,7 +74,7 @@
       let doc;
       try {
         const ifrWin = ifr.contentWindow;
-        doc = ifrWin.document;
+        doc = ifrWin?.document;
         if (!ifrWin || !doc) {
           throw new Error('iframe inaccessible');
         }
@@ -88,7 +88,7 @@
     isIframeBlank(ifr) {
       const bl = 'about:blank',
         src = ifr.getAttribute('src').trim(),
-        href = ifr.contentWindow.location.href;
+        href = ifr.contentWindow?.location?.href;
       return href === bl && src !== bl && src;
     }
     observeIframeLoad(ifr, successFn, errorFn) {
@@ -114,7 +114,7 @@
     }
     onIframeReady(ifr, successFn, errorFn) {
       try {
-        if (ifr.contentWindow.document.readyState === 'complete') {
+        if (ifr.srcdoc || ifr.contentWindow.document.readyState === 'complete') {
           if (this.isIframeBlank(ifr)) {
             this.observeIframeLoad(ifr, successFn, errorFn);
           } else {

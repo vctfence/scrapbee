@@ -1,12 +1,14 @@
 import {send} from "../proxy.js"
 import {settings} from "../settings.js";
-import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
+import {fixDocumentEncoding, instantiateIFramesRecursive, parseHtml, rebuildIFramesRecursive} from "../utils_html.js";
 import {getActiveTab} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Archive, Icon} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {ProgressCounter} from "../utils.js";
+
+const IGNORE_PUNCTUATION = ",-–—‒'\"+=".split("");
 
 let shelfList;
 
@@ -38,16 +40,22 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
-    const blob = await Archive.get(node);
-    const text = await Archive.reify(blob);
+    const archive = await Archive.get(node);
+    const text = await Archive.reify(archive);
     const doc = parseHtml(text);
+    const [iframeDocs, topIframes] = instantiateIFramesRecursive(doc);
     const mark = new Mark(doc.body);
+
+    for (const iframeDoc of iframeDocs)
+        await markDoc(query, iframeDoc)
+
+    rebuildIFramesRecursive(doc, topIframes);
 
     mark.mark(query, {
         iframes: true,
         acrossElements: true,
         separateWordSearch: false,
-        ignorePunctuation: ",-–—‒'\"+=".split(""),
+        ignorePunctuation: IGNORE_PUNCTUATION,
         done: () => {
             fixDocumentEncoding(doc);
             $(doc.head).append("<style>mark {background-color: #ffff00 !important;}</style>");
@@ -64,6 +72,24 @@ async function previewResult(query, node) {
             $("#search-preview").html(`<iframe class="search-preview-content" src="${previewURL}"></iframe>`);
         }
     });
+}
+
+async function markDoc(query, doc) {
+    _log(doc)
+    const mark = new Mark(doc);
+
+    let resolveResult;
+    const promise = new Promise(resolve => resolveResult = resolve);
+
+    mark.mark(query, {
+        iframes: true,
+        acrossElements: true,
+        separateWordSearch: false,
+        ignorePunctuation: IGNORE_PUNCTUATION,
+        done: c => resolveResult()
+    });
+
+    return promise;
 }
 
 async function appendSearchResult(query, node, occurrences) {
@@ -115,39 +141,62 @@ async function appendSearchResult(query, node, occurrences) {
     $("#search-result-count").text(`${++resultsFound} ${resultsFound === 1? "result": "results"} found`);
 }
 
-function markSearch(query, nodes, across, progressCallback, finishCallback) {
+async function markSearch(query, nodes, acrossElements, progressCallback, finishCallback) {
     if (!nodes.length || !searching) {
         finishCallback()
         return;
     }
 
-    let node = nodes.shift();
-    Archive.get(node)
-        .then(blob => {
-            Archive.reify(blob)
-                .then(text => {
-                    let doc = parseHtml(text);
-                    let mark = new Mark(doc);
-                    let found = true;
+    for (const node of nodes) {
+        const archive = await Archive.get(node);
+        const content = await Archive.reify(archive);
+        const rootDoc = parseHtml(content);
+        const [iframeDocs] = instantiateIFramesRecursive(rootDoc);
+        const docs = [rootDoc, ...iframeDocs];
 
-                    mark.mark(query, {
-                        iframes: true,
-                        acrossElements: across,
-                        //firstMatchOnly: true,
-                        separateWordSearch: false,
-                        ignorePunctuation: ",-–—‒'\"+=".split(""),
-                        //filter: (n, t, c) => {return c === 0},
-                        noMatch: () => {found = false;},
-                        done: c => {
-                            if (found && searching)
-                                appendSearchResult(query, node, c);
+        let total = 0;
+        for (const doc of docs) {
+            const count = await markSearchDoc(query, doc, acrossElements);
 
-                            progressCallback();
-                            markSearch(query, nodes, across, progressCallback, finishCallback);
-                        }
-                    });
-                });
-        });
+            if (count)
+                total += count;
+
+            progressCallback();
+        }
+
+        if (searching && total > 0)
+            appendSearchResult(query, node, total);
+    }
+
+    finishCallback();
+}
+
+async function markSearchDoc(query, doc, across) {
+    const mark = new Mark(doc);
+    let found = true;
+
+    let resolveResult;
+    const promise = new Promise(resolve => resolveResult = resolve);
+
+    mark.mark(query, {
+        iframes: true,
+        acrossElements: across,
+        //firstMatchOnly: true,
+        separateWordSearch: false,
+        ignorePunctuation: IGNORE_PUNCTUATION,
+        //filter: (n, t, c) => {return c === 0},
+        noMatch: () => {
+            found = false;
+        },
+        done: c => {
+            if (found)
+                resolveResult(c);
+            else
+                resolveResult(0);
+        }
+    });
+
+    return promise;
 }
 
 async function performSearch() {
@@ -195,8 +244,6 @@ async function performSearch() {
                 performSearch();
         });
     }
-    else {
+    else
         searching = false;
-    }
-
 }

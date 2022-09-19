@@ -184,6 +184,39 @@ function extractTextRecursive(string, parser) {
     return text;
 }
 
+export function instantiateIFramesRecursive(doc, parser, acc = [], topIFrames) {
+    const invocation = !parser;
+    if (invocation)
+        parser = new DOMParser();
+
+    const iframes = doc.querySelectorAll("iframe");
+
+    if (invocation)
+        topIFrames = iframes;
+
+    iframes.forEach(
+        function (iframe) {
+            const html = iframe.srcdoc;
+            if (html) {
+                const iframeDoc = parseHtml(html);
+                iframe.__doc = iframeDoc;
+                acc.push(iframeDoc);
+                instantiateIFramesRecursive(iframeDoc, parser, acc, topIFrames);
+            }
+        });
+
+    return [acc, topIFrames];
+}
+
+export function rebuildIFramesRecursive(doc, topIFrames) {
+    topIFrames.forEach(iframe => {
+        if (iframe.__doc) {
+            rebuildIFramesRecursive(iframe.__doc, iframe.__doc.querySelectorAll("iframe"));
+            iframe.srcdoc = iframe.__doc.documentElement.outerHTML;
+        }
+    })
+}
+
 function removeTags(string) {
     return string.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
         .replace(/<title.*?<\/title>/igs, "")

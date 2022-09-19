@@ -90,6 +90,7 @@ export class StorageAdapterDisk {
 
     async fetchArchiveContent(params) {
         const node = params.node;
+        delete params.node;
         //archive = archive || await this._fetchJSON("/storage/fetch_archive_object", params);
 
         params.data_path = settings.data_folder_path();
