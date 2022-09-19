@@ -1,4 +1,5 @@
 import {fetchWithTimeout} from "./utils_io.js";
+import {Archive} from "./storage_entities.js";
 
 var entityMap = {
     '&': '&amp;',
@@ -215,6 +216,36 @@ export function rebuildIFramesRecursive(doc, topIFrames) {
             iframe.srcdoc = iframe.__doc.documentElement.outerHTML;
         }
     })
+}
+
+export async function buildIFramesRecursive(node, doc, topIFrames, acc = []) {
+    for (let i = 0; i < topIFrames.length; ++i) {
+        const iframe = topIFrames[i];
+
+        if (iframe.src) {
+            const iframeHTML = await Archive.getFile(node, iframe.src);
+
+            if (iframeHTML) {
+                const iframeDoc = parseHtml(iframeHTML);
+                await buildIFramesRecursive(node, iframeDoc, iframeDoc.querySelectorAll("iframe"), acc);
+                iframe.__doc = iframeDoc;
+                acc.push(iframeDoc);
+            }
+        }
+    }
+
+    return [acc, topIFrames];
+}
+
+export async function assembleUnpackedIndex(node) {
+    const indexHTML = await Archive.getFile(node, "index.html");
+    if (indexHTML) {
+        const doc = parseHtml(indexHTML);
+        const iframes = doc.querySelectorAll("iframe");
+        const [iframeDocs] = await buildIFramesRecursive(node, doc, iframes);
+
+        return [doc, ...iframeDocs];
+    }
 }
 
 function removeTags(string) {

@@ -41,7 +41,6 @@ def close_batch_session():
 @requires_auth
 def add_node():
     request_queue.add(storage_manager.persist_node, request.json)
-    #storage_manager.persist_node(request.json)
     return "", 204
 
 
@@ -49,7 +48,6 @@ def add_node():
 @requires_auth
 def update_node():
     request_queue.add(storage_manager.update_node, request.json)
-    #storage_manager.update_node(request.json)
     return "", 204
 
 
@@ -57,7 +55,6 @@ def update_node():
 @requires_auth
 def update_nodes():
     request_queue.add(storage_manager.update_nodes, request.json)
-    #storage_manager.update_nodes(request.json)
     return "", 204
 
 
@@ -65,7 +62,6 @@ def update_nodes():
 @requires_auth
 def delete_nodes():
     request_queue.add(storage_manager.delete_nodes, request.json)
-    #storage_manager.delete_nodes(request.json)
     return "", 204
 
 
@@ -73,7 +69,6 @@ def delete_nodes():
 @requires_auth
 def delete_nodes_shallow():
     request_queue.add(storage_manager.delete_nodes_shallow, request.json)
-    #storage_manager.delete_nodes_shallow(request.json)
     return "", 204
 
 
@@ -133,7 +128,18 @@ def fetch_archive_object():
 @app.route("/storage/fetch_archive_content", methods=['POST'])
 @requires_auth
 def fetch_archive_content():
-    result = storage_manager.fetch_archive_content(request.form)
+    result = storage_manager.fetch_archive_content(request.json)
+
+    if result:
+        return result
+    else:
+        return "", 404
+
+
+@app.route("/storage/fetch_archive_file", methods=['POST'])
+@requires_auth
+def fetch_archive_file():
+    result = storage_manager.fetch_archive_file(request.json)
 
     if result:
         return result

@@ -5,7 +5,7 @@ import {Node} from "./storage_entities.js";
 import {delegateProxy} from "./proxy.js";
 import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {ArchiveProxy} from "./storage_archive_proxy.js";
-import {ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_TEXT} from "./storage.js";
+import {ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT} from "./storage.js";
 
 export class ArchiveIDB extends EntityIDB {
     static newInstance() {
@@ -112,12 +112,21 @@ export class ArchiveIDB extends EntityIDB {
         return this._db.blobs.where("node_id").equals(node.id).first();
     }
 
+    // get file of an unpacked archive
+    async getFile(node, file) {
+        // NOP, used in proxy
+    }
+
     async delete(node) {
         if (this._db.tables.some(t => t.name === "blobs"))
             await this._db.blobs.where("node_id").equals(node.id).delete();
 
         if (this._db.tables.some(t => t.name === "index"))
             await this._db.index.where("node_id").equals(node.id).delete();
+    }
+
+    isUnpacked(node) {
+        return node.contains === ARCHIVE_TYPE_FILES;
     }
 
     // reifying for JSON storage, leaves string (no byte_length) as is even if binarystring is specified

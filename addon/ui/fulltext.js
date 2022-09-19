@@ -1,12 +1,19 @@
 import {send} from "../proxy.js"
 import {settings} from "../settings.js";
-import {fixDocumentEncoding, instantiateIFramesRecursive, parseHtml, rebuildIFramesRecursive} from "../utils_html.js";
-import {getActiveTab} from "../utils_browser.js";
+import {
+    assembleUnpackedIndex,
+    fixDocumentEncoding,
+    instantiateIFramesRecursive,
+    parseHtml,
+    rebuildIFramesRecursive
+} from "../utils_html.js";
+import {getActiveTab, injectScriptFile} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Archive, Icon} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
-import {ProgressCounter} from "../utils.js";
+import {ProgressCounter, sleep} from "../utils.js";
+import {helperApp} from "../helper_app.js";
 
 const IGNORE_PUNCTUATION = ",-–—‒'\"+=".split("");
 
@@ -31,8 +38,8 @@ async function init() {
     await shelfList.initDefault()
 
     $("#search-button").on("click", e => performSearch());
-    $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});
-};
+    $("#search-query").on("keydown", e => {if (e.originalEvent.code === "Enter") performSearch();});
+}
 
 let searching;
 let searchQuery;
@@ -40,9 +47,16 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
+    if (Archive.isUnpacked(node))
+        return previewUnpackedResult(query, node);
+    else
+        return previewPackedResult(query, node);
+}
+
+async function previewPackedResult(query, node) {
     const archive = await Archive.get(node);
-    const text = await Archive.reify(archive);
-    const doc = parseHtml(text);
+    const content = await Archive.reify(archive);
+    const doc = parseHtml(content);
     const [iframeDocs, topIframes] = instantiateIFramesRecursive(doc);
     const mark = new Mark(doc.body);
 
@@ -56,26 +70,43 @@ async function previewResult(query, node) {
         acrossElements: true,
         separateWordSearch: false,
         ignorePunctuation: IGNORE_PUNCTUATION,
-        done: () => {
-            fixDocumentEncoding(doc);
-            $(doc.head).append("<style>mark {background-color: #ffff00 !important;}</style>");
-            let html = doc.documentElement.outerHTML;
-
-            if (previewURL)
-                URL.revokeObjectURL(previewURL);
-
-            let object = new Blob([html], {type: "text/html"});
-            previewURL = URL.createObjectURL(object);
-
-            $(`#found-items td`).css("background-color", "transparent");
-            $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
-            $("#search-preview").html(`<iframe class="search-preview-content" src="${previewURL}"></iframe>`);
-        }
+        done: () => displayDocument(doc, node)
     });
 }
 
+function displayDocument(doc, node) {
+    fixDocumentEncoding(doc);
+    $(doc.head).append("<style>mark {background-color: #ffff00 !important;}</style>");
+    let html = doc.documentElement.outerHTML;
+
+    if (previewURL)
+        URL.revokeObjectURL(previewURL);
+
+    let object = new Blob([html], {type: "text/html"});
+    previewURL = URL.createObjectURL(object);
+    displayURL(previewURL, node);
+}
+
+async function previewUnpackedResult(query, node) {
+    const previewURL = helperApp.url(`/browse/${node.uuid}`);
+    displayURL(previewURL, node);
+
+    // await sleep(100);
+
+    // const currentTab = await browser.tabs.getCurrent();
+    // const frameIds = await browser.webNavigation.getAllFrames({tabId: currentTab.id});
+    // const previewFrameId = frameIds.find(f => f.frameId > 0)?.frameId;
+    // // does not work, missing permissions
+    // await injectScriptFile(currentTab.id, {file: "/content_mark.js", allFrames: true});
+}
+
+function displayURL(previewURL, node) {
+    $(`#found-items td`).css("background-color", "transparent");
+    $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
+    $("#search-preview").html(`<iframe class="search-preview-content" src="${previewURL}"></iframe>`);
+}
+
 async function markDoc(query, doc) {
-    _log(doc)
     const mark = new Mark(doc);
 
     let resolveResult;
@@ -86,7 +117,7 @@ async function markDoc(query, doc) {
         acrossElements: true,
         separateWordSearch: false,
         ignorePunctuation: IGNORE_PUNCTUATION,
-        done: c => resolveResult()
+        done: () => resolveResult()
     });
 
     return promise;
@@ -147,28 +178,45 @@ async function markSearch(query, nodes, acrossElements, progressCallback, finish
         return;
     }
 
+    const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
+
     for (const node of nodes) {
-        const archive = await Archive.get(node);
-        const content = await Archive.reify(archive);
-        const rootDoc = parseHtml(content);
-        const [iframeDocs] = instantiateIFramesRecursive(rootDoc);
-        const docs = [rootDoc, ...iframeDocs];
+        if (!searching)
+            break;
+
+        const docs = await getArchiveFrames(node);
 
         let total = 0;
         for (const doc of docs) {
+            if (!searching)
+                break;
+
             const count = await markSearchDoc(query, doc, acrossElements);
 
             if (count)
                 total += count;
 
-            progressCallback();
+            progressCounter.incrementAndNotify();
         }
 
-        if (searching && total > 0)
-            appendSearchResult(query, node, total);
+        if (total > 0)
+            await appendSearchResult(query, node, total);
     }
 
-    finishCallback();
+    stopSearch(progressCounter);
+}
+
+async function getArchiveFrames(node) {
+    if (Archive.isUnpacked(node)) {
+        return await assembleUnpackedIndex(node);
+    }
+    else {
+        const archive = await Archive.get(node);
+        const content = await Archive.reify(archive);
+        const rootDoc = parseHtml(content);
+        const [iframeDocs] = instantiateIFramesRecursive(rootDoc);
+        return [rootDoc, ...iframeDocs];
+    }
 }
 
 async function markSearchDoc(query, doc, across) {
@@ -228,22 +276,21 @@ async function performSearch() {
         $("#found-items").empty();
         $("#search-preview").empty();
 
-        const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
-        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0,
-            () => progressCounter.incrementAndNotify(),
-            () => {
-            searching = false;
-            $("#search-button").val("Search");
-            send.stopProcessingIndication();
-            progressCounter.finish();
-
-            if (resultsFound === 0)
-                $("#search-result-count").text(`not found`);
-
-            if (searchQuery !== $("#search-query").val())
-                performSearch();
-        });
+        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0);
     }
     else
         searching = false;
+}
+
+function stopSearch(progressCounter) {
+    searching = false;
+    $("#search-button").val("Search");
+    send.stopProcessingIndication();
+    progressCounter.finish();
+
+    if (resultsFound === 0)
+        $("#search-result-count").text(`not found`);
+
+    if (searchQuery !== $("#search-query").val())
+        performSearch();
 }

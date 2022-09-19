@@ -1,5 +1,7 @@
-import {ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT, CLOUD_EXTERNAL_TYPE} from "./storage.js";
+import {ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT, CLOUD_EXTERNAL_TYPE, UNPACKED_ARCHIVE_DIRECTORY} from "./storage.js";
 import {unzip} from "./lib/unzipit.js";
+import {settings} from "./settings.js";
+import {helperApp} from "./helper_app.js";
 
 export class StorageAdapterCloud {
     _provider;
@@ -76,7 +78,7 @@ export class StorageAdapterCloud {
             const {entries} = await unzip(params.content);
 
             for (const [name, entry] of Object.entries(entries)) {
-                const filePath = `archive/${name.startsWith("/")? name.substring(1): name}`;
+                const filePath = `${UNPACKED_ARCHIVE_DIRECTORY}/${name.startsWith("/")? name.substring(1): name}`;
                 const bytes = await entry.arrayBuffer();
                 await this._provider.assets.storeArchiveFile(params.uuid, bytes, filePath);
             }
@@ -96,6 +98,18 @@ export class StorageAdapterCloud {
         //archive = JSON.parse(archive);
 
         if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
+            const decoder = new TextDecoder();
+            content = decoder.decode(content);
+        }
+
+        return content;
+    }
+
+    async fetchArchiveFile(params) {
+        const fileName = `${UNPACKED_ARCHIVE_DIRECTORY}/${params.file}`;
+        let content = await this._provider.assets.fetchArchiveFile(params.uuid, fileName);
+
+        if (content) {
             const decoder = new TextDecoder();
             content = decoder.decode(content);
         }

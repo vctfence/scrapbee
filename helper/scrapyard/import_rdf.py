@@ -75,7 +75,7 @@ def create_index(string):
 def read_rdf_metadata(rdf_archive_directory, result):
     metadata_file_path = os.path.join(rdf_archive_directory, "index.dat")
 
-    if os.path.exists(rdf_archive_directory):
+    if os.path.exists(metadata_file_path):
         with open(metadata_file_path, "r", encoding="utf-8") as metadata_file:
             lines = metadata_file.readlines()
 

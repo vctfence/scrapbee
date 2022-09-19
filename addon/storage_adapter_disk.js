@@ -96,7 +96,7 @@ export class StorageAdapterDisk {
         params.data_path = settings.data_folder_path();
 
         try {
-            const response = await helperApp.post(`/storage/fetch_archive_content`, params);
+            const response = await helperApp.postJSON(`/storage/fetch_archive_content`, params);
 
             if (response.ok) {
                 let content = await response.arrayBuffer();
@@ -109,6 +109,22 @@ export class StorageAdapterDisk {
                 return content;
             }
 
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async fetchArchiveFile(params) {
+        params.data_path = settings.data_folder_path();
+
+        try {
+            const response = await helperApp.postJSON(`/storage/fetch_archive_file`, params);
+
+            if (response.ok) {
+                let content = await response.arrayBuffer();
+                const decoder = new TextDecoder();
+                return decoder.decode(content);
+            }
         } catch (e) {
             console.error(e);
         }

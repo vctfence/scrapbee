@@ -219,6 +219,17 @@ class StorageManager:
         else:
             return self.fetch_packed_archive(object_directory_path)
 
+    def fetch_archive_file(self, params):
+        object_directory_path = self.get_object_directory(params, params["uuid"])
+        archive_file_path = os.path.join(object_directory_path, ARCHIVE_DIRECTORY, params["file"])
+
+        file_content = None
+        if os.path.exists(archive_file_path):
+            with open(archive_file_path, "rb") as archive_file:
+                file_content = archive_file.read()
+
+        return file_content
+
     def fetch_packed_archive(self, object_directory_path):
         content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 
