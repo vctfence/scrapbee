@@ -219,7 +219,7 @@ export class BookmarkManager extends EntityManager {
                     await Query.selectAllChildrenIdsOf(group.id, subtree);
             }
 
-            result = await Query.nodesByIndex(subtree, search, options.index);
+            result = await Query.nodesByIndex(subtree, search, options.index, options.partial);
         }
         else {
             result = await Query.nodes(group, options);

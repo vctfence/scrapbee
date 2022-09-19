@@ -210,55 +210,76 @@ class QueryIDB extends EntityIDB {
     }
 
     // returns nodes containing only the all given words
-    async nodesByIndex(ids, words, index) {
-        let allMatchedNodes = [];
-        let matches = {};
-        let wordCount = {};
+    async nodesByIndex(ids, words, entityName, partialMatching) {
+        let matchingNodeIds;
 
-        const selectIndex = index => {
-            switch (index) {
-                case "notes":
-                    return this._db.index_notes;
-                case "comments":
-                    return this._db.index_comments;
-                default:
-                    return this._db.index;
-            }
-        };
+        if (partialMatching)
+            matchingNodeIds = await this.partiallyMatchWords(ids, words, entityName);
+        else
+            matchingNodeIds = await this.prefixMatchWords(ids, words, entityName);
 
-        const query = ids
-            ? word => selectIndex(index).where("words").startsWith(word).and(i => ids.some(id => id === i.node_id))
-            : word => selectIndex(index).where("words").startsWith(word);
+        return Node.get(matchingNodeIds);
+    }
 
-        for (let word of words) {
-            let matched_nodes = matches[word] = [];
-            await query(word).each(w => matched_nodes.push(w.node_id));
-            allMatchedNodes = [...allMatchedNodes, ...matched_nodes]
-                .filter((w, i, a) => a.indexOf(w) === i); // distinct
-        }
-
-        for (let n of allMatchedNodes) {
-            wordCount[n] = 0;
-
-            for (let word of words) {
-                if (matches[word].some(i => i === n))
-                    wordCount[n] += 1;
-            }
-        }
+    async partiallyMatchWords(ids, words, entityName) {
+        const matchingNodeIds = [];
+        let indexItems = this.selectIndex(entityName);
 
         if (ids)
-            return Node.get(ids.filter(id => wordCount[id] === words.length));
-        else {
-            let nodesWithAllWords = [];
+            indexItems = indexItems.where("node_id").anyOf(ids);
 
-            for (const [id, count] of Object.entries(wordCount)) {
-                if (count === words.length)
-                    nodesWithAllWords.push(parseInt(id));
-            }
+        await indexItems.each(idx => {
+            const foundWords = words.map(_ => false);
 
-            return Node.get(nodesWithAllWords);
-        }
+            for (let i = 0; i < idx.words.length; ++i)
+                for (let w = 0; w < words.length; ++w)
+                    if (idx.words[i].indexOf(words[w]) !== -1) {
+                        foundWords[w] = true;
+                        break;
+                    }
+
+            if (foundWords.every(w => w))
+                matchingNodeIds.push(idx.node_id);
+        });
+
+        return matchingNodeIds;
     }
+
+    async prefixMatchWords(ids, words, entityName) {
+        const matchingNodeIds = [];
+
+        const indexItems = ids
+            ? this.selectIndex(entityName).where("words").startsWithAnyOf(words)
+                .and(i => ids.some(id => id === i.node_id))
+            : this.selectIndex(entityName).where("words").startsWithAnyOf(words);
+
+        await indexItems.each(idx => {
+            const foundWords = words.map(_ => false);
+
+            for (let i = 0; i < idx.words.length; ++i)
+                for (let w = 0; w < words.length; ++w)
+                    if (idx.words[i].startsWith(words[w])) {
+                        foundWords[w] = true;
+                        break;
+                    }
+
+            if (foundWords.every(w => w))
+                matchingNodeIds.push(idx.node_id);
+        });
+
+        return matchingNodeIds;
+    }
+
+    selectIndex(index) {
+        switch (index) {
+            case "notes":
+                return this._db.index_notes;
+            case "comments":
+                return this._db.index_comments;
+            default:
+                return this._db.index;
+        }
+    };
 
     async unlisted(name) {
         let where = this._db.nodes.where("type").equals(NODE_TYPE_UNLISTED);

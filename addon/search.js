@@ -134,6 +134,7 @@ export class ContentSearchProvider extends SearchProvider {
                 search: text,
                 content: true,
                 index: this.index,
+                partial: true,
                 depth: "subtree",
                 path: this.shelf
             });

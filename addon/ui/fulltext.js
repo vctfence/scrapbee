@@ -1,12 +1,19 @@
 import {send} from "../proxy.js"
 import {settings} from "../settings.js";
-import {fixDocumentEncoding, parseHtml} from "../utils_html.js";
-import {getActiveTab} from "../utils_browser.js";
+import {
+    fixDocumentEncoding,
+    instantiateIFramesRecursive,
+    parseHtml,
+    rebuildIFramesRecursive
+} from "../utils_html.js";
+import {getActiveTab, injectScriptFile} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Archive, Icon} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
-import {ProgressCounter} from "../utils.js";
+import {ProgressCounter, sleep} from "../utils.js";
+
+const IGNORE_PUNCTUATION = ",-–—‒'\"+=".split("");
 
 let shelfList;
 
@@ -29,8 +36,8 @@ async function init() {
     await shelfList.initDefault()
 
     $("#search-button").on("click", e => performSearch());
-    $("#search-query").on("keydown", e => {if (e.code === "Enter") performSearch();});
-};
+    $("#search-query").on("keydown", e => {if (e.originalEvent.code === "Enter") performSearch();});
+}
 
 let searching;
 let searchQuery;
@@ -38,32 +45,60 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
-    const blob = await Archive.get(node.id);
-    const text = await Archive.reify(blob);
-    const doc = parseHtml(text);
+    const archive = await Archive.get(node.id);
+    const content = await Archive.reify(archive);
+    const doc = parseHtml(content);
+    const [iframeDocs, topIframes] = instantiateIFramesRecursive(doc);
     const mark = new Mark(doc.body);
+
+    for (const iframeDoc of iframeDocs)
+        await markDoc(query, iframeDoc)
+
+    rebuildIFramesRecursive(doc, topIframes);
 
     mark.mark(query, {
         iframes: true,
         acrossElements: true,
         separateWordSearch: false,
-        ignorePunctuation: ",-–—‒'\"+=".split(""),
-        done: () => {
-            fixDocumentEncoding(doc);
-            $(doc.head).append("<style>mark {background-color: #ffff00 !important;}</style>");
-            let html = doc.documentElement.outerHTML;
-
-            if (previewURL)
-                URL.revokeObjectURL(previewURL);
-
-            let object = new Blob([html], {type: "text/html"});
-            previewURL = URL.createObjectURL(object);
-
-            $(`#found-items td`).css("background-color", "transparent");
-            $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
-            $("#search-preview").html(`<iframe class="search-preview-content" src="${previewURL}"></iframe>`);
-        }
+        ignorePunctuation: IGNORE_PUNCTUATION,
+        done: () => displayDocument(doc, node)
     });
+}
+
+function displayDocument(doc, node) {
+    fixDocumentEncoding(doc);
+    $(doc.head).append("<style>mark {background-color: #ffff00 !important;}</style>");
+    let html = doc.documentElement.outerHTML;
+
+    if (previewURL)
+        URL.revokeObjectURL(previewURL);
+
+    let object = new Blob([html], {type: "text/html"});
+    previewURL = URL.createObjectURL(object);
+    displayURL(previewURL, node);
+}
+
+function displayURL(previewURL, node) {
+    $(`#found-items td`).css("background-color", "transparent");
+    $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
+    $("#search-preview").html(`<iframe class="search-preview-content" src="${previewURL}"></iframe>`);
+}
+
+async function markDoc(query, doc) {
+    const mark = new Mark(doc);
+
+    let resolveResult;
+    const promise = new Promise(resolve => resolveResult = resolve);
+
+    mark.mark(query, {
+        iframes: true,
+        acrossElements: true,
+        separateWordSearch: false,
+        ignorePunctuation: IGNORE_PUNCTUATION,
+        done: () => resolveResult()
+    });
+
+    return promise;
 }
 
 async function appendSearchResult(query, node, occurrences) {
@@ -115,39 +150,74 @@ async function appendSearchResult(query, node, occurrences) {
     $("#search-result-count").text(`${++resultsFound} ${resultsFound === 1? "result": "results"} found`);
 }
 
-function markSearch(query, nodes, across, progressCallback, finishCallback) {
+async function markSearch(query, nodes, acrossElements, progressCallback, finishCallback) {
     if (!nodes.length || !searching) {
         finishCallback()
         return;
     }
 
-    let node = nodes.shift();
-    Archive.get(node.id)
-        .then(blob => {
-            Archive.reify(blob)
-                .then(text => {
-                    let doc = parseHtml(text);
-                    let mark = new Mark(doc);
-                    let found = true;
+    const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
 
-                    mark.mark(query, {
-                        iframes: true,
-                        acrossElements: across,
-                        //firstMatchOnly: true,
-                        separateWordSearch: false,
-                        ignorePunctuation: ",-–—‒'\"+=".split(""),
-                        //filter: (n, t, c) => {return c === 0},
-                        noMatch: () => {found = false;},
-                        done: c => {
-                            if (found && searching)
-                                appendSearchResult(query, node, c);
+    for (const node of nodes) {
+        if (!searching)
+            break;
 
-                            progressCallback();
-                            markSearch(query, nodes, across, progressCallback, finishCallback);
-                        }
-                    });
-                });
-        });
+        const docs = await getArchiveFrames(node);
+
+        let total = 0;
+        for (const doc of docs) {
+            if (!searching)
+                break;
+
+            const count = await markSearchDoc(query, doc, acrossElements);
+
+            if (count)
+                total += count;
+
+            progressCounter.incrementAndNotify();
+        }
+
+        if (total > 0)
+            await appendSearchResult(query, node, total);
+    }
+
+    stopSearch(progressCounter);
+}
+
+async function getArchiveFrames(node) {
+    const archive = await Archive.get(node.id);
+    const content = await Archive.reify(archive);
+    const rootDoc = parseHtml(content);
+    const [iframeDocs] = instantiateIFramesRecursive(rootDoc);
+    return [rootDoc, ...iframeDocs];
+}
+
+async function markSearchDoc(query, doc, across) {
+    const mark = new Mark(doc);
+    let found = true;
+
+    let resolveResult;
+    const promise = new Promise(resolve => resolveResult = resolve);
+
+    mark.mark(query, {
+        iframes: true,
+        acrossElements: across,
+        //firstMatchOnly: true,
+        separateWordSearch: false,
+        ignorePunctuation: IGNORE_PUNCTUATION,
+        //filter: (n, t, c) => {return c === 0},
+        noMatch: () => {
+            found = false;
+        },
+        done: c => {
+            if (found)
+                resolveResult(c);
+            else
+                resolveResult(0);
+        }
+    });
+
+    return promise;
 }
 
 async function performSearch() {
@@ -171,6 +241,7 @@ async function performSearch() {
             search: searchQuery,
             content: true,
             index: "content",
+            partial: true,
             order: "date_desc",
             path: shelfList.selectedShelfName
         });
@@ -178,24 +249,21 @@ async function performSearch() {
         $("#found-items").empty();
         $("#search-preview").empty();
 
-        const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
-        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0,
-            () => progressCounter.incrementAndNotify(),
-            () => {
-            searching = false;
-            $("#search-button").val("Search");
-            send.stopProcessingIndication();
-            progressCounter.finish();
-
-            if (resultsFound === 0)
-                $("#search-result-count").text(`not found`);
-
-            if (searchQuery !== $("#search-query").val())
-                performSearch();
-        });
+        markSearch(searchQuery, nodes, searchQuery.indexOf(" ") > 0);
     }
-    else {
+    else
         searching = false;
-    }
+}
 
+function stopSearch(progressCounter) {
+    searching = false;
+    $("#search-button").val("Search");
+    send.stopProcessingIndication();
+    progressCounter.finish();
+
+    if (resultsFound === 0)
+        $("#search-result-count").text(`not found`);
+
+    if (searchQuery !== $("#search-query").val())
+        performSearch();
 }

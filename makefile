@@ -1,7 +1,7 @@
 # uses git shell
 
 test:
-	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard" --keep-profile-changes
+	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard1" --keep-profile-changes
 
 test-nightly:
 	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard.nightly" --firefox=nightly --keep-profile-changes
