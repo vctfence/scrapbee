@@ -9,7 +9,7 @@ input[type="text"]:focus {
     padding: 0 10px 5px 10px;
 }
 
-.dlg-cover {
+.dlg-dim {
     position: fixed;
     z-index: 999999;
     width: 100%;

@@ -1,13 +1,12 @@
 import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {StorageAdapterCloud} from "./storage_adapter_cloud.js";
-import {BROWSER_EXTERNAL_TYPE, CLOUD_EXTERNAL_TYPE} from "./storage.js";
-
-const STORAGE_ADAPTER_DISK = new StorageAdapterDisk();
-const STORAGE_ADAPTER_CLOUD = new StorageAdapterCloud();
+import {CLOUD_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE} from "./storage.js";
+import {StorageAdapterRDF} from "./storage_adapter_rdf.js";
 
 export class StorageProxy {
     static _adapterDisk = new StorageAdapterDisk();
     static _adapterCloud = new StorageAdapterCloud();
+    static _adapterRDF = new StorageAdapterRDF();
 
     static setCloudProvider(provider) {
         this._adapterCloud.setProvider(provider);
@@ -30,7 +29,9 @@ export class StorageProxy {
 
         if (node.external === CLOUD_EXTERNAL_TYPE)
             return StorageProxy._adapterCloud;
-        else if (node.external !== BROWSER_EXTERNAL_TYPE)
+        else if (node.external === RDF_EXTERNAL_TYPE)
+            return StorageProxy._adapterRDF;
+        else if (!node.external)
             return StorageProxy._adapterDisk;
     }
 

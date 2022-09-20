@@ -231,7 +231,7 @@ async function browseRDFArchive(node, options) {
 
 export async function onRequestRdfPathMessage(msg) {
     const node = await Node.getByUUID(msg.uuid);
-    const path = await rdfShelf.getRDFPageDir(node);
+    const path = await rdfShelf.getRDFArchiveDir(node);
     return {
         type: "RDF_PATH",
         uuid: node.uuid,

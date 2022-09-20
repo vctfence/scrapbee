@@ -8,8 +8,8 @@ import flask
 from flask import request
 
 from .cache_dict import CacheDict
-from .import_rdf import import_rdf_archive
-from .server import app, requires_auth, send_native_message
+from .import_rdf import import_rdf_archive, import_rdf_archive_index
+from .server import app, requires_auth, send_native_message, storage_manager
 
 # Scrapbook RDF support
 
@@ -46,7 +46,26 @@ shutil.copyfileobj = _copyfileobj_patched
 @app.route("/rdf/import/archive", methods=['POST'])
 @requires_auth
 def rdf_import_archive():
-    return import_rdf_archive(request.json)
+    import_type = request.args.get("type", "full")
+    result = {}
+
+    if import_type == "full":
+        result = import_rdf_archive(request.json)
+    else:
+        result = import_rdf_archive_index(request.json)
+
+    return result
+
+
+@app.route("/storage/fetch_rdf_archive_file", methods=['POST'])
+@requires_auth
+def fetch_rdf_archive_file():
+    result = storage_manager.fetch_rdf_archive_file(request.json)
+
+    if result:
+        return result
+    else:
+        return "", 404
 
 
 rdf_page_directories = CacheDict()

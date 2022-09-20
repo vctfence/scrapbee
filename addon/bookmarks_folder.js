@@ -6,10 +6,24 @@ import {ishellConnector} from "./plugin_ishell.js";
 import {Node} from "./storage_entities.js";
 
 class FolderManager extends EntityManager {
+    #Node;
+
+    static newInstance() {
+        const instance = new FolderManager();
+
+        instance.idb = new FolderManager();
+
+        return instance;
+    }
+
+    configure() {
+        this.#Node = Node;
+        this.idb.#Node = Node.idb;
+    }
 
     async add(parent, name, nodeType = NODE_TYPE_FOLDER) {
         if (parent && typeof parent === "number")
-            parent = await Node.get(parent);
+            parent = await this.#Node.get(parent);
 
         return this._addNode({
             name,
@@ -19,7 +33,7 @@ class FolderManager extends EntityManager {
     }
 
     async addSite(parentId, name) {
-        const parent = await Node.get(parentId);
+        const parent = await this.#Node.get(parentId);
 
         return this._addNode({
             name,
@@ -32,7 +46,7 @@ class FolderManager extends EntityManager {
     async _addNode(node, parent) {
         node.name = await this.ensureUniqueName(parent?.id, node.name);
         node.external = parent?.external;
-        node = await Node.add(node);
+        node = await this.#Node.add(node);
 
         try {
             ishellConnector.invalidateCompletion();
@@ -90,7 +104,7 @@ class FolderManager extends EntityManager {
         let parent = folders[shelfName.toLowerCase()];
 
         if (!parent) {
-            parent = await Node.add({
+            parent = await this.#Node.add({
                 name: shelfName,
                 type: NODE_TYPE_SHELF
             });
@@ -104,7 +118,7 @@ class FolderManager extends EntityManager {
                 parent = folder;
             }
             else {
-                let node = await Node.add({
+                let node = await this.#Node.add({
                     parent_id: parent.id,
                     external: parent.external,
                     name: name,
@@ -143,11 +157,11 @@ class FolderManager extends EntityManager {
                 console.error(e);
             }
 
-            await Node.update(folder);
+            await this.#Node.update(folder);
         }
         return folder;
     }
 
 }
 
-export let Folder = new FolderManager();
+export let Folder = FolderManager.newInstance();

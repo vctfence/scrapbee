@@ -6,11 +6,13 @@ import {rdfShelf} from "./plugin_rdf_shelf.js";
 import {ishellConnector} from "./plugin_ishell.js";
 import {plugins} from "./bookmarks.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
+import {Folder} from "./bookmarks_folder.js";
 
 export let systemInitialization = new Promise(async resolve => {
     await settings.load();
 
     Bookmark.configure();
+    Folder.configure();
 
     plugins.registerPlugin(BROWSER_EXTERNAL_TYPE, browserShelf);
     plugins.registerPlugin(CLOUD_EXTERNAL_TYPE, cloudShelf);

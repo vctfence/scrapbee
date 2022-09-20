@@ -14,7 +14,6 @@ import {Archive, Comments, Node} from "./storage_entities.js";
 import {StreamImporterBuilder} from "./import_drivers.js";
 import {RDFNamespaces} from "./utils_html.js";
 import {settings} from "./settings.js";
-import {UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 
 class RDFImporter {
     #options;
@@ -26,10 +25,20 @@ class RDFImporter {
     #progressCounter;
     #threads;
     #sidebarSender;
+    #importType = "full";
+
+    #Bookmark = Bookmark;
+    #Folder = Folder;
 
     constructor(importOptions) {
         this.#options = importOptions;
         this.#sidebarSender = importOptions.sidebarContext? sendLocal: send;
+
+        if (importOptions.quick) {
+            this.#Bookmark = Bookmark.idb;
+            this.#Folder = Folder.idb;
+            this.#importType = "index";
+        }
     }
 
     async import() {
@@ -91,8 +100,11 @@ class RDFImporter {
                 node.__sb_type = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "type");
                 node.__sb_title = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "title");
                 node.__sb_source = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "source");
-                node.__sb_comment = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "comment");
                 node.__sb_icon = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "icon");
+                node.__sb_comment = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "comment");
+
+                if (node.__sb_comment)
+                    node.__sb_comment = node.__sb_comment.replace(/ __BR__ /g, "\n");
             }
 
             result.set(node.getAttributeNS(namespaces.NS_RDF, "about"), node);
@@ -132,7 +144,7 @@ class RDFImporter {
         browser.runtime.onMessage.addListener(cancelListener);
 
         try {
-            if (!this.#options.quick) {
+            if (this.#options.createIndex) { // createIndex is always on when performing a full import
                 this.#progressCounter = new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
                 await this.#startThreads(this.#importThread.bind(this, path), this.#options.threads);
             }
@@ -183,7 +195,7 @@ class RDFImporter {
             if (bookmark.icon && bookmark.icon.startsWith("resource://scrapbook/")) {
                 bookmark.icon = bookmark.icon.replace("resource://scrapbook/", "");
                 bookmark.icon = helperApp.url(`/rdf/import/files/${bookmark.icon}`);
-                await Bookmark.storeIcon(bookmark);
+                await this.#Bookmark.storeIcon(bookmark);
             }
 
             return this.#iconImportThread(bookmarks);
@@ -204,17 +216,11 @@ class RDFImporter {
         };
 
         try {
-            const response = await helperApp.fetchJSON_postJSON("/rdf/import/archive", params);
+            const url = `/rdf/import/archive?type=${this.#importType}`;
+            const response = await helperApp.fetchJSON_postJSON(url, params);
 
             if (response?.archive_index)
                 Archive.idb.import.storeIndex(node, response.archive_index);
-
-            if (response?.comments) {
-                await Comments.idb.import.storeIndex(node, response.comments_index);
-                await Comments.idb.import.add(node, response.comments);
-                node.has_comments = true;
-                await Node.idb.update(node);
-            }
         } catch (e) {
             console.error(e);
         }
@@ -223,7 +229,7 @@ class RDFImporter {
     async #onFinish() {
         this.#sidebarSender.nodesImported({shelf: this.#shelf});
 
-        if (!this.#options.quick)
+        if (this.#options.createIndex)
             this.#progressCounter.finish();
 
         send.obtainingIcons({shelf: this.#shelf});
@@ -231,13 +237,13 @@ class RDFImporter {
     }
 
     async #createShelf(path) {
-        const shelfNode = await Folder.getOrCreateByPath(this.#options.name);
+        const shelfNode = await this.#Folder.getOrCreateByPath(this.#options.name);
 
         if (shelfNode) {
             if (this.#options.quick) {
                 shelfNode.external = RDF_EXTERNAL_TYPE;
                 shelfNode.uri = path.substring(0, path.lastIndexOf("/"));
-                await Node.update(shelfNode);
+                await Node.idb.update(shelfNode);
             }
             this.#nodeID_SB2SY.set(null, shelfNode.id);
         }
@@ -261,6 +267,7 @@ class RDFImporter {
             todo_state: node.__sb_type === "marked" ? 1 : undefined,
             contains: ARCHIVE_TYPE_FILES,
             content_type: "text/html",
+            has_comments: node.__sb_comment? true: undefined,
             icon: node.__sb_icon,
             date_added: now,
             date_modified: now
@@ -271,7 +278,10 @@ class RDFImporter {
             data.external_id = node.__sb_id;
         }
 
-        let bookmark = await Bookmark.import(data);
+        let bookmark = await this.#Bookmark.import(data);
+
+        if (node.__sb_comment) // commends json file on disk is also created by helper
+            await Comments.idb.import.add(bookmark, node.__sb_comment);
 
         this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
 
@@ -282,7 +292,6 @@ class RDFImporter {
             this.#bookmarks.push(bookmark);
         }
     }
-
 }
 
 export class RDFImporterBuilder extends StreamImporterBuilder {
@@ -292,6 +301,10 @@ export class RDFImporterBuilder extends StreamImporterBuilder {
 
     setQuickImport(quick) {
         this._importOptions.quick = quick;
+    }
+
+    setCreateIndex(quick) {
+        this._importOptions.createIndex = quick;
     }
 
     _createImporter(options) {

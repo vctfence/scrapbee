@@ -29,6 +29,7 @@ import {
     NODE_TYPE_SHELF,
     TODO_SHELF_ID,
     TODO_SHELF_NAME,
+    RDF_EXTERNAL_TYPE,
     isBuiltInShelf,
     isVirtualShelf,
     isContentNode
@@ -196,7 +197,7 @@ async function init() {
     });
 
     $(document).on('contextmenu', e => {
-        if ($(".dlg-cover:visible").length && e.target.localName !== "input")
+        if ($(".dlg-dim:visible").length && e.target.localName !== "input")
             e.preventDefault();
     });
 
@@ -258,7 +259,7 @@ async function loadSidebar() {
     try {
         await shelfList.load();
 
-        const initialShelf = await getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
+        const initialShelf = await getPreselectedShelf() || getLastShelf() || DEFAULT_SHELF_ID;
         await switchShelf(initialShelf, true, true);
 
         stopProcessingIndication();
@@ -310,7 +311,7 @@ function getLastShelf() {
     return DEFAULT_SHELF_ID;
 }
 
-async function getExternalShelf() {
+async function getPreselectedShelf() {
     if (settings.platform.firefox) {
         const externalShelf = localStorage.getItem("sidebar-select-shelf");
 
@@ -352,7 +353,6 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
 }
 
 async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
-
     if (getLastShelf() != shelf_id)
         tree.clearIconCache();
 
@@ -413,6 +413,11 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.openRoot();
         }
     }
+
+    if (shelfList.selectedShelfExternal === RDF_EXTERNAL_TYPE)
+        $("#shelf-menu-delete").text("Close");
+    else
+        $("#shelf-menu-delete").text("Delete");
 }
 
 async function createShelf() {
@@ -447,14 +452,15 @@ async function renameShelf() {
 
 
 async function deleteShelf() {
-    let {id, name} = shelfList.getCurrentShelf();
+    let {id, name, external} = shelfList.getCurrentShelf();
 
     if (isBuiltInShelf(name)) {
         showNotification({message: "A built-in shelf could not be deleted."})
         return;
     }
 
-    const proceed = await confirm("Warning", "Do you really want to delete '" + name + "'?");
+    const verb = external === RDF_EXTERNAL_TYPE? "close": "delete";
+    const proceed = await confirm("Warning", `Do you really want to ${verb} '${name}'?`);
 
     if (proceed && name) {
         await send.softDeleteNodes({node_ids: id})

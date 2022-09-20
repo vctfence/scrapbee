@@ -45,6 +45,20 @@ def import_rdf_archive(params):
     return result
 
 
+def import_rdf_archive_index(params):
+    scrapbook_id = params["scrapbook_id"]
+    rdf_path = params["rdf_directory"]
+    rdf_archive_directory = os.path.join(rdf_path, "data", scrapbook_id)
+
+    result = dict()
+
+    if os.path.exists(rdf_archive_directory):
+        words = build_archive_index(rdf_archive_directory)
+        result["archive_index"] = words
+
+    return result
+
+
 def build_archive_index(path):
     words = []
 
@@ -85,8 +99,8 @@ def read_rdf_metadata(rdf_archive_directory, result):
 
                 if line.startswith("comment"):
                     comments = line.replace("comment", "", 1).strip()
-                    comments = result["comments"] = comments.replace(" __BR__ ", "\n")
-                    result["comments_index"] = create_index(comments)
+                    comments = comments.replace(" __BR__ ", "\n")
+                    create_index(comments)
 
 
 def store_archive_comments(params, result):

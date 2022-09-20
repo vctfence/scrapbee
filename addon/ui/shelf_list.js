@@ -98,6 +98,7 @@ export class ShelfList {
             id: parseInt(selectedOption.val()),
             name: selectedOption.text(),
             uuid: selectedOption.attr("data-uuid"),
+            external: selectedOption.attr("data-external"),
             option: selectedOption
         };
     }
@@ -136,7 +137,8 @@ export class ShelfList {
         shelves.sort((a, b) => a.name.localeCompare(b.name));
 
         for (let shelf of shelves)
-            html += `<option data-uuid="${shelf.uuid}" value="${shelf.id}">${shelf.name}</option>`;
+            html += `<option data-uuid="${shelf.uuid}" data-external="${shelf.external}"
+                        value="${shelf.id}">${shelf.name}</option>`;
 
         this._select.html(html);
     }
@@ -178,6 +180,11 @@ export class ShelfList {
     get selectedShelfName() {
         let selectedOption = $(`option[value='${this._select.val()}']`, this._select);
         return selectedOption.text();
+    }
+
+    get selectedShelfExternal() {
+        let selectedOption = $(`option[value='${this._select.val()}']`, this._select);
+        return selectedOption.attr("data-external");
     }
 
     change(handler) {

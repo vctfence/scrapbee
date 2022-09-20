@@ -8,20 +8,31 @@
                     <td><input id="rdf-shelf-name" type="text" size="60" value="Imported RDF"/></td>
                 </tr>
                 <tr>
-                    <td>Path to the RDF file:&nbsp;&nbsp;</td>
+                    <td>RDF file:&nbsp;&nbsp;</td>
                     <td>
-                        <input id="rdf-import-path" type="text" size="60" value="D:/tmp/scrapbook/scrapbook.rdf"/>
-                        <i class="help-mark"></i>
-                        <span class="tips hide">For example: <b>d:/notes/scrapbook.rdf</b></span>
+                        <input id="rdf-import-path" type="text" size="60" value="D:/tmp/scrapbook/scrapbook.rdf"
+                               placeholder="For example: d:/scrapbook/scrapbook.rdf"/>
                     </td>
                 </tr>
-                <tr>
+                <!--tr>
                     <td>Processing threads:</td>
                     <td style="display: flex"><input id="rdf-import-threads" type="number" min="1" value="5"/>
                         <div id="rdf-import-quick-div"><input id="rdf-import-quick" type="checkbox"/><label for="rdf-import-quick"
                         >Quick import</label>
                             <i class="help-mark"></i>
                             <span class="tips hide">Leave archived files on disk.</span>
+                        </div>
+                    </td>
+                </tr-->
+                <tr>
+                    <td>Import type:</td>
+                    <td style="display: flex">
+                        <select id="rdf-import-type">
+                            <option value="rdf-import">Import RDF to Scrapyard</option>
+                            <option value="rdf-open">Open RDF for editing</option>
+                        </select>
+                        <div id="rdf-import-create-search-index-div"><input id="rdf-import-create-search-index" type="checkbox" checked disabled/><!--
+                        --><label for="rdf-import-create-search-index">Create search index</label>
                         </div>
                     </td>
                 </tr>

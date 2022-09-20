@@ -1,7 +1,5 @@
 import {ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT, CLOUD_EXTERNAL_TYPE, UNPACKED_ARCHIVE_DIRECTORY} from "./storage.js";
 import {unzip} from "./lib/unzipit.js";
-import {settings} from "./settings.js";
-import {helperApp} from "./helper_app.js";
 
 export class StorageAdapterCloud {
     _provider;

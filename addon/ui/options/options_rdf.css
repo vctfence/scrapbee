@@ -7,7 +7,7 @@
     flex: 0 0 auto;
 }
 
-#rdf-import-quick-div {
+#rdf-import-create-search-index-div {
     flex: 1 0 auto;
     text-align: right;
 }
@@ -30,7 +30,7 @@
     height: 22px;
     padding-top: 0;
     padding-bottom: 0;
-    margin-right: 26px;
+    margin-right: 4px;
     float: right;
 }
 

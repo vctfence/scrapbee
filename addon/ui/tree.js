@@ -1194,7 +1194,9 @@ class BookmarkTree {
                             return;
                         }
 
-                        if (await confirm("Warning", "Do you really want to delete the selected items?")) {
+                        const verb = ctxNode.external === RDF_EXTERNAL_TYPE? "close": "delete";
+
+                        if (await confirm("Warning", `Do you really want to ${verb} '${ctxNode.name}'?`)) {
                             this.startProcessingIndication();
 
                             let selectedIds = selectedNodes.map(n => o(n).id);
@@ -1505,6 +1507,9 @@ class BookmarkTree {
 
         if (ctxNode.external === BROWSER_EXTERNAL_TYPE) {
             delete items.newItem.submenu.newNotesItem;
+        }
+        else if (ctxNode.external === RDF_EXTERNAL_TYPE && ctxNode.type === NODE_TYPE_SHELF) {
+            items.deleteItem.label = "Close";
         }
 
         return items;

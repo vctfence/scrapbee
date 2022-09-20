@@ -243,7 +243,7 @@ export async function assembleUnpackedIndex(node) {
         const doc = parseHtml(indexHTML);
         const iframes = doc.querySelectorAll("iframe");
         const [iframeDocs] = await buildIFramesRecursive(node, doc, iframes);
-
+        _log(doc)
         return [doc, ...iframeDocs];
     }
 }

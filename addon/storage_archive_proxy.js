@@ -90,7 +90,7 @@ export class ArchiveProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter)
-            return await adapter.fetchArchiveFile({uuid: node.uuid, file});
+            return await adapter.fetchArchiveFile({node, uuid: node.uuid, file});
     }
 }
 

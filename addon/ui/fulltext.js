@@ -7,13 +7,14 @@ import {
     parseHtml,
     rebuildIFramesRecursive
 } from "../utils_html.js";
-import {getActiveTab, injectScriptFile} from "../utils_browser.js";
+import {getActiveTab} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Archive, Icon} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {ProgressCounter, sleep} from "../utils.js";
 import {helperApp} from "../helper_app.js";
+import {RDF_EXTERNAL_TYPE} from "../storage.js";
 
 const IGNORE_PUNCTUATION = ",-–—‒'\"+=".split("");
 
@@ -88,7 +89,11 @@ function displayDocument(doc, node) {
 }
 
 async function previewUnpackedResult(query, node) {
-    const previewURL = helperApp.url(`/browse/${node.uuid}`);
+    const url = node.external === RDF_EXTERNAL_TYPE
+        ? `/rdf/browse/${node.uuid}`
+        : `/browse/${node.uuid}`;
+
+    const previewURL = helperApp.url(url);
     displayURL(previewURL, node);
 
     // await sleep(100);
@@ -184,7 +189,7 @@ async function markSearch(query, nodes, acrossElements, progressCallback, finish
         if (!searching)
             break;
 
-        const docs = await getArchiveFrames(node);
+        const docs = await getArchiveFrames(node) || [];
 
         let total = 0;
         for (const doc of docs) {
@@ -207,9 +212,8 @@ async function markSearch(query, nodes, acrossElements, progressCallback, finish
 }
 
 async function getArchiveFrames(node) {
-    if (Archive.isUnpacked(node)) {
+    if (Archive.isUnpacked(node))
         return await assembleUnpackedIndex(node);
-    }
     else {
         const archive = await Archive.get(node);
         const content = await Archive.reify(archive);

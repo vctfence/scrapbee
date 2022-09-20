@@ -280,7 +280,7 @@ export class RDFShelfPlugin {
                     if (node.type === NODE_TYPE_ARCHIVE) {
                         try {
                             await helperApp.post(`/rdf/delete_item/${node.uuid}`,
-                                {rdf_directory: await this.getRDFPageDir(node)});
+                                {rdf_directory: await this.getRDFArchiveDir(node)});
                         } catch (e) {
                             console.error(e);
                         }
@@ -316,21 +316,21 @@ export class RDFShelfPlugin {
         try {
             await helperApp.post(`/rdf/save_item/${node.uuid}`,
                 {item_content: data,
-                rdf_directory: await this.getRDFPageDir(node)});
+                rdf_directory: await this.getRDFArchiveDir(node)});
         }
         catch (e) {
             console.error(e);
         }
     }
 
-    async getRDFPageDir(node) {
+    async getRDFArchiveDir(node) {
         const path = await Path.compute(node);
         return `${path[0].uri}/data/${node.external_id}/`;
     }
 
     async pushRDFPath(node) {
         await helperApp.post(`/rdf/browse/push/${node.uuid}`,
-            {rdf_directory: await this.getRDFPageDir(node)});
+            {rdf_directory: await this.getRDFArchiveDir(node)});
     }
 }
 

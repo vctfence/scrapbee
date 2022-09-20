@@ -243,6 +243,16 @@ class StorageManager:
 
         return file_content
 
+    def fetch_rdf_archive_file(self, params):
+        archive_file_path = os.path.join(params["rdf_archive_path"], params["file"])
+
+        file_content = None
+        if os.path.exists(archive_file_path):
+            with open(archive_file_path, "rb") as archive_file:
+                file_content = archive_file.read()
+
+        return file_content
+
     def fetch_packed_archive(self, object_directory_path):
         content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
 

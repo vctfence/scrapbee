@@ -4,9 +4,9 @@ import {formatBytes} from "../utils.js";
 const DEFAULT_CONTAINER = "--default-container";
 
 function showDlg(name, data, callback) {
-    if ($(".dlg-cover:visible").length)
+    if ($(".dlg-dim:visible").length)
         return
-    let $dlg = $(".dlg-cover.dlg-" + name).clone().prependTo(document.body);
+    let $dlg = $(".dlg-dim.dlg-" + name).clone().prependTo(document.body);
 
     if (data.width)
         $dlg.find(".dlg").css("width", data.width);

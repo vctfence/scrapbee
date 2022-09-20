@@ -31,9 +31,7 @@ export class StorageAdapterDisk {
     }
 
     accepts(node) {
-        return node && !(
-            node.external && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external)
-        )
+        return node && !node.external;
     }
 
     async persistNode(params) {

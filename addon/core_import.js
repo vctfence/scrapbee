@@ -31,6 +31,7 @@ receive.importFile = async message => {
                 importerBuilder.setStream(message.file);
                 importerBuilder.setNumberOfThreads(message.threads);
                 importerBuilder.setQuickImport(message.quick);
+                importerBuilder.setCreateIndex(message.createIndex);
                 break;
         }
 
