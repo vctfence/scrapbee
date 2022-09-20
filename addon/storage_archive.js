@@ -100,10 +100,18 @@ export class ArchiveIDB extends EntityIDB {
     }
 
     async updateHTML(node, data) {
-        const entity = this.entity(node, data);
-        await this._add(node, entity);
+        if (node.contains === ARCHIVE_TYPE_FILES) {
+            const index = await this.saveFile(node, "index.html", data);
 
-        await this.storeIndex(node, indexHTML(data));
+            if (index)
+                await this.idb.import.storeIndex(node, index);
+        }
+        else {
+            const entity = this.entity(node, data);
+
+            await this._add(node, entity);
+            await this.storeIndex(node, indexHTML(data));
+        }
 
         return this.updateContentModified(node, entity);
     }
@@ -114,6 +122,11 @@ export class ArchiveIDB extends EntityIDB {
 
     // get file of an unpacked archive
     async getFile(node, file) {
+        // NOP, used in proxy
+    }
+
+    // save file of an unpacked archive
+    async getFile(node, file, content) {
         // NOP, used in proxy
     }
 
@@ -175,7 +188,5 @@ export class ArchiveIDB extends EntityIDB {
 
         return result;
     }
-
-
 }
 

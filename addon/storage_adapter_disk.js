@@ -130,6 +130,21 @@ export class StorageAdapterDisk {
         }
     }
 
+    async saveArchiveFile(params) {
+        params.data_path = settings.data_folder_path();
+        params.content = new Blob([params.content]);
+        params.compute_index = true;
+
+        try {
+            const response = await helperApp.post(`/storage/save_archive_file`, params);
+
+            if (response.ok)
+                return response.json()
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     async persistNotesIndex(params) {
         return this._postJSON("/storage/persist_notes_index", params);
     }

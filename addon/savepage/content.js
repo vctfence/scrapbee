@@ -4393,7 +4393,7 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
             if (doctype != null)
             {
                 htmltext = '<!DOCTYPE ' + doctype.name + (doctype.publicId ? ' PUBLIC "' + doctype.publicId + '"' : '') +
-                           ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>';
+                           ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>\n';
 
                 htmlStrings[htmlStrings.length] = htmltext;
             }

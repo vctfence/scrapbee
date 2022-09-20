@@ -170,7 +170,7 @@ function extractTextRecursive(string, parser) {
     if (!parser)
         parser = new DOMParser();
 
-    const doc = parser.parseFromString(string,"text/html");
+    const doc = parser.parseFromString(string, "text/html");
     removeScriptTags(doc);
 
     let text = doc.body.textContent;

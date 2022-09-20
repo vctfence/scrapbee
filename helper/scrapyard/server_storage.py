@@ -1,6 +1,8 @@
+import json
 
 from flask import request, abort
 
+from .import_rdf import build_archive_index
 from .request_queue import RequestQueue
 from .server import app, requires_auth, storage_manager
 
@@ -143,6 +145,24 @@ def fetch_archive_file():
 
     if result:
         return result
+    else:
+        return "", 404
+
+
+@app.route("/storage/save_archive_file", methods=['POST'])
+@requires_auth
+def save_archive_file():
+    params = request.form
+    storage_manager.save_archive_file(params, request.files)
+
+    index = None
+    if request.form.get("compute_index", None):
+        object_directory_path = storage_manager.get_object_directory(params)
+        archive_directory_path = storage_manager.get_archive_unpacked_path(object_directory_path)
+        index = build_archive_index(archive_directory_path)
+
+    if index:
+        return json.dumps(index)
     else:
         return "", 404
 

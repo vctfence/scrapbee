@@ -26,6 +26,10 @@ export class ArchiveProxy extends StorageProxy {
         return this.#fetchArchiveFile(node, file);
     }
 
+    async saveFile(node, file, content) {
+        return this.#saveArchiveFile(node, file, content);
+    }
+
     async #persistArchiveIndex(node, words) {
         const adapter = this.adapter(node);
 
@@ -62,6 +66,13 @@ export class ArchiveProxy extends StorageProxy {
         }
 
         return archive;
+    }
+
+    async #saveArchiveFile(node, file, content) {
+        const adapter = this.adapter(node);
+
+        if (adapter)
+            return adapter.saveArchiveFile({uuid: node.uuid, file, content});
     }
 
     async #fetchArchive(node) {

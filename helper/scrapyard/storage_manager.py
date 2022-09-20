@@ -45,7 +45,10 @@ class StorageManager:
     def get_object_root_directory(self, params):
         return os.path.join(params["data_path"], OBJECT_DIRECTORY)
 
-    def get_object_directory(self, params, uuid):
+    def get_object_directory(self, params, uuid=None):
+        if not uuid:
+            uuid = params["uuid"]
+
         return os.path.join(params["data_path"], OBJECT_DIRECTORY, uuid)
 
     def get_temp_directory(self, params):
@@ -175,7 +178,7 @@ class StorageManager:
             logging.error(e)
 
     def persist_object(self, object_file_name, params, param_name):
-        object_directory_path = self.get_object_directory(params, params["uuid"])
+        object_directory_path = self.get_object_directory(params)
         object_file_path = os.path.join(object_directory_path, object_file_name)
 
         Path(object_directory_path).mkdir(parents=True, exist_ok=True)
@@ -188,10 +191,10 @@ class StorageManager:
         self.persist_object(NODE_OBJECT_FILE, params, "node_json")
 
     def persist_archive_content(self, params, files):
-        object_directory_path = self.get_object_directory(params, params["uuid"])
+        object_directory_path = self.get_object_directory(params)
 
         if params.get("contains", None) == StorageManager.ARCHIVE_TYPE_FILES:
-            archive_directory_path = os.path.join(object_directory_path, ARCHIVE_DIRECTORY)
+            archive_directory_path = self.get_archive_unpacked_path(object_directory_path)
             with zipfile.ZipFile(files["content"], "r", zipfile.ZIP_DEFLATED, False) as zip_file:
                 zip_file.extractall(archive_directory_path)
         else:
@@ -199,8 +202,17 @@ class StorageManager:
             content_file_path = os.path.join(object_directory_path, ARCHIVE_CONTENT_FILE)
             files["content"].save(content_file_path)
 
+    def save_archive_file(self, params, files):
+        object_directory_path = self.get_object_directory(params)
+        archive_directory_path = self.get_archive_unpacked_path(object_directory_path)
+        archive_file_path = os.path.join(archive_directory_path, params["file"])
+
+        files["content"].save(archive_file_path)
+
+        return archive_directory_path
+
     def fetch_object(self, object_file_name, params):
-        object_directory_path = self.get_object_directory(params, params["uuid"])
+        object_directory_path = self.get_object_directory(params)
         object_file_path = os.path.join(object_directory_path, object_file_name)
 
         result = None
@@ -211,7 +223,7 @@ class StorageManager:
         return result
 
     def fetch_archive_content(self, params):
-        object_directory_path = self.get_object_directory(params, params["uuid"])
+        object_directory_path = self.get_object_directory(params)
         archive_directory_path = os.path.join(object_directory_path, ARCHIVE_DIRECTORY)
 
         if os.path.exists(archive_directory_path):
@@ -220,8 +232,9 @@ class StorageManager:
             return self.fetch_packed_archive(object_directory_path)
 
     def fetch_archive_file(self, params):
-        object_directory_path = self.get_object_directory(params, params["uuid"])
-        archive_file_path = os.path.join(object_directory_path, ARCHIVE_DIRECTORY, params["file"])
+        object_directory_path = self.get_object_directory(params)
+        archive_directory_path = self.get_archive_unpacked_path(object_directory_path)
+        archive_file_path = os.path.join(archive_directory_path, params["file"])
 
         file_content = None
         if os.path.exists(archive_file_path):

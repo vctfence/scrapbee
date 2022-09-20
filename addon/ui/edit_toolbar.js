@@ -117,7 +117,7 @@ class EditToolbar {
         $(doc.getElementsByTagName("head")[0]).prepend(`<meta charset="utf-8">`);
     }
 
-    saveDoc() {
+    async saveDoc() {
         let saveButton = $("#scrapyard-save-doc-button", this.shadowRoot);
         saveButton.addClass("scrapyard-flash-button");
 
@@ -129,25 +129,15 @@ class EditToolbar {
         this._fixDocumentEncoding(doc);
 
         const uuid = location.href.split("/").at(-2);
+        const html = getDocType(document) + doc.outerHTML;
 
-        browser.runtime.sendMessage({
-            type: "updateArchive",
-            uuid,
-            data: "<!DOCTYPE html>" + doc.outerHTML
-        }).then(async () => {
-            return browser.runtime.sendMessage({
-                type: "getBookmarkInfo",
-                uuid
-            });
-        })
-        .then(node => {
-            $("#scrapyard-page-info", this.editBar).html(this.formatPageInfo(node))
-        });
+        await browser.runtime.sendMessage({type: "updateArchive", uuid, data: html});
+        const node = await browser.runtime.sendMessage({type: "getBookmarkInfo", uuid});
+        $("#scrapyard-page-info", this.editBar).html(this.formatPageInfo(node))
     }
 
     buildTools() {
         const CONTAINER_HEIGHT = 42;
-        const EXTENSION_ID = browser.i18n.getMessage("@@extension_id");
         const documentMarginBottom = document.body.style.marginBottom;
 
         let erasing = false;
@@ -188,8 +178,7 @@ class EditToolbar {
         append(`<div class="scrapyard-icon-container">
                          <i class="scrapyard-help-mark"></i>
                          <span class="scrapyard-tips scrapyard-hide">
-                             To remove content, text-select it (including images and other media) and press Del key on keyboard.
-                             It is also possible to type something in. Press F7 to turn on caret browsing.
+                             Press F7 to turn on caret browsing.
                          </span>
                      </div>`);
 
@@ -403,6 +392,17 @@ async function loadInternalResources(shadowRoot) {
 
     $(".scrapyard-i-mark", shadowRoot).css("background-image",
         `url("data:image/svg+xml,${encodeURIComponent(await svgPageInfo)}")`);
+}
+
+function getDocType(doc) {
+    const doctype = doc.doctype;
+    let result = "";
+
+    if (doctype)
+        result = '<!DOCTYPE ' + doctype.name + (doctype.publicId ? ' PUBLIC "' + doctype.publicId + '"' : '') +
+            ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>\n';
+
+    return result;
 }
 
 function getTextNodesBetween(rootNode, startNode, endNode) {
