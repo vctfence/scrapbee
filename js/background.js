@@ -22,7 +22,7 @@ log.sendLog = function(logtype, content){
 log.clear = function(){
     log_pool = [];
 };
-/* log version and platform */
+/* load and log version and platform */
 var browser_info_status = "";
 function loadBrowserInfo(){
     return new Promise((resolve, reject) => {
@@ -45,9 +45,10 @@ function loadBrowserInfo(){
                 var manifest = browser.runtime.getManifest();
                 log.info("version = " + manifest.version);
                 log.info("browser = " + info.name + " " + info.version);
+                
                 var main_version = parseInt(info.version.replace(/\..+/, ""));
-                let compatible = info.name == "Firefox" && main_version >= 57;
-                compatible = compatible || (info.name == "Waterfox" && main_version >= 57);
+                let compatible = ["firefox", "waterfox", "icecat"].indexOf(info.name.toLowerCase()) > -1 && main_version >= 57;
+                
                 if(!compatible){
                     var em = "Your browser or version is not supported";
                     log.error(em);
@@ -72,7 +73,7 @@ loadBrowserInfo().then(async () => {
 });
 /* backend*/
 var backend_inst_port;
-var web_status;
+var web_status = "";
 var backend_version;
 function communicate(command, body, callback){
     return new Promise((resolve, reject)=>{
@@ -103,6 +104,7 @@ function communicate(command, body, callback){
         }
     });
 }
+
 function startWebServer(try_times){
     if(web_status == "failed"){
         return  Promise.reject(Error("connect web server: failed"));
@@ -123,39 +125,40 @@ function startWebServer(try_times){
         var pwd = CONF.getItem("backend.pwd");
         if(web_status == "launched"){
             resolve();
-        }else if(CONF.getItem("backend.type") == "address"){
+        }else if(CONF.getItem("backend.type") == "address"){ /** address mode */
             var address = CONF.getBackendAddress();
             log.info(`connect web server: address = ${address}`);
             $.get(address + `serverinfo/?pwd=${pwd}`, function(r){
                 if(r.Serverstate == "ok"){
                     web_status = "launched";
                     showInfo(r);
-                    resolve();
+                    resolve(backend_version);
                 }else{
-                    startWebServer(try_times - 1);
+                    return startWebServer(try_times - 1);
                 }
             }).fail(function(e){
                 if(e.status > 0){ // old version backend
                     web_status = "launched";
                     showInfo({});
-                    resolve();
+                    resolve(backend_version);
                 }else{
+                    web_status = "failed";
                     var em = "connect web server: failed to connect backend";
                     reject(Error(em));
                 }
             });
-        } else if(web_status == "launching"){
+        } else if(web_status == "launching"){ /** wait for auto launch mode*/
             new (function (){
                 var self = this;
                 setTimeout(()=>{
                     if(browser_info_status == "launched"){
-                        resolve();
+                        resolve(backend_version);
                     }else{
                         self.constructor();
                     }
                 }, 1000);
             })();
-        } else {
+        } else { /** start auto launch mode*/
             web_status = "launching";
             loadBrowserInfo().then(() => {
                 log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
@@ -173,7 +176,7 @@ function startWebServer(try_times){
                     }else{
                         web_status = "launched";
                         showInfo(r);
-                        return resolve();
+                        return resolve(backend_version);
                     }
                 }).catch((e) => {
                     log.error(e);
@@ -338,21 +341,27 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
     }else if(request.type == "WAIT_WEB_SERVER"){
         var times = request.try_times;
-        return new Promise((resolve, reject) => {
-            function check(){
-                times --;
-                if(web_status == "launched"){
-                    resolve(backend_version);
-                }else if(times < 1){
-                    reject(Error("max times tried"));
-                }else if(web_status == "failed"){
-                    reject(Error("backend failed"));
-                }else{
-                    setTimeout(function(r){check();}, 1000);
+        if(web_status == "failed" && request.restart){
+            web_status = "";
+            return startWebServer(request.try_times);
+        }else{
+            return new Promise((resolve, reject) => {
+                function check(){
+                    times --;
+                    if(web_status == "launched"){
+                        resolve(backend_version);
+                    }else if(times < 1){
+                        reject(Error("max times tried"));
+                    }else if(web_status == "failed"){
+                        reject(Error("backend failed"));
+                    }else{
+                        setTimeout(function(r){check();}, 1000);
+                    }
                 }
-            }
-            check();
-        });
+                check();
+            });    
+        }
+
     }
 });
 function saveTextFile(request){

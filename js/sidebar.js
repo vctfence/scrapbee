@@ -265,7 +265,7 @@ menulistener.onOpenFolder = function(){
 };
 var drop;
 function loadRdfList(){
-    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10}).then(async (version) => {
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10, restart: false}).then(async (version) => {
         GLOBAL.set("backendVersion", version);
         
         log.info("show rdf list");
@@ -462,7 +462,13 @@ $(document).ready(async function(){
     /** */
     var btn = document.getElementById("btnReload");
     btn.onclick = function(){
-        loadRdfList();
+        $(".folder-content.toplevel").html("{Loading...}".translate());
+        browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10, restart: true}).then(async (version) => {
+            loadRdfList();
+        }).catch((e) => {
+            log.error("failed to start backend, please check installation and settings");
+            $(".folder-content.toplevel").html("{FAIL_START_BACKEND_HINT}".translate());
+        });
     };
     var btn = document.getElementById("btnSet");
     btn.onclick = function(){
