@@ -222,15 +222,16 @@ export async function buildIFramesRecursive(node, doc, topIFrames, acc = []) {
     for (let i = 0; i < topIFrames.length; ++i) {
         const iframe = topIFrames[i];
 
-        if (iframe.src) {
-            const iframeHTML = await Archive.getFile(node, iframe.src);
+        let iframeHTML = iframe.srcdoc;
 
-            if (iframeHTML) {
-                const iframeDoc = parseHtml(iframeHTML);
-                await buildIFramesRecursive(node, iframeDoc, iframeDoc.querySelectorAll("iframe"), acc);
-                iframe.__doc = iframeDoc;
-                acc.push(iframeDoc);
-            }
+        if (!iframeHTML && iframe.src && !iframe.src.startsWith("http"))
+            iframeHTML = await Archive.getFile(node, iframe.src);
+
+        if (iframeHTML) {
+            const iframeDoc = parseHtml(iframeHTML);
+            await buildIFramesRecursive(node, iframeDoc, iframeDoc.querySelectorAll("iframe"), acc);
+            iframe.__doc = iframeDoc;
+            acc.push(iframeDoc);
         }
     }
 
@@ -243,7 +244,6 @@ export async function assembleUnpackedIndex(node) {
         const doc = parseHtml(indexHTML);
         const iframes = doc.querySelectorAll("iframe");
         const [iframeDocs] = await buildIFramesRecursive(node, doc, iframes);
-        _log(doc)
         return [doc, ...iframeDocs];
     }
 }

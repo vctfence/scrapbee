@@ -137,7 +137,7 @@ export class ShelfList {
         shelves.sort((a, b) => a.name.localeCompare(b.name));
 
         for (let shelf of shelves)
-            html += `<option data-uuid="${shelf.uuid}" data-external="${shelf.external}"
+            html += `<option data-uuid="${shelf.uuid}" data-external="${shelf.external || ''}"
                         value="${shelf.id}">${shelf.name}</option>`;
 
         this._select.html(html);

@@ -210,7 +210,7 @@ class RDFImporter {
     async #importRDFArchive(path, node, scrapbookId) {
         const params = {
             data_path: settings.data_folder_path(),
-            rdf_directory: path,
+            rdf_archive_path: path,
             uuid: node.uuid,
             scrapbook_id: scrapbookId
         };

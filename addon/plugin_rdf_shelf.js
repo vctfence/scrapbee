@@ -1,9 +1,16 @@
 import UUID from "./uuid.js";
 import {helperApp} from "./helper_app.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_FOLDER, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_TYPE} from "./storage.js";
-import {Archive, Node} from "./storage_entities.js";
+import {
+    ARCHIVE_TYPE_FILES,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_FOLDER,
+    NODE_TYPE_SEPARATOR,
+    RDF_EXTERNAL_TYPE
+} from "./storage.js";
+import {Archive, Comments, Icon, Node} from "./storage_entities.js";
 import {Path} from "./path.js";
 import {RDFNamespaces} from "./utils_html.js";
+import {CONTENT_TYPE_TO_EXT} from "./utils.js";
 
 class RDFDoc {
 
@@ -99,16 +106,22 @@ class RDFDoc {
         return instance;
     }
 
-    addBookmarkNode(node, parent) {
+    async addBookmarkNode(node, parent) {
         let xmlNode = this.doc.createElementNS(this._xmlNamespaces.NS_RDF, "Description");
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_RDF, "about", `urn:scrapbook:item${node.external_id}`);
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "id", node.external_id);
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "type", "");
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "title", node.name);
-        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "chars", "");
+        xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "chars", "UTF-8");
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "icon", "");
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "source", node.uri);
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "comment", "");
+
+        if (node.stored_icon) {
+            const iconURL = await this.#loadNodeIcon(node);
+            xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "icon", iconURL);
+        }
+
         this.doc.documentElement.appendChild(xmlNode)
 
         let query = `//RDF:Seq[@RDF:about='urn:scrapbook:item${parent.external_id}']`;
@@ -123,7 +136,18 @@ class RDFDoc {
         if (seqNode)
             seqNode.appendChild(liNode);
 
-        return xmlNode
+        return xmlNode;
+    }
+
+    async #loadNodeIcon(node) {
+        node.__icon_data_url = await Icon.get(node);
+        const mimeType = node.__icon_data_url.match(/data:([^;]+)/)?.[1];
+        node.__icon_ext = "ico";
+
+        if (mimeType)
+            node.__icon_ext = CONTENT_TYPE_TO_EXT[mimeType];
+
+        return `resource://scrapbook/data/${node.external_id}/favicon.${node.__icon_ext}`;
     }
 
     deleteBookmarkNode(node) {
@@ -154,15 +178,25 @@ class RDFDoc {
             xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "title", node.name);
     }
 
-    updateBookmark(node) {
+    async updateBookmark(node) {
         let query = `//RDF:Description[@RDF:about='urn:scrapbook:item${node.external_id}']`;
         let xmlNode = this._selectFirst(query);
-        if (xmlNode)
+        if (xmlNode) {
             xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "title", node.name);
+            xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "source", node.uri);
+
+            if (node.has_comments) {
+                let comments = await Comments.get(node);
+                comments = comments.replace(/\n/g, " __BR__ ");
+                xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "comment", comments);
+            }
+            else
+                xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "comment", "");
+        }
     }
 
-    createBookmarkFolder(node, parent) {
-        let xmlNode = this.addBookmarkNode(node, parent);
+    async createBookmarkFolder(node, parent) {
+        let xmlNode = await this.addBookmarkNode(node, parent);
 
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "type", "folder");
         xmlNode.setAttributeNS(this._xmlNamespaces.NS_SCRAPBOOK, "source", "");
@@ -236,11 +270,12 @@ export class RDFShelfPlugin {
     async createBookmark(node, parent) {
         node.external = RDF_EXTERNAL_TYPE;
         node.external_id = UUID.date();
+        node.contains = ARCHIVE_TYPE_FILES;
         await Node.update(node);
 
         const rdfDoc = await RDFDoc.fromNode(node);
         if (rdfDoc) {
-            rdfDoc.addBookmarkNode(node, parent);
+            await rdfDoc.addBookmarkNode(node, parent);
             await rdfDoc.write();
         }
     }
@@ -280,7 +315,7 @@ export class RDFShelfPlugin {
                     if (node.type === NODE_TYPE_ARCHIVE) {
                         try {
                             await helperApp.post(`/rdf/delete_item/${node.uuid}`,
-                                {rdf_directory: await this.getRDFArchiveDir(node)});
+                                {rdf_archive_directory: await this.getRDFArchiveDir(node)});
                         } catch (e) {
                             console.error(e);
                         }
@@ -293,14 +328,16 @@ export class RDFShelfPlugin {
 
     async updateBookmark(node) {
         const rdfDoc = await RDFDoc.fromNode(node);
+
         if (rdfDoc) {
-            rdfDoc.renameBookmark(node)
+            await rdfDoc.updateBookmark(node)
             await rdfDoc.write();
         }
     }
 
     async reorderBookmarks(nodes) {
         let rdfNodes = nodes.filter(n => n.external === RDF_EXTERNAL_TYPE && n.external_id);
+
         if (rdfNodes.length) {
             const rdfDoc = await RDFDoc.fromNode(nodes[0]);
             if (rdfDoc) {
@@ -311,12 +348,16 @@ export class RDFShelfPlugin {
     }
 
     async storeBookmarkData(node, data) {
-        await Archive.delete(node);
-
         try {
-            await helperApp.post(`/rdf/save_item/${node.uuid}`,
-                {item_content: data,
-                rdf_directory: await this.getRDFArchiveDir(node)});
+            await helperApp.post(`/rdf/persist_archive`, {
+                content: new Blob([data]),
+                rdf_archive_path: await this.getRDFArchiveDir(node),
+                scrapbook_id: node.external_id,
+                title: node.name,
+                source: node.uri,
+                icon_ext: node.__icon_ext || "ico",
+                icon_data: node.__icon_data_url.split(",")?.[1] || null
+            });
         }
         catch (e) {
             console.error(e);
@@ -326,11 +367,6 @@ export class RDFShelfPlugin {
     async getRDFArchiveDir(node) {
         const path = await Path.compute(node);
         return `${path[0].uri}/data/${node.external_id}/`;
-    }
-
-    async pushRDFPath(node) {
-        await helperApp.post(`/rdf/browse/push/${node.uuid}`,
-            {rdf_directory: await this.getRDFArchiveDir(node)});
     }
 }
 

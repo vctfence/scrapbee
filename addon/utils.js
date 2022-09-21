@@ -112,7 +112,7 @@ export function getMimetype (signature) {
     }
 }
 
-export function getMimetypeExt(url) {
+export function getMimetypeByExt(url) {
     if (!url)
         return null;
 
@@ -173,6 +173,7 @@ export const CONTENT_TYPE_TO_EXT = {
     "image/tiff": "tiff",
     "image/jpeg": "jpg",
     "image/x-icon": "ico",
+    "image/vnd.microsoft.icon": "ico",
     "image/webp": "webp",
     "image/svg+xml": "svg"
 };

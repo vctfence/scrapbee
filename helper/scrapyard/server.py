@@ -140,6 +140,7 @@ def send_native_message(msg):
 
 
 from . import browser
+from . import server_resources
 from . import server_rdf
 from . import server_browse
 from . import server_export

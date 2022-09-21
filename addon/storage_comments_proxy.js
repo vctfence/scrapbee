@@ -49,7 +49,8 @@ export class CommentsProxy extends StorageProxy {
 
             const params = {
                 uuid: node.uuid,
-                comments_json: JSON.stringify(comments)
+                comments_json: JSON.stringify(comments),
+                ...await adapter.getParams(node)
             };
 
             await adapter.persistComments(params);

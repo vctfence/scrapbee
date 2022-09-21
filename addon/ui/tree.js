@@ -35,6 +35,7 @@ import {IMAGE_FORMATS} from "../utils.js";
 import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
+import UUID from "../uuid.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 const FOLDER_SELECT_STATE = "folder-select";
@@ -1243,12 +1244,25 @@ class BookmarkTree {
 
                         properties.containers = this._containers;
 
+                        const originalUUID = properties.uuid;
+                        const originalDateAdded = properties.date_added;
+                        if (ctxNode.external === RDF_EXTERNAL_TYPE) {
+                            properties.uuid = properties.external_id;
+                            properties.date_added = UUID.getDate(properties.external_id);
+                        }
+
                         let newProperties = await showDlg("properties", properties);
 
                         if (newProperties) {
                             delete properties.containers;
+                            delete properties.uuid;
 
                             Object.assign(properties, newProperties);
+
+                            if (ctxNode.external === RDF_EXTERNAL_TYPE) {
+                                properties.uuid = originalUUID;
+                                properties.date_added = originalDateAdded;
+                            }
 
                             if (!properties.icon) {
                                 properties.icon = undefined;
@@ -1505,10 +1519,11 @@ class BookmarkTree {
             delete items.uploadItem;
         }
 
-        if (ctxNode.external === BROWSER_EXTERNAL_TYPE) {
+        if (ctxNode.external === BROWSER_EXTERNAL_TYPE || ctxNode.external === RDF_EXTERNAL_TYPE) {
             delete items.newItem.submenu.newNotesItem;
         }
-        else if (ctxNode.external === RDF_EXTERNAL_TYPE && ctxNode.type === NODE_TYPE_SHELF) {
+
+        if (ctxNode.external === RDF_EXTERNAL_TYPE && ctxNode.type === NODE_TYPE_SHELF) {
             items.deleteItem.label = "Close";
         }
 

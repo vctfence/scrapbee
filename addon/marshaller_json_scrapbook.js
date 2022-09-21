@@ -371,7 +371,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         this._uuidToId.set(node.uuid, node.id);
 
         if (node.parent) {
-            node.parent_id = this._uuidToId.get(node.parent);
+            node.parent_id = this._uuidToId.get(node.parent) || 1;
             delete node.parent;
         }
     }

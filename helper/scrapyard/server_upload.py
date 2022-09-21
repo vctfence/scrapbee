@@ -24,7 +24,8 @@ def open_file_dialog(queue):
     root.withdraw()
 
     icon_dir = os.path.split(__file__)[0]
-    icon_path = os.path.join(icon_dir, "scrapyard.png")
+    icon_path = os.path.join(icon_dir, "resources", "scrapyard.png")
+
     if os.path.exists(icon_path):
         icon = PhotoImage(file=icon_path)
         root.iconphoto(False, icon)

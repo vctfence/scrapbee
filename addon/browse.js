@@ -178,10 +178,11 @@ async function browseArchive(node, options) {
     if (node.__tentative)
         return;
 
+    let urlPrefix = "";
     if (node.external === RDF_EXTERNAL_TYPE)
-        return await browseRDFArchive(node, options);
+        urlPrefix = "/rdf";
 
-    const archiveURL = helperApp.url(`/browse/${node.uuid}`);
+    const archiveURL = helperApp.url(`${urlPrefix}/browse/${node.uuid}`);
     const archiveTab = await openURL(archiveURL, options);
     return configureArchiveTab(node, archiveTab);
 }
@@ -229,17 +230,17 @@ async function browseRDFArchive(node, options) {
     }
 }
 
+helperApp.addMessageHandler("REQUEST_RDF_PATH", onRequestRdfPathMessage);
+
 export async function onRequestRdfPathMessage(msg) {
     const node = await Node.getByUUID(msg.uuid);
     const path = await rdfShelf.getRDFArchiveDir(node);
     return {
         type: "RDF_PATH",
         uuid: node.uuid,
-        rdf_directory: path
+        rdf_archive_path: path
     };
 }
-
-helperApp.addMessageHandler("REQUEST_RDF_PATH", onRequestRdfPathMessage);
 
 async function getBlobURL(node, blob) {
     if (settings.browse_with_helper()) {

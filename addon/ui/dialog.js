@@ -1,4 +1,4 @@
-import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_NOTES} from "../storage.js";
+import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_NOTES, RDF_EXTERNAL_TYPE} from "../storage.js";
 import {formatBytes} from "../utils.js";
 
 const DEFAULT_CONTAINER = "--default-container";
@@ -50,6 +50,9 @@ function showDlg(name, data, callback) {
     //$dlg.find("input.dialog-input").first().focus();
 
     $(".more-properties", $dlg).hide();
+
+    if (data.external === RDF_EXTERNAL_TYPE)
+        $("#copy-reference-url").hide();
 
     // handle bookmark comments
     let comments_icon = $dlg.find("#prop-dlg-comments-icon").first();

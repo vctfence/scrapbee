@@ -1,4 +1,4 @@
-import {formatBytes, getMimetypeExt} from "./utils.js";
+import {formatBytes, getMimetypeByExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
 import {getActiveTab, showNotification, updateTabURL} from "./utils_browser.js";
@@ -198,7 +198,7 @@ receive.uploadFiles = async message => {
                 bookmark.name = bookmark.name[bookmark.name.length - 1];
 
                 let content;
-                let contentType = getMimetypeExt(file);
+                let contentType = getMimetypeByExt(file);
 
                 try {
                     if (isHtml) {

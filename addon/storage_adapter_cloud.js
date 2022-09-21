@@ -8,10 +8,6 @@ export class StorageAdapterCloud {
         this._provider = provider;
     }
 
-    get concurrent() {
-        return false;
-    }
-
     async withCloudDB(f, fe) {
         try {
             let db = await this._provider.downloadDB();
@@ -24,8 +20,16 @@ export class StorageAdapterCloud {
         }
     }
 
+    get concurrent() {
+        return false;
+    }
+
     accepts(node) {
         return node && node.external === CLOUD_EXTERNAL_TYPE;
+    }
+
+    async getParams(node) {
+        return {};
     }
 
     async persistNode(params) {

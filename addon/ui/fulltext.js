@@ -89,20 +89,14 @@ function displayDocument(doc, node) {
 }
 
 async function previewUnpackedResult(query, node) {
-    const url = node.external === RDF_EXTERNAL_TYPE
+    let url = node.external === RDF_EXTERNAL_TYPE
         ? `/rdf/browse/${node.uuid}`
         : `/browse/${node.uuid}`;
 
+    url += `?highlight=${encodeURIComponent(query)}`;
+
     const previewURL = helperApp.url(url);
     displayURL(previewURL, node);
-
-    // await sleep(100);
-
-    // const currentTab = await browser.tabs.getCurrent();
-    // const frameIds = await browser.webNavigation.getAllFrames({tabId: currentTab.id});
-    // const previewFrameId = frameIds.find(f => f.frameId > 0)?.frameId;
-    // // does not work, missing permissions
-    // await injectScriptFile(currentTab.id, {file: "/content_mark.js", allFrames: true});
 }
 
 function displayURL(previewURL, node) {

@@ -209,9 +209,9 @@ export class StructuredStreamImporter {
         await Import.prepare(shelfName);
 
         progress = progress && !!meta.entities;
-        const local = !_BACKGROUND_PAGE && !muteSidebar;
+        const localSender = !_BACKGROUND_PAGE && !muteSidebar;
         this._progressCounter = progress
-            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar}, local)
+            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar}, localSender)
             : null;
 
         this._importParentId2DBParentId = new Map();
@@ -225,8 +225,10 @@ export class StructuredStreamImporter {
         await this._importObject(firstObject);
 
         let object;
-        while (object = await unmarshaller.unmarshal())
+        while (object = await unmarshaller.unmarshal()) {
+            _log({...object});
             await this._importObject(object);
+        }
 
         if (progress && !this._progressCounter.isFinished())
             throw new Error("some records are missing");

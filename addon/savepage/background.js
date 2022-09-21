@@ -628,10 +628,10 @@ function initialize(optionsOnly)
             ("options-saveallcustomfonts" in object) ? object["options-saveallcustomfonts"] : true;  /* Version 2.0-3.0 */
 
         if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = true;
-        // Scrapyard //////////////////////////////////////////////////////////////////
 
         if (!("options-savescripts" in object)) object["options-savescripts"] =
-            ("options-saveallscripts" in object) ? object["options-saveallscripts"] : false;  /* Version 2.0-3.0 */
+            ("options-saveallscripts" in object) ? object["options-saveallscripts"] : true;  /* Version 2.0-3.0 */
+        // Scrapyard //////////////////////////////////////////////////////////////////
 
         /* File Info options */
 

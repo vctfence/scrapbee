@@ -414,10 +414,14 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
         }
     }
 
-    if (shelfList.selectedShelfExternal === RDF_EXTERNAL_TYPE)
+    if (shelfList.selectedShelfExternal === RDF_EXTERNAL_TYPE) {
         $("#shelf-menu-delete").text("Close");
-    else
+        $("#shelf-menu-export").hide();
+    }
+    else {
         $("#shelf-menu-delete").text("Delete");
+        $("#shelf-menu-export").show();
+    }
 }
 
 async function createShelf() {

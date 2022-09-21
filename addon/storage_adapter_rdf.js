@@ -32,6 +32,12 @@ export class StorageAdapterRDF {
         return node && node.external === RDF_EXTERNAL_TYPE;
     }
 
+    async getParams(node) {
+        return {
+            rdf_archive_path: await rdfShelf.getRDFArchiveDir(node)
+        };
+    }
+
     async persistNode(params) {
 
     }
@@ -73,11 +79,8 @@ export class StorageAdapterRDF {
     }
 
     async fetchArchiveFile(params) {
-        params.rdf_archive_path = await rdfShelf.getRDFArchiveDir(params.node);
-        delete params.node;
-
         try {
-            const response = await helperApp.postJSON(`/storage/fetch_rdf_archive_file`, params);
+            const response = await helperApp.postJSON(`/rdf/fetch_archive_file`, params);
 
             if (response.ok) {
                 let content = await response.arrayBuffer();
@@ -90,18 +93,16 @@ export class StorageAdapterRDF {
     }
 
     async saveArchiveFile(params) {
-        // params.data_path = settings.data_folder_path();
-        // params.content = new Blob([params.content]);
-        // params.compute_index = true;
-        //
-        // try {
-        //     const response = await helperApp.post(`/storage/save_archive_file`, params);
-        //
-        //     if (response.ok)
-        //         return response.json()
-        // } catch (e) {
-        //     console.error(e);
-        // }
+        params.content = new Blob([params.content]);
+
+        try {
+            const response = await helperApp.post(`/rdf/save_archive_file`, params);
+
+            if (response.ok)
+                return response.json()
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     async persistNotesIndex(params) {
@@ -121,7 +122,7 @@ export class StorageAdapterRDF {
     }
 
     async persistComments(params) {
-
+        return this._postJSON("/rdf/persist_comments", params);
     }
 
     async fetchComments(params) {

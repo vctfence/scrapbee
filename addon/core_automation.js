@@ -12,7 +12,7 @@ import {settings} from "./settings.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
-import {getMimetypeExt} from "./utils.js";
+import {getMimetypeByExt} from "./utils.js";
 import {fetchText} from "./utils_io.js";
 import {ishellConnector} from "./plugin_ishell.js";
 import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
@@ -145,7 +145,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
         node.name = "Unnamed";
 
     if (!node.content_type)
-        node.content_type = getMimetypeExt(node.uri);
+        node.content_type = getMimetypeByExt(node.uri);
 
     let saveContent = (bookmark, content) => {
         const contentType = node.pack? "text/html": node.content_type;

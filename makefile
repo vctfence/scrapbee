@@ -48,7 +48,7 @@ helper-win:
 	cd helper; rm -f *.zip
 	cd helper; pyinstaller scrapyard_helper.py
 	mkdir ./helper/dist/scrapyard_helper/scrapyard
-	cp ./helper/scrapyard/scrapyard.png ./helper/dist/scrapyard_helper/scrapyard/scrapyard.png
+	cp -r ./helper/scrapyard/resources ./helper/dist/scrapyard_helper/scrapyard
 	cd helper; makensis setup.nsi
 	make helper-clean
 

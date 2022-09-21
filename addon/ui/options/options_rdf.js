@@ -107,7 +107,7 @@ export function load() {
     $("#rdf-import-type").on("change", e => {
         if ($(e.target).val() === "rdf-open") {
             $("#rdf-import-create-search-index")
-                .prop("checked", false)
+                //.prop("checked", false)
                 .prop("disabled", false)
         }
         else {

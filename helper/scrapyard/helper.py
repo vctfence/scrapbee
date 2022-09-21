@@ -1,4 +1,6 @@
 import json
+import logging
+import os
 
 from . import server, browser
 
@@ -10,6 +12,7 @@ def main():
     while True:
         msg = browser.get_message()
         process_message(msg)
+
 
 def process_message(msg):
     if msg["type"] == "INITIALIZE":

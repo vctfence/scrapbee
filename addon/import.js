@@ -4,7 +4,8 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
     EVERYTHING_SHELF_UUID,
-    FIREFOX_BOOKMARK_MOBILE,
+    RDF_EXTERNAL_TYPE,
+    NODE_TYPE_SHELF,
     TODO_SHELF_NAME
 } from "./storage.js";
 import {Query} from "./storage_query.js";
@@ -69,21 +70,15 @@ export class Export {
             if (browser)
                 shelves.splice(shelves.indexOf(browser), 1);
 
+            const openRDFShelves = shelves.filter(n => n.external === RDF_EXTERNAL_TYPE);
+            for (const node of openRDFShelves)
+                shelves.splice(shelves.indexOf(node), 1);
+
             nodes = await Query.fullSubtree(shelves.map(s => s.id), true, level);
         }
         else {
             nodes = await Query.fullSubtree(shelf.id,true, level);
             nodes.shift();
-        }
-
-        const mobileBookmarks = nodes.find(n => n.external_id === FIREFOX_BOOKMARK_MOBILE);
-        if (mobileBookmarks) {
-            const mobileSubtree = nodes.filter(n => n.parent_id === mobileBookmarks.id);
-
-            for (const n of mobileSubtree)
-                nodes.splice(nodes.indexOf(n), 1);
-
-            nodes.splice(nodes.indexOf(mobileBookmarks), 1);
         }
 
         return nodes;

@@ -7,7 +7,7 @@ import {
     showNotification,
     isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
-import {capitalize, getMimetypeExt} from "./utils.js";
+import {capitalize, getMimetypeByExt} from "./utils.js";
 import {receive, send, sendLocal} from "./proxy.js";
 import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {fetchText, fetchWithTimeout} from "./utils_io.js";
@@ -160,7 +160,7 @@ async function captureNonHTMLTab(tab, bookmark) {
             let contentType = response.headers.get("content-type");
 
             if (!contentType)
-                contentType = getMimetypeExt(new URL(tab.url).pathname) || "application/pdf";
+                contentType = getMimetypeByExt(new URL(tab.url).pathname) || "application/pdf";
 
             bookmark.content_type = contentType;
 

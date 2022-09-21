@@ -19,7 +19,7 @@ import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Folder} from "./bookmarks_folder.js";
 import {ishellConnector} from "./plugin_ishell.js";
-import {cleanObject, getMimetypeExt} from "./utils.js";
+import {cleanObject, getMimetypeByExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
@@ -535,7 +535,7 @@ export class BookmarkManager extends EntityManager {
 
                                 if (!type) {
                                     let iconUrl = new URL(node.icon);
-                                    type = getMimetypeExt(iconUrl.pathname);
+                                    type = getMimetypeByExt(iconUrl.pathname);
                                 }
 
                                 if (type.startsWith("image")) {

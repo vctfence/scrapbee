@@ -1,6 +1,7 @@
 import {helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import {ARCHIVE_TYPE_TEXT, NON_SYNCHRONIZED_EXTERNALS} from "./storage.js";
+import {rdfShelf} from "./plugin_rdf_shelf.js";
 
 export class StorageAdapterDisk {
     async _postJSON(path, fields) {
@@ -32,6 +33,10 @@ export class StorageAdapterDisk {
 
     accepts(node) {
         return node && !node.external;
+    }
+
+    async getParams(node) {
+        return {};
     }
 
     async persistNode(params) {

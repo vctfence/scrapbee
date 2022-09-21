@@ -1,8 +1,11 @@
+import base64
 import json
 import logging
 import os
 import shutil
 import threading
+from pathlib import Path
+
 import regex
 
 from bs4 import BeautifulSoup
@@ -24,7 +27,7 @@ def with_mutex(f):
 def import_rdf_archive(params):
     uuid = params["uuid"]
     scrapbook_id = params["scrapbook_id"]
-    rdf_path = params["rdf_directory"]
+    rdf_path = params["rdf_archive_path"]
 
     object_directory = storage_manager.get_object_directory(params, uuid)
     unpacked_archive_directory = storage_manager.get_archive_unpacked_path(object_directory)
@@ -35,19 +38,19 @@ def import_rdf_archive(params):
     if os.path.exists(rdf_archive_directory):
         with_mutex(lambda: shutil.copytree(rdf_archive_directory, unpacked_archive_directory, dirs_exist_ok=True))
         words = build_archive_index(rdf_archive_directory)
-        store_archive_index(params, words)
+        import_archive_index(params, words)
         result["archive_index"] = words
 
-        read_rdf_metadata(rdf_archive_directory, result)
+        import_rdf_metadata(rdf_archive_directory, result)
         if result.get("comments", None):
-            store_archive_comments(params, result)
+            import_archive_comments(params, result)
 
     return result
 
 
 def import_rdf_archive_index(params):
     scrapbook_id = params["scrapbook_id"]
-    rdf_path = params["rdf_directory"]
+    rdf_path = params["rdf_archive_path"]
     rdf_archive_directory = os.path.join(rdf_path, "data", scrapbook_id)
 
     result = dict()
@@ -72,13 +75,13 @@ def build_archive_index(path):
                     script.extract()
 
                 text = soup.body.get_text(separator=' ')
-                file_words = create_index(text)
+                file_words = index_text(text)
                 words += file_words
 
     return list(set(words))
 
 
-def create_index(string):
+def index_text(string):
     string = string.replace("\n", " ")
     string = regex.sub(r"(?:\p{Z}|[^\p{L}-])+", " ", string)
     words = string.split(" ")
@@ -86,24 +89,54 @@ def create_index(string):
     return words
 
 
-def read_rdf_metadata(rdf_archive_directory, result):
+def create_rdf_metadata(params):
+    archive_directory_path = params["rdf_archive_path"]
+    metadata_file_path = os.path.join(archive_directory_path, "index.dat")
+    metadata = f"""id\t{params["scrapbook_id"]}
+type
+title\t{params["title"]}
+chars\tUTF-8
+icon\tfavicon.{params["icon_ext"]}
+source\t{params["source"]}
+comment
+"""
+    with open(metadata_file_path, "w", encoding="utf-8") as metadata_file:
+        metadata_file.write(metadata)
+
+
+def read_rdf_metadata(rdf_archive_directory):
     metadata_file_path = os.path.join(rdf_archive_directory, "index.dat")
 
+    lines = []
     if os.path.exists(metadata_file_path):
         with open(metadata_file_path, "r", encoding="utf-8") as metadata_file:
             lines = metadata_file.readlines()
 
-            for line in lines:
-                if line.startswith("chars"):
-                    result["charset"] = line.replace("chars", "", 1).strip()
-
-                if line.startswith("comment"):
-                    comments = line.replace("comment", "", 1).strip()
-                    comments = comments.replace(" __BR__ ", "\n")
-                    create_index(comments)
+    return lines
 
 
-def store_archive_comments(params, result):
+def write_rdf_metadata(rdf_archive_directory, lines):
+    metadata_file_path = os.path.join(rdf_archive_directory, "index.dat")
+
+    with open(metadata_file_path, "w", encoding="utf-8") as metadata_file:
+        content = "".join(lines)
+        metadata_file.write(content)
+
+
+def import_rdf_metadata(rdf_archive_directory, result):
+    lines = read_rdf_metadata(rdf_archive_directory)
+
+    for line in lines:
+        if line.startswith("chars"):
+            result["charset"] = line.replace("chars", "", 1).strip()
+
+        if line.startswith("comment"):
+            comments = line.replace("comment", "", 1).strip()
+            result["comments"] = comments = comments.replace(" __BR__ ", "\n")
+            result["comments_index"] = index_text(comments)
+
+
+def import_archive_comments(params, result):
     comments = {"content": result["comments"]}
     params["comments_json"] = json.dumps(comments, ensure_ascii=False, separators=(',', ':'))
     with_mutex(lambda: storage_manager.persist_comments(params))
@@ -113,7 +146,66 @@ def store_archive_comments(params, result):
     with_mutex(lambda: storage_manager.persist_comments_index(params))
 
 
-def store_archive_index(params, words):
+def import_archive_index(params, words):
     index = {"content": words}
     params["index_json"] = json.dumps(index, ensure_ascii=False, separators=(',', ':'))
     with_mutex(lambda: storage_manager.persist_archive_index(params))
+
+
+def persist_archive(params, files):
+    archive_directory_path = params["rdf_archive_path"]
+    if not os.path.exists(archive_directory_path):
+        Path(archive_directory_path).mkdir(parents=True, exist_ok=True)
+
+    index_file_path = os.path.join(archive_directory_path, "index.html")
+    files["content"].save(index_file_path)
+    create_rdf_metadata(params)
+    persist_archive_icon(params)
+
+
+def persist_archive_icon(params):
+    archive_directory_path = params["rdf_archive_path"]
+    icon_data = params.get("icon_data", None)
+
+    if icon_data:
+        icon_file_path = os.path.join(archive_directory_path, f"favicon.{params['icon_ext']}")
+        icon_bytes = base64.b64decode(icon_data)
+
+        with open(icon_file_path, "wb") as icon_file:
+            icon_file.write(icon_bytes)
+
+
+def fetch_archive_file(params):
+    archive_file_path = os.path.join(params["rdf_archive_path"], params["file"])
+
+    file_content = None
+    if os.path.exists(archive_file_path):
+        with open(archive_file_path, "rb") as archive_file:
+            file_content = archive_file.read()
+
+    return file_content
+
+
+def save_archive_file(params, files):
+    archive_directory_path = params["rdf_archive_path"]
+    archive_file_path = os.path.join(archive_directory_path, params["file"])
+
+    files["content"].save(archive_file_path)
+
+    index = build_archive_index(archive_directory_path)
+    return json.dumps(index)
+
+
+def persist_comments(params):
+    archive_directory_path = params["rdf_archive_path"]
+    lines = read_rdf_metadata(archive_directory_path)
+    comments = json.loads(params["comments_json"])
+
+    for i in range(len(lines)):
+        if lines[i].startswith("comment"):
+            text = comments["content"].replace("\n", " __BR__ ")
+            lines[i] = f"comment\t{text}\n"
+
+    write_rdf_metadata(archive_directory_path, lines)
+
+

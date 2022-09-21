@@ -1,5 +1,5 @@
 import {EntityIDB} from "./storage_idb.js";
-import {BROWSER_SHELF_ID, DEFAULT_SHELF_ID, CLOUD_SHELF_ID} from "./storage.js";
+import {BROWSER_SHELF_ID, DEFAULT_SHELF_ID, CLOUD_SHELF_ID, RDF_EXTERNAL_TYPE, NODE_TYPE_SHELF} from "./storage.js";
 import {Query} from "./storage_query.js";
 
 class StorageDatabase extends EntityIDB {
@@ -39,9 +39,14 @@ class StorageDatabase extends EntityIDB {
     }
 
     async wipeImportable() {
-        const retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
+        let retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
             ...(await Query.fullSubtreeOfIDs(BROWSER_SHELF_ID)),
             ...(await Query.fullSubtreeOfIDs(CLOUD_SHELF_ID))];
+
+        const shelves = await Query.allShelves();
+        const openRDFShelves = shelves.filter(n => n.external === RDF_EXTERNAL_TYPE);
+        for (const node of openRDFShelves)
+            retain = [...retain, ...await Query.fullSubtreeOfIDs(node.id)]
 
         return this.#wipe(retain);
     }

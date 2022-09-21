@@ -1,15 +1,12 @@
 import io
 import os
 import json
-import time
 import shutil
-import base64
 import logging
 import zipfile
 import tempfile
 
 from pathlib import Path
-from datetime import datetime
 
 from . import storage_sync
 from .storage_node_db import NodeDB
@@ -235,16 +232,6 @@ class StorageManager:
         object_directory_path = self.get_object_directory(params)
         archive_directory_path = self.get_archive_unpacked_path(object_directory_path)
         archive_file_path = os.path.join(archive_directory_path, params["file"])
-
-        file_content = None
-        if os.path.exists(archive_file_path):
-            with open(archive_file_path, "rb") as archive_file:
-                file_content = archive_file.read()
-
-        return file_content
-
-    def fetch_rdf_archive_file(self, params):
-        archive_file_path = os.path.join(params["rdf_archive_path"], params["file"])
 
         file_content = None
         if os.path.exists(archive_file_path):
