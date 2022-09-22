@@ -247,8 +247,8 @@ receive.browseNode = async message => {
 
 receive.browseNotes = message => {
     (message.tab
-        ? updateTabURL(message.tab, "ui/notes.html#" + message.uuid + ":" + message.id, false)
-        : browser.tabs.create({"url": "ui/notes.html#" + message.uuid + ":" + message.id}));
+        ? updateTabURL(message.tab, "ui/notes.html#" + message.uuid, false)
+        : browser.tabs.create({"url": "ui/notes.html#" + message.uuid}));
 };
 
 receive.browseOrgReference = message => {

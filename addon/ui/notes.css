@@ -82,6 +82,15 @@ a#notes-button.focus, a#edit-button.focus {
     font-size: 100%;
 }
 
+#notes *, .ql-editor * {
+    font-family: "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans", sans-serif;
+}
+
+#notes code, .ql-editor code {
+    font-family: "Lucida Console", "Courier New", monospace;
+    display: inline-block;
+}
+
 #notes > ul#toc {
     padding-left: 0;
     margin-top: 0;
@@ -96,6 +105,10 @@ a#notes-button.focus, a#edit-button.focus {
 
 #content-edit-button {
     display: none;
+}
+
+#wysiwyg-editor {
+    height: calc(100% - 24px);
 }
 
 #editor {
@@ -260,7 +273,7 @@ pre.plaintext {
 }
 
 .ql-container {
-    font-size: 120%;
+    font-size: 115%;
 }
 
 .ql-editor .ql-align-justify {
@@ -325,7 +338,7 @@ button.ql-hr {
 
 .format-html {
     line-height: 1.42;
-    font-size: 120%;
+    font-size: 115%;
     box-sizing: border-box;
 }
 

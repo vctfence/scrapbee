@@ -293,7 +293,7 @@ export async function browseNodeInCurrentContext(node, options) {
             return browseArchive(node, options);
 
         case NODE_TYPE_NOTES:
-            return openURL("ui/notes.html#" + node.uuid + ":" + node.id, options);
+            return openURL("ui/notes.html#" + node.uuid, options);
 
         case NODE_TYPE_FOLDER:
             return browseFolder(node, options);

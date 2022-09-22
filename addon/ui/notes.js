@@ -15,7 +15,7 @@ let examples;
 const styles = {"org": `#+CSS: p {text-align: justify;}`,
                 "markdown": `[//]: # (p {text-align: justify;})`};
 
-const NODE_ID = parseInt(location.hash?.split(":")?.pop());
+let NODE_ID;
 
 let format = "delta";
 let align;
@@ -46,9 +46,12 @@ async function init() {
 
 
     try {
-        let node = await Node.get(NODE_ID);
-        let sourceURL = $("#source-url");
+        const uuid = location.hash.substring(1);
+        const node = await Node.getByUUID(uuid);
+        const sourceURL = $("#source-url");
         sourceURL.text(node.name);
+
+        NODE_ID = node.id;
 
         if (node.type === NODE_TYPE_NOTES) {
             sourceURL.removeClass("source-url");

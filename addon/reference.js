@@ -24,7 +24,7 @@ async function openReference(tab) {
         else
             switch (prefix) {
                 case "notes":
-                    send.browseNotes({uuid: node.uuid, id: node.id, tab: tab});
+                    send.browseNotes({uuid: node.uuid, tab: tab});
                     break;
             }
     }

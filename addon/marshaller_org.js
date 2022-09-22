@@ -15,7 +15,7 @@ import {transformFromV1ToV3} from "./import_versions.js";
 const STORAGE_FORMAT = "Scrapyard";
 const FORMAT_VERSION = 2;
 const ORG_EXPORTED_KEYS = ["uuid", "icon", "stored_icon", "type", "size", "details", "date_added", "date_modified",
-    "content_modified", "external", "external_id", "container", "content_type", "site"];
+    "content_modified", "external", "external_id", "container", "content_type", "contains", "site"];
 
 export class MarshallerORG extends Marshaller {
     configure(options) {

@@ -850,7 +850,7 @@ class BookmarkTree {
             openNotesItem: {
                 label: "Open Notes",
                 action: () => {
-                    send.browseNotes({id: ctxNode.id, uuid: ctxNode.uuid});
+                    send.browseNotes({uuid: ctxNode.uuid});
                 }
             },
             openOriginalItem: {
@@ -971,7 +971,7 @@ class BookmarkTree {
                         icon: `/icons/notes${lightTheme? "": "2"}.svg`,
                         action: async () => {
                             if (isContentNode(ctxNode)) {
-                                send.browseNotes({id: ctxNode.id, uuid: ctxNode.uuid});
+                                send.browseNotes({uuid: ctxNode.uuid});
                                 return;
                             }
 
