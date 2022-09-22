@@ -3,10 +3,13 @@ import {formatBytes} from "../utils.js";
 
 const DEFAULT_CONTAINER = "--default-container";
 
-function showDlg(name, data, callback) {
+function showDlg(name, data, init = () => {}) {
     if ($(".dlg-dim:visible").length)
         return
+
     let $dlg = $(".dlg-dim.dlg-" + name).clone().prependTo(document.body);
+
+    init($dlg);
 
     if (data.width)
         $dlg.find(".dlg").css("width", data.width);
@@ -153,6 +156,10 @@ function showDlg(name, data, callback) {
                         data[this.name] = $(this).val();
                     }
                 }
+            })
+            $dlg.find("select").each(function () {
+                if (this.name)
+                    data[this.name] = $(this).val();
             })
             $dlg.find("textarea").each(function () {
                 if (this.name)

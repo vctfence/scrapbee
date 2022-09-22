@@ -222,6 +222,37 @@
         </div>
     </div>
 
+    <div class="dlg-dim dlg-export" style="display:none;">
+        <div class="dlg">
+            <div class="dlg-box">
+                <div class="dlg-title i18n i18n-innerHTML">[caption]</div>
+                <div class="dlg-table" style="overflow:hidden;">
+                    <div class="row">
+                        <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">File name:</div>
+                        <div class="cell"><input class="dialog-input" type="" name="file_name" value=""
+                                                 style="width:100%"/></div>
+                    </div>
+                    <div class="row">
+                        <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">Format:</div>
+                        <div class="cell">
+                            <select class="export-format" name="format" style="color: black; appearance: auto;">
+                                <option value="json">JSON</option>
+                                <option value="org">ORG</option>
+                                <option value="org_links">ORG (links only)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
+                    <div class="cell" style="float:right">
+                        <input type="button" class="button-ok i18n i18n-value" value="OK"/>
+                        <input type="button" class="button-cancel i18n i18n-value" value="Cancel"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

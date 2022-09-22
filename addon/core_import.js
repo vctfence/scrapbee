@@ -48,14 +48,19 @@ receive.importFile = async message => {
 
 receive.exportFile = async message => {
     const shelf = isBuiltInShelf(message.shelf)? message.shelf.toLocaleLowerCase(): message.shelf;
-
-    let format = settings.export_format() || "json";
+    let format = message.format || "json";
 
     let shallowExport = false;
-    if (format === "org_shallow") {
+    if (format === "org_links") {
         shallowExport = true;
         format = "org";
     }
+
+    let fileExt = ".jsbk";
+    if (format === "org")
+        fileExt = ".org";
+
+    const fileName = message.fileName.replace(/[\\\/:*?"<>|^#%&!@+={}'~]/g, "_") + fileExt;
 
     let nodes = await Export.nodes(shelf, format === "org");
 
@@ -66,9 +71,6 @@ receive.exportFile = async message => {
         .setReportProgress(true)
         .setObjects(nodes)
         .setSidebarContext(!_BACKGROUND_PAGE);
-
-    const fileExt = `.${format === "json" ? "jsbk" : format}`;
-    const fileName = shelf.replace(/[\\\/:*?"<>|^#%&!@+={}'~]/g, "_") + fileExt;
 
     await exportWithHelperApp(exportBuilder, fileName, format);
 };

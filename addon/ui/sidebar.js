@@ -35,7 +35,7 @@ import {
     isContentNode
 } from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
-import {ShelfList} from "./shelf_list.js";
+import {ShelfList, simpleSelectric} from "./shelf_list.js";
 import {Query} from "../storage_query.js";
 import {Path} from "../path.js";
 import {Shelf} from "../bookmarks_shelf.js";
@@ -528,6 +528,7 @@ async function performSearch() {
         return context.search(input).then(nodes => tree.list(nodes));
 }
 
+// "File" is non-serializable on Chrome, hence imported files could not be processed in the background
 if (!_BACKGROUND_PAGE)
     import("../core_import.js");
 
@@ -554,20 +555,25 @@ async function performImport(file, file_name, file_ext) {
 }
 
 async function performExport() {
-    let {name: shelf, uuid} = shelfList.getCurrentShelf();
+    const {name: shelf, uuid} = shelfList.getCurrentShelf();
+    const options = await showDlg("export", {
+        caption: "Export Shelf",
+        file_name: shelf
+    });
 
-    startProcessingIndication(true);
+    if (options) {
+        startProcessingIndication(true);
 
-    try {
-        const sender = _BACKGROUND_PAGE? send: sendLocal;
-        await sender.exportFile({shelf, uuid});
-        stopProcessingIndication();
-    }
-    catch (e) {
-        console.error(e);
-        stopProcessingIndication();
-        if (!e.message?.includes("Download canceled"))
-            showNotification({message: "The export has failed: " + e.message});
+        try {
+            const sender = _BACKGROUND_PAGE? send: sendLocal;
+            await sender.exportFile({shelf, uuid, fileName: options.file_name, format: options.format});
+            stopProcessingIndication();
+        } catch (e) {
+            console.error(e);
+            stopProcessingIndication();
+            if (!e.message?.includes("Download canceled"))
+                showNotification({message: "The export has failed: " + e.message});
+        }
     }
 }
 
