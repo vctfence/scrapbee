@@ -6,64 +6,9 @@ import {
     NODE_TYPE_NOTES
 } from "./storage.js";
 import {cloudShelf} from "./plugin_cloud_shelf.js";
-import {indexString, indexHTML} from "./utils_html.js";
-import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
+import {Node} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
 import {settings} from "./settings.js";
-
-receive.reindexArchiveContent = async message => {
-    send.startProcessingIndication({noWait: true});
-
-    const nodes = await Node.filter(n => n.type === NODE_TYPE_ARCHIVE || n.has_notes || n.has_comments);
-
-    let currentProgress = 0;
-    let ctr = 0;
-
-    for (let node of nodes) {
-        //console.log("Processing: %s", node.name)
-
-        try {
-            if (node.type === NODE_TYPE_ARCHIVE) {
-                const archive = await Archive.get(node);
-
-                if (archive && !archive.byte_length && archive.object) {
-                    let text = await Archive.reify(archive);
-                    if (text)
-                        await Archive.storeIndex(node, indexHTML(text));
-                }
-            }
-
-            if (node.has_notes) {
-                const notes = await Notes.get(node);
-                if (notes) {
-                    delete notes.id;
-                    await Notes.add(node, notes);
-                }
-            }
-
-            if (node.has_comments) {
-                const comments = await Comments.get(node);
-                if (comments) {
-                    const words = indexString(comments);
-                    await Comments.storeIndex(node.id, words);
-                }
-            }
-
-            ctr += 1;
-            const newProgress = Math.round((ctr / nodes.length) * 100);
-            if (newProgress !== currentProgress) {
-                currentProgress = newProgress;
-                send.indexUpdateProgress({progress: currentProgress});
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    send.stopProcessingIndication();
-
-    send.indexUpdateFinished();
-};
 
 receive.resetCloud = async message => {
     if (!cloudShelf.isAuthenticated())

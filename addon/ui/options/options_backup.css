@@ -122,7 +122,7 @@
     gap: 10px;
 }
 
-#create-backup-container {
+#create-backup-container, #backup-compression-options-container {
     border: 1px solid #777777;
     border-radius: 3px;
     display: flex;

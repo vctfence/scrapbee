@@ -1,7 +1,7 @@
 import {send} from "../../proxy.js";
 import {settings} from "../../settings.js";
 import {confirm} from "../dialog.js";
-import {ShelfList} from "../shelf_list.js";
+import {selectricRefresh, ShelfList, simpleSelectric} from "../shelf_list.js";
 import {formatBytes, toHHMMSS} from "../../utils.js";
 import {showNotification} from "../../utils_browser.js";
 import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_UUID, BROWSER_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
@@ -359,6 +359,31 @@ export class BackupManager {
 
 }
 
+function configureBackupCompressionPanel() {
+    const compMethod = $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
+    const compLevel = $("#option-compression-level").val(settings.backup_compression_level() || "5");
+
+    $("#option-compression-method option[value='EMPTY']").remove();
+    $("#option-compression-level option[value='EMPTY']").remove();
+
+    simpleSelectric(compMethod);
+    selectricRefresh(compMethod);
+    simpleSelectric(compLevel);
+    selectricRefresh(compLevel);
+
+    $("#option-compression-method").on("change", async e => {
+        await settings.load();
+        settings.backup_compression_method(e.target.value)
+    });
+    $("#option-compression-level").on("change", async  e => {
+        await settings.load();
+        settings.backup_compression_level(parseInt(e.target.value))
+    });
+}
+
 export function load() {
+    $("a.settings-menu-item[href='#backup']").show();
+    configureBackupCompressionPanel();
+
     new BackupManager().init();
 }

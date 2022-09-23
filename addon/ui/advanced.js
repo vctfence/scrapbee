@@ -13,7 +13,6 @@ async function init() {
 
     initHelpMarks();
     configureAutomationPanel();
-    configureBackupCompressionPanel();
     configureMaintenancePanel();
     configureImpExpPanel();
 }
@@ -51,28 +50,6 @@ function configureAutomationPanel() {
     });
 }
 
-function configureBackupCompressionPanel() {
-    const compMethod = $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
-    const compLevel = $("#option-compression-level").val(settings.backup_compression_level() || "5");
-
-    $("#option-compression-method option[value='EMPTY']").remove();
-    $("#option-compression-level option[value='EMPTY']").remove();
-
-    simpleSelectric(compMethod);
-    selectricRefresh(compMethod);
-    simpleSelectric(compLevel);
-    selectricRefresh(compLevel);
-
-    $("#option-compression-method").on("change", async e => {
-        await settings.load();
-        settings.backup_compression_method(e.target.value)
-    });
-    $("#option-compression-level").on("change", async  e => {
-        await settings.load();
-        settings.backup_compression_level(parseInt(e.target.value))
-    });
-}
-
 function configureMaintenancePanel() {
     $("#option-repair-icons").prop("checked", settings.repair_icons());
     $("#option-repair-icons").on("change", async e => {
@@ -84,26 +61,6 @@ function configureMaintenancePanel() {
     $("#option-enable-debug").on("change", async e => {
         await settings.load();
         settings.debug_mode(e.target.checked);
-    });
-
-    $("#reindex-content-link").on("click", e => {
-        e.preventDefault();
-
-        let progressListener = message => {
-            if (message.type === "indexUpdateProgress") {
-                $("#reindex-content-progress").text(`Progress: ${message.progress}%`);
-            }
-            else if (message.type === "indexUpdateFinished") {
-                $("#reindex-content-progress").text(``);
-                browser.runtime.onMessage.removeListener(progressListener);
-            }
-        };
-
-        browser.runtime.onMessage.addListener(progressListener);
-
-        send.reindexArchiveContent();
-        $("#reindex-content-link").off("click");
-        $("#reindex-content-progress").text(`Progress: 0%`);
     });
 
     $("#reset-cloud-link").on("click", async e => {
@@ -121,7 +78,7 @@ function configureMaintenancePanel() {
         e.preventDefault();
 
         if (await confirm("Warning",
-            "This will reset the Scrapyard browser internal storage. All archived content will be left intact. Continue?"))
+            "This will reset the Scrapyard browser internal storage. All archived content on disk will remain intact. Continue?"))
             await send.resetScrapyard();
     });
 

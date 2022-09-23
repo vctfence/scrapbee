@@ -128,6 +128,12 @@ input[type='text'] {
     flex-grow: 0
 }
 
+.item-aligner {
+    display: flex;
+    align-items: center;
+    align-content: center;
+}
+
 .form-table {
 }
 

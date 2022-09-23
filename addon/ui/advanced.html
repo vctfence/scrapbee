@@ -55,6 +55,7 @@
     <div id="advanced-title">
         <h1>Advanced Settings</h1>
     </div>
+
     <div class="panel" id="automation-panel">
         <p class="panel-title" id="automation-panel-title">Automation Settings
             <a id="automation-api-docs" href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md" target="_blank">API documentation</a></p>
@@ -74,63 +75,21 @@
             </fieldset>
         </form>
     </div>
-    <div class="panel" id="experimental-panel">
-        <p class="panel-title">Backup Compression</p>
-        <div class="double-container">
-            <div class="double-first">
-                <form>
-                    <fieldset style="border: none;">
-                        <div class="item-aligner">
-                            <label for="option-compression-method">Compression method:&nbsp;&nbsp;&nbsp;</label>
-                            <select id="option-compression-method" type="select" style="color: black">
-                                <option value="EMPTY"></option>
-                                <option value="DEFLATE">DEFLATE</option>
-                                <option value="LZMA">LZMA</option>
-                                <option value="BZIP2">BZIP2</option>
-                            </select>
-                        </div>
-                    </fieldset>
-                    <fieldset style="border: none;">
-                        <div class="item-aligner">
-                            <label for="option-compression-level" style="margin-right: 2px">Compression level:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                            <select id="option-compression-level" type="select" style="color: black;">
-                                <option value="EMPTY"></option>
-                                <option value="0">0</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
-                            </select>
-                        </div>
-                    </fieldset>
-                </form>
-            </div>
-            <div class="double-last">
-                <form>
 
-                </form>
-            </div>
-        </div>
-    </div>
     <div class="panel" id="maintenance-panel">
         <p class="panel-title">Maintenance
             <a id="statistics-link" href="#">Statistics</a></p>
             <fieldset style="border: none;">
                 <div class="double-container">
                     <div class="double-first">
-                        <div id="reindex-content" class="action-link">
-                            <a id="reindex-content-link" href="#">Rebuild search index</a>
-                            &nbsp;<span id="reindex-content-progress"></span>
+                        <div id="backup" class="action-link">
+                            <a id="backup-link" href="options.html#backup" target="_blank">Backup</a>
                         </div>
 
                         <div id="reset-scrapyard" class="action-link">
                             <a id="reset-scrapyard-link" href="#">Reset Scrapyard</a>
                         </div>
+
                         <div id="reset-cloud" class="action-link">
                             <a id="reset-cloud-link" href="#">Reset Cloud</a>
                         </div>
@@ -147,6 +106,7 @@
                 </div>
             </fieldset>
     </div>
+
     <div class="panel" id="impexp-panel">
         <p class="panel-title">Import/Export Scrapyard Settings</p>
         <form>
