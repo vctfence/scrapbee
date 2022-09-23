@@ -1180,8 +1180,11 @@ class BookmarkTree {
             },
             uploadItem: {
                 label: "Upload...",
-                action: () => {
-                    send.uploadFiles({parent_id: ctxNode.id})
+                action: async () => {
+                    const options = await showDlg("prompt", {caption: "Upload File", label: "File path:"});
+
+                    if (options?.title)
+                        send.uploadFiles({parent_id: ctxNode.id, file_name: options.title});
                 }
             },
             deleteItem: {
@@ -1514,10 +1517,6 @@ class BookmarkTree {
 
         if (!browser.contextualIdentities)
             delete items.openInContainerItem;
-
-        if (settings.platform.chrome) {
-            delete items.uploadItem;
-        }
 
         if (ctxNode.external === BROWSER_EXTERNAL_TYPE || ctxNode.external === RDF_EXTERNAL_TYPE) {
             delete items.newItem.submenu.newNotesItem;

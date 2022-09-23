@@ -3,12 +3,15 @@ import logging
 import os
 
 from . import server, browser
+from .server import storage_manager
 
 
 VERSION = "2.0"
 
 
 def main():
+    storage_manager.clean_temp_directory()
+
     while True:
         msg = browser.get_message()
         process_message(msg)

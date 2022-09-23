@@ -48,7 +48,7 @@ class StorageManager:
 
         return os.path.join(params["data_path"], OBJECT_DIRECTORY, uuid)
 
-    def get_temp_directory(self, params):
+    def get_temp_directory(self):
         return os.path.join(tempfile.gettempdir(), SCRAPYARD_DIRECTORY)
 
     def get_cloud_archive_temp_directory(self, params):
@@ -110,8 +110,8 @@ class StorageManager:
         else:
             return dict(error="empty")
 
-    def clean_temp_directory(self, params):
-        temp_directory = self.get_temp_directory(params)
+    def clean_temp_directory(self):
+        temp_directory = self.get_temp_directory()
 
         if os.path.exists(temp_directory):
             shutil.rmtree(temp_directory)

@@ -7,6 +7,7 @@ import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent, JSON_S
 import {ProgressCounter} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
 import {Database} from "./storage_database.js";
+import {undoManager} from "./bookmarks_undo.js";
 
 let syncing = false;
 
@@ -152,6 +153,7 @@ async function prepareDatabase(storageMetadata, dbMetadata) {
         || storageMetadata.version !== dbMetadata?.version;
 
     if (resetDatabase) {
+        await undoManager.commit();
         await Database.wipeImportable();
         await settings.last_sync_date(null);
     }

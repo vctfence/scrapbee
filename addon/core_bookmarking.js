@@ -25,6 +25,7 @@ import {Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {browseNodeInCurrentContext} from "./browse.js";
 import {ensureSidebarWindow} from "./utils_sidebar.js";
+import UUID from "./uuid.js";
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -186,7 +187,11 @@ receive.uploadFiles = async message => {
         const helper = await helperApp.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
 
         if (helper) {
-            const uuids = await helperApp.fetchJSON("/upload/open_file_dialog");
+            const fileUUID = UUID.numeric();
+            await helperApp.post(`/serve/set_path/${fileUUID}`, {path: message.file_name});
+
+            //const uuids = await helperApp.fetchJSON("/upload/open_file_dialog");
+            const uuids = {[fileUUID]: message.file_name};
 
             for (const [uuid, file] of Object.entries(uuids)) {
                 const url = helperApp.url(`/serve/file/${uuid}/`);

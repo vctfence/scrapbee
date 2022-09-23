@@ -57,9 +57,6 @@ async function performStartupInitialization() {
 
     await undoManager.commit();
 
-    if (helper)
-        await DiskStorage.cleanTempDirectory();
-
     console.log("==> core.js initialized");
 }
 
