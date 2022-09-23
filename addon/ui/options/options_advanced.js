@@ -1,20 +1,13 @@
-import {send} from "../proxy.js";
-import {settings} from "../settings.js";
-import {showNotification} from "../utils_browser.js";
-import {alert, confirm} from "./dialog.js";
-import {formatBytes} from "../utils.js";
-import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
-import {systemInitialization} from "../bookmarks_init.js";
+import {send} from "../../proxy.js";
+import {settings} from "../../settings.js";
+import {showNotification} from "../../utils_browser.js";
+import {alert, confirm} from "../dialog.js";
+import {formatBytes} from "../../utils.js";
 
 $(init);
 
 async function init() {
-    await systemInitialization;
 
-    initHelpMarks();
-    configureAutomationPanel();
-    configureMaintenancePanel();
-    configureImpExpPanel();
 }
 
 
@@ -103,11 +96,15 @@ function configureImpExpPanel() {
     $("#export-settings-link").click(async e => {
         e.preventDefault();
 
-        let exported = {};
+        const exported = {};
         exported.addon = "Scrapyard";
         exported.version = browser.runtime.getManifest().version;
 
-        let settings = await browser.storage.local.get();
+        const now = new Date();
+        exported.timestamp = now.getTime();
+        exported.date = now.toString();
+
+        const settings = await browser.storage.local.get();
 
         if (settings["scrapyard-settings"]) {
             delete settings["scrapyard-settings"]["ishell_presents"];
@@ -125,13 +122,13 @@ function configureImpExpPanel() {
         Object.assign(exported, settings);
 
         // download link
-        let file = new Blob([JSON.stringify(exported, null, 2)], {type: "application/json"});
-        let url = URL.createObjectURL(file);
-        let filename = "scrapyard-settings.json"
+        const file = new Blob([JSON.stringify(exported, null, 2)], {type: "application/json"});
+        const url = URL.createObjectURL(file);
+        const filename = "scrapyard-settings.json"
 
-        let download = await browser.downloads.download({url: url, filename: filename, saveAs: true});
+        const download = await browser.downloads.download({url: url, filename: filename, saveAs: true});
 
-        let download_listener = delta => {
+        const download_listener = delta => {
             if (delta.id === download && delta.state && delta.state.current === "complete") {
                 browser.downloads.onChanged.removeListener(download_listener);
                 URL.revokeObjectURL(url);
@@ -149,7 +146,7 @@ function configureImpExpPanel() {
         if (e.target.files.length > 0) {
             let reader = new FileReader();
             reader.onload = async function(re) {
-                let imported = JSON.parse(re.target.result);
+                const imported = JSON.parse(re.target.result);
 
                 if (imported.addon !== "Scrapyard") {
                     showNotification("Export format is not supported.");
@@ -192,4 +189,10 @@ function configureImpExpPanel() {
         }
     });
 
+}
+
+export async function load() {
+    configureAutomationPanel();
+    configureMaintenancePanel();
+    configureImpExpPanel();
 }

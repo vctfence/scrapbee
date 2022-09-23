@@ -13,7 +13,7 @@ async function openReference(tab) {
 
         switch (id) {
             case "advanced":
-                return updateTabURL(tab, browser.runtime.getURL("ui/advanced.html"), false);
+                return updateTabURL(tab, browser.runtime.getURL("ui/options.html#advanced"), false);
         }
 
         let [prefix, uuid] = id.includes(":")? id.split(":"): [null, id];
