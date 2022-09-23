@@ -190,32 +190,37 @@ async function browseArchive(node, options) {
 helperApp.addMessageHandler("REQUEST_ARCHIVE", onRequestArchiveMessage);
 
 export async function onRequestArchiveMessage(msg) {
-    const node = await Node.getByUUID(msg.uuid)
     const result = {type: "ARCHIVE_INFO", kind: "empty"};
 
-    result.data_path = settings.data_folder_path() || null;
+    if (msg.uuid) {
+        const node = await Node.getByUUID(msg.uuid);
 
-    if (node.external === CLOUD_EXTERNAL_TYPE) {
-        try {
-            const archive = await Archive.get(node);
+        if (node) {
+            result.data_path = settings.data_folder_path() || null;
 
-            if (archive) {
-                const content = await Archive.reify(archive, true);
+            if (node.external === CLOUD_EXTERNAL_TYPE) {
+                try {
+                    const archive = await Archive.get(node);
 
-                result.kind = "content";
-                result.uuid = node.uuid;
-                result.content_type = node.content_type || "text/html";
-                result.content = content;
-                result.contains = node.contains|| null;
+                    if (archive) {
+                        const content = await Archive.reify(archive, true);
+
+                        result.kind = "content";
+                        result.uuid = node.uuid;
+                        result.content_type = node.content_type || "text/html";
+                        result.content = content;
+                        result.contains = node.contains || null;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
             }
-        } catch (e) {
-            console.error(e);
+            else {
+                result.kind = "metadata";
+                result.content_type = node.content_type || "text/html";
+                result.contains = node.contains || null;
+            }
         }
-    }
-    else {
-        result.kind = "metadata";
-        result.content_type = node.content_type || "text/html";
-        result.contains = node.contains || null;
     }
 
     return result;

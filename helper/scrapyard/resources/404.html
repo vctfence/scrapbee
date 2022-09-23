@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scrapyard: Not Found</title>
+    <link rel="icon" href="{{ url_for('static', filename='scrapyard.svg') }}"/>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #not-found-wrapper {
+            text-align: center;
+        }
+
+        #not-found-text {
+            color: #183741;
+            font-size: 32pt;
+            font-weight: bold;
+            margin-bottom: 16px;
+            font-family: "Arial", sans-serif;
+        }
+
+        #not-found-image {
+            width: 60%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+<div id="not-found-wrapper">
+    <div id="not-found-text">NOT FOUND</div>
+    <img id="not-found-image" src="{{ url_for('static', filename='ufo.svg') }}"/>
+</div>
+</body>
+</html>

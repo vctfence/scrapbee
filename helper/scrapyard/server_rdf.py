@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 import flask
-from flask import request
+from flask import request, render_template
 
 from .browse import highlight_words_in_index
 from .cache_dict import CacheDict
@@ -102,19 +102,24 @@ rdf_page_directories = CacheDict()
 def rdf_browse(uuid):
     msg = send_native_message({"type": "REQUEST_RDF_PATH", "uuid": uuid})
     rdf_archive_directory = msg["rdf_archive_path"]
-    rdf_page_directories[uuid] = rdf_archive_directory
-    highlight = request.args.get("highlight", None)
+    archive_index_path = os.path.join(rdf_archive_directory, "index.html")
 
-    if highlight:
-        msg["highlight"] = highlight
-    else:
-        msg["highlight"] = None
+    if os.path.exists(archive_index_path):
+        rdf_page_directories[uuid] = rdf_archive_directory
+        highlight = request.args.get("highlight", None)
 
-    if highlight:
-        msg["index_file_path"] = os.path.join(rdf_archive_directory, "index.html")
-        return highlight_words_in_index(msg)
-    else:
-        return flask.send_from_directory(rdf_archive_directory, "index.html")
+        if highlight:
+            msg["highlight"] = highlight
+        else:
+            msg["highlight"] = None
+
+        if highlight:
+            msg["index_file_path"] = os.path.join(archive_index_path)
+            return highlight_words_in_index(msg)
+        else:
+            return flask.send_from_directory(archive_index_path)
+
+    return render_template("404.html"), 404
 
 
 @app.route("/rdf/browse/<uuid>/<path:file>", methods=['GET'])

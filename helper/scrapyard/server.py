@@ -10,14 +10,14 @@ from functools import wraps
 from contextlib import closing
 
 import flask
-from flask import request, abort
+from flask import request, abort, render_template
 from werkzeug.serving import make_server
 
 from .storage_manager import StorageManager
 
 DEBUG = True
 
-app = flask.Flask(__name__)
+app = flask.Flask(__name__, template_folder="resources", static_folder="resources")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 log = logging.getLogger('werkzeug')
 log.disabled = True
@@ -111,7 +111,7 @@ def requires_auth(f):
 if True:
     @app.errorhandler(500)
     def handle_500(e=None):
-        return traceback.format_exc(), 500
+        return f"<pre>{traceback.format_exc()}</pre>", 500
 ###
 
 
@@ -152,6 +152,11 @@ from . import server_storage
 @app.route("/")
 def root():
     return "Scrapyard helper application"
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
 
 
 @app.route("/exit")

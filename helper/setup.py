@@ -14,6 +14,6 @@ setup(
         'console_scripts': ['scrapyard_helper=scrapyard.helper:main'],
     },
     package_data={
-        '': ['resources/*.png', 'resources/js/*.js', 'resources/*.html']
+        '': ['resources/*.png', 'resources/*.svg', 'resources/js/*.js', 'resources/*.html']
     }
 )

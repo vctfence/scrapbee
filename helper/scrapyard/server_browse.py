@@ -5,9 +5,8 @@ import logging
 import zipfile
 
 import flask
-from flask import abort, send_file, send_from_directory, request
+from flask import abort, send_file, send_from_directory, request, render_template
 
-from . import browser
 from .browse import highlight_words_in_index
 from .cache_dict import CacheDict
 from .server import app, send_native_message, storage_manager
@@ -37,7 +36,7 @@ def browse(uuid):
     except Exception as e:
         logging.error(e)
 
-    return "", 404
+    return render_template("404.html"), 404
 
 
 def serve_from_file(params, uuid):
