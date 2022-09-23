@@ -28,17 +28,6 @@ function withCurrTab(fn){
         fn.apply(null, [tabs[0]]);
     });
 }
-// function initRdf(rdf, callback){
-//     var content = `<?xml version="1.0"?>
-// <RDF:RDF xmlns:NS1="scrapbee@163.com" xmlns:NC="http://home.netscape.com/NC-rdf#" xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-// <RDF:Seq RDF:about="urn:scrapbook:root"></RDF:Seq>
-// </RDF:RDF>`;
-//     browser.runtime.sendMessage({type: 'SAVE_TEXT_FILE', text: content, path: rdf}).then((response) => {
-//         if(callback)callback();
-//     }).catch((err) => {
-//         alert("{Warning}", err.message);
-//     });
-// }
 function showDlg(name, data, onshowed){
     if($(".dlg-cover:visible").length)
         return Promise.reject(Error("only one dialog can be showed"));
@@ -265,7 +254,7 @@ menulistener.onOpenFolder = function(){
 };
 var drop;
 function loadRdfList(){
-    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 10, restart: false}).then(async (version) => {
+    browser.runtime.sendMessage({type: 'WAIT_WEB_SERVER', try_times: 20, restart: false}).then(async (version) => {
         GLOBAL.set("backendVersion", version);
         
         log.info("show rdf list");

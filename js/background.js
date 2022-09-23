@@ -75,7 +75,9 @@ loadBrowserInfo().then(async () => {
 var backend_inst_port;
 var web_status = "";
 var backend_version;
-function communicate(command, body, callback){
+var backend_info = {};
+
+function communicate(command, body){
     return new Promise((resolve, reject)=>{
         if(!backend_inst_port){
             backend_inst_port = browser.runtime.connectNative("scrapbee_backend");
@@ -109,7 +111,7 @@ function startWebServer(try_times){
     if(web_status == "failed"){
         return  Promise.reject(Error("connect web server: failed"));
     }
-    function showInfo(r){
+    function sendSuccessInfo(r){
         var version = r.Version || 'unknown';
         backend_version = version;
         GLOBAL.set("backendVersion", version);
@@ -123,75 +125,75 @@ function startWebServer(try_times){
     return new Promise((resolve, reject) => {
         var port = CONF.getItem("backend.port");
         var pwd = CONF.getItem("backend.pwd");
-        if(web_status == "launched"){
-            resolve();
-        }else if(CONF.getItem("backend.type") == "address"){ /** address mode */
-            var address = CONF.getBackendAddress();
-            log.info(`connect web server: address = ${address}`);
-            $.get(address + `serverinfo/?pwd=${pwd}`, function(r){
-                if(r.Serverstate == "ok"){
-                    web_status = "launched";
-                    showInfo(r);
-                    resolve(backend_version);
-                }else{
-                    return startWebServer(try_times - 1);
-                }
-            }).fail(function(e){
-                if(e.status > 0){ // old version backend
-                    web_status = "launched";
-                    showInfo({});
-                    resolve(backend_version);
-                }else{
-                    web_status = "failed";
-                    var em = "connect web server: failed to connect backend";
-                    reject(Error(em));
-                }
-            });
-        } else if(web_status == "launching"){ /** wait for auto launch mode*/
-            new (function (){
-                var self = this;
-                setTimeout(()=>{
-                    if(browser_info_status == "launched"){
-                        resolve(backend_version);
-                    }else{
-                        self.constructor();
-                    }
-                }, 1000);
-            })();
-        } else { /** start auto launch mode*/
-            web_status = "launching";
-            loadBrowserInfo().then(() => {
-                log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
-                communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
-                    if(r.Serverstate != "ok"){
-                        log.error(`failed to start backend service: ${r.Error}`);
-                        web_status = "error";
-                        if(try_times > 0){
-                            return startWebServer(try_times - 1);
-                        }else{
-                            web_status = "failed";
-                            var ms = "connect web server: too many times tried";
-                            return reject(Error(ms));
-                        }
-                    }else{
+        const fntry = (try_times) => {
+            if(web_status == "launched"){
+                sendSuccessInfo(backend_info);
+                resolve(backend_version);
+            }else if(CONF.getItem("backend.type") == "address"){ /** connect MANUALLY MODE */
+                var address = CONF.getBackendAddress();
+                log.info(`connect web server: address = ${address}`);
+                $.get(address + `serverinfo/?pwd=${pwd}`, function(r){
+                    if(r.Serverstate == "ok"){
                         web_status = "launched";
-                        showInfo(r);
-                        return resolve(backend_version);
+                        backend_info = r;
                     }
-                }).catch((e) => {
-                    log.error(e);
+                    fntry(try_times);
+                }).fail(function(e){
+                    if(e.status > 0){ // old version backend
+                        web_status = "launched";
+                        backend_info = {};
+                        fntry(try_times);
+                    }else{
+                        web_status = "failed";
+                        var em = "connect web server: failed to connect backend";
+                        reject(Error(em));
+                    }
                 });
-            });
-        }
-    }).catch((e)=>{
-        log.error(e.message);
-        web_status = "failed";
+            } else if(web_status == "launching"){ /** wait for AUTO MODE*/
+                new (function (){
+                    var self = this;
+                    setTimeout(()=>{
+                        if(browser_info_status == "launched"){
+                            fntry(try_times);
+                        }else{
+                            self.constructor();
+                        }
+                    }, 1000);
+                })();
+            } else { /** connect AUTO MODE */
+                web_status = "launching";
+                loadBrowserInfo().then(() => {
+                    log.info(`start web server: port = '${port}'. pwd = '${pwd}'`);
+                    communicate("web-server", {addr: `127.0.0.1:${port}`, port, pwd}).then(function(r){
+                        if(r.Serverstate != "ok"){
+                            log.error(`failed to start backend service: ${r.Error}`);
+                            web_status = "error";
+                            if(try_times > 0){
+                                fntry(try_times - 1);
+                            }else{
+                                web_status = "failed";
+                                var ms = "connect web server: too many times tried";
+                                reject(Error(ms));
+                            }
+                        }else{
+                            web_status = "launched";
+                            backend_info = r;
+                            fntry(try_times);
+                        }
+                    }).catch((e) => {
+                        log.error(e);
+                    });
+                });
+            }
+        };
+        fntry(try_times);
     });
 };
+
 CONF.onchange=function(key, value){
     if(key == "__backend__"){
         web_status = "";
-        CONF.load().then(()=>{
+        CONF.load().then(() => {
             startWebServer(20);
         });
     }
@@ -343,25 +345,23 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         var times = request.try_times;
         if(web_status == "failed" && request.restart){
             web_status = "";
-            return startWebServer(request.try_times);
-        }else{
-            return new Promise((resolve, reject) => {
-                function check(){
-                    times --;
-                    if(web_status == "launched"){
-                        resolve(backend_version);
-                    }else if(times < 1){
-                        reject(Error("max times tried"));
-                    }else if(web_status == "failed"){
-                        reject(Error("backend failed"));
-                    }else{
-                        setTimeout(function(r){check();}, 1000);
-                    }
-                }
-                check();
-            });    
+            startWebServer(request.try_times);
         }
-
+        return new Promise((resolve, reject) => {
+            function check(){
+                times --;
+                if(web_status == "launched"){
+                    resolve(backend_version);
+                }else if(times < 1){
+                    reject(Error("max times tried"));
+                }else if(web_status == "failed"){
+                    reject(Error("backend failed"));
+                }else{
+                    setTimeout(function(r){check();}, 1000);
+                }
+            }
+            check();
+        });    
     }
 });
 function saveTextFile(request){
