@@ -67,6 +67,7 @@ function configureScrapyardSettingsPage() {
     setSaveCheckHandler("option-do-not-switch-to-ff-bookmark", "do_not_switch_to_ff_bookmark");
     setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
     setSaveCheckHandler("option-sidebar-filter-partial-match", "sidebar_filter_partial_match");
+    setSaveCheckHandler("option-remember-last-filtering-mode", "remember_last_filtering_mode");
 }
 
 function loadScrapyardSettings() {
@@ -87,6 +88,7 @@ function loadScrapyardSettings() {
     $("#option-open-sidebar-from-shortcut").prop("checked", settings.open_sidebar_from_shortcut());
     $("#option-capitalize-builtin-shelf-names").prop("checked", settings.capitalize_builtin_shelf_names());
     $("#option-sidebar-filter-partial-match").prop("checked", settings.sidebar_filter_partial_match());
+    $("#option-remember-last-filtering-mode").prop("checked", settings.remember_last_filtering_mode());
     //$("#option-export-format").val(settings.export_format());
     $("#option-undo-failed-imports").prop("checked", settings.undo_failed_imports());
     $("#option-helper-port").val(settings.helper_port_number());

@@ -48,6 +48,16 @@ import {systemInitialization} from "../bookmarks_init.js";
 import {findSidebarWindow} from "../utils_sidebar.js";
 
 const INPUT_TIMEOUT = 1000;
+const MENU_ID_TO_SEARCH_MODE = {
+    "shelf-menu-search-universal": SEARCH_MODE_UNIVERSAL,
+    "shelf-menu-search-title": SEARCH_MODE_TITLE,
+    "shelf-menu-search-folder": SEARCH_MODE_FOLDER,
+    "shelf-menu-search-tags": SEARCH_MODE_TAGS,
+    "shelf-menu-search-content": SEARCH_MODE_CONTENT,
+    "shelf-menu-search-notes": SEARCH_MODE_NOTES,
+    "shelf-menu-search-comments": SEARCH_MODE_COMMENTS,
+    "shelf-menu-search-date": SEARCH_MODE_DATE
+};
 
 let tree;
 let context;
@@ -112,61 +122,72 @@ async function init() {
         $("#search-mode-menu").toggle();
     });
 
-    $("#shelf-menu-search-universal").click(() => {
+    $("#shelf-menu-search-universal").click(e => {
         $("#search-mode-switch").prop("src", "/icons/star.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_UNIVERSAL, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-title").click(() => {
+    $("#shelf-menu-search-title").click(e => {
         $("#search-mode-switch").prop("src", "/icons/bookmark.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TITLE, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-folder").click(() => {
+    $("#shelf-menu-search-folder").click(e => {
         $("#search-mode-switch").prop("src", "/icons/filter-folder.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_FOLDER, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-tags").click(() => {
+    $("#shelf-menu-search-tags").click(e => {
         $("#search-mode-switch").prop("src", "/icons/tags.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TAGS, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-content").click(() => {
+    $("#shelf-menu-search-content").click(e => {
         $("#search-mode-switch").prop("src", "/icons/content-web.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_CONTENT, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-notes").click(() => {
+    $("#shelf-menu-search-notes").click(e => {
         $("#search-mode-switch").prop("src", "/icons/content-notes.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_NOTES, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-comments").click(() => {
+    $("#shelf-menu-search-comments").click(e => {
         $("#search-mode-switch").prop("src", "/icons/content-comments.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_COMMENTS, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-date").click(() => {
+    $("#shelf-menu-search-date").click(e => {
         $("#search-mode-switch").prop("src", "/icons/calendar.svg");
         $("#search-input").attr("placeholder", "examples: 2021-02-24, before 2021-02-24, after 2021-02-24")
         context.setMode(SEARCH_MODE_DATE, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
+
+    if (settings.remember_last_filtering_mode())
+        $(`#${settings.last_filtering_mode()}`).click();
 
     let filterInputTimeout;
     $("#search-input").on("input", e => {
