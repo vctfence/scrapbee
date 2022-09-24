@@ -847,17 +847,6 @@ function updateProgress(message) {
         progressDiv.css("width", "0");
 }
 
-let browseNode;
-if (!_BACKGROUND_PAGE) {
-    const browseModule = await import("../browse.js");
-    browseNode = browseModule.browseNodeInCurrentContext;
-}
-
-receive.browseNodeSidebar = message => {
-    if (browseNode)
-        browseNode(message.node, message);
-};
-
 receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
     if (!ishellConnector.isIShell(sender.id))
         throw new Error();

@@ -23,7 +23,7 @@ import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {browseNodeInCurrentContext} from "./browse.js";
+import {browseNode} from "./browse.js";
 import {ensureSidebarWindow} from "./utils_sidebar.js";
 import UUID from "./uuid.js";
 
@@ -242,12 +242,7 @@ receive.uploadFiles = async message => {
 }
 
 receive.browseNode = async message => {
-    if (_BACKGROUND_PAGE)
-        browseNodeInCurrentContext(message.node, message);
-    else {
-        await ensureSidebarWindow();
-        send.browseNodeSidebar(message);
-    }
+    return browseNode(message.node, message);
 };
 
 receive.browseNotes = message => {

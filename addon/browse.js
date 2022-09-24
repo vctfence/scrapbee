@@ -47,22 +47,6 @@ function configureArchiveTab(node, archiveTab) {
     browser.tabs.onRemoved.addListener(tabRemoveListener);
 }
 
-async function configureArchivePage_v1(tab, node) {
-    if (archiveTabs[tab.id]?.has(tab.url.replace(/#.*$/, ""))) {
-        await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
-        await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
-        if (!_BACKGROUND_PAGE)
-            await injectScriptFile(tab.id, {file: "lib/browser-polyfill.js", frameId: 0});
-        await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
-
-        if (settings.open_bookmark_in_active_tab())
-            node = await Node.getByUUID(tab.url.replace(/^.*#/, "").split(":")[0])
-
-        if (await Bookmark.isSitePage(node))
-            await configureSiteLinks(node, tab);
-    }
-}
-
 async function configureArchivePage(tab, node) {
     await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
     await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
@@ -79,7 +63,6 @@ async function configureArchivePage(tab, node) {
         await configureSiteLinks(node, tab);
 }
 
-
 async function configureSiteLinks(node, tab) {
     await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
     const siteMap = await buildSiteMap(node);
@@ -92,34 +75,6 @@ async function buildSiteMap(node) {
         acc[n.uri] = n.uuid;
         return acc;
     }, {});
-}
-
-var archiveTabs = {};
-
-function trackArchiveTab(tabId, url) {
-    let urls = archiveTabs[tabId];
-    if (!urls) {
-        urls = new Set([url]);
-        archiveTabs[tabId] = urls;
-    }
-    else
-        urls.add(url);
-}
-
-function isArchiveTabTracked(tabId) {
-    return !!archiveTabs[tabId];
-}
-
-function revokeTrackedObjectURLs(tabId) {
-    const objectURLs = archiveTabs[tabId];
-
-    if (objectURLs) {
-        delete archiveTabs[tabId];
-
-        for (const url of objectURLs)
-            if (url.startsWith("blob:"))
-                URL.revokeObjectURL(url);
-    }
 }
 
 function openURL(url, options, newtabf = openPage) {
@@ -145,33 +100,6 @@ function browseBookmark(node, options) {
 
         return openURL(url, options, openContainerTab);
     }
-}
-
-async function browseArchive_v1(node, options) {
-    if (node.__tentative)
-        return;
-
-    if (node.external === RDF_EXTERNAL_TYPE)
-        return await browseRDFArchive(node, options);
-
-    const blob = await Archive.get(node);
-    if (blob) {
-        let objectURL = await getBlobURL(node, blob);
-
-        if (objectURL) {
-            const archiveURL = objectURL + "#" + node.uuid + ":" + node.id;
-            const archiveTab = await openURL(archiveURL, options);
-            const tabTracked = isArchiveTabTracked(archiveTab.id);
-
-            // configureArchiveTab depends on the tracked url
-            trackArchiveTab(archiveTab.id, objectURL);
-
-            if (!tabTracked)
-                configureArchiveTab(node, archiveTab);
-        }
-    }
-    else
-        showNotification({message: "No data is stored."});
 }
 
 async function browseArchive(node, options) {
@@ -226,49 +154,19 @@ export async function onRequestArchiveMessage(msg) {
     return result;
 }
 
-async function browseRDFArchive(node, options) {
-    const helper = await helperApp.probe(true);
-
-    if (helper) {
-        const url = helperApp.url(`/rdf/browse/${node.uuid}/`);
-        return openURL(url, options);
-    }
-}
-
 helperApp.addMessageHandler("REQUEST_RDF_PATH", onRequestRdfPathMessage);
 
 export async function onRequestRdfPathMessage(msg) {
     const node = await Node.getByUUID(msg.uuid);
-    const path = await rdfShelf.getRDFArchiveDir(node);
-    return {
-        type: "RDF_PATH",
-        uuid: node.uuid,
-        rdf_archive_path: path
-    };
-}
+    if (node) {
+        const path = await rdfShelf.getRDFArchiveDir(node);
 
-async function getBlobURL(node, blob) {
-    if (settings.browse_with_helper()) {
-        const alertText = _BACKGROUND_PAGE? "Scrapyard helper application v1.1+ is required.": undefined;
-        const helper = await helperApp.hasVersion("1.1", alertText);
-
-        if (helper)
-            return helperApp.url(`/browse/${node.uuid}/`);
-        else
-            return loadArchive(blob);
+        return {
+            type: "RDF_PATH",
+            uuid: node.uuid,
+            rdf_archive_path: path
+        };
     }
-
-    return loadArchive(blob);
-}
-
-async function loadArchive(blob) {
-    if (blob.data) { // legacy string content
-        let object = new Blob([await Archive.reify(blob)],
-            {type: blob.type? blob.type: "text/html"});
-        return URL.createObjectURL(object);
-    }
-    else
-        return URL.createObjectURL(blob.object);
 }
 
 async function browseFolder(node, options) {
@@ -289,7 +187,7 @@ async function listSiteArchives(node) {
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
 }
 
-export async function browseNodeInCurrentContext(node, options) {
+export async function browseNode(node, options) {
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
             return browseBookmark(node, options);
@@ -303,11 +201,4 @@ export async function browseNodeInCurrentContext(node, options) {
         case NODE_TYPE_FOLDER:
             return browseFolder(node, options);
     }
-}
-
-export async function browseNode(node) {
-    if (_BACKGROUND_PAGE)
-        return browseNodeInCurrentContext(node);
-    else
-        return sendLocal.browseNode({node});
 }
