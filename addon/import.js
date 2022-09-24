@@ -4,8 +4,8 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
     EVERYTHING_SHELF_UUID,
+    EVERYTHING_SHELF_NAME,
     RDF_EXTERNAL_TYPE,
-    NODE_TYPE_SHELF,
     TODO_SHELF_NAME
 } from "./storage.js";
 import {Query} from "./storage_query.js";
@@ -52,7 +52,7 @@ export class Export {
             return nodes;
         }
 
-        const everything = isShelfName && shelf === EVERYTHING_SHELF_UUID;
+        const everything = isShelfName && shelf === EVERYTHING_SHELF_NAME;
 
         if (!everything && isShelfName)
             shelf = await Query.shelf(shelf);

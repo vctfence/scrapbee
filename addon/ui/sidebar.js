@@ -21,8 +21,8 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_ID,
     DONE_SHELF_NAME,
-    EVERYTHING_SHELF_UUID,
     EVERYTHING_SHELF_ID,
+    EVERYTHING_SHELF_NAME,
     BROWSER_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
@@ -381,7 +381,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            const nodes = await Shelf.listContent(EVERYTHING_SHELF_UUID);
+            const nodes = await Shelf.listContent(EVERYTHING_SHELF_NAME);
             tree.update(nodes, true, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
@@ -492,7 +492,7 @@ async function importShelf(e) {
         let {name, ext} = pathToNameExt($("#file-picker").val());
         let lname = name.toLocaleLowerCase();
 
-        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING_SHELF_UUID || !isBuiltInShelf(lname)) {
+        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING_SHELF_NAME || !isBuiltInShelf(lname)) {
             if (shelfList.hasShelf(name)) {
                 if (await confirm("Warning", "This will replace '" + name + "'.")) {
                     await performImport(e.target.files[0], name, ext);
@@ -540,7 +540,7 @@ async function performImport(file, file_name, file_ext) {
         await sender.importFile({file: file, file_name: file_name, file_ext: file_ext});
         stopProcessingIndication();
 
-        if (file_name.toLocaleLowerCase() === EVERYTHING_SHELF_UUID)
+        if (file_name.toLocaleLowerCase() === EVERYTHING_SHELF_NAME)
             await loadShelves(EVERYTHING_SHELF_ID);
         else {
             const shelf = await Query.shelf(file_name);
@@ -609,7 +609,7 @@ async function selectOrCreatePath(path) {
         else {
             if (isVirtualShelf(shelf)) {
                 switch (shelf.toUpperCase()) {
-                    case EVERYTHING_SHELF_UUID.toUpperCase():
+                    case EVERYTHING_SHELF_NAME.toUpperCase():
                         await switchShelf(EVERYTHING_SHELF_ID);
                         break;
                     case TODO_SHELF_NAME:

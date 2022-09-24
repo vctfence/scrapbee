@@ -1,7 +1,7 @@
 import {receiveExternal, send, sendLocal} from "./proxy.js";
 import {
     BROWSER_EXTERNAL_TYPE,
-    DEFAULT_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_UUID, FIREFOX_BOOKMARK_MENU,
+    DEFAULT_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_NAME, FIREFOX_BOOKMARK_MENU,
     FIREFOX_BOOKMARK_UNFILED, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
     NODE_TYPE_FOLDER,
     NODE_TYPE_SHELF, TODO_SHELF_NAME
@@ -29,7 +29,7 @@ receiveExternal.scrapyardListGroupsIshell = async (message, sender) => {
 
     let shelves = await Query.allShelves();
     shelves = shelves.map(n => ({name: n.name}));
-    const builtin = [EVERYTHING_SHELF_UUID, TODO_SHELF_NAME, DONE_SHELF_NAME].map(s => ({name: s}));
+    const builtin = [EVERYTHING_SHELF_NAME, TODO_SHELF_NAME, DONE_SHELF_NAME].map(s => ({name: s}));
 
     shelves = [...builtin, ...shelves];
 
