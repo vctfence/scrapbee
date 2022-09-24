@@ -16,6 +16,10 @@ class StorageDisk extends StorageAdapterDisk {
     closeBatchSession() {
         return this._postJSON("/storage/close_batch_session", {});
     }
+
+    async deleteOrphanedItems(orphanedItems) {
+        return this._postJSON("/storage/delete_orphaned_items", {node_uuids: orphanedItems});
+    }
 }
 
 export const DiskStorage = new StorageDisk();

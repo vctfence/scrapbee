@@ -40,19 +40,21 @@ class StorageManager:
         return os.path.join(data_directory, NODE_DB_FILE)
 
     def get_object_root_directory(self, params):
-        return os.path.join(params["data_path"], OBJECT_DIRECTORY)
+        data_directory = os.path.expanduser(params["data_path"])
+        return os.path.join(data_directory, OBJECT_DIRECTORY)
 
     def get_object_directory(self, params, uuid=None):
         if not uuid:
             uuid = params["uuid"]
 
-        return os.path.join(params["data_path"], OBJECT_DIRECTORY, uuid)
+        data_directory = os.path.expanduser(params["data_path"])
+        return os.path.join(data_directory, OBJECT_DIRECTORY, uuid)
 
     def get_temp_directory(self):
         return os.path.join(tempfile.gettempdir(), SCRAPYARD_DIRECTORY)
 
     def get_cloud_archive_temp_directory(self, params):
-        temp_directory = self.get_temp_directory(params)
+        temp_directory = self.get_temp_directory()
         return os.path.join(temp_directory, CLOUD_DIRECTORY, params["uuid"], ARCHIVE_DIRECTORY)
 
     def get_node_object_path(self, object_directory):
@@ -331,6 +333,25 @@ class StorageManager:
 
     def sync_pull_objects(self, params):
         return storage_sync.pull_sync_objects(self, params)
+
+    def get_orphaned_items(self, params):
+        object_root_directory = self.get_object_root_directory(params)
+
+        if os.path.exists(object_root_directory):
+            disk_items = os.listdir(object_root_directory)
+            node_db_path = self.get_node_db_path(params)
+            orphaned_items = []
+
+            def test_orphaned(node_db):
+                for uuid in disk_items:
+                    if uuid not in node_db.nodes:
+                        orphaned_items.append(uuid)
+
+            NodeDB.with_file(node_db_path, test_orphaned)
+            return orphaned_items
+
+    def delete_orphaned_items(self, params):
+        self.delete_node_content(params)
 
 
 

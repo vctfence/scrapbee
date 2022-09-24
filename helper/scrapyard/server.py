@@ -19,6 +19,7 @@ DEBUG = True
 
 app = flask.Flask(__name__, template_folder="resources", static_folder="resources")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
 log = logging.getLogger('werkzeug')
 log.disabled = True
 app.logger.disabled = not DEBUG

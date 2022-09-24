@@ -255,3 +255,17 @@ def sync_pull_objects():
         return json_text
     else:
         return "", 404
+
+
+@app.route("/storage/get_orphaned_items", methods=['POST'])
+@requires_auth
+def get_orphaned_items():
+    item_list = storage_manager.get_orphaned_items(request.json)
+    return json.dumps(item_list)
+
+
+@app.route("/storage/delete_orphaned_items", methods=['POST'])
+@requires_auth
+def delete_orphaned_items():
+    storage_manager.delete_orphaned_items(request.json)
+    return "", 204

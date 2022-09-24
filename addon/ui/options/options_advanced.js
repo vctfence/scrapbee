@@ -1,8 +1,9 @@
 import {send} from "../../proxy.js";
 import {settings} from "../../settings.js";
 import {showNotification} from "../../utils_browser.js";
-import {alert, confirm} from "../dialog.js";
+import {alert, confirm, showDlg} from "../dialog.js";
 import {formatBytes} from "../../utils.js";
+import {DiskStorage} from "../../storage_external.js";
 
 $(init);
 
@@ -73,6 +74,28 @@ function configureMaintenancePanel() {
         if (await confirm("Warning",
             "This will reset the Scrapyard browser internal storage. All archived content on disk will remain intact. Continue?"))
             await send.resetScrapyard();
+    });
+
+    $("#remove-orphaned-link").on("click", async e => {
+        e.preventDefault();
+
+        const orphanedItems = await send.getOrphanedItems();
+
+        if (orphanedItems?.length) {
+            const message = `${orphanedItems.length} orphaned items found. Remove?`
+            if (await showDlg("confirm", {title: "Orphaned Items", message})) {
+                await send.startProcessingIndication();
+
+                try {
+                    await DiskStorage.deleteOrphanedItems(orphanedItems);
+                }
+                finally {
+                    await send.stopProcessingIndication();
+                }
+            }
+        }
+        else
+            return showDlg("alert", {title: "Orphaned Items", message: "No orphaned items found."});
     });
 
     $("#statistics-link").on("click", async e => {

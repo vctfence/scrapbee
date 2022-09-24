@@ -9,6 +9,7 @@ import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {Node} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
 import {settings} from "./settings.js";
+import {helperApp} from "./helper_app.js";
 
 receive.resetCloud = async message => {
     if (!cloudShelf.isAuthenticated())
@@ -67,3 +68,13 @@ receive.computeStatistics = async message => {
 
     return {items, bookmarks, archives, notes, size};
 }
+
+receive.getOrphanedItems = async message => {
+    const helper = helperApp.probe(true);
+
+    if (helper) {
+        await settings.load();
+        const params = {data_path: settings.data_folder_path()};
+        return await helperApp.fetchJSON_postJSON("/storage/get_orphaned_items", params);
+    }
+};
