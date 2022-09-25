@@ -1,11 +1,10 @@
 import {
     isContainerNode,
-    EVERYTHING_SHELF_UUID,
     BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     TODO_STATE_NAMES,
-    TODO_STATES
+    TODO_STATES, EVERYTHING_SHELF_NAME
 } from "./storage.js";
 import * as org from "./lib/org/org.js";
 import {formatShelfName} from "./bookmarking.js";
@@ -217,7 +216,7 @@ class ORGObjectStream {
 
     *objects() {
         let level = 0;
-        let path = this._shelf === EVERYTHING_SHELF_UUID ? [] : [this._shelf];
+        let path = this._shelf === EVERYTHING_SHELF_NAME ? [] : [this._shelf];
 
         let lastObject;
         let orgNodes = this.orgLines.nodes;
@@ -250,7 +249,7 @@ class ORGObjectStream {
 
                 let dirName = orgItems[1].value;
 
-                if (level === 0 && this._shelf === EVERYTHING_SHELF_UUID && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
+                if (level === 0 && this._shelf === EVERYTHING_SHELF_NAME && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
                     dirName = `${formatShelfName(dirName)} (imported)`;
 
                 if (level < orgItems[0].level)

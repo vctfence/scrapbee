@@ -14,7 +14,7 @@ import {
     BROWSER_SHELF_NAME,
     BROWSER_SHELF_UUID,
     TODO_SHELF_ID,
-    TODO_SHELF_NAME, DEFAULT_SHELF_UUID
+    TODO_SHELF_NAME, DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME
 } from "../storage.js";
 import {formatShelfName} from "../bookmarking.js";
 import {Query} from "../storage_query.js";
@@ -41,7 +41,7 @@ function measureSelectricWidth(options) {
 
     meter.text(longestText);
 
-    if (longestText.toLowerCase() === EVERYTHING_SHELF_UUID)
+    if (longestText.toLowerCase() === EVERYTHING_SHELF_NAME)
         meter.addClass("option-builtin");
     else
         meter.removeClass("option-builtin");
@@ -108,7 +108,7 @@ export class ShelfList {
             <option class="option-builtin" value="${TODO_SHELF_ID}" data-uuid="${TODO_SHELF_NAME}">${TODO_SHELF_NAME}</option>
             <option class="option-builtin" value="${DONE_SHELF_ID}" data-uuid="${DONE_SHELF_NAME}">${DONE_SHELF_NAME}</option>
             <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
-                    data-uuid="${EVERYTHING_SHELF_UUID}">${formatShelfName(EVERYTHING_SHELF_UUID)}</option>`
+                    data-uuid="${EVERYTHING_SHELF_UUID}">${formatShelfName(EVERYTHING_SHELF_NAME)}</option>`
 
         if (settings.cloud_enabled())
             html += `<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"

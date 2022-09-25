@@ -3,11 +3,10 @@ import {
     DEFAULT_SHELF_ID,
     DEFAULT_SHELF_UUID,
     DEFAULT_SHELF_NAME,
-    EVERYTHING_SHELF_UUID,
     BROWSER_SHELF_ID,
     isContainerNode,
     NODE_TYPE_FOLDER,
-    NODE_TYPE_SHELF
+    NODE_TYPE_SHELF, EVERYTHING_SHELF_NAME
 } from "./storage.js";
 import {Folder} from "./bookmarks_folder.js";
 import UUID from "./uuid.js";
@@ -216,8 +215,8 @@ export class StructuredStreamImporter {
 
         this._importParentId2DBParentId = new Map();
         this._importParentId2DBParentId.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
-        this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING_SHELF_UUID;
-        this._shelfNode = shelfName !== EVERYTHING_SHELF_UUID? await Folder.getOrCreateByPath(shelfName): null;
+        this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING_SHELF_NAME;
+        this._shelfNode = shelfName !== EVERYTHING_SHELF_NAME? await Folder.getOrCreateByPath(shelfName): null;
 
         if (this._shelfNode) // first object contains id of its parent shelf if a shelf (not everything) is imported
             this._importParentId2DBParentId.set(firstObject.node.parent_id, this._shelfNode.id);

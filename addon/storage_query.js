@@ -1,6 +1,6 @@
 import {
     byPosition,
-    DONE_SHELF_NAME, EVERYTHING_SHELF_UUID,
+    DONE_SHELF_NAME, EVERYTHING_SHELF_NAME,
     isContainerNode, isVirtualShelf,
     NODE_TYPE_FOLDER,
     NODE_TYPE_SHELF,
@@ -120,7 +120,7 @@ class QueryIDB extends EntityIDB {
         let searchrx = search? new RegExp(search, "i"): null;
         let query = this._db.nodes;
 
-        path = path || EVERYTHING_SHELF_UUID;
+        path = path || EVERYTHING_SHELF_NAME;
 
         const todoShelf = path?.toUpperCase() === TODO_SHELF_NAME;
         const doneShelf = path?.toUpperCase() === DONE_SHELF_NAME;

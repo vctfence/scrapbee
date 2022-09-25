@@ -13,7 +13,6 @@ import {
     injectScriptFile,
     openContainerTab,
     openPage,
-    showNotification,
     updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
@@ -120,7 +119,7 @@ helperApp.addMessageHandler("REQUEST_ARCHIVE", onRequestArchiveMessage);
 export async function onRequestArchiveMessage(msg) {
     const result = {type: "ARCHIVE_INFO", kind: "empty"};
 
-    if (msg.uuid) {
+    try {
         const node = await Node.getByUUID(msg.uuid);
 
         if (node) {
@@ -149,6 +148,8 @@ export async function onRequestArchiveMessage(msg) {
                 result.contains = node.contains || null;
             }
         }
+    } catch (e) {
+        console.error(e);
     }
 
     return result;
@@ -157,15 +158,20 @@ export async function onRequestArchiveMessage(msg) {
 helperApp.addMessageHandler("REQUEST_RDF_PATH", onRequestRdfPathMessage);
 
 export async function onRequestRdfPathMessage(msg) {
-    const node = await Node.getByUUID(msg.uuid);
-    if (node) {
-        const path = await rdfShelf.getRDFArchiveDir(node);
+    try {
+        const node = await Node.getByUUID(msg.uuid);
 
-        return {
-            type: "RDF_PATH",
-            uuid: node.uuid,
-            rdf_archive_path: path
-        };
+        if (node) {
+            const path = await rdfShelf.getRDFArchiveDir(node);
+
+            return {
+                type: "RDF_PATH",
+                uuid: node.uuid,
+                rdf_archive_path: path
+            };
+        }
+    } catch (e) {
+        console.error(e);
     }
 }
 

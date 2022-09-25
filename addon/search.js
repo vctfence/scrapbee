@@ -1,5 +1,5 @@
 import {TREE_STATE_PREFIX} from "./ui/tree.js";
-import {CONTENT_NODE_TYPES, EVERYTHING_SHELF_UUID, NODE_TYPE_FOLDER, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {CONTENT_NODE_TYPES, EVERYTHING_SHELF_NAME, NODE_TYPE_FOLDER, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {getActiveTab, openContainerTab, makeReferenceURL} from "./utils_browser.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {escapeHtml} from "./utils_html.js";
@@ -195,7 +195,7 @@ export class SearchContext {
         this.tree = tree;
         this._previousInput = "";
         this.searchMode = SEARCH_MODE_UNIVERSAL;
-        this.provider = new UniversalSearchProvider(EVERYTHING_SHELF_UUID);
+        this.provider = new UniversalSearchProvider(EVERYTHING_SHELF_NAME);
     }
 
     inSearch() {
@@ -307,8 +307,8 @@ export function initializeOmnibox() {
             return;
 
         let provider = text.startsWith("+")
-            ? new TagSearchProvider(EVERYTHING_SHELF_UUID)
-            : new TitleSearchProvider(EVERYTHING_SHELF_UUID);
+            ? new TagSearchProvider(EVERYTHING_SHELF_NAME)
+            : new TitleSearchProvider(EVERYTHING_SHELF_NAME);
 
         if (text.startsWith("+"))
             text = text.replace(/^\+(?:\s+)?/, "");

@@ -3,7 +3,6 @@ import {
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
-    EVERYTHING_SHELF_UUID,
     EVERYTHING_SHELF_NAME,
     RDF_EXTERNAL_TYPE,
     TODO_SHELF_NAME
@@ -108,7 +107,7 @@ export class Import {
             console.error(e);
         }
 
-        if (shelf === EVERYTHING_SHELF_UUID) {
+        if (shelf === EVERYTHING_SHELF_NAME) {
             await Database.wipeImportable();
             await DiskStorage.wipeStorage();
         }

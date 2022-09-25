@@ -4,7 +4,6 @@ import {
     byPosition,
     DEFAULT_SHELF_UUID,
     DONE_SHELF_NAME,
-    EVERYTHING_SHELF_UUID,
     nodeHasSomeContent, isVirtualShelf,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
@@ -12,7 +11,7 @@ import {
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
     TODO_SHELF_NAME, DEFAULT_POSITION,
-    RDF_EXTERNAL_TYPE
+    RDF_EXTERNAL_TYPE, EVERYTHING_SHELF_NAME
 } from "./storage.js";
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
@@ -212,7 +211,7 @@ export class BookmarkManager extends EntityManager {
                        // partial // partially match words (boolean)
                        //}
     ) {
-        const path = options.path || EVERYTHING_SHELF_UUID;
+        const path = options.path || EVERYTHING_SHELF_NAME;
         let folder = isVirtualShelf(path)? null: await Folder.getByPath(path);
 
         if (!options.depth)
@@ -230,7 +229,7 @@ export class BookmarkManager extends EntityManager {
             if (path) {
                 subtree = [];
 
-                if (path.toLowerCase() === EVERYTHING_SHELF_UUID)
+                if (path.toLowerCase() === EVERYTHING_SHELF_NAME)
                     subtree = null;
                 else if (path.toUpperCase() === TODO_SHELF_NAME)
                     subtree = (await Query.todo()).map(n => n.id);

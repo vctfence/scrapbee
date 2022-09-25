@@ -1,7 +1,7 @@
 import {settings} from "../../settings.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "../shelf_list.js";
 import {send} from "../../proxy.js";
-import {EVERYTHING_SHELF_UUID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../../storage.js";
+import {EVERYTHING_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../../storage.js";
 import {getFaviconFromContent} from "../../favicon.js";
 import {fetchWithTimeout} from "../../utils_io.js";
 import {confirm} from "../dialog.js";
@@ -110,7 +110,7 @@ export class LinkChecker {
             path = this.autoLinkCheckScope;
         else {
             let scope = this.shelfList.selectedShelfName;
-            path = scope === EVERYTHING_SHELF_UUID ? undefined : scope;
+            path = scope === EVERYTHING_SHELF_NAME ? undefined : scope;
         }
 
         currentLinkDiv.show();
@@ -243,7 +243,7 @@ export class LinkChecker {
         const checkResultTable = $("#check-results");
         const currentLinkDiv = $("#current-link");
         const scope = this.shelfList.selectedShelfName;
-        const path = scope === EVERYTHING_SHELF_UUID ? undefined : scope;
+        const path = scope === EVERYTHING_SHELF_NAME ? undefined : scope;
 
         currentLinkDiv.hide();
         checkResultContainerDiv.hide();

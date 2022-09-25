@@ -4,7 +4,7 @@ import {confirm} from "../dialog.js";
 import {selectricRefresh, ShelfList, simpleSelectric} from "../shelf_list.js";
 import {formatBytes, toHHMMSS} from "../../utils.js";
 import {showNotification} from "../../utils_browser.js";
-import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_UUID, BROWSER_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
+import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_NAME, BROWSER_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
 import {Query} from "../../storage_query.js";
 
 export class BackupManager {
@@ -278,7 +278,7 @@ export class BackupManager {
         const shelves = await Query.allShelves();
         const backupName = newShelf? jnode.data.alt_name: jnode.data.name;
 
-        shelves.push({name: EVERYTHING_SHELF_UUID});
+        shelves.push({name: EVERYTHING_SHELF_NAME});
 
         if (shelves.find(s => s.name.toLowerCase() === backupName.toLowerCase())) {
             if (!await confirm("Warning", `This will replace "${backupName}". Continue?`))
