@@ -131,7 +131,7 @@ export function isContentNode(node) {
     return node && CONTENT_NODE_TYPES.some(t => t == node.type);
 }
 
-export function isNodeHasContent(node) {
+export function nodeHasSomeContent(node) {
     return node.type === NODE_TYPE_ARCHIVE || node.stored_icon || node.has_notes || node.has_comments;
 }
 

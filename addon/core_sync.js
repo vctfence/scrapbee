@@ -3,7 +3,7 @@ import {SCRAPYARD_SYNC_METADATA, settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
 import {helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
-import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent, JSON_SCRAPBOOK_VERSION} from "./storage.js";
+import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, nodeHasSomeContent, JSON_SCRAPBOOK_VERSION} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
 import {Database} from "./storage_database.js";
@@ -149,7 +149,6 @@ async function prepareDatabase(storageMetadata, dbMetadata) {
 
     const resetDatabase = storageMetadata.uuid !== dbMetadata?.uuid
         || storageMetadata.timestamp < dbMetadata?.timestamp
-        || storageMetadata.generator !== dbMetadata?.generator
         || storageMetadata.version !== dbMetadata?.version;
 
     if (resetDatabase) {

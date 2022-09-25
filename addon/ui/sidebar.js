@@ -562,10 +562,10 @@ async function performImport(file, file_name, file_ext) {
         stopProcessingIndication();
 
         if (file_name.toLocaleLowerCase() === EVERYTHING_SHELF_NAME)
-            await loadShelves(EVERYTHING_SHELF_ID);
+            await loadShelves(EVERYTHING_SHELF_ID, false);
         else {
             const shelf = await Query.shelf(file_name);
-            await loadShelves(shelf.id);
+            await loadShelves(shelf.id, false);
         }
     }
     catch (e) {
@@ -599,7 +599,7 @@ async function performExport() {
 }
 
 async function performSync(verbose = true) {
-    if (getLastShelf() === CLOUD_SHELF_ID)
+     if (getLastShelf() === CLOUD_SHELF_ID)
         await switchShelf(CLOUD_SHELF_ID);
     else {
         send.performSync();

@@ -18,6 +18,7 @@ import * as crawler from "./crawler.js";
 import {Folder} from "./bookmarks_folder.js";
 import {isHTMLLink, parseHtml} from "./utils_html.js";
 import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
+import {helperApp} from "./helper_app.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -31,11 +32,12 @@ export function isSpecialPage(url) {
         || url.startsWith("view-source:") || url.startsWith("moz-extension:")
         || url.startsWith("https://addons.mozilla.org") || url.startsWith("https://support.mozilla.org")
         || url.startsWith("chrome:") || url.startsWith("chrome-extension:")
-        || url.startsWith("https://chrome.google.com/webstore"));
+        || url.startsWith("https://chrome.google.com/webstore")
+        || url.startsWith(helperApp.url("/")));
 }
 
 export function notifySpecialPage() {
-    showNotification("Scrapyard cannot be used with special pages.");
+    showNotification("Scrapyard cannot be used with special or already captured pages.");
 }
 
 export async function getTabMetadata(tab) {

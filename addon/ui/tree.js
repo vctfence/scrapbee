@@ -491,10 +491,12 @@ class BookmarkTree {
         }
         else {
             this._everything = false;
-            let shelves = nodes.filter(n => n.type === NODE_TYPE_SHELF);
+            const shelves = nodes.filter(n => n.type === NODE_TYPE_SHELF);
 
-            this._jstree.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
-            state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + shelves[0].name));
+            if (shelves.length) {
+                this._jstree.settings.state.key = TREE_STATE_PREFIX + shelves[0].name;
+                state = JSON.parse(localStorage.getItem(TREE_STATE_PREFIX + shelves[0].name));
+            }
         }
 
         this._jstree.refresh(true, () => state? state.state: null);
@@ -1443,6 +1445,7 @@ class BookmarkTree {
                     delete items.cutItem;
                     delete items.copyItem;
                     delete items.pasteItem;
+                    delete items.shareItem.submenu.cloudItem;
                     delete items.shareItem.submenu.dropboxItem;
                     delete items.shareItem.submenu.oneDriveItem;
                 }

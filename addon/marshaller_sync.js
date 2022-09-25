@@ -7,7 +7,7 @@ import {
 import {helperApp} from "./helper_app.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {settings} from "./settings.js";
-import {DEFAULT_SHELF_UUID, isNodeHasContent} from "./storage.js";
+import {DEFAULT_SHELF_UUID, nodeHasSomeContent} from "./storage.js";
 
 
 export class MarshallerSync extends MarshallerJSONScrapbook {
@@ -27,7 +27,7 @@ export class MarshallerSync extends MarshallerJSONScrapbook {
         else
             syncNode.date_modified = 0;
 
-        if (!node.content_modified && isNodeHasContent(node))
+        if (!node.content_modified && nodeHasSomeContent(node))
             syncNode.content_modified = syncNode.date_modified;
         else if (syncNode.content_modified)
             syncNode.content_modified = syncNode.content_modified.getTime();

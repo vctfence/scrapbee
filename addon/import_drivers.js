@@ -226,7 +226,6 @@ export class StructuredStreamImporter {
 
         let object;
         while (object = await unmarshaller.unmarshal()) {
-            _log({...object});
             await this._importObject(object);
         }
 

@@ -83,17 +83,26 @@ async function prepareForCloudSharing(node) {
     if (node.type === NODE_TYPE_ARCHIVE) {
         let archive = await Archive.get(node);
         if (archive) {
-            const type = archive.type? archive.type: "text/html";
+            let type = archive.type? archive.type: "text/html";
+
+            if (Archive.isUnpacked(node))
+                type = "application/octet-stream";
+
             filename = node.name
+
             if (!/\.[a-z]{2,8}$/.test(node.name?.toLowerCase())) {
-                const ext = CONTENT_TYPE_TO_EXT[type] || "bin";
+                let ext = CONTENT_TYPE_TO_EXT[type] || "bin";
+
+                if (Archive.isUnpacked(node))
+                    ext = "zip";
+
                 filename = node.name + `.${ext}`;
             }
 
-            if (archive.object)
-                content = archive.object
-            else
-                content = new Blob([await Archive.reify(archive)], {type: type});
+            content = await Archive.reify(archive);
+
+            if (!(content instanceof Blob))
+                content = new Blob([content], {type});
         }
     }
     else if (node.type === NODE_TYPE_BOOKMARK) {

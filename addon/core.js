@@ -45,7 +45,7 @@ async function showAnnouncement() {
 async function performStartupInitialization() {
     search.initializeOmnibox();
 
-    const helper = await helperApp.probe();
+    await helperApp.probe();
 
     await browserShelf.reconcileBrowserBookmarksDB();
 

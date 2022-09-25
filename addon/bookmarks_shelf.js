@@ -23,8 +23,9 @@ class ShelfManager extends EntityManager {
             nodes = nodes.filter(n => !(n._unlisted || n.type === NODE_TYPE_UNLISTED));
         }
         else {
-            let shelfNode = await Query.shelf(shelfName);
-            nodes = await Query.fullSubtree(shelfNode.id);
+            const shelfNode = await Query.shelf(shelfName);
+            if (shelfNode)
+                nodes = await Query.fullSubtree(shelfNode.id);
         }
 
         if (nodes)
