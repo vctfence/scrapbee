@@ -78,7 +78,7 @@ export class BookmarkManager extends EntityManager {
         if (iconId)
             data.content_modified = new Date();
 
-        const node = await Node.add(data);
+        const node = await this._Node.add(data);
 
         if (iconId) {
             await Icon.update(iconId, {node_id: node.id});
@@ -99,7 +99,7 @@ export class BookmarkManager extends EntityManager {
             external: parent.external
         };
 
-        let node = await Node.add(options);
+        let node = await this._Node.add(options);
 
         try {
             await this.plugins.createBookmark(node, parent);
@@ -113,7 +113,7 @@ export class BookmarkManager extends EntityManager {
 
     async addNotes(parentId, name) {
         let folder = await Node.get(parentId);
-        let node = await Node.add({
+        let node = await this._Node.add({
             parent_id: parentId,
             name: name,
             //has_notes: true,
@@ -186,7 +186,7 @@ export class BookmarkManager extends EntityManager {
 
         await this.plugins.updateBookmark(update);
 
-        return Node.update(update);
+        return this._Node.update(update);
     }
 
     clean(bookmark) {
@@ -276,7 +276,7 @@ export class BookmarkManager extends EntityManager {
         }
 
         const id2pos = new Map(positions.map(n => [n.id, n.pos]));
-        await Node.batchUpdate(n => n.pos = id2pos.get(n.id), Array.from(id2pos.keys()));
+        await this._Node.batchUpdate(n => n.pos = id2pos.get(n.id), Array.from(id2pos.keys()));
     }
 
     async _move(ids, destId, moveLast) {
@@ -306,7 +306,7 @@ export class BookmarkManager extends EntityManager {
             if (moveLast)
                 n.pos = DEFAULT_POSITION;
 
-            await Node.update(n);
+            await this._Node.update(n);
         }
 
         if (nodes.some(n => n.type === NODE_TYPE_FOLDER))
@@ -356,7 +356,7 @@ export class BookmarkManager extends EntityManager {
 
             await this.plugins.beforeBookmarkCopied(dest, newNode);
 
-            newNodes.push(Object.assign(newNode, await Node.add(newNode)));
+            newNodes.push(Object.assign(newNode, await this._Node.add(newNode)));
 
             try {
                 await this.copyContent(sourceNode, newNode);
@@ -441,7 +441,7 @@ export class BookmarkManager extends EntityManager {
     }
 
     async _hardDelete(nodes) {
-        return this._delete(nodes, nodes => Node.delete(nodes));
+        return this._delete(nodes, nodes => this._Node.delete(nodes));
     }
 
     async delete(ids) {
@@ -462,19 +462,19 @@ export class BookmarkManager extends EntityManager {
     async _undoDelete(nodes, ids) {
         await undoManager.pushDeleted(ids, nodes);
 
-        return Node.deleteShallow(nodes);
+        return this._Node.deleteShallow(nodes);
     }
 
     async deleteChildren(id) {
         let all_nodes = await Query.fullSubtree(id);
 
-        await Node.delete(all_nodes.filter(n => n.id !== id));
+        await this._Node.delete(all_nodes.filter(n => n.id !== id));
 
         ishellConnector.invalidateCompletion();
     }
 
     async restore(node) {
-        await Node.put(node);
+        await this._Node.put(node);
 
         if (node.parent_id) {
             const parent = await Node.get(node.parent_id);
@@ -505,7 +505,7 @@ export class BookmarkManager extends EntityManager {
             node.stored_icon = true;
             node.icon = await Icon.computeHash(iconUrl);
             if (node.id)
-                await Node.update(node);
+                await this._Node.update(node);
         };
 
         let iconId;
@@ -552,7 +552,7 @@ export class BookmarkManager extends EntityManager {
                             node.icon = undefined;
                             node.stored_icon = undefined;
                             if (node.id)
-                                await Node.update(node);
+                                await this._Node.update(node);
                             console.error(e);
                         }
                     }

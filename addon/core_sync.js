@@ -4,7 +4,7 @@ import {Node} from "./storage_entities.js";
 import {helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
 import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, nodeHasSomeContent, JSON_SCRAPBOOK_VERSION} from "./storage.js";
-import {ProgressCounter} from "./utils.js";
+import {ProgressCounter, sleep} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
 import {Database} from "./storage_database.js";
 import {undoManager} from "./bookmarks_undo.js";
@@ -38,7 +38,7 @@ receive.performSync = async message => {
     }
     finally {
         send.stopProcessingIndication();
-        send.shelvesChanged({synchronize: false});
+        send.shelvesChanged();
     }
 };
 

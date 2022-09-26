@@ -3,7 +3,7 @@ import {sleep} from "./utils.js";
 
 const SCRAPYARD_SIDEBAR_URL = browser.runtime.getURL("/ui/sidebar.html");
 
-export async function findSidebarWindow() {
+export async function getSidebarWindow() {
     const popupWindows = await browser.windows.getAll({
         populate: true,
         windowTypes: ["popup"]
@@ -42,7 +42,7 @@ export async function createSidebarWindow(focused = true) {
 }
 
 export async function toggleSidebarWindow() {
-    const sidebarWindow = await findSidebarWindow();
+    const sidebarWindow = await getSidebarWindow();
 
     if (sidebarWindow)
         await browser.windows.update(sidebarWindow.id, {focused: true});
@@ -51,7 +51,7 @@ export async function toggleSidebarWindow() {
 }
 
 export async function ensureSidebarWindow(sleepMs) {
-    const sidebarWindow = await findSidebarWindow();
+    const sidebarWindow = await getSidebarWindow();
 
     if (!sidebarWindow) {
         await createSidebarWindow(false);

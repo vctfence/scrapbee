@@ -72,7 +72,7 @@ receive.createArchive = message => {
     }
 
     let addBookmark = () =>
-        Bookmark.add(node, NODE_TYPE_ARCHIVE)
+        Bookmark.idb.add(node, NODE_TYPE_ARCHIVE) // added to the storage on archive content update
             .then(bookmark => {
                 getActiveTab().then(tab => {
                     bookmark.__tab_id = tab.id;

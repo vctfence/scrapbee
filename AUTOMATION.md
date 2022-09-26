@@ -19,7 +19,7 @@ Returns Scrapyard version. Useful for testing if Scrapyard presents in the brows
 
 ```javascript
 try {
-    // Extension id "jlpgjeiblkojkaedoobnfkgobdddimon" should be used in Chrome
+    // In Chrome, Scrapyard has the extension id "jlpgjeiblkojkaedoobnfkgobdddimon"
     let version = await browser.runtime.sendMessage("scrapyard-we@firefox", {
         type: "SCRAPYARD_GET_VERSION"
     });
@@ -31,9 +31,29 @@ catch (e) {
 }
 ```
 
+#### SCRAPYARD_OPEN_BATCH_SESSION, SCRAPYARD_CLOSE_BATCH_SESSION
+
+To optimize disk operations on the Scrapyard storage index file, these messages need to be issued
+when creating or modifying multiple bookmark or archive items.
+
+```javascript
+try {
+    let version = await browser.runtime.sendMessage("scrapyard-we@firefox", {
+        type: "SCRAPYARD_OPEN_BATCH_SESSION"
+    });
+
+    // Procesing...
+}
+finally {
+    let version = await browser.runtime.sendMessage("scrapyard-we@firefox", {
+        type: "SCRAPYARD_CLOSE_BATCH_SESSION"
+    });
+}
+```
+
 #### SCRAPYARD_ADD_BOOKMARK
 
-Creates a bookmark in Scrapyard.
+Creates a bookmark.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
@@ -69,7 +89,7 @@ executing `python3 -m http.server` in the desired directory.
 
 #### SCRAPYARD_ADD_ARCHIVE
 
-Creates an archive in Scrapyard.
+Creates an archive.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {
@@ -120,14 +140,11 @@ Returns UUID of the newly created archive.
 #### SCRAPYARD_PACK_PAGE
 
 Packs content of all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
-When displayed in the browser, such a page will not rely on any external dependencies
-and could be served from a database.
+When displayed in the browser, such a page will not rely on any external dependencies.
 Use this API, for example, when you need to somehow modify the captured page.
 
-This API creates a new tab which is required for its operation and closes it on completion.
-This tab could be hidden through the `hide_tab` message option. Although this option may be useful
-in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
-tabs and offer to remove the addon.
+This API creates a new tab which is required for its operation.
+This tab could be hidden through the `hide_tab` message option.
 
 ```js
 browser.runtime.sendMessage("scrapyard-we@firefox", {

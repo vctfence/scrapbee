@@ -17,7 +17,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
 import {Folder} from "./bookmarks_folder.js";
 import {isHTMLLink, parseHtml} from "./utils_html.js";
-import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
+import {getSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
 import {helperApp} from "./helper_app.js";
 
 export function formatShelfName(name) {
@@ -186,7 +186,7 @@ export function finalizeCapture(bookmark) {
 export async function archiveBookmark(node) {
     const bookmark = await Node.get(node.id);
     bookmark.type = NODE_TYPE_ARCHIVE;
-    await Node.update(bookmark);
+    // await Node.update(bookmark); // updated in Archive.add
 
     const isHTML = await isHTMLLink(bookmark.uri);
     if (isHTML === true) {
@@ -361,7 +361,7 @@ async function addBookmarkOnCommandNonFirefox(action) {
 
     await settings.load();
     if (settings.open_sidebar_from_shortcut()) {
-        const window = await findSidebarWindow();
+        const window = await getSidebarWindow();
         if (!window) {
             await browser.storage.session.set({"sidebar-select-shelf": DEFAULT_SHELF_ID});
             await toggleSidebarWindow();

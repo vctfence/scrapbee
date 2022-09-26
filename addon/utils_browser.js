@@ -1,5 +1,5 @@
 import {settings} from "./settings.js";
-import {findSidebarWindow} from "./utils_sidebar.js";
+import {getSidebarWindow} from "./utils_sidebar.js";
 
 export const ACTION_ICONS = {
     16: "icons/logo16.png",
@@ -101,7 +101,7 @@ export async function getActiveTabFromSidebar() {
     if (_SIDEBAR)
         return getActiveTab();
     else {
-        const sidebarWindow = findSidebarWindow();
+        const sidebarWindow = getSidebarWindow();
         const tabs = await browser.tabs.query({active: true});
         return tabs.find(t => t.windowId !== sidebarWindow.id);
     }

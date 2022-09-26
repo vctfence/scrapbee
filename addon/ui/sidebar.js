@@ -45,7 +45,7 @@ import {Folder} from "../bookmarks_folder.js";
 import {Icon, Node} from "../storage_entities.js";
 import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
-import {findSidebarWindow} from "../utils_sidebar.js";
+import {getSidebarWindow} from "../utils_sidebar.js";
 
 const INPUT_TIMEOUT = 1000;
 const MENU_ID_TO_SEARCH_MODE = {
@@ -88,7 +88,7 @@ async function init() {
 
     shelfList.change(function () { switchShelf(this.value, true, true) });
 
-    $("#btnLoad").on("click", () => loadShelves());
+    $("#btnLoad").on("click", () => syncShelves());
     $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
     $("#btnSettings").on("click", () => openPage("/ui/options.html"));
     $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
@@ -266,7 +266,7 @@ async function init() {
 
 window.onbeforeunload = function() {
     if (!_SIDEBAR) {
-        findSidebarWindow().then(w => {
+        getSidebarWindow().then(w => {
             const position = {top: w.top, left: w.left, height: w.height, width: w.width};
             settings.sidebar_window_position(position);
         });
@@ -360,9 +360,6 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
     try {
         updateProgress(0);
 
-        if (synchronize)
-            await performSync();
-
         await shelfList.reload();
         const switchToId = selected || getLastShelf() || DEFAULT_SHELF_ID;
         return switchShelf(switchToId, synchronize, clearSelection);
@@ -371,6 +368,11 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
         console.error(e);
         return switchShelf(DEFAULT_SHELF_ID, synchronize, clearSelection);
     }
+}
+
+async function syncShelves() {
+    await performSync();
+    await loadShelves();
 }
 
 async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
@@ -502,9 +504,13 @@ async function sortShelves() {
 
     let positions = [];
     for (let i = 0; i < sorted.length; ++i)
-        positions.push({id: sorted[i].id, pos: i});
+        positions.push({id: sorted[i].id, uuid: sorted[i].uuid, external: sorted[i].external, pos: i});
 
-    await send.reorderNodes({positions: positions});
+    await Bookmark.idb.reorder(positions);
+
+    const storedShelves = positions.filter(p => !p.external);
+    await send.reorderNodes({positions: storedShelves});
+
     loadShelves(getLastShelf(), false);
 }
 
@@ -562,10 +568,10 @@ async function performImport(file, file_name, file_ext) {
         stopProcessingIndication();
 
         if (file_name.toLocaleLowerCase() === EVERYTHING_SHELF_NAME)
-            await loadShelves(EVERYTHING_SHELF_ID, false);
+            await loadShelves(EVERYTHING_SHELF_ID);
         else {
             const shelf = await Query.shelf(file_name);
-            await loadShelves(shelf.id, false);
+            await loadShelves(shelf.id);
         }
     }
     catch (e) {
@@ -599,11 +605,10 @@ async function performExport() {
 }
 
 async function performSync(verbose = true) {
-     if (getLastShelf() === CLOUD_SHELF_ID)
+    if (getLastShelf() === CLOUD_SHELF_ID)
         await switchShelf(CLOUD_SHELF_ID);
-    else {
+    else
         send.performSync();
-    }
 }
 
 async function selectNode(node, open, forceScroll) {

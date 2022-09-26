@@ -22,6 +22,7 @@ import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "./storage_entities.js";
 import {browseNode} from "./browse.js";
+import {DiskStorage} from "./storage_external.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
@@ -159,7 +160,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
             });
     };
 
-    return Bookmark.add(node, NODE_TYPE_ARCHIVE)
+    return Bookmark.idb.add(node, NODE_TYPE_ARCHIVE) // added to storage in Archive.add
         .then(async bookmark => {
 
             if (node.comments)
@@ -169,7 +170,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
                 let content = await downloadLocalContent(bookmark);
 
                 bookmark.uri = "";
-                await Bookmark.update(bookmark);
+                //await Bookmark.update(bookmark);
 
                 return saveContent(bookmark, content);
             }
@@ -183,7 +184,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
 
                 bookmark.name = page.title;
 
-                await Bookmark.update(bookmark);
+                //await Bookmark.update(bookmark);
 
                 return saveContent(bookmark, page.html);
             }
@@ -477,4 +478,18 @@ receiveExternal.scrapyardBrowseUuid = async (message, sender) => {
     const node = await Node.getByUUID(message.uuid);
     if (node)
         browseNode(node);
+};
+
+receiveExternal.scrapyardOpenBatchSession = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    return DiskStorage.openBatchSession();
+};
+
+receiveExternal.scrapyardCloseBatchSession = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    return DiskStorage.closeBatchSession();
 };

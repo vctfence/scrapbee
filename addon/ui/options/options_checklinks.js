@@ -9,6 +9,7 @@ import {showNotification} from "../../utils_browser.js";
 import {Node} from "../../storage_entities.js";
 import {Path} from "../../path.js";
 import {Bookmark} from "../../bookmarks_bookmark.js";
+import {DiskStorage} from "../../storage_external.js";
 
 const DEFAULT_LINK_CHECK_TIMEOUT = 10;
 
@@ -180,60 +181,67 @@ export class LinkChecker {
 
         const nodes = await Bookmark.list({path: path, types: [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK]});
 
-        for (let node of nodes) {
-            if (this.abortCheckLinks)
-                break;
+        try {
+            if (updateIcons)
+                await DiskStorage.openBatchSession();
 
-            if (!node.uri)
-                continue;
-
-            $("#current-link-title").text(node.name);
-            $("#current-link-url").text(node.uri);
-
-            let error;
-            let networkError;
-            let contentType;
-            let response;
-
-            try {
-                let timeout = parseInt($("#link-check-timeout").val());
-                timeout = isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout;
-                response = await fetchWithTimeout(node.uri, {timeout: timeout * 1000});
-
+            for (let node of nodes) {
                 if (this.abortCheckLinks)
                     break;
 
-                if (!response.ok)
-                    error = `[HTTP Error: ${response.status}]`;
-                else
-                    contentType = response.headers.get("content-type");
-            }
-            catch (e) {
-                networkError = true;
+                if (!node.uri)
+                    continue;
 
-                if (e.name === "AbortError")
-                    error = `[Timeout]`;
-                else
-                    error = "[Unavailable]"
-            }
+                $("#current-link-title").text(node.name);
+                $("#current-link-url").text(node.uri);
 
-            if (error) {
-                this.resultCount += 1;
-                await displayLinkError(error, node);
+                let error;
+                let networkError;
+                let contentType;
+                let response;
 
-                if (networkError && updateIcons && node.icon && !node.stored_icon) {
-                    node.icon = undefined;
-                    await Node.update(node);
-                }
-            }
-            else if (updateIcons && contentType?.toLowerCase()?.startsWith("text/html")) {
                 try {
-                    await updateIcon(node, await response.text());
+                    let timeout = parseInt($("#link-check-timeout").val());
+                    timeout = isNaN(timeout)? DEFAULT_LINK_CHECK_TIMEOUT: timeout;
+                    response = await fetchWithTimeout(node.uri, {timeout: timeout * 1000});
+
+                    if (this.abortCheckLinks)
+                        break;
+
+                    if (!response.ok)
+                        error = `[HTTP Error: ${response.status}]`;
+                    else
+                        contentType = response.headers.get("content-type");
+                } catch (e) {
+                    networkError = true;
+
+                    if (e.name === "AbortError")
+                        error = `[Timeout]`;
+                    else
+                        error = "[Unavailable]"
                 }
-                catch (e) {
-                    console.error(e)
+
+                if (error) {
+                    this.resultCount += 1;
+                    await displayLinkError(error, node);
+
+                    if (networkError && updateIcons && node.icon && !node.stored_icon) {
+                        node.icon = undefined;
+                        await Node.update(node);
+                    }
+                }
+                else if (updateIcons && contentType?.toLowerCase()?.startsWith("text/html")) {
+                    try {
+                        await updateIcon(node, await response.text());
+                    } catch (e) {
+                        console.error(e)
+                    }
                 }
             }
+        }
+        finally {
+            if (updateIcons)
+                await DiskStorage.closeBatchSession();
         }
     }
 

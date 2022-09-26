@@ -78,6 +78,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
         serializedNode.has_icon = serializedNode.stored_icon;
         delete serializedNode.stored_icon;
+        delete serializedNode.icon;
 
         serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
 

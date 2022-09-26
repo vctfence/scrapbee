@@ -684,7 +684,7 @@ class BookmarkTree {
 
             if (o(jnode)?.external !== RDF_EXTERNAL_TYPE && o(jparent)?.external === RDF_EXTERNAL_TYPE
                     || o(jnode)?.external === RDF_EXTERNAL_TYPE
-                        && more.ref && o(more.ref)?.external !== RDF_EXTERNAL_TYPE)
+                        && more.ref && jnode.parent !== "#" && o(more.ref)?.external !== RDF_EXTERNAL_TYPE)
                 return false;
         }
 
@@ -722,18 +722,14 @@ class BookmarkTree {
             this.reorderNodes(jparent);
     }
 
-    reorderNodes(jparent) {
+    async reorderNodes(jparent) {
         let jsiblings = jparent.children.map(c => this._jstree.get_node(c));
-        // optimization may produce unexpected results in Sync
-        let optimized = false; //!jsiblings.some(jn => o(jn).external === RDF_EXTERNAL_TYPE);
 
         let positions = [];
         for (let i = 0; i < jsiblings.length; ++i) {
             const sibling = o(jsiblings[i]);
-            // if (sibling.pos === i && optimized)
-            //     continue;
-
             const orderNode = {};
+
             orderNode.id = sibling.id;
             orderNode.uuid = sibling.uuid;
             orderNode.parent_id = sibling.parent_id;
@@ -743,7 +739,13 @@ class BookmarkTree {
             positions.push(orderNode);
         }
 
-        return send.reorderNodes({positions: positions});
+        if (jparent.id === "#") {
+            await Bookmark.idb.reorder(positions);
+            const storedShelves = positions.filter(p => !p.external);
+            await send.reorderNodes({positions: storedShelves});
+        }
+        else
+            return send.reorderNodes({positions: positions});
     }
 
     contextMenu(ctxJNode) {
@@ -1357,7 +1359,7 @@ class BookmarkTree {
                     if (options) {
                         let node = await Node.get(ctxNode.id);
                         ctxNode.uri = node.uri = options.title;
-                        Node.update(node);
+                        await Node.update(node);
                     }
                 }
             },

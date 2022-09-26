@@ -23,7 +23,9 @@ export class NodeProxy extends StorageProxy {
     async update(node, resetDateModified = true) {
         const result = await this.wrapped.update(node, resetDateModified);
 
-        if (!Array.isArray(node))
+        if (Array.isArray(node))
+            await this.#updateNodes(node);
+        else
             await this.#updateNode(node);
 
         return result;
@@ -103,7 +105,7 @@ export class NodeProxy extends StorageProxy {
             const params = {
                 nodes: await Promise.all(nodes.map(async node => {
                     node = this.#marshaller.serializeNode(node);
-                    node = this.#marshaller.convertNode(node);
+                    node = await this.#marshaller.convertNode(node);
                     return node;
                 }))
             };

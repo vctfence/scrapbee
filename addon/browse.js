@@ -47,6 +47,9 @@ function configureArchiveTab(node, archiveTab) {
 }
 
 async function configureArchivePage(tab, node) {
+    if (node.external === CLOUD_EXTERNAL_TYPE && Archive.isUnpacked(node))
+        return;
+
     await injectCSSFile(tab.id, {file: "ui/edit_toolbar.css"});
     await injectScriptFile(tab.id, {file: "lib/jquery.js", frameId: 0});
     if (!_BACKGROUND_PAGE)
