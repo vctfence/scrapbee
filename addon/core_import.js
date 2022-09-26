@@ -47,7 +47,18 @@ receive.importFile = async message => {
 };
 
 receive.exportFile = async message => {
-    const shelf = isBuiltInShelf(message.shelf)? message.shelf.toLocaleLowerCase(): message.shelf;
+    let shelf = message.shelf;
+    let shelfName = message.shelf;
+
+    if (typeof shelf === "string") {
+        shelfName = shelf;
+
+        if (isBuiltInShelf(shelfName))
+            shelfName = shelfName.toLocaleLowerCase();
+    }
+    else
+        shelfName = shelf.name;
+
     let format = message.format || "json";
 
     let shallowExport = false;
@@ -65,7 +76,7 @@ receive.exportFile = async message => {
     let nodes = await Export.nodes(shelf, format === "org");
 
     const exportBuilder = Export.create(format)
-        .setName(message.shelf)
+        .setName(shelfName)
         .setUUID(message.uuid)
         .setLinksOnly(shallowExport)
         .setReportProgress(true)

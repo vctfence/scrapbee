@@ -1191,6 +1191,10 @@ class BookmarkTree {
                         send.uploadFiles({parent_id: ctxNode.id, file_name: options.title});
                 }
             },
+            exportItem: {
+                label: "Export...",
+                action: async () => this.performExport(ctxNode)
+            },
             deleteItem: {
                 separator_before: true,
                 _disabled: !this._everything && multiselect && selectedNodes.some(n => o(n).type === NODE_TYPE_SHELF),
@@ -1443,6 +1447,7 @@ class BookmarkTree {
                 delete items.rdfPathItem;
                 delete items.checkLinksItem;
                 delete items.uploadItem;
+                delete items.exportItem;
                 if (ctxNode.external === RDF_EXTERNAL_TYPE) {
                     delete items.cutItem;
                     delete items.copyItem;
@@ -1509,6 +1514,7 @@ class BookmarkTree {
             items["newItem"] && (items["newItem"]._disabled = true);
             items["sortItem"] && (items["sortItem"]._disabled = true);
             items["uploadItem"] && (items["uploadItem"]._disabled = true);
+            items["exportItem"] && (items["exportItem"]._disabled = true);
             items["renameItem"] && (items["renameItem"]._disabled = true);
             items["copyLinkItem"] && (items["copyLinkItem"]._disabled = true);
             items["openNotesItem"] && (items["openNotesItem"]._disabled = true);

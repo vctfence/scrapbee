@@ -257,6 +257,7 @@ async function init() {
     tree.stopProcessingIndication = stopProcessingIndication;
 
     tree.sidebarSelectNode = selectNode;
+    tree.performExport = performExport;
 
     receive.startListener();
     receiveExternal.startListener();
@@ -581,11 +582,17 @@ async function performImport(file, file_name, file_ext) {
     }
 }
 
-async function performExport() {
-    const {name: shelf, uuid} = shelfList.getCurrentShelf();
+async function performExport(node) {
+    let {name: shelf, uuid} = shelfList.getCurrentShelf();
+
+    if (node) {
+        shelf = node;
+        uuid = node.uuid;
+    }
+
     const options = await showDlg("export", {
-        caption: "Export Shelf",
-        file_name: shelf
+        caption: "Export",
+        file_name: shelf.name || shelf
     });
 
     if (options) {
@@ -594,12 +601,13 @@ async function performExport() {
         try {
             const sender = _BACKGROUND_PAGE? send: sendLocal;
             await sender.exportFile({shelf, uuid, fileName: options.file_name, format: options.format});
-            stopProcessingIndication();
         } catch (e) {
             console.error(e);
-            stopProcessingIndication();
             if (!e.message?.includes("Download canceled"))
                 showNotification({message: "The export has failed: " + e.message});
+        }
+        finally {
+            stopProcessingIndication();
         }
     }
 }
