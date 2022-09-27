@@ -17,9 +17,11 @@ import {
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
 import {helperApp} from "./helper_app.js";
-import {send, sendLocal} from "./proxy.js";
+import {send} from "./proxy.js";
 import {rdfShelf} from "./plugin_rdf_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
+
+const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
 
 function configureArchiveTab(node, archiveTab) {
     var tabUpdateListener = async (id, changed, tab) => {
@@ -108,13 +110,17 @@ async function browseArchive(node, options) {
     if (node.__tentative)
         return;
 
-    let urlPrefix = "";
-    if (node.external === RDF_EXTERNAL_TYPE)
-        urlPrefix = "/rdf";
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
 
-    const archiveURL = helperApp.url(`${urlPrefix}/browse/${node.uuid}`);
-    const archiveTab = await openURL(archiveURL, options);
-    return configureArchiveTab(node, archiveTab);
+    if (helper) {
+        let urlPrefix = "";
+        if (node.external === RDF_EXTERNAL_TYPE)
+            urlPrefix = "/rdf";
+
+        const archiveURL = helperApp.url(`${urlPrefix}/browse/${node.uuid}`);
+        const archiveTab = await openURL(archiveURL, options);
+        return configureArchiveTab(node, archiveTab);
+    }
 }
 
 helperApp.addMessageHandler("REQUEST_ARCHIVE", onRequestArchiveMessage);

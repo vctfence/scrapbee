@@ -318,6 +318,7 @@ class ORGObjectStream {
                         object[property.name] = parseInt(property.value);
                     break;
                 case "stored_icon":
+                case "site":
                     if (property.value)
                         object[property.name] = property.value === "true";
                     break;

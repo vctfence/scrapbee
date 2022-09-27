@@ -70,7 +70,7 @@ receive.computeStatistics = async message => {
 }
 
 receive.getOrphanedItems = async message => {
-    const helper = helperApp.probe(true);
+    const helper = await helperApp.probe(true);
 
     if (helper) {
         await settings.load();

@@ -24,8 +24,9 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {browseNode} from "./browse.js";
-import {ensureSidebarWindow} from "./utils_sidebar.js";
 import UUID from "./uuid.js";
+
+const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -35,7 +36,12 @@ receive.renameFolder = message => Folder.rename(message.id, message.name);
 
 receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
-receive.createBookmark = message => {
+receive.createBookmark = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     const node = message.node;
 
     if (isSpecialPage(node.uri)) {
@@ -63,7 +69,12 @@ receive.createBookmark = message => {
 
 receive.updateBookmark = message => Bookmark.update(message.node);
 
-receive.createArchive = message => {
+receive.createArchive = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     const node = message.node;
 
     if (isSpecialPage(node.uri)) {
@@ -96,6 +107,11 @@ receive.createArchive = message => {
 };
 
 receive.archiveBookmarks = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     send.startProcessingIndication();
 
     try {
@@ -128,27 +144,57 @@ receive.getHideToolbarSetting = async message => {
     return settings.do_not_show_archive_toolbar();
 };
 
-receive.copyNodes = message => {
+receive.copyNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.copy(message.node_ids, message.dest_id, message.move_last);
 };
 
-receive.shareToCloud = message => {
+receive.shareToCloud = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.copy(message.node_ids, CLOUD_SHELF_ID, true);
 }
 
-receive.moveNodes = message => {
+receive.moveNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.move(message.node_ids, message.dest_id, message.move_last);
 };
 
-receive.deleteNodes = message => {
+receive.deleteNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.delete(message.node_ids);
 };
 
-receive.softDeleteNodes = message => {
+receive.softDeleteNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.softDelete(message.node_ids);
 };
 
-receive.reorderNodes = message => {
+receive.reorderNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.reorder(message.positions);
 };
 
