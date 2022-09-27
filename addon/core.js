@@ -54,7 +54,9 @@ async function performStartupInitialization() {
 
     await helperApp.probe();
     await undoManager.commit();
-    await sendLocal.performSync();
+
+    if (settings.synchronize_storage_at_startup())
+        await sendLocal.performSync();
 
     console.log("==> core.js initialized");
 }

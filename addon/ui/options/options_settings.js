@@ -45,6 +45,8 @@ function configureScrapyardSettingsPage() {
 
     //setSaveSelectHandler("option-export-format", "export_format");
 
+    setSaveCheckHandler("option-synchronize-at-startup", "synchronize_storage_at_startup",
+        () => send.shelvesChanged());
     setSaveCheckHandler("option-capitalize-builtin-shelf-names", "capitalize_builtin_shelf_names",
         () => send.shelvesChanged());
     setSaveCheckHandler("option-show-firefox-bookmarks", "show_firefox_bookmarks",
@@ -72,6 +74,7 @@ function configureScrapyardSettingsPage() {
 
 function loadScrapyardSettings() {
     $("#option-data-folder-path").val(settings.data_folder_path() || "");
+    $("#option-synchronize-at-startup").prop("checked", settings.synchronize_storage_at_startup());
     $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
     $("#option-shelf-list-max-height").val(settings.shelf_list_height());
     $("#option-show-firefox-bookmarks").prop("checked", settings.show_firefox_bookmarks());
