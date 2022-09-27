@@ -45,8 +45,6 @@ async function showAnnouncement() {
 async function performStartupInitialization() {
     search.initializeOmnibox();
 
-    await helperApp.probe();
-
     await browserShelf.reconcileBrowserBookmarksDB();
 
     if (settings.cloud_enabled()) {
@@ -54,7 +52,9 @@ async function performStartupInitialization() {
         await cloudShelf.enableBackgroundSync(settings.cloud_background_sync());
     }
 
+    await helperApp.probe();
     await undoManager.commit();
+    await sendLocal.performSync();
 
     console.log("==> core.js initialized");
 }

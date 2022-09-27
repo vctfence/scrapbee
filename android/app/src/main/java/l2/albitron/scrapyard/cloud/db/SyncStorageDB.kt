@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 
 private const val SYNC_STORAGE_PATH = "/Sync"
-private const val SYNC_DB_INDEX = "scrapbook.jsbk"
+private const val SYNC_DB_INDEX = "index.jsbk"
 
 class SyncStorageDB: AbstractCloudDB, CloudDB {
     override var _provider: CloudProvider

@@ -667,7 +667,7 @@ async function selectOrCreatePath(path) {
 }
 
 function sidebarRefresh() {
-    switchShelf(getLastShelf(), false);
+    return switchShelf(getLastShelf(), false);
 }
 
 function sidebarRefreshExternal() {

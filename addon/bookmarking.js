@@ -186,7 +186,7 @@ export function finalizeCapture(bookmark) {
 export async function archiveBookmark(node) {
     const bookmark = await Node.get(node.id);
     bookmark.type = NODE_TYPE_ARCHIVE;
-    // await Node.update(bookmark); // updated in Archive.add
+    await Node.idb.update(bookmark); // storage updated in Archive.add
 
     const isHTML = await isHTMLLink(bookmark.uri);
     if (isHTML === true) {
