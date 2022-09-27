@@ -25,17 +25,17 @@ const SERIALIZED_FIELD_ORDER = [
     "contains",
     "size",
     "tags",
+    "todo_state",
+    "todo_date",
+    "details",
     "date_added",
     "date_modified",
     "content_modified",
     "external",
     "external_id",
-    "stored_icon",
+    "has_icon",
     "has_comments",
     "has_notes",
-    "todo_state",
-    "todo_date",
-    "details",
     "pos"
 ];
 

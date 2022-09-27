@@ -57,7 +57,7 @@ class NodeDB:
 
     def create_format_header(self):
         return {
-            "format": "JSON ScrapBook",
+            "format": "JSON Scrapbook",
             "version": NodeDB.FORMAT_VERSION,
             "type": "index",
             "contains": "everything",
