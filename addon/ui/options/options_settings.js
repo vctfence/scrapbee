@@ -5,7 +5,6 @@ import {send} from "../../proxy.js";
 
 function configureScrapyardSettingsPage() {
     simpleSelectric("#option-sidebar-theme");
-    //simpleSelectric("#option-export-format");
 
     let dataFolderInputTimeout;
     $("#option-data-folder-path").on("input", e => {
@@ -43,7 +42,17 @@ function configureScrapyardSettingsPage() {
         settings.helper_port_number(+e.target.value);
     });
 
-    //setSaveSelectHandler("option-export-format", "export_format");
+    $("#transfer-content").on("click", async e => {
+        e.preventDefault();
+
+        const success = await send.transferContentToDisk();
+
+        if (success)
+            $("#transfer-content-container").hide();
+    });
+
+    if (settings.transition_to_disk())
+        $("#transfer-content-container").show();
 
     setSaveCheckHandler("option-synchronize-at-startup", "synchronize_storage_at_startup",
         () => send.shelvesChanged());

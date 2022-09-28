@@ -19,6 +19,18 @@ export class NotesIDB extends EntityIDB {
         return delegateProxy(new NotesProxy(new StorageAdapterDisk()), instance);
     }
 
+    static newInstance_transition() {
+        const instance = new NotesIDB();
+
+        instance.import = new NotesIDB();
+        instance.import._importer = true;
+
+        instance.idb = {import: new NotesIDB()};
+        instance.idb.import._importer = true;
+
+        return instance;
+    }
+
     indexEntity(node, words) {
         return {
             node_id: node.id,

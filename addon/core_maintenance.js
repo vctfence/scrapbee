@@ -1,4 +1,4 @@
-import {send, receive} from "./proxy.js";
+import {send, receive, sendLocal} from "./proxy.js";
 import {
     isContentNode,
     NODE_TYPE_ARCHIVE,
@@ -30,11 +30,9 @@ receive.resetScrapyard = async message => {
     await Database.wipeEverything();
     await settings.last_sync_date(null);
 
-    browser.runtime.reload();
-
     send.stopProcessingIndication();
 
-    send.shelvesChanged({synchronize: false});
+    //return sendLocal.performSync();
 }
 
 receive.computeStatistics = async message => {

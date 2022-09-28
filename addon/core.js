@@ -1,11 +1,12 @@
-import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
+import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
+import {receive, receiveExternal, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserShelf} from "./plugin_browser_shelf.js";
 import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {addBookmarkOnCommand} from "./bookmarking.js";
 import {toggleSidebarWindow} from "./utils_sidebar.js";
-import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
 import {undoManager} from "./bookmarks_undo.js";
+import {helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
 import "./core_bookmarking.js";
@@ -16,7 +17,7 @@ import "./core_maintenance.js";
 import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
-import {helperApp} from "./helper_app.js";
+import "./core_transition.js";
 
 if (_BACKGROUND_PAGE)
     import("./core_import.js");

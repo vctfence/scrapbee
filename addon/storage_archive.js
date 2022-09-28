@@ -20,6 +20,18 @@ export class ArchiveIDB extends EntityIDB {
         return delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), instance);
     }
 
+    static newInstance_transition() {
+        const instance = new ArchiveIDB();
+
+        instance.import = new ArchiveIDB();
+        instance.import._importer = true;
+
+        instance.idb = {import: new ArchiveIDB()};
+        instance.idb.import._importer = true;
+
+        return instance
+    }
+
     entity(node, data, contentType, byteLength) {
         contentType = contentType || "text/html";
 
@@ -68,8 +80,10 @@ export class ArchiveIDB extends EntityIDB {
 
         if (exists)
             await this._db.blobs.where("node_id").equals(node.id).modify(archive);
-        else
+        else {
+            archive.node_id = node.id;
             await this._db.blobs.add(archive);
+        }
 
         return archive;
     }

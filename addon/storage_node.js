@@ -15,6 +15,14 @@ export class NodeIDB extends EntityIDB {
         return delegateProxy(new NodeProxy(new StorageAdapterDisk()), instance);
     }
 
+    static newInstance_transition() {
+        const instance = new NodeIDB();
+
+        instance.idb = new NodeIDB();
+
+        return instance;
+    }
+
     resetDates(node) {
         node.date_added = new Date();
         node.date_modified = node.date_added;
