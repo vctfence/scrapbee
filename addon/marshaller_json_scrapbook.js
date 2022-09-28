@@ -82,6 +82,11 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
         serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
 
+        if (node.site) {
+            serializedNode.is_site = node.site;
+            delete node.site;
+        }
+
         this.convertUUIDsToFormat(serializedNode);
 
         return this._reorderFields(serializedNode);
@@ -252,6 +257,11 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
 
         deserializedNode.stored_icon = deserializedNode.has_icon;
         delete deserializedNode.has_icon;
+
+        if (node.is_site) {
+            deserializedNode.site = node.is_site;
+            delete node.is_site;
+        }
 
         return deserializedNode;
     }

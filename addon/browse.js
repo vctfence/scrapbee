@@ -16,12 +16,10 @@ import {
     updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
-import {helperApp} from "./helper_app.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {send} from "./proxy.js";
 import {rdfShelf} from "./plugin_rdf_shelf.js";
-import {Bookmark} from "./bookmarks_bookmark.js";
-
-const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
+import {Bookmark} from "./bookmarks_bookmark.js"
 
 function configureArchiveTab(node, archiveTab) {
     var tabUpdateListener = async (id, changed, tab) => {

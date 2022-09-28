@@ -46,6 +46,7 @@ import {Icon, Node} from "../storage_entities.js";
 import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {getSidebarWindow} from "../utils_sidebar.js";
+import {helperApp} from "../helper_app.js";
 
 const INPUT_TIMEOUT = 1000;
 const MENU_ID_TO_SEARCH_MODE = {
@@ -92,6 +93,7 @@ async function init() {
     $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
     $("#btnSettings").on("click", () => openPage("/ui/options.html"));
     $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
+    $("#btnHelperWarning").on("click", () => openPage("/ui/options.html#helperapp"));
 
     $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();
@@ -306,6 +308,11 @@ async function loadSidebar() {
 
     if (settings.display_random_bookmark())
         displayRandomBookmark();
+
+    const helper = await helperApp.probe();
+
+    if (!helper)
+        $("#btnHelperWarning").css("display", "inline-block");
 }
 
 let processingTimeout;

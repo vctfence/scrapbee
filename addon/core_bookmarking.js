@@ -1,8 +1,8 @@
 import {formatBytes, getMimetypeByExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
 import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
-import {getActiveTab, showNotification, updateTabURL} from "./utils_browser.js";
-import {helperApp} from "./helper_app.js";
+import {getActiveTab, gettingStarted, showNotification, updateTabURL} from "./utils_browser.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import {
     captureTab,
@@ -26,7 +26,6 @@ import {undoManager} from "./bookmarks_undo.js";
 import {browseNode} from "./browse.js";
 import UUID from "./uuid.js";
 
-const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -37,6 +36,9 @@ receive.renameFolder = message => Folder.rename(message.id, message.name);
 receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
 receive.createBookmark = async message => {
+    if (!settings.data_folder_path())
+        return gettingStarted();
+
     const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
 
     if (!helper)
@@ -44,10 +46,8 @@ receive.createBookmark = async message => {
 
     const node = message.node;
 
-    if (isSpecialPage(node.uri)) {
-        notifySpecialPage();
-        return;
-    }
+    if (isSpecialPage(node.uri))
+        return notifySpecialPage();
 
     const addBookmark = () =>
         Bookmark.add(node, NODE_TYPE_BOOKMARK)
@@ -62,7 +62,7 @@ receive.createBookmark = async message => {
 
     Bookmark.setTentativeId(node);
     node.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
-    return send.beforeBookmarkAdded({node: node})
+    return send.beforeBookmarkAdded({node})
         .then(addBookmark)
         .catch(addBookmark);
 };
@@ -70,6 +70,9 @@ receive.createBookmark = async message => {
 receive.updateBookmark = message => Bookmark.update(message.node);
 
 receive.createArchive = async message => {
+    if (!settings.data_folder_path())
+        return gettingStarted();
+
     const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
 
     if (!helper)
@@ -77,10 +80,8 @@ receive.createArchive = async message => {
 
     const node = message.node;
 
-    if (isSpecialPage(node.uri)) {
-        notifySpecialPage();
-        return;
-    }
+    if (isSpecialPage(node.uri))
+        return notifySpecialPage();
 
     let addBookmark = () =>
         Bookmark.idb.add(node, NODE_TYPE_ARCHIVE) // added to the storage on archive content update

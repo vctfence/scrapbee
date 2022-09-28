@@ -1,9 +1,9 @@
 import {receive, send} from "./proxy.js";
 import {SCRAPYARD_SYNC_METADATA, settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
-import {helperApp} from "./helper_app.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
-import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, nodeHasSomeContent, JSON_SCRAPBOOK_VERSION} from "./storage.js";
+import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, JSON_SCRAPBOOK_VERSION} from "./storage.js";
 import {ProgressCounter, sleep} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
 import {Database} from "./storage_database.js";
@@ -14,7 +14,7 @@ let syncing = false;
 receive.checkSyncDirectory = async message => {
     try {
         send.startProcessingIndication();
-        const helper = await helperApp.hasVersion("2.0", "Scrapyard helper application 2.0+ is required.");
+        const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
 
         if (helper) {
             const status = await helperApp.fetchJSON_postJSON("/storage/check_directory", {

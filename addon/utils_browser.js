@@ -194,3 +194,7 @@ export async function startupLatch(f) {
     else
         await f();
 }
+
+export function gettingStarted() {
+    return openPage("/ui/options.html#help:start");
+}

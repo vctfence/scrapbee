@@ -1,13 +1,14 @@
 import {helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
-import {ARCHIVE_TYPE_TEXT, NON_SYNCHRONIZED_EXTERNALS} from "./storage.js";
-import {rdfShelf} from "./plugin_rdf_shelf.js";
+import {ARCHIVE_TYPE_TEXT} from "./storage.js";
 
 export class StorageAdapterDisk {
     async _postJSON(path, fields) {
         try {
-            fields.data_path = settings.data_folder_path()
-            return helperApp.postJSON(path, fields);
+            fields.data_path = settings.data_folder_path();
+
+            if (fields.data_path)
+                return helperApp.postJSON(path, fields);
         }
         catch (e) {
             console.error(e);
@@ -16,11 +17,14 @@ export class StorageAdapterDisk {
 
     async _fetchJSON(path, fields) {
         try {
-            fields.data_path = settings.data_folder_path()
-            const response = await helperApp.postJSON(path, fields);
+            fields.data_path = settings.data_folder_path();
 
-            if (response.ok)
-                return response.json();
+            if (fields.data_path) {
+                const response = await helperApp.postJSON(path, fields);
+
+                if (response.ok)
+                    return response.json();
+            }
         }
         catch (e) {
             console.error(e);

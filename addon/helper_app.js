@@ -1,7 +1,9 @@
 import UUID from "./uuid.js"
 import {settings} from "./settings.js"
 import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
-import {send} from "./proxy.js";
+import {send} from "./proxy.js"
+
+export const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
 
 class HelperApp {
     #auth;
