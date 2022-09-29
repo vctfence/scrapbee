@@ -187,11 +187,16 @@ input:focus {
     position:relative;
 }
 
-.dlg-table .row {
+.dlg-table .row, .dlg > .row {
     display:table-row;
     padding:12px 5px 6px 5px;
     white-space:nowrap;
     overflow:hidden;
+}
+
+.dlg > .row {
+    display: block;
+    padding: 14px 5px 4px 5px;
 }
 
 .dlg-table .row .cell {
