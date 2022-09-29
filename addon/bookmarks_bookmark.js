@@ -272,6 +272,8 @@ export class BookmarkManager extends EntityManager {
 
         // a check for circular references
         const ascendants = new Set(await Query.ascendantIdsOf(dest));
+        ascendants.add(destId);
+
         for (const node of nodes)
             if (ascendants.has(node.id)) {
                 const error = new Error("A circular reference while moving nodes");

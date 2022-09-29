@@ -98,6 +98,10 @@ a#notes-button.focus, a#edit-button.focus {
     display: none;
 }
 
+#wysiwyg-editor {
+    height: calc(100% - 24px);
+}
+
 #editor {
     width: calc(100% - 4px);
     height: calc(100% - 4px);
