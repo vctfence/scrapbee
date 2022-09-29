@@ -240,6 +240,7 @@ export async function buildIFramesRecursive(node, doc, topIFrames, acc = []) {
 
 export async function assembleUnpackedIndex(node) {
     const indexHTML = await Archive.getFile(node, "index.html");
+
     if (indexHTML) {
         const doc = parseHtml(indexHTML);
         const iframes = doc.querySelectorAll("iframe");
@@ -264,6 +265,7 @@ function removeScriptTags(doc) {
 
 export async function isHTMLLink(url, timeout = 10000) {
     let response;
+
     try {
         response = await fetchWithTimeout(url, {method: "head"});
     } catch (e) {

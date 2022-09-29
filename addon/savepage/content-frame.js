@@ -52,14 +52,20 @@ function collectFrameLinks(root) {
     return links;
 }
 
-function indexWords(string) {
+function indexWords(domNode) {
     try {
+        const scripts = domNode.querySelectorAll("style, script");
+        scripts.forEach(tag => {
+            tag.parentElement.removeChild(tag);
+        });
+
+        let string = domNode.textContent;
         string = string.replace(/\n/g, ' ')
                        .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
 
-        let words = string.split(" ")
+        const words = string.split(" ")
             .filter(s => s && s.length > 2)
-            .map(s => s.toLocaleLowerCase())
+            .map(s => s.toLocaleLowerCase());
 
         return Array.from(new Set(words));
     }
@@ -234,7 +240,7 @@ function frameScript()
                             html: message.siteCaptureOptions? "": htmltext,
                             fonts: loadedfonts,
                             links: message.siteCapture? collectFrameLinks(document): undefined,
-                            index: message.siteCaptureOptions? undefined: indexWords(document.documentElement.textContent)
+                            index: message.siteCaptureOptions? undefined: indexWords(document.body?.cloneNode(true))
                         });
                         ////////////////////////////////////////////////////////////////// Scrapyard //
 

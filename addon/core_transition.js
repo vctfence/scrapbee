@@ -1,13 +1,13 @@
-import {receive, send} from "./proxy.js";
 import {EVERYTHING_SHELF_NAME, NODE_TYPE_ARCHIVE, CLOUD_SHELF_NAME, CLOUD_SHELF_ID} from "./storage.js";
-import {Export} from "./import.js";
 import {Node, Archive, Comments, Icon, Notes} from "./storage_entities.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {showNotification} from "./utils_browser.js";
+import {receive, send} from "./proxy.js";
+import {Export} from "./import.js";
 import {ProgressCounter} from "./utils.js";
 import {settings} from "./settings.js";
 import {Query} from "./storage_query.js";
 import UUID from "./uuid.js";
-import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 
 receive.transferContentToDisk = async message => {
 
@@ -82,10 +82,8 @@ async function transferNode(node) {
     if (node.type === NODE_TYPE_ARCHIVE) {
         let archive = await Archive.idb.import.get(node);
 
-        if (archive) {
-            const index = await Archive.idb.import.fetchIndex(node);
-            await Archive.add(node, archive, index);
-        }
+        if (archive)
+            await Archive.add(node, archive);
     }
 
     if (node.has_notes) {

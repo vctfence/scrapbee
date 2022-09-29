@@ -60,7 +60,7 @@ class NodeDB:
             "format": "JSON Scrapbook",
             "version": NodeDB.FORMAT_VERSION,
             "type": "index",
-            "contains": "everything",
+            "contains": "shelves",
             "generator": "Scrapyard",
             "uuid": NodeDB.generate_uuid(),
             "entities": 0

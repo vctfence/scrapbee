@@ -8,8 +8,8 @@ interface Scrapyard {
         const val FORMAT_VERSION: Long = 1
         const val FORMAT_TYPE_CLOUD: String = "cloud"
         const val FORMAT_TYPE_INDEX: String = "index"
-        const val FORMAT_CONTAINS_SHELF: String = "shelf"
-        const val FORMAT_CONTAINS_EVERYTHING = "everything"
+        const val FORMAT_CONTAINS_SHELF: String = "folders"
+        const val FORMAT_CONTAINS_EVERYTHING = "shelves"
         const val ARCHIVE_CONTAINS_FILES: String = "files"
         const val NODE_TYPE_SHELF: String = "shelf"
         const val NODE_TYPE_FOLDER: String = "folder"

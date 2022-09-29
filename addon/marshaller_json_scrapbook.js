@@ -4,8 +4,8 @@ import {
     ARCHIVE_TYPE_BYTES,
     ARCHIVE_TYPE_TEXT,
     createJSONScrapBookMeta,
-    DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME, JSON_SCRAPBOOK_EVERYTHING,
-    JSON_SCRAPBOOK_FORMAT, JSON_SCRAPBOOK_SHELF,
+    DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME, JSON_SCRAPBOOK_SHELVES,
+    JSON_SCRAPBOOK_FORMAT, JSON_SCRAPBOOK_FOLDERS,
     JSON_SCRAPBOOK_VERSION,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NAMES,
@@ -171,7 +171,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
     async marshalMeta(options) {
         const {comment, uuid, objects, name} = options;
-        const contains = name === EVERYTHING_SHELF_NAME? JSON_SCRAPBOOK_EVERYTHING: JSON_SCRAPBOOK_SHELF;
+        const contains = name === EVERYTHING_SHELF_NAME? JSON_SCRAPBOOK_SHELVES: JSON_SCRAPBOOK_FOLDERS;
         const meta = createJSONScrapBookMeta("export", contains, name);
 
         updateJSONScrapBookMeta(meta, objects.length, uuid, comment);

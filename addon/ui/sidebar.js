@@ -622,7 +622,7 @@ async function performExport(node) {
 
 async function performSync(verbose = true) {
     if (getLastShelf() === CLOUD_SHELF_ID)
-        await switchShelf(CLOUD_SHELF_ID);
+        await switchShelf(CLOUD_SHELF_ID, true);
     else
         send.performSync();
 }

@@ -201,11 +201,11 @@ export function byDateAddedAsc(a, b) {
 
 export const JSON_SCRAPBOOK_FORMAT = "JSON Scrapbook";
 export const JSON_SCRAPBOOK_VERSION = 1;
-export const JSON_SCRAPBOOK_EVERYTHING = "everything";
-export const JSON_SCRAPBOOK_SHELF = "shelf";
+export const JSON_SCRAPBOOK_SHELVES = "shelves";
+export const JSON_SCRAPBOOK_FOLDERS = "folders";
 
 
-export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_EVERYTHING, title) {
+export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_SHELVES, title) {
     const now = new Date();
 
     return {

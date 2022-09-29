@@ -3,7 +3,7 @@ import {
     NODE_TYPE_SHELF,
     createJSONScrapBookMeta,
     updateJSONScrapBookMeta,
-    JSON_SCRAPBOOK_SHELF
+    JSON_SCRAPBOOK_FOLDERS
 } from "./storage.js";
 import UUID from "./uuid.js";
 
@@ -30,7 +30,7 @@ export class CloudStorage {
 
     serialize() {
         const hasMeta = !!this._meta;
-        this._meta = this._meta || createJSONScrapBookMeta("cloud", JSON_SCRAPBOOK_SHELF);
+        this._meta = this._meta || createJSONScrapBookMeta("cloud", JSON_SCRAPBOOK_FOLDERS);
 
         if (!hasMeta)
             this._meta.uuid = UUID.numeric();
