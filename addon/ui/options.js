@@ -16,6 +16,9 @@ async function init() {
 
     if (settings.debug_mode())
         $("a.settings-menu-item[href='#debug']").show();
+
+    if (settings.transition_to_disk())
+        $("a.settings-menu-item[href='#transition']").show();
 }
 
 async function switchPane() {

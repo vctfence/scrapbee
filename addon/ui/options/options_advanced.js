@@ -5,21 +5,6 @@ import {alert, confirm, showDlg} from "../dialog.js";
 import {formatBytes} from "../../utils.js";
 import {DiskStorage} from "../../storage_external.js";
 
-$(init);
-
-async function init() {
-
-}
-
-
-function initHelpMarks() {
-    $(".help-mark").hover(function(e){
-        $(this).next(".tips.hide").show().css({left: (e.pageX )+"px", top: (e.pageY) +"px"})
-    }, function(){
-        $(this).next(".tips.hide").hide();
-    });
-}
-
 function configureAutomationPanel() {
     $("#option-enable-automation").prop("checked", settings.enable_automation());
     $("#option-extension-whitelist").val(settings.extension_whitelist()?.join(", "));
@@ -113,6 +98,9 @@ function configureMaintenancePanel() {
 
         alert("Statistics", html);
     });
+
+    if (settings.transition_to_disk())
+        $("#backup-link-wrapper").hide();
 }
 
 function configureImpExpPanel() {
@@ -215,7 +203,7 @@ function configureImpExpPanel() {
 }
 
 export async function load() {
-    configureAutomationPanel();
     configureMaintenancePanel();
+    configureAutomationPanel();
     configureImpExpPanel();
 }

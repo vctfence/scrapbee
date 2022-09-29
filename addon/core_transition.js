@@ -1,10 +1,13 @@
 import {receive, send} from "./proxy.js";
-import {EVERYTHING_SHELF_NAME, NODE_TYPE_ARCHIVE} from "./storage.js";
+import {EVERYTHING_SHELF_NAME, NODE_TYPE_ARCHIVE, CLOUD_SHELF_NAME, CLOUD_SHELF_ID} from "./storage.js";
 import {Export} from "./import.js";
 import {Node, Archive, Comments, Icon, Notes} from "./storage_entities.js";
 import {showNotification} from "./utils_browser.js";
 import {ProgressCounter} from "./utils.js";
 import {settings} from "./settings.js";
+import {Query} from "./storage_query.js";
+import UUID from "./uuid.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 
 receive.transferContentToDisk = async message => {
 
@@ -13,12 +16,16 @@ receive.transferContentToDisk = async message => {
         return;
     }
 
-    const nodes = await Export.nodes(EVERYTHING_SHELF_NAME);
+    const helper = helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+    if (!helper)
+        return;
+
+    send.startProcessingIndication({noWait: true});
+
+    const nodes = await collectNodes();
     const progressCounter = new ProgressCounter(nodes.length, "exportProgress");
 
     try {
-        send.startProcessingIndication({noWait: true});
-
         for (const node of nodes) {
             await transferNode(node);
             progressCounter.incrementAndNotify();
@@ -38,12 +45,40 @@ receive.transferContentToDisk = async message => {
     }
 };
 
-async function transferNode(node) {
-    Node.put(node);
-    await transferContent(node);
+async function collectNodes() {
+    let nodes = await Export.nodes(EVERYTHING_SHELF_NAME);
+
+    if (settings.cloud_enabled()) {
+        let cloudShelf = await Node.get(CLOUD_SHELF_ID);
+
+        if (cloudShelf) {
+            const cloudNodes = await Query.fullSubtree(cloudShelf.id);
+            cloudShelf = cloudNodes.find(n => n.id === CLOUD_SHELF_ID);
+
+            for (const cloudNode of cloudNodes) {
+                delete cloudNode.external;
+                delete cloudNode.external_id;
+            }
+
+            cloudShelf.uuid = UUID.numeric();
+            cloudShelf.name = CLOUD_SHELF_NAME + " (transferred)";
+
+            nodes = [...nodes, ...cloudNodes];
+        }
+    }
+
+    return nodes;
 }
 
-async function transferContent(node) {
+async function transferNode(node) {
+    Node.put(node);
+
+    if (node.stored_icon) {
+        let icon = await Icon.idb.import.get(node);
+        if (icon)
+            await Icon.add(node, icon);
+    }
+
     if (node.type === NODE_TYPE_ARCHIVE) {
         let archive = await Archive.idb.import.get(node);
 
@@ -51,12 +86,6 @@ async function transferContent(node) {
             const index = await Archive.idb.import.fetchIndex(node);
             await Archive.add(node, archive, index);
         }
-    }
-
-    if (node.stored_icon) {
-        let icon = await Icon.idb.import.get(node);
-        if (icon)
-            await Icon.add(node, icon);
     }
 
     if (node.has_notes) {

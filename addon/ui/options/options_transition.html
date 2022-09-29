@@ -1,0 +1,42 @@
+<h2>Transferring Scrapyard Content to the Filesystem</h2>
+
+
+<div style="max-width: 600px; font-size: 110%; text-align: justify">
+<p>Since version 2, Scrapyard stores archived content in the filesystem. This makes
+the installation of the Scrapyard helper application mandatory. If you are not ready
+for this change, please install Scrapyard version 1 by <a href="#">this</a> link
+and disable automatic updates in the add-on settings at <b>about:addons</b>
+(Firefox only, rollback to version 1 on Chrome is impossible).</p>
+
+<p>The content archived with the Scrapyard version 1 is stored in the browser internal
+storage and is not directly accessible by version 2 of the add-on.
+The instructions below describe the process of transferring the archived content
+from the browser internal storage to the filesystem.</p>
+
+
+<ol>
+    <li>Before performing the transition, you may want to back up your browser profile.
+    In Firefox, you can find your browser profile path at the <b>about:support</b> settings page.
+    In Chrome the current profile path could be found by the following URL: <b>chrome://version</b>
+    </li>
+
+    <li>Close your browser and install the Scrapyard <a href="#helperapp">helper application</a> version 2.0+.</li>
+
+    <li>Open the <a href="#settings">Settings</a> Scrapyard options tab and specify the directory where
+        you want to keep your archived content.</li>
+
+    <li>Click on the "Transfer content" link.</li>
+
+    <li>Make sure that the archived content is transferred successfully.</li>
+
+    <li>Open the <a href="#advanced">Advanced</a> Scrapyard options tab and click on the
+        "Reset Scrapyard" link.</li>
+</ol>
+
+</div>
+
+<style>
+    li {
+        margin-top: 6px;
+    }
+</style>

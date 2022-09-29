@@ -616,11 +616,9 @@ function initialize(optionsOnly)
             ("options-saveallhtmlimages" in object) ? object["options-saveallhtmlimages"] : true;  /* Version 2.0-3.0 */
 
         if (!("options-savehtmlaudiovideo" in object)) object["options-savehtmlaudiovideo"] = true;
-        ////////////////////////////////////////////////////////////////// Scrapyard //
 
-        if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = false;
+        if (!("options-savehtmlobjectembed" in object)) object["options-savehtmlobjectembed"] = true;
 
-        // Scrapyard //////////////////////////////////////////////////////////////////
         if (!("options-savecssimagesall" in object)) object["options-savecssimagesall"] =
             ("options-saveallcssimages" in object) ? object["options-saveallcssimages"] : true;  /* Version 2.0-3.0 */
 
@@ -630,7 +628,7 @@ function initialize(optionsOnly)
         if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = true;
 
         if (!("options-savescripts" in object)) object["options-savescripts"] = true;  /* Version 2.0-3.0 */
-        // Scrapyard //////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////// Scrapyard //
 
         /* File Info options */
 

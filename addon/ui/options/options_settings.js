@@ -51,8 +51,10 @@ function configureScrapyardSettingsPage() {
             $("#transfer-content-container").hide();
     });
 
-    if (settings.transition_to_disk())
+    if (settings.transition_to_disk()) {
         $("#transfer-content-container").show();
+        $("#synchronize-at-startup-wrapper").hide();
+    }
 
     setSaveCheckHandler("option-synchronize-at-startup", "synchronize_storage_at_startup",
         () => send.shelvesChanged());

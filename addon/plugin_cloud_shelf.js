@@ -195,7 +195,7 @@ export class CloudShelfPlugin {
 
     // should only be called in the background script through message
     async reconcileCloudBookmarksDB(verbose) {
-        if (this._reconciling)
+        if (this._reconciling || settings.transition_to_disk())
             return;
 
         this._reconciling = true;

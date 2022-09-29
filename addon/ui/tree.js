@@ -1051,28 +1051,29 @@ class BookmarkTree {
                     this.startProcessingIndication();
 
                     try {
-                        let new_nodes;
+                        let newNodes;
                         if (buffer.mode === "copy_node")
-                            new_nodes = await send.copyNodes({node_ids: selection, dest_id: ctxNode.id});
+                            newNodes = await send.copyNodes({node_ids: selection, dest_id: ctxNode.id});
                         else {
-                            new_nodes = await send.moveNodes({node_ids: selection, dest_id: ctxNode.id});
+                            newNodes = await send.moveNodes({node_ids: selection, dest_id: ctxNode.id});
                             for (let s of selection)
                                 tree.delete_node(s);
                         }
 
-                        for (let n of new_nodes) {
-                            let jparent = tree.get_node(n.parent_id);
-                            let jnode = BookmarkTree.toJsTreeNode(n);
+                        await this.reorderNodes(ctxJNode);
+
+                        for (let newNode of newNodes) {
+                            let jparent = tree.get_node(newNode.parent_id);
+                            let jnode = BookmarkTree.toJsTreeNode(newNode);
                             tree.create_node(jparent, jnode, "last");
 
-                            let old_original = this.data.find(d => d.id == n.id);
-                            if (old_original)
-                                this.data[this.data.indexOf(old_original)] = jnode;
+                            let sourceNode = this.data.find(treeNode => treeNode.id == newNode.id);
+                            if (sourceNode)
+                                this.data[this.data.indexOf(sourceNode)] = jnode;
                             else
                                 this.data.push(jnode);
                         }
 
-                        await this.reorderNodes(ctxJNode);
                         tree.clear_buffer();
                     }
                     finally {

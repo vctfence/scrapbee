@@ -32,7 +32,7 @@ receive.resetScrapyard = async message => {
 
     send.stopProcessingIndication();
 
-    //return sendLocal.performSync();
+    return sendLocal.performSync();
 }
 
 receive.computeStatistics = async message => {

@@ -381,6 +381,12 @@ export class BookmarkManager extends EntityManager {
     }
 
     async copyContent(sourceNode, newNode) {
+        if (sourceNode.stored_icon) {
+            let icon = await Icon.get(sourceNode);
+            if (icon)
+                await Icon.add(newNode, icon);
+        }
+
         if (sourceNode.type === NODE_TYPE_ARCHIVE) {
             let archive = await Archive.get(sourceNode);
 
@@ -403,12 +409,6 @@ export class BookmarkManager extends EntityManager {
             let comments = await Comments.get(sourceNode);
             if (comments)
                 await Comments.add(newNode, comments);
-        }
-
-        if (sourceNode.stored_icon) {
-            let icon = await Icon.get(sourceNode);
-            if (icon)
-                await Icon.add(newNode, icon);
         }
     }
 
