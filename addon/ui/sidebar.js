@@ -47,6 +47,7 @@ import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {getSidebarWindow} from "../utils_sidebar.js";
 import {helperApp} from "../helper_app.js";
+import {DiskStorage} from "../storage_external.js";
 
 const INPUT_TIMEOUT = 1000;
 const MENU_ID_TO_SEARCH_MODE = {
@@ -924,10 +925,17 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
         selection = selection.map(n => n.id);
 
         const folder = await Folder.getOrCreateByPath(external_path);
-        let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
-        let topNodes = newNodes.filter(n => selection.some(id => id === n.source_node_id)).map(n => n.id);
 
-        await switchAfterCopy(message, external_path, folder, topNodes);
+        try {
+            DiskStorage.openBatchSession();
+            let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
+            let topNodes = newNodes.filter(n => selection.some(id => id === n.source_node_id)).map(n => n.id);
+
+            await switchAfterCopy(message, external_path, folder, topNodes);
+        }
+        finally {
+            DiskStorage.closeBatchSession();
+        }
     }
 };
 
@@ -945,7 +953,15 @@ receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
         selection = selection.map(n => n.id);
 
         const folder = await Folder.getOrCreateByPath(external_path);
-        await send.moveNodes({node_ids: selection, dest_id: folder.id, move_last: true});
+
+        try {
+            await DiskStorage.openBatchSession();
+            await send.moveNodes({node_ids: selection, dest_id: folder.id, move_last: true});
+        }
+        finally {
+            await DiskStorage.closeBatchSession();
+        }
+
         await switchAfterCopy(message, external_path, folder, selection);
     }
 };

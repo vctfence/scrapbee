@@ -36,6 +36,7 @@ import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 import UUID from "../uuid.js";
+import {DiskStorage} from "../storage_external.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 const FOLDER_SELECT_STATE = "folder-select";
@@ -701,7 +702,9 @@ class BookmarkTree {
             this.startProcessingIndication();
 
             try {
+                await DiskStorage.openBatchSession();
                 const newNodes = await send.moveNodes({node_ids: [o(jnode).id], dest_id: o(jparent).id});
+
                 // keep jstree nodes synchronized with the database
                 for (let node of newNodes) {
                     jnode.original = BookmarkTree.toJsTreeNode(node);
@@ -712,9 +715,11 @@ class BookmarkTree {
                     else
                         this.data.push(jnode.original);
                 }
+
                 await this.reorderNodes(jparent);
             }
             finally {
+                await DiskStorage.closeBatchSession();
                 this.stopProcessingIndication();
             }
         }
@@ -1052,6 +1057,9 @@ class BookmarkTree {
 
                     try {
                         let newNodes;
+
+                        await DiskStorage.openBatchSession();
+
                         if (buffer.mode === "copy_node")
                             newNodes = await send.copyNodes({node_ids: selection, dest_id: ctxNode.id});
                         else {
@@ -1059,8 +1067,6 @@ class BookmarkTree {
                             for (let s of selection)
                                 tree.delete_node(s);
                         }
-
-                        await this.reorderNodes(ctxJNode);
 
                         for (let newNode of newNodes) {
                             let jparent = tree.get_node(newNode.parent_id);
@@ -1074,9 +1080,12 @@ class BookmarkTree {
                                 this.data.push(jnode);
                         }
 
+                        await this.reorderNodes(ctxJNode);
+
                         tree.clear_buffer();
                     }
                     finally {
+                        DiskStorage.closeBatchSession();
                         this.stopProcessingIndication();
                     }
                 }

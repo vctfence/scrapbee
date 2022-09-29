@@ -22,7 +22,6 @@ import {cleanObject, getMimetypeByExt} from "./utils.js";
 import {getFaviconFromContent} from "./favicon.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {DiskStorage} from "./storage_external.js";
 
 export class BookmarkManager extends EntityManager {
     _Node;
@@ -279,7 +278,7 @@ export class BookmarkManager extends EntityManager {
         await this._Node.batchUpdate(n => n.pos = id2pos.get(n.id), Array.from(id2pos.keys()));
     }
 
-    async _move(ids, destId, moveLast) {
+    async move(ids, destId, moveLast) {
         const dest = await Node.get(destId);
         const nodes = await Node.get(ids);
 
@@ -292,6 +291,8 @@ export class BookmarkManager extends EntityManager {
 
         // a check for circular references
         const ascendants = new Set(await Query.ascendantIdsOf(dest));
+        ascendants.add(destId);
+
         for (const node of nodes)
             if (ascendants.has(node.id)) {
                 const error = new Error("A circular reference while moving nodes");
@@ -315,21 +316,7 @@ export class BookmarkManager extends EntityManager {
         return Query.fullSubtree(ids, true);
     }
 
-    async move(ids, destId, moveLast) {
-        let result;
-
-        try {
-            await DiskStorage.openBatchSession();
-            result = await this._move(ids, destId, moveLast);
-        }
-        finally {
-            await DiskStorage.closeBatchSession();
-        }
-
-        return result;
-    }
-
-    async _copy(ids, destId, moveLast) {
+    async copy(ids, destId, moveLast) {
         const dest = await Node.get(destId);
         let sourceNodes = await Query.fullSubtree(ids, true);
         let newNodes = [];
@@ -410,20 +397,6 @@ export class BookmarkManager extends EntityManager {
             if (comments)
                 await Comments.add(newNode, comments);
         }
-    }
-
-    async copy(ids, destId, moveLast) {
-        let result;
-
-        try {
-            await DiskStorage.openBatchSession();
-            result = await this._copy(ids, destId, moveLast);
-        }
-        finally {
-            await DiskStorage.closeBatchSession();
-        }
-
-        return result;
     }
 
     async _delete(nodes, deletef) {
