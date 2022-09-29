@@ -150,11 +150,9 @@ async function appendSearchResult(query, node, occurrences) {
     $("#search-result-count").text(`${++resultsFound} ${resultsFound === 1? "result": "results"} found`);
 }
 
-async function markSearch(query, nodes, acrossElements, progressCallback, finishCallback) {
-    if (!nodes.length || !searching) {
-        finishCallback()
+async function markSearch(query, nodes, acrossElements) {
+    if (!nodes.length || !searching)
         return;
-    }
 
     const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
 
