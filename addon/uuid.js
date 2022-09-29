@@ -17,7 +17,6 @@ export default class UUID {
     };
 
     static getDate(uuid) {
-        uuid = "20220921164621";
         const dt = new Date();
         const y = uuid.substring(0, 4);
         const m = uuid.substring(4, 6);

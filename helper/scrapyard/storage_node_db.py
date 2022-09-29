@@ -6,14 +6,14 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-DEFAULT_SHELF_NAME = "default"
-DEFAULT_SHELF_UUID = "default"
 
 class NodeDB:
     FORMAT_VERSION = 1
+    DEFAULT_SHELF_NAME = "default"
+    DEFAULT_SHELF_UUID = "default"
 
     def __init__(self):
-        self.header = None
+        self.header = self.create_format_header()
         self.nodes = dict()
 
     @classmethod
@@ -75,15 +75,15 @@ class NodeDB:
     def create_default_shelf(self):
         return {
             "type": "shelf",
-            "uuid": DEFAULT_SHELF_UUID,
-            "title": DEFAULT_SHELF_NAME,
+            "uuid": NodeDB.DEFAULT_SHELF_UUID,
+            "title": NodeDB.DEFAULT_SHELF_NAME,
             "date_added": int(datetime.now().timestamp() * 1000),
             "date_modified": 0,
             "pos": 1
         }
 
     @classmethod
-    def read_header(self, path):
+    def read_header(cls, path):
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as node_db_file:
                 return node_db_file.readline()
@@ -107,7 +107,7 @@ class NodeDB:
             self.header = self.create_format_header()
 
         if len(self.nodes) == 0:
-            self.nodes[DEFAULT_SHELF_UUID] = self.create_default_shelf()
+            self.nodes[NodeDB.DEFAULT_SHELF_UUID] = self.create_default_shelf()
 
     def write(self, path):
         self.populate_format_header()
@@ -127,7 +127,7 @@ class NodeDB:
 
     def reset(self):
         self.nodes.clear()
-        self.nodes[DEFAULT_SHELF_UUID] = self.create_default_shelf()
+        self.nodes[NodeDB.DEFAULT_SHELF_UUID] = self.create_default_shelf()
         self.header = self.create_format_header()
 
     def add_node(self, node):

@@ -42,16 +42,32 @@ function configureMaintenancePanel() {
         settings.debug_mode(e.target.checked);
     });
 
-    $("#reset-cloud-link").on("click", async e => {
+    $("#statistics-link").on("click", async e => {
         e.preventDefault();
 
-        if (await confirm("Warning", "This will remove all contents of the Cloud shelf. Continue?")) {
-            let success = await send.resetCloud();
+        const statistics = await send.computeStatistics();
 
-            if (!success)
-                showNotification("Error accessing cloud.")
-        }
+        let html = `<table class="stats-table">
+                    <tr><td>Items:</td><td>${statistics.items}</td></tr>
+                    <tr><td>Bookmarks:</td><td>${statistics.bookmarks}</td></tr>
+                    <tr><td>Archives:</td><td>${statistics.archives}</td></tr>
+                    <tr><td>Notes:</td><td>${statistics.notes}</td></tr>
+                    <tr><td>Archived content:</td><td>${formatBytes(statistics.size)}</td></tr>
+                    </table>`
+
+        alert("Statistics", html);
     });
+
+    // $("#reset-cloud-link").on("click", async e => {
+    //     e.preventDefault();
+    //
+    //     if (await confirm("Warning", "This will remove all contents of the Cloud shelf. Continue?")) {
+    //         let success = await send.resetCloud();
+    //
+    //         if (!success)
+    //             showNotification("Error accessing cloud.")
+    //     }
+    // });
 
     $("#reset-scrapyard-link").on("click", async e => {
         e.preventDefault();
@@ -83,20 +99,22 @@ function configureMaintenancePanel() {
             return showDlg("alert", {title: "Orphaned Items", message: "No orphaned items found."});
     });
 
-    $("#statistics-link").on("click", async e => {
+    $("#rebuild-item-index-link").on("click", async e => {
         e.preventDefault();
 
-        const statistics = await send.computeStatistics();
+        const message = `This will restore orphaned items. Are you sure?`
+        if (await showDlg("confirm", {title: "Rebuild Item Index", message})) {
+            await send.startProcessingIndication();
 
-        let html = `<table class="stats-table">
-                    <tr><td>Items:</td><td>${statistics.items}</td></tr>
-                    <tr><td>Bookmarks:</td><td>${statistics.bookmarks}</td></tr>
-                    <tr><td>Archives:</td><td>${statistics.archives}</td></tr>
-                    <tr><td>Notes:</td><td>${statistics.notes}</td></tr>
-                    <tr><td>Archived content:</td><td>${formatBytes(statistics.size)}</td></tr>
-                    </table>`
+            try {
+                await send.rebuildItemIndex();
+            }
+            finally {
+                await send.stopProcessingIndication();
+                send.performSync();
+            }
+        }
 
-        alert("Statistics", html);
     });
 
     if (settings.transition_to_disk())

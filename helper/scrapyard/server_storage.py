@@ -269,3 +269,10 @@ def get_orphaned_items():
 def delete_orphaned_items():
     storage_manager.delete_orphaned_items(request.json)
     return "", 204
+
+
+@app.route("/storage/rebuild_item_index", methods=['POST'])
+@requires_auth
+def rebuild_item_index():
+    storage_manager.rebuild_item_index(request.json)
+    return "", 204

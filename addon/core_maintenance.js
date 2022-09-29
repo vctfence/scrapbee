@@ -76,3 +76,13 @@ receive.getOrphanedItems = async message => {
         return await helperApp.fetchJSON_postJSON("/storage/get_orphaned_items", params);
     }
 };
+
+receive.rebuildItemIndex = async message => {
+    const helper = await helperApp.probe(true);
+
+    if (helper) {
+        await settings.load();
+        const params = {data_path: settings.data_folder_path()};
+        return await helperApp.postJSON("/storage/rebuild_item_index", params);
+    }
+};

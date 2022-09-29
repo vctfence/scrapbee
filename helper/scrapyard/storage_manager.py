@@ -353,7 +353,22 @@ class StorageManager:
     def delete_orphaned_items(self, params):
         self.delete_node_content(params)
 
+    def rebuild_item_index(self, params):
+        node_db_path = self.get_node_db_path(params)
+        object_root_directory = self.get_object_root_directory(params)
+        node_db = NodeDB.from_file(node_db_path)
 
+        node_db.nodes.clear()
+        node_db.nodes[NodeDB.DEFAULT_SHELF_UUID] = node_db.create_default_shelf()
 
+        for uuid in os.listdir(object_root_directory):
+            node_object_file_path = os.path.join(object_root_directory, uuid, NODE_OBJECT_FILE)
 
+            if os.path.exists(node_object_file_path):
+                with open(node_object_file_path, "r", encoding="utf-8") as node_object_file:
+                    node_json = node_object_file.read()
+                    node = json.loads(node_json)
+                    node_db.nodes[node["uuid"]] = node
+
+        node_db.write(node_db_path)
 
