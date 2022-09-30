@@ -23,7 +23,7 @@ class RDFImporter {
     #bookmarks = [];
     #cancelled = false;
     #progressCounter;
-    #threads;
+    #threadCount;
     #sidebarSender;
     #importType = "full";
 
@@ -145,7 +145,8 @@ class RDFImporter {
 
         try {
             if (this.#options.createIndex) { // createIndex is always on when performing a full import
-                this.#progressCounter = new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
+                this.#progressCounter =
+                    new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
                 await this.#startThreads(this.#importThread.bind(this, path), this.#options.threads);
             }
             else
@@ -155,12 +156,12 @@ class RDFImporter {
         }
     }
 
-    async #startThreads(threadf, amount) {
+    async #startThreads(threadf, maxThreads) {
         const bookmarks = [...this.#bookmarks];
-        this.#threads = Math.min(amount, this.#bookmarks.length);
+        this.#threadCount = Math.min(maxThreads, this.#bookmarks.length);
 
         const promises = [];
-        for (let i = 0; i < amount; ++i)
+        for (let i = 0; i < maxThreads; ++i)
             promises.push(threadf(bookmarks));
 
         return Promise.all(promises);
@@ -182,8 +183,8 @@ class RDFImporter {
             return this.#importThread(path, bookmarks);
         }
         else {
-            this.#threads -= 1;
-            if (this.#threads === 0)
+            this.#threadCount -= 1;
+            if (this.#threadCount === 0)
                 return this.#onFinish();
         }
     }
@@ -201,8 +202,8 @@ class RDFImporter {
             return this.#iconImportThread(bookmarks);
         }
         else {
-            this.#threads -= 1;
-            if (this.#threads === 0)
+            this.#threadCount -= 1;
+            if (this.#threadCount === 0)
                 this.#sidebarSender.nodesReady({shelf: this.#shelf});
         }
     }

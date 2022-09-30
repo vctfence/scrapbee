@@ -117,7 +117,7 @@ def rdf_browse(uuid):
             msg["index_file_path"] = os.path.join(archive_index_path)
             return highlight_words_in_index(msg)
         else:
-            return flask.send_from_directory(archive_index_path)
+            return flask.send_file(archive_index_path)
 
     return render_template("404.html"), 404
 

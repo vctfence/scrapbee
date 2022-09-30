@@ -315,3 +315,55 @@ export class ProgressCounter {
         return this._counter === this._last;
     }
 }
+
+export class ParallelProcessor {
+    #errors;
+    #cancelled;
+    #progressCounter;
+    #threadCount;
+    #processorf;
+    #resolveResult;
+
+    constructor(processorf) {
+        this.#processorf = processorf;
+    }
+
+    async process(items, maxThreads, message) {
+        items = [...items];
+        this.#threadCount = Math.min(maxThreads, items.length);
+        this.#progressCounter = new ProgressCounter(items.length, message);
+
+        const resultPromise = new Promise(resolve => this.#resolveResult = resolve);
+        for (let i = 0; i < maxThreads; ++i)
+            this.#thread(items);
+
+        return resultPromise;
+    }
+
+    async #thread(items) {
+        if (items.length && !this.#cancelled) {
+            let item = items.shift();
+
+            try {
+                await this.#processorf(item);
+            } catch (e) {
+                console.error(e);
+                this.#errors = true;
+            }
+
+            this.#progressCounter.incrementAndNotify();
+
+            return this.#thread(items);
+        }
+        else {
+            this.#threadCount -= 1;
+            if (this.#threadCount === 0)
+                return this.#onFinish();
+        }
+    }
+
+    async #onFinish() {
+        this.#progressCounter.finish();
+        this.#resolveResult(!this.#errors);
+    }
+}

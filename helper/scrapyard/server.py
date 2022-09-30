@@ -12,6 +12,7 @@ from contextlib import closing
 import flask
 from flask import request, abort, render_template
 from werkzeug.serving import make_server
+from werkzeug.middleware.profiler import ProfilerMiddleware
 
 from .storage_manager import StorageManager
 
@@ -21,12 +22,14 @@ app = flask.Flask(__name__, template_folder="resources", static_folder="resource
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 log = logging.getLogger('werkzeug')
-log.disabled = True
+log.disabled = not DEBUG
 app.logger.disabled = not DEBUG
 
 ###
 if DEBUG:
-    logging.basicConfig(filename='../.local/helper.log', encoding='utf-8', level=logging.DEBUG)
+    logging.basicConfig(filename="../.local/helper.log", encoding="utf-8", level=logging.DEBUG)
+    # profiler_log_file = open("../.local/profiler.log", "w", encoding="utf-8")
+    # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, profiler_log_file)
 ###
 
 auth_token = None
@@ -48,7 +51,6 @@ class Httpd(threading.Thread):
         self.ctx.push()
 
     def run(self):
-        #serve(app, host='0.0.0.0', port=port,  _quiet=True)
         self.srv.serve_forever()
 
     def shutdown(self):

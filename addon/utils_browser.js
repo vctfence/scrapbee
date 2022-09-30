@@ -24,7 +24,11 @@ async function injectScriptFileMV3(tabId, options) {
     if (options.allFrames)
         target.allFrames = options.allFrames;
 
-    return browser.scripting.executeScript({target, files: [options.file]});
+    let immediately = false;
+    if (options.runAt === "document_start")
+        immediately = true;
+
+    return browser.scripting.executeScript({target, files: [options.file], injectImmediately: immediately});
 }
 
 export const injectScriptFile = _MANIFEST_V3? injectScriptFileMV3: browser.tabs.executeScript;

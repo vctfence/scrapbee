@@ -63,7 +63,7 @@ export class BookmarkManager extends EntityManager {
         const parent = await Node.get(data.parent_id);
 
         if (nodeType === NODE_TYPE_BOOKMARK && parent.external === RDF_EXTERNAL_TYPE)
-            throw new Error("Only archives could be added to an RDF file");
+            throw new Error("Only archives could be added to an RDF file.");
 
         data.external = parent.external;
         data.name = await this.ensureUniqueName(data.parent_id, data.name);

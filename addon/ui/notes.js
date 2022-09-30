@@ -9,7 +9,7 @@ import {PlainTextEditor, WYSIWYGEditor} from "./notes_editor.js";
 
 const INPUT_TIMEOUT = 3000;
 const DEFAULT_WIDTH = "790px";
-const DEFAULT_FONT_SIZE = 120;
+const DEFAULT_FONT_SIZE = 115;
 
 let examples;
 const styles = {"org": `#+CSS: p {text-align: justify;}`,
@@ -128,7 +128,7 @@ async function init() {
         $(e.target).addClass("focus");
 
         $(`.content`).hide();
-        $(`#content-${e.target.id}`).css("display", "flex");
+        $(`#${e.target.id}-content`).css("display", "flex");
 
         if (e.target.id === "notes-button") {
             formatNotes(editor.renderContent(), format);

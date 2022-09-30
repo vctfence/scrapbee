@@ -103,12 +103,15 @@ export class NodeProxy extends StorageProxy {
 
         if (adapter) {
             const params = {
-                nodes: await Promise.all(nodes.map(async node => {
-                    node = this.#marshaller.serializeNode(node);
-                    node = await this.#marshaller.convertNode(node);
-                    return node;
-                }))
+                remove_fields: nodes.map(node =>
+                    Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined))
             };
+
+            params.nodes = await Promise.all(nodes.map(async node => {
+                node = this.#marshaller.serializeNode(node);
+                node = await this.#marshaller.convertNode(node);
+                return node;
+            }));
 
             const result = adapter.updateNodes(params);
             if (!adapter.concurrent)

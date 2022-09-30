@@ -1178,7 +1178,7 @@ class BookmarkTree {
                         separator_before: true,
                         label: "Clear",
                         action: () => {
-                            setTODOState(null);
+                            setTODOState(undefined);
                         }
                     }
                 }
@@ -1541,6 +1541,10 @@ class BookmarkTree {
 
         if (ctxNode.external === BROWSER_EXTERNAL_TYPE || ctxNode.external === RDF_EXTERNAL_TYPE) {
             delete items.newItem.submenu.newNotesItem;
+
+            if (ctxNode.external === RDF_EXTERNAL_TYPE) {
+                delete items.exportItem;
+            }
         }
 
         if (ctxNode.external === RDF_EXTERNAL_TYPE && ctxNode.type === NODE_TYPE_SHELF) {

@@ -12,7 +12,7 @@ import {
     injectCSSFile,
     injectScriptFile,
     openContainerTab,
-    openPage,
+    openPage, showNotification,
     updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
@@ -56,12 +56,14 @@ async function configureArchivePage(tab, node) {
         await injectScriptFile(tab.id, {file: "lib/browser-polyfill.js", frameId: 0});
     await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
 
-    if (settings.open_bookmark_in_active_tab()) {
-        const uuid = tab.url.split("/").at(-1);
+    if (tab.url?.startsWith(helperApp.url("/browse")) && settings.open_bookmark_in_active_tab()) {
+        const uuid = tab.url.split("/").at(-2);
         node = await Node.getByUUID(uuid);
     }
+    else
+        node = undefined;
 
-    if (await Bookmark.isSitePage(node))
+    if (node && await Bookmark.isSitePage(node))
         await configureSiteLinks(node, tab);
 }
 
@@ -115,7 +117,7 @@ async function browseArchive(node, options) {
         if (node.external === RDF_EXTERNAL_TYPE)
             urlPrefix = "/rdf";
 
-        const archiveURL = helperApp.url(`${urlPrefix}/browse/${node.uuid}`);
+        const archiveURL = helperApp.url(`${urlPrefix}/browse/${node.uuid}/`);
         const archiveTab = await openURL(archiveURL, options);
         return configureArchiveTab(node, archiveTab);
     }

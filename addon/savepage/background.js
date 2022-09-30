@@ -627,7 +627,7 @@ function initialize(optionsOnly)
 
         if (!("options-savecssfontsall" in object)) object["options-savecssfontsall"] = true;
 
-        if (!("options-savescripts" in object)) object["options-savescripts"] = true;  /* Version 2.0-3.0 */
+        if (!("options-savescripts" in object)) object["options-savescripts"] = false;  /* Version 2.0-3.0 */
         ////////////////////////////////////////////////////////////////// Scrapyard //
 
         /* File Info options */

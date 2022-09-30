@@ -65,24 +65,31 @@ export class MarshallerJSONScrapbook extends Marshaller {
             delete serializedNode.parent_id;
         }
 
-        serializedNode.url = node.uri;
-        delete serializedNode.uri;
+        if (node.hasOwnProperty("uri")) {
+            serializedNode.url = node.uri;
+            delete serializedNode.uri;
+        }
 
-        serializedNode.title = node.name;
-        delete serializedNode.name;
+        if (node.hasOwnProperty("name")) {
+            serializedNode.title = node.name;
+            delete serializedNode.name;
+        }
 
-        serializedNode.type = NODE_TYPE_NAMES[node.type];
+        if (node.hasOwnProperty("type"))
+            serializedNode.type = NODE_TYPE_NAMES[node.type];
 
-        if (serializedNode.stored_icon || serializedNode.icon)
+        if (serializedNode.icon)
             delete serializedNode.icon;
 
-        serializedNode.has_icon = serializedNode.stored_icon;
-        delete serializedNode.stored_icon;
-        delete serializedNode.icon;
+        if (node.hasOwnProperty("stored_icon")) {
+            serializedNode.has_icon = serializedNode.stored_icon;
+            delete serializedNode.stored_icon;
+        }
 
-        serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
+        if (node.hasOwnProperty("todo_state"))
+            serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
 
-        if (node.site) {
+        if (node.hasOwnProperty("site")) {
             serializedNode.is_site = node.site;
             delete node.site;
         }

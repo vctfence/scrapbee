@@ -134,8 +134,11 @@ class StorageManager:
 
     def update_nodes(self, params):
         def update(node_db):
-            for node in params["nodes"]:
-                updated_node = node_db.update_node(node, None)
+            nodes = params["nodes"]
+            remove_fields = params["remove_fields"]
+
+            for i in range(len(nodes)):
+                updated_node = node_db.update_node(nodes[i], remove_fields[i])
                 params["node"] = updated_node
                 self.persist_node_object(params)
 
@@ -290,6 +293,11 @@ class StorageManager:
         self.persist_object(NOTES_INDEX_OBJECT_FILE, params, "index_json")
 
     def persist_notes(self, params):
+        existing_notes = self.fetch_notes(params) or "{}"
+        existing_notes = json.loads(existing_notes)
+        new_notes = json.loads(params["notes_json"])
+        new_notes = {**existing_notes, **new_notes}
+        params["notes_json"] = json.dumps(new_notes)
         self.persist_object(NOTES_OBJECT_FILE, params, "notes_json")
 
     def fetch_notes(self, params):

@@ -183,7 +183,7 @@ async function init() {
 
     $("#shelf-menu-search-date").click(e => {
         $("#search-mode-switch").prop("src", "/icons/calendar.svg");
-        $("#search-input").attr("placeholder", "examples: 2021-02-24, before 2021-02-24, after 2021-02-24")
+        $("#search-input").attr("placeholder", "examples: 2020-02-20, before 2020-02-20, after 2020-02-20");
         context.setMode(SEARCH_MODE_DATE, shelfList.selectedShelfName);
         settings.last_filtering_mode(e.target.id);
         performSearch();
@@ -761,10 +761,10 @@ receive.beforeBookmarkAdded = async message => {
     if (node.type === NODE_TYPE_ARCHIVE)
         startProcessingIndication(true);
 
-    node.name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
-    tree.createTentativeNode(node);
-
     if (select) {
+        node.name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
+        tree.createTentativeNode(node);
+
         const path = await Path.compute(node.parent_id);
         if (getLastShelf() == path[0].id)
             tree.selectNode(node.id);
