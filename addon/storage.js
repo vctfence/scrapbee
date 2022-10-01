@@ -179,6 +179,10 @@ export function getBuiltInShelfName(uuid) {
     }
 }
 
+export function byName(a, b) {
+    return a.name?.localeCompare(b.name, undefined, {sensitivity: "base"});
+}
+
 export function byPosition(a, b) {
     let a_pos = a.pos === undefined? DEFAULT_POSITION: a.pos;
     let b_pos = b.pos === undefined? DEFAULT_POSITION: b.pos;

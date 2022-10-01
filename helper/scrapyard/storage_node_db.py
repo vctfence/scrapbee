@@ -55,6 +55,45 @@ class NodeDB:
         new_uuid = new_uuid.replace("-", "")
         return new_uuid.upper()
 
+    @classmethod
+    def tree_sort_nodes(cls, nodes):
+        items = nodes.items()
+        children = dict()
+        roots = []
+
+        for uuid, n in items:
+            parent_uuid = n.get("parent", None)
+            if parent_uuid is None:
+                roots.append(n)
+            else:
+                if parent_uuid in children:
+                    children[parent_uuid].append(uuid)
+                else:
+                    children[parent_uuid] = [uuid]
+
+        def get_subtree(p, acc=[]):
+            children_uuids = children.get(p["uuid"], None)
+
+            if children_uuids:
+                for uuid in children_uuids:
+                    node = nodes[uuid]
+                    acc.append(node)
+                    get_subtree(node, acc)
+
+            return acc
+
+        sorted_nodes = roots[:]
+
+        for r in roots:
+            sorted_nodes += get_subtree(r, [])
+
+        result = dict()
+
+        for node in sorted_nodes:
+            result[node["uuid"]] = node
+
+        return result
+
     def create_format_header(self):
         return {
             "format": "JSON Scrapbook",

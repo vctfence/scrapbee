@@ -19,6 +19,7 @@ def main():
     # msg = browser.get_message()
     # start_server(msg)
 
+
 def process_message(msg):
     if msg["type"] == "INITIALIZE":
         start_server(msg)

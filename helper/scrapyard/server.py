@@ -12,7 +12,7 @@ from contextlib import closing
 import flask
 from flask import request, abort, render_template
 from werkzeug.serving import make_server
-from werkzeug.middleware.profiler import ProfilerMiddleware
+# from werkzeug.middleware.profiler import ProfilerMiddleware
 
 from .storage_manager import StorageManager
 
@@ -22,7 +22,7 @@ app = flask.Flask(__name__, template_folder="resources", static_folder="resource
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 log = logging.getLogger('werkzeug')
-log.disabled = not DEBUG
+log.disabled = True
 app.logger.disabled = not DEBUG
 
 ###
@@ -41,6 +41,7 @@ message_mutex = threading.Lock()
 message_queue = queue.Queue()
 
 storage_manager = StorageManager()
+
 
 class Httpd(threading.Thread):
 

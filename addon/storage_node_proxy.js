@@ -81,16 +81,15 @@ export class NodeProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter) {
+            const params = {
+                remove_fields: Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined)
+            };
+
             if (!node.uuid)
                 node.uuid = await Node.getUUIDFromId(node.id);
 
             node = this.#marshaller.serializeNode(node);
-            node = await this.#marshaller.convertNode(node);
-
-            const params = {
-                remove_fields: Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined),
-                node: node
-            };
+            params.node = await this.#marshaller.convertNode(node);
 
             const result = adapter.updateNode(params);
             if (!adapter.concurrent)

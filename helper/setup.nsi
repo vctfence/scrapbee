@@ -1,13 +1,13 @@
 Unicode True
 
 !define APPNAME "Scrapyard Helper"
-!define VERSION "1.2"
+!define VERSION "2.0"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
 ; Main Install settings
 Name "${APPNAMEANDVERSION}"
-InstallDir "$PROGRAMFILES\${APPNAME}"
+InstallDir "$PROGRAMFILES64\${APPNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" ""
 OutFile "scrapyard-helper-${VERSION}_x86_64.exe"
 

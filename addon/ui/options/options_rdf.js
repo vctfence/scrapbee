@@ -104,6 +104,11 @@ function selectNode(e) {
 export function load() {
     simpleSelectric("#rdf-import-type");
 
+    if (!_BACKGROUND_PAGE) {
+        $("#rdf-import-type option[value='rdf-open']").text("Open RDF for browsing");
+        $("#rdf-import-type").selectric('refresh');
+    }
+
     $("#rdf-import-type").on("change", e => {
         if ($(e.target).val() === "rdf-open") {
             $("#rdf-import-create-search-index")

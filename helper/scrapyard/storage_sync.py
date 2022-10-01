@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-import time
 
 from .storage_node_db import NodeDB
 
@@ -67,11 +66,11 @@ def compute_sync(storage_manager, params):
     # push = new_incoming | updated_incoming
     pull = new_in_storage | updated_in_storage
 
-    db_tree = tree_sort_database(uuid2node_storage)
+    db_tree = NodeDB.tree_sort_nodes(uuid2node_storage)
 
     # keeping the correct order
     # push_nodes = [n for n in nodes_incoming if n["uuid"] in push]
-    pull_nodes = [make_sync_node(n) for n in db_tree if n["uuid"] in pull]
+    pull_nodes = [make_sync_node(n) for _, n in db_tree.items() if n["uuid"] in pull]
 
     # for n in push_nodes:
     #     n["push_content"] = "content_modified" in n and (n["uuid"] in new_incoming
@@ -103,40 +102,6 @@ def make_sync_node(node):
 
     if "content_modified" in node:
         result["content_modified"] = node["content_modified"]
-
-    return result
-
-
-def tree_sort_database(nodes):
-    items = nodes.items()
-    children = dict()
-    roots = []
-
-    for uuid, n in items:
-        parent_uuid = n.get("parent", None)
-        if parent_uuid is None:
-            roots.append(n)
-        else:
-            if parent_uuid in children:
-                children[parent_uuid].append(uuid)
-            else:
-                children[parent_uuid] = [uuid]
-
-    def get_subtree(p, acc=[]):
-        children_uuids = children.get(p["uuid"], None)
-
-        if children_uuids:
-            for uuid in children_uuids:
-                node = nodes[uuid]
-                acc.append(node)
-                get_subtree(node, acc)
-
-        return acc
-
-    result = roots[:]
-
-    for r in roots:
-        result += get_subtree(r, [])
 
     return result
 
@@ -195,11 +160,6 @@ def assemble_node_payload(storage_manager, params, sync_node):
         notes_index_object = read_object_file(notes_index_object_path)
         if notes_index_object:
             result += ",\"notes_index\":" + notes_index_object
-
-        comments_index_object_path = storage_manager.get_comments_index_object_path(object_directory_path)
-        comments_index_object = read_object_file(comments_index_object_path)
-        if comments_index_object:
-            result += ",\"comments_index\":" + comments_index_object
 
     result += "}"
 

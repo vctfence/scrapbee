@@ -3,7 +3,6 @@ package l2.albitron.scrapyard.cloud.db
 import l2.albitron.scrapyard.Scrapyard
 import l2.albitron.scrapyard.cloud.db.model.*
 import l2.albitron.scrapyard.cloud.providers.CloudProvider
-import java.util.ArrayList
 
 private const val CLOUD_SHELF_PATH = "/Cloud"
 private const val CLOUD_DB_INDEX = "cloud.jsbk"
@@ -18,7 +17,7 @@ class CloudShelfDB: AbstractCloudDB, CloudDB {
     }
 
     override fun createTypeMeta(): JSONScrapbookMeta {
-        return super.createMeta(Scrapyard.FORMAT_TYPE_CLOUD, Scrapyard.FORMAT_CONTAINS_SHELF)
+        return super.createMeta(Scrapyard.FORMAT_TYPE_CLOUD, null)
     }
 
     override fun getDatabaseFile(): String = CLOUD_DB_INDEX

@@ -1,10 +1,14 @@
 $(document).ready(async function () {
-    const toolbar = new EditToolbar();
+    const scrapyardNotFound = !!$("meta[name='scrapyard-not-found']").length;
 
-    $(window).on("beforeunload", e => {
-        if (toolbar._unsavedChanges)
-            e.preventDefault();
-    })
+    if (!scrapyardNotFound) {
+        const toolbar = new EditToolbar();
+
+        $(window).on("beforeunload", e => {
+            if (toolbar._unsavedChanges)
+                e.preventDefault();
+        })
+    }
 });
 
 class EditToolbar {
@@ -109,7 +113,7 @@ class EditToolbar {
 
     _fixDocumentEncoding(doc) {
         let meta = doc.querySelector("meta[http-equiv='content-type' i]")
-                        || doc.querySelector("meta[charset]");
+            || doc.querySelector("meta[charset]");
 
         if (meta)
             meta.parentNode.removeChild(meta);
@@ -262,7 +266,7 @@ class EditToolbar {
                 }
                 else {
                     // if (location.origin.startsWith("http"))
-                         browser.runtime.sendMessage({type: "browseNotes", uuid});
+                    browser.runtime.sendMessage({type: "browseNotes", uuid});
                     // else {
                     //     let notes_page = browser.runtime.getURL("/ui/notes_iframe.html");
                     //
@@ -315,14 +319,14 @@ class EditToolbar {
 
         $(".scrapyard-help-mark", editBar).hover(e => {
             $(e.target).next(".scrapyard-tips.scrapyard-hide").show().css({"margin-top": "2px", "position": "absolute",
-                                                                            "left": "100%", "margin-left": "4px"});
+                "left": "100%", "margin-left": "4px"});
         }, e => {
             $(e.target).next(".scrapyard-tips.scrapyard-hide").hide();
         });
 
         $(".scrapyard-i-mark", editBar).hover(e => {
             $(e.target).prev(".scrapyard-tips.scrapyard-hide").show().css({"margin-top": "2px", "position": "absolute",
-                                                                           "right": "100%", "margin-right": "-14px"});
+                "right": "100%", "margin-right": "-14px"});
         }, e => {
             $(e.target).prev(".scrapyard-tips.scrapyard-hide").hide();
         });

@@ -72,6 +72,15 @@
         padding-left: 30px;
     }
 
+    #read-more-table-of-contents, #read-more-table-of-contents ul {
+        list-style: none;
+    }
+
+    #read-more-table-of-contents > li > a:first-of-type {
+        padding-bottom: 8px;
+        display: inline-block;
+    }
+
     span.query,
     #help-content code.rainbow, #help-content code.rainbow span {
         font-family: "Lucida Console", "Courier New", monospace !important;
@@ -514,7 +523,7 @@
         import (RDF editing is available on Firefox only). Shelves imported in the editing mode are
         marked with a tape reel icon. It is possible to add
         new archives to these shelves and physically delete RDF entries along with the attached
-        files (it could not be undone). Some features, such as bookmark transferring or copying are
+        files (this could not be undone). Some features, such as bookmark transferring or copying are
         not available for the shelves imported in the editing mode.</p>
 
     <p>It is possible to edit the path of the imported RDF file through the "RDF Directory..." context

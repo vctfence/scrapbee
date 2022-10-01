@@ -1,4 +1,4 @@
-import {DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "../storage.js";
+import {byName, DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "../storage.js";
 import {askCSRPermission, getActiveTab} from "../utils_browser.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {systemInitialization} from "../bookmarks_init.js";
@@ -8,6 +8,7 @@ import {BookmarkTree} from "./tree.js";
 import {send} from "../proxy.js";
 import {toggleSidebarWindow} from "../utils_sidebar.js";
 import {isSpecialPage} from "../bookmarking.js";
+import {settings} from "../settings.js";
 
 let tree;
 let bookmarkFolderSelect;
@@ -19,7 +20,11 @@ $(init);
 async function init() {
     await systemInitialization;
 
-    const nodes = await Query.allFolders();
+    let nodes = await Query.allFolders();
+
+    if (settings.sort_shelves_in_popup())
+        nodes = sortShelves(nodes);
+
     tree = new BookmarkTree("#treeview", true);
     bookmarkFolderSelect = simpleSelectric("#bookmark-folder");
     folderHistory = loadFolderHistory(nodes);
@@ -37,6 +42,20 @@ async function init() {
     $("#create-bookmark").on("click", async () => await addBookmark(NODE_TYPE_BOOKMARK));
     $("#create-archive").on("click", async e => await addBookmark(NODE_TYPE_ARCHIVE));
     bookmarkFolderSelect.on("change", () => tree.selectNode(bookmarkFolderSelect.val(), false, true));
+}
+
+function sortShelves(nodes) {
+    const shelves = nodes.filter(n => n.type === NODE_TYPE_SHELF);
+    const otherNodes = nodes.filter(n => n.type !== NODE_TYPE_SHELF);
+
+    shelves.sort((a, b) => a.id - b.id);
+
+    const builtinShelves = shelves.filter(n => n.id < 2);
+    const userShelves = shelves.filter(n => n.id > 1);
+
+    userShelves.sort(byName);
+
+    return [...builtinShelves, ...userShelves, ...otherNodes];
 }
 
 function loadFolderHistory(nodes) {

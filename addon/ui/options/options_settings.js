@@ -72,6 +72,7 @@ function configureScrapyardSettingsPage() {
         () => send.shelvesChanged());
     setSaveCheckHandler("option-display-random-bookmark", "display_random_bookmark",
         e => send.displayRandomBookmark({display: e.target.checked}));
+    setSaveCheckHandler("option-sort-shelves-in-popup", "sort_shelves_in_popup");
     setSaveCheckHandler("option-show-firefox-bookmarks-mobile", "show_firefox_mobile");
     setSaveCheckHandler("option-do-not-show-archive-toolbar", "do_not_show_archive_toolbar");
     setSaveCheckHandler("option-switch-to-bookmark", "switch_to_new_bookmark");
@@ -93,6 +94,7 @@ function loadScrapyardSettings() {
     $("#option-visually-emphasise-archives").prop("checked", settings.visually_emphasise_archives());
     $("#option-archives-icon").prop("checked", settings.visual_archive_icon());
     $("#option-archives-color").prop("checked", settings.visual_archive_color());
+    $("#option-sort-shelves-in-popup").prop("checked", settings.sort_shelves_in_popup());
     $("#option-show-firefox-bookmarks-mobile").prop("checked", settings.show_firefox_mobile());
     $("#option-switch-to-bookmark").prop("checked", settings.switch_to_new_bookmark());
     $("#option-do-not-show-archive-toolbar").prop("checked", settings.do_not_show_archive_toolbar());

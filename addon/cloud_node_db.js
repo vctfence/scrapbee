@@ -30,7 +30,7 @@ export class CloudStorage {
 
     serialize() {
         const hasMeta = !!this._meta;
-        this._meta = this._meta || createJSONScrapBookMeta("cloud", JSON_SCRAPBOOK_FOLDERS);
+        this._meta = this._meta || createJSONScrapBookMeta("cloud");
 
         if (!hasMeta)
             this._meta.uuid = UUID.numeric();

@@ -77,6 +77,9 @@ export async function createBookmarkNode(message, sender, activeTab) {
     else if (!node.icon && !node.local)
         node.icon = await getFaviconFromTab(activeTab);
 
+    if (node.todo_state)
+        node.todo_state = TODO_STATES[node.todo_state];
+
     const path = Path.expand(node.path);
     const folder = await Folder.getOrCreateByPath(path);
     node.parent_id = folder.id;

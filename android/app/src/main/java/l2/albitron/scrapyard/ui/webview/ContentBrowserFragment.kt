@@ -98,8 +98,7 @@ class ContentBrowserFragment : Fragment() {
 
                 if (uri.startsWith(prefix)) {
                     val assetPath = uri.replace(prefix, "")
-
-                    val mimeType: String = getMimetypeFromExt(assetPath)
+                    val mimeType: String? = getMimetypeFromExt(assetPath)
                     val inputStream = _db?.downloadUnpackedAsset(_uuid!!, assetPath)
 
                     if (inputStream != null) {

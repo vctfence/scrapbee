@@ -378,5 +378,31 @@ class StorageManager:
                     node = json.loads(node_json)
                     node_db.nodes[node["uuid"]] = node
 
+        node_db.nodes = NodeDB.tree_sort_nodes(node_db.nodes)
         node_db.write(node_db_path)
 
+    def debug_get_stored_node_instances(self, params):
+        node_db_path = self.get_node_db_path(params)
+        node_db = NodeDB.from_file(node_db_path)
+        items = list(node_db.nodes.items())
+        n_items = len(items)
+        result = "{"
+
+        for i in range(n_items):
+            uuid, node = items[i]
+            object_directory = self.get_object_directory(params, uuid)
+            node_object_path = self.get_node_object_path(object_directory)
+
+            node_object_json = "{}"
+            if os.path.exists(node_object_path):
+                with open(node_object_path, "r", encoding="utf-8") as node_object_file:
+                    node_object_json = node_object_file.read()
+
+            result += f'"{uuid}": {{"db_item": {json.dumps(node)}, "object_item": {node_object_json}}}'
+
+            if i < n_items - 1:
+                result += ","
+
+        result += "}"
+
+        return result

@@ -7,6 +7,14 @@ import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {ArchiveProxy} from "./storage_archive_proxy.js";
 import {ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT} from "./storage.js";
 
+// The Archive entity has three fields:
+//   object - the contents of an archive, may be anything (the reify function deals with this)
+//            usually a String or ArrayBuffer
+//   byte_length - the presence of this field indicates that the archive was created from a non-text source
+//                 if object contains a string, this is a binary string
+//   type - mime type of the archive content
+
+
 export class ArchiveIDB extends EntityIDB {
     static newInstance() {
         const instance = new ArchiveIDB();
@@ -18,18 +26,6 @@ export class ArchiveIDB extends EntityIDB {
         instance.idb.import._importer = true;
 
         return delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), instance);
-    }
-
-    static newInstance_transition() {
-        const instance = new ArchiveIDB();
-
-        instance.import = new ArchiveIDB();
-        instance.import._importer = true;
-
-        instance.idb = {import: new ArchiveIDB()};
-        instance.idb.import._importer = true;
-
-        return instance
     }
 
     entity(node, data, contentType, byteLength) {

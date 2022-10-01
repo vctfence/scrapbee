@@ -12,12 +12,18 @@
                                 <a href="#" id="transfer-content" title="Transfer content to disk">Transfer content</a>
                             </div>
                         </div>
-                        <div id="synchronize-at-startup-wrapper">
-                            <input id="option-synchronize-at-startup" type="checkbox"
-                            /><label for="option-synchronize-at-startup">Synchronize with the storage at startup</label>
-                            <i class="help-mark"></i>
-                            <span class="tips hide">This option may be useful if Scrapyard files are updated externally,
-                                for example, through cloud.</span>
+                        <div class="double-container">
+                            <div class="double-first" style="width: 320px">
+                            </div>
+                            <div class="double-last">
+                                <div id="synchronize-at-startup-wrapper">
+                                    <input id="option-synchronize-at-startup" type="checkbox"
+                                    /><label for="option-synchronize-at-startup">Synchronize with the storage at startup</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">Enable this option if Scrapyard files are updated<br> externally,
+                                        for example, through cloud.</span>
+                                </div>
+                            </div>
                         </div>
                     </fieldset>
                 </form>
@@ -43,6 +49,10 @@
                                     <label for="option-shelf-list-max-height">Maximum sidebar shelf list height (px): </label>
                                     <input id="option-shelf-list-max-height" type="number"/>
                                 </div>
+                                <div class="align-checkbox">
+                                    <input id="option-sort-shelves-in-popup" type="checkbox"
+                                    /><label for="option-sort-shelves-in-popup">Alphabetically short shelves in the popup window</label>
+                                </div>
                             </fieldset>
                         </form>
                     </div>
@@ -51,13 +61,13 @@
                             <fieldset style="border: none;">
                                 <input id="option-capitalize-builtin-shelf-names" type="checkbox"
                                 /><label for="option-capitalize-builtin-shelf-names">Capitalize builtin shelf names</label>
-                                <div class="align-checkbox">
+                                <div class="align-checkbox" style="margin-top: 4px;">
                                     <input id="option-do-not-show-archive-toolbar" type="checkbox"
                                     /><label for="option-do-not-show-archive-toolbar">Do not show toolbar in archived pages</label>
                                     <i class="help-mark"></i>
                                     <span class="tips hide">The edit toolbar could be toggled with the <code>Ctrl+Alt+T</code> key combination.</span>
                                 </div>
-                                <div class="align-checkbox">
+                                <div class="align-checkbox" style="margin-top: 4px;">
                                     <input id="option-visually-emphasise-archives" type="checkbox"
                                     /><label for="option-visually-emphasise-archives">Visually emphasise archives: &nbsp;</label>
                                     <input id="option-archives-icon" type="checkbox"
@@ -151,7 +161,10 @@
                         <fieldset style="border: none;">
                             <div class="align-checkbox">
                                 <input id="option-sidebar-filter-partial-match" type="checkbox"/><label for="option-sidebar-filter-partial-match"
-                                    >Use partial word matching in the sidebar filter</label>
+                                    >Use partial content matching in the sidebar filter</label>
+                                <i class="help-mark"></i>
+                                <span class="tips hide">When this setting is enabled, <b>cake</b> will also match <b>cheesecake</b>
+                                    <br>in the content of a page.</span>
                             </div>
                         </fieldset>
                     </form>
@@ -160,7 +173,7 @@
                     <form>
                         <fieldset style="border: none;">
                             <input id="option-remember-last-filtering-mode" type="checkbox"/><label for="option-remember-last-filtering-mode"
-                                >Remember last filtering mode</label>
+                                >Remember the last filtering mode</label>
                         </fieldset>
                     </form>
                 </div>

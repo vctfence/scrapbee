@@ -276,3 +276,14 @@ def delete_orphaned_items():
 def rebuild_item_index():
     storage_manager.rebuild_item_index(request.json)
     return "", 204
+
+
+@app.route("/storage/debug_get_stored_node_instances", methods=['POST'])
+@requires_auth
+def debug_get_stored_node_instances():
+    json_text = storage_manager.debug_get_stored_node_instances(request.json)
+
+    if json_text:
+        return json_text
+    else:
+        return "", 404

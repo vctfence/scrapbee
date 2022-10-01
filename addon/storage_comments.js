@@ -18,18 +18,6 @@ export class CommentsIDB extends EntityIDB {
         return delegateProxy(new CommentsProxy(new StorageAdapterDisk()), instance);
     }
 
-    static newInstance_transition() {
-        const instance = new CommentsIDB();
-
-        instance.import = new CommentsIDB();
-        instance.import._importer = true;
-
-        instance.idb = {import: new CommentsIDB()};
-        instance.idb.import._importer = true;
-
-        return instance;
-    }
-
     indexEntity(node, words) {
         return {
             node_id: node.id,

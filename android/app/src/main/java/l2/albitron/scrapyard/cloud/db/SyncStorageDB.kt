@@ -1,15 +1,8 @@
 package l2.albitron.scrapyard.cloud.db
 
-import android.util.Base64
-import com.fasterxml.jackson.core.JsonProcessingException
 import l2.albitron.scrapyard.Scrapyard
 import l2.albitron.scrapyard.cloud.db.model.*
 import l2.albitron.scrapyard.cloud.providers.CloudProvider
-import l2.albitron.scrapyard.cloud.providers.exceptions.CloudItemNotFoundException
-import java.io.IOException
-import java.lang.Exception
-import java.nio.charset.StandardCharsets
-import java.util.*
 
 private const val SYNC_STORAGE_PATH = "/Sync"
 private const val SYNC_DB_INDEX = "index.jsbk"
@@ -24,7 +17,7 @@ class SyncStorageDB: AbstractCloudDB, CloudDB {
     }
 
     override fun createTypeMeta(): JSONScrapbookMeta {
-        return super.createMeta(Scrapyard.FORMAT_TYPE_INDEX, Scrapyard.FORMAT_CONTAINS_EVERYTHING)
+        return super.createMeta(Scrapyard.FORMAT_TYPE_INDEX, Scrapyard.FORMAT_CONTAINS_SHELVES)
     }
 
     override fun getDatabaseFile(): String = SYNC_DB_INDEX

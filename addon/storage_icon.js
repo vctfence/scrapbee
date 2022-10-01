@@ -18,18 +18,6 @@ export class IconIDB extends EntityIDB {
         return delegateProxy(new IconProxy(new StorageAdapterDisk()), instance);
     }
 
-    static newInstance_transition() {
-        const instance = new IconIDB();
-
-        instance.import = new IconIDB();
-        instance.import._importer = true;
-
-        instance.idb = {import: new IconIDB()};
-        instance.idb.import._importer = true;
-
-        return instance;
-    }
-
     async add(node, dataUrl) {
         const exists = node.id? await this._db.icons.where("node_id").equals(node.id).count(): false;
         const entity = this.entity(node, dataUrl);

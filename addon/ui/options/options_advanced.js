@@ -102,7 +102,7 @@ function configureMaintenancePanel() {
     $("#rebuild-item-index-link").on("click", async e => {
         e.preventDefault();
 
-        const message = `This will restore orphaned items. Are you sure?`
+        const message = `This will restore orphaned items. Continue?`
         if (await showDlg("confirm", {title: "Rebuild Item Index", message})) {
             await send.startProcessingIndication();
 
@@ -119,6 +119,27 @@ function configureMaintenancePanel() {
 
     if (settings.transition_to_disk())
         $("#backup-link-wrapper").hide();
+
+    $("#compare-database-storage-link").on("click", async e => {
+        e.preventDefault();
+
+        await send.startProcessingIndication();
+
+        try {
+            const result = await send.compareDatabaseStorage();
+
+            if (result)
+                await alert("DB Comparison", "IDB and storage are identical.");
+            else
+                await alert("DB Comparison", "IDB and storage are NOT identical.")
+        }
+        finally {
+            await send.stopProcessingIndication();
+        }
+    });
+
+    if (settings.debug_mode())
+        $("#compare-database-storage").show()
 }
 
 function configureImpExpPanel() {

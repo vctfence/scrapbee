@@ -55,48 +55,48 @@ export class MarshallerJSONScrapbook extends Marshaller {
     }
 
     async convertNode(node) {
-        const serializedNode = {...node};
+        const convertedNode = {...node};
 
-        delete serializedNode.id;
-        this._resetNodeDates(serializedNode);
+        delete convertedNode.id;
+        this._resetNodeDates(convertedNode);
 
         if (node.parent_id) {
-            serializedNode.parent = await Node.getUUIDFromId(node.parent_id);
-            delete serializedNode.parent_id;
+            convertedNode.parent = await Node.getUUIDFromId(node.parent_id);
+            delete convertedNode.parent_id;
         }
 
         if (node.hasOwnProperty("uri")) {
-            serializedNode.url = node.uri;
-            delete serializedNode.uri;
+            convertedNode.url = node.uri;
+            delete convertedNode.uri;
         }
 
         if (node.hasOwnProperty("name")) {
-            serializedNode.title = node.name;
-            delete serializedNode.name;
+            convertedNode.title = node.name;
+            delete convertedNode.name;
         }
 
         if (node.hasOwnProperty("type"))
-            serializedNode.type = NODE_TYPE_NAMES[node.type];
+            convertedNode.type = NODE_TYPE_NAMES[node.type];
 
-        if (serializedNode.icon)
-            delete serializedNode.icon;
+        if (convertedNode.icon)
+            delete convertedNode.icon;
 
         if (node.hasOwnProperty("stored_icon")) {
-            serializedNode.has_icon = serializedNode.stored_icon;
-            delete serializedNode.stored_icon;
+            convertedNode.has_icon = convertedNode.stored_icon;
+            delete convertedNode.stored_icon;
         }
 
         if (node.hasOwnProperty("todo_state"))
-            serializedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
+            convertedNode.todo_state = TODO_STATE_NAMES[node.todo_state];
 
         if (node.hasOwnProperty("site")) {
-            serializedNode.is_site = node.site;
+            convertedNode.is_site = node.site;
             delete node.site;
         }
 
-        this.convertUUIDsToFormat(serializedNode);
+        this.convertUUIDsToFormat(convertedNode);
 
-        return this._reorderFields(serializedNode);
+        return this._reorderFields(convertedNode);
     }
 
     _resetNodeDates(node) {
@@ -178,7 +178,7 @@ export class MarshallerJSONScrapbook extends Marshaller {
 
     async marshalMeta(options) {
         const {comment, uuid, objects, name} = options;
-        const contains = name === EVERYTHING_SHELF_NAME? JSON_SCRAPBOOK_SHELVES: JSON_SCRAPBOOK_FOLDERS;
+        const contains = name === EVERYTHING_SHELF_NAME? JSON_SCRAPBOOK_SHELVES: undefined;
         const meta = createJSONScrapBookMeta("export", contains, name);
 
         updateJSONScrapBookMeta(meta, objects.length, uuid, comment);
@@ -248,29 +248,29 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
     }
 
     unconvertNode(node) {
-        const deserializedNode = {...node};
+        const unconvertedNode = {...node};
 
-        this.convertUUIDsFromFormat(deserializedNode);
+        this.convertUUIDsFromFormat(unconvertedNode);
 
-        deserializedNode.uri = node.url;
-        delete deserializedNode.url;
+        unconvertedNode.uri = node.url;
+        delete unconvertedNode.url;
 
-        deserializedNode.name = node.title;
-        delete deserializedNode.title;
+        unconvertedNode.name = node.title;
+        delete unconvertedNode.title;
 
-        deserializedNode.type = NODE_TYPES[node.type];
+        unconvertedNode.type = NODE_TYPES[node.type];
 
-        deserializedNode.todo_state = TODO_STATES[node.todo_state];
+        unconvertedNode.todo_state = TODO_STATES[node.todo_state];
 
-        deserializedNode.stored_icon = deserializedNode.has_icon;
-        delete deserializedNode.has_icon;
+        unconvertedNode.stored_icon = unconvertedNode.has_icon;
+        delete unconvertedNode.has_icon;
 
         if (node.is_site) {
-            deserializedNode.site = node.is_site;
+            unconvertedNode.site = node.is_site;
             delete node.is_site;
         }
 
-        return deserializedNode;
+        return unconvertedNode;
     }
 
     unconvertIcon(icon) {
@@ -372,7 +372,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         return object;
     }
 
-    async _findParentInIDB(node) {
+    async findParentInIDB(node) {
         if (node.parent) {
             const parent = await Node.getByUUID(node.parent);
             delete node.parent;

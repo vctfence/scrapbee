@@ -28,7 +28,7 @@ function configureArchiveTab(node, archiveTab) {
                 return;
 
             if (changed.status === "complete")
-                configureArchivePage(tab, node);
+                await configureArchivePage(tab, node);
         }
     };
 
@@ -36,8 +36,6 @@ function configureArchiveTab(node, archiveTab) {
 
     function tabRemoveListener(tabId) {
         if (tabId === archiveTab.id) {
-            revokeTrackedObjectURLs(tabId);
-
             browser.tabs.onRemoved.removeListener(tabRemoveListener);
             browser.tabs.onUpdated.removeListener(tabUpdateListener);
         }

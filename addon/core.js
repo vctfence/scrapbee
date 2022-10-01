@@ -32,16 +32,9 @@ receive.startListener(true);
     if (await grantPersistenceQuota()) {
         await systemInitialization;
 
-        await showAnnouncement();
-
         await startupLatch(performStartupInitialization);
     }
 })();
-
-async function showAnnouncement() {
-    if (await settings.isAddonUpdated() && /^\d+\.\d+$/.test(_ADDON_VERSION))
-        settings.pending_announcement("options.html#about");
-}
 
 async function performStartupInitialization() {
     search.initializeOmnibox();

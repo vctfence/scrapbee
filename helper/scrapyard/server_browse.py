@@ -1,6 +1,5 @@
 import io
 import os
-import json
 import logging
 import zipfile
 
@@ -43,20 +42,15 @@ def serve_from_file(params, uuid):
     params["uuid"] = uuid
 
     object_directory = storage_manager.get_object_directory(params, uuid)
-    archive_content_path = storage_manager.get_archive_content_path(object_directory)
-    content_type = params.get("content_type", "text/html")
     archive_type = params.get("contains", None)
 
     if archive_type == StorageManager.ARCHIVE_TYPE_FILES:
-        unpacked_content_path = os.path.join(object_directory, "archive")
-        unpacked_archives[uuid] = unpacked_content_path
-
-        if params["highlight"]:
-            params["index_file_path"] = os.path.join(unpacked_content_path, "index.html")
-            return highlight_words_in_index(params)
-        else:
-            return send_from_directory(unpacked_content_path, "index.html")
+        archive_directory = storage_manager.get_archive_unpacked_path(object_directory)
+        unpacked_archives[uuid] = archive_directory
+        return serve_unpacked_archive(params, archive_directory)
     else:
+        archive_content_path = storage_manager.get_archive_content_path(object_directory)
+        content_type = params.get("content_type", "text/html")
         return send_file(archive_content_path, mimetype=content_type)
 
 
@@ -70,12 +64,7 @@ def serve_content(params):
     if contains == StorageManager.ARCHIVE_TYPE_FILES:
         archive_directory = extract_unpacked_archive(params, content)
         unpacked_archives[params["uuid"]] = archive_directory
-
-        if params["highlight"]:
-            params["index_file_path"] = os.path.join(archive_directory, "index.html")
-            return highlight_words_in_index(params)
-        else:
-            return send_from_directory(archive_directory, "index.html")
+        return serve_unpacked_archive(params, archive_directory)
     else:
         return flask.Response(content, mimetype=params["content_type"])
 
@@ -88,6 +77,14 @@ def extract_unpacked_archive(params, content):
         zip_file.extractall(archive_directory_path)
 
     return archive_directory_path
+
+
+def serve_unpacked_archive(params, archive_directory):
+    if params["highlight"]:
+        params["index_file_path"] = os.path.join(archive_directory, "index.html")
+        return highlight_words_in_index(params)
+    else:
+        return send_from_directory(archive_directory, "index.html")
 
 
 @app.route("/browse/<uuid>/<path:file>")

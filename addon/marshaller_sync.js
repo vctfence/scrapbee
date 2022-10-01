@@ -142,11 +142,11 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
         if (object.item.uuid === FORMAT_DEFAULT_SHELF_UUID)
             return;
 
-        let {item: node, icon, comments, archive_index, notes_index, comments_index} = object;
+        let {item: node, icon, comments, archive_index, notes_index} = object;
 
         node = await this.unconvertNode(node);
         node = this.deserializeNode(node);
-        await this._findParentInIDB(node);
+        await this.findParentInIDB(node);
 
         if (icon) {
             icon = this.unconvertIcon(icon);
@@ -158,24 +158,19 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
         if (icon)
             await Icon.idb.import.add(node, icon.data_url);
 
-        if (archive_index) {
-            archive_index = this.unconvertIndex(archive_index);
-            Archive.idb.import.storeIndex(node, archive_index.words);
-        }
-
         if (comments) {
             comments = this.unconvertComments(comments);
             Comments.idb.import.add(node, comments.text);
         }
 
+        if (archive_index) {
+            archive_index = this.unconvertIndex(archive_index);
+            Archive.idb.import.storeIndex(node, archive_index.words);
+        }
+
         if (notes_index) {
             notes_index = this.unconvertIndex(notes_index);
             Notes.idb.import.storeIndex(node, notes_index.words);
-        }
-
-        if (comments_index) {
-            comments_index = this.unconvertIndex(comments_index);
-            Comments.idb.import.storeIndex(node, comments_index.words);
         }
     }
 }

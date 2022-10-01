@@ -3,7 +3,6 @@ import {merge} from "./utils.js";
 export const SCRAPYARD_SYNC_METADATA = "scrapyard-sync-metadata";
 
 const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
-const SCRAPYARD_UPDATED_KEY = "scrapyard-updated";
 
 class ScrapyardSettings {
     constructor() {
@@ -15,6 +14,7 @@ class ScrapyardSettings {
             switch_to_new_bookmark: true,
             visual_archive_icon: true,
             visual_archive_color: true,
+            sort_shelves_in_popup: true,
             show_firefox_toolbar: !_BACKGROUND_PAGE
         };
 
@@ -61,21 +61,6 @@ class ScrapyardSettings {
 
     async _set(k, v) { return browser.storage.local.set({[k]: v}) }
 
-    async _isAddonUpdated() {
-        let updated;
-
-        if (browser.storage.session) {
-            updated = await browser.storage.session.get(SCRAPYARD_UPDATED_KEY);
-            updated = updated?.[SCRAPYARD_UPDATED_KEY];
-        }
-        else {
-            updated = localStorage.getItem(SCRAPYARD_UPDATED_KEY) === "true";
-            localStorage.setItem(SCRAPYARD_UPDATED_KEY, "false");
-        }
-
-        return updated;
-    }
-
     _processSetSetting(key, val) {
         // in Firefox, synchronous access to this setting is required
         if (this._platform.firefox && key === "open_sidebar_from_shortcut")
@@ -93,8 +78,6 @@ class ScrapyardSettings {
             return this._get;
         else if (key === "set")
             return this._set;
-        else if (key === "isAddonUpdated")
-            return this._isAddonUpdated;
 
         return (val, save = true) => {
             let bin = this._bin;

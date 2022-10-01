@@ -11,7 +11,7 @@ export class UnmarshallerCloud extends UnmarshallerJSONScrapbook {
 
     async unmarshal(provider, cloudNode) {
         cloudNode = this.unconvertNode(cloudNode);
-        await this._findParentInIDB(cloudNode);
+        await this.findParentInIDB(cloudNode);
 
         const content = {node: cloudNode};
         let node = await Node.getByUUID(cloudNode.uuid);

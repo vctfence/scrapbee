@@ -97,8 +97,8 @@ fun SHA1(text: String): String {
     return convertToHex(sha1hash)
 }
 
-fun getMimetypeFromExt(name: String?): String {
-    val file = File(name)
+fun getMimetypeFromExt(name: String?): String? {
+    val file = File(name!!)
     return URLConnection.guessContentTypeFromName(file.name)
 }
 

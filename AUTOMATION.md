@@ -122,6 +122,9 @@ The relevant missing parameters (`url`, `title`, `icon`, `content`, `content_typ
 from the active tab. If the `url` parameter is explicitly set to an empty string,
 it will remain empty.
 
+If `title` or `icon` parameters are explicitly set to `true`, bookmark title or icon will be extracted from the page
+defined by the `url` parameter.
+
 When the `pack` parameter is specified, this API ignores the `content`, `title`, and `icon` parameters,
 and packs, then stores the page defined by the `url` parameter. "text/html" content type is assumed.
 A new tab is created, which is required for page packing. This tab could be hidden through the `hide_tab` message option.

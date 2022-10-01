@@ -8,6 +8,8 @@ import {ProgressCounter} from "./utils.js";
 import {settings} from "./settings.js";
 import {Query} from "./storage_query.js";
 import UUID from "./uuid.js";
+import {DiskStorage} from "./storage_external.js";
+import {indexHTML} from "./utils_html.js";
 
 receive.transferContentToDisk = async message => {
 
@@ -26,6 +28,8 @@ receive.transferContentToDisk = async message => {
     const progressCounter = new ProgressCounter(nodes.length, "exportProgress");
 
     try {
+        await DiskStorage.openBatchSession();
+
         for (const node of nodes) {
             await transferNode(node);
             progressCounter.incrementAndNotify();
@@ -40,6 +44,7 @@ receive.transferContentToDisk = async message => {
         return false;
     }
     finally {
+        await DiskStorage.closeBatchSession();
         send.stopProcessingIndication();
         await progressCounter.finish();
     }
@@ -82,8 +87,15 @@ async function transferNode(node) {
     if (node.type === NODE_TYPE_ARCHIVE) {
         let archive = await Archive.idb.import.get(node);
 
-        if (archive)
+        if (archive) {
+            if (!archive.byte_length) {
+                const content = await Archive.reify(archive);
+                const index = indexHTML(content);
+                await Archive.storeIndex(node, index);
+            }
+
             await Archive.add(node, archive);
+        }
     }
 
     if (node.has_notes) {

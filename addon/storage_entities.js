@@ -9,9 +9,3 @@ export const Archive = ArchiveIDB.newInstance();
 export const Comments = CommentsIDB.newInstance();
 export const Notes = NotesIDB.newInstance();
 export const Icon = IconIDB.newInstance();
-
-// export const Node = NodeIDB.newInstance_transition();
-// export const Archive = ArchiveIDB.newInstance_transition();
-// export const Comments = CommentsIDB.newInstance_transition();
-// export const Notes = NotesIDB.newInstance_transition();
-// export const Icon = IconIDB.newInstance_transition();

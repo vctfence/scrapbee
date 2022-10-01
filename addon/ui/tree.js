@@ -278,7 +278,7 @@ class BookmarkTree {
         if (node.todo_state)
             return " todo-state-" + (node.__overdue
                 ? "overdue"
-                : TODO_STATE_NAMES[node.todo_state].toLowerCase());
+                : TODO_STATE_NAMES[node.todo_state]?.toLowerCase());
 
         return "";
     }

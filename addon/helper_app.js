@@ -29,7 +29,7 @@ class HelperApp {
         }
         else {
             this.port = new Promise(async (resolve, reject) => {
-                let port = browser.runtime.connectNative("scrapyard2_helper");
+                let port = browser.runtime.connectNative("scrapyard_helper");
 
                 port.onDisconnect.addListener(error => {
                     resolve(null);

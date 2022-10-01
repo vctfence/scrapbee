@@ -6,7 +6,7 @@ from queue import Queue
 class RequestQueue:
     def __init__(self):
         self.request_queue = Queue()
-        self.processor_thread = threading.Thread(target=self.processor)
+        self.processor_thread = threading.Thread(target=self.processor, daemon=True)
         self.processor_thread.start()
 
     def processor(self):
