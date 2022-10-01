@@ -151,7 +151,21 @@ def close_session():
 
 
 def pull_sync_objects(storage_manager, params):
-    sync_node = json.loads(params["sync_node"])
+    sync_nodes = json.loads(params["sync_nodes"])
+
+    assert len(sync_nodes) > 1
+
+    result = "["
+
+    for sync_node in sync_nodes[:-1]:
+        result += assemble_node_payload(storage_manager, params, sync_node) + ","
+
+    result += assemble_node_payload(storage_manager, params, sync_nodes[-1]) + "]"
+
+    return result
+
+
+def assemble_node_payload(storage_manager, params, sync_node):
     uuid = sync_node["uuid"]
     result = "{"
 

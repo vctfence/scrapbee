@@ -119,16 +119,30 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
         this.setSyncMode();
     }
 
-    async unmarshall(syncNode) {
-        if (syncNode.uuid === FORMAT_DEFAULT_SHELF_UUID)
-            return;
-
+    async unmarshall(syncNodes) {
         const payload = await helperApp.fetchJSON_postJSON("/storage/sync_pull_objects", {
             data_path: settings.data_folder_path(),
-            sync_node: JSON.stringify(syncNode)
+            sync_nodes: JSON.stringify(syncNodes)
         });
 
-        let {item: node, icon, comments, archive_index, notes_index, comments_index} = payload;
+        let success = true;
+
+        for (const object of payload)
+            try {
+                await this.unmarshallNode(object);
+            } catch (e) {
+                success = false;
+                console.error(e);
+            }
+
+        return success;
+    }
+
+    async unmarshallNode(object) {
+        if (object.item.uuid === FORMAT_DEFAULT_SHELF_UUID)
+            return;
+
+        let {item: node, icon, comments, archive_index, notes_index, comments_index} = object;
 
         node = await this.unconvertNode(node);
         node = this.deserializeNode(node);

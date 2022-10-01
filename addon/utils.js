@@ -22,22 +22,35 @@ export function merge(to, from) {
 }
 
 export function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve,  ms))
+    return new Promise(resolve => setTimeout(resolve,  ms));
 }
 
 export function partition(items, size) {
-    var result = []
-    var n = Math.round(items.length / size);
+    const result = [];
 
-    while (items.length > 0)
-        result.push(items.splice(0, n));
+    if (size) {
+        const n = Math.round(items.length / size);
 
-    if (result.length > size) {
-        result[result.length - 2] = [...result[result.length - 2], ...result[result.length - 1]];
-        result.splice(result.length - 1, 1);
+        while (items.length > 0)
+            result.push(items.splice(0, n));
+
+        if (result.length > size) {
+            result[result.length - 2] = [...result[result.length - 2], ...result[result.length - 1]];
+            result.splice(result.length - 1, 1);
+        }
     }
 
     return result;
+}
+
+export function chunk(items, size) {
+    const chunks = [];
+    let i = 0;
+
+    while (i < items.length)
+        chunks.push(items.slice(i, i += size));
+
+    return chunks;
 }
 
 export function makeReferenceURL(uuid) {

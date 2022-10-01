@@ -380,7 +380,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
             if (parent)
                 node.parent_id = parent.id;
             else
-                throw new Error(`No parent for node: ${node.uuid}`)
+                throw new Error(`No parent for node: ${node.uuid}`);
         }
     }
 

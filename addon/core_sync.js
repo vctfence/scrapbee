@@ -4,10 +4,12 @@ import {Node} from "./storage_entities.js";
 import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
 import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, JSON_SCRAPBOOK_VERSION} from "./storage.js";
-import {ParallelProcessor, ProgressCounter, sleep} from "./utils.js";
+import {chunk, ProgressCounter} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
 import {Database} from "./storage_database.js";
 import {undoManager} from "./bookmarks_undo.js";
+
+const SYNC_NODE_CHUNK_SIZE = 10;
 
 let syncing = false;
 
@@ -204,7 +206,9 @@ async function performOperations(syncOperations, syncDirectory) {
     //     console.error(e);
     // }
 
-    const total = syncOperations.push.length + syncOperations.pull.length + syncOperations.delete.length;
+    const total = syncOperations.push.length
+        + Math.floor(syncOperations.pull.length / SYNC_NODE_CHUNK_SIZE)
+        + syncOperations.delete.length;
     const progress = new ProgressCounter(total, "syncProgress");
 
     // const syncMarshaller = new MarshallerSync();
@@ -219,12 +223,14 @@ async function performOperations(syncOperations, syncDirectory) {
     //     }
 
     const syncUnmarshaller = new UnmarshallerSync();
-    for (const syncNode of syncOperations.pull)
+    for (const syncNodes of chunk(syncOperations.pull, SYNC_NODE_CHUNK_SIZE))
         try {
-            await syncUnmarshaller.unmarshall(syncNode)
+            const success = await syncUnmarshaller.unmarshall(syncNodes)
             progress.incrementAndNotify();
-        }
-        catch (e) {
+
+            if (!success)
+                errors = true;
+        } catch (e) {
             errors = true;
             console.error(e);
         }
