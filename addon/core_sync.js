@@ -33,7 +33,7 @@ receive.checkSyncDirectory = async message => {
 };
 
 receive.performSync = async message => {
-    send.startProcessingIndication({noWait: true});
+    send.startProcessingIndication();
 
     try {
         await performSync();

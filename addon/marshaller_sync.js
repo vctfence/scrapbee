@@ -139,7 +139,7 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
     }
 
     async unmarshallNode(object) {
-        if (object.item.uuid === FORMAT_DEFAULT_SHELF_UUID)
+        if (!object.item || object.item.uuid === FORMAT_DEFAULT_SHELF_UUID)
             return;
 
         let {item: node, icon, comments, archive_index, notes_index} = object;

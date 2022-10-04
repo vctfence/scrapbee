@@ -42,26 +42,28 @@ def compute_sync(storage_manager, params):
 
     for uuid in common:
         incoming_node = uuid2node_incoming[uuid]
-        db_node = uuid2node_storage[uuid]
+        storage_node = uuid2node_storage[uuid]
 
-        if incoming_node["date_modified"] > db_node["date_modified"]:
+        if incoming_node["date_modified"] > storage_node["date_modified"]:
             updated_incoming.add(uuid)
-        elif incoming_node["date_modified"] < db_node["date_modified"]:
+        elif incoming_node["date_modified"] < storage_node["date_modified"]:
             updated_in_storage.add(uuid)
 
     new_incoming = incoming - common
     new_in_storage = from_storage - common
 
-    for uuid in new_incoming:
-        if uuid2node_incoming[uuid]["date_modified"] < last_sync_date:
-            deleted_incoming.add(uuid)
+    # for uuid in new_incoming:
+    #     if uuid2node_incoming[uuid]["date_modified"] < last_sync_date:
+    #         deleted_incoming.add(uuid)
 
-    for uuid in new_in_storage:
-        if uuid2node_storage[uuid]["date_modified"] < last_sync_date:
-            deleted_in_storage.add(uuid)
+    deleted_incoming = new_incoming  # instead of ^^^
+
+    # for uuid in new_in_storage:
+    #     if uuid2node_storage[uuid]["date_modified"] < last_sync_date:
+    #         deleted_in_storage.add(uuid)
 
     # new_incoming -= deleted_incoming
-    new_in_storage -= deleted_in_storage
+    # new_in_storage -= deleted_in_storage
 
     # push = new_incoming | updated_incoming
     pull = new_in_storage | updated_in_storage
@@ -118,14 +120,17 @@ def close_session():
 def pull_sync_objects(storage_manager, params):
     sync_nodes = json.loads(params["sync_nodes"])
 
-    assert len(sync_nodes) > 1
-
     result = "["
+    n_nodes = len(sync_nodes)
 
-    for sync_node in sync_nodes[:-1]:
-        result += assemble_node_payload(storage_manager, params, sync_node) + ","
+    for i in range(n_nodes):
+        sync_node = sync_nodes[i]
+        result += assemble_node_payload(storage_manager, params, sync_node)
 
-    result += assemble_node_payload(storage_manager, params, sync_nodes[-1]) + "]"
+        if i < n_nodes - 1:
+            result += ","
+
+    result += "]"
 
     return result
 

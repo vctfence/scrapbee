@@ -4,6 +4,7 @@ import UUID from "./uuid.js";
 import {delegateProxy} from "./proxy.js";
 import {NodeProxy} from "./storage_node_proxy.js";
 import {StorageAdapterDisk} from "./storage_adapter_disk.js";
+import {settings} from "./settings.js";
 
 export class NodeIDB extends EntityIDB {
     static newInstance() {
@@ -18,6 +19,20 @@ export class NodeIDB extends EntityIDB {
     resetDates(node) {
         node.date_added = new Date();
         node.date_modified = node.date_added;
+    }
+
+    fixDates(node) {
+        // Chrome structured cloning turns dates to strings
+        if (settings.platform.chrome) {
+            if (typeof node.date_added === "string")
+                node.date_added = new Date(node.date_added);
+
+            if (typeof node.date_modified === "string")
+                node.date_modified = new Date(node.date_modified);
+
+            if (typeof node.content_modified === "string")
+                node.content_modified = new Date(node.content_modified);
+        }
     }
 
     setUUID(node) {
@@ -114,6 +129,7 @@ export class NodeIDB extends EntityIDB {
             if (resetDateModified)
                 node.date_modified = new Date();
 
+            this.fixDates(node);
             await this._db.nodes.update(node.id, this.sanitized(node));
         }
         else {

@@ -1,12 +1,19 @@
 import {receive, send, sendLocal} from "./proxy.js";
-import {isContentNode, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, DEFAULT_SHELF_UUID} from "./storage.js";
+import {
+    isContentNode,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_NOTES,
+    DEFAULT_SHELF_UUID,
+    JSON_SCRAPBOOK_FORMAT
+} from "./storage.js";
 import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {Node} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
 import {settings} from "./settings.js";
 import {helperApp} from "./helper_app.js";
 import {Export} from "./import.js";
-import {UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
+import {FORMAT_DEFAULT_SHELF_UUID, UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 import {isDeepEqual} from "./utils.js";
 
 receive.resetCloud = async message => {
@@ -97,8 +104,21 @@ receive.compareDatabaseStorage = async message => {
 
         let result = Object.keys(storedNodes).length === nodes.length;
 
-        if (!result)
+        if (!result) {
+            for (const node of [...nodes]) {
+                if (node.uuid === DEFAULT_SHELF_UUID)
+                    node.uuid = FORMAT_DEFAULT_SHELF_UUID;
+
+                if (storedNodes[node.uuid]) {
+                    nodes.splice(nodes.indexOf(node), 1);
+                    delete storedNodes[node.uuid];
+                }
+            }
+
+            console.log(nodes, storedNodes);
+
             return result;
+        }
 
         for (const node of nodes) {
             if (node.uuid === DEFAULT_SHELF_UUID)
