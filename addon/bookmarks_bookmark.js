@@ -11,7 +11,7 @@ import {
     NODE_TYPE_SEPARATOR,
     NODE_TYPE_SHELF, NON_IMPORTABLE_SHELVES,
     TODO_SHELF_NAME, DEFAULT_POSITION,
-    RDF_EXTERNAL_TYPE, EVERYTHING_SHELF_NAME
+    RDF_EXTERNAL_TYPE, EVERYTHING_SHELF_NAME, ARCHIVE_TYPE_FILES
 } from "./storage.js";
 import {indexString} from "./utils_html.js";
 import {Query} from "./storage_query.js";
@@ -550,7 +550,15 @@ export class BookmarkManager extends EntityManager {
 
     async storeArchive(node, data, contentType, index) {
         const archive = Archive.entity(node, data, contentType);
-        await Archive.add(node, archive, index);
+
+        if (node.contains === ARCHIVE_TYPE_FILES) {
+            await Archive.storeIndex(node, index);
+            await Archive.saveFile(node, "index.html", data);
+            await Archive.updateContentModified(node, archive);
+        }
+        else
+            await Archive.add(node, archive, index);
+
         await this.plugins.storeBookmarkData(node, data, contentType);
     }
 

@@ -9,7 +9,7 @@ import {
 } from "./utils_browser.js";
 import {capitalize, getMimetypeByExt} from "./utils.js";
 import {receive, send, sendLocal} from "./proxy.js";
-import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {ARCHIVE_TYPE_FILES, DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {fetchText, fetchWithTimeout} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
@@ -123,6 +123,9 @@ async function captureHTMLTab(tab, bookmark) {
 }
 
 function startSavePageCapture(tab, bookmark, selection) {
+    if (settings.save_unpacked_archives())
+        bookmark.contains = ARCHIVE_TYPE_FILES;
+
     return browser.tabs.sendMessage(tab.id, {
         type: "performAction",
         menuaction: 1,
@@ -321,11 +324,11 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 }
 
 export async function packUrl(url, hide_tab) {
-    return packPage(url, {}, b => b.__url_packing = true, m => m.data, hide_tab);
+    return packPage(url, {}, b => b.__url_packing = true, m => m.html, hide_tab);
 }
 
 export async function packUrlExt(url, hide_tab) {
-    let resolver = (m, t) => ({html: m.data, title: url.endsWith(t.title)? undefined: t.title, icon: t.favIconUrl});
+    let resolver = (m, t) => ({html: m.html, title: url.endsWith(t.title)? undefined: t.title, icon: t.favIconUrl});
     return packPage(url, {}, b => b.__url_packing = true, resolver, hide_tab);
 }
 

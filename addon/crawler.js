@@ -233,7 +233,7 @@ class Crawler {
 
     #captureHTMLPage(link, options) {
         const bookmark = {uri: link.url, __site_capture: options, __url_packing: true};
-        const resolver = (m, t) => ({bookmark: m.bookmark, content: m.data, title: t.title, icon: t.favIconUrl});
+        const resolver = (m, t) => ({bookmark: m.bookmark, content: m.html, title: t.title, icon: t.favIconUrl});
         return packPage(link.url, bookmark, null, resolver);
     }
 

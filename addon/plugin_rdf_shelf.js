@@ -7,10 +7,11 @@ import {
     NODE_TYPE_SEPARATOR,
     RDF_EXTERNAL_TYPE
 } from "./storage.js";
-import {Archive, Comments, Icon, Node} from "./storage_entities.js";
+import {Comments, Icon, Node} from "./storage_entities.js";
 import {Path} from "./path.js";
 import {RDFNamespaces} from "./utils_html.js";
 import {CONTENT_TYPE_TO_EXT} from "./utils.js";
+import {settings} from "./settings.js";
 
 class RDFDoc {
 
@@ -356,7 +357,7 @@ export class RDFShelfPlugin {
                 title: node.name,
                 source: node.uri,
                 icon_ext: node.__icon_ext || "ico",
-                icon_data: node.__icon_data_url.split(",")?.[1] || null
+                icon_data: node.__icon_data_url?.split(",")?.[1] || null
             });
         }
         catch (e) {

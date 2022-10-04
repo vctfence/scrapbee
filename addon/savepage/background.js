@@ -464,6 +464,12 @@
 
 /* Global variables */
 
+// Scrapyard //////////////////////////////////////////////////////////////////
+import {Archive} from "../storage_entities.js";
+import {ARCHIVE_TYPE_FILES} from "../storage.js";
+var mimeTypes;
+////////////////////////////////////////////////////////////////// Scrapyard //
+
 var isFirefox;
 var ffVersion;
 var gcVersion;
@@ -756,6 +762,16 @@ function addListeners()
         var safeContent,mixedContent,refererURL,refererValue,htmlBlob,objectURL,receiverId;
         var xhr = new Object();
 
+        // Scrapyard //////////////////////////////////////////////////////////////////
+        var saveUnpacked = message.bookmark?.contains === ARCHIVE_TYPE_FILES;
+        var messageResolve = _BACKGROUND_PAGE? () => undefined: sendResponse;
+        var messagePromise = saveUnpacked
+            ? (_BACKGROUND_PAGE
+                ? new Promise(resolve => messageResolve = resolve)
+                :true)
+            : undefined;
+        ////////////////////////////////////////////////////////////////// Scrapyard //
+
         switch (message.type)
         {
             /* Messages from content script */
@@ -854,7 +870,9 @@ function addListeners()
                 }
                 else chrome.tabs.sendMessage(sender.tab.id,{ type: "loadFailure", index: message.index, reason: "mixed" },checkError);
 
-                function onloadResource()
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                async function onloadResource()
+                ////////////////////////////////////////////////////////////////// Scrapyard //
                 {
                     var i,binaryString,contentType,allowOrigin;
                     var byteArray = new Uint8Array(this.response);
@@ -877,20 +895,82 @@ function addListeners()
                         allowOrigin = this.getResponseHeader("Access-Control-Allow-Origin");
                         if (allowOrigin == null) allowOrigin = "";
 
-                        chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index,
-                                                              content: binaryString, contenttype: contentType, alloworigin: allowOrigin },checkError);
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        const [mimeType, charset] = parseContentType(contentType);
+                        const fileName = await getResourceFileName(message.index, message.location, mimeType);
+
+                        if (saveUnpacked && !(mimeType.toLowerCase() === "text/css" || fileName.endsWith(".css"))) {
+                            await saveResource(message.bookmark, this.response, fileName, charset);
+                            chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index,
+                                content: "", filename: fileName, contenttype: contentType, alloworigin: allowOrigin },checkError);
+                        }
+                        else
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
+                            chrome.tabs.sendMessage(this._tabId,{ type: "loadSuccess", index: this._index,
+                                content: binaryString, contenttype: contentType, alloworigin: allowOrigin },checkError);
                     }
                     else chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "load:" + this.status },checkError);
+            // Scrapyard //////////////////////////////////////////////////////////////////
+                    messageResolve();
                 }
+
+                async function getResourceFileName(index, url, mimeType) {
+                    if (!mimeTypes)
+                        mimeTypes = await (await fetch("/mime_types.json")).json();
+
+                    const path = new URL(url).pathname;
+                    let extension = path.match(/\.([\d,a-z]{1,8}$)/i)?.[1];
+
+                    if (!extension)
+                        extension = mimeTypes[mimeType]?.extensions?.[0] || "bin";
+
+                    return `resource_${index}.${extension}`;
+                }
+
+                function parseContentType(contentType) {
+                    let matches = contentType.match(/([^;]+)/i);
+                    let mimeType, charset;
+
+                    if (matches)
+                        mimeType = matches[1].toLowerCase();
+                    else mimeType = "";
+
+                    matches = contentType.match(/;charset=([^;]+)/i);
+                    if (matches)
+                        charset = matches[1].toLowerCase();
+                    else charset = "";
+
+                    return [mimeType, charset];
+                }
+
+                async function saveResource(bookmark, content, fileName, charset) {
+                    try {
+                        if (charset && charset.toLowerCase() !== "utf-8") {
+                            const textDecoder = new TextDecoder(charset);
+                            content = textDecoder.decode(content);
+                        }
+
+                        return Archive.saveFile(bookmark, fileName, content);
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            ////////////////////////////////////////////////////////////////// Scrapyard //
 
                 function onerrorResource()
                 {
                     chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "network" },checkError);
+                    // Scrapyard //////////////////////////////////////////////////////////////////
+                    messageResolve();
+                    ////////////////////////////////////////////////////////////////// Scrapyard //
                 }
 
                 function ontimeoutResource()
                 {
                     chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "maxtime" },checkError);
+                    // Scrapyard //////////////////////////////////////////////////////////////////
+                    messageResolve();
+                    ////////////////////////////////////////////////////////////////// Scrapyard //
                 }
 
                 function onprogressResource(event)
@@ -900,10 +980,15 @@ function addListeners()
                         this.abort();
 
                         chrome.tabs.sendMessage(this._tabId,{ type: "loadFailure", index: this._index, reason: "maxsize" },checkError);
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        messageResolve();
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                     }
                 }
 
-                break;
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                return messagePromise;
+                ////////////////////////////////////////////////////////////////// Scrapyard //
 
             // Scrapyard //////////////////////////////////////////////////////////////////
             // <deleted>

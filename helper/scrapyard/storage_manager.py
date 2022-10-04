@@ -209,6 +209,7 @@ class StorageManager:
         archive_directory_path = self.get_archive_unpacked_path(object_directory_path)
         archive_file_path = os.path.join(archive_directory_path, params["file"])
 
+        Path(archive_directory_path).mkdir(parents=True, exist_ok=True)
         files["content"].save(archive_file_path)
 
         return archive_directory_path

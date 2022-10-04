@@ -1,6 +1,13 @@
 import {formatBytes, getMimetypeByExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
-import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
+import {
+    ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES,
+    CLOUD_SHELF_ID,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_SHELF,
+    UNDO_DELETE
+} from "./storage.js";
 import {getActiveTab, gettingStarted, showNotification, updateTabURL} from "./utils_browser.js";
 import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
@@ -21,7 +28,7 @@ import {TODO} from "./bookmarks_todo.js";
 import {Folder} from "./bookmarks_folder.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
-import {Node} from "./storage_entities.js";
+import {Archive, Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {browseNode} from "./browse.js";
 import UUID from "./uuid.js";
@@ -203,7 +210,7 @@ receive.storePageHtml = message => {
     if (message.bookmark.__url_packing)
         return;
 
-    return Bookmark.storeArchive(message.bookmark, message.data, "text/html", message.bookmark.__index)
+    return Bookmark.storeArchive(message.bookmark, message.html, "text/html", message.bookmark.__index)
         .then(() => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
@@ -341,4 +348,8 @@ receive.performUndo = async message => {
     finally {
         send.stopProcessingIndication();
     }
+};
+
+receive.saveResource = async message => {
+    return Archive.saveFile(message.node, message.filename, message.content);
 };

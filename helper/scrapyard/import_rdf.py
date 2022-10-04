@@ -190,6 +190,7 @@ def save_archive_file(params, files):
     archive_directory_path = params["rdf_archive_path"]
     archive_file_path = os.path.join(archive_directory_path, params["file"])
 
+    Path(archive_directory_path).mkdir(parents=True, exist_ok=True)
     files["content"].save(archive_file_path)
 
     index = build_archive_index(archive_directory_path)

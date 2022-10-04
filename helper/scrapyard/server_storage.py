@@ -157,7 +157,7 @@ def save_archive_file():
     if index:
         return json.dumps(index)
     else:
-        return "", 404
+        return "[]"
 
 
 @app.route("/storage/persist_notes_index", methods=['POST'])

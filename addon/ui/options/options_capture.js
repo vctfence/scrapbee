@@ -1,5 +1,6 @@
 import {send} from "../../proxy.js";
 import {settings} from "../../settings.js";
+import {setSaveCheckHandler} from "../options.js";
 
 async function loadCaptureSettings() {
     let object = await browser.storage.local.get("savepage-settings");
@@ -101,6 +102,10 @@ async function storeCaptureSettings(e) {
     send.savepageSettingsChanged();
 }
 
+async function loadSaveSettings() {
+    $("#option-save-unpacked-archives").prop("checked", settings.save_unpacked_archives());
+}
+
 function configureCaptureSettingsPage() {
     $(`#div-capture input[type="checkbox"]`).on("click", storeCaptureSettings);
     $(`#div-capture input[type="radio"]`).on("click", storeCaptureSettings);
@@ -112,9 +117,13 @@ function configureCaptureSettingsPage() {
         $("label[for='options-originonly']").css("color", "grey");
         $("label[for='options-originpath']").css("color", "grey");
     }
+
+    setSaveCheckHandler("option-save-unpacked-archives", "save_unpacked_archives");
 }
 
 export async function load() {
+    await settings.load();
     await loadCaptureSettings();
+    await loadSaveSettings();
     configureCaptureSettingsPage();
 }
