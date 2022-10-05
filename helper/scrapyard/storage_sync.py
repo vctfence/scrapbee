@@ -44,9 +44,9 @@ def compute_sync(storage_manager, params):
         incoming_node = uuid2node_incoming[uuid]
         storage_node = uuid2node_storage[uuid]
 
-        if incoming_node["date_modified"] > storage_node["date_modified"]:
+        if incoming_node.get("date_modified", 0) > storage_node.get("date_modified", 0):
             updated_incoming.add(uuid)
-        elif incoming_node["date_modified"] < storage_node["date_modified"]:
+        elif incoming_node.get("date_modified", 0) < storage_node.get("date_modified", 0):
             updated_in_storage.add(uuid)
 
     new_incoming = incoming - common
@@ -70,6 +70,9 @@ def compute_sync(storage_manager, params):
 
     db_tree = NodeDB.tree_sort_nodes(uuid2node_storage)
 
+
+    logging.debug(new_in_storage)
+    logging.debug(new_in_storage)
     # keeping the correct order
     # push_nodes = [n for n in nodes_incoming if n["uuid"] in push]
     pull_nodes = [make_sync_node(n) for _, n in db_tree.items() if n["uuid"] in pull]
@@ -96,7 +99,7 @@ def compute_sync(storage_manager, params):
 def make_sync_node(node):
     result = {
         "uuid": node["uuid"],
-        "date_modified": node["date_modified"]
+        "date_modified": node.get("date_modified", 0)
     }
 
     if "parent" in node:

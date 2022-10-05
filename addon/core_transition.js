@@ -67,6 +67,7 @@ async function collectNodes() {
 
             cloudShelf.uuid = UUID.numeric();
             cloudShelf.name = CLOUD_SHELF_NAME + " (transferred)";
+            cloudShelf.date_modifed = cloudShelf.date_added;
 
             nodes = [...nodes, ...cloudNodes];
         }
