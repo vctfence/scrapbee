@@ -1,6 +1,7 @@
 import {settings} from "../../settings.js";
-import {setSaveCheckHandler, setSaveSelectHandler} from "../options.js";
+import {setSaveCheckHandler} from "../options.js";
 import {selectricRefresh, simpleSelectric} from "../shelf_list.js";
+import {STORAGE_POPULATED} from "../../storage.js";
 import {send} from "../../proxy.js";
 
 function configureScrapyardSettingsPage() {
@@ -17,8 +18,9 @@ function configureScrapyardSettingsPage() {
 
             const status = await send.checkSyncDirectory({path});
 
-            if (status)
-                send.shelvesChanged();
+            if (status === STORAGE_POPULATED)
+                send.performSync();
+
         }, 1000)
     });
 

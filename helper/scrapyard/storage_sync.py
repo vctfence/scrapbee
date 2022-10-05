@@ -70,12 +70,9 @@ def compute_sync(storage_manager, params):
 
     db_tree = NodeDB.tree_sort_nodes(uuid2node_storage)
 
-
-    logging.debug(new_in_storage)
-    logging.debug(new_in_storage)
     # keeping the correct order
     # push_nodes = [n for n in nodes_incoming if n["uuid"] in push]
-    pull_nodes = [make_sync_node(n) for _, n in db_tree.items() if n["uuid"] in pull]
+    pull_nodes = [make_sync_node(n) for n in db_tree.values() if n["uuid"] in pull]
 
     # for n in push_nodes:
     #     n["push_content"] = "content_modified" in n and (n["uuid"] in new_incoming
@@ -87,10 +84,10 @@ def compute_sync(storage_manager, params):
 
     global g_sync_operations
     g_sync_operations = {
-        "push": [], # push_nodes,
+        "push": [],  # push_nodes,
         "pull": pull_nodes,
         "delete": [uuid2node_incoming[n] for n in deleted_incoming],
-        "delete_in_storage": [] # [uuid2node_storage[n] for n in deleted_in_storage]
+        "delete_in_storage": []  # [uuid2node_storage[n] for n in deleted_in_storage]
     }
 
     return g_sync_operations

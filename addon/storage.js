@@ -244,3 +244,5 @@ export const ARCHIVE_TYPE_TEXT = "text";
 export const ARCHIVE_TYPE_FILES = "files";
 
 export const UNPACKED_ARCHIVE_DIRECTORY = "archive";
+
+export const STORAGE_POPULATED = "populated";

@@ -58,41 +58,41 @@ function showDlg(name, data, init = () => {}) {
         $("#copy-reference-url").hide();
 
     // handle bookmark comments
-    let comments_icon = $dlg.find("#prop-dlg-comments-icon").first();
-    if (comments_icon.length) {
+    let commentsIcon = $dlg.find("#prop-dlg-comments-icon").first();
+    if (commentsIcon.length) {
         if (data.external === BROWSER_EXTERNAL_TYPE)
-            comments_icon.hide();
+            commentsIcon.hide();
 
         let comments_container = $dlg.find(" #dlg-comments-container").first();
         let dlg_title = $dlg.find(" #prop-dlg-title-text").first();
 
         if (data.comments) {
-            comments_icon.css("background-image", "var(--themed-comments-filled-icon)");
+            commentsIcon.css("background-image", "var(--themed-comments-filled-icon)");
         }
         else
-            comments_icon.css("background-image", "var(--themed-comments-icon)");
+            commentsIcon.css("background-image", "var(--themed-comments-icon)");
 
-        let old_icon = comments_icon.css("background-image");
+        let old_icon = commentsIcon.css("background-image");
 
-        comments_icon.click(e => {
+        commentsIcon.click(e => {
             comments_container.toggle();
             if (comments_container.is(":visible")) {
-                comments_icon.css("background-image", "var(--themed-properties-icon)");
-                comments_icon.attr("title", "Properties");
+                commentsIcon.css("background-image", "var(--themed-properties-icon)");
+                commentsIcon.attr("title", "Properties");
                 dlg_title.text("Comments");
             }
             else {
-                comments_icon.css("background-image", old_icon);
-                comments_icon.attr("title", "Comments");
+                commentsIcon.css("background-image", old_icon);
+                commentsIcon.attr("title", "Comments");
                 dlg_title.text("Properties");
             }
         });
     }
 
     // handle bookmark containers
-    let containers_icon = $dlg.find("#prop-dlg-containers-icon").first();
-    if (browser.contextualIdentities && containers_icon.length && data.type !== NODE_TYPE_NOTES) {
-        containers_icon.click(() => {
+    let containersIcon = $dlg.find("#prop-dlg-containers-icon").first();
+    if (browser.contextualIdentities && containersIcon.length && data.type !== NODE_TYPE_NOTES) {
+        containersIcon.click(() => {
             $("#containers-menu", $dlg).toggle();
         });
 
@@ -125,7 +125,7 @@ function showDlg(name, data, init = () => {}) {
         }
 
         $(".container-item").click(e => {
-            containers_icon.attr("style", makeButtonStyle(e.target));
+            containersIcon.attr("style", makeButtonStyle(e.target));
             data.container = e.target.id;
 
             if (data.container === DEFAULT_CONTAINER)
@@ -135,13 +135,24 @@ function showDlg(name, data, init = () => {}) {
         if (data.container && data.container !== DEFAULT_CONTAINER) {
             let elt = $(`#${data.container}`, containers_menu).get(0);
             if (elt)
-                containers_icon.attr("style", makeButtonStyle(elt));
+                containersIcon.attr("style", makeButtonStyle(elt));
         }
     }
     else {
-        containers_icon.remove();
+        containersIcon.remove();
     }
 
+    let bookmarkIconDiv = $dlg.find("#prop-title-icon-image").first();
+    if (bookmarkIconDiv.length) {
+        if (data.displayed_icon)
+            bookmarkIconDiv.css("background-image", `url("${data.displayed_icon}")`);
+        else
+            bookmarkIconDiv.css("background-image", `var(--themed-globe-icon)`);
+
+        bookmarkIconDiv.on("click.dlg", () => {
+            $dlg.find("#prop-row-user_icon").show();
+        });
+    }
 
     /** return promise object */
     let p = new Promise(function (resolve, reject) {
@@ -182,19 +193,14 @@ function showDlg(name, data, init = () => {}) {
             resolve(null);
         });
 
-        let more_properties = $dlg.find("#more-properties");
+        let morePropertiesLink = $dlg.find("#more-properties");
 
-        more_properties.bind("click.dlg", function () {
-            if (more_properties.text() === "More") {
+        morePropertiesLink.bind("click.dlg", function () {
+            if (morePropertiesLink.text() === "More") {
                 let fields = $(".more-properties");
 
-                // hide the icon filed, if there is a stored icon or no icon
-                // hide size, if it is empty
                 fields = fields.filter(function() {
-                    if (!["prop-row-icon", "prop-row-size"].some(id => this.id === id))
-                        return true;
-
-                    if (this.id === "prop-row-icon" && !data.stored_icon && data.icon && data.type !== NODE_TYPE_NOTES)
+                    if (!["prop-row-size"].some(id => this.id === id))
                         return true;
 
                     if (this.id === "prop-row-size" && data.size)
@@ -204,23 +210,23 @@ function showDlg(name, data, init = () => {}) {
                 });
 
                 fields.show();
-                more_properties.text("Less");
+                morePropertiesLink.text("Less");
             }
             else {
                 $(".more-properties").hide();
-                more_properties.text("More");
+                morePropertiesLink.text("More");
             }
         });
 
-        let set_default_icon = $dlg.find("#set-default-icon");
+        let setDefaultIconLink = $dlg.find("#set-default-icon");
 
-        set_default_icon.bind("click.dlg", function () {
-            $dlg.find("#prop-icon").val("");
+        setDefaultIconLink.bind("click.dlg", function () {
+            $dlg.find("#prop-user_icon").val("");
         });
 
-        let copy_reference = $dlg.find("#copy-reference-url");
+        let copyReferenceLink = $dlg.find("#copy-reference-url");
 
-        copy_reference.bind("click.dlg", function () {
+        copyReferenceLink.bind("click.dlg", function () {
             let url = "ext+scrapyard://" + $dlg.find("#prop-uuid").val();
             navigator.clipboard.writeText(url);
         });

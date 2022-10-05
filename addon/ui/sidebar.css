@@ -622,5 +622,14 @@ a#set-default-icon, a#copy-reference-url {
     left: 0;
     height: 2px;
     background-color: #757575 !important;
-    width: 0%;
+    width: 0;
+}
+
+#prop-title-icon-image {
+    height: 16px;
+    width: 16px;
+    margin-right: 2px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    cursor: pointer;
 }

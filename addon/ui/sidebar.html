@@ -146,8 +146,18 @@
                         <textarea id="prop-comments" name="comments"></textarea>
                     </div>
                     <div class="prop-row">
-                        <label for="prop-name" class="cell">Title: </label>
-                        <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
+                        <label for="prop-name" class="cell" style="float: none;">Title: </label>
+                        <div id="prop-title-container" style="width:100%; display: flex; align-items: center;">
+                            <div id="prop-title-icon-image" title="Edit icon"></div>
+                            <input id="prop-name" class="dialog-input" type="" name="name" value=""  style="flex-grow: 1"/>
+                        </div>
+                    </div>
+                    <div id="prop-row-user_icon" class="prop-row" style="display: none;">
+                        <div>
+                            <div><label for="prop-user_icon" class="cell">Icon: </label></div>
+                            <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
+                        </div>
+                        <input id="prop-user_icon" type="" class="dialog-input" name="user_icon" value="" style="width:100%"/>
                     </div>
                     <div class="prop-row">
                         <label for="prop-uri" class="cell">URL: </label>
@@ -171,13 +181,6 @@
                             <div style="float: right;"><a id="copy-reference-url" href="#">copy reference</a></div>
                         </div>
                         <input id="prop-uuid" readonly="true" class="dialog-input" type="" name="uuid" value="" style="width:100%"/>
-                    </div>
-                    <div id="prop-row-icon" class="prop-row more-properties">
-                        <div>
-                            <div><label for="prop-icon" class="cell">Icon: </label></div>
-                            <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
-                        </div>
-                        <input id="prop-icon" type="" class="dialog-input" name="icon" value="" style="width:100%"/>
                     </div>
                     <div class="prop-row prop-row-date-added more-properties">
                         <label for="prop-added" class="cell">Added on: </label>

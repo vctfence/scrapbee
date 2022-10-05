@@ -24,6 +24,9 @@ export class Marshaller {
         if (!node.name)
             node.name = "";
 
+        delete node.external;
+        delete node.external_id;
+
         for (let key of Object.keys(node))
             if (key.endsWith("_added") || key.endsWith("_modified"))
                 node[key] = this._date2UnixTime(node[key]);

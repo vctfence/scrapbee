@@ -1261,6 +1261,17 @@ class BookmarkTree {
                         else
                             properties.comments = "";
 
+                        if (properties.icon || properties.stored_icon) {
+                            if (properties.stored_icon)
+                                properties.displayed_icon = await Icon.get(properties);
+                            else
+                                properties.displayed_icon = properties.icon;
+
+                            properties.user_icon = properties.displayed_icon;
+                        }
+                        else
+                            properties.displayed_icon = "";
+
                         let hasComments = !!properties.comments;
 
                         properties.containers = this._containers;
@@ -1275,6 +1286,7 @@ class BookmarkTree {
                         let newProperties = await showDlg("properties", properties);
 
                         if (newProperties) {
+                            delete properties.displayed_icon;
                             delete properties.containers;
                             delete properties.uuid;
 
@@ -1285,9 +1297,16 @@ class BookmarkTree {
                                 properties.date_added = originalDateAdded;
                             }
 
-                            if (!properties.icon) {
+                            let newIcon;
+                            if (properties.user_icon === "") {
                                 properties.icon = undefined;
                                 properties.stored_icon = undefined;
+                                ctxJNode.icon = "var(--themed-globe-icon)";
+                            }
+                            else if (properties.user_icon && properties.user_icon !== properties.displayed_icon) {
+                                properties.icon = properties.user_icon;
+                                await Bookmark.storeIcon(properties);
+                                newIcon = await Icon.get(properties);
                             }
 
                             this.startProcessingIndication();
@@ -1315,6 +1334,9 @@ class BookmarkTree {
                                 tree.rename_node(ctxJNode, BookmarkTree._formatTODO(ctxNode));
 
                             tree.redraw_node(ctxJNode, true, false, true);
+
+                            if (newIcon)
+                                tree.set_icon(ctxJNode, newIcon);
 
                             $("#" + properties.id).prop('title', BookmarkTree._formatNodeTooltip(properties));
                         }
