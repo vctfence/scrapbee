@@ -2,7 +2,7 @@ import json
 
 from flask import request, abort
 
-from .import_rdf import build_archive_index
+from .storage_rdf import build_archive_index
 from .request_queue import RequestQueue
 from .server import app, requires_auth, storage_manager
 

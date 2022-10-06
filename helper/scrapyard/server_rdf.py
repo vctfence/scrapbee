@@ -9,7 +9,7 @@ from flask import request, render_template
 
 from .browse import highlight_words_in_index
 from .cache_dict import CacheDict
-from .import_rdf import import_rdf_archive, import_rdf_archive_index, fetch_archive_file, save_archive_file, \
+from .storage_rdf import import_rdf_archive, import_rdf_archive_index, fetch_archive_file, save_archive_file, \
     persist_comments, persist_archive
 from .server import app, requires_auth, send_native_message
 

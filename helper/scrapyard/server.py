@@ -14,9 +14,8 @@ from flask import request, abort, render_template
 from werkzeug.serving import make_server
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 
+from .server_debug import DEBUG
 from .storage_manager import StorageManager
-
-DEBUG = True
 
 app = flask.Flask(__name__, template_folder="resources", static_folder="resources")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0

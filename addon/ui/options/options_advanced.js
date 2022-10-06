@@ -154,7 +154,7 @@ function configureImpExpPanel() {
         exported.timestamp = now.getTime();
         exported.date = now.toString();
 
-        const settings = await browser.storage.local.get();
+        const settings = await browser.storage.local.get() || {};
 
         if (settings["scrapyard-settings"]) {
             delete settings["scrapyard-settings"]["ishell_presents"];
@@ -221,7 +221,7 @@ function configureImpExpPanel() {
 
                 delete imported["localstorage-settings"];
 
-                let scrapyardSettings = await browser.storage.local.get();
+                let scrapyardSettings = await browser.storage.local.get() || {};
                 Object.assign(scrapyardSettings["savepage-settings"], imported["savepage-settings"]);
                 Object.assign(scrapyardSettings["scrapyard-settings"], imported["scrapyard-settings"]);
 

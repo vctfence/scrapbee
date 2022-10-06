@@ -468,7 +468,7 @@ export class BookmarkManager extends EntityManager {
 
                 let iconUrl = `data:${contentType};base64,${btoa(binaryString)}`;
 
-                const id = await Icon.add(node, iconUrl);
+                const id = await Icon.import.add(node, iconUrl);
 
                 return [id, iconUrl];
             }
@@ -478,7 +478,7 @@ export class BookmarkManager extends EntityManager {
             node.stored_icon = true;
             node.icon = await Icon.computeHash(iconUrl);
             if (node.id)
-                await this._Node.update(node);
+                await this._Node.updateContentModified(node);
         };
 
         let iconId;
@@ -487,7 +487,7 @@ export class BookmarkManager extends EntityManager {
         if (node.icon) {
             try {
                 if (node.icon.startsWith("data:")) {
-                    iconId = await Icon.add(node, node.icon);
+                    iconId = await Icon.import.add(node, node.icon);
                     dataUrl = node.icon;
                     await updateNode(node, node.icon);
                 }

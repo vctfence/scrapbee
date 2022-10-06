@@ -46,15 +46,18 @@ helper-win:
 	make helper-clean
 	cd helper; rm -f *.exe
 	cd helper; rm -f *.zip
+	echo "DEBUG = False" > ./helper/scrapyard/server_debug.py
 	cd helper; pyinstaller scrapyard_helper.py
 	mkdir ./helper/dist/scrapyard_helper/scrapyard
 	cp -r ./helper/scrapyard/resources ./helper/dist/scrapyard_helper/scrapyard
 	cd helper; makensis setup.nsi
 	make helper-clean
+	echo "DEBUG = True" > ./helper/scrapyard/server_debug.py
 
 .PHONY: helper-cli
 helper-cli:
 	cd helper; cp -r ./scrapyard ./cli-installer/scrapyard_helper/
+	echo "DEBUG = False" > ./helper/cli-installer/scrapyard_helper/scrapyard/server_debug.py
 	cd helper; cp -r ./manifests ./cli-installer/scrapyard_helper/
 	cd helper; rm -r -f ./cli-installer/scrapyard_helper/manifests/debug_manifest*
 	cd helper; cp -r ./setup.py ./cli-installer/scrapyard_helper/

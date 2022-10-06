@@ -1269,8 +1269,10 @@ class BookmarkTree {
 
                             properties.user_icon = properties.displayed_icon;
                         }
-                        else
+                        else {
                             properties.displayed_icon = "";
+                            properties.user_icon = "";
+                        }
 
                         let hasComments = !!properties.comments;
 
@@ -1286,7 +1288,6 @@ class BookmarkTree {
                         let newProperties = await showDlg("properties", properties);
 
                         if (newProperties) {
-                            delete properties.displayed_icon;
                             delete properties.containers;
                             delete properties.uuid;
 
@@ -1295,18 +1296,6 @@ class BookmarkTree {
                             if (ctxNode.external === RDF_EXTERNAL_TYPE) {
                                 properties.uuid = originalUUID;
                                 properties.date_added = originalDateAdded;
-                            }
-
-                            let newIcon;
-                            if (properties.user_icon === "") {
-                                properties.icon = undefined;
-                                properties.stored_icon = undefined;
-                                ctxJNode.icon = "var(--themed-globe-icon)";
-                            }
-                            else if (properties.user_icon && properties.user_icon !== properties.displayed_icon) {
-                                properties.icon = properties.user_icon;
-                                await Bookmark.storeIcon(properties);
-                                newIcon = await Icon.get(properties);
                             }
 
                             this.startProcessingIndication();
@@ -1318,9 +1307,27 @@ class BookmarkTree {
 
                             delete properties.comments;
 
-                            Bookmark.clean(properties);
+                            let newIcon;
+                            if (properties.user_icon === "") {
+                                properties.icon = undefined;
+                                properties.stored_icon = undefined;
+                                ctxJNode.icon = "var(--themed-globe-icon)";
+                            }
+                            else if (properties.user_icon && properties.user_icon !== properties.displayed_icon)
+                                newIcon = properties.user_icon;
 
+                            Bookmark.clean(properties);
                             properties = await send.updateBookmark({node: properties});
+
+                            if (newIcon) {
+                                properties.icon = newIcon;
+                                await Bookmark.storeIcon(properties);
+
+                                if (ctxJNode.a_attr.class)
+                                    ctxJNode.a_attr.class = ctxJNode.a_attr.class.replace("generic-icon");
+
+                                tree.set_icon(ctxJNode, newIcon);
+                            }
 
                             this.stopProcessingIndication();
 
@@ -1334,9 +1341,6 @@ class BookmarkTree {
                                 tree.rename_node(ctxJNode, BookmarkTree._formatTODO(ctxNode));
 
                             tree.redraw_node(ctxJNode, true, false, true);
-
-                            if (newIcon)
-                                tree.set_icon(ctxJNode, newIcon);
 
                             $("#" + properties.id).prop('title', BookmarkTree._formatNodeTooltip(properties));
                         }
