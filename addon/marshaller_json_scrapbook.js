@@ -27,6 +27,7 @@ const SERIALIZED_FIELD_ORDER = [
     "tags",
     "todo_state",
     "todo_date",
+    "todo_pos",
     "details",
     "date_added",
     "date_modified",

@@ -33,18 +33,24 @@ receive.checkSyncDirectory = async message => {
 };
 
 receive.performSync = async message => {
+    let synced;
+
     send.startProcessingIndication();
 
     try {
-        await performSync();
+        synced = await performSync();
     }
     finally {
         send.stopProcessingIndication();
-        send.shelvesChanged();
+
+        if (synced)
+            send.shelvesChanged();
     }
 };
 
 async function performSync() {
+    let result;
+
     await settings.load();
 
     if (syncing || !await helperApp.probe(true))
@@ -65,7 +71,7 @@ async function performSync() {
                 const syncOperations = await computeSync(syncDirectory);
 
                 if (syncOperations) {
-                    await syncWithStorage(syncOperations, syncDirectory);
+                    result = await syncWithStorage(syncOperations, syncDirectory);
                     await helperApp.fetch("/storage/sync_close_session");
                     await settings.set(SCRAPYARD_SYNC_METADATA, storageMetadata);
                 }
@@ -77,6 +83,8 @@ async function performSync() {
     finally {
         syncing = false;
     }
+
+    return result;
 }
 
 async function getStorageMetadata(syncDirectory) {
@@ -179,6 +187,8 @@ async function syncWithStorage(syncOperations, syncDirectory) {
             else
                 action.setIcon({path: ACTION_ICONS});
         }
+
+        return true;
     }
 }
 

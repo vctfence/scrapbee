@@ -380,8 +380,8 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
 }
 
 async function syncShelves() {
-    await performSync();
     await loadShelves();
+    await performSync();
 }
 
 async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
@@ -624,7 +624,7 @@ async function performSync(verbose = true) {
     if (getLastShelf() === CLOUD_SHELF_ID)
         await switchShelf(CLOUD_SHELF_ID, true);
     else
-        send.performSync();
+        return send.performSync();
 }
 
 async function selectNode(node, open, forceScroll) {
