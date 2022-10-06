@@ -102,7 +102,10 @@ receive.compareDatabaseStorage = async message => {
         const nodes = await Export.nodes("everything");
         const unmarshaller = new UnmarshallerJSONScrapbook();
 
-        let result = Object.keys(storedNodes).length === nodes.length;
+        const idbKeys = new Set(nodes.map(n => n.uuid === DEFAULT_SHELF_UUID? FORMAT_DEFAULT_SHELF_UUID: n.uuid));
+        const storageKeys = new Set(Object.keys(storedNodes));
+
+        let result = idbKeys.size === storageKeys.size && [...idbKeys].every(x => storageKeys.has(x));
 
         if (!result) {
             for (const node of [...nodes]) {
@@ -115,7 +118,10 @@ receive.compareDatabaseStorage = async message => {
                 }
             }
 
-            console.log(nodes, storedNodes);
+            console.log("Unmatched IDB nodes:");
+            console.log(nodes);
+            console.log("Unmatched storage nodes:")
+            console.log(storedNodes);
 
             return result;
         }
@@ -139,7 +145,7 @@ receive.compareDatabaseStorage = async message => {
                 delete node.icon;
                 delete node.tag_list;
 
-                if (!isDeepEqual(node, dbItem) || !isDeepEqual(node, objectItem)) {
+                if (!isDeepEqual(node, dbItem, true) || !isDeepEqual(node, objectItem, true)) {
                     console.log("objects do not match");
                     console.log(node, dbItem, objectItem);
                     result = false;

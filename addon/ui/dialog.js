@@ -58,7 +58,7 @@ function showDlg(name, data, init = () => {}) {
         $("#copy-reference-url").hide();
 
     // handle bookmark comments
-    let commentsIcon = $dlg.find("#prop-dlg-comments-icon").first();
+    const commentsIcon = $dlg.find("#prop-dlg-comments-icon").first();
     if (commentsIcon.length) {
         if (data.external === BROWSER_EXTERNAL_TYPE)
             commentsIcon.hide();
@@ -90,7 +90,7 @@ function showDlg(name, data, init = () => {}) {
     }
 
     // handle bookmark containers
-    let containersIcon = $dlg.find("#prop-dlg-containers-icon").first();
+    const containersIcon = $dlg.find("#prop-dlg-containers-icon").first();
     if (browser.contextualIdentities && containersIcon.length && data.type !== NODE_TYPE_NOTES) {
         containersIcon.click(() => {
             $("#containers-menu", $dlg).toggle();
@@ -142,7 +142,7 @@ function showDlg(name, data, init = () => {}) {
         containersIcon.remove();
     }
 
-    let bookmarkIconDiv = $dlg.find("#prop-title-icon-image").first();
+    const bookmarkIconDiv = $dlg.find("#prop-title-icon-image").first();
     if (bookmarkIconDiv.length) {
         if (data.displayed_icon)
             bookmarkIconDiv.css("background-image", `url("${data.displayed_icon}")`);
@@ -154,8 +154,10 @@ function showDlg(name, data, init = () => {}) {
         });
     }
 
+    const doNotAssign = ["date_added"];
+
     /** return promise object */
-    let p = new Promise(function (resolve, reject) {
+    let promise = new Promise(function (resolve, reject) {
         function proceed() {
             var data = {};
             $dlg.find("input").each(function () {
@@ -164,7 +166,8 @@ function showDlg(name, data, init = () => {}) {
                         if (this.checked)
                             data[this.name] = $(this).val();
                     } else {
-                        data[this.name] = $(this).val();
+                        if (!doNotAssign.some(p => p === this.name))
+                            data[this.name] = $(this).val();
                     }
                 }
             })
@@ -231,7 +234,7 @@ function showDlg(name, data, init = () => {}) {
             navigator.clipboard.writeText(url);
         });
     });
-    return p;
+    return promise;
 }
 
 function alert(title, message) {

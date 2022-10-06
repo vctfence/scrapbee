@@ -283,7 +283,7 @@ export function cleanObject(object, forUpdate) {
     return object;
 }
 
-export function isDeepEqual(object1, object2) {
+export function isDeepEqual(object1, object2, verbose) {
     const objKeys1 = Object.keys(object1);
     const objKeys2 = Object.keys(object2);
 
@@ -295,8 +295,10 @@ export function isDeepEqual(object1, object2) {
 
         const isObjects = isObject(value1) && isObject(value2);
 
-        if ((isObjects && !isDeepEqual(value1, value2))
-            || (!isObjects && value1 !== value2)) {
+        if ((isObjects && !isDeepEqual(value1, value2)) || (!isObjects && value1 !== value2)) {
+            if (verbose)
+                console.log("Deep unequal key: %s", key);
+
             return false;
         }
     }
