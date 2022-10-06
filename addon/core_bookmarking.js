@@ -203,7 +203,7 @@ receive.reorderNodes = async message => {
     if (!helper)
         return;
 
-    return Bookmark.reorder(message.positions);
+    return Bookmark.reorder(message.positions, message.posProperty);
 };
 
 receive.storePageHtml = message => {

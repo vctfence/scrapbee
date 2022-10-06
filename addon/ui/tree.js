@@ -40,6 +40,8 @@ import {DiskStorage} from "../storage_external.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 const FOLDER_SELECT_STATE = "folder-select";
+const EXTENDED_TODO_CLASS = "extended-todo";
+const DEFAULT_ICON_CLASS = "generic-icon";
 
 // return the original Scrapyard node object stored in a jsTree node
 let o = n => n.data;
@@ -426,7 +428,7 @@ class BookmarkTree {
                 jnode.a_attr.class += BookmarkTree._styleTODO(node);
 
                 if (node.__extended_todo) {
-                    jnode.li_attr.class += " extended-todo";
+                    jnode.li_attr.class += " " + EXTENDED_TODO_CLASS;
                     jnode.text = BookmarkTree._formatTODO(node);
                 }
             }
@@ -443,7 +445,7 @@ class BookmarkTree {
                     jnode.icon = "var(--themed-image-icon)";
                 else {
                     jnode.icon = "var(--themed-globe-icon)";
-                    jnode.a_attr.class += " generic-icon";
+                    jnode.a_attr.class += " " + DEFAULT_ICON_CLASS;
                 }
             }
         }
@@ -693,12 +695,11 @@ class BookmarkTree {
     }
 
     async #moveNode(_, data) {
-        let tree = this._jstree;
-        let jparent = tree.get_node(data.parent);
+        const tree = this._jstree;
+        const jparent = tree.get_node(data.parent);
+        const jnode = tree.get_node(data.node);
 
         if (data.parent != data.old_parent) {
-            let jnode = tree.get_node(data.node);
-
             this.startProcessingIndication();
 
             try {
@@ -723,11 +724,15 @@ class BookmarkTree {
                 this.stopProcessingIndication();
             }
         }
-        else
-            this.reorderNodes(jparent);
+        else {
+            if (jnode.li_attr?.class?.includes(EXTENDED_TODO_CLASS))
+                await this.reorderNodes(jparent, "todo_pos");
+            else
+                await this.reorderNodes(jparent);
+        }
     }
 
-    async reorderNodes(jparent) {
+    async reorderNodes(jparent, posProperty = "pos") {
         let jsiblings = jparent.children.map(c => this._jstree.get_node(c));
 
         let positions = [];
@@ -740,17 +745,17 @@ class BookmarkTree {
             orderNode.parent_id = sibling.parent_id;
             orderNode.external = sibling.external;
             orderNode.external_id = sibling.external_id;
-            sibling.pos = orderNode.pos = i;
+            sibling[posProperty] = orderNode[posProperty] = i;
             positions.push(orderNode);
         }
 
-        if (jparent.id === "#") {
+        if (jparent.id === "#" && this._everything) {
             await Bookmark.idb.reorder(positions);
             const storedShelves = positions.filter(p => !p.external);
             await send.reorderNodes({positions: storedShelves});
         }
         else
-            return send.reorderNodes({positions: positions});
+            return send.reorderNodes({positions: positions, posProperty});
     }
 
     contextMenu(ctxJNode) {
@@ -1324,7 +1329,7 @@ class BookmarkTree {
                                 await Bookmark.storeIcon(properties);
 
                                 if (ctxJNode.a_attr.class)
-                                    ctxJNode.a_attr.class = ctxJNode.a_attr.class.replace("generic-icon");
+                                    ctxJNode.a_attr.class = ctxJNode.a_attr.class.replace(DEFAULT_ICON_CLASS, "");
 
                                 tree.set_icon(ctxJNode, newIcon);
                             }

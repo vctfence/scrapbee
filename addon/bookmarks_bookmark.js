@@ -266,7 +266,7 @@ export class BookmarkManager extends EntityManager {
         return result;
     }
 
-    async reorder(positions) {
+    async reorder(positions, posProperty) {
         try {
             await this.plugins.reorderBookmarks(positions);
         }
@@ -274,8 +274,8 @@ export class BookmarkManager extends EntityManager {
             console.error(e);
         }
 
-        const id2pos = new Map(positions.map(n => [n.id, n.pos]));
-        await this._Node.batchUpdate(n => n.pos = id2pos.get(n.id), Array.from(id2pos.keys()));
+        const id2pos = new Map(positions.map(n => [n.id, n[posProperty]]));
+        await this._Node.batchUpdate(n => n[posProperty] = id2pos.get(n.id), Array.from(id2pos.keys()));
     }
 
     async move(ids, destId, moveLast) {

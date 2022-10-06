@@ -107,6 +107,7 @@ export const NODE_PROPERTIES =
      "parent_id",
      "todo_date",
      "todo_state",
+     "todo_pos",
      "date_added",
      "date_modified",
      "content_modified",
@@ -186,6 +187,12 @@ export function byName(a, b) {
 export function byPosition(a, b) {
     let a_pos = a.pos === undefined? DEFAULT_POSITION: a.pos;
     let b_pos = b.pos === undefined? DEFAULT_POSITION: b.pos;
+    return a_pos - b_pos;
+}
+
+export function byTODOPosition(a, b) {
+    let a_pos = a.todo_pos === undefined? DEFAULT_POSITION: a.todo_pos;
+    let b_pos = b.todo_pos === undefined? DEFAULT_POSITION: b.todo_pos;
     return a_pos - b_pos;
 }
 
