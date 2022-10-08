@@ -229,7 +229,7 @@ ScrapbeeElement.prototype.getBodyResources=function(){
 }
 ScrapbeeElement.prototype.getImgResources=function(){
     var r=[];
-    ["data-orig-file", "data-medium-file", "data-large-file", "srcset"].forEach((a)=>{
+    ["data-orig-file", "data-medium-file", "data-large-file", "srcset", "onload", "onerror"].forEach((a)=>{
         this.el.removeAttribute(a);    
     });
     if(this.el.getAttribute("src")){ // always absolute uri?
