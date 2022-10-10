@@ -124,7 +124,10 @@ def rdf_browse(uuid):
 
 @app.route("/rdf/browse/<uuid>/<path:file>", methods=['GET'])
 def rdf_browse_content(uuid, file):
-    return flask.send_from_directory(rdf_page_directories[uuid], file)
+    if uuid in rdf_page_directories:
+        return flask.send_from_directory(rdf_page_directories[uuid], file)
+    else:
+        return "", 404
 
 
 # Get Scrapbook rdf file for the given node uuid

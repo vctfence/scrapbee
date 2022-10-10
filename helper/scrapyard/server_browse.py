@@ -89,5 +89,8 @@ def serve_unpacked_archive(params, archive_directory):
 
 @app.route("/browse/<uuid>/<path:file>")
 def serve_unpacked_assets(uuid, file):
-    return send_from_directory(unpacked_archives[uuid], file)
+    if uuid in unpacked_archives:
+        return send_from_directory(unpacked_archives[uuid], file)
+    else:
+        return "", 404
 

@@ -284,11 +284,26 @@ export function cleanObject(object, forUpdate) {
 }
 
 export function isDeepEqual(object1, object2, verbose) {
-    const objKeys1 = Object.keys(object1);
-    const objKeys2 = Object.keys(object2);
+    object1 = {...object1};
+    object2 = {...object2};
+
+    let objKeys1 = Object.keys(object1);
+    let objKeys2 = Object.keys(object2);
+
+    for (const key of objKeys1)
+        if (object1[key] === undefined)
+            delete object1[key];
+
+    for (const key of objKeys2)
+        if (object2[key] === undefined)
+            delete object2[key];
+
+    objKeys1 = Object.keys(object1);
+    objKeys2 = Object.keys(object2);
 
     if (objKeys1.length !== objKeys2.length) {
-        console.log("Missing keys");
+        if (verbose)
+            console.log("Missing keys");
         return false;
     }
 
