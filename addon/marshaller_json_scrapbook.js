@@ -261,9 +261,11 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
 
         unconvertedNode.type = NODE_TYPES[node.type];
 
-        unconvertedNode.todo_state = TODO_STATES[node.todo_state];
+        if (node.todo_state)
+            unconvertedNode.todo_state = TODO_STATES[node.todo_state];
 
-        unconvertedNode.stored_icon = unconvertedNode.has_icon;
+        if (unconvertedNode.has_icon)
+            unconvertedNode.stored_icon = unconvertedNode.has_icon;
         delete unconvertedNode.has_icon;
 
         if (node.is_site) {

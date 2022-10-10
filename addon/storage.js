@@ -191,8 +191,8 @@ export function byPosition(a, b) {
 }
 
 export function byTODOPosition(a, b) {
-    let a_pos = a.todo_pos === undefined? DEFAULT_POSITION: a.todo_pos;
-    let b_pos = b.todo_pos === undefined? DEFAULT_POSITION: b.todo_pos;
+    let a_pos = a.todo_pos === undefined? 0: a.todo_pos;
+    let b_pos = b.todo_pos === undefined? 0: b.todo_pos;
     return a_pos - b_pos;
 }
 

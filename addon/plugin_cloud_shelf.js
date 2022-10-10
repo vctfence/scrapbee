@@ -162,7 +162,7 @@ export class CloudShelfPlugin {
     async beforeBookmarkCopied(dest, node) {
         if (dest.external !== CLOUD_EXTERNAL_TYPE && node.external === CLOUD_EXTERNAL_TYPE) {
             node.external = dest.external;
-            node.external_id = dest.external;
+            delete node.external_id;
         }
         else if (dest.external === CLOUD_EXTERNAL_TYPE && node.external !== CLOUD_EXTERNAL_TYPE) {
             node.external = CLOUD_EXTERNAL_TYPE;
@@ -193,7 +193,7 @@ export class CloudShelfPlugin {
             return this.createCloudShelf();
     }
 
-    // should only be called in the background script through message
+    // should only be called in the background script through a message
     async reconcileCloudBookmarksDB(verbose) {
         if (this._reconciling || settings.transition_to_disk())
             return;

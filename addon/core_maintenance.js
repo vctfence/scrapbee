@@ -118,9 +118,9 @@ receive.compareDatabaseStorage = async message => {
                 }
             }
 
-            console.log("Unmatched IDB nodes:");
+            console.log("Nodes only in IDB:");
             console.log(nodes);
-            console.log("Unmatched storage nodes:")
+            console.log("Nodes only in storage:")
             console.log(storedNodes);
 
             return result;
@@ -133,9 +133,9 @@ receive.compareDatabaseStorage = async message => {
             const storedObjects = storedNodes[node.uuid];
 
             if (storedObjects) {
-                let dbItem = unmarshaller.unconvertNode(storedObjects.db_item);
-                dbItem = unmarshaller.deserializeNode(dbItem);
-                await unmarshaller.findParentInIDB(dbItem)
+                let indexItem = unmarshaller.unconvertNode(storedObjects.db_item);
+                indexItem = unmarshaller.deserializeNode(indexItem);
+                await unmarshaller.findParentInIDB(indexItem)
 
                 let objectItem = unmarshaller.unconvertNode(storedObjects.object_item);
                 objectItem = unmarshaller.deserializeNode(objectItem);
@@ -145,14 +145,22 @@ receive.compareDatabaseStorage = async message => {
                 delete node.icon;
                 delete node.tag_list;
 
-                if (!isDeepEqual(node, dbItem, true) || !isDeepEqual(node, objectItem, true)) {
-                    console.log("objects do not match");
-                    console.log(node, dbItem, objectItem);
+                if (node.tags === "")
+                    delete node.tags;
+
+                if (!isDeepEqual(node, indexItem, true) || !isDeepEqual(node, objectItem, true)) {
+                    console.log("Objects do not match:\nIDB object:");
+                    console.log(node);
+                    console.log("Index object:");
+                    console.log(indexItem);
+                    console.log("File object:");
+                    console.log(objectItem);
+
                     result = false;
                 }
             }
             else {
-                console.log("no corresponding object");
+                console.log("No corresponding storage item for object:");
                 console.log(node);
                 result = false;
             }

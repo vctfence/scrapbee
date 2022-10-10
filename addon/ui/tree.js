@@ -783,7 +783,7 @@ class BookmarkTree {
 
             // a minimal set of attributes compatible with marshalling
             selectedNodes.forEach(n => nodes.push({id: n.id, parent_id: n.parent_id, name: n.name, uuid: n.uuid,
-                external: n.external, todo_state: state}));
+                external: n.external, todo_state: state, todo_pos: state? n.todo_pos: undefined}));
 
             this.startProcessingIndication();
 
