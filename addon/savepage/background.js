@@ -918,11 +918,12 @@ function addListeners()
                     if (!mimeTypes)
                         mimeTypes = await (await fetch("/mime_types.json")).json();
 
-                    const path = new URL(url).pathname;
-                    let extension = path.match(/\.([\d,a-z]{1,8}$)/i)?.[1];
+                    let extension = mimeTypes[mimeType]?.extensions?.[0];
 
-                    if (!extension)
-                        extension = mimeTypes[mimeType]?.extensions?.[0] || "bin";
+                    if (!extension) {
+                        const path = new URL(url).pathname;
+                        extension = path.match(/\.([\d,a-z]{1,8}$)/i)?.[1] || "bin";
+                    }
 
                     return `resource_${index}.${extension}`;
                 }

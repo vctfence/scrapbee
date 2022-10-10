@@ -150,7 +150,7 @@ export class BookmarkManager extends EntityManager {
         if (!data.date_added)
             data.date_added = now;
 
-        // sync uses date_modified field to track changes, so this field should be updated on a regular import
+        // sync uses date_modified field to track changes, so this field should be updated on a regular import,
         // but it should not be touched when performing a sync import
         if (!sync) {
             data.date_modified = now;

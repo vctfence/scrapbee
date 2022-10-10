@@ -145,6 +145,8 @@ export class CloudShelfPlugin {
     }
 
     async _moveNodeToCloud(dest, storedNode) {
+        const nodeJSON = JSON.stringify(storedNode);
+        await this._provider.assets.storeNode(storedNode.uuid, nodeJSON);
         const cloudNode = {...storedNode};
         cloudNode.external = CLOUD_EXTERNAL_TYPE;
         await Bookmark.copyContent(storedNode, cloudNode);

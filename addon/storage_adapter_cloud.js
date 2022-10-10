@@ -32,20 +32,31 @@ export class StorageAdapterCloud {
         return {};
     }
 
+    async _persistNodeObject(node) {
+        const nodeJSON = JSON.stringify(node);
+        await this._provider.assets.storeNode(node.uuid, nodeJSON);
+    }
+
     async persistNode(params) {
-        const nodeJSON = JSON.stringify(params.node);
-        await this._provider.assets.storeNode(params.node.uuid, nodeJSON);
+        await this._persistNodeObject(params.node);
         return this.withCloudDB(db => db.addNode(params.node));
     }
 
     async updateNode(params) {
-        return this.withCloudDB(db => db.updateNode(params.node));
+        return this.withCloudDB(db => {
+            db.updateNode(params.node);
+            const node = db.getNode(params.node.uuid);
+            return this._persistNodeObject(node);
+        });
     }
 
     async updateNodes(params) {
-        return this.withCloudDB(db => {
-            for (let node of params.nodes)
+        return this.withCloudDB(async db => {
+            for (const node of params.nodes) {
                 db.updateNode(node);
+                const updatedNode = db.getNode(params.node.uuid);
+                await this._persistNodeObject(updatedNode);
+            }
         });
     }
 
