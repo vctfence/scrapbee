@@ -302,8 +302,16 @@ export function isDeepEqual(object1, object2, verbose) {
     objKeys2 = Object.keys(object2);
 
     if (objKeys1.length !== objKeys2.length) {
-        if (verbose)
-            console.log("Missing keys");
+        if (verbose) {
+            console.log("Missing keys:");
+            for (const key of [...objKeys1])
+                if (key in object2) {
+                    delete object1[key];
+                    delete object2[key];
+                }
+
+            console.log([...Object.keys(object1), ...Object.keys(object2)])
+        }
         return false;
     }
 

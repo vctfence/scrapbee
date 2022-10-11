@@ -218,12 +218,22 @@ class Crawler {
     }
 
     async #savePage(link, options) {
-        let resource;
+        const bookmark = {
+            uri: link.url,
+            name: "Site Page",
+            __site_capture: options,
+            _unlisted: true,
+            parent_id: this.#siteBookmark.parent_id
+        };
+
+        const node = await Bookmark.idb.add(bookmark, NODE_TYPE_ARCHIVE);
         const isHTML = await isHTMLLink(link.url);
+        let resource;
+
         if (isHTML === true)
-            resource = await this.#captureHTMLPage(link, options);
+            resource = await this.#captureHTMLPage(node, link);
         else if (isHTML === false)
-            resource = await this.#captureNonHTMLPage(link, options);
+            resource = await this.#captureNonHTMLPage(node, link);
 
         if (resource)
             await this.#saveArchive(resource);
@@ -231,41 +241,43 @@ class Crawler {
         return resource?.bookmark
     }
 
-    #captureHTMLPage(link, options) {
-        const bookmark = {uri: link.url, __site_capture: options, __url_packing: true};
+    #captureHTMLPage(node, link) {
+        node.__url_packing = true;
         const resolver = (m, t) => ({bookmark: m.bookmark, content: m.html, title: t.title, icon: t.favIconUrl});
-        return packPage(link.url, bookmark, null, resolver);
+        return packPage(link.url, node, null, resolver);
     }
 
-    async #captureNonHTMLPage(link, options) {
+    async #captureNonHTMLPage(node, link) {
         let response;
         try {
             response = await fetchWithTimeout(link.url);
         } catch (e) {
             console.error(e);
         }
-        const result = {bookmark: {uri: link.url, __site_capture: options}, title: link.text};
+        const result = {bookmark: node, title: link.text};
 
         if (response?.ok) {
             result.contentType = response.headers.get("content-type");
-            result.content = await response.blob();
+            result.content = await response.arrayBuffer();
         }
 
         return result;
     }
 
     async #saveArchive(result) {
-        const bookmark = {
-            uri: result.bookmark.uri,
-            name: result.title,
-            icon: result.icon,
-            parent_id: this.#siteBookmark.parent_id
-        }
-
-        const node = await Bookmark.add(bookmark, NODE_TYPE_ARCHIVE);
+        const node = result.bookmark;
         const content = result.content || "";
         const contentType = result.contentType || "text/html";
-        return Bookmark.storeArchive(node, content, contentType, result.bookmark.__index);
+
+        node.name = result.title;
+        node._unlisted = undefined;
+
+        if (result.icon) {
+            node.icon = result.icon;
+            await Bookmark.storeIcon(node);
+        }
+
+        return Bookmark.storeArchive(node, content, contentType, node.__index);
     }
 }
 

@@ -287,6 +287,9 @@ export class BookmarkManager extends EntityManager {
         }
         catch (e) {
             console.error(e);
+
+            if (e.name === "EScrapyardPluginError")
+                throw e;
         }
 
         // a check for circular references

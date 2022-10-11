@@ -18,18 +18,18 @@ class ShelfManager extends EntityManager {
     async listContent(shelfName) {
         let nodes = [];
 
-        if (shelfName === EVERYTHING_SHELF_NAME) {
+        if (shelfName === EVERYTHING_SHELF_NAME)
             nodes = await Node.get();
-            nodes = nodes.filter(n => !(n._unlisted || n.type === NODE_TYPE_UNLISTED));
-        }
         else {
             const shelfNode = await Query.shelf(shelfName);
             if (shelfNode)
                 nodes = await Query.fullSubtree(shelfNode.id);
         }
 
-        if (nodes)
+        if (nodes) {
+            nodes = nodes.filter(n => !(n._unlisted || n.type === NODE_TYPE_UNLISTED));
             nodes.sort(byPosition);
+        }
 
         return nodes;
     }

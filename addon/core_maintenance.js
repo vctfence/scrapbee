@@ -162,11 +162,9 @@ receive.compareDatabaseStorage = async message => {
             else {
                 console.log("No corresponding storage item for object:");
                 console.log(node);
+
                 result = false;
             }
-
-            if (!result)
-                break;
         }
 
         return result;

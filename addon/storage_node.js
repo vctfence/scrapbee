@@ -68,7 +68,7 @@ export class NodeIDB extends EntityIDB {
     }
 
     async add(node) {
-        delete node.pos;
+        node.pos = undefined;
         this.setUUID(node);
         this.resetDates(node);
 

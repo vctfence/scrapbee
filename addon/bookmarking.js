@@ -8,7 +8,7 @@ import {
     isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
 import {capitalize, getMimetypeByExt} from "./utils.js";
-import {receive, send, sendLocal} from "./proxy.js";
+import {send, sendLocal} from "./proxy.js";
 import {ARCHIVE_TYPE_FILES, DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {fetchText, fetchWithTimeout} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
@@ -205,7 +205,7 @@ export async function archiveBookmark(node) {
         }
 
         if (response.ok)
-           await Bookmark.storeArchive(bookmark, await response.blob(), response.headers.get("content-type"));
+           await Bookmark.storeArchive(bookmark, await response.arrayBuffer(), response.headers.get("content-type"));
     }
 }
 

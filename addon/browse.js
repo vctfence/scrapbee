@@ -58,7 +58,7 @@ async function configureArchivePage(tab, node) {
         const uuid = tab.url.split("/").at(-2);
         node = await Node.getByUUID(uuid);
     }
-    else
+    else if (settings.open_bookmark_in_active_tab())
         node = undefined;
 
     if (node && await Bookmark.isSitePage(node))
@@ -68,7 +68,7 @@ async function configureArchivePage(tab, node) {
 async function configureSiteLinks(node, tab) {
     await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
     const siteMap = await buildSiteMap(node);
-    browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap});
+    browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap, useProtocol: _BACKGROUND_PAGE});
 }
 
 async function buildSiteMap(node) {

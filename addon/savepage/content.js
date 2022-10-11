@@ -3111,7 +3111,7 @@ async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,pa
         origstr = (datauri == origurl)? "": " data-savepage-src=\"" + origurl + "\"";
 
         if (sandboxed)
-            origstr += + " sandbox=\"allow-scripts\"";
+            origstr += " sandbox=\"allow-scripts\"";
 
         startTag = startTag.replace(/ src="[^"]*"/, origstr + " src=\"" + datauri + "\"");
 

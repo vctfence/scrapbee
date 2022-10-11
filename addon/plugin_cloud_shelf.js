@@ -13,7 +13,7 @@ import {CONTEXT_BACKGROUND, getContextType, showNotification} from "./utils_brow
 import {ExternalNode} from "./storage_node_external.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Node} from "./storage_entities.js";
-import {ProgressCounter} from "./utils.js";
+import {ProgressCounter, sleep} from "./utils.js";
 import {CloudError} from "./cloud_client_base.js";
 import {StorageProxy} from "./storage_proxy.js";
 import {UnmarshallerCloud} from "./marshaller_cloud.js";
@@ -109,6 +109,13 @@ export class CloudShelfPlugin {
         if (!settings.cloud_enabled())
             return;
 
+        if (this._reconciling) {
+            const error = new Error("Moving bookmarks during cloud reconciliation.");
+            error.name = "EScrapyardPluginError";
+            showNotification("Please wait until refresh is finished.");
+            throw error;
+        }
+
         let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE);
         let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_TYPE);
 
@@ -162,6 +169,13 @@ export class CloudShelfPlugin {
     }
 
     async beforeBookmarkCopied(dest, node) {
+        if (this._reconciling) {
+            const error = new Error("Copying bookmarks during cloud reconciliation.");
+            error.name = "EScrapyardPluginError";
+            showNotification("Please wait until refresh is finished.");
+            throw error;
+        }
+
         if (dest.external !== CLOUD_EXTERNAL_TYPE && node.external === CLOUD_EXTERNAL_TYPE) {
             node.external = dest.external;
             delete node.external_id;
