@@ -253,7 +253,8 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
 
         this.convertUUIDsFromFormat(unconvertedNode);
 
-        unconvertedNode.uri = node.url;
+        if (node.url)
+            unconvertedNode.uri = node.url;
         delete unconvertedNode.url;
 
         unconvertedNode.name = node.title;

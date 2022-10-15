@@ -71,9 +71,7 @@ export class NodeProxy extends StorageProxy {
                 node: node
             };
 
-            const result = adapter.persistNode(params);
-            if (!adapter.concurrent)
-                return result;
+            return adapter.persistNode(params);
         }
     }
 
@@ -91,9 +89,7 @@ export class NodeProxy extends StorageProxy {
             node = this.#marshaller.serializeNode(node);
             params.node = await this.#marshaller.convertNode(node);
 
-            const result = adapter.updateNode(params);
-            if (!adapter.concurrent)
-                return result;
+            return adapter.updateNode(params);
         }
     }
 
@@ -112,9 +108,7 @@ export class NodeProxy extends StorageProxy {
                 return node;
             }));
 
-            const result = adapter.updateNodes(params);
-            if (!adapter.concurrent)
-                return result;
+            return adapter.updateNodes(params);
         }
     }
 
@@ -126,9 +120,7 @@ export class NodeProxy extends StorageProxy {
                 node_uuids: [node.uuid]
             };
 
-            const result = adapter.deleteNodes(params);
-            if (!adapter.concurrent)
-                return result;
+            return adapter.deleteNodes(params);
         }
     }
 
@@ -143,9 +135,7 @@ export class NodeProxy extends StorageProxy {
                 node_uuids: nodes.map(n => n.uuid)
             };
 
-            const result = adapter.deleteNodesShallow(params);
-            if (!adapter.concurrent)
-                return result;
+            return adapter.deleteNodesShallow(params);
         }
     }
 

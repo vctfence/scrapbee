@@ -69,7 +69,8 @@ export class BookmarkManager extends EntityManager {
         data.name = await this.ensureUniqueName(data.parent_id, data.name);
 
         data.type = nodeType;
-        data.tag_list = this._splitTags(data.tags);
+        if (data.tags)
+            data.tag_list = this._splitTags(data.tags);
         //await this.addTags(data.tag_list);
 
         const [iconId, dataUrl] = await this.storeIcon(data);
@@ -139,7 +140,8 @@ export class BookmarkManager extends EntityManager {
 
         data = Object.assign({}, data);
 
-        data.tag_list = this._splitTags(data.tags);
+        if (data.tags)
+            data.tag_list = this._splitTags(data.tags);
         //this.addTags(data.tag_list);
 
         const exists = await Node.exists(data);
@@ -180,7 +182,8 @@ export class BookmarkManager extends EntityManager {
 
         //update.name = await this.ensureUniqueName(update.parent_id, update.name)
 
-        update.tag_list = this._splitTags(update.tags);
+        if (data.tags)
+            update.tag_list = this._splitTags(update.tags);
         //this.addTags(update.tag_list);
 
         await this.plugins.updateBookmark(update);

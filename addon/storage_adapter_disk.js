@@ -31,10 +31,6 @@ export class StorageAdapterDisk {
         }
     }
 
-    get concurrent() {
-        return true;
-    }
-
     accepts(node) {
         return node && !node.external;
     }

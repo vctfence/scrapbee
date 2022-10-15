@@ -138,8 +138,7 @@ class StorageManager:
             remove_fields = params["remove_fields"]
 
             for i in range(len(nodes)):
-                updated_node = node_db.update_node(nodes[i], remove_fields[i])
-                params["node"] = updated_node
+                params["node"] = node_db.update_node(nodes[i], remove_fields[i])
                 self.persist_node_object(params)
 
         self.with_node_db(params, update)

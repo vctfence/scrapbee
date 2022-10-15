@@ -20,10 +20,6 @@ export class StorageAdapterCloud {
         }
     }
 
-    get concurrent() {
-        return false;
-    }
-
     accepts(node) {
         return node && node.external === CLOUD_EXTERNAL_TYPE;
     }
@@ -54,7 +50,7 @@ export class StorageAdapterCloud {
         return this.withCloudDB(async db => {
             for (const node of params.nodes) {
                 db.updateNode(node);
-                const updatedNode = db.getNode(params.node.uuid);
+                const updatedNode = db.getNode(node.uuid);
                 await this._persistNodeObject(updatedNode);
             }
         });

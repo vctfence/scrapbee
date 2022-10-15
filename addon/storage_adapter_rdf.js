@@ -24,10 +24,6 @@ export class StorageAdapterRDF {
         }
     }
 
-    get concurrent() {
-        return false;
-    }
-
     accepts(node) {
         return node && node.external === RDF_EXTERNAL_TYPE;
     }

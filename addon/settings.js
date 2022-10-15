@@ -15,7 +15,8 @@ class ScrapyardSettings {
             visual_archive_icon: true,
             visual_archive_color: true,
             sort_shelves_in_popup: true,
-            show_firefox_toolbar: !_BACKGROUND_PAGE
+            show_firefox_toolbar: !_BACKGROUND_PAGE,
+            sidebar_filter_partial_match: true
         };
 
         this._bin = {};

@@ -109,12 +109,7 @@ export class CloudShelfPlugin {
         if (!settings.cloud_enabled())
             return;
 
-        if (this._reconciling) {
-            const error = new Error("Moving bookmarks during cloud reconciliation.");
-            error.name = "EScrapyardPluginError";
-            showNotification("Please wait until refresh is finished.");
-            throw error;
-        }
+        this._checkForReconciliation();
 
         let cloudNodes = nodes.filter(n => n.external === CLOUD_EXTERNAL_TYPE);
         let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_TYPE);
@@ -151,6 +146,15 @@ export class CloudShelfPlugin {
         }
     }
 
+    _checkForReconciliation() {
+        if (this._reconciling) {
+            const error = new Error("Adding bookmarks during cloud reconciliation.");
+            error.name = "EScrapyardPluginError";
+            showNotification("Please wait until refresh is finished.");
+            throw error;
+        }
+    }
+
     async _moveNodeToCloud(dest, storedNode) {
         const nodeJSON = JSON.stringify(storedNode);
         await this._provider.assets.storeNode(storedNode.uuid, nodeJSON);
@@ -169,15 +173,11 @@ export class CloudShelfPlugin {
     }
 
     async beforeBookmarkCopied(dest, node) {
-        if (this._reconciling) {
-            const error = new Error("Copying bookmarks during cloud reconciliation.");
-            error.name = "EScrapyardPluginError";
-            showNotification("Please wait until refresh is finished.");
-            throw error;
-        }
+        this._checkForReconciliation();
 
         if (dest.external !== CLOUD_EXTERNAL_TYPE && node.external === CLOUD_EXTERNAL_TYPE) {
-            node.external = dest.external;
+            if (dest.external)
+                node.external = dest.external;
             delete node.external_id;
         }
         else if (dest.external === CLOUD_EXTERNAL_TYPE && node.external !== CLOUD_EXTERNAL_TYPE) {
