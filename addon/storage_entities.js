@@ -4,8 +4,8 @@ import {NodeIDB} from "./storage_node.js";
 import {CommentsIDB} from "./storage_comments.js";
 import {NotesIDB} from "./storage_notes.js";
 
-export let Node = NodeIDB.newInstance();
-export let Archive = ArchiveIDB.newInstance();
-export let Comments = CommentsIDB.newInstance();
-export let Notes = NotesIDB.newInstance();
-export let Icon = IconIDB.newInstance();
+export const Node = NodeIDB.newInstance();
+export const Archive = ArchiveIDB.newInstance();
+export const Comments = CommentsIDB.newInstance();
+export const Notes = NotesIDB.newInstance();
+export const Icon = IconIDB.newInstance();

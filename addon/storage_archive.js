@@ -1,115 +1,158 @@
 import {EntityIDB} from "./storage_idb.js";
 import {indexHTML} from "./utils_html.js";
-import {readBlob} from "./utils_io.js";
+import {arrayToBinaryString, binaryString2Array, readBlob} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
+import {delegateProxy} from "./proxy.js";
+import {StorageAdapterDisk} from "./storage_adapter_disk.js";
+import {ArchiveProxy} from "./storage_archive_proxy.js";
+import {ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT} from "./storage.js";
+
+// An Archive entity has three fields:
+//   object - the contents of an archive, may be anything (the reify function deals with this)
+//            usually a String or ArrayBuffer
+//   byte_length - the presence of this field indicates that the archive was created from a non-text source
+//                 if object contains a string, this is a binary string
+//   type - mime type of the archive content
+
 
 export class ArchiveIDB extends EntityIDB {
     static newInstance() {
         const instance = new ArchiveIDB();
-        instance.import = new ArchiveIDB();
+
+        instance.import = delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), new ArchiveIDB());
         instance.import._importer = true;
-        return instance;
+
+        instance.idb = {import: new ArchiveIDB()};
+        instance.idb.import._importer = true;
+
+        return delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), instance);
     }
 
-    async _storeIndex(nodeId, words) {
-        return this._db.index.add({
-            node_id: nodeId,
-            words: words
-        });
-    }
+    entity(node, data, contentType, byteLength) {
+        contentType = contentType || "text/html";
 
-    async updateIndex(nodeId, words) {
-        const exists = await this._db.index.where("node_id").equals(nodeId).count();
-
-        if (exists)
-            return this._db.index.where("node_id").equals(nodeId).modify({
-                words: words
-            });
-        else
-            return this._storeIndex(nodeId, words);
-    }
-
-    async fetchIndex(nodeId) {
-        return this._db.index.where("node_id").equals(nodeId).first();
-    }
-
-    compose(data, contentType, byteLength) {
         if (typeof data !== "string" && data?.byteLength) // from ArrayBuffer
             byteLength = data.byteLength;
-        else if (typeof data === "string" && byteLength) // from binary string (presumably may come only form import)
-            data = this._binaryString2Array(data);
+        // else if (typeof data === "string" && byteLength) // from binary string
+        //     data = this._binaryString2Array(data);
+        //
+        // data = data instanceof Blob? data: new Blob([data], {type: contentType});
 
-        let object = data instanceof Blob? data: new Blob([data], {type: contentType});
+        const result = {
+            object: data,
+            byte_length: byteLength, // presence of this field indicates that the object is binary
+            type: contentType
+        };
 
+        if (node)
+            result.node_id = node.id;
+
+        return result;
+    }
+
+    indexEntity(node, words) {
         return {
-            object,
-            data: undefined,
-            byte_length: byteLength, // presence of this field indicates that the the object is binary
-            type: contentType || "text/html"
+            node_id: node.id,
+            words: words
         };
     }
 
-    async _addRaw(nodeId, data, contentType, byteLength) {
-        let options = this.compose(data, contentType, byteLength);
-        options.node_id = nodeId;
+    async storeIndex(node, words) {
+        const exists = await this._db.index.where("node_id").equals(node.id).count();
+        const entity = this.indexEntity(node, words);
 
-        const exists = await this._db.blobs.where("node_id").equals(nodeId).count();
         if (exists)
-            await this._db.blobs.where("node_id").equals(nodeId).modify(options);
+            return this._db.index.where("node_id").equals(node.id).modify(entity);
         else
-            await this._db.blobs.add(options);
-
-        if (!this._importer) {
-            const node = {id: nodeId, size: options.object.size, content_type: options.type};
-            await Node.contentUpdate(node);
-        }
+            return this._db.index.add(entity);
     }
 
-    async add(nodeId, data, contentType, byteLength, index) {
-        await this._addRaw(nodeId, data, contentType, byteLength);
+    async fetchIndex(node) {
+        return this._db.index.where("node_id").equals(node.id).first();
+    }
+
+    async _add(node, archive) {
+        const exists = await this._db.blobs.where("node_id").equals(node.id).count();
+
+        if (exists)
+            await this._db.blobs.where("node_id").equals(node.id).modify(archive);
+        else {
+            archive.node_id = node.id;
+            await this._db.blobs.add(archive);
+        }
+
+        return archive;
+    }
+
+    async add(node, archive, index) {
+        await this._add(node, archive);
+        await this.updateContentModified(node, archive);
 
         if (index?.words)
-            await this._storeIndex(nodeId, index.words);
-        else if (typeof data === "string" && !byteLength)
-            await this.updateIndex(nodeId, indexHTML(data));
+            await this.storeIndex(node, index.words);
+        else if (typeof archive.object === "string" && !archive.byte_length)
+            await this.storeIndex(node, indexHTML(archive.object));
     }
 
-    async updateHTML(nodeId, data) {
-        const object = new Blob([data], {type: "text/html"});
-
-        await this._db.blobs.where("node_id").equals(nodeId).modify({
-            object,
-            data: undefined // undefined removes fields from IDB
-        });
-
-        await this.updateIndex(nodeId, indexHTML(data));
-
+    async updateContentModified(node, archive) {
         if (!this._importer) {
-            const node = {id: nodeId, size: object.size};
-            await Node.contentUpdate(node);
+            node.contains = node.contains || (archive.byte_length? ARCHIVE_TYPE_BYTES: undefined)
+            node.content_type = archive.type;
+            node.size = (await this.getSize(node))?.size;
+
+            await Node.updateContentModified(node);
         }
     }
 
-    async get(nodeId, isUUID = false) {
-        nodeId = isUUID? await Node.getIdFromUUID(nodeId): nodeId;
-        return this._db.blobs.where("node_id").equals(nodeId).first();
+    async updateHTML(node, data) {
+        if (node.contains === ARCHIVE_TYPE_FILES) {
+            const index = await this.saveFile(node, "index.html", data);
+
+            if (index)
+                await this.idb.import.storeIndex(node, index);
+        }
+        else {
+            const entity = this.entity(node, data);
+
+            await this._add(node, entity);
+            await this.storeIndex(node, indexHTML(data));
+        }
+
+        return this.updateContentModified(node, entity);
     }
 
-    async delete(nodeId) {
+    async get(node) {
+        return this._db.blobs.where("node_id").equals(node.id).first();
+    }
+
+    // get size of an archive, not including size of metadata and indexes
+    async getSize(node) {
+        // NOP, implemented in proxy
+    }
+
+    // get file of an unpacked archive
+    async getFile(node, file) {
+        // NOP, implemented in proxy
+    }
+
+    // save file of an unpacked archive
+    async saveFile(node, file, content) {
+        // NOP, implemented in proxy
+    }
+
+    async delete(node) {
         if (this._db.tables.some(t => t.name === "blobs"))
-            await this._db.blobs.where("node_id").equals(nodeId).delete();
+            await this._db.blobs.where("node_id").equals(node.id).delete();
 
         if (this._db.tables.some(t => t.name === "index"))
-            await this._db.index.where("node_id").equals(nodeId).delete();
+            await this._db.index.where("node_id").equals(node.id).delete();
     }
 
-    _binaryString2Array(bs) {
-        let byteArray = new Uint8Array(bs.length);
-        for (let i = 0; i < bs.length; ++i)
-            byteArray[i] = bs.charCodeAt(i);
-        return byteArray;
+    isUnpacked(node) {
+        return node.contains === ARCHIVE_TYPE_FILES;
     }
 
+    // reifying for JSON storage, leaves string (no byte_length) as is even if binarystring is specified
     async reify(archive, binarystring = false) {
         let result;
 
@@ -123,18 +166,34 @@ export class ArchiveIDB extends EntityIDB {
                 else
                     result = this._binaryString2Array(archive.data);
             }
-            else if (archive.object) { // archive.object is an instance of Blob
+            else if (archive.object instanceof Blob) {
                 if (binarystring)
-                    result = await readBlob(archive.object, "binarystring")
+                    result = await readBlob(archive.object, "binarystring");
                 else
                     result = await readBlob(archive.object, "binary")
+            }
+            else if (typeof archive.object === "string") {
+                if (binarystring)
+                    result = archive.object;
+                else
+                    result = binaryString2Array(archive.object);
+            }
+            else {
+                if (binarystring)
+                    result = arrayToBinaryString(archive.object);
+                else
+                    result = archive.object;
             }
         }
         else {
             if (archive.data)
                 result = archive.data;
-            else if (archive.object)
+            else if (archive.object instanceof Blob)
                 result = await readBlob(archive.object, "text");
+            else if (typeof archive.object === "string")
+                result = archive.object;
+            else
+                result = arrayToBinaryString(archive.object);
         }
 
         return result;

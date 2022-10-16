@@ -1,127 +1,176 @@
-import {Marshaller, Unmarshaller} from "./marshaller.js";
-import {Node} from "./storage_entities.js";
-import {DEFAULT_SHELF_UUID} from "./storage.js";
-import {SYNC_VERSION} from "./marshaller_json.js";
+import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
+import {
+    FORMAT_DEFAULT_SHELF_UUID,
+    MarshallerJSONScrapbook,
+    UnmarshallerJSONScrapbook
+} from "./marshaller_json_scrapbook.js";
+import {helperApp} from "./helper_app.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {settings} from "./settings.js";
+import {DEFAULT_SHELF_UUID, nodeHasSomeContent} from "./storage.js";
 
-export class MarshallerSync extends Marshaller {
-    constructor(backend, initial) {
-        super();
-        this._backend = backend;
-        this._initial = initial;
-    }
 
-    async marshal(syncNode) {
-        const node = await Node.getByUUID(syncNode.uuid);
-        await this._resetExportedNodeDates(syncNode, node);
+export class MarshallerSync extends MarshallerJSONScrapbook {
+    _id2uuid = new Map();
 
-        let content;
-        let exportedNode;
+    createSyncNode(node) {
+        const syncNode = {
+            id: node.id,
+            uuid: node.uuid,
+            parent_id: node.parent_id,
+            date_modified: node.date_modified,
+            content_modified: node.content_modified
+        };
 
-        if (syncNode.push_content) {
-            content = await this.preprocessContent(node);
-            exportedNode = content.node;
-        }
+        if (syncNode.date_modified && syncNode.date_modified instanceof Date)
+            syncNode.date_modified = syncNode.date_modified.getTime();
         else
-            exportedNode = this.preprocessNode(node);
+            syncNode.date_modified = 0;
 
-        delete exportedNode.id;
-        exportedNode.parent_id = syncNode.parent_id;
+        if (!node.content_modified && nodeHasSomeContent(node))
+            syncNode.content_modified = syncNode.date_modified;
+        else if (syncNode.content_modified)
+            syncNode.content_modified = syncNode.content_modified.getTime();
 
-        const payload = {node: JSON.stringify(exportedNode)};
+        this._id2uuid.set(syncNode.id, syncNode.uuid);
 
-        if (!this.isContentEmpty(content))
-            payload.content = this._serializeExportedContent(content);
-
-        const resp = await this._backend.post("/sync/push_node", payload);
-
-        if (!resp.ok)
-            throw new Error(`Sync marshaling HTTP error: ${resp.status}`);
-    }
-
-    async _resetExportedNodeDates(syncNode, node) {
-        if (this._initial) {
-            // reset the date_modified to force import by other clients
-            // of the nodes merged at the initial synchronization
-            node.date_modified = new Date();
-            if (node.content_modified || syncNode.content_modified)
-                node.content_modified = node.date_modified;
-
-            await Node.update(node, false);
+        if (syncNode.parent_id) {
+            syncNode.parent = this._id2uuid.get(syncNode.parent_id);
+            delete syncNode.parent_id;
         }
+        delete syncNode.id;
 
-        if (node.uuid === DEFAULT_SHELF_UUID) {
-            node.date_added = 0;
-            node.date_modified = 0;
-        }
+        if (syncNode.uuid === DEFAULT_SHELF_UUID)
+            syncNode.date_modified = 0;
+
+        this.convertUUIDsToFormat(syncNode);
+
+        return syncNode;
     }
 
-    _serializeExportedContent(content) {
-        let result;
-
-        const header = {sync: "Scrapyard", version: SYNC_VERSION};
-        result = JSON.stringify(header);
-
-        if (content.icon)
-            result += "\n" + JSON.stringify({icon: content.icon});
-        else
-            result += "\n{}";
-
-        delete content.node;
-        delete content.icon;
-        if (Object.keys(content).length)
-            result += "\n" + JSON.stringify(content);
-
-        return result;
-    }
+//     async marshal(syncNode) {
+//         const node = await Node.getByUUID(syncNode.uuid);
+//         await this._resetExportedNodeDates(syncNode, node);
+//
+//         let content;
+//         let exportedNode;
+//
+//         if (syncNode.push_content) {
+//             content = await this.serializeContent(node);
+//             exportedNode = content.node;
+//         }
+//         else
+//             exportedNode = this.serializeNode(node);
+//
+//         delete exportedNode.id;
+//         exportedNode.parent_id = syncNode.parent_id;
+//
+//         const payload = {node: JSON.stringify(exportedNode)};
+//
+//         if (!this.isContentEmpty(content))
+//             payload.content = this._serializeExportedContent(content);
+//
+//         const resp = await this._backend.post("/sync/push_node", payload);
+//
+//         if (!resp.ok)
+//             throw new Error(`Sync marshaling HTTP error: ${resp.status}`);
+//     }
+//
+//     async _resetExportedNodeDates(syncNode, node) {
+//         if (this._initial) {
+//             // reset the date_modified to force import by other clients
+//             // of the nodes merged at the initial synchronization
+//             node.date_modified = new Date();
+//             if (node.content_modified || syncNode.content_modified)
+//                 node.content_modified = node.date_modified;
+//
+//             await Node.update(node, false);
+//         }
+//
+//         if (node.uuid === DEFAULT_SHELF_UUID) {
+//             node.date_added = 0;
+//             node.date_modified = 0;
+//         }
+//     }
+//
+//     _serializeExportedContent(content) {
+//         let result;
+//
+//         const header = {sync: "Scrapyard", version: <!!!!!>};
+//         result = JSON.stringify(header);
+//
+//         if (content.icon)
+//             result += "\n" + JSON.stringify({icon: content.icon});
+//         else
+//             result += "\n{}";
+//
+//         delete content.node;
+//         delete content.icon;
+//         if (Object.keys(content).length)
+//             result += "\n" + JSON.stringify(content);
+//
+//         return result;
+//     }
 }
 
-export class UnmarshallerSync extends Unmarshaller {
-    constructor(backend) {
+export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
+    constructor() {
         super();
-        this._backend = backend;
         this.setSyncMode();
     }
 
-    async unmarshall(syncNode) {
-        if (syncNode.uuid === DEFAULT_SHELF_UUID)
-            return;
+    async unmarshall(syncNodes) {
+        const payload = await helperApp.fetchJSON_postJSON("/storage/sync_pull_objects", {
+            data_path: settings.data_folder_path(),
+            sync_nodes: JSON.stringify(syncNodes)
+        });
 
-        const payload = await this._backend.jsonPost("/sync/pull_node", {node: JSON.stringify(syncNode)});
+        let success = true;
 
-        if (!payload)
-            throw new Error("Sync unmarshaling HTTP error")
+        for (const object of payload)
+            try {
+                await this.unmarshallNode(object);
+            } catch (e) {
+                success = false;
+                console.error(e);
+            }
 
-        const node = payload.node;
-        let content = this._deserializeContent(payload.content);
-        content = Object.assign({node}, content);
-
-        if (node.parent_id) {
-            const parent = await Node.getByUUID(node.parent_id);
-            if (parent)
-                node.parent_id = parent.id;
-            else
-                throw new Error(`No parent for node: ${node.uuid}`);
-        }
-
-        await this.storeContent(content);
+        return success;
     }
 
-    _deserializeContent(serializedContent) {
-        const result = {};
+    async unmarshallNode(object) {
+        if (!object.item || object.item.uuid === FORMAT_DEFAULT_SHELF_UUID)
+            return;
 
-        if (serializedContent) {
-            let parts = serializedContent.split("\n").filter(s => !!s);
+        let {item: node, icon, comments, archive_index, notes_index} = object;
 
-            if (parts.length) {
-                //const header = JSON.parse(parts[0]);
-                const icon = JSON.parse(parts[1]);
-                const content = parts.length > 2? JSON.parse(parts[2]): {};
+        node = await this.unconvertNode(node);
+        node = this.deserializeNode(node);
+        await this.findParentInIDB(node);
 
-                Object.assign(result, icon);
-                Object.assign(result, content);
-            }
+        if (icon) {
+            icon = this.unconvertIcon(icon);
+            node.icon = await Icon.computeHash(icon.data_url);
         }
 
-        return result;
+        node = await Bookmark.idb.import(node, this._sync);
+
+        if (icon)
+            await Icon.idb.import.add(node, icon.data_url);
+
+        if (comments) {
+            comments = this.unconvertComments(comments);
+            Comments.idb.import.add(node, comments.text);
+        }
+
+        if (archive_index) {
+            archive_index = this.unconvertIndex(archive_index);
+            Archive.idb.import.storeIndex(node, archive_index.words);
+        }
+
+        if (notes_index) {
+            notes_index = this.unconvertIndex(notes_index);
+            Notes.idb.import.storeIndex(node, notes_index.words);
+        }
     }
 }

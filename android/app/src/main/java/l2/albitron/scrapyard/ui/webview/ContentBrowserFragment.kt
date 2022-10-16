@@ -6,9 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.CoroutineScope
@@ -16,9 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import l2.albitron.scrapyard.R
+import l2.albitron.scrapyard.Scrapyard
 import l2.albitron.scrapyard.cloud.db.CloudDB
-import l2.albitron.scrapyard.executeInUIThread
-import l2.albitron.scrapyard.executeInThread
+import l2.albitron.scrapyard.getMimetypeFromExt
 import org.apache.commons.text.StringEscapeUtils
 
 class ContentBrowserFragment : Fragment() {
@@ -36,20 +34,31 @@ class ContentBrowserFragment : Fragment() {
         return rootView
     }
 
-    private inner class TreeWebViewClient(context: FragmentActivity, browser: WebView) : WebViewClient() {
+    private inner class TreeWebViewClient(context: FragmentActivity, browser: WebView): WebViewClient() {
         private val _context = context
         private val _browser = browser
+        private var _uuid: String? = null
+        private var _db: CloudDB? = null
+        private var _unpacked = false
 
         override fun onPageFinished(view: WebView, url: String) {
             CoroutineScope(Dispatchers.IO).launch {
-                val uuid = requireArguments().getString(ARG_UUID)
-                val asset = requireArguments().getString(ARG_ASSET)
-                val dbType = requireArguments().getString(ARG_DB_TYPE)
+                val uuid = requireArguments().getString(ARG_UUID)!!
+                val asset = requireArguments().getString(ARG_ASSET)!!
+                val dbType = requireArguments().getString(ARG_DB_TYPE)!!
                 var assetContent: String? = null
 
+                _uuid = uuid
+
                 try {
-                    val cloudDB: CloudDB? = CloudDB.newInstance(_context, dbType)
-                    assetContent = cloudDB?.downloadAssetRaw(uuid!!, asset!!)
+                    _db = CloudDB.newInstance(_context, dbType)
+
+                    assetContent = if (asset == Scrapyard.ARCHIVE_CONTAINS_FILES) {
+                        _unpacked = true
+                        _db?.downloadUnpackedIndex(uuid)
+                    }
+                    else
+                        _db?.downloadAsset(uuid, asset)
 
                     if (assetContent == null) {
                         _context.supportFragmentManager.popBackStack()
@@ -80,6 +89,25 @@ class ContentBrowserFragment : Fragment() {
             } else {
                 false
             }
+        }
+
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse?  {
+            if (_unpacked) {
+                val uri = request.url.toString()
+                val prefix = "file:///android_asset/"
+
+                if (uri.startsWith(prefix)) {
+                    val assetPath = uri.replace(prefix, "")
+                    val mimeType: String? = getMimetypeFromExt(assetPath)
+                    val inputStream = _db?.downloadUnpackedAsset(_uuid!!, assetPath)
+
+                    if (inputStream != null) {
+                        return WebResourceResponse(mimeType, null, inputStream)
+                    }
+                }
+            }
+
+            return null
         }
     }
 

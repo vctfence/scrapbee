@@ -1,14 +1,6 @@
 * {
-    font-family: "Helvetica",
-    "Lucida Sans Unicode",
-    "Lucida Sans",
-    "Trebuchet MS",
-    "Open Sans",
-    "Fira Sans",
-    "Liberation Sans",
-    "Nimbus Sans L",
-    sans-serif;
-    font-size: 12px;
+    font-family: "Arial", "Helvetica", sans-serif;
+    font-size: 10pt; /* fsz */
 }
 
 html {
@@ -53,7 +45,7 @@ input[type="checkbox"] {
     padding: 0 10px 5px 10px;
 }
 
-.dlg-cover {
+.dlg-dim {
     position: fixed;
     z-index: 999999;
     width: 100%;
@@ -128,6 +120,12 @@ input[type='text'] {
     flex-grow: 0
 }
 
+.item-aligner {
+    display: flex;
+    align-items: center;
+    align-content: center;
+}
+
 .form-table {
 }
 
@@ -184,7 +182,7 @@ div.panel, fieldset.panel {
     text-align: right;
     font-weight: normal;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 10pt; /* fsz */
 }
 
 .form-table > tbody > tr > td {

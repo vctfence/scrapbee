@@ -1,5 +1,5 @@
 import {cleanObject} from "./utils.js";
-import {BROWSER_EXTERNAL_NAME, NODE_TYPE_ARCHIVE} from "./storage.js";
+import {DEFAULT_SHELF_ID, DEFAULT_SHELF_UUID, NODE_TYPE_ARCHIVE, NODE_TYPE_SHELF} from "./storage.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 
@@ -16,7 +16,7 @@ export class Marshaller {
         return date;
     }
 
-    preprocessNode(node) {
+    serializeNode(node) {
         node = Node.sanitized(node);
         cleanObject(node);
         Node.strip(node);
@@ -24,47 +24,44 @@ export class Marshaller {
         if (!node.name)
             node.name = "";
 
+        delete node.external;
+        delete node.external_id;
+
         for (let key of Object.keys(node))
             if (key.endsWith("_added") || key.endsWith("_modified"))
                 node[key] = this._date2UnixTime(node[key]);
 
-        if (node.external === BROWSER_EXTERNAL_NAME) {
-            delete node.external;
-            delete node.external_id;
-        }
-
         return node;
     }
 
-    async preprocessContent(node) {
-        const result = {node: this.preprocessNode(node)};
+    async serializeContent(node) {
+        const result = {node: this.serializeNode(node)};
 
         if (node.type === NODE_TYPE_ARCHIVE) {
-            let archive = await Archive.get(node.id);
+            let archive = await Archive.get(node);
             if (archive)
-                result.archive = await this.preprocessArchive(archive);
+                result.archive = await this.serializeArchive(archive);
         }
 
         if (node.has_notes) {
-            let notes = await Notes.get(node.id);
+            let notes = await Notes.get(node);
             if (notes)
-                result.notes = this.preprocessNotes(notes);
+                result.notes = this.serializeNotes(notes);
         }
 
         if (node.has_comments)
-            result.comments = this.preprocessComments(await Comments.get(node.id));
+            result.comments = this.serializeComments(await Comments.get(node));
 
         if (node.icon && node.stored_icon)
-            result.icon = this.preprocessIcon(await Icon.get(node.id));
+            result.icon = this.serializeIcon(await Icon.get(node));
 
         return result;
     }
 
-    async preprocessArchive(archive) {
+    async serializeArchive(archive) {
         let content = await Archive.reify(archive, true);
 
         delete archive.id;
-        delete archive.data;
         delete archive.node_id;
 
         if (archive.byte_length)
@@ -74,18 +71,18 @@ export class Marshaller {
         return cleanObject(archive);
     }
 
-    preprocessNotes(notes) {
+    serializeNotes(notes) {
         delete notes.id;
         delete notes.node_id;
         return cleanObject(notes);
     }
 
-    preprocessComments(comments) {
+    serializeComments(comments) {
         if (comments)
             return {text: comments};
     }
 
-    preprocessIcon(icon) {
+    serializeIcon(icon) {
         if (icon)
             return {data_url: icon};
     }
@@ -100,13 +97,15 @@ export class Unmarshaller {
         this._sync = true;
     }
 
+    setIDBOnlyMode() {
+        this._idbOnly = true;
+    }
+
     setForceLoadIcons() {
         this._forceIcons = true;
     }
 
-    async storeContent(content) {
-        let {node, icon, archive, notes, comments} = content;
-
+    deserializeNode(node) {
         delete node.id;
 
         if (!node.name)
@@ -116,30 +115,60 @@ export class Unmarshaller {
             if (key.endsWith("_added") || key.endsWith("_modified"))
                 node[key] = new Date(node[key]);
 
-        node = await Bookmark.import(node, this._sync);
+        return node;
+    }
+
+    deserializeArchive(archive) {
+        if (archive.byte_length && archive.object) {
+            archive.object = atob(archive.object);
+            archive.byte_length = archive.object.length;
+        }
+
+        return archive;
+    }
+
+    async storeContent(content) {
+        let {node, icon, archive, notes, comments} = content;
+        let _Bookmark = Bookmark;
+        let _Node = Node;
+        let _Icon = Icon;
+
+        if (this._idbOnly) {
+            _Bookmark = Bookmark.idb;
+            _Node = Node.idb;
+            _Icon = Icon.idb;
+        }
+
+        node = this.deserializeNode(node);
+
+        if (node.type === NODE_TYPE_SHELF && node.uuid === DEFAULT_SHELF_UUID) {
+            node.id = DEFAULT_SHELF_ID;
+            node = await _Node.put(node);
+        }
+        else
+            node = await _Bookmark.import(node, this._sync);
 
         if (this._forceIcons)
-            await Bookmark.storeIconFromURI(node);
+            await _Bookmark.storeIconFromURI(node);
 
         if (node.type === NODE_TYPE_ARCHIVE && archive) {
-            if (archive.byte_length)
-                archive.object = atob(archive.object);
-            await Archive.import.add(node.id, archive.object, archive.type, archive.byte_length);
+            archive = this.deserializeArchive(archive);
+            await Archive.import.add(node, archive);
         }
 
         if (notes) {
             notes.node_id = node.id;
-            await Notes.import.add(notes);
+            await Notes.import.add(node, notes);
         }
 
         if (comments)
-            await Comments.import.add(node.id, comments.text);
+            await Comments.import.add(node, comments.text);
 
         if (icon)
-            await Icon.import.add(node.id, icon.data_url);
+            await _Icon.import.add(node, icon.data_url);
         else {
             if (node.icon && !node.stored_icon) // may appear from android application
-                await Bookmark.storeIcon(node);
+                await _Bookmark.storeIcon(node);
         }
 
         return node;

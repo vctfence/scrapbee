@@ -1,8 +1,8 @@
-import {STORAGE_FORMAT,} from "./storage.js";
 import {parseJSONObject_v1, parseJSONObject_v2} from "./import_versions.js"
 import {Marshaller, Unmarshaller} from "./marshaller.js";
+import {ARCHIVE_TYPE_BYTES} from "./storage.js";
 
-export const SYNC_VERSION = 1; // sync v1 uses v3 JSON format
+export const SCRAPYARD_STORAGE_FORMAT = "Scrapyard";
 const FORMAT_VERSION = 3;
 
 export class MarshallerJSON extends Marshaller {
@@ -15,7 +15,7 @@ export class MarshallerJSON extends Marshaller {
         const now = new Date();
 
         const meta = {
-            export: STORAGE_FORMAT,
+            export: SCRAPYARD_STORAGE_FORMAT,
             version: FORMAT_VERSION,
             name: name,
             uuid: uuid,
@@ -31,44 +31,35 @@ export class MarshallerJSON extends Marshaller {
     }
 
     async marshal(object) {
-        const content = await this.preprocessContent(object);
+        const content = await this.serializeContent(object);
+
         const output = "\n" + JSON.stringify(content);
+
         return this._stream.append(output);
     }
 }
 
-export class StructuredUnmarshallerJSON extends Unmarshaller {
-    configure(options) {
-        this._stream = options.stream;
-        this.parseJSONObjectImpl = JSON.parse;
+export class UnmarshallerJSON extends Unmarshaller {
+    constructor(meta) {
+        super();
+
+        this._meta = meta;
     }
 
-    async unmarshalMeta() {
-        let metaLine = await this._stream.read();
+    configure(options) {
+        this._stream = options.stream;
 
-        if (!metaLine)
-            throw new Error("invalid file format");
-
-        metaLine = metaLine.replace(/^\[/, "");
-        metaLine = metaLine.replace(/,$/, "");
-        const meta = JSON.parse(metaLine);
-
-        if (!meta)
-            throw new Error("invalid file format");
-
-        if (meta.version > FORMAT_VERSION)
-            throw new Error("export format version is not supported");
-
-        switch (meta.version) {
+        switch (this._meta.version) {
             case 1:
                 this.parseJSONObjectImpl = parseJSONObject_v1;
                 break;
             case 2:
                 this.parseJSONObjectImpl = parseJSONObject_v2;
                 break;
+            default:
+                this.parseJSONObjectImpl = JSON.parse;
+                break;
         }
-
-        return meta;
     }
 
     async unmarshal() {
@@ -78,10 +69,20 @@ export class StructuredUnmarshallerJSON extends Unmarshaller {
             input = undefined;
 
         if (input) {
-            const object = this.parseJSONObjectImpl(input);
+            let object = this.parseJSONObjectImpl(input);
+
+            object = this.convertToScrapyard_v2(object);
             object.persist = () => this.storeContent(object);
             return object;
         }
+    }
+
+    convertToScrapyard_v2(object) {
+        if (object.archive) {
+            object.node.contains = object.archive.byte_length? ARCHIVE_TYPE_BYTES: undefined;
+        }
+
+        return object;
     }
 }
 

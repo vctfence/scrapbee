@@ -1,8 +1,8 @@
 import {
     byPosition,
-    DONE_SHELF_NAME, EVERYTHING,
-    isContainer, isVirtualShelf,
-    NODE_TYPE_GROUP,
+    DONE_SHELF_NAME, EVERYTHING_SHELF_NAME,
+    isContainerNode, isVirtualShelf,
+    NODE_TYPE_FOLDER,
     NODE_TYPE_SHELF,
     NODE_TYPE_UNLISTED,
     TODO_SHELF_NAME,
@@ -46,7 +46,7 @@ class QueryIDB extends EntityIDB {
     async selectAllChildrenIdsOf(id, children) {
         let directChildren = [];
         await this._db.nodes.where("parent_id").equals(id)
-            .each(n => directChildren.push([n.id, isContainer(n)]));
+            .each(n => directChildren.push([n.id, isContainerNode(n)]));
 
         if (directChildren.length) {
             for (let child of directChildren) {
@@ -84,7 +84,7 @@ class QueryIDB extends EntityIDB {
 
                 children.push(child);
 
-                if (isContainer(child))
+                if (isContainerNode(child))
                     await this._selectAllChildrenOf(child, children, preorder, level !== undefined? level + 1: undefined);
             }
         }
@@ -107,7 +107,7 @@ class QueryIDB extends EntityIDB {
 
                 children.push(node);
 
-                if (isContainer(node))
+                if (isContainerNode(node))
                     await this._selectAllChildrenOf(node, children, preorder, level !== undefined? level + 1: undefined);
             }
         }
@@ -115,28 +115,28 @@ class QueryIDB extends EntityIDB {
         return children;
     }
 
-    async nodes(group, options) {
+    async nodes(folder, options) {
         let {search, tags, date, date2, period, types, path, limit, depth, order} = options;
         let searchrx = search? new RegExp(search, "i"): null;
         let query = this._db.nodes;
 
-        path = path || EVERYTHING;
+        path = path || EVERYTHING_SHELF_NAME;
 
         const todoShelf = path?.toUpperCase() === TODO_SHELF_NAME;
         const doneShelf = path?.toUpperCase() === DONE_SHELF_NAME;
         const virtualShelf = isVirtualShelf(path);
 
-        if (group) {
+        if (folder) {
             let subtree = [];
 
             if (depth === "group")
-                await this._selectDirectChildrenIdsOf(group.id, subtree);
+                await this._selectDirectChildrenIdsOf(folder.id, subtree);
             else if (depth === "root+subtree") {
-                await this.selectAllChildrenIdsOf(group.id, subtree);
-                subtree.push(group.id);
+                await this.selectAllChildrenIdsOf(folder.id, subtree);
+                subtree.push(folder.id);
             }
             else // "subtree"
-                await this.selectAllChildrenIdsOf(group.id, subtree);
+                await this.selectAllChildrenIdsOf(folder.id, subtree);
 
             query = query.where("id").anyOf(subtree);
         }
@@ -157,7 +157,7 @@ class QueryIDB extends EntityIDB {
         }
 
         let byOptions = node => {
-            let result = virtualShelf? true: !!group;
+            let result = virtualShelf? true: !!folder;
 
             if (types)
                 result = result && types.some(t => t == node.type);
@@ -307,15 +307,15 @@ class QueryIDB extends EntityIDB {
         return this.shelf();
     }
 
-    async allGroups() {
-        const nodes = await this._db.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_GROUP]).toArray();
+    async allFolders() {
+        const nodes = await this._db.nodes.where("type").anyOf([NODE_TYPE_SHELF, NODE_TYPE_FOLDER]).toArray();
         return nodes.sort(byPosition);
     }
 
-    subgroup(parentId, name) {
+    subfolder(parentId, name) {
         name = name.toLocaleUpperCase();
         return this._db.nodes.where("parent_id").equals(parentId)
-            .and(n => n.type === NODE_TYPE_GROUP && name === n.name.toLocaleUpperCase())
+            .and(n => n.type === NODE_TYPE_FOLDER && name === n.name.toLocaleUpperCase())
             .first();
     }
 

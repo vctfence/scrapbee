@@ -10,6 +10,8 @@ import com.dropbox.core.NetworkIOException
 import com.dropbox.core.oauth.DbxCredential
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.WriteMode
+import com.microsoft.graph.http.GraphServiceException
+import com.microsoft.graph.models.DriveItem
 import l2.albitron.scrapyard.Settings
 import l2.albitron.scrapyard.cloud.providers.exceptions.CloudItemNotFoundException
 import l2.albitron.scrapyard.cloud.providers.exceptions.CloudNetworkException
@@ -41,19 +43,15 @@ class DropboxProvider : CloudProvider {
             target.write(buf, 0, length)
     }
 
-    override fun downloadTextFile(path: String): String? {
+    private fun downloadInputStreamInternal(path: String): Pair<InputStream?, Int?> {
         try {
             val downloader = _client.files().download(path)
             val fileSize = downloader.result.size.toInt()
+
             try {
-                ByteArrayOutputStream(fileSize).use { out ->
-                    copyStream(downloader.inputStream, out)
-                    return String(out.toByteArray(), StandardCharsets.UTF_8)
-                }
+                return Pair(downloader.inputStream, fileSize)
             } catch (e: IOException) {
                 e.printStackTrace()
-            } finally {
-                downloader.close()
             }
         } catch (e: DbxException) {
             if (BuildConfig.DEBUG)
@@ -64,6 +62,36 @@ class DropboxProvider : CloudProvider {
 
             throw CloudItemNotFoundException(e)
         }
+
+        return Pair(null, null)
+    }
+
+    override fun downloadInputStream(path: String): InputStream? {
+        val (inputStream, driveItem) = downloadInputStreamInternal(path)
+
+        return if (driveItem != null && inputStream != null)
+            inputStream
+        else
+            null
+    }
+
+    override fun downloadBinaryFile(path: String): ByteArray? {
+        val (inputStream, fileSize) = downloadInputStreamInternal(path)
+
+        return inputStream?.use { inputStream ->
+            ByteArrayOutputStream(fileSize!!).use { out ->
+                copyStream(inputStream, out)
+                return out.toByteArray()
+            }
+        }
+    }
+
+    override fun downloadTextFile(path: String): String? {
+        val bytes = downloadBinaryFile(path)
+
+        if (bytes != null)
+            return String(bytes, StandardCharsets.UTF_8)
+
         return null
     }
 

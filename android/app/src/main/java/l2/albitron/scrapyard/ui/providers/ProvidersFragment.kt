@@ -82,6 +82,9 @@ class ProvidersFragment : Fragment() {
 
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
+
+                    // OneDriveProvider.getSignature(context)
+
                     if (settings.isOneDriveSignedIn)
                         OneDriveProvider.signOut(context)
                     else

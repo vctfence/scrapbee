@@ -1,26 +1,27 @@
 import {receive, send} from "./proxy.js";
-import {settings} from "./settings.js";
+import {SCRAPYARD_SYNC_METADATA, settings} from "./settings.js";
 import {Node} from "./storage_entities.js";
-import {nativeBackend} from "./backend_native.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {ACTION_ICONS, showNotification} from "./utils_browser.js";
-import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, isNodeHasContent} from "./storage.js";
-import {SYNC_VERSION} from "./marshaller_json.js";
-import {ProgressCounter} from "./utils.js";
+import {DEFAULT_SHELF_UUID, NON_SYNCHRONIZED_EXTERNALS, JSON_SCRAPBOOK_VERSION} from "./storage.js";
+import {chunk, ProgressCounter} from "./utils.js";
 import {MarshallerSync, UnmarshallerSync} from "./marshaller_sync.js";
+import {Database} from "./storage_database.js";
+import {undoManager} from "./bookmarks_undo.js";
 
-const SYNC_ALARM_NAME = "sync-alarm";
-const SYNC_ALARM_PERIOD = 60;
+const SYNC_NODE_CHUNK_SIZE = 10;
 
 let syncing = false;
 
 receive.checkSyncDirectory = async message => {
     try {
-        send.startProcessingIndication({noWait: true});
-        const helperApp = await nativeBackend.hasVersion("0.5", "Scrapyard helper application 0.5+ is required for this feature.");
+        send.startProcessingIndication();
+        const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
 
-        if (helperApp) {
-            const status = await nativeBackend.jsonPost("/sync/check_directory",
-                {sync_directory: message.sync_directory});
+        if (helper) {
+            const status = await helperApp.fetchJSON_postJSON("/storage/check_directory", {
+                data_path: message.path
+            });
 
             if (status)
                 return status.status;
@@ -32,114 +33,163 @@ receive.checkSyncDirectory = async message => {
 };
 
 receive.performSync = async message => {
-    send.startProcessingIndication({noWait: true});
+    let synced;
+
+    send.startProcessingIndication();
 
     try {
-        await performSync(message.isInitial);
+        synced = await performSync();
     }
     finally {
         send.stopProcessingIndication();
-        send.shelvesChanged();
+
+        if (synced)
+            send.shelvesChanged();
     }
 };
 
-receive.enableBackgroundSync = async message => enableBackgroundSync(message.enable);
+async function performSync() {
+    let result;
 
-async function enableBackgroundSync(enable) {
-    if (enable) {
-        const alarm = await browser.alarms.get(SYNC_ALARM_NAME);
-        if (!alarm)
-            browser.alarms.create(SYNC_ALARM_NAME, {periodInMinutes: SYNC_ALARM_PERIOD});
-    }
-    else {
-        browser.alarms.clear(SYNC_ALARM_NAME);
-    }
-}
-
-browser.alarms.onAlarm.addListener(alarm => {
-    if (alarm.name === SYNC_ALARM_NAME)
-        performSync();
-});
-
-async function performSync(initial) {
     await settings.load();
 
-    if (syncing || !settings.sync_enabled() || !await nativeBackend.probe(true))
+    if (syncing || !await helperApp.probe(true))
         return;
 
-    if (initial)
-        settings.last_sync_date(null);
-
-    const sync_directory = settings.sync_directory();
+    const syncDirectory = settings.data_folder_path();
 
     try {
         syncing = true;
 
-        if (!await isSynchronizationPossible(sync_directory, initial)) {
-            syncing = false;
-            return;
-        }
+        let storageMetadata = await getStorageMetadata(syncDirectory);
 
-        const syncNodes = await getNodesForSync();
-        const syncParams = {
-            sync_directory,
-            nodes: JSON.stringify(syncNodes),
-            last_sync_date: settings.last_sync_date() || -1
-        };
+        if (storageMetadata) {
+            const dbMetadata = await settings.get(SCRAPYARD_SYNC_METADATA);
 
-        const syncOperations = await nativeBackend.jsonPost("/sync/compute", syncParams);
+            if (await prepareDatabase(storageMetadata, dbMetadata)) {
 
-        if (!syncOperations) {
-            showNotification("Synchronization could not be performed because of an error.");
-            syncing = false;
-            return;
-        }
+                const syncOperations = await computeSync(syncDirectory);
 
-        syncOperations.initial = initial;
-
-        if (areChangesPresent(syncOperations)) {
-            const action = _MANIFEST_V3? browser.action: browser.browserAction;
-
-            if (settings.platform.firefox)
-                action.setIcon({path: "/icons/action-sync.svg"});
-            else
-                action.setIcon({path: "/icons/action-sync.png"});
-
-            try {
-                await performOperations(syncOperations, sync_directory);
-            }
-            finally {
-                if (settings.platform.firefox)
-                    action.setIcon({path: "/icons/scrapyard.svg"});
+                if (syncOperations) {
+                    result = await syncWithStorage(syncOperations, syncDirectory);
+                    await helperApp.fetch("/storage/sync_close_session");
+                    await settings.set(SCRAPYARD_SYNC_METADATA, storageMetadata);
+                }
                 else
-                    action.setIcon({path: ACTION_ICONS});
+                    showNotification("Synchronization could not be performed because of an error.");
             }
         }
-        else if (initial)
-            send.syncProgress({progress: 100});
     }
     finally {
         syncing = false;
     }
+
+    return result;
 }
 
-async function isSynchronizationPossible(sync_directory, initial) {
-    const syncProperties = await nativeBackend.jsonPost("/sync/get_metadata", {sync_directory});
+async function getStorageMetadata(syncDirectory) {
+    let storageMetadata
+    try {
+        storageMetadata = await helperApp.fetchJSON_postJSON("/storage/get_metadata", {
+            data_path: syncDirectory
+        });
+    } catch (e) {
+        console.error(e);
+    }
 
-    if (!syncProperties || syncProperties.error === "error") {
-        showNotification("Error initializing synchronization.");
+    if (!storageMetadata || storageMetadata.error === "error") {
+        showNotification("Synchronization error.");
+        return;
+    }
+    else if (storageMetadata.error === "empty" || !storageMetadata.entities) {
+        showNotification("The disk storage is missing or empty.");
+        return;
+    }
+    else if (storageMetadata.type !== "index") {
+        showNotification("Unknown storage format type.");
+        return;
+    }
+    else if (typeof storageMetadata.version === "number" && storageMetadata.version > JSON_SCRAPBOOK_VERSION) {
+        showNotification("Unknown storage format version.");
+        return;
+    }
+
+    return storageMetadata;
+}
+
+async function computeSync(syncDirectory) {
+    const syncNodes = await getNodesForSync();
+
+    const syncParams = {
+        data_path: syncDirectory,
+        nodes: JSON.stringify(syncNodes),
+        last_sync_date: settings.last_sync_date() || -1
+    };
+
+    let syncOperations;
+    try {
+        syncOperations = await helperApp.fetchJSON_postJSON("/storage/sync_compute", syncParams);
+    } catch (e) {
+        console.error(e);
+    }
+    return syncOperations;
+}
+
+async function getNodesForSync() {
+    const syncNodes = [];
+    const marshaller = new MarshallerSync();
+
+    await Node.iterate(node => {
+        const nonSyncable = node.external && NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === node.external);
+
+        if (!nonSyncable) {
+            const syncNode = marshaller.createSyncNode(node);
+            syncNodes.push(syncNode);
+        }
+    });
+
+    return syncNodes;
+}
+
+async function prepareDatabase(storageMetadata, dbMetadata) {
+    if (storageMetadata.type !== "index") {
+        showNotification("Storage format type is not supported.");
         return false;
     }
-    else if (!initial && (syncProperties.error === "empty" || !syncProperties.entities)) {
-        showNotification("Cannot synchronize with an empty or read-only database.");
-        return false;
-    }
-    else if (syncProperties.version > SYNC_VERSION) {
-        showNotification("Synchronization is impossible. Please update the add-on and the helper application.");
-        return false;
+
+    const resetDatabase = storageMetadata.uuid !== dbMetadata?.uuid
+        || storageMetadata.timestamp < dbMetadata?.timestamp
+        || storageMetadata.version !== dbMetadata?.version;
+
+    if (resetDatabase) {
+        await undoManager.commit();
+        await Database.wipeImportable();
+        await settings.last_sync_date(null);
     }
 
     return true;
+}
+
+async function syncWithStorage(syncOperations, syncDirectory) {
+    if (areChangesPresent(syncOperations)) {
+        const action = _MANIFEST_V3? browser.action: browser.browserAction;
+
+        if (settings.platform.firefox)
+            action.setIcon({path: "/icons/action-sync.svg"});
+        else
+            action.setIcon({path: "/icons/action-sync.png"});
+
+        try {
+            await performOperations(syncOperations, syncDirectory);
+        } finally {
+            if (settings.platform.firefox)
+                action.setIcon({path: "/icons/scrapyard.svg"});
+            else
+                action.setIcon({path: ACTION_ICONS});
+        }
+
+        return true;
+    }
 }
 
 function areChangesPresent(syncOperations) {
@@ -148,84 +198,49 @@ function areChangesPresent(syncOperations) {
     const changes = syncOperations.push.length
         || syncOperations.pull.length
         || syncOperations.delete.length
-        || syncOperations.delete_in_sync.length;
+        || syncOperations.delete_in_storage.length;
 
     return !!changes;
 }
 
-async function getNodesForSync() {
-    const id2uuid = new Map();
-    const nodes = (await Node.get()).filter(n => !NON_SYNCHRONIZED_EXTERNALS.some(ex => ex === n.external));
-
-    for (let node of nodes)
-        id2uuid.set(node.id, node.uuid);
-
-    const syncNodes = [];
-
-    for (let node of nodes) {
-        const syncNode = {
-            uuid: node.uuid,
-            date_modified: node.date_modified,
-            content_modified: node.content_modified
-        };
-
-        if (node.parent_id)
-            syncNode.parent_id = id2uuid.get(node.parent_id);
-
-        if (syncNode.date_modified && syncNode.date_modified instanceof Date)
-            syncNode.date_modified = syncNode.date_modified.getTime();
-        else
-            syncNode.date_modified = 0;
-
-        if (!node.content_modified && isNodeHasContent(node))
-            syncNode.content_modified = syncNode.date_modified;
-        else if (syncNode.content_modified)
-            syncNode.content_modified = syncNode.content_modified.getTime();
-
-        syncNodes.push(syncNode);
-    }
-
-    const defaultShelf = syncNodes.find(n => n.uuid === DEFAULT_SHELF_UUID);
-    if (defaultShelf)
-        defaultShelf.date_modified = 0;
-
-    return syncNodes;
-}
-
-async function performOperations(syncOperations, sync_directory) {
-    await nativeBackend.post("/sync/open_session", {sync_directory});
+async function performOperations(syncOperations, syncDirectory) {
+    await helperApp.fetchJSON_postJSON("/storage/sync_open_session", {data_path: syncDirectory});
 
     let errors = false;
 
-    try {
-        await deleteSyncNodes(syncOperations.delete_in_sync);
-    }
-    catch (e) {
-        errors = true;
-        console.error(e);
-    }
+    // try {
+    //     await deleteStorageNodes(syncOperations.delete_in_storage);
+    // }
+    // catch (e) {
+    //     errors = true;
+    //     console.error(e);
+    // }
 
-    const total = syncOperations.push.length + syncOperations.pull.length + syncOperations.delete.length;
+    const total = syncOperations.push.length
+        + Math.floor(syncOperations.pull.length / SYNC_NODE_CHUNK_SIZE)
+        + syncOperations.delete.length;
     const progress = new ProgressCounter(total, "syncProgress");
 
-    const syncMarshaller = new MarshallerSync(nativeBackend, syncOperations.initial);
-    for (const syncNode of syncOperations.push)
-        try {
-            await syncMarshaller.marshal(syncNode);
-            progress.incrementAndNotify();
-        }
-        catch (e) {
-            errors = true;
-            console.error(e);
-        }
+    // const syncMarshaller = new MarshallerSync();
+    // for (const syncNode of syncOperations.push)
+    //     try {
+    //         await syncMarshaller.marshal(syncNode);
+    //         progress.incrementAndNotify();
+    //     }
+    //     catch (e) {
+    //         errors = true;
+    //         console.error(e);
+    //     }
 
-    const syncUnmarshaller = new UnmarshallerSync(nativeBackend);
-    for (const syncNode of syncOperations.pull)
+    const syncUnmarshaller = new UnmarshallerSync();
+    for (const syncNodes of chunk(syncOperations.pull, SYNC_NODE_CHUNK_SIZE))
         try {
-            await syncUnmarshaller.unmarshall(syncNode)
+            const success = await syncUnmarshaller.unmarshall(syncNodes)
             progress.incrementAndNotify();
-        }
-        catch (e) {
+
+            if (!success)
+                errors = true;
+        } catch (e) {
             errors = true;
             console.error(e);
         }
@@ -234,8 +249,6 @@ async function performOperations(syncOperations, sync_directory) {
 
     progress.finish();
 
-    await nativeBackend.fetch("/sync/close_session");
-
     await settings.load();
     settings.last_sync_date(Date.now());
 
@@ -243,9 +256,9 @@ async function performOperations(syncOperations, sync_directory) {
         showNotification("Synchronization finished with errors.");
 }
 
-async function deleteSyncNodes(syncNodes) {
+async function deleteStorageNodes(syncNodes) {
     if (syncNodes.length)
-        await nativeBackend.post("/sync/delete", {nodes: JSON.stringify(syncNodes)});
+        await helperApp.post("/storage/sync_delete_nodes", {nodes: JSON.stringify(syncNodes)});
 }
 
 async function deleteNodes(syncNodes) {
@@ -254,7 +267,7 @@ async function deleteNodes(syncNodes) {
             if (syncNode.uuid === DEFAULT_SHELF_UUID)
                 continue;
             const node = await Node.getByUUID(syncNode.uuid)
-            await Node.delete(node.id)
+            await Node.idb.delete(node)
         }
         catch (e) {
             console.error(e);

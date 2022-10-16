@@ -1,66 +1,77 @@
 import {EntityIDB} from "./storage_idb.js";
 import {indexString} from "./utils_html.js";
 import {Node} from "./storage_entities.js";
+import {delegateProxy} from "./proxy.js";
+import {StorageAdapterDisk} from "./storage_adapter_disk.js";
+import {CommentsProxy} from "./storage_comments_proxy.js";
 
 export class CommentsIDB extends EntityIDB {
     static newInstance() {
         const instance = new CommentsIDB();
-        instance.import = new CommentsIDB();
+
+        instance.import = delegateProxy(new CommentsProxy(new StorageAdapterDisk()), new CommentsIDB());
         instance.import._importer = true;
-        return instance;
+
+        instance.idb = {import: new CommentsIDB()};
+        instance.idb.import._importer = true;
+
+        return delegateProxy(new CommentsProxy(new StorageAdapterDisk()), instance);
     }
 
-    async updateIndex(nodeId, words) {
-        let exists = await this._db.index_comments.where("node_id").equals(nodeId).count();
+    indexEntity(node, words) {
+        return {
+            node_id: node.id,
+            words: words
+        };
+    }
+
+    async storeIndex(node, words) {
+        const exists = await this._db.index_comments.where("node_id").equals(node.id).count();
+        const entity = this.indexEntity(node, words);
 
         if (exists)
-            return this._db.index_comments.where("node_id").equals(nodeId).modify({
-                words: words
-            });
+            return this._db.index_comments.where("node_id").equals(node.id).modify(entity);
         else
-            return this._db.index_comments.add({
-                node_id: nodeId,
-                words: words
-            });
+            return this._db.index_comments.add(entity);
     }
 
-    async _addRaw(nodeId, comments) {
-        const exists = await this._db.comments.where("node_id").equals(nodeId).count();
+    async _add(node, text) {
+        const exists = await this._db.comments.where("node_id").equals(node.id).count();
 
-        if (!comments)
-            comments = undefined;
+        if (!text)
+            text = undefined;
 
         if (exists) {
-            await this._db.comments.where("node_id").equals(nodeId).modify({
-                comments: comments
+            await this._db.comments.where("node_id").equals(node.id).modify({
+                comments: text
             });
         }
         else {
             await this._db.comments.add({
-                node_id: nodeId,
-                comments: comments
+                node_id: node.id,
+                comments: text
             });
-        }
-
-        if (!this._importer) {
-            const node = {id: nodeId, has_comments: !!comments};
-            await Node.contentUpdate(node);
         }
     }
 
-    async add(nodeId, comments) {
-        await this._addRaw(nodeId, comments);
+    async add(node, comments) {
+        await this._add(node, comments);
+
+        if (!this._importer) {
+            node.has_comments = !!comments;
+            await Node.updateContentModified(node);
+        }
 
         if (comments) {
             let words = indexString(comments);
-            await this.updateIndex(nodeId, words);
+            await this.storeIndex(node, words);
         }
         else
-            await this.updateIndex(nodeId, []);
+            await this.storeIndex(node, []);
     }
 
-    async get(nodeId) {
-        let record = await this._db.comments.where("node_id").equals(nodeId).first();
+    async get(node) {
+        let record = await this._db.comments.where("node_id").equals(node.id).first();
         return record?.comments;
     }
 }

@@ -1,10 +1,10 @@
 import {send} from "../../proxy.js";
 import {settings} from "../../settings.js";
 import {confirm} from "../dialog.js";
-import {ShelfList} from "../shelf_list.js";
+import {selectricRefresh, ShelfList, simpleSelectric} from "../shelf_list.js";
 import {formatBytes, toHHMMSS} from "../../utils.js";
 import {showNotification} from "../../utils_browser.js";
-import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING, BROWSER_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
+import {CLOUD_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_NAME, BROWSER_SHELF_NAME, TODO_SHELF_NAME} from "../../storage.js";
 import {Query} from "../../storage_query.js";
 
 export class BackupManager {
@@ -70,9 +70,9 @@ export class BackupManager {
     }
 
     async init() {
-        const helperApp = await send.helperAppHasVersion({version: "0.3"});
+        const helper = await send.helperAppHasVersion({version: "0.4"});
 
-        if (helperApp) {
+        if (helper) {
             await this.listBackups();
             $("#backup-button").attr("disabled", false);
         }
@@ -119,6 +119,7 @@ export class BackupManager {
         date = date.toISOString().split("T")[0];
         let comment = node.comment? `<span class="backup-comment">${node.comment}</span>`: "";
 
+        node.name = node.name || node.title;
         node.alt_name = `${node.name} [${date}]`;
 
         jnode.id = `${node.uuid}-${node.timestamp}`;
@@ -277,7 +278,7 @@ export class BackupManager {
         const shelves = await Query.allShelves();
         const backupName = newShelf? jnode.data.alt_name: jnode.data.name;
 
-        shelves.push({name: EVERYTHING});
+        shelves.push({name: EVERYTHING_SHELF_NAME});
 
         if (shelves.find(s => s.name.toLowerCase() === backupName.toLowerCase())) {
             if (!await confirm("Warning", `This will replace "${backupName}". Continue?`))
@@ -289,16 +290,7 @@ export class BackupManager {
 
         let progressIndication = false;
         let importListener = message => {
-            if (message.type === "importInitializingTransaction") {
-                $("#backup-progress-container").html("Saving database state...");
-            }
-            else if (message.type === "importFinalizingTransaction") {
-                $("#backup-progress-container").html("Cleaning up...");
-            }
-            else if (message.type === "importRollingBack") {
-                $("#backup-progress-container").html("Restoring database...");
-            }
-            else if (message.type === "importProgress") {
+            if (message.type === "importProgress") {
                 if (!progressIndication) {
                     $("#backup-progress-container").html(PROGRESS_BAR_HTML);
                     progressIndication = true;
@@ -367,6 +359,31 @@ export class BackupManager {
 
 }
 
+function configureBackupCompressionPanel() {
+    const compMethod = $("#option-compression-method").val(settings.backup_compression_method() || "DEFLATE");
+    const compLevel = $("#option-compression-level").val(settings.backup_compression_level() || "5");
+
+    $("#option-compression-method option[value='EMPTY']").remove();
+    $("#option-compression-level option[value='EMPTY']").remove();
+
+    simpleSelectric(compMethod);
+    selectricRefresh(compMethod);
+    simpleSelectric(compLevel);
+    selectricRefresh(compLevel);
+
+    $("#option-compression-method").on("change", async e => {
+        await settings.load();
+        settings.backup_compression_method(e.target.value)
+    });
+    $("#option-compression-level").on("change", async  e => {
+        await settings.load();
+        settings.backup_compression_level(parseInt(e.target.value))
+    });
+}
+
 export function load() {
+    $("a.settings-menu-item[href='#backup']").show();
+    configureBackupCompressionPanel();
+
     new BackupManager().init();
 }

@@ -53,26 +53,30 @@ function collectFrameLinks(root) {
 }
 
 function indexWords(domNode) {
-    try {
-        const scripts = domNode.querySelectorAll("style, script");
-        scripts.forEach(tag => {
-            tag.parentElement.removeChild(tag);
-        });
+    let result = [];
 
-        let string = domNode.textContent;
-        string = string.replace(/\n/g, ' ')
-            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
+    if (domNode)
+        try {
+            const scripts = domNode.querySelectorAll("style, script");
+            scripts.forEach(tag => {
+                tag.parentElement.removeChild(tag);
+            });
 
-        const words = string.split(" ")
-            .filter(s => s && s.length > 2)
-            .map(s => s.toLocaleUpperCase());
+            let string = domNode.textContent;
+            string = string.replace(/\n/g, ' ')
+                           .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
 
-        return Array.from(new Set(words));
-    }
-    catch (e) {
-        console.error(e)
-        return [];
-    }
+            const words = string.split(" ")
+                .filter(s => s && s.length > 2)
+                .map(s => s.toLocaleLowerCase());
+
+            result = Array.from(new Set(words));
+        }
+        catch (e) {
+            console.error(e)
+        }
+
+    return result;
 }
 ////////////////////////////////////////////////////////////////// Scrapyard //
 

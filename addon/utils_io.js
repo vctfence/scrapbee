@@ -1,3 +1,22 @@
+export function binaryString2Array(str) {
+    let byteArray = new Uint8Array(str.length);
+
+    for (let i = 0; i < str.length; ++i)
+        byteArray[i] = str.charCodeAt(i);
+
+    return byteArray;
+}
+
+export function  arrayToBinaryString(arr) {
+    let str = "";
+    const bytes = new Uint8Array(arr);
+
+    for (let i = 0; i < bytes.byteLength; i++)
+        str += String.fromCharCode(bytes[i]);
+
+    return str;
+}
+
 export async function readFile(file) {
     let reader = new FileReader();
 

@@ -1,21 +1,20 @@
 import {
-    isContainer,
-    EVERYTHING,
+    isContainerNode,
     BROWSER_SHELF_NAME,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    STORAGE_FORMAT,
-    TODO_NAMES,
-    TODO_STATES
+    TODO_STATE_NAMES,
+    TODO_STATES, EVERYTHING_SHELF_NAME
 } from "./storage.js";
 import * as org from "./lib/org/org.js";
 import {formatShelfName} from "./bookmarking.js";
 import {Marshaller, Unmarshaller} from "./marshaller.js";
 import {transformFromV1ToV3} from "./import_versions.js";
 
+const STORAGE_FORMAT = "Scrapyard";
 const FORMAT_VERSION = 2;
 const ORG_EXPORTED_KEYS = ["uuid", "icon", "stored_icon", "type", "size", "details", "date_added", "date_modified",
-    "content_modified", "external", "external_id", "container", "content_type"];
+    "content_modified", "external", "external_id", "container", "content_type", "contains", "site"];
 
 export class MarshallerORG extends Marshaller {
     configure(options) {
@@ -46,7 +45,7 @@ export class MarshallerORG extends Marshaller {
     async marshal(object) {
         let output;
 
-        if (isContainer(object))
+        if (isContainerNode(object))
             output = this._processContainer(object);
         else
             output = await this._processEndpoint(object);
@@ -70,7 +69,7 @@ export class MarshallerORG extends Marshaller {
         if (!this._linksOnly) {
             lines.push(prependSpaces(":PROPERTIES:", level + 1));
 
-            const content = await this.preprocessContent(object);
+            const content = await this.serializeContent(object);
             let property_lines = this._formatProperties(content);
             property_lines = property_lines.map(l => prependSpaces(l, level + 3));
             lines = lines.concat(property_lines);
@@ -85,7 +84,7 @@ export class MarshallerORG extends Marshaller {
         let line = "\n" + "*".repeat(level);
 
         if (node.todo_state)
-            line += " " + TODO_NAMES[node.todo_state];
+            line += " " + TODO_STATE_NAMES[node.todo_state];
 
         let title = node.name || "";
         if (title) {
@@ -217,7 +216,7 @@ class ORGObjectStream {
 
     *objects() {
         let level = 0;
-        let path = this._shelf === EVERYTHING ? [] : [this._shelf];
+        let path = this._shelf === EVERYTHING_SHELF_NAME ? [] : [this._shelf];
 
         let lastObject;
         let orgNodes = this.orgLines.nodes;
@@ -250,7 +249,7 @@ class ORGObjectStream {
 
                 let dirName = orgItems[1].value;
 
-                if (level === 0 && this._shelf === EVERYTHING && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
+                if (level === 0 && this._shelf === EVERYTHING_SHELF_NAME && dirName && dirName.toLowerCase() === BROWSER_SHELF_NAME)
                     dirName = `${formatShelfName(dirName)} (imported)`;
 
                 if (level < orgItems[0].level)
@@ -319,6 +318,7 @@ class ORGObjectStream {
                         object[property.name] = parseInt(property.value);
                     break;
                 case "stored_icon":
+                case "site":
                     if (property.value)
                         object[property.name] = property.value === "true";
                     break;

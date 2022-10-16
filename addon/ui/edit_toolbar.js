@@ -1,10 +1,14 @@
 $(document).ready(async function () {
-    const toolbar = new EditToolbar();
+    const scrapyardNotFound = !!$("meta[name='scrapyard-not-found']").length;
 
-    $(window).on("beforeunload", e => {
-        if (toolbar._unsavedChanges)
-            e.preventDefault();
-    })
+    if (!scrapyardNotFound) {
+        const toolbar = new EditToolbar();
+
+        $(window).on("beforeunload", e => {
+            if (toolbar._unsavedChanges)
+                e.preventDefault();
+        })
+    }
 });
 
 class EditToolbar {
@@ -109,7 +113,7 @@ class EditToolbar {
 
     _fixDocumentEncoding(doc) {
         let meta = doc.querySelector("meta[http-equiv='content-type' i]")
-                        || doc.querySelector("meta[charset]");
+            || doc.querySelector("meta[charset]");
 
         if (meta)
             meta.parentNode.removeChild(meta);
@@ -117,7 +121,7 @@ class EditToolbar {
         $(doc.getElementsByTagName("head")[0]).prepend(`<meta charset="utf-8">`);
     }
 
-    saveDoc() {
+    async saveDoc() {
         let saveButton = $("#scrapyard-save-doc-button", this.shadowRoot);
         saveButton.addClass("scrapyard-flash-button");
 
@@ -128,25 +132,16 @@ class EditToolbar {
 
         this._fixDocumentEncoding(doc);
 
-        browser.runtime.sendMessage({
-            type: "updateArchive",
-            id: parseInt(location.hash.split(":")[1]),
-            data: "<!DOCTYPE html>" + doc.outerHTML
-        }).then(async () => {
-            return browser.runtime.sendMessage({
-                type: "getBookmarkInfo",
-                uuid: location.hash.split(":")[0].substring(1),
-                id: parseInt(location.hash.split(":")[1])
-            });
-        })
-        .then(node => {
-            $("#scrapyard-page-info", this.editBar).html(this.formatPageInfo(node))
-        });
+        const uuid = location.href.split("/").at(-2);
+        const html = getDocType(document) + doc.outerHTML;
+
+        await browser.runtime.sendMessage({type: "updateArchive", uuid, data: html});
+        const node = await browser.runtime.sendMessage({type: "getBookmarkInfo", uuid});
+        $("#scrapyard-page-info", this.editBar).html(this.formatPageInfo(node))
     }
 
     buildTools() {
         const CONTAINER_HEIGHT = 42;
-        const EXTENSION_ID = browser.i18n.getMessage("@@extension_id");
         const documentMarginBottom = document.body.style.marginBottom;
 
         let erasing = false;
@@ -187,8 +182,7 @@ class EditToolbar {
         append(`<div class="scrapyard-icon-container">
                          <i class="scrapyard-help-mark"></i>
                          <span class="scrapyard-tips scrapyard-hide">
-                             To remove content, text-select it (including images and other media) and press Del key on keyboard.
-                             It is also possible to type something in. Press F7 to turn on caret browsing.
+                             Press F7 to turn on caret browsing.
                          </span>
                      </div>`);
 
@@ -259,30 +253,27 @@ class EditToolbar {
                 $(menu).hide();
         });
 
+        const uuid = location.href.split("/").at(-2);
+
         append(`<input id="scrapyard-view-notes" type="button" class="blue-button" value="Notes">`)
             .on("click", e => {
                 const iframe = $("#scrapyard-notes-frame");
 
                 if (iframe.length) {
                     iframe.remove();
-                    $("#scrapyard-notes-container").remove();
+                    $("#scrapyard-notes-dim").remove();
                     $(document.body).removeClass("scrapyard-no-overflow");
                 }
                 else {
-                    if (location.origin.startsWith("http")) {
-                        browser.runtime.sendMessage({
-                            type: "browseNotes",
-                            uuid: location.hash.split(":")[0].substring(1),
-                            id: parseInt(location.hash.split(":")[1])
-                        });
-                    }
-                    else {
-                        let notes_page = location.origin.replace(/^blob:/, "") + "/ui/notes.html?i"
-
-                        $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notes_page}${location.hash}"/>
-                                                  <div id="scrapyard-notes-container"></div>`)
-                            .addClass("scrapyard-no-overflow");
-                    }
+                    // if (location.origin.startsWith("http"))
+                    browser.runtime.sendMessage({type: "browseNotes", uuid});
+                    // else {
+                    //     let notes_page = browser.runtime.getURL("/ui/notes_iframe.html");
+                    //
+                    //     $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notes_page}#${uuid}"/>
+                    //                               <div id="scrapyard-notes-dim"></div>`)
+                    //         .addClass("scrapyard-no-overflow");
+                    //}
                 }
             });
 
@@ -290,7 +281,7 @@ class EditToolbar {
         window.addEventListener("message", e => {
             if (e.data === "SCRAPYARD_CLOSE_NOTES") {
                 $("#scrapyard-notes-frame").remove();
-                $("#scrapyard-notes-container").remove();
+                $("#scrapyard-notes-dim").remove();
                 $(document.body).removeClass("scrapyard-no-overflow");
             }
         }, false);
@@ -301,8 +292,7 @@ class EditToolbar {
 
         browser.runtime.sendMessage({
             type: "getBookmarkInfo",
-            uuid: location.hash.split(":")[0].substring(1),
-            id: parseInt(location.hash.split(":")[1])
+            uuid
         }).then(node => {
             originalURLText.value = node?.uri || "";
             originalURLLink.href = node?.uri || "#";
@@ -329,14 +319,14 @@ class EditToolbar {
 
         $(".scrapyard-help-mark", editBar).hover(e => {
             $(e.target).next(".scrapyard-tips.scrapyard-hide").show().css({"margin-top": "2px", "position": "absolute",
-                                                                            "left": "100%", "margin-left": "4px"});
+                "left": "100%", "margin-left": "4px"});
         }, e => {
             $(e.target).next(".scrapyard-tips.scrapyard-hide").hide();
         });
 
         $(".scrapyard-i-mark", editBar).hover(e => {
             $(e.target).prev(".scrapyard-tips.scrapyard-hide").show().css({"margin-top": "2px", "position": "absolute",
-                                                                           "right": "100%", "margin-right": "-14px"});
+                "right": "100%", "margin-right": "-14px"});
         }, e => {
             $(e.target).prev(".scrapyard-tips.scrapyard-hide").hide();
         });
@@ -401,6 +391,17 @@ async function loadInternalResources(shadowRoot) {
 
     $(".scrapyard-i-mark", shadowRoot).css("background-image",
         `url("data:image/svg+xml,${encodeURIComponent(await svgPageInfo)}")`);
+}
+
+function getDocType(doc) {
+    const doctype = doc.doctype;
+    let result = "";
+
+    if (doctype)
+        result = '<!DOCTYPE ' + doctype.name + (doctype.publicId ? ' PUBLIC "' + doctype.publicId + '"' : '') +
+            ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>\n';
+
+    return result;
 }
 
 function getTextNodesBetween(rootNode, startNode, endNode) {

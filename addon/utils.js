@@ -22,22 +22,35 @@ export function merge(to, from) {
 }
 
 export function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve,  ms))
+    return new Promise(resolve => setTimeout(resolve,  ms));
 }
 
 export function partition(items, size) {
-    var result = []
-    var n = Math.round(items.length / size);
+    const result = [];
 
-    while (items.length > 0)
-        result.push(items.splice(0, n));
+    if (size) {
+        const n = Math.round(items.length / size);
 
-    if (result.length > size) {
-        result[result.length - 2] = [...result[result.length - 2], ...result[result.length - 1]];
-        result.splice(result.length - 1, 1);
+        while (items.length > 0)
+            result.push(items.splice(0, n));
+
+        if (result.length > size) {
+            result[result.length - 2] = [...result[result.length - 2], ...result[result.length - 1]];
+            result.splice(result.length - 1, 1);
+        }
     }
 
     return result;
+}
+
+export function chunk(items, size) {
+    const chunks = [];
+    let i = 0;
+
+    while (i < items.length)
+        chunks.push(items.slice(i, i += size));
+
+    return chunks;
 }
 
 export function makeReferenceURL(uuid) {
@@ -112,7 +125,7 @@ export function getMimetype (signature) {
     }
 }
 
-export function getMimetypeExt(url) {
+export function getMimetypeByExt(url) {
     if (!url)
         return null;
 
@@ -173,6 +186,7 @@ export const CONTENT_TYPE_TO_EXT = {
     "image/tiff": "tiff",
     "image/jpeg": "jpg",
     "image/x-icon": "ico",
+    "image/vnd.microsoft.icon": "ico",
     "image/webp": "webp",
     "image/svg+xml": "svg"
 };
@@ -269,6 +283,58 @@ export function cleanObject(object, forUpdate) {
     return object;
 }
 
+export function isDeepEqual(object1, object2, verbose) {
+    object1 = {...object1};
+    object2 = {...object2};
+
+    let objKeys1 = Object.keys(object1);
+    let objKeys2 = Object.keys(object2);
+
+    for (const key of objKeys1)
+        if (object1[key] === undefined)
+            delete object1[key];
+
+    for (const key of objKeys2)
+        if (object2[key] === undefined)
+            delete object2[key];
+
+    objKeys1 = Object.keys(object1);
+    objKeys2 = Object.keys(object2);
+
+    if (objKeys1.length !== objKeys2.length) {
+        if (verbose) {
+            console.log("Missing keys:");
+            for (const key of [...objKeys1])
+                if (key in object2) {
+                    delete object1[key];
+                    delete object2[key];
+                }
+
+            console.log([...Object.keys(object1), ...Object.keys(object2)])
+        }
+        return false;
+    }
+
+    for (const key of objKeys1) {
+        const value1 = object1[key];
+        const value2 = object2[key];
+
+        const isObjects = isObject(value1) && isObject(value2);
+
+        if ((isObjects && !isDeepEqual(value1, value2)) || (!isObjects && value1 !== value2)) {
+            if (verbose)
+                console.log("Deep unequal key: %s", key);
+
+            return false;
+        }
+    }
+    return true;
+}
+
+function isObject(object) {
+    return object != null && typeof object === "object";
+}
+
 export class ProgressCounter {
     constructor(total, message, payload = {}, local) {
         this._total = total;
@@ -312,5 +378,57 @@ export class ProgressCounter {
 
     isLast() {
         return this._counter === this._last;
+    }
+}
+
+export class ParallelProcessor {
+    #errors;
+    #cancelled;
+    #progressCounter;
+    #threadCount;
+    #processorf;
+    #resolveResult;
+
+    constructor(processorf) {
+        this.#processorf = processorf;
+    }
+
+    async process(items, maxThreads, message) {
+        items = [...items];
+        this.#threadCount = Math.min(maxThreads, items.length);
+        this.#progressCounter = new ProgressCounter(items.length, message);
+
+        const resultPromise = new Promise(resolve => this.#resolveResult = resolve);
+        for (let i = 0; i < maxThreads; ++i)
+            this.#thread(items);
+
+        return resultPromise;
+    }
+
+    async #thread(items) {
+        if (items.length && !this.#cancelled) {
+            let item = items.shift();
+
+            try {
+                await this.#processorf(item);
+            } catch (e) {
+                console.error(e);
+                this.#errors = true;
+            }
+
+            this.#progressCounter.incrementAndNotify();
+
+            return this.#thread(items);
+        }
+        else {
+            this.#threadCount -= 1;
+            if (this.#threadCount === 0)
+                return this.#onFinish();
+        }
+    }
+
+    async #onFinish() {
+        this.#progressCounter.finish();
+        this.#resolveResult(!this.#errors);
     }
 }

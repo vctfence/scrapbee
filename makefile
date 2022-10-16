@@ -17,7 +17,7 @@ build:
 build-chrome:
 	make chrome-mv3
 	rm -f build/Scrapyard.zip
-	7za a build/Scrapyard.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
+	7za a build/Scrapyard-chrome-`cat ./addon/version.txt`.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
 
 sign:
 	make firefox-mv2
@@ -46,15 +46,18 @@ helper-win:
 	make helper-clean
 	cd helper; rm -f *.exe
 	cd helper; rm -f *.zip
+	echo "DEBUG = False" > ./helper/scrapyard/server_debug.py
 	cd helper; pyinstaller scrapyard_helper.py
 	mkdir ./helper/dist/scrapyard_helper/scrapyard
-	cp ./helper/scrapyard/scrapyard.png ./helper/dist/scrapyard_helper/scrapyard/scrapyard.png
+	cp -r ./helper/scrapyard/resources ./helper/dist/scrapyard_helper/scrapyard
 	cd helper; makensis setup.nsi
 	make helper-clean
+	echo "DEBUG = True" > ./helper/scrapyard/server_debug.py
 
 .PHONY: helper-cli
 helper-cli:
 	cd helper; cp -r ./scrapyard ./cli-installer/scrapyard_helper/
+	echo "DEBUG = False" > ./helper/cli-installer/scrapyard_helper/scrapyard/server_debug.py
 	cd helper; cp -r ./manifests ./cli-installer/scrapyard_helper/
 	cd helper; rm -r -f ./cli-installer/scrapyard_helper/manifests/debug_manifest*
 	cd helper; cp -r ./setup.py ./cli-installer/scrapyard_helper/

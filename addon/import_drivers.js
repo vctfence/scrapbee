@@ -1,17 +1,18 @@
 import {ProgressCounter} from "./utils.js";
 import {
     DEFAULT_SHELF_ID,
+    DEFAULT_SHELF_UUID,
     DEFAULT_SHELF_NAME,
-    EVERYTHING,
     BROWSER_SHELF_ID,
-    isContainer,
-    NODE_TYPE_GROUP,
-    NODE_TYPE_SHELF
+    isContainerNode,
+    NODE_TYPE_FOLDER,
+    NODE_TYPE_SHELF, EVERYTHING_SHELF_NAME
 } from "./storage.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import UUID from "./uuid.js";
 import {formatShelfName} from "./bookmarking.js";
 import {Import} from "./import.js";
+import {SCRAPYARD_STORAGE_FORMAT, UnmarshallerJSON} from "./marshaller_json.js";
 
 export class StreamExporterBuilder {
     constructor(marshaller) {
@@ -186,40 +187,46 @@ export class StructuredStreamImporter {
     }
 
     async import() {
-        const unmarshaller = this._unmarshaller;
+        let unmarshaller = this._unmarshaller;
         const meta = await unmarshaller.unmarshalMeta();
 
         if (!meta)
-            throw new Error("invalid file format");
+            throw new Error("Invalid file format.");
+
+        if (meta.export === SCRAPYARD_STORAGE_FORMAT) {
+            unmarshaller = new UnmarshallerJSON(meta);
+            unmarshaller.configure(this._importOptions);
+        }
 
         let firstObject = await unmarshaller.unmarshal();
 
         if (!firstObject)
-            throw new Error("invalid file format");
+            throw new Error("Invalid file format.");
 
         let {name: shelfName, progress, muteSidebar} = this._importOptions;
 
         await Import.prepare(shelfName);
 
         progress = progress && !!meta.entities;
-        const local = !_BACKGROUND_PAGE && !muteSidebar;
+        const localSender = !_BACKGROUND_PAGE && !muteSidebar;
         this._progressCounter = progress
-            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar}, local)
+            ? new ProgressCounter(meta.entities, "importProgress", {muteSidebar}, localSender)
             : null;
 
         this._importParentId2DBParentId = new Map();
         this._importParentId2DBParentId.set(DEFAULT_SHELF_ID, DEFAULT_SHELF_ID);
-        this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING;
-        this._shelfNode = shelfName !== EVERYTHING? await Group.getOrCreateByPath(shelfName): null;
+        this._everythingAsShelf = !firstObject.node.parent_id && shelfName !== EVERYTHING_SHELF_NAME;
+        this._shelfNode = shelfName !== EVERYTHING_SHELF_NAME? await Folder.getOrCreateByPath(shelfName): null;
 
-        if (this._shelfNode) // first object contains id of its parent shelf (not everything) if a shelf is imported
+        if (this._shelfNode) // first object contains id of its parent shelf if a shelf (not everything) is imported
             this._importParentId2DBParentId.set(firstObject.node.parent_id, this._shelfNode.id);
 
         await this._importObject(firstObject);
 
         let object;
-        while (object = await unmarshaller.unmarshal())
+        while (object = await unmarshaller.unmarshal()) {
             await this._importObject(object);
+        }
 
         if (progress && !this._progressCounter.isFinished())
             throw new Error("some records are missing");
@@ -235,25 +242,26 @@ export class StructuredStreamImporter {
 
         // importing the default shelf
         if (object.node.type === NODE_TYPE_SHELF && object.node.name?.toLowerCase() === DEFAULT_SHELF_NAME) {
-            if (_everythingAsShelf) // import default shelf as a group
+            if (_everythingAsShelf) // import default shelf as a folder
                 object.node.uuid = UUID.numeric();
-            else { // do not import default shelf because it is always there
-                _progressCounter?.incrementAndNotify();
-                return;
+            else { // force import to the external storage
+                object.node.id = DEFAULT_SHELF_ID;
+                object.node.uuid = DEFAULT_SHELF_UUID;
+                object.node.date_modified = 0;
             }
         }
 
         if (object.node.parent_id)
             object.node.parent_id = _importParentId2DBParentId.get(object.node.parent_id);
         else if (_everythingAsShelf && object.node.type === NODE_TYPE_SHELF) {
-            object.node.type = NODE_TYPE_GROUP;
+            object.node.type = NODE_TYPE_FOLDER;
             object.node.parent_id = _shelfNode.id;
         }
 
         let objectImportId = object.node.id;
         const node = await object.persist();
 
-        if (objectImportId && isContainer(node))
+        if (objectImportId && isContainerNode(node))
             _importParentId2DBParentId.set(objectImportId, node.id);
 
         _progressCounter?.incrementAndNotify();

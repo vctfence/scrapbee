@@ -1,5 +1,5 @@
 import {settings} from "./settings.js";
-import {findSidebarWindow} from "./utils_sidebar.js";
+import {getSidebarWindow} from "./utils_sidebar.js";
 
 export const ACTION_ICONS = {
     16: "icons/logo16.png",
@@ -24,7 +24,11 @@ async function injectScriptFileMV3(tabId, options) {
     if (options.allFrames)
         target.allFrames = options.allFrames;
 
-    return browser.scripting.executeScript({target, files: [options.file]});
+    let immediately = false;
+    if (options.runAt === "document_start")
+        immediately = true;
+
+    return browser.scripting.executeScript({target, files: [options.file], injectImmediately: immediately});
 }
 
 export const injectScriptFile = _MANIFEST_V3? injectScriptFileMV3: browser.tabs.executeScript;
@@ -101,7 +105,7 @@ export async function getActiveTabFromSidebar() {
     if (_SIDEBAR)
         return getActiveTab();
     else {
-        const sidebarWindow = findSidebarWindow();
+        const sidebarWindow = getSidebarWindow();
         const tabs = await browser.tabs.query({active: true});
         return tabs.find(t => t.windowId !== sidebarWindow.id);
     }
@@ -193,4 +197,8 @@ export async function startupLatch(f) {
     }
     else
         await f();
+}
+
+export function gettingStarted() {
+    return openPage("/ui/options.html#help:start");
 }

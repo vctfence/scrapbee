@@ -3,6 +3,10 @@ import {isBuiltInShelf} from "../../storage.js";
 import {showNotification} from "../../utils_browser.js";
 import {Query} from "../../storage_query.js";
 import {ensureSidebarWindow} from "../../utils_sidebar.js";
+import {simpleSelectric} from "../shelf_list.js";
+import {settings} from "../../settings.js";
+
+const RDF_IMPORT_THREADS = 5;
 
 let importing = false;
 async function onStartRDFImport(e) {
@@ -10,7 +14,7 @@ async function onStartRDFImport(e) {
         $("#start-rdf-import").val("Import");
         $("#rdf-shelf-name").prop('disabled', false);
         $("#rdf-import-path").prop('disabled', false);
-        $("#rdf-import-threads").prop('disabled', false);
+        //$("#rdf-import-threads").prop('disabled', false);
 
         $("#rdf-progress-row").text("Ready");
         importing = false;
@@ -23,6 +27,11 @@ async function onStartRDFImport(e) {
     if (importing) {
         send.cancelRdfImport();
         finalize();
+        return;
+    }
+
+    if (settings.platform.chrome && $("#rdf-import-type").val() === "rdf-open") {
+        showNotification({message: "RDF editing is only available on firefox."});
         return;
     }
 
@@ -41,11 +50,11 @@ async function onStartRDFImport(e) {
     $("#start-rdf-import").val("Cancel");
     $("#rdf-shelf-name").prop('disabled', true);
     $("#rdf-import-path").prop('disabled', true);
-    $("#rdf-import-threads").prop('disabled', true);
+    //$("#rdf-import-threads").prop('disabled', true);
 
-    let progress_row = $("#rdf-progress-row");
+    let progressRow = $("#rdf-progress-row");
 
-    progress_row.text("initializing bookmark directory structure...");
+    progressRow.text("initializing bookmark directory structure...");
     //$("#rdf-import-progress").val(0);
     //$("#rdf-progress-row").show();
 
@@ -56,7 +65,7 @@ async function onStartRDFImport(e) {
             let bar = $("#rdf-import-progress");
             if (!bar.length) {
                 bar = $(`<progress id="rdf-import-progress" max="100" value="0"/>`);
-                progress_row.empty().append(bar);
+                progressRow.empty().append(bar);
             }
             if (message.progress > runningProgress) {
                 runningProgress = message.progress;
@@ -70,7 +79,7 @@ async function onStartRDFImport(e) {
             $("#invalid-imports").append(`<tr><td>${message.error}</td><td>${invalid_link}</td></tr>`);
         }
         else if (message.type === "obtainingIcons") {
-            progress_row.text("Obtaining page icons...");
+            progressRow.text("Obtaining page icons...");
         }
     };
 
@@ -79,14 +88,18 @@ async function onStartRDFImport(e) {
     if (!_BACKGROUND_PAGE)
         await ensureSidebarWindow(1000);
 
-    send.importFile({file: path, file_name: shelf, file_ext: "RDF",
-        threads: $("#rdf-import-threads").val(),
-        quick: $("#rdf-import-quick").is(':checked')})
-        .then(finalize)
-        .catch(e => {
-            showNotification({message: e.message});
-            finalize();
-        });
+    send.importFile({
+        file: path,
+        file_name: shelf,
+        file_ext: "RDF",
+        threads: RDF_IMPORT_THREADS,
+        quick: $("#rdf-import-type").val() === "rdf-open",
+        createIndex: $("#rdf-import-create-search-index").is(":checked")
+    }).then(finalize)
+      .catch(e => {
+          showNotification({message: e.message});
+          finalize();
+      });
 }
 
 function selectNode(e) {
@@ -95,6 +108,26 @@ function selectNode(e) {
 }
 
 export function load() {
+    simpleSelectric("#rdf-import-type");
+
+    if (!_BACKGROUND_PAGE) {
+        $("#rdf-import-type option[value='rdf-open']").text("Open RDF for browsing");
+        $("#rdf-import-type").selectric('refresh');
+    }
+
+    $("#rdf-import-type").on("change", e => {
+        if ($(e.target).val() === "rdf-open") {
+            $("#rdf-import-create-search-index")
+                //.prop("checked", false)
+                .prop("disabled", false)
+        }
+        else {
+            $("#rdf-import-create-search-index")
+                .prop("checked", true)
+                .prop("disabled", true)
+        }
+    });
+
     $("#invalid-imports-container").on("click", ".invalid-import", selectNode);
     $("#start-rdf-import").on("click", onStartRDFImport);
 }

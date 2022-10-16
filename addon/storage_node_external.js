@@ -1,7 +1,17 @@
 import {EntityIDB} from "./storage_idb.js";
 import {Node} from "./storage_entities.js";
 
-class ExternalNodeIDB extends EntityIDB {
+export class ExternalNodeIDB extends EntityIDB {
+    _Node = Node;
+
+    static newInstance() {
+        const instance = new ExternalNodeIDB();
+
+        instance.idb = new ExternalNodeIDB();
+        instance.idb._Node = Node.idb;
+
+        return instance;
+    }
 
     get(...args) {
         let externalId, kind;
@@ -24,21 +34,19 @@ class ExternalNodeIDB extends EntityIDB {
     }
 
     async delete(kind) {
-        const ids = [];
-        await this._db.nodes.where("external").equals(kind).each(n => ids.push(n.id));
-        return Node.delete(ids);
+        const nodes = await this._db.nodes.where("external").equals(kind).toArray();
+        return this._Node.delete(nodes);
     }
 
     async deleteMissingIn(retainExternalIDs, kind) {
         const retain = new Set(retainExternalIDs);
 
-        const ids = [];
-        await this._db.nodes.where("external").equals(kind)
+        const nodes = await this._db.nodes.where("external").equals(kind)
             .and(n => n.external_id && !retain.has(n.external_id))
-            .each(n => ids.push(n.id));
+            .toArray();
 
-        return Node.delete(ids);
+        return this._Node.delete(nodes);
     }
 }
 
-export let ExternalNode = new ExternalNodeIDB();
+export let ExternalNode = ExternalNodeIDB.newInstance();

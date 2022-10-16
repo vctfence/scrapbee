@@ -1,6 +1,6 @@
 import {receive, receiveExternal, send, sendLocal} from "../proxy.js";
 import {settings} from "../settings.js"
-import {ishellBackend} from "../backend_ishell.js"
+import {ishellConnector} from "../plugin_ishell.js"
 import {BookmarkTree} from "./tree.js"
 import {confirm, showDlg} from "./dialog.js"
 import {
@@ -21,32 +21,45 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_ID,
     DONE_SHELF_NAME,
-    EVERYTHING,
     EVERYTHING_SHELF_ID,
+    EVERYTHING_SHELF_NAME,
     BROWSER_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NOTES,
     NODE_TYPE_SHELF,
     TODO_SHELF_ID,
     TODO_SHELF_NAME,
+    RDF_EXTERNAL_TYPE,
     isBuiltInShelf,
     isVirtualShelf,
-    isEndpoint
+    isContentNode
 } from "../storage.js";
 import {openPage, showNotification} from "../utils_browser.js";
-import {ShelfList} from "./shelf_list.js";
+import {ShelfList, simpleSelectric} from "./shelf_list.js";
 import {Query} from "../storage_query.js";
 import {Path} from "../path.js";
 import {Shelf} from "../bookmarks_shelf.js";
 import {TODO} from "../bookmarks_todo.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
-import {Group} from "../bookmarks_group.js";
+import {Folder} from "../bookmarks_folder.js";
 import {Icon, Node} from "../storage_entities.js";
 import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
-import {findSidebarWindow} from "../utils_sidebar.js";
+import {getSidebarWindow} from "../utils_sidebar.js";
+import {helperApp} from "../helper_app.js";
+import {DiskStorage} from "../storage_external.js";
 
 const INPUT_TIMEOUT = 1000;
+const MENU_ID_TO_SEARCH_MODE = {
+    "shelf-menu-search-universal": SEARCH_MODE_UNIVERSAL,
+    "shelf-menu-search-title": SEARCH_MODE_TITLE,
+    "shelf-menu-search-folder": SEARCH_MODE_FOLDER,
+    "shelf-menu-search-tags": SEARCH_MODE_TAGS,
+    "shelf-menu-search-content": SEARCH_MODE_CONTENT,
+    "shelf-menu-search-notes": SEARCH_MODE_NOTES,
+    "shelf-menu-search-comments": SEARCH_MODE_COMMENTS,
+    "shelf-menu-search-date": SEARCH_MODE_DATE
+};
 
 let tree;
 let context;
@@ -77,14 +90,11 @@ async function init() {
 
     shelfList.change(function () { switchShelf(this.value, true, true) });
 
-    $("#btnLoad").on("click", () => loadShelves());
-    $("#btnSync").on("click", () => performSync());
+    $("#btnLoad").on("click", () => syncShelves());
     $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
     $("#btnSettings").on("click", () => openPage("/ui/options.html"));
     $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
-
-    // in the case if settings are cleaned by user
-    localStorage.setItem("sidebar-show-sync", settings.sync_enabled()? "show": "hide");
+    $("#btnHelperWarning").on("click", () => openPage("/ui/options.html#helperapp"));
 
     $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();
@@ -115,61 +125,72 @@ async function init() {
         $("#search-mode-menu").toggle();
     });
 
-    $("#shelf-menu-search-universal").click(() => {
+    $("#shelf-menu-search-universal").click(e => {
         $("#search-mode-switch").prop("src", "/icons/star.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_UNIVERSAL, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-title").click(() => {
+    $("#shelf-menu-search-title").click(e => {
         $("#search-mode-switch").prop("src", "/icons/bookmark.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TITLE, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-folder").click(() => {
+    $("#shelf-menu-search-folder").click(e => {
         $("#search-mode-switch").prop("src", "/icons/filter-folder.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_FOLDER, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-tags").click(() => {
+    $("#shelf-menu-search-tags").click(e => {
         $("#search-mode-switch").prop("src", "/icons/tags.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_TAGS, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-content").click(() => {
+    $("#shelf-menu-search-content").click(e => {
         $("#search-mode-switch").prop("src", "/icons/content-web.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_CONTENT, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-notes").click(() => {
+    $("#shelf-menu-search-notes").click(e => {
         $("#search-mode-switch").prop("src", "/icons/content-notes.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_NOTES, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-comments").click(() => {
+    $("#shelf-menu-search-comments").click(e => {
         $("#search-mode-switch").prop("src", "/icons/content-comments.svg");
         $("#search-input").attr("placeholder", "");
         context.setMode(SEARCH_MODE_COMMENTS, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
 
-    $("#shelf-menu-search-date").click(() => {
+    $("#shelf-menu-search-date").click(e => {
         $("#search-mode-switch").prop("src", "/icons/calendar.svg");
-        $("#search-input").attr("placeholder", "examples: 2021-02-24, before 2021-02-24, after 2021-02-24")
+        $("#search-input").attr("placeholder", "examples: 2020-02-20, before 2020-02-20, after 2020-02-20");
         context.setMode(SEARCH_MODE_DATE, shelfList.selectedShelfName);
+        settings.last_filtering_mode(e.target.id);
         performSearch();
     });
+
+    if (settings.remember_last_filtering_mode())
+        $(`#${settings.last_filtering_mode()}`).click();
 
     let filterInputTimeout;
     $("#search-input").on("input", e => {
@@ -200,7 +221,7 @@ async function init() {
     });
 
     $(document).on('contextmenu', e => {
-        if ($(".dlg-cover:visible").length && e.target.localName !== "input")
+        if ($(".dlg-dim:visible").length && e.target.localName !== "input")
             e.preventDefault();
     });
 
@@ -239,6 +260,7 @@ async function init() {
     tree.stopProcessingIndication = stopProcessingIndication;
 
     tree.sidebarSelectNode = selectNode;
+    tree.performExport = performExport;
 
     receive.startListener();
     receiveExternal.startListener();
@@ -248,23 +270,21 @@ async function init() {
 
 window.onbeforeunload = function() {
     if (!_SIDEBAR) {
-        findSidebarWindow().then(w => {
+        getSidebarWindow().then(w => {
             const position = {top: w.top, left: w.left, height: w.height, width: w.width};
             settings.sidebar_window_position(position);
         });
     }
 };
 
-window.onunload = async function() {
-    if (settings.sync_enabled() && settings.sync_on_close_sidebar())
-        send.performSync();
-};
+// window.onunload = async function() {
+// };
 
 async function loadSidebar() {
     try {
         await shelfList.load();
 
-        const initialShelf = await getExternalShelf() || getLastShelf() || DEFAULT_SHELF_ID;
+        const initialShelf = await getPreselectedShelf() || getLastShelf() || DEFAULT_SHELF_ID;
         await switchShelf(initialShelf, true, true);
 
         stopProcessingIndication();
@@ -289,6 +309,11 @@ async function loadSidebar() {
 
     if (settings.display_random_bookmark())
         displayRandomBookmark();
+
+    const helper = await helperApp.probe();
+
+    if (!helper)
+        $("#btnHelperWarning").css("display", "inline-block");
 }
 
 let processingTimeout;
@@ -316,7 +341,7 @@ function getLastShelf() {
     return DEFAULT_SHELF_ID;
 }
 
-async function getExternalShelf() {
+async function getPreselectedShelf() {
     if (settings.platform.firefox) {
         const externalShelf = localStorage.getItem("sidebar-select-shelf");
 
@@ -343,6 +368,7 @@ function setLastShelf(id) {
 async function loadShelves(selected, synchronize = true, clearSelection = false) {
     try {
         updateProgress(0);
+
         await shelfList.reload();
         const switchToId = selected || getLastShelf() || DEFAULT_SHELF_ID;
         return switchShelf(switchToId, synchronize, clearSelection);
@@ -353,8 +379,12 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
     }
 }
 
-async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
+async function syncShelves() {
+    await loadShelves();
+    await performSync();
+}
 
+async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
     if (getLastShelf() != shelf_id)
         tree.clearIconCache();
 
@@ -383,7 +413,7 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.list(nodes, DONE_SHELF_NAME, true);
         }
         else if (shelf_id == EVERYTHING_SHELF_ID) {
-            const nodes = await Shelf.listContent(EVERYTHING);
+            const nodes = await Shelf.listContent(EVERYTHING_SHELF_NAME);
             tree.update(nodes, true, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
                 send.reconcileCloudBookmarkDb({verbose: true});
@@ -415,6 +445,15 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
             tree.openRoot();
         }
     }
+
+    if (shelfList.selectedShelfExternal === RDF_EXTERNAL_TYPE) {
+        $("#shelf-menu-delete").text("Close");
+        $("#shelf-menu-export").hide();
+    }
+    else {
+        $("#shelf-menu-delete").text("Delete");
+        $("#shelf-menu-export").show();
+    }
 }
 
 async function createShelf() {
@@ -438,7 +477,7 @@ async function renameShelf() {
         const options = await showDlg("prompt", {caption: "Rename", label: "Name", title: name});
         let newName = options?.title;
         if (newName && !isBuiltInShelf(newName)) {
-            await send.renameGroup({id, name: newName});
+            await send.renameFolder({id, name: newName});
             tree.renameRoot(newName);
             shelfList.renameShelf(id, newName);
         }
@@ -449,14 +488,15 @@ async function renameShelf() {
 
 
 async function deleteShelf() {
-    let {id, name} = shelfList.getCurrentShelf();
+    let {id, name, external} = shelfList.getCurrentShelf();
 
     if (isBuiltInShelf(name)) {
         showNotification({message: "A built-in shelf could not be deleted."})
         return;
     }
 
-    const proceed = await confirm("Warning", "Do you really want to delete '" + name + "'?");
+    const verb = external === RDF_EXTERNAL_TYPE? "close": "delete";
+    const proceed = await confirm("Warning", `Do you really want to ${verb} '${name}'?`);
 
     if (proceed && name) {
         await send.softDeleteNodes({node_ids: id})
@@ -473,9 +513,13 @@ async function sortShelves() {
 
     let positions = [];
     for (let i = 0; i < sorted.length; ++i)
-        positions.push({id: sorted[i].id, pos: i});
+        positions.push({id: sorted[i].id, uuid: sorted[i].uuid, external: sorted[i].external, pos: i});
 
-    await send.reorderNodes({positions: positions});
+    await Bookmark.idb.reorder(positions);
+
+    const storedShelves = positions.filter(p => !p.external);
+    await send.reorderNodes({positions: storedShelves});
+
     loadShelves(getLastShelf(), false);
 }
 
@@ -484,7 +528,7 @@ async function importShelf(e) {
         let {name, ext} = pathToNameExt($("#file-picker").val());
         let lname = name.toLocaleLowerCase();
 
-        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING || !isBuiltInShelf(lname)) {
+        if (lname === DEFAULT_SHELF_NAME || lname === EVERYTHING_SHELF_NAME || !isBuiltInShelf(lname)) {
             if (shelfList.hasShelf(name)) {
                 if (await confirm("Warning", "This will replace '" + name + "'.")) {
                     await performImport(e.target.files[0], name, ext);
@@ -520,6 +564,7 @@ async function performSearch() {
         return context.search(input).then(nodes => tree.list(nodes));
 }
 
+// "File" is non-serializable on Chrome, hence imported files could not be processed in the background
 if (!_BACKGROUND_PAGE)
     import("../core_import.js");
 
@@ -531,7 +576,7 @@ async function performImport(file, file_name, file_ext) {
         await sender.importFile({file: file, file_name: file_name, file_ext: file_ext});
         stopProcessingIndication();
 
-        if (file_name.toLocaleLowerCase() === EVERYTHING)
+        if (file_name.toLocaleLowerCase() === EVERYTHING_SHELF_NAME)
             await loadShelves(EVERYTHING_SHELF_ID);
         else {
             const shelf = await Query.shelf(file_name);
@@ -545,34 +590,41 @@ async function performImport(file, file_name, file_ext) {
     }
 }
 
-async function performExport() {
+async function performExport(node) {
     let {name: shelf, uuid} = shelfList.getCurrentShelf();
 
-    startProcessingIndication(true);
-
-    try {
-        const sender = _BACKGROUND_PAGE? send: sendLocal;
-        await sender.exportFile({shelf, uuid});
-        stopProcessingIndication();
+    if (node) {
+        shelf = node;
+        uuid = node.uuid;
     }
-    catch (e) {
-        console.error(e);
-        stopProcessingIndication();
-        if (!e.message?.includes("Download canceled"))
-            showNotification({message: "The export has failed: " + e.message});
+
+    const options = await showDlg("export", {
+        caption: "Export",
+        file_name: shelf.name || shelf
+    });
+
+    if (options) {
+        startProcessingIndication(true);
+
+        try {
+            const sender = _BACKGROUND_PAGE? send: sendLocal;
+            await sender.exportFile({shelf, uuid, fileName: options.file_name, format: options.format});
+        } catch (e) {
+            console.error(e);
+            if (!e.message?.includes("Download canceled"))
+                showNotification({message: "The export has failed: " + e.message});
+        }
+        finally {
+            stopProcessingIndication();
+        }
     }
 }
 
 async function performSync(verbose = true) {
     if (getLastShelf() === CLOUD_SHELF_ID)
-        await switchShelf(CLOUD_SHELF_ID);
-    else {
-        await settings.load();
-        if (settings.sync_enabled())
-            send.performSync();
-        else if (verbose)
-            showNotification("Synchronization is not configured.");
-    }
+        await switchShelf(CLOUD_SHELF_ID, true);
+    else
+        return send.performSync();
 }
 
 async function selectNode(node, open, forceScroll) {
@@ -592,14 +644,14 @@ async function selectOrCreatePath(path) {
         const shelfNode = await Query.shelf(shelf);
 
         if (shelfNode) {
-            const group = await Group.getOrCreateByPath(normalized_path);
+            const folder = await Folder.getOrCreateByPath(normalized_path);
             await switchShelf(shelfNode.id);
-            tree.selectNode(group.id, true);
+            tree.selectNode(folder.id, true);
         }
         else {
             if (isVirtualShelf(shelf)) {
                 switch (shelf.toUpperCase()) {
-                    case EVERYTHING.toUpperCase():
+                    case EVERYTHING_SHELF_NAME.toUpperCase():
                         await switchShelf(EVERYTHING_SHELF_ID);
                         break;
                     case TODO_SHELF_NAME:
@@ -613,9 +665,9 @@ async function selectOrCreatePath(path) {
             else {
                 const shelfNode = await Shelf.add(shelf);
                 if (shelfNode) {
-                    let group = await Group.getOrCreateByPath(normalized_path);
+                    let folder = await Folder.getOrCreateByPath(normalized_path);
                     await loadShelves(shelfNode.id);
-                    tree.selectNode(group.id, true);
+                    tree.selectNode(folder.id, true);
                 }
             }
         }
@@ -623,7 +675,7 @@ async function selectOrCreatePath(path) {
 }
 
 function sidebarRefresh() {
-    switchShelf(getLastShelf(), false);
+    return switchShelf(getLastShelf(), false);
 }
 
 function sidebarRefreshExternal() {
@@ -644,7 +696,7 @@ async function getRandomBookmark() {
         const id = Math.floor(Math.random() * (ids.length - 1));
         const node = await Node.get(ids[id]);
 
-        if (isEndpoint(node))
+        if (isContentNode(node))
             return node;
 
         ctr -= 1;
@@ -674,7 +726,7 @@ async function displayRandomBookmark() {
         }
 
         if (bookmark.stored_icon) {
-            icon = `url("${await Icon.get(bookmark.id)}")`;
+            icon = `url("${await Icon.get(bookmark)}")`;
         }
         else if (bookmark.icon) {
             let image = new Image();
@@ -709,10 +761,10 @@ receive.beforeBookmarkAdded = async message => {
     if (node.type === NODE_TYPE_ARCHIVE)
         startProcessingIndication(true);
 
-    node.name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
-    tree.createTentativeNode(node);
-
     if (select) {
+        node.name = await Bookmark.ensureUniqueName(node.parent_id, node.name);
+        tree.createTentativeNode(node);
+
         const path = await Path.compute(node.parent_id);
         if (getLastShelf() == path[0].id)
             tree.selectNode(node.id);
@@ -807,17 +859,6 @@ receive.reloadSidebar = message => {
     browser.sidebarAction.setPanel({panel: sidebarUrl});
 };
 
-receive.syncStateChanged = message => {
-    if (message.enabled) {
-        $("#btnSync").css("display", "inline-block");
-        localStorage.setItem("sidebar-show-sync", "show");
-    }
-    else {
-        $("#btnSync").hide();
-        localStorage.setItem("sidebar-show-sync", "hide");
-    }
-};
-
 receive.toggleAbortMenu = message => {
     if (message.show)
         $("#shelf-menu-abort").show();
@@ -848,32 +889,21 @@ function updateProgress(message) {
         progressDiv.css("width", "0");
 }
 
-let browseNode;
-if (!_BACKGROUND_PAGE) {
-    const browseModule = await import("../browse.js");
-    browseNode = browseModule.browseNodeInCurrentContext;
-}
-
-receive.browseNodeSidebar = message => {
-    if (browseNode)
-        browseNode(message.node, message);
-};
-
 receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
-    if (!ishellBackend.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     await selectOrCreatePath(message.name);
 };
 
-async function switchAfterCopy(message, external_path, group, topNodes) {
+async function switchAfterCopy(message, external_path, folder, topNodes) {
     if (message.action === "switching") {
         const [shelf, ...path] = external_path.split("/");
         const shelfNode = await Query.shelf(shelf);
 
         await loadShelves(shelfNode.id);
 
-        tree.openNode(group.id)
+        tree.openNode(folder.id)
         tree.selectNode(topNodes);
     }
     else
@@ -881,7 +911,7 @@ async function switchAfterCopy(message, external_path, group, topNodes) {
 }
 
 receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
-    if (!ishellBackend.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let external_path = Path.expand(message.path);
@@ -894,16 +924,23 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
         selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const group = await Group.getOrCreateByPath(external_path);
-        let newNodes = await send.copyNodes({node_ids: selection, dest_id: group.id, move_last: true});
-        let topNodes = newNodes.filter(n => selection.some(id => id === n.old_id)).map(n => n.id);
+        const folder = await Folder.getOrCreateByPath(external_path);
 
-        await switchAfterCopy(message, external_path, group, topNodes);
+        try {
+            DiskStorage.openBatchSession();
+            let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
+            let topNodes = newNodes.filter(n => selection.some(id => id === n.source_node_id)).map(n => n.id);
+
+            await switchAfterCopy(message, external_path, folder, topNodes);
+        }
+        finally {
+            DiskStorage.closeBatchSession();
+        }
     }
 };
 
 receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
-    if (!ishellBackend.isIShell(sender.id))
+    if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
     let external_path = Path.expand(message.path);
@@ -915,9 +952,17 @@ receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
         selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const group = await Group.getOrCreateByPath(external_path);
-        await send.moveNodes({node_ids: selection, dest_id: group.id, move_last: true});
-        await switchAfterCopy(message, external_path, group, selection);
+        const folder = await Folder.getOrCreateByPath(external_path);
+
+        try {
+            await DiskStorage.openBatchSession();
+            await send.moveNodes({node_ids: selection, dest_id: folder.id, move_last: true});
+        }
+        finally {
+            await DiskStorage.closeBatchSession();
+        }
+
+        await switchAfterCopy(message, external_path, folder, selection);
     }
 };
 

@@ -8,13 +8,13 @@ import {
     DEFAULT_SHELF_NAME,
     DONE_SHELF_ID,
     DONE_SHELF_NAME,
-    EVERYTHING,
+    EVERYTHING_SHELF_UUID,
     EVERYTHING_SHELF_ID,
     BROWSER_SHELF_ID,
     BROWSER_SHELF_NAME,
     BROWSER_SHELF_UUID,
     TODO_SHELF_ID,
-    TODO_SHELF_NAME, DEFAULT_SHELF_UUID
+    TODO_SHELF_NAME, DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME
 } from "../storage.js";
 import {formatShelfName} from "../bookmarking.js";
 import {Query} from "../storage_query.js";
@@ -41,7 +41,7 @@ function measureSelectricWidth(options) {
 
     meter.text(longestText);
 
-    if (longestText.toLowerCase() === EVERYTHING)
+    if (longestText.toLowerCase() === EVERYTHING_SHELF_NAME)
         meter.addClass("option-builtin");
     else
         meter.removeClass("option-builtin");
@@ -98,6 +98,7 @@ export class ShelfList {
             id: parseInt(selectedOption.val()),
             name: selectedOption.text(),
             uuid: selectedOption.attr("data-uuid"),
+            external: selectedOption.attr("data-external"),
             option: selectedOption
         };
     }
@@ -107,7 +108,7 @@ export class ShelfList {
             <option class="option-builtin" value="${TODO_SHELF_ID}" data-uuid="${TODO_SHELF_NAME}">${TODO_SHELF_NAME}</option>
             <option class="option-builtin" value="${DONE_SHELF_ID}" data-uuid="${DONE_SHELF_NAME}">${DONE_SHELF_NAME}</option>
             <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
-                    data-uuid="${EVERYTHING}">${formatShelfName(EVERYTHING)}</option>`
+                    data-uuid="${EVERYTHING_SHELF_UUID}">${formatShelfName(EVERYTHING_SHELF_NAME)}</option>`
 
         if (settings.cloud_enabled())
             html += `<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
@@ -119,13 +120,13 @@ export class ShelfList {
 
         let shelves = await Query.allShelves();
 
-        let cloudShelf = shelves.find(s => s.id === CLOUD_SHELF_ID);
-        if (cloudShelf)
-            shelves.splice(shelves.indexOf(cloudShelf), 1);
+        let cloudShelfNode = shelves.find(s => s.id === CLOUD_SHELF_ID);
+        if (cloudShelfNode)
+            shelves.splice(shelves.indexOf(cloudShelfNode), 1);
 
-        let firefoxShelf = shelves.find(s => s.id === BROWSER_SHELF_ID);
-        if (firefoxShelf)
-            shelves.splice(shelves.indexOf(firefoxShelf), 1);
+        let browserShelfNode = shelves.find(s => s.id === BROWSER_SHELF_ID);
+        if (browserShelfNode)
+            shelves.splice(shelves.indexOf(browserShelfNode), 1);
 
         let defaultShelf = shelves.find(s => s.name.toLowerCase() === DEFAULT_SHELF_NAME);
         shelves.splice(shelves.indexOf(defaultShelf), 1);
@@ -136,7 +137,8 @@ export class ShelfList {
         shelves.sort((a, b) => a.name.localeCompare(b.name));
 
         for (let shelf of shelves)
-            html += `<option data-uuid="${shelf.uuid}" value="${shelf.id}">${shelf.name}</option>`;
+            html += `<option data-uuid="${shelf.uuid}" data-external="${shelf.external || ''}"
+                        value="${shelf.id}">${shelf.name}</option>`;
 
         this._select.html(html);
     }
@@ -178,6 +180,11 @@ export class ShelfList {
     get selectedShelfName() {
         let selectedOption = $(`option[value='${this._select.val()}']`, this._select);
         return selectedOption.text();
+    }
+
+    get selectedShelfExternal() {
+        let selectedOption = $(`option[value='${this._select.val()}']`, this._select);
+        return selectedOption.attr("data-external");
     }
 
     change(handler) {

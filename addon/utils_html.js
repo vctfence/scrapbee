@@ -1,4 +1,5 @@
 import {fetchWithTimeout} from "./utils_io.js";
+import {Archive} from "./storage_entities.js";
 
 var entityMap = {
     '&': '&amp;',
@@ -149,12 +150,12 @@ export function indexHTML(string) {
 function createIndex(string, textExtractor) {
     try {
         string = textExtractor(string);
-        string = string.replace(/\n/g, ' ')
-            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, ' ');
+        string = string.replace(/\n/g, " ")
+            .replace(/(?:\p{Z}|[^\p{L}-])+/ug, " ");
 
         let words = string.split(" ")
             .filter(s => s && s.length > 2)
-            .map(s => s.toLocaleUpperCase())
+            .map(s => s.toLocaleLowerCase())
 
         return Array.from(new Set(words));
     }
@@ -169,7 +170,7 @@ function extractTextRecursive(string, parser) {
     if (!parser)
         parser = new DOMParser();
 
-    const doc = parser.parseFromString(string,"text/html");
+    const doc = parser.parseFromString(string, "text/html");
     removeScriptTags(doc);
 
     let text = doc.body.textContent;
@@ -217,6 +218,37 @@ export function rebuildIFramesRecursive(doc, topIFrames) {
     })
 }
 
+export async function buildIFramesRecursive(node, doc, topIFrames, acc = []) {
+    for (let i = 0; i < topIFrames.length; ++i) {
+        const iframe = topIFrames[i];
+
+        let iframeHTML = iframe.srcdoc;
+
+        if (!iframeHTML && iframe.src && !iframe.src.startsWith("http"))
+            iframeHTML = await Archive.getFile(node, iframe.src);
+
+        if (iframeHTML) {
+            const iframeDoc = parseHtml(iframeHTML);
+            await buildIFramesRecursive(node, iframeDoc, iframeDoc.querySelectorAll("iframe"), acc);
+            iframe.__doc = iframeDoc;
+            acc.push(iframeDoc);
+        }
+    }
+
+    return [acc, topIFrames];
+}
+
+export async function assembleUnpackedIndex(node) {
+    const indexHTML = await Archive.getFile(node, "index.html");
+
+    if (indexHTML) {
+        const doc = parseHtml(indexHTML);
+        const iframes = doc.querySelectorAll("iframe");
+        const [iframeDocs] = await buildIFramesRecursive(node, doc, iframes);
+        return [doc, ...iframeDocs];
+    }
+}
+
 function removeTags(string) {
     return string.replace(/<iframe[^>]*srcdoc="([^"]*)"[^>]*>/igs, (m, d) => d)
         .replace(/<title.*?<\/title>/igs, "")
@@ -233,6 +265,7 @@ function removeScriptTags(doc) {
 
 export async function isHTMLLink(url, timeout = 10000) {
     let response;
+
     try {
         response = await fetchWithTimeout(url, {method: "head"});
     } catch (e) {

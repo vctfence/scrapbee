@@ -30,7 +30,7 @@ function expandReadMore(evt) {
     evt.preventDefault();
 
     if (elt.id === "for-read-more-table-of-contents") {
-        $("#read-more-table-of-contents").toc({prefix: "help:"});
+        $("#read-more-table-of-contents").toc({content: "#help-content", prefix: "help:"});
         $("#help-content h1, #help-content h2, #help-content h3").append(" <a class='to-top' href='#'>&#x1F809;</a>");
         $(".to-top").on("click", e => {
             e.preventDefault();

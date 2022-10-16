@@ -7,17 +7,18 @@ import {
     showNotification,
     isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
-import {capitalize, getMimetypeExt} from "./utils.js";
-import {receive, send, sendLocal} from "./proxy.js";
-import {DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {capitalize, getMimetypeByExt} from "./utils.js";
+import {send, sendLocal} from "./proxy.js";
+import {ARCHIVE_TYPE_FILES, DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {fetchText, fetchWithTimeout} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import * as crawler from "./crawler.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {isHTMLLink, parseHtml} from "./utils_html.js";
-import {findSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
+import {getSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
+import {helperApp} from "./helper_app.js";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -31,11 +32,12 @@ export function isSpecialPage(url) {
         || url.startsWith("view-source:") || url.startsWith("moz-extension:")
         || url.startsWith("https://addons.mozilla.org") || url.startsWith("https://support.mozilla.org")
         || url.startsWith("chrome:") || url.startsWith("chrome-extension:")
-        || url.startsWith("https://chrome.google.com/webstore"));
+        || url.startsWith("https://chrome.google.com/webstore")
+        || url.startsWith(helperApp.url("/")));
 }
 
 export function notifySpecialPage() {
-    showNotification("Scrapyard cannot be used with special pages.");
+    showNotification("Scrapyard cannot be used with special or already captured pages.");
 }
 
 export async function getTabMetadata(tab) {
@@ -121,6 +123,9 @@ async function captureHTMLTab(tab, bookmark) {
 }
 
 function startSavePageCapture(tab, bookmark, selection) {
+    if (settings.save_unpacked_archives())
+        bookmark.contains = ARCHIVE_TYPE_FILES;
+
     return browser.tabs.sendMessage(tab.id, {
         type: "performAction",
         menuaction: 1,
@@ -160,11 +165,11 @@ async function captureNonHTMLTab(tab, bookmark) {
             let contentType = response.headers.get("content-type");
 
             if (!contentType)
-                contentType = getMimetypeExt(new URL(tab.url).pathname) || "application/pdf";
+                contentType = getMimetypeByExt(new URL(tab.url).pathname) || "application/pdf";
 
             bookmark.content_type = contentType;
 
-            await Bookmark.storeArchive(bookmark.id, await response.arrayBuffer(), contentType);
+            await Bookmark.storeArchive(bookmark, await response.arrayBuffer(), contentType);
         }
     }
     catch (e) {
@@ -184,7 +189,7 @@ export function finalizeCapture(bookmark) {
 export async function archiveBookmark(node) {
     const bookmark = await Node.get(node.id);
     bookmark.type = NODE_TYPE_ARCHIVE;
-    await Node.update(bookmark);
+    await Node.idb.update(bookmark); // storage updated in Archive.add
 
     const isHTML = await isHTMLLink(bookmark.uri);
     if (isHTML === true) {
@@ -200,7 +205,7 @@ export async function archiveBookmark(node) {
         }
 
         if (response.ok)
-           await Bookmark.storeArchive(bookmark.id, await response.blob(), response.headers.get("content-type"));
+           await Bookmark.storeArchive(bookmark, await response.arrayBuffer(), response.headers.get("content-type"));
     }
 }
 
@@ -220,8 +225,8 @@ export async function showSiteCaptureOptions(tab, bookmark) {
 
 export async function performSiteCapture(bookmark) {
     if (crawler.initialize(bookmark)) {
-        const group = await Group.addSite(bookmark.parent_id, bookmark.name);
-        bookmark.parent_id = group.id;
+        const folder = await Folder.addSite(bookmark.parent_id, bookmark.name);
+        bookmark.parent_id = folder.id;
 
         sendLocal.createArchive({node: bookmark});
     }
@@ -319,11 +324,11 @@ export async function packPage(url, bookmark, initializer, resolver, hide_tab) {
 }
 
 export async function packUrl(url, hide_tab) {
-    return packPage(url, {}, b => b.__url_packing = true, m => m.data, hide_tab);
+    return packPage(url, {}, b => b.__url_packing = true, m => m.html, hide_tab);
 }
 
 export async function packUrlExt(url, hide_tab) {
-    let resolver = (m, t) => ({html: m.data, title: url.endsWith(t.title)? undefined: t.title, icon: t.favIconUrl});
+    let resolver = (m, t) => ({html: m.html, title: url.endsWith(t.title)? undefined: t.title, icon: t.favIconUrl});
     return packPage(url, {}, b => b.__url_packing = true, resolver, hide_tab);
 }
 
@@ -359,7 +364,7 @@ async function addBookmarkOnCommandNonFirefox(action) {
 
     await settings.load();
     if (settings.open_sidebar_from_shortcut()) {
-        const window = await findSidebarWindow();
+        const window = await getSidebarWindow();
         if (!window) {
             await browser.storage.session.set({"sidebar-select-shelf": DEFAULT_SHELF_ID});
             await toggleSidebarWindow();

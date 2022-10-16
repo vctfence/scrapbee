@@ -1,8 +1,9 @@
 var DB_TYPE_CLOUD = "cloud"
 var DB_TYPE_SYNC = "sync"
 
-var ASSET_ARCHIVE = "data"
-var ASSET_NOTES = "view"
+var ASSET_FILES = "files"
+var ASSET_ARCHIVE = "archive_content.blob"
+var ASSET_NOTES = "notes.json"
 
 function replaceDocument(content, asset, dbType) {
     var content = extractContent(content, asset, dbType)
@@ -15,33 +16,17 @@ function replaceDocument(content, asset, dbType) {
 
 function extractContent(content, asset, dbType) {
     var result;
-    if (dbType === DB_TYPE_CLOUD) {
-        if (ASSET_NOTES === asset) {
-            result = content;
-        }
-        else if (ASSET_ARCHIVE === asset) {
-             content = JSON.parse(content);
-             result = content.object;
-         }
-    }
-    else if (dbType === DB_TYPE_SYNC) {
-        var lines = content.split("\n")
 
-        if (lines.length > 2) {
-            var meta = JSON.parse(lines[0])
+    if (ASSET_NOTES === asset) {
+        var notes = JSON.parse(content)
 
-            if (meta.sync) {
-                content = JSON.parse(lines[2]);
-                if (ASSET_ARCHIVE === asset)
-                    result = content.archive.object;
-                else if (ASSET_NOTES === asset)
-                    if (content.notes.html)
-                        result = content.notes.html;
-                    else
-                        result = "<html><head></head><pre class='plaintext'>" + content.notes.content + "</pre></body>";
-            }
-        }
+        if (notes.html)
+            result = notes.html;
+        else
+            result = "<html><head></head><pre class='plaintext'>" + notes.content + "</pre></body>";
     }
+    else if (ASSET_ARCHIVE === asset || ASSET_FILES === asset)
+        result = content
 
     return result;
 }

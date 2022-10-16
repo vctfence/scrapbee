@@ -237,6 +237,11 @@ var frameLinks = [];
 var frameIndex = [];
 var selectionLinks;
 
+var styleCounter = 1;
+var frameCounter = 1;
+var resourceFileName = [];
+var saveUnpacked;
+
 var scrapyardBookmark;
 
 var selectionElement;
@@ -492,6 +497,8 @@ function addListeners()
                 // Scrapyard //////////////////////////////////////////////////////////////////
                 scrapyardBookmark = message.bookmark;
                 siteCapture = !!scrapyardBookmark.__site_capture;
+                saveUnpacked = scrapyardBookmark.contains === "files";
+                mergeCSSImages = !saveUnpacked;
 
                 if (message.selection) {
                     selectionElement = document.createElement("div");
@@ -581,9 +588,9 @@ function addListeners()
                 break;
 
             case "loadSuccess":
-
-                loadSuccess(message.index,message.content,message.contenttype,message.alloworigin);
-
+                // Scrapyard //////////////////////////////////////////////////////////////////
+                loadSuccess(message.index,message.content,message.contenttype,message.alloworigin,message.filename);
+                ////////////////////////////////////////////////////////////////// Scrapyard //
                 break;
 
             case "loadFailure":
@@ -1662,17 +1669,6 @@ function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfont
 
             try
             {
-                // Scrapyard //////////////////////////////////////////////////////////////////
-
-                if (!element.contentDocument && element.src) {
-                    let url = new URL(element.src);
-                    if (url.pathname.endsWith(".pdf")) {
-                        rememberURL(url.pathname,url.origin,"application/pdf","",false);
-                        return;
-                    }
-                }
-                ////////////////////////////////////////////////////////////////// Scrapyard //
-
                 if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before finding */
                 {
                     element.contentDocument.fonts.forEach(  /* CSS Font Loading Module */
@@ -2066,8 +2062,9 @@ function unescapeCSSValue(value)
 
 /* After first or second pass - load resources */
 
-
-function loadResources()
+// Scrapyard //////////////////////////////////////////////////////////////////
+async function loadResources()
+////////////////////////////////////////////////////////////////// Scrapyard //
 {
     var i,documentURL,useCORS;
 
@@ -2085,9 +2082,12 @@ function loadResources()
 
             useCORS = (resourceMimeType[i] == "application/font-woff");
             // Scrapyard //////////////////////////////////////////////////////////////////
-            chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
+            const result = chrome.runtime.sendMessage({ type: "loadResource", index: i, location: resourceLocation[i], referer: resourceReferer[i],
                                          passive: resourcePassive[i], pagescheme: documentURL.protocol, usecors: useCORS,
                                          bookmark: scrapyardBookmark });
+
+            if (saveUnpacked)
+                await result;
             ////////////////////////////////////////////////////////////////// Scrapyard //
         }
     }
@@ -2103,7 +2103,9 @@ function loadResources()
     }
 }
 
-function loadSuccess(index,content,contenttype,alloworigin)
+// Scrapyard //////////////////////////////////////////////////////////////////
+function loadSuccess(index,content,contenttype,alloworigin,filename)
+////////////////////////////////////////////////////////////////// Scrapyard //
 {
     var i,mimetype,charset,resourceURL,frameURL,csstext,baseuri,regex,documentURL;
     var matches = new Array();
@@ -2279,6 +2281,9 @@ function loadSuccess(index,content,contenttype,alloworigin)
     }
 
     resourceStatus[index] = "success";
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    resourceFileName[index] = filename;
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 
     if (--resourceCount <= 0)
     {
@@ -2811,7 +2816,9 @@ function enterComments()
 
 /* Third Pass - to generate HTML and save to file */
 
-function generateHTML()
+// Scrapyard //////////////////////////////////////////////////////////////////
+async function generateHTML()
+////////////////////////////////////////////////////////////////// Scrapyard //
 {
     var i,j,totalscans,totalloads,maxstrsize,totalstrsize,count,mimetype,charset,pageurl,htmlString,htmlIndex,filename,htmlBlob,objectURL,link;
 
@@ -2823,7 +2830,9 @@ function generateHTML()
 
     timeStart[3] = performance.now();
 
-    extractHTML(0,window,document.documentElement,false,false,"0",0,0);
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    await extractHTML(0,window,document.documentElement,false,false,"0",0,0);
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 
     timeFinish[3] = performance.now();
 
@@ -2928,7 +2937,7 @@ function generateHTML()
     skipIfSelected = false;
 
     if (loadLazyContent != toggleLazy && lazyLoadType == 2)
-    /////////////////////////// /////////////////////////////////////// Scrapyard //
+    ////////////////////////////////////////////////////////////////// Scrapyard //
     {
         undoShrinkPage();
 
@@ -2959,7 +2968,7 @@ function generateHTML()
     const pageIndex = frameIndex.reduce((acc, item) => [...acc, ...item], []);
     scrapyardBookmark.__index = {words: Array.from(new Set(pageIndex))};
 
-    chrome.runtime.sendMessage({type: "storePageHtml", data: resultingHTML, bookmark: scrapyardBookmark});
+    chrome.runtime.sendMessage({type: "storePageHtml", html: resultingHTML, bookmark: scrapyardBookmark});
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
     // if (cancelSave)
@@ -3069,7 +3078,9 @@ function createLargeTestFile()
     }
 }
 
-function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpreserve,indent)
+// Scrapyard //////////////////////////////////////////////////////////////////
+async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpreserve,indent)
+////////////////////////////////////////////////////////////////// Scrapyard //
 {
     var i,j,startTag,textContent,endTag,inline,preserve,style,display,position,whitespace,displayed,csstext,baseuri,documenturi,separator,origurl,datauri,origstr,dupelement,dupsheet,location,newurl;
     var visible,width,height,currentsrc,svgstr,parser,svgdoc,svgfragid,svgelement,svghref,subframekey,startindex,endindex,htmltext,origsrcdoc,origsandbox,framedoc,prefix,shadowroot;
@@ -3079,6 +3090,24 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
     var voidElements = new Array("area","base","br","col","command","embed","frame","hr","img","input","keygen","link","menuitem","meta","param","source","track","wbr");  /* W3C HTML5 4.3 Elements + menuitem */
     var retainElements = new Array("html","head","body","base","command","link","meta","noscript","script","style","template","title");
     var hiddenElements = new Array("area","base","datalist","head","link","meta","param","rp","script","source","style","template","track","title");  /* W3C HTML5 10.3.1 Hidden Elements */
+
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    async function saveFrame(uri, persist, sandboxed) {
+        origurl = element.getAttribute("src");
+
+        datauri = uri;
+
+        origstr = (datauri == origurl)? "": " data-savepage-src=\"" + origurl + "\"";
+
+        if (sandboxed)
+            origstr += " sandbox=\"allow-scripts\"";
+
+        startTag = startTag.replace(/ src="[^"]*"/, origstr + " src=\"" + datauri + "\"");
+
+        if (persist)
+            return chrome.runtime.sendMessage({ type: "saveResource", content: htmltext, filename: datauri, node: scrapyardBookmark});
+    }
+    ////////////////////////////////////////////////////////////////// Scrapyard //
 
     /* Create element start and end tags */
 
@@ -3160,14 +3189,14 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
             return;
         } else {
             for (let i = 0; i < selectionElement.children.length; ++i)
-                extractHTML(0,window,selectionElement.children[i],crossframe,nosrcframe,subframekey,preserve,indent+2);
+                await extractHTML(0,window,selectionElement.children[i],crossframe,nosrcframe,subframekey,preserve,indent+2);
 
             skipIfSelected = true;
             return;
         }
     }
 
-    if (element.id === "scrapyard-waiting" || element.id === "scrapyard-edit-bar")
+    if (element.id?.startsWith("scrapyard-"))
         return;
     ////////////////////////////////////////////////////////////////// Scrapyard //
 
@@ -3414,11 +3443,6 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             {
                                 csstext = resourceContent[i];
 
-                                /* Converting <link> into <style> means that CSS rules are embedded in saved HTML file */
-                                /* Therefore need to escape any </style> end tags that may appear inside CSS strings */
-
-                                csstext = csstext.replace(/<\/style>/gi,"<\\/style>");
-
                                 baseuri = element.href;
 
                                 documenturi = element.href;
@@ -3427,12 +3451,36 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
 
                                 if (swapDevices) textContent = swapScreenAndPrintDevices(textContent);
 
+                                // Scrapyard //////////////////////////////////////////////////////////////////
+                                if (saveUnpacked) {
+                                    origurl = element.getAttribute("href");
+
+                                    datauri = `style_${styleCounter++}.css`;
+
+                                    origstr = (datauri == origurl)? "": " data-savepage-href=\"" + origurl + "\"";
+
+                                    startTag = startTag.replace(/ href="[^"]*"/, origstr + " href=\"" + datauri + "\"");
+
+                                    await chrome.runtime.sendMessage({type: "saveResource", content: textContent, filename: datauri, node: scrapyardBookmark});
+
+                                    textContent = "";
+                                }
+                                else {
+
+                                /* Converting <link> into <style> means that CSS rules are embedded in saved HTML file */
+                                /* Therefore need to escape any </style> end tags that may appear inside CSS strings */
+
+                                    textContent = textContent.replace(/<\/style>/gi,"<\\/style>");
+
+                                ////////////////////////////////////////////////////////////////// Scrapyard //
                                 startTag = "<style data-savepage-href=\"" + element.getAttribute("href") + "\"";
                                 if (element.type != "") startTag += " type=\"" + element.type + "\"";
                                 if (element.media != "") startTag += " media=\"" + element.media + "\"";
                                 startTag += ">";
                                 endTag = "</style>";
-
+                                // Scrapyard //////////////////////////////////////////////////////////////////
+                                }
+                                ////////////////////////////////////////////////////////////////// Scrapyard //
                                 resourceReplaced[i]++;
                             }
                         }
@@ -4127,34 +4175,13 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
 
                 try
                 {
-                    // Scrapyard //////////////////////////////////////////////////////////////////
-                    if (!element.contentDocument && element.src) {
-                        let url = new URL(element.src);
-
-                        if (url.pathname.endsWith(".pdf")) {
-                            origurl = element.getAttribute("src");
-
-                            datauri = replaceURL(url.pathname, url.origin);
-
-                            origstr = (datauri == origurl) ? "" : " data-savepage-src=\"" + origurl + "\"";
-
-                            startTag = startTag.replace(/ src="[^"]*"/, origstr + " src=\"" + datauri + "\"");
-
-                            htmlStrings[htmlStrings.length] = newlineIndent(indent);
-                            htmlStrings[htmlStrings.length] = startTag;
-
-                            return;
-                        } else {
-                            throw new Error();
-                        }
-                    }
-                    ////////////////////////////////////////////////////////////////// Scrapyard //
-
                     if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before extracting */
                     {
                         startindex = htmlStrings.length;
 
-                        extractHTML(depth+1,element.contentWindow,element.contentDocument.documentElement,crossframe,nosrcframe,subframekey,preserve,indent+2);
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        await extractHTML(depth+1,element.contentWindow,element.contentDocument.documentElement,crossframe,nosrcframe,subframekey,preserve,indent+2);
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
 
                         endindex = htmlStrings.length;
 
@@ -4166,6 +4193,11 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             htmlStrings[j] = "";
                         }
 
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        if (saveUnpacked && element.hasAttribute("src"))
+                            await saveFrame(`frame_${frameCounter++}.html`, true);
+                        else {
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                         htmltext = htmltext.replace(/&/g,"&amp;");
                         htmltext = htmltext.replace(/"/g,"&quot;");
 
@@ -4187,6 +4219,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             startTag = startTag.replace(/ srcdoc="[^"]*"/,origstr + " srcdoc=\"" + htmltext + "\"");
                         }
                         else startTag = startTag.replace(/<iframe/,"<iframe srcdoc=\"" + htmltext + "\"");
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        }
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                     }
                 }
                 catch (e)  /* attempting cross-domain web page access */
@@ -4204,9 +4239,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             framedoc = parser.parseFromString(frameHTML[i],"text/html");
 
                             startindex = htmlStrings.length;
-
-                            extractHTML(depth+1,null,framedoc.documentElement,true,nosrcframe,subframekey,preserve,indent+2);
-
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            await extractHTML(depth+1,null,framedoc.documentElement,true,nosrcframe,subframekey,preserve,indent+2);
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
                             endindex = htmlStrings.length;
 
                             htmltext = "";
@@ -4217,6 +4252,11 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                                 htmlStrings[j] = "";
                             }
 
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            if (saveUnpacked && element.hasAttribute("src"))
+                                await saveFrame(`frame_${frameCounter++}.html`, true, true);
+                            else {
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
                             htmltext = htmltext.replace(/&/g,"&amp;");
                             htmltext = htmltext.replace(/"/g,"&quot;");
 
@@ -4248,12 +4288,17 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                                 startTag = startTag.replace(/ sandbox="[^"]*"/,origstr + " sandbox=\"allow-scripts\"");
                             }
                             else startTag = startTag.replace(/<iframe/,"<iframe sandbox=\"allow-scripts\"");
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            }
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
                         }
                     }
                 }
             }
 
-            if (element.hasAttribute("src"))
+            // Scrapyard //////////////////////////////////////////////////////////////////
+            if (!saveUnpacked && element.hasAttribute("src"))
+            ////////////////////////////////////////////////////////////////// Scrapyard //
             {
                 origurl = element.getAttribute("src");
 
@@ -4285,9 +4330,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                     if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before extracting */
                     {
                         startindex = htmlStrings.length;
-
-                        extractHTML(depth+1,element.contentWindow,element.contentDocument.documentElement,crossframe,nosrcframe,subframekey,preserve,indent+2);
-
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        await extractHTML(depth+1,element.contentWindow,element.contentDocument.documentElement,crossframe,nosrcframe,subframekey,preserve,indent+2);
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                         endindex = htmlStrings.length;
 
                         htmltext = "";
@@ -4298,6 +4343,11 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             htmlStrings[j] = "";
                         }
 
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        if (saveUnpacked && element.hasAttribute("src"))
+                            await saveFrame(`frame_${frameCounter++}.html`, true);
+                        else {
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                         datauri = "data:text/html;charset=utf-8," + encodeURIComponent(htmltext);
 
                         startTag = startTag.replace(/<frame/,"<frame data-savepage-sameorigin=\"\"");
@@ -4311,6 +4361,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             startTag = startTag.replace(/ src="[^"]*"/,origstr + " src=\"" + datauri + "\"");
                         }
                         else startTag = startTag.replace(/<frame/,"<frame src=\"" + datauri + "\"");
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        }
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                     }
                 }
                 catch (e)  /* attempting cross-domain web page access */
@@ -4328,9 +4381,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                             framedoc = parser.parseFromString(frameHTML[i],"text/html");
 
                             startindex = htmlStrings.length;
-
-                            extractHTML(depth+1,null,framedoc.documentElement,true,nosrcframe,subframekey,preserve,indent+2);
-
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            await extractHTML(depth+1,null,framedoc.documentElement,true,nosrcframe,subframekey,preserve,indent+2);
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
                             endindex = htmlStrings.length;
 
                             htmltext = "";
@@ -4341,6 +4394,11 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                                 htmlStrings[j] = "";
                             }
 
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            if (saveUnpacked && element.hasAttribute("src"))
+                                await saveFrame(`frame_${frameCounter++}.html`, true);
+                            else {
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
                             datauri = "data:text/html;charset=utf-8," + encodeURIComponent(htmltext);
 
                             startTag = startTag.replace(/<frame/,"<frame data-savepage-crossorigin=\"\"");
@@ -4354,6 +4412,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                                 startTag = startTag.replace(/ src="[^"]*"/,origstr + " src=\"" + datauri + "\"");
                             }
                             else startTag = startTag.replace(/<frame/,"<frame src=\"" + datauri + "\"");
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            }
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
                         }
                     }
                 }
@@ -4393,7 +4454,7 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
             if (doctype != null)
             {
                 htmltext = '<!DOCTYPE ' + doctype.name + (doctype.publicId ? ' PUBLIC "' + doctype.publicId + '"' : '') +
-                           ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>';
+                           ((doctype.systemId && !doctype.publicId) ? ' SYSTEM' : '') + (doctype.systemId ? ' "' + doctype.systemId + '"' : '') + '>\n';
 
                 htmlStrings[htmlStrings.length] = htmltext;
             }
@@ -4487,9 +4548,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                         if (shadowroot.childNodes[i] != null)  /* in case web page not fully loaded before extracting */
                         {
                             if (shadowroot.childNodes[i].nodeType == 1)  /* element node */
-                            {
-                                extractHTML(depth,frame,shadowroot.childNodes[i],crossframe,nosrcframe,framekey,preserve,indent+2);
-                            }
+                            { // Scrapyard //////////////////////////////////////////////////////////////////
+                                await extractHTML(depth,frame,shadowroot.childNodes[i],crossframe,nosrcframe,framekey,preserve,indent+2);
+                            } ////////////////////////////////////////////////////////////////// Scrapyard //
                             else if (shadowroot.childNodes[i].nodeType == 3)  /* text node */
                             {
                                 text = shadowroot.childNodes[i].textContent;
@@ -4554,8 +4615,9 @@ function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpr
                         }
 
                         /* Handle other element nodes */
-
-                        extractHTML(depth,frame,element.childNodes[i],crossframe,nosrcframe,framekey,preserve,indent+2);
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        await extractHTML(depth,frame,element.childNodes[i],crossframe,nosrcframe,framekey,preserve,indent+2);
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
                     }
                     else if (element.childNodes[i].nodeType == 3)  /* text node */
                     {
@@ -5027,7 +5089,12 @@ function replaceCSSImageURL(url,baseuri,documenturi,framekey)
                             try { asciistring = btoa(resourceContent[i]); }
                             catch (e) { asciistring = ""; }  /* resource content not a binary string */
 
-                            return "data:" + resourceMimeType[i] + ";base64," + asciistring;  /* binary data encoded as Base64 ASCII string */
+                            // Scrapyard //////////////////////////////////////////////////////////////////
+                            if (saveUnpacked)
+                                return resourceFileName[i]
+                            else
+                            ////////////////////////////////////////////////////////////////// Scrapyard //
+                                return "data:" + resourceMimeType[i] + ";base64," + asciistring;  /* binary data encoded as Base64 ASCII string */
                         }
                     }
                 }
@@ -5072,14 +5139,23 @@ function replaceURL(url,baseuri,documenturi)
                         try { asciistring = btoa(resourceContent[i]); }
                         catch (e) { asciistring = ""; }  /* resource content not a binary string */
 
-                        return "data:" + resourceMimeType[i] + ";base64," + asciistring  + fragment;  /* binary data encoded as Base64 ASCII string */
+                        // Scrapyard //////////////////////////////////////////////////////////////////
+                        if (saveUnpacked)
+                            return resourceFileName[i];
+                        else
+                        ////////////////////////////////////////////////////////////////// Scrapyard //
+                            return "data:" + resourceMimeType[i] + ";base64," + asciistring  + fragment;  /* binary data encoded as Base64 ASCII string */
                     }
                 }
                 else  /* charset defined - character data */
                 {
                     resourceReplaced[i]++;
-
-                    return "data:" + resourceMimeType[i] + ";charset=utf-8," + encodeURIComponent(resourceContent[i]) + fragment;  /* characters encoded as UTF-8 %escaped string */
+                    // Scrapyard //////////////////////////////////////////////////////////////////
+                    if (saveUnpacked)
+                        return resourceFileName[i];
+                    else
+                    ////////////////////////////////////////////////////////////////// Scrapyard //
+                        return "data:" + resourceMimeType[i] + ";charset=utf-8," + encodeURIComponent(resourceContent[i]) + fragment;  /* characters encoded as UTF-8 %escaped string */
                 }
             }
         }

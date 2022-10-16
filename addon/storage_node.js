@@ -1,16 +1,38 @@
 import {EntityIDB} from "./storage_idb.js";
 import {NODE_PROPERTIES} from "./storage.js";
 import UUID from "./uuid.js";
+import {delegateProxy} from "./proxy.js";
+import {NodeProxy} from "./storage_node_proxy.js";
+import {StorageAdapterDisk} from "./storage_adapter_disk.js";
+import {settings} from "./settings.js";
 
 export class NodeIDB extends EntityIDB {
     static newInstance() {
         const instance = new NodeIDB();
-        return instance;
+
+        // bypass the disk proxy
+        instance.idb = new NodeIDB();
+
+        return delegateProxy(new NodeProxy(new StorageAdapterDisk()), instance);
     }
 
     resetDates(node) {
         node.date_added = new Date();
         node.date_modified = node.date_added;
+    }
+
+    fixDates(node) {
+        // Chrome structured cloning turns dates to strings
+        if (settings.platform.chrome) {
+            if (typeof node.date_added === "string")
+                node.date_added = new Date(node.date_added);
+
+            if (typeof node.date_modified === "string")
+                node.date_modified = new Date(node.date_modified);
+
+            if (typeof node.content_modified === "string")
+                node.content_modified = new Date(node.content_modified);
+        }
     }
 
     setUUID(node) {
@@ -24,6 +46,11 @@ export class NodeIDB extends EntityIDB {
     async getIdFromUUID(uuid) {
         let node = await this._db.nodes.where("uuid").equals(uuid).first();
         return node?.id;
+    }
+
+    async getUUIDFromId(id) {
+        let node = await this._db.nodes.where("id").equals(id).first();
+        return node?.uuid;
     }
 
     sanitize(node) {
@@ -41,21 +68,31 @@ export class NodeIDB extends EntityIDB {
     }
 
     async add(node) {
-        delete node.pos;
+        node.pos = undefined;
         this.setUUID(node);
         this.resetDates(node);
 
-        node.id = await this._db.nodes.add(this.sanitized(node));
+        node.id = await this._add(node);
         return node;
-    }
-
-    async put(node) {
-        return this._db.nodes.put(this.sanitized(node));
     }
 
     async import(node) {
-        node.id = await this._db.nodes.add(this.sanitized(node));
+        node.id = await this._add(node);
         return node;
+    }
+
+    async _add(node) {
+        return this._db.nodes.add(this.sanitized(node))
+    }
+
+    async put(node) {
+        await this._db.nodes.put(this.sanitized(node));
+        return node;
+    }
+
+    // retains node in IDB, but removes from storage
+    async unpersist(node) {
+        // NOP, implemented in proxy
     }
 
     exists(node) {
@@ -91,18 +128,15 @@ export class NodeIDB extends EntityIDB {
         else if (node?.id) {
             if (resetDateModified)
                 node.date_modified = new Date();
+
+            this.fixDates(node);
             await this._db.nodes.update(node.id, this.sanitized(node));
         }
         else {
             console.error("Updating a node without id or a null reference", node);
         }
-        return node;
-    }
 
-    async contentUpdate(node) {
-        node.date_modified = new Date();
-        node.content_modified = node.date_modified;
-        await this._db.nodes.update(node.id, this.sanitized(node));
+        return node;
     }
 
     async batchUpdate(updater, ids) {
@@ -118,6 +152,13 @@ export class NodeIDB extends EntityIDB {
             await this._db.nodes.toCollection().modify(withPostprocessing);
     }
 
+    async updateContentModified(node) {
+        node.date_modified = new Date();
+        node.content_modified = node.date_modified;
+
+        return this.update(node, false);
+    }
+
     iterate(iterator, filter) {
         if (filter)
             return this._db.nodes.filter(filter).each(iterator);
@@ -129,34 +170,35 @@ export class NodeIDB extends EntityIDB {
         return this._db.nodes.filter(filter).toArray();
     }
 
-    async delete(ids) {
-        if (!Array.isArray(ids))
-            ids = [ids];
+    async delete(nodes) {
+        if (!Array.isArray(nodes))
+            nodes = [nodes];
 
-        await this.deleteDependencies(ids);
+        await this.deleteDependencies(nodes);
 
-        return this.deleteShallow(ids);
+        return this.deleteShallow(nodes);
     }
 
-    async deleteShallow(ids) {
-        if (!Array.isArray(ids))
-            ids = [ids];
+    async deleteShallow(nodes) {
+        if (!Array.isArray(nodes))
+            nodes = [nodes];
 
+        const ids = nodes.map(n => n.id);
         return this._db.nodes.bulkDelete(ids);
     }
 
-    async deleteDependencies(ids) {
-        if (!Array.isArray(ids))
-            ids = [ids];
+    async deleteDependencies(nodes) {
+        if (!Array.isArray(nodes))
+            nodes = [nodes];
 
+        const ids = nodes.map(n => n.id);
         await this._db.blobs?.where("node_id").anyOf(ids).delete();
-        await this._db.index?.where("node_id").anyOf(ids).delete();
         await this._db.notes?.where("node_id").anyOf(ids).delete();
         await this._db.icons?.where("node_id").anyOf(ids).delete();
         await this._db.comments?.where("node_id").anyOf(ids).delete();
+        await this._db.index?.where("node_id").anyOf(ids).delete();
         await this._db.index_notes?.where("node_id").anyOf(ids).delete();
         await this._db.index_comments?.where("node_id").anyOf(ids).delete();
     }
-
 }
 

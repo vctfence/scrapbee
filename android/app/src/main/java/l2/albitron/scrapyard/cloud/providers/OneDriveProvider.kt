@@ -106,9 +106,8 @@ class OneDriveProvider : CloudProvider {
             .itemWithPath(normalizedPath)
     }
 
-
     // GraphServiceException: Error code: itemNotFound
-    override fun downloadTextFile(path: String): String? {
+    private fun downloadInputStreamInternal(path: String): Pair<InputStream?, Int?> {
         var driveItem: DriveItem? = null
         var inputStream: InputStream? = null
 
@@ -124,12 +123,38 @@ class OneDriveProvider : CloudProvider {
         }
 
         return if (driveItem != null && inputStream != null)
-            ByteArrayOutputStream(driveItem.size?.toInt()!!).use { out ->
-                copyStream(inputStream, out)
-                String(out.toByteArray(), StandardCharsets.UTF_8)
-            }
+            Pair(inputStream, driveItem?.size?.toInt())
+        else
+            Pair(null, null)
+    }
+
+    override fun downloadInputStream(path: String): InputStream? {
+        val (inputStream, driveItem) = downloadInputStreamInternal(path)
+
+        return if (driveItem != null && inputStream != null)
+            inputStream
         else
             null
+    }
+
+    override fun downloadBinaryFile(path: String): ByteArray? {
+        val (inputStream, fileSize) = downloadInputStreamInternal(path)
+
+        return inputStream?.use { inputStream ->
+            ByteArrayOutputStream(fileSize!!).use { out ->
+                copyStream(inputStream, out)
+                return out.toByteArray()
+            }
+        }
+    }
+
+    override fun downloadTextFile(path: String): String? {
+        val bytes = downloadBinaryFile(path)
+
+        if (bytes != null)
+            return String(bytes, StandardCharsets.UTF_8)
+
+        return null
     }
 
     override fun downloadRange(path: String, start: Long, length: Long): String? {
@@ -284,30 +309,30 @@ class OneDriveProvider : CloudProvider {
             }
         }
 
-//        @Suppress("DEPRECATION")
-//        fun getSignature(context: Context) {
-//            val packageName: String = context.getPackageName()
-//            try {
-//                val info: PackageInfo = context.getPackageManager().getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
-//                for (signature in info.signatures) {
-//                    var md: MessageDigest
-//                    md = MessageDigest.getInstance("SHA")
-//                    md.update(signature.toByteArray())
-//                    //val sha1Singature = String(Base64.encode(md.digest(), 0))
-//                    //String something = new String(Base64.encodeBytes(md.digest()));
-//                    //Log.e("TAG", sha1Singature)
-//
-//                    val sha1SingatureBytes = Base64.encode(md.digest(), 0)
-//                    val storageService = StorageService(context)
-//                    storageService.writeToDiskAndOpen(sha1SingatureBytes, "sig.txt", "text/plain")
-//                }
-//            } catch (e1: PackageManager.NameNotFoundException) {
-//                Log.e("name not found", e1.toString())
-//            } catch (e: NoSuchAlgorithmException) {
-//                Log.e("no such an algorithm", e.toString())
-//            } catch (e: Exception) {
-//                Log.e("exception", e.toString())
-//            }
-//        }
+        @Suppress("DEPRECATION")
+        fun getSignature(context: Context) {
+            val packageName: String = context.getPackageName()
+            try {
+                val info: PackageInfo = context.getPackageManager().getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                for (signature in info.signatures) {
+                    var md: MessageDigest
+                    md = MessageDigest.getInstance("SHA")
+                    md.update(signature.toByteArray())
+                    //val sha1Singature = String(Base64.encode(md.digest(), 0))
+                    //String something = new String(Base64.encodeBytes(md.digest()));
+                    //Log.e("TAG", sha1Singature)
+
+                    val sha1SingatureBytes = Base64.encode(md.digest(), 0)
+                    val storageService = StorageService(context)
+                    storageService.writeToDiskAndOpen(sha1SingatureBytes, "sig.txt", "text/plain")
+                }
+            } catch (e1: PackageManager.NameNotFoundException) {
+                Log.e("name not found", e1.toString())
+            } catch (e: NoSuchAlgorithmException) {
+                Log.e("no such an algorithm", e.toString())
+            } catch (e: Exception) {
+                Log.e("exception", e.toString())
+            }
+        }
     }
 }

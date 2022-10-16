@@ -31,11 +31,11 @@
             <div id="main-controls">
                 <div id="main-buttons">
                     <img class="tool-button midnight-filter" src="../icons/reload.svg" title="Reload" id="btnLoad"/>
-                    <img class="tool-button midnight-filter" src="../icons/sync.svg" title="Sync" id="btnSync"/>
                     <img class="tool-button midnight-filter" src="../icons/search.svg" title="Search" id="btnSearch"/>
                     <img class="tool-button midnight-filter" src="../icons/settings.svg" title="Settings" id="btnSettings"/>
                     <img class="tool-button midnight-filter" src="../icons/help.svg" title="Help" id="btnHelp"/>
                     <img class="tool-button midnight-filter" src="../icons/bell.svg" title="Announcement" id="btnAnnouncement"/>
+                    <img class="tool-button midnight-filter" src="../icons/disk_warning.svg" title="Helper App is Missing" id="btnHelperWarning"/>
                 </div>
                 <div id="shelf-selector-container">
                     <img id="shelves-icon" title="Shelf" src="../icons/books.svg" class="midnight-filter">
@@ -54,11 +54,11 @@
                         <div id="shelf-menu-rename">Rename</div>
                         <div id="shelf-menu-delete">Delete</div>
                         <div id="shelf-menu-sort">Sort</div>
-                        <div id="shelf-menu-import">Import...</div>
-                        <div id="shelf-menu-export">Export...</div>
+                        <div id="shelf-menu-import">Import&#x2026;</div>
+                        <div id="shelf-menu-export">Export&#x2026;</div>
                         <div id="shelf-menu-undo">Undo</div>
                         <div id="shelf-menu-abort">Abort</div>
-                        <input type="file" accept=".jsonl,.json,.org,.html" id="file-picker" style="display: none"/>
+                        <input type="file" accept=".jsbk,.jsonl,.json,.org,.html" id="file-picker" style="display: none"/>
                     </div>
                 </div>
             </div>
@@ -94,7 +94,7 @@
         </div>
     </div>
 
-    <div class="dlg-cover dlg-confirm" style="display:none;">
+    <div class="dlg-dim dlg-confirm" style="display:none;">
         <div class="dlg">
             <div class="dlg-box">
                 <div class="dlg-title">[title]</div>
@@ -102,18 +102,18 @@
                     <div class="row">
                         <div class="cell">[message]</div>
                     </div>
-                    <div class="row">
-                        <div class="cell" style="text-align:center;">
-                            <input type="button" class="button-ok" value="OK" />
-                            <input type="button" class="button-cancel" value="Cancel" />
-                        </div>
-                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="cell" style="text-align:center;">
+                    <input type="button" class="button-ok" value="OK" />
+                    <input type="button" class="button-cancel" value="Cancel" />
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="dlg-cover dlg-alert" style="display:none;">
+    <div class="dlg-dim dlg-alert" style="display:none;">
         <div class="dlg">
             <div class="dlg-box">
                 <div class="dlg-title">[title]</div>
@@ -121,17 +121,17 @@
                     <div class="row">
                         <div class="cell">[message]</div>
                     </div>
-                    <div class="row">
-                        <div class="cell" style="text-align:center;">
-                            <input type="button" class="button-ok" value="OK"/>
-                        </div>
-                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="cell" style="text-align:center;">
+                    <input type="button" class="button-ok" value="OK"/>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="dlg-cover dlg-properties" style="display:none;">
+    <div class="dlg-dim dlg-properties" style="display:none;">
         <div class="dlg">
             <div class="dlg-box">
                 <div class="dlg-title">
@@ -146,8 +146,18 @@
                         <textarea id="prop-comments" name="comments"></textarea>
                     </div>
                     <div class="prop-row">
-                        <label for="prop-name" class="cell">Title: </label>
-                        <input id="prop-name" class="dialog-input" type="" name="name" value="" style="width:100%"/>
+                        <label for="prop-name" class="cell" style="float: none;">Title: </label>
+                        <div id="prop-title-container" style="width:100%; display: flex; align-items: center;">
+                            <div id="prop-title-icon-image" title="Change icon"></div>
+                            <input id="prop-name" class="dialog-input" type="" name="name" value=""  style="flex-grow: 1"/>
+                        </div>
+                    </div>
+                    <div id="prop-row-user_icon" class="prop-row" style="display: none;">
+                        <div>
+                            <div><label for="prop-user_icon" class="cell">Icon URL: </label></div>
+                            <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
+                        </div>
+                        <input id="prop-user_icon" type="" class="dialog-input" name="user_icon" value="" style="width:100%"/>
                     </div>
                     <div class="prop-row">
                         <label for="prop-uri" class="cell">URL: </label>
@@ -172,14 +182,7 @@
                         </div>
                         <input id="prop-uuid" readonly="true" class="dialog-input" type="" name="uuid" value="" style="width:100%"/>
                     </div>
-                    <div id="prop-row-icon" class="prop-row more-properties">
-                        <div>
-                            <div><label for="prop-icon" class="cell">Icon: </label></div>
-                            <div style="float: right;"><a id="set-default-icon" href="#">set default</a></div>
-                        </div>
-                        <input id="prop-icon" type="" class="dialog-input" name="icon" value="" style="width:100%"/>
-                    </div>
-                    <div class="prop-row more-properties">
+                    <div class="prop-row prop-row-date-added more-properties">
                         <label for="prop-added" class="cell">Added on: </label>
                         <input id="prop-added" type="" class="dialog-input" name="date_added" value="" style="width:100%"
                                readonly="true"/>
@@ -201,7 +204,7 @@
         </div>
     </div>
 
-    <div class="dlg-cover dlg-prompt" style="display:none;">
+    <div class="dlg-dim dlg-prompt" style="display:none;">
         <div class="dlg">
             <div class="dlg-box">
                 <div class="dlg-title i18n i18n-innerHTML">[caption]</div>
@@ -214,6 +217,37 @@
                 </div>
                 <div class="row"
                      style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
+                    <div class="cell" style="float:right">
+                        <input type="button" class="button-ok i18n i18n-value" value="OK"/>
+                        <input type="button" class="button-cancel i18n i18n-value" value="Cancel"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dlg-dim dlg-export" style="display:none;">
+        <div class="dlg">
+            <div class="dlg-box">
+                <div class="dlg-title i18n i18n-innerHTML">[caption]</div>
+                <div class="dlg-table" style="overflow:hidden;">
+                    <div class="row">
+                        <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">File name:</div>
+                        <div class="cell"><input class="dialog-input" type="" name="file_name" value=""
+                                                 style="width:100%"/></div>
+                    </div>
+                    <div class="row">
+                        <div class="cell i18n i18n-innerHTML" style="width:50px;text-align:right;">Format:</div>
+                        <div class="cell">
+                            <select class="export-format" name="format" style="color: black; appearance: auto;">
+                                <option value="json">JSON</option>
+                                <option value="org_links">ORG (links only)</option>
+                                <option value="org">ORG</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="bottom:20px;white-space:nowrap;overflow:hidden;margin-top:20px;text-align:right;">
                     <div class="cell" style="float:right">
                         <input type="button" class="button-ok i18n i18n-value" value="OK"/>
                         <input type="button" class="button-cancel i18n i18n-value" value="Cancel"/>

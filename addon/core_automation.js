@@ -1,8 +1,8 @@
-import {nativeBackend} from "./backend_native.js";
+import {helperApp} from "./helper_app.js";
 import UUID from "./uuid.js";
 import {
-    isContainer, isBuiltInShelf, byPosition,
-    TODO_NAMES, TODO_STATES,
+    isContainerNode, isBuiltInShelf, byPosition,
+    TODO_STATE_NAMES, TODO_STATES,
     CLOUD_SHELF_NAME, CLOUD_SHELF_UUID,
     DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
     BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
@@ -12,22 +12,22 @@ import {settings} from "./settings.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 import {send, receiveExternal, sendLocal} from "./proxy.js";
 import {getActiveTab} from "./utils_browser.js";
-import {getMimetypeExt} from "./utils.js";
-import {parseHtml} from "./utils_html.js";
+import {getMimetypeByExt} from "./utils.js";
 import {fetchText} from "./utils_io.js";
-import {ishellBackend} from "./backend_ishell.js";
+import {ishellConnector} from "./plugin_ishell.js";
 import {captureTab, isSpecialPage, notifySpecialPage, packUrlExt} from "./bookmarking.js";
 import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "./storage_entities.js";
 import {browseNode} from "./browse.js";
+import {DiskStorage} from "./storage_external.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
 
-    return ishellBackend.isIShell(sender.id)
+    return ishellConnector.isIShell(sender.id)
         || (settings.enable_automation() && (!extension_whitelist
             || extension_whitelist.some(id => id.toLowerCase() === sender.id.toLowerCase())));
 }
@@ -77,9 +77,12 @@ export async function createBookmarkNode(message, sender, activeTab) {
     else if (!node.icon && !node.local)
         node.icon = await getFaviconFromTab(activeTab);
 
+    if (node.todo_state)
+        node.todo_state = TODO_STATES[node.todo_state];
+
     const path = Path.expand(node.path);
-    const group = await Group.getOrCreateByPath(path);
-    node.parent_id = group.id;
+    const folder = await Folder.getOrCreateByPath(path);
+    node.parent_id = folder.id;
     delete node.path;
 
     return node;
@@ -146,12 +149,12 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
         node.name = "Unnamed";
 
     if (!node.content_type)
-        node.content_type = getMimetypeExt(node.uri);
+        node.content_type = getMimetypeByExt(node.uri);
 
     let saveContent = (bookmark, content) => {
         const contentType = node.pack? "text/html": node.content_type;
 
-        return Bookmark.storeArchive(bookmark.id, content, contentType, bookmark.__index)
+        return Bookmark.storeArchive(bookmark, content, contentType, bookmark.__index)
             .then(() => {
                 if (node.select)
                     send.bookmarkCreated({node: bookmark});
@@ -160,7 +163,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
             });
     };
 
-    return Bookmark.add(node, NODE_TYPE_ARCHIVE)
+    return Bookmark.idb.add(node, NODE_TYPE_ARCHIVE) // added to storage in Archive.add
         .then(async bookmark => {
 
             if (node.comments)
@@ -170,7 +173,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
                 let content = await downloadLocalContent(bookmark);
 
                 bookmark.uri = "";
-                await Bookmark.update(bookmark);
+                //await Bookmark.update(bookmark);
 
                 return saveContent(bookmark, content);
             }
@@ -184,7 +187,7 @@ receiveExternal.scrapyardAddArchive = async (message, sender) => {
 
                 bookmark.name = page.title;
 
-                await Bookmark.update(bookmark);
+                //await Bookmark.update(bookmark);
 
                 return saveContent(bookmark, page.html);
             }
@@ -235,12 +238,12 @@ async function setUpLocalFileCapture(message) {
         throw new Error("HTTP URL is processed as a local path.");
 
     let local_uri;
-    if (await nativeBackend.probe()) {
+    if (await helperApp.probe()) {
         message.uri = message.uri.replace(/^file:\/+/i, "");
 
         message.__local_uuid = UUID.numeric();
-        await nativeBackend.post(`/serve/set_path/${message.__local_uuid}`, {path: message.uri});
-        local_uri = nativeBackend.url(`/serve/file/${message.__local_uuid}/`);
+        await helperApp.post(`/serve/set_path/${message.__local_uuid}`, {path: message.uri});
+        local_uri = helperApp.url(`/serve/file/${message.__local_uuid}/`);
         message.uri = "";
         return local_uri;
     }
@@ -251,25 +254,22 @@ async function setUpLocalFileCapture(message) {
 
 async function cleanUpLocalFileCapture(message) {
     if (message.local)
-        await nativeBackend.fetch(`/serve/release_path/${message.__local_uuid}`);
+        await helperApp.fetch(`/serve/release_path/${message.__local_uuid}`);
 }
 
 async function nodeToAPIObject(node) {
     if (node) {
         const comments =
             node.has_comments
-                ? await Comments.get(node.id)
+                ? await Comments.get(node)
                 : undefined;
 
         const icon =
             node.stored_icon
-                ? await Icon.get(node.id)
+                ? await Icon.get(node)
                 : node.icon;
 
-        const uuid =
-            isBuiltInShelf(node.name)
-                ? node.name.toLowerCase()
-                : node.uuid;
+        const uuid = node.uuid;
 
         const options = {
             type: NODE_TYPE_NAMES[node.type],
@@ -290,7 +290,7 @@ async function nodeToAPIObject(node) {
             options.details = node.details;
 
         if (node.todo_state)
-            options.todo_state = TODO_NAMES[node.todo_state];
+            options.todo_state = TODO_STATE_NAMES[node.todo_state];
 
         if (node.todo_date)
             options.todo_date = node.todo_date;
@@ -361,14 +361,17 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
 
     let entries;
     let container;
+
     if (message.path === "/") {
         entries = await Query.allShelves();
         container = true;
     }
     else {
         const path = Path.expand(message.path);
-        const node = await Group.getByPath(path);
+        const node = await Folder.getByPath(path);
+
         container = !!node;
+
         if (container)
             entries = await Node.getChildren(node.id);
         else
@@ -478,4 +481,18 @@ receiveExternal.scrapyardBrowseUuid = async (message, sender) => {
     const node = await Node.getByUUID(message.uuid);
     if (node)
         browseNode(node);
+};
+
+receiveExternal.scrapyardOpenBatchSession = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    return DiskStorage.openBatchSession();
+};
+
+receiveExternal.scrapyardCloseBatchSession = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    return DiskStorage.closeBatchSession();
 };

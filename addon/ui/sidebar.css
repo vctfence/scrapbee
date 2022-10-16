@@ -95,7 +95,7 @@ input:focus {
     z-index:1; /* prevent dots of "text-overflow:ellipsis" diplayed over me */
 }
 
-#btnSync, #btnAnnouncement {
+#btnAnnouncement, #btnHelperWarning {
     display: none;
 }
 
@@ -134,7 +134,7 @@ input:focus {
     padding:0 10px 5px 10px;
 }
 
-.dlg-cover {
+.dlg-dim {
     position:fixed;
     z-index:999999999;
     width:100%;
@@ -187,11 +187,16 @@ input:focus {
     position:relative;
 }
 
-.dlg-table .row {
+.dlg-table .row, .dlg > .row {
     display:table-row;
     padding:12px 5px 6px 5px;
     white-space:nowrap;
     overflow:hidden;
+}
+
+.dlg > .row {
+    display: block;
+    padding: 14px 5px 4px 5px;
 }
 
 .dlg-table .row .cell {
@@ -319,6 +324,7 @@ select {
     height: 14px;
     margin-left: 8px;
     margin-right: 4px;
+    margin-top: 2px;
     cursor: pointer;
     background: transparent !important;
 }
@@ -616,5 +622,14 @@ a#set-default-icon, a#copy-reference-url {
     left: 0;
     height: 2px;
     background-color: #757575 !important;
-    width: 0%;
+    width: 0;
+}
+
+#prop-title-icon-image {
+    height: 16px;
+    width: 16px;
+    margin-right: 2px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    cursor: pointer;
 }

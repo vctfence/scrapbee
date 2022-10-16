@@ -20,5 +20,3 @@ function removeDarkUITheme() {
 if (localStorage.getItem("scrapyard-sidebar-theme") === "dark")
     setDarkUITheme()
 
-if (localStorage.getItem("sidebar-show-sync") === "show")
-    loadCSSFile("show-sync-button", "sidebar_show_sync.css");

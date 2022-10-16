@@ -17,7 +17,6 @@ class StorageService(context: Context) {
     var _context = context
 
     private fun openIntent(uri: Uri?, type: String) {
-        println(type)
         try {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY

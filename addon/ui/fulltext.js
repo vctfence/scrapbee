@@ -1,17 +1,20 @@
 import {send} from "../proxy.js"
 import {settings} from "../settings.js";
 import {
+    assembleUnpackedIndex,
     fixDocumentEncoding,
     instantiateIFramesRecursive,
     parseHtml,
     rebuildIFramesRecursive
 } from "../utils_html.js";
-import {getActiveTab, injectScriptFile} from "../utils_browser.js";
+import {getActiveTab} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Archive, Icon} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {ProgressCounter, sleep} from "../utils.js";
+import {helperApp} from "../helper_app.js";
+import {RDF_EXTERNAL_TYPE} from "../storage.js";
 
 const IGNORE_PUNCTUATION = ",-–—‒'\"+=".split("");
 
@@ -45,7 +48,14 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
-    const archive = await Archive.get(node.id);
+    if (Archive.isUnpacked(node))
+        return previewUnpackedResult(query, node);
+    else
+        return previewPackedResult(query, node);
+}
+
+async function previewPackedResult(query, node) {
+    const archive = await Archive.get(node);
     const content = await Archive.reify(archive);
     const doc = parseHtml(content);
     const [iframeDocs, topIframes] = instantiateIFramesRecursive(doc);
@@ -78,6 +88,17 @@ function displayDocument(doc, node) {
     displayURL(previewURL, node);
 }
 
+async function previewUnpackedResult(query, node) {
+    let url = node.external === RDF_EXTERNAL_TYPE
+        ? `/rdf/browse/${node.uuid}`
+        : `/browse/${node.uuid}`;
+
+    url += `?highlight=${encodeURIComponent(query)}`;
+
+    const previewURL = helperApp.url(url);
+    displayURL(previewURL, node);
+}
+
 function displayURL(previewURL, node) {
     $(`#found-items td`).css("background-color", "transparent");
     $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
@@ -107,7 +128,7 @@ async function appendSearchResult(query, node, occurrences) {
 
     let icon = node.icon;
     if (node.stored_icon)
-        icon = await Icon.get(node.id);
+        icon = await Icon.get(node);
 
     if (!icon)
         icon = fallbackIcon;
@@ -151,16 +172,13 @@ async function appendSearchResult(query, node, occurrences) {
 }
 
 async function markSearch(query, nodes, acrossElements) {
-    if (!nodes.length || !searching)
-        return;
-
     const progressCounter = new ProgressCounter(nodes.length, "fullTextSearchProgress");
 
     for (const node of nodes) {
         if (!searching)
             break;
 
-        const docs = await getArchiveFrames(node);
+        const docs = await getArchiveFrames(node) || [];
 
         let total = 0;
         for (const doc of docs) {
@@ -183,11 +201,15 @@ async function markSearch(query, nodes, acrossElements) {
 }
 
 async function getArchiveFrames(node) {
-    const archive = await Archive.get(node.id);
-    const content = await Archive.reify(archive);
-    const rootDoc = parseHtml(content);
-    const [iframeDocs] = instantiateIFramesRecursive(rootDoc);
-    return [rootDoc, ...iframeDocs];
+    if (Archive.isUnpacked(node))
+        return await assembleUnpackedIndex(node);
+    else {
+        const archive = await Archive.get(node);
+        const content = await Archive.reify(archive);
+        const rootDoc = parseHtml(content);
+        const [iframeDocs] = instantiateIFramesRecursive(rootDoc);
+        return [rootDoc, ...iframeDocs];
+    }
 }
 
 async function markSearchDoc(query, doc, across) {

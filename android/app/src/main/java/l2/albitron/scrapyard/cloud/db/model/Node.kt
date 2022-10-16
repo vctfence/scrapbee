@@ -6,33 +6,34 @@ import com.fasterxml.jackson.annotation.JsonInclude
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(
-    "name",
-    "uuid",
-    "uri",
-    "pos",
-    "icon",
-    "parent_id",
     "type",
+    "uuid",
+    "parent",
+    "title",
+    "url",
+    "content_type",
+    "archive_type",
+    "size",
     "tags",
     "date_added",
     "date_modified",
     "content_modified",
-    "todo_state",
-    "details",
-    "todo_date",
-    "has_notes",
-    "has_comments",
-    "content_type",
-    "byte_length",
     "external",
-    "external_id"
+    "external_id",
+    "stored_icon",
+    "has_comments",
+    "has_notes",
+    "todo_state",
+    "todo_date",
+    "details",
+    "pos"
 )
 class Node : JSONEntity() {
-    @JsonProperty("name")
-    var name: String? = null
+    @JsonProperty("title")
+    var title: String? = null
 
-    @JsonProperty("uri")
-    var uri: String? = null
+    @JsonProperty("url")
+    var url: String? = null
 
     @JsonProperty("tags")
     var tags: String? = null
@@ -40,11 +41,14 @@ class Node : JSONEntity() {
     @JsonProperty("icon")
     var icon: String? = null
 
-    @JsonProperty("parent_id")
-    var parentId: String? = null
+    @JsonProperty("parent")
+    var parent: String? = null
 
     @JsonProperty("type")
-    var type: Long? = null
+    var type: String? = null
+
+    @JsonProperty("archive_type")
+    var archiveType: String? = null
 
     @JsonProperty("pos")
     var pos: Long? = null
@@ -62,26 +66,18 @@ class Node : JSONEntity() {
     var uuid: String? = null
 
     @JsonProperty("todo_state")
-    var todoState: Long? = null
+    var todoState: String? = null
 
     @JsonProperty("details")
     var details: String? = null
 
-    @JsonProperty("todo_date")
-    var todoDate: String? = null
-
     @JsonProperty("has_notes")
     var hasNotes: Boolean? = null
 
-    @JsonProperty("has_comments")
-    var hasComments: Boolean? = null
+    @JsonProperty("has_icon")
+    var hasIcon: Boolean? = null
 
     @JsonProperty("content_type")
     var contentType: String? = null
-
-    @JsonProperty("external")
-    var external: String? = null
-
-    @JsonProperty("external_id")
-    var externalId: String? = null
 }
+

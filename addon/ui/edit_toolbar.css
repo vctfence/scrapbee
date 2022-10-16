@@ -73,16 +73,7 @@
 
 #scrapyard-edit-bar, #scrapyard-edit-bar *, #scrapyard-edit-bar input[type=button].blue-button,
 #scrapyard-edit-bar input[type=button].yellow-button, #scrapyard-edit-bar input[type=text].original-url-text {
-    font-family: "Helvetica",
-    "Lucida Sans Unicode",
-    "Lucida Sans",
-    "Trebuchet MS",
-    "Open Sans",
-    "Fira Sans",
-    "Liberation Sans",
-    "Nimbus Sans L",
-    "WenQuanYi Micro Hei",
-    sans-serif;
+    font-family: "Arial", "Helvetica", sans-serif;
     font-size: 12px;
     box-sizing: content-box;
 }
@@ -204,7 +195,7 @@
     overflow: hidden;
 }
 
-#scrapyard-notes-container {
+#scrapyard-notes-dim {
     position: fixed;
     top: 0;
     left: 0;

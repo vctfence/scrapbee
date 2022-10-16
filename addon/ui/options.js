@@ -16,6 +16,9 @@ async function init() {
 
     if (settings.debug_mode())
         $("a.settings-menu-item[href='#debug']").show();
+
+    if (settings.transition_to_disk())
+        $("a.settings-menu-item[href='#transition']").show();
 }
 
 async function switchPane() {
@@ -37,8 +40,10 @@ async function loadOptionsModule(moduleName) {
     const moduleDiv = $(`#div-${moduleName}`);
 
     let module = moduleDiv.data("module");
+
     if (!module) {
-        injectCSS(`options/options_${moduleName}.css`)
+        injectCSS(`options/options_${moduleName}.css`);
+
         try {
             let html = await fetchText(`options/options_${moduleName}.html`);
             moduleDiv.html(html);
@@ -46,6 +51,7 @@ async function loadOptionsModule(moduleName) {
         catch (e) {
             console.info(e)
         }
+
         module = await import(`./options/options_${moduleName}.js`);
         moduleDiv.data("module", module);
         initHelpMarks(`#div-${moduleName}`);
@@ -64,8 +70,8 @@ function initHelpMarks(container = "") {
 }
 
 export async function setSaveCheckHandler(id, setting, callback) {
-    await settings.load();
     $(`#${id}`).on("click", async e => {
+        await settings.load();
         await settings[setting](e.target.checked);
         if (callback)
             return callback(e);

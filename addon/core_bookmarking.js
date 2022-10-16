@@ -1,8 +1,15 @@
-import {formatBytes, getMimetypeExt} from "./utils.js";
+import {formatBytes, getMimetypeByExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
-import {CLOUD_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, UNDO_DELETE} from "./storage.js";
-import {getActiveTab, showNotification, updateTabURL} from "./utils_browser.js";
-import {nativeBackend} from "./backend_native.js";
+import {
+    ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES,
+    CLOUD_SHELF_ID,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_SHELF,
+    UNDO_DELETE
+} from "./storage.js";
+import {getActiveTab, gettingStarted, showNotification, updateTabURL} from "./utils_browser.js";
+import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import {
     captureTab,
@@ -18,29 +25,36 @@ import {
 } from "./bookmarking.js";
 import {fetchText} from "./utils_io.js";
 import {TODO} from "./bookmarks_todo.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
-import {Node} from "./storage_entities.js";
+import {Archive, Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {browseNodeInCurrentContext} from "./browse.js";
-import {ensureSidebarWindow} from "./utils_sidebar.js";
+import {browseNode} from "./browse.js";
+import UUID from "./uuid.js";
+
 
 receive.createShelf = message => Shelf.add(message.name);
 
-receive.createGroup = message => Group.add(message.parent, message.name);
+receive.createFolder = message => Folder.add(message.parent, message.name);
 
-receive.renameGroup = message => Group.rename(message.id, message.name);
+receive.renameFolder = message => Folder.rename(message.id, message.name);
 
 receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
-receive.createBookmark = message => {
+receive.createBookmark = async message => {
+    if (!settings.data_folder_path())
+        return gettingStarted();
+
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     const node = message.node;
 
-    if (isSpecialPage(node.uri)) {
-        notifySpecialPage();
-        return;
-    }
+    if (isSpecialPage(node.uri))
+        return notifySpecialPage();
 
     const addBookmark = () =>
         Bookmark.add(node, NODE_TYPE_BOOKMARK)
@@ -55,23 +69,29 @@ receive.createBookmark = message => {
 
     Bookmark.setTentativeId(node);
     node.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
-    return send.beforeBookmarkAdded({node: node})
+    return send.beforeBookmarkAdded({node})
         .then(addBookmark)
         .catch(addBookmark);
 };
 
 receive.updateBookmark = message => Bookmark.update(message.node);
 
-receive.createArchive = message => {
+receive.createArchive = async message => {
+    if (!settings.data_folder_path())
+        return gettingStarted();
+
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     const node = message.node;
 
-    if (isSpecialPage(node.uri)) {
-        notifySpecialPage();
-        return;
-    }
+    if (isSpecialPage(node.uri))
+        return notifySpecialPage();
 
     let addBookmark = () =>
-        Bookmark.add(node, NODE_TYPE_ARCHIVE)
+        Bookmark.idb.add(node, NODE_TYPE_ARCHIVE) // added to the storage on archive content update
             .then(bookmark => {
                 getActiveTab().then(tab => {
                     bookmark.__tab_id = tab.id;
@@ -95,6 +115,11 @@ receive.createArchive = message => {
 };
 
 receive.archiveBookmarks = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     send.startProcessingIndication();
 
     try {
@@ -109,12 +134,12 @@ receive.archiveBookmarks = async message => {
     }
 };
 
-receive.updateArchive = message => Bookmark.updateArchive(message.id, message.data);
+receive.updateArchive = message => Bookmark.updateArchive(message.uuid, message.data);
 
 receive.setTODOState = message => TODO.setState(message.nodes);
 
 receive.getBookmarkInfo = async message => {
-    let node = await Node.get(message.id);
+    let node = await Node.getByUUID(message.uuid);
     node.__formatted_size = node.size ? formatBytes(node.size) : null;
     node.__formatted_date = node.date_added
         ? node.date_added.toString().replace(/:[^:]*$/, "")
@@ -127,35 +152,65 @@ receive.getHideToolbarSetting = async message => {
     return settings.do_not_show_archive_toolbar();
 };
 
-receive.copyNodes = message => {
+receive.copyNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.copy(message.node_ids, message.dest_id, message.move_last);
 };
 
-receive.shareToCloud = message => {
+receive.shareToCloud = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.copy(message.node_ids, CLOUD_SHELF_ID, true);
 }
 
-receive.moveNodes = message => {
+receive.moveNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.move(message.node_ids, message.dest_id, message.move_last);
 };
 
-receive.deleteNodes = message => {
+receive.deleteNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.delete(message.node_ids);
 };
 
-receive.softDeleteNodes = message => {
+receive.softDeleteNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
     return Bookmark.softDelete(message.node_ids);
 };
 
-receive.reorderNodes = message => {
-    return Bookmark.reorder(message.positions);
+receive.reorderNodes = async message => {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
+    return Bookmark.reorder(message.positions, message.posProperty);
 };
 
 receive.storePageHtml = message => {
     if (message.bookmark.__url_packing)
         return;
 
-    Bookmark.storeArchive(message.bookmark.id, message.data, "text/html", message.bookmark.__index)
+    return Bookmark.storeArchive(message.bookmark, message.html, "text/html", message.bookmark.__index)
         .then(() => {
             if (!message.bookmark.__mute_ui) {
                 browser.tabs.sendMessage(message.bookmark.__tab_id, {type: "UNLOCK_DOCUMENT"});
@@ -183,13 +238,17 @@ receive.uploadFiles = async message => {
     send.startProcessingIndication();
 
     try {
-        const helperApp = await nativeBackend.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
+        const helper = await helperApp.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
 
-        if (helperApp) {
-            const uuids = await nativeBackend.fetchJSON("/upload/open_file_dialog");
+        if (helper) {
+            const fileUUID = UUID.numeric();
+            await helperApp.post(`/serve/set_path/${fileUUID}`, {path: message.file_name});
+
+            //const uuids = await helperApp.fetchJSON("/upload/open_file_dialog");
+            const uuids = {[fileUUID]: message.file_name};
 
             for (const [uuid, file] of Object.entries(uuids)) {
-                const url = nativeBackend.url(`/serve/file/${uuid}/`);
+                const url = helperApp.url(`/serve/file/${uuid}/`);
                 const isHtml = /\.html?$/i.test(file);
 
                 let bookmark = {uri: "", parent_id: message.parent_id};
@@ -198,7 +257,7 @@ receive.uploadFiles = async message => {
                 bookmark.name = bookmark.name[bookmark.name.length - 1];
 
                 let content;
-                let contentType = getMimetypeExt(file);
+                let contentType = getMimetypeByExt(file);
 
                 try {
                     if (isHtml) {
@@ -217,7 +276,7 @@ receive.uploadFiles = async message => {
 
                     bookmark = await Bookmark.add(bookmark, NODE_TYPE_ARCHIVE);
                     if (content)
-                        await Bookmark.storeArchive(bookmark.id, content, contentType);
+                        await Bookmark.storeArchive(bookmark, content, contentType);
                     else
                         throw new Error();
                 } catch (e) {
@@ -225,7 +284,7 @@ receive.uploadFiles = async message => {
                     showNotification(`Can not upload ${bookmark.name}`);
                 }
 
-                await nativeBackend.fetch(`/serve/release_path/${uuid}`);
+                await helperApp.fetch(`/serve/release_path/${uuid}`);
             }
             if (Object.entries(uuids).length)
                 send.nodesUpdated();
@@ -237,18 +296,13 @@ receive.uploadFiles = async message => {
 }
 
 receive.browseNode = async message => {
-    if (_BACKGROUND_PAGE)
-        browseNodeInCurrentContext(message.node, message);
-    else {
-        await ensureSidebarWindow();
-        send.browseNodeSidebar(message);
-    }
+    return browseNode(message.node, message);
 };
 
 receive.browseNotes = message => {
     (message.tab
-        ? updateTabURL(message.tab, "ui/notes.html#" + message.uuid + ":" + message.id, false)
-        : browser.tabs.create({"url": "ui/notes.html#" + message.uuid + ":" + message.id}));
+        ? updateTabURL(message.tab, "ui/notes.html#" + message.uuid, false)
+        : browser.tabs.create({"url": "ui/notes.html#" + message.uuid}));
 };
 
 receive.browseOrgReference = message => {
@@ -294,4 +348,8 @@ receive.performUndo = async message => {
     finally {
         send.stopProcessingIndication();
     }
+};
+
+receive.saveResource = async message => {
+    return Archive.saveFile(message.node, message.filename, message.content);
 };

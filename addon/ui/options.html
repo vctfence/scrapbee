@@ -22,7 +22,7 @@
     <script type="module" src="options.js"></script>
 </head>
 <body>
-<div class="dlg-cover dlg-confirm" style="display:none;">
+<div class="dlg-dim dlg-confirm" style="display:none;">
     <div class="dlg">
         <div class="dlg-box">
             <div class="dlg-title">[title]</div>
@@ -40,7 +40,7 @@
         </div>
     </div>
 </div>
-<div class="dlg-cover dlg-alert" style="display:none;">
+<div class="dlg-dim dlg-alert" style="display:none;">
     <div class="dlg">
         <div class="dlg-box">
             <div class="dlg-title">[title]</div>
@@ -62,12 +62,13 @@
         <a class="settings-menu-item" href="#settings">Settings</a>
         <a class="settings-menu-item" href="#capture">Page Capture</a>
         <a class="settings-menu-item" href="#cloud">Cloud</a>
-        <a class="settings-menu-item" href="#sync">Sync</a>
-        <a class="settings-menu-item" href="#backup">Backup</a>
+        <a class="settings-menu-item" href="#backup" style="display: none">Backup</a>
         <a class="settings-menu-item" href="#checklinks">Check Links</a>
         <a class="settings-menu-item" href="#rdf">Import RDF</a>
         <a class="settings-menu-item" href="#diagnostics" style="display: none">Diagnostics</a>
         <a class="settings-menu-item" href="#helperapp">Helper App</a>
+        <a class="settings-menu-item" href="#advanced">Advanced</a>
+        <a class="settings-menu-item" href="#transition" style="display: none">Transition</a>
         <a class="settings-menu-item" href="#help">User Manual</a>
         <a class="settings-menu-item" href="#about">About</a>
         <a class="settings-menu-item" href="#debug" style="display: none">Debug</a>
@@ -76,6 +77,7 @@
     <div id="div-placeholder" class="settings-content"></div>
     <div id="div-settings" class="settings-content" style="display: none;"></div>
     <div id="div-capture" class="settings-content" style="display: none;"></div>
+    <div id="div-advanced" class="settings-content" style="display: none;"></div>
     <div id="div-cloud" class="settings-content" style="display: none;"></div>
     <div id="div-sync" class="settings-content" style="display: none;"></div>
     <div id="div-backup" class="settings-content" style="display: none;"></div>
@@ -83,6 +85,7 @@
     <div id="div-rdf" class="settings-content" style="display: none;"></div>
     <div id="div-diagnostics" class="settings-content" style="display: none;"></div>
     <div id="div-helperapp" class="settings-content" style="display: none;"></div>
+    <div id="div-transition" class="settings-content" style="display: none;"></div>
     <div id="div-help" class="settings-content" style="display: none;"></div>
     <div id="div-about" class="settings-content" style="display: none;"></div>
     <div id="div-debug" class="settings-content" style="display: none;"></div>

@@ -9,6 +9,7 @@ import os
 import flask
 from flask import request, abort
 
+from .cache_dict import CacheDict
 from .server import app, requires_auth
 
 
@@ -23,7 +24,8 @@ def open_file_dialog(queue):
     root.withdraw()
 
     icon_dir = os.path.split(__file__)[0]
-    icon_path = os.path.join(icon_dir, "scrapyard.png")
+    icon_path = os.path.join(icon_dir, "resources", "scrapyard.png")
+
     if os.path.exists(icon_path):
         icon = PhotoImage(file=icon_path)
         root.iconphoto(False, icon)
@@ -32,6 +34,8 @@ def open_file_dialog(queue):
     queue.put(filename)
 
 
+# does not work, it is impossible to spawn a multiprocessing.Process when the main
+# process waits on stdin in the loop to process native messages
 @app.route("/upload/open_file_dialog", methods=['GET'])
 @requires_auth
 def upload_show_dialog():
@@ -56,7 +60,7 @@ def upload_show_dialog():
             serve_mutex.release()
 
     except Exception as e:
-        logging.debug(e)
+        logging.error(e)
         return "[]"
 
     return json.dumps(uuids)
@@ -64,7 +68,7 @@ def upload_show_dialog():
 
 # Serve a local file (used to upload local files from automation API)
 
-serve_path_map = {}
+serve_path_map = dict()
 serve_mutex = threading.Lock()
 
 

@@ -1,5 +1,5 @@
 import {TREE_STATE_PREFIX} from "./ui/tree.js";
-import {ENDPOINT_TYPES, EVERYTHING, NODE_TYPE_GROUP, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {CONTENT_NODE_TYPES, EVERYTHING_SHELF_NAME, NODE_TYPE_FOLDER, NODE_TYPE_BOOKMARK} from "./storage.js";
 import {getActiveTab, openContainerTab, makeReferenceURL} from "./utils_browser.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {escapeHtml} from "./utils_html.js";
@@ -78,7 +78,7 @@ export class TitleSearchProvider extends SearchProvider {
                 depth: "subtree",
                 path: this.shelf,
                 limit: limit,
-                types: ENDPOINT_TYPES
+                types: CONTENT_NODE_TYPES
             });
 
         return [];
@@ -97,7 +97,7 @@ export class FolderSearchProvider extends SearchProvider {
                 depth: "subtree",
                 path: this.shelf,
                 limit: limit,
-                types: [NODE_TYPE_GROUP]
+                types: [NODE_TYPE_FOLDER]
             });
 
         return [];
@@ -115,7 +115,7 @@ export class TagSearchProvider extends SearchProvider {
                 depth: "subtree",
                 path: this.shelf,
                 tags: text,
-                types: ENDPOINT_TYPES
+                types: CONTENT_NODE_TYPES
             });
         }
         return [];
@@ -134,7 +134,7 @@ export class ContentSearchProvider extends SearchProvider {
                 search: text,
                 content: true,
                 index: this.index,
-                partial: true,
+                partial: settings.sidebar_filter_partial_match(),
                 depth: "subtree",
                 path: this.shelf
             });
@@ -165,7 +165,7 @@ export class DateSearchProvider extends SearchProvider {
                 date: dates[0],
                 date2: dates[1],
                 period: period.trim(),
-                types: ENDPOINT_TYPES
+                types: CONTENT_NODE_TYPES
             });
         }
         return [];
@@ -195,7 +195,7 @@ export class SearchContext {
         this.tree = tree;
         this._previousInput = "";
         this.searchMode = SEARCH_MODE_UNIVERSAL;
-        this.provider = new UniversalSearchProvider(EVERYTHING);
+        this.provider = new UniversalSearchProvider(EVERYTHING_SHELF_NAME);
     }
 
     inSearch() {
@@ -307,8 +307,8 @@ export function initializeOmnibox() {
             return;
 
         let provider = text.startsWith("+")
-            ? new TagSearchProvider(EVERYTHING)
-            : new TitleSearchProvider(EVERYTHING);
+            ? new TagSearchProvider(EVERYTHING_SHELF_NAME)
+            : new TitleSearchProvider(EVERYTHING_SHELF_NAME);
 
         if (text.startsWith("+"))
             text = text.replace(/^\+(?:\s+)?/, "");

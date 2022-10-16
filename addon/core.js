@@ -1,11 +1,12 @@
-import {receive, receiveExternal, send, sendLocal} from "./proxy.js";
+import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
+import {receive, receiveExternal, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
-import {browserBackend} from "./backend_browser.js";
-import {cloudBackend} from "./backend_cloud_shelf.js";
+import {browserShelf} from "./plugin_browser_shelf.js";
+import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {addBookmarkOnCommand} from "./bookmarking.js";
 import {toggleSidebarWindow} from "./utils_sidebar.js";
-import {grantPersistenceQuota, startupLatch} from "./utils_browser.js";
 import {undoManager} from "./bookmarks_undo.js";
+import {helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import * as search from "./search.js";
 import "./core_bookmarking.js";
@@ -16,6 +17,7 @@ import "./core_maintenance.js";
 import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
+import "./core_transition.js";
 
 if (_BACKGROUND_PAGE)
     import("./core_import.js");
@@ -30,30 +32,25 @@ receive.startListener(true);
     if (await grantPersistenceQuota()) {
         await systemInitialization;
 
-        await showAnnouncement();
-
         await startupLatch(performStartupInitialization);
     }
 })();
 
-async function showAnnouncement() {
-    if (await settings.isAddonUpdated() && /^\d+\.\d+$/.test(_ADDON_VERSION))
-        settings.pending_announcement("options.html#about");
-}
-
 async function performStartupInitialization() {
     search.initializeOmnibox();
 
-    await browserBackend.reconcileBrowserBookmarksDB();
-    await cloudBackend.enableBackgroundSync(settings.cloud_background_sync());
+    await browserShelf.reconcileBrowserBookmarksDB();
 
-    if (settings.background_sync())
-        await sendLocal.enableBackgroundSync({enable: true});
+    if (settings.cloud_enabled()) {
+        await cloudShelf.createIfMissing();
+        await cloudShelf.enableBackgroundSync(settings.cloud_background_sync());
+    }
 
-    if (settings.sync_on_startup())
-        sendLocal.performSync();
-
+    await helperApp.probe();
     await undoManager.commit();
+
+    if (settings.synchronize_storage_at_startup())
+        await sendLocal.performSync();
 
     console.log("==> core.js initialized");
 }

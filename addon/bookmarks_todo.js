@@ -3,6 +3,7 @@ import {Path} from "./path.js";
 
 import {EntityManager} from "./bookmarks.js";
 import {Node} from "./storage_entities.js";
+import {byTODOPosition} from "./storage.js";
 
 class TODOManager extends EntityManager {
 
@@ -14,6 +15,7 @@ class TODOManager extends EntityManager {
     async listTODO() {
         let todo = await Query.todo();
         todo.reverse();
+        todo.sort(byTODOPosition);
         todo.sort((a, b) => a.todo_state - b.todo_state);
 
         let now = new Date();
@@ -48,6 +50,8 @@ class TODOManager extends EntityManager {
 
     async listDONE() {
         let done = await Query.done();
+        done.sort(byTODOPosition);
+        done.sort((a, b) => a.todo_state - b.todo_state);
 
         for (let node of done) {
             let path = await Path.compute(node);

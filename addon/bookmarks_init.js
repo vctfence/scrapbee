@@ -1,18 +1,23 @@
 import {settings} from "./settings.js";
-import {BROWSER_EXTERNAL_NAME, CLOUD_EXTERNAL_NAME, RDF_EXTERNAL_NAME} from "./storage.js";
-import {browserBackend} from "./backend_browser.js";
-import {cloudBackend} from "./backend_cloud_shelf.js";
-import {rdfBackend} from "./backend_rdf.js";
-import {ishellBackend} from "./backend_ishell.js";
+import {BROWSER_EXTERNAL_TYPE, CLOUD_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE} from "./storage.js";
+import {browserShelf} from "./plugin_browser_shelf.js";
+import {cloudShelf} from "./plugin_cloud_shelf.js";
+import {rdfShelf} from "./plugin_rdf_shelf.js";
+import {ishellConnector} from "./plugin_ishell.js";
 import {plugins} from "./bookmarks.js";
+import {Bookmark} from "./bookmarks_bookmark.js";
+import {Folder} from "./bookmarks_folder.js";
 
 export let systemInitialization = new Promise(async resolve => {
     await settings.load();
 
-    plugins.registerPlugin(BROWSER_EXTERNAL_NAME, browserBackend);
-    plugins.registerPlugin(CLOUD_EXTERNAL_NAME, cloudBackend);
-    plugins.registerPlugin(RDF_EXTERNAL_NAME, rdfBackend);
-    plugins.registerPlugin("ishell", ishellBackend);
+    Bookmark.configure();
+    Folder.configure();
+
+    plugins.registerPlugin(BROWSER_EXTERNAL_TYPE, browserShelf);
+    plugins.registerPlugin(CLOUD_EXTERNAL_TYPE, cloudShelf);
+    plugins.registerPlugin(RDF_EXTERNAL_TYPE, rdfShelf);
+    plugins.registerPlugin("ishell", ishellConnector);
 
     resolve(true);
 });

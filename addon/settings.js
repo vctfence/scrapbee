@@ -1,7 +1,8 @@
 import {merge} from "./utils.js";
 
+export const SCRAPYARD_SYNC_METADATA = "scrapyard-sync-metadata";
+
 const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
-const SCRAPYARD_UPDATED_KEY = "scrapyard-updated";
 
 class ScrapyardSettings {
     constructor() {
@@ -11,11 +12,11 @@ class ScrapyardSettings {
             helper_port_number: 20202,
             show_firefox_bookmarks: true,
             switch_to_new_bookmark: true,
-            enable_backup_compression: true,
             visual_archive_icon: true,
             visual_archive_color: true,
+            sort_shelves_in_popup: true,
             show_firefox_toolbar: !_BACKGROUND_PAGE,
-            browse_with_helper: !_BACKGROUND_PAGE
+            sidebar_filter_partial_match: true
         };
 
         this._bin = {};
@@ -25,10 +26,13 @@ class ScrapyardSettings {
     async _loadPlatform() {
         if (!this._platform) {
             const platformInfo = await browser.runtime.getPlatformInfo();
+
             this._platform = {[platformInfo.os]: true};
+
             if (navigator.userAgent.indexOf("Firefox") >= 0) {
                 this._platform.firefox = true;
             }
+
             if (navigator.userAgent.indexOf("Chrome") >= 0) {
                 this._platform.chrome = true;
             }
@@ -49,18 +53,14 @@ class ScrapyardSettings {
         return browser.storage.local.set({[this._key]: this._bin});
     }
 
-    async _isAddonUpdated() {
-        let updated;
-        if (browser.storage.session) {
-            updated = await browser.storage.session.get(SCRAPYARD_UPDATED_KEY);
-            updated = updated?.[SCRAPYARD_UPDATED_KEY];
-        }
-        else {
-            updated = localStorage.getItem(SCRAPYARD_UPDATED_KEY) === "true";
-            localStorage.setItem(SCRAPYARD_UPDATED_KEY, "false");
-        }
-        return updated;
+    async _get(k) {
+        const v = await browser.storage.local.get(k);
+        if (v)
+            return v[k];
+        return null;
     }
+
+    async _set(k, v) { return browser.storage.local.set({[k]: v}) }
 
     _processSetSetting(key, val) {
         // in Firefox, synchronous access to this setting is required
@@ -75,10 +75,12 @@ class ScrapyardSettings {
             return this._default;
         else if (key === "platform")
             return this._platform;
-        else if (key === "isAddonUpdated")
-            return this._isAddonUpdated;
+        else if (key === "get")
+            return this._get;
+        else if (key === "set")
+            return this._set;
 
-        return val => {
+        return (val, save = true) => {
             let bin = this._bin;
 
             if (val === undefined)
@@ -94,7 +96,11 @@ class ScrapyardSettings {
 
             let result = key in bin? bin[key]: deleted;
             this._processSetSetting(key, val);
-            return this._save().then(() => result);
+
+            if (save)
+                return this._save().then(() => result);
+            else
+                return result;
         }
     }
 

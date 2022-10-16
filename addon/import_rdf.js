@@ -1,14 +1,19 @@
-import {nativeBackend} from "./backend_native.js";
-import {getFaviconFromTab} from "./favicon.js";
-import {NODE_TYPE_ARCHIVE, NODE_TYPE_GROUP, NODE_TYPE_SEPARATOR, RDF_EXTERNAL_NAME} from "./storage.js";
+import {helperApp} from "./helper_app.js";
+import {
+    ARCHIVE_TYPE_FILES,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_FOLDER,
+    NODE_TYPE_SEPARATOR,
+    RDF_EXTERNAL_TYPE
+} from "./storage.js";
 import {ProgressCounter} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
-import {packPage} from "./bookmarking.js";
-import {Group} from "./bookmarks_group.js";
+import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
-import {Node} from "./storage_entities.js";
+import {Archive, Comments, Node} from "./storage_entities.js";
 import {StreamImporterBuilder} from "./import_drivers.js";
 import {RDFNamespaces} from "./utils_html.js";
+import {settings} from "./settings.js";
 
 class RDFImporter {
     #options;
@@ -18,30 +23,39 @@ class RDFImporter {
     #bookmarks = [];
     #cancelled = false;
     #progressCounter;
-    #threads;
+    #threadCount;
     #sidebarSender;
+    #importType = "full";
+
+    #Bookmark = Bookmark;
+    #Folder = Folder;
 
     constructor(importOptions) {
         this.#options = importOptions;
         this.#sidebarSender = importOptions.sidebarContext? sendLocal: send;
+
+        if (importOptions.quick) {
+            this.#Bookmark = Bookmark.idb;
+            this.#Folder = Folder.idb;
+            this.#importType = "index";
+        }
     }
 
     async import() {
-        let helperApp;
+        const helper = await helperApp.probe(true);
 
-        helperApp = await nativeBackend.probe(true);
+        if (helper) {
+            const path = this.#options.stream.replace(/\\/g, "/");
+            const rdfFile = path.split("/").at(-1);
+            const rdfDirectory = path.substring(0, path.lastIndexOf("/"));
+            const xml = await this.#getRDFXML(rdfFile, rdfDirectory);
 
-        if (!helperApp)
-            return;
+            if (!xml)
+                return Promise.reject(new Error("RDF file not found."));
 
-        const path = this.#options.stream.replace(/\\/g, "/");
-        const xml = await this.#getRDFXML(path);
-
-        if (!xml)
-            return Promise.reject(new Error("RDF file not found."));
-
-        await this.#buildBookmarkTree(path, xml);
-        await this.#importArchives();
+            await this.#buildBookmarkTree(path, xml);
+            await this.#importArchives(rdfDirectory);
+        }
     }
 
     #traverseRDFTree(doc, visitor, data) {
@@ -86,8 +100,11 @@ class RDFImporter {
                 node.__sb_type = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "type");
                 node.__sb_title = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "title");
                 node.__sb_source = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "source");
-                node.__sb_comment = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "comment");
                 node.__sb_icon = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "icon");
+                node.__sb_comment = node.getAttributeNS(namespaces.NS_SCRAPBOOK, "comment");
+
+                if (node.__sb_comment)
+                    node.__sb_comment = node.__sb_comment.replace(/ __BR__ /g, "\n");
             }
 
             result.set(node.getAttributeNS(namespaces.NS_RDF, "about"), node);
@@ -96,9 +113,7 @@ class RDFImporter {
         return result;
     }
 
-    async #getRDFXML(path) {
-        const rdfFile = path.split("/").at(-1);
-        const rdfDirectory = path.substring(0, path.lastIndexOf("/"));
+    async #getRDFXML(rdfFile, rdfDirectory) {
         let xml = null;
 
         try {
@@ -106,7 +121,7 @@ class RDFImporter {
             form.append("rdf_file", rdfFile);
             form.append("rdf_directory", rdfDirectory);
 
-            xml = await nativeBackend.fetchText(`/rdf/import/${rdfFile}`, {method: "POST", body: form});
+            xml = await helperApp.fetchText(`/rdf/import/${rdfFile}`, {method: "POST", body: form});
         } catch (e) {
             console.error(e);
         }
@@ -121,7 +136,7 @@ class RDFImporter {
         await this.#traverseRDFTree(rdfDoc, this.#createBookmark.bind(this), {pos: 0});
     }
 
-    async #importArchives() {
+    async #importArchives(path) {
         let cancelListener = (message, sender, sendResponse) => {
             if (message.type === "cancelRdfImport")
                 this.#cancelled = true;
@@ -129,9 +144,10 @@ class RDFImporter {
         browser.runtime.onMessage.addListener(cancelListener);
 
         try {
-            if (!this.#options.quick) {
-                this.#progressCounter = new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
-                await this.#startThreads(this.#importThread.bind(this));
+            if (this.#options.createIndex) { // createIndex is always on when performing a full import
+                this.#progressCounter =
+                    new ProgressCounter(this.#bookmarks.length, "rdfImportProgress", {muteSidebar: true});
+                await this.#startThreads(this.#importThread.bind(this, path), this.#options.threads);
             }
             else
                 await this.#onFinish();
@@ -140,37 +156,71 @@ class RDFImporter {
         }
     }
 
-    async #startThreads(threadf) {
+    async #startThreads(threadf, maxThreads) {
         const bookmarks = [...this.#bookmarks];
-        this.#threads = Math.min(this.#options.threads, this.#bookmarks.length);
+        this.#threadCount = Math.min(maxThreads, this.#bookmarks.length);
 
         const promises = [];
-        for (let i = 0; i < this.#threads; ++i)
+        for (let i = 0; i < maxThreads; ++i)
             promises.push(threadf(bookmarks));
 
         return Promise.all(promises);
     }
 
-    async #importThread(bookmarks) {
+    async #importThread(path, bookmarks) {
         if (bookmarks.length && !this.#cancelled) {
             let bookmark = bookmarks.shift();
 
             try {
                 let scrapbookId = this.#nodeID_SY2SB.get(bookmark.id);
-                await this.#importRDFArchive(bookmark, scrapbookId);
+                await this.#importRDFArchive(path, bookmark, scrapbookId);
             } catch (e) {
                 send.rdfImportError({bookmark: bookmark, error: e.message});
             }
 
             this.#progressCounter.incrementAndNotify();
 
-            return this.#importThread(bookmarks);
+            return this.#importThread(path, bookmarks);
         }
         else {
-            this.#threads -= 1;
-            if (this.#threads === 0)
+            this.#threadCount -= 1;
+            if (this.#threadCount === 0)
                 return this.#onFinish();
         }
+    }
+
+    async #importRDFArchive(path, node, scrapbookId) {
+        const params = {
+            data_path: settings.data_folder_path(),
+            rdf_archive_path: path,
+            uuid: node.uuid,
+            scrapbook_id: scrapbookId
+        };
+
+        try {
+            const url = `/rdf/import/archive?type=${this.#importType}`;
+            const response = await helperApp.fetchJSON_postJSON(url, params);
+
+            if (response?.size) {
+                node.size = response.size;
+                await Node.update(node);
+            }
+
+            if (response?.archive_index)
+                Archive.idb.import.storeIndex(node, response.archive_index);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async #onFinish() {
+        this.#sidebarSender.nodesImported({shelf: this.#shelf});
+
+        if (this.#options.createIndex)
+            this.#progressCounter.finish();
+
+        send.obtainingIcons({shelf: this.#shelf});
+        await this.#startThreads(this.#iconImportThread.bind(this), this.#options.threads);
     }
 
     async #iconImportThread(bookmarks) {
@@ -179,56 +229,27 @@ class RDFImporter {
 
             if (bookmark.icon && bookmark.icon.startsWith("resource://scrapbook/")) {
                 bookmark.icon = bookmark.icon.replace("resource://scrapbook/", "");
-                bookmark.icon = nativeBackend.url(`/rdf/import/files/${bookmark.icon}`);
-                await Bookmark.storeIcon(bookmark);
+                bookmark.icon = helperApp.url(`/rdf/import/files/${bookmark.icon}`);
+                await this.#Bookmark.storeIcon(bookmark);
             }
 
             return this.#iconImportThread(bookmarks);
         }
         else {
-            this.#threads -= 1;
-            if (this.#threads === 0)
+            this.#threadCount -= 1;
+            if (this.#threadCount === 0)
                 this.#sidebarSender.nodesReady({shelf: this.#shelf});
         }
     }
 
-    async #importRDFArchive(node, scrapbookId) {
-        let root = nativeBackend.url(`/rdf/import/files/`)
-        let base = `${root}data/${scrapbookId}/`
-        let index = `${base}index.html`;
-
-        let initializer = async (bookmark, tab) => {
-            let icon = await getFaviconFromTab(tab, true);
-
-            if (icon) {
-                bookmark.icon = icon;
-                await Bookmark.storeIcon(bookmark);
-            }
-
-            node.__mute_ui = true;
-        }
-
-        return packPage(index, node, initializer, _ => null, false);
-    }
-
-    async #onFinish() {
-        this.#sidebarSender.nodesImported({shelf: this.#shelf});
-
-        if (!this.#options.quick)
-            this.#progressCounter.finish();
-
-        send.obtainingIcons({shelf: this.#shelf});
-        await this.#startThreads(this.#iconImportThread.bind(this));
-    }
-
     async #createShelf(path) {
-        const shelfNode = await Group.getOrCreateByPath(this.#options.name);
+        const shelfNode = await this.#Folder.getOrCreateByPath(this.#options.name);
 
         if (shelfNode) {
             if (this.#options.quick) {
-                shelfNode.external = RDF_EXTERNAL_NAME;
+                shelfNode.external = RDF_EXTERNAL_TYPE;
                 shelfNode.uri = path.substring(0, path.lastIndexOf("/"));
-                await Node.update(shelfNode);
+                await Node.idb.update(shelfNode);
             }
             this.#nodeID_SB2SY.set(null, shelfNode.id);
         }
@@ -244,35 +265,39 @@ class RDFImporter {
             uri: node.__sb_source,
             name: node.__sb_title,
             type: node.__sb_type === "folder"
-                ? NODE_TYPE_GROUP
+                ? NODE_TYPE_FOLDER
                 : (node.__sb_type === "separator"
                     ? NODE_TYPE_SEPARATOR
                     : NODE_TYPE_ARCHIVE),
-            details: node.__sb_comment,
             parent_id: parent ? this.#nodeID_SB2SY.get(parent.__sb_id) : this.#shelf.id,
             todo_state: node.__sb_type === "marked" ? 1 : undefined,
+            contains: ARCHIVE_TYPE_FILES,
+            content_type: "text/html",
+            has_comments: node.__sb_comment? true: undefined,
             icon: node.__sb_icon,
             date_added: now,
             date_modified: now
         };
 
         if (this.#options.quick) {
-            data.external = RDF_EXTERNAL_NAME;
+            data.external = RDF_EXTERNAL_TYPE;
             data.external_id = node.__sb_id;
         }
 
-        let bookmark = await Bookmark.import(data);
+        let bookmark = await this.#Bookmark.import(data);
+
+        if (node.__sb_comment) // commends json file on disk is also created by helper
+            await Comments.idb.import.add(bookmark, node.__sb_comment);
 
         this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
 
-        if (data.type === NODE_TYPE_GROUP)
+        if (data.type === NODE_TYPE_FOLDER)
             this.#nodeID_SB2SY.set(node.__sb_id, bookmark.id);
         else if (data.type === NODE_TYPE_ARCHIVE) {
             this.#nodeID_SY2SB.set(bookmark.id, node.__sb_id);
             this.#bookmarks.push(bookmark);
         }
     }
-
 }
 
 export class RDFImporterBuilder extends StreamImporterBuilder {
@@ -282,6 +307,10 @@ export class RDFImporterBuilder extends StreamImporterBuilder {
 
     setQuickImport(quick) {
         this._importOptions.quick = quick;
+    }
+
+    setCreateIndex(quick) {
+        this._importOptions.createIndex = quick;
     }
 
     _createImporter(options) {

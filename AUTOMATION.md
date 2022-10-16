@@ -2,15 +2,16 @@
 
 Automation is a powerful feature that allows to programmatically create, modify, and delete Scrapyard bookmarks
 from [iShell](https://gchristensen.github.io/ishell/) commands or your own extensions. For example, with this API you
-can import hierarchical content, manage TODO lists, or create something similar to the former Firefox "Live Bookmarks".
-
-Currently, automation is experimental, and should be manually enabled from the Scrapyard advanced settings page:
-**ext+scrapyard://advanced**
-<br>
-Because Scrapyard knows about iShell, you do not need to enable automation to use the code below from iShell commands.
+can import hierarchical content, manage TODO lists, or create something similar to the legacy Firefox "Live Bookmarks".
 
 All automation features are implemented through the WebExtensions
 [runtime messaging API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage).
+The ES6 module available by [this](https://raw.githubusercontent.com/GChristensen/ishell/master/addon/commands/scrapyard_api.js) link provides a
+JavaScript wrapper which is used in the examples below.
+
+To call Scrapyard API from regular extensions, automation should be enabled manually at the Scrapyard advanced settings
+page (**ext+scrapyard://advanced**). It is not necessary to enable automation to use the code below from iShell commands.
+
 The following messages are currently available:
 
 #### SCRAPYARD_GET_VERSION
@@ -18,12 +19,10 @@ The following messages are currently available:
 Returns Scrapyard version. Useful for testing if Scrapyard presents in the browser:
 
 ```javascript
-try {
-    // Extension id "jlpgjeiblkojkaedoobnfkgobdddimon" should be used in Chrome
-    let version = await browser.runtime.sendMessage("scrapyard-we@firefox", {
-        type: "SCRAPYARD_GET_VERSION"
-    });
+import {getVersion} from "./scrapyard_api.js";
 
+try {
+    let version = await getVersion();
     console.log(`Scrapyard version: ${version}`);
 }
 catch (e) {
@@ -31,13 +30,32 @@ catch (e) {
 }
 ```
 
+#### SCRAPYARD_OPEN_BATCH_SESSION, SCRAPYARD_CLOSE_BATCH_SESSION
+
+To optimize disk operations on the Scrapyard storage, these messages need to be issued
+when creating or modifying multiple bookmark or archive items.
+
+```javascript
+import {openBatchSession, closeBatchSession} from "./scrapyard_api.js";
+
+try {
+    await openBatchSession();
+
+    // Procesing...
+}
+finally {
+    await closeBatchSession();
+}
+```
+
 #### SCRAPYARD_ADD_BOOKMARK
 
-Creates a bookmark in Scrapyard.
+Creates a bookmark.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:       "SCRAPYARD_ADD_BOOKMARK",
+import {addBookmark} from "./scrapyard_api.js";
+
+const uuid = await addBookmark({
     url:        "http://example.com",             // Bookmark URL
     title:      "Bookmark Title",                 // Bookmark title
     icon:       "http://example.com/favicon.ico", // URL of bookmark favicon
@@ -49,31 +67,34 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
     todo_date:  "YYYY-MM-DD",                     // TODO expiration date
     comments:   "comment text",                   // Bookmark comments
     container:  "firefox-container-1",            // cookieStoreId of a Firefox Multi-Account container
-    select:     true                              // Select the bookmark in the interface
+    select:     true                              // Select the newly created bookmark in the interface
 });
 ```
 
 All parameters are optional. Directories in the bookmark path will be created automatically, if not exist.
-The relevant missing parameters (`url`, `title`, `icon`) will be captured from the active tab. In this and the
-following API the icon URL is used by Scrapyard only to store its image in the database, so it may be a URL from a
-local server, or a [data-URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
-If this parameter is explicitly set to an empty string, the default icon will be used.
+The relevant undefined parameters (`url`, `title`, `icon`) will be captured from the active tab.
+
+The icon URL is used by Scrapyard only to store its image in the database, so it may be a URL from a local server, or a
+[data-URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
+If this parameter is explicitly set to an empty string, the default icon will be
+used.
 
 If `title` or `icon` parameters are explicitly set to `true`, bookmark title or icon will be extracted from the page
 defined by the `url` parameter.
 
 Returns UUID of the newly created bookmark.
 
-Note: if you have [Python](https://www.python.org) installed, a local server could be started simply by
+Note: if you have [Python](https://www.python.org) installed, a local server could be started by
 executing `python3 -m http.server` in the desired directory.
 
 #### SCRAPYARD_ADD_ARCHIVE
 
-Creates an archive in Scrapyard.
+Creates an archive.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:         "SCRAPYARD_ADD_ARCHIVE",
+import {addArchive} from "./scrapyard_api.js";
+
+const uuid = await addArchive({
     url:          "http://example.com",             // Bookmark URL
     title:        "Bookmark Title",                 // Bookmark title
     icon:         "http://example.com/favicon.ico", // URL of bookmark favicon
@@ -89,11 +110,10 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
                                                     // HTML-pages, images, PDF-documents, and other files could be stored
     content_type: "text/html",                      // MIME-type of the stored content
     pack:         true,                             // Pakck and store the page specified by the 'url' parameter,
-                                                    // do not use the 'content' parameter
-    local:        true,                             // The 'url' parameter contains path to a local file
-                                                    // (helper application v0.4+ is required to capture local files)
+                                                    // the 'content' parameter is ignored
+    local:        true,                             // The 'url' parameter contains path to a local file, 'pack' is ignored
     hide_tab:     false,                            // Hide tab necessary to pack the page
-    select:       true                              // Select the bookmark in the interface
+    select:       true                              // Select the newly created bookmark in the interface
 });
 ```
 
@@ -102,39 +122,36 @@ The relevant missing parameters (`url`, `title`, `icon`, `content`, `content_typ
 from the active tab. If the `url` parameter is explicitly set to an empty string,
 it will remain empty.
 
+If `title` or `icon` parameters are explicitly set to `true`, bookmark title or icon will be extracted from the page
+defined by the `url` parameter.
+
 When the `pack` parameter is specified, this API ignores the `content`, `title`, and `icon` parameters,
 and packs, then stores the page defined by the `url` parameter. "text/html" content type is assumed.
-A new tab is created, which is required for page packing (see the API below).
-This tab could be hidden through the `hide_tab` message option. Although this option may be useful
-in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
-tabs and offer to remove the addon.
+A new tab is created, which is required for page packing. This tab could be hidden through the `hide_tab` message option.
 
-The `pack` and `content` parameters are ignored if the `local` parameter is set to `true`. The addon will perform
+The `pack` and `content` parameters are ignored if the `local` parameter is set to `true`. In this case, the addon will perform
 packing of the HTML content as the `pack` option, or store binary content otherwise. The `title` and `icon` parameters are
 taken into account.
 
-If the `pack` or `local` parameters are used, bookmark icon and title will be set automatically in the case of HTML content.
+If the `pack` or `local` parameters are set, bookmark icon and title will be assigned automatically.
 
 Returns UUID of the newly created archive.
 
 #### SCRAPYARD_PACK_PAGE
 
 Packs content of all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
-When displayed in the browser, such a page will not rely on any external dependencies
-and could be served from a database.
-Use this API, for example, when you need to somehow modify the captured page.
+When displayed in the browser, such a page will not rely on any external dependencies.
+Use this API, for example, when it is necessary to somehow modify the captured page.
 
-This API creates a new tab which is required for its operation and closes it on completion.
-This tab could be hidden through the `hide_tab` message option. Although this option may be useful
-in the case of mass API calls, please be careful with it, since Firefox may complain about hidden
-tabs and offer to remove the addon.
+This API creates a new tab which is required for its operation.
+This tab could be hidden through the `hide_tab` message option.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:     "SCRAPYARD_PACK_PAGE",
+import {packPage} from "./scrapyard_api.js";
+
+const {html, title, icon} = await packPage({
     url:      "http://example.com",  // URL of the page to be packed
     local:    true,                  // The 'url' parameter contains path to a local file
-                                     // (helper application v0.4+ is required to capture local files)
     hide_tab: false                  // Hide the tab used by the API
 });
 ```
@@ -150,8 +167,9 @@ Returns an object with the following properties:
 Retrieves the properties of a bookmark or archive defined by the `uuid` parameter.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type: "SCRAPYARD_GET_UUID",
+import {getItem} from "./scrapyard_api.js";
+
+const item = await getItem({
     uuid: "F0D858C6ED40416AA402EB2C3257EA17"
 });
 ```
@@ -172,41 +190,29 @@ Returns an object with the following properties:
 
 Only `type`, `uuid`, and `title` properties are always present.
 
-#### SCRAPYARD_LIST_UUID
+#### SCRAPYARD_LIST_UUID, SCRAPYARD_LIST_PATH
 
-Lists the direct descendants of a shelf or folder defined by the `uuid` parameter
-in the same format as `SCRAPYARD_GET_UUID`.
-
-```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type: "SCRAPYARD_LIST_UUID",
-    uuid: null
-});
-```
-
-If `null` is specified as the value of the `uuid` parameter, the list of all existing shelves is returned.
-
-#### SCRAPYARD_LIST_PATH
-
-Lists the direct descendants of a shelf or folder defined by the `path` parameter
-in the same format as `SCRAPYARD_GET_UUID`.
+Lists the direct descendants of a shelf or folder defined by the `uuid` or `path` parameter.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type: "SCRAPYARD_LIST_PATH",
+import {listItems} from "./scrapyard_api.js";
+
+const items = await listItems({
+    uuid: null,  // the uuid and path parameters are mutually exclusive
     path: "/"
 });
 ```
 
-If `/` is specified as the value of the `path` parameter, the list of all existing shelves is returned.
+If `null` is specified as the value of the `uuid` parameter, the list of all shelves is returned.
 
 #### SCRAPYARD_UPDATE_UUID
 
 Updates the properties of a bookmark, archive, or folder represented by the given UUID.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:       "SCRAPYARD_UPDATE_UUID",
+import {updateItem} from "./scrapyard_api.js";
+
+await updateItem({
     uuid:       "F0D858C6ED40416AA402EB2C3257EA17",
     title:      "Bookmark Title",                 // Bookmark title
     url:        "http://example.com",             // Bookmark URL
@@ -230,8 +236,9 @@ It is preferable to use the `refresh` parameter only on the last invocation in t
 Removes a bookmark or archive defined by the given UUID.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type:    "SCRAPYARD_REMOVE_UUID",
+import {deleteItem} from "./scrapyard_api.js";
+
+const items = await deleteItem({
     uuid:    "F0D858C6ED40416AA402EB2C3257EA17",
     refresh: true                                  // Refresh the sidebar
 });
@@ -241,12 +248,12 @@ It is preferable to use the `refresh` parameter only on the last invocation in t
 
 #### SCRAPYARD_BROWSE_UUID
 
-Opens a bookmark or archive defined by the UUID, which could be
-found at the bookmark property dialog.
+Opens a bookmark or archive defined by the UUID, which could be found at the bookmark property dialog.
 
 ```js
-browser.runtime.sendMessage("scrapyard-we@firefox", {
-    type: "SCRAPYARD_BROWSE_UUID",
+import {browseItem} from "./scrapyard_api.js";
+
+await browseItem({
     uuid: "F0D858C6ED40416AA402EB2C3257EA17"
 });
 ```
@@ -255,9 +262,9 @@ browser.runtime.sendMessage("scrapyard-we@firefox", {
 
 #### Creating Dedicated iShell Bookmark Commands
 
-You can quickly open dedicated bookmarks by iShell commands without using mouse. This may
+It is possible to quickly open dedicated bookmarks with iShell commands. This may
 be helpful in the case of bookmarks with assigned multi-account containers. The example below
-demonstrates a command without arguments used to open a single bookmark defined by its UUID.
+demonstrates an iShell command used to open a single bookmark defined by its UUID.
 
 ```js
 /**
@@ -270,8 +277,8 @@ demonstrates a command without arguments used to open a single bookmark defined 
 */
 class MyTwitter {
     execute() {
-        browser.runtime.sendMessage("scrapyard-we@firefox", {
-            type: "SCRAPYARD_BROWSE_UUID",
+        // cmdAPI.scrapyard property offers the same methods as the API wrapper mentioned above.
+        cmdAPI.scrapyard.browseItem({
             uuid: "F0D858C6ED40416AA402EB2C3257EA17"
         });
     }
@@ -280,7 +287,7 @@ class MyTwitter {
 
 It is possible to create more complex commands with arguments corresponding to the bookmarks you want to open.
 The following example creates a command named **my-site** which can be called with either
-*personal* or *work* argument values.
+*personal* or *work* arguments.
 
 ```js
 /**
@@ -303,15 +310,14 @@ class MySite {
     }
 
     execute({OBJECT}) {
-        browser.runtime.sendMessage("scrapyard-we@firefox", {
-            type: "SCRAPYARD_BROWSE_UUID",
+        cmdAPI.scrapyard.browseItem({
             uuid: OBJECT?.data
         });
     }
 }
 ```
 
-The following function allows to create such commands with one line of code:
+The `createBookmarkCommand` function in the listing below allows to create such commands with one line of code:
 
 ```js
 /**
@@ -336,8 +342,7 @@ class BrowseBookmarkCommand {
     }
 
     execute({OBJECT}) {
-        browser.runtime.sendMessage("scrapyard-we@firefox", {
-            type: "SCRAPYARD_BROWSE_UUID",
+        cmdAPI.scrapyard.browseItem({
             uuid: this._uuid || OBJECT?.data
         });
     }
@@ -357,8 +362,8 @@ createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297"
 
 #### Uploading Local Files to Scrapyard
 
-You can pass a local file path to the following iShell command to store a file in Scrapyard
-under the folder specified by the `at` argument (helper application v0.4+ is required).
+It is possible to pass a local file path to the following iShell command to store a file in Scrapyard
+under the folder specified by the `at` argument.
 
 ```js
 /**
@@ -374,7 +379,7 @@ under the folder specified by the `at` argument (helper application v0.4+ is req
 
     @command
     @markdown
-    @icon /res/icons/scrapyard.svg
+    @icon /ui/icons/scrapyard.svg
     @description Stores a local file at the specified Scrapyard folder
     @uuid 674BF919-3BCA-4378-AB8F-C873F8CFE42A
  */
@@ -400,10 +405,6 @@ class UploadFile {
         let title = localPath.replaceAll("\\", "/").split("/");
         title = title[title.length - 1]; // use file name as the default bookmark title
 
-        // cmdAPI.scrapyard methods offers a more concise way to send messages to Scrapyard from iShell.
-        // Method names are camel-case message suffixes with the "SCRAPYARD_" part omitted.
-        // For example, the method name for SCRAPYARD_LIST_UUID will be: listUuid.
-        // There is no need to specify Scrapyard addon ID and the 'type' parameter.
         cmdAPI.scrapyard.addArchive({
             title:   title,
             url:     localPath,
@@ -420,9 +421,4 @@ Example usage:
 **upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
 
 See the iShell [tutorial](https://gchristensen.github.io/ishell/res/tutorial.html) for more details on command authoring.
-
-Because iShell commands can store UUIDs generated by the API and
-call, for example, [setInterval](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval)
-in the `load` method (Firefox only), you may not need to create separate extensions
-even for non-trivial functionality.
-
+With iShell commands, there is no need to create separate add-ons for the Scrapyard automation in the most cases.

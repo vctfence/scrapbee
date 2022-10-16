@@ -4,7 +4,7 @@
     }
 
     #help-content * {
-        font-family: "Helvetica", "Arial", "Lucida Sans", sans-serif;
+        font-family: "Arial", "Helvetica", "Lucida Sans", sans-serif;
     }
 
     #help-spacer-left, #help-spacer-right {
@@ -60,7 +60,7 @@
     }
 
     #help-content h4 {
-        font-size: 14px;
+        font-size: 12pt;
         padding-left: 26px;
     }
 
@@ -70,6 +70,15 @@
 
     #help-content pre.rainbow-show {
         padding-left: 30px;
+    }
+
+    #read-more-table-of-contents, #read-more-table-of-contents ul {
+        list-style: none;
+    }
+
+    #read-more-table-of-contents > li > a:first-of-type {
+        padding-bottom: 8px;
+        display: inline-block;
     }
 
     span.query,
@@ -114,14 +123,12 @@
 
     <h2>What is Scrapyard?</h2>
     <p>Scrapyard is a bookmarking extension where you can store and organize bookmarks, page
-        fragments, or complete HTML pages and PDF documents in unlimited quantities.
-        Unlike most others ScrapBook alternatives, Scrapyard does not require installing external tools
-        for most of its functionality by keeping the data in the browser internal storage.
-        If necessary, it is possible to keep your content on disk for synchronization through a
-        cloud service, or import/export all your bookmarks in <a
-            href="https://orgmode.org" target="_blank">org-mode</a> or <a
-            href="https://www.jsonlines.org/">JSON</a> formats. Scrapyard also supports
-        import of RDF archives of the legacy ScrapBook addon.
+        fragments, complete HTML pages and PDF documents, or take notes. All archived
+        content is accessible on the Android platform if shared through a
+        cloud service. It is possible to export and import bookmarks in <a
+            href="https://www.jsonlines.org/">JSON</a> or <a
+            href="https://orgmode.org" target="_blank">org-mode</a> formats. Scrapyard also supports
+        the import of RDF archives of the legacy ScrapBook addon.
     </p>
 
     <h3>Where to Find Scrapyard</h3>
@@ -134,19 +141,28 @@
         <img src="images/find-sidebar.png">
     </p>
 
-    <p>The sidebar itself could be opened with the corresponding toolbar button: <img
-        style="display: inline-block" src="images/sidebar-button.png">. In the more recent versions
-        of Firefox, it may be necessary to add this button to the toolbar manually by selecting
-        "Customize Toolbar..." at Main menu > More tools. This button is also available in the
-        Scrapyard popup dialog.</p>
-
-    <p>In Chrome Scrapyard could be opened in a separate window through the <img
+    <p>In Chrome, Scrapyard could be opened in a separate window through the <img
         style="display: inline-block" src="images/sidebar-button.png"> button in the popup dialog.</p>
 
     <p>
         The <code>Alt+Y</code> keyboard shortcut allows to open Scrapyard directly.
         Keyboard shortcuts provided by any extension could be <a href="https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox" target="_blank">
         customized</a> in the browser settings.
+    </p>
+
+    <h3 id="start">Getting Started</h3>
+    <h4>1. Installing the Helper Application</h4>
+    <p>
+        Scrapyard requires the native helper application to access the filesystem.
+        Please, install the helper application using one of the download links provided in
+        the <a href="options.html#helperapp">Helper App</a> options tab.
+    </p>
+
+    <h4>2. Specifying the Data Directory Path</h4>
+    <p>
+        Specify the data directory path at the <a href="options.html#settings">Settings</a> tab.
+        Use the path <b>&lt;your cloud folder&gt;/Apps/Scrapyard/Sync</b> to make Scrapyard content available on mobile devices.
+        Only content shared through Dropbox or OneDrive could be browsed with the Scrapyard application for Android.
     </p>
 
     <h2>Main Features</h2>
@@ -310,11 +326,7 @@
     <h3>Browser Bookmarks</h3>
     <p>
         Scrapyard seamlessly integrates with the browser bookmarks, so there is no need to switch to the
-        built-in bookmark manager. It is possible to attach comments and TODO states to browser
-        bookmarks displayed in Scrapyard, although they will be lost if the bookmarks are deleted
-        from the browser UI, or after the "Enable browser bookmarks integration" option in settings
-        is unchecked. Browser bookmarks are included in the export as a separate shelf, so an import
-        will leave the current bookmark state intact.
+        built-in bookmark manager. Browser bookmarks are not included in the export or backups.
     </p>
 
     <p style="text-align: center">
@@ -332,8 +344,8 @@
         and to browse contents of this shelf. See the corresponding section below for more details.
     </p>
 
-    <p>It is not necessary to install native cloud clients or the Scrapyard
-    helper application on any OS to use the cloud shelf. Just a Dropbox or a personal Microsoft account is required.</p>
+    <p>It is not necessary to install native cloud clients on any OS to use the cloud shelf.
+        Just a Dropbox or a personal Microsoft account is required.</p>
 
     <p style="text-align: center">
         <img src="images/cloud.png">
@@ -447,10 +459,10 @@
     <p>Filtering by date supports simple queries:</p>
 
     <ul>
-        <li><span class="query">2021-02-24</span> - the exact date.</li>
-        <li><span class="query"><i>before</i> 2021-02-24</span> - before the specified date (the specified date is not included).</li>
-        <li><span class="query"><i>after</i> 2021-02-24</span> - after the specified date (the specified date is not included).</li>
-        <li><span class="query"><i>between</i> 2021-02-24 <i>and</i> 2021-03-24</span> - between the specified dates (the specified dates are included).</li>
+        <li><span class="query">2020-02-20</span> - the exact date.</li>
+        <li><span class="query"><i>before</i> 2020-02-20</span> - before the specified date (the specified date is not included).</li>
+        <li><span class="query"><i>after</i> 2020-02-20</span> - after the specified date (the specified date is not included).</li>
+        <li><span class="query"><i>between</i> 2020-02-20 <i>and</i> 2020-03-20</span> - between the specified dates (the specified dates are included).</li>
     </ul>
 
     <h4>Search from URL-bar</h4>
@@ -481,44 +493,11 @@
         <img src="images/full-text-search.png">
     </p>
 
-    <h3 id="sync-manual">Synchronization</h3>
-    <p>The Sync option allows to maintain an actual copy of Scrapyard content as a
-        set of files on disk that could be shared through a cloud provider of your choice.
-        This feature requires the helper application version 0.5 or above. The synchronized
-        bookmarks shared through Dropbox or OneDrive also could be browsed in the Scrapyard
-        application for Android.</p>
-
-    <p>Note that due to potentially large volume of synchronized content, synchronization is not
-        automatic, and is not performed, for example, after you added or deleted a bookmark. To
-        receive or send changes to the Sync storage on the disk you need to manually initiate
-        synchronization with the corresponding sidebar button. There is an option to synchronize
-        automatically in the background for every hour. Please do not close the browser while the
-        Scrapyard synchronization indicator on the browser toolbar is active.
-    </p>
-
-    <p>The synchronization algorithm works as follows:</p>
-    <ul>
-        <li>Just after the Sync option is enabled, the content of the Sync storage is
-        mutually merged with the content of the Scrapyard database, nothing is deleted.</li>
-        <li>During the following synchronizations, any changes (modifications, additions, and deletions)
-        found in the Sync storage are propagated to Scrapyard and vice versa.</li>
-        <li>The items from restored backups are considered as newly added. If a restored backup
-            deletes any existing items, they will also be deleted in the Sync storage.</li>
-    </ul>
-
-    <p>Use the path <b>&lt;cloud folder&gt;/Apps/Scrapyard/Sync</b> to make your content available on mobile devices.</p>
-
-    <p>Because this feature can introduce irreversible changes, please consider taking a full backup
-        on every Firefox instance where you intend to enable it. If you need to reset Scrapyard or Sync
-        storage to perform a clean synchronization, use the corresponding options at the <a
-            href="/ui/advanced.html">advanced settings</a>. "Cloud" and "Browser" bookmark shelves
-        are excluded from synchronization and are not affected by the reset.</p>
-
     <h3>Import/Export</h3>
 
     <p>Scrapyard allows importing bookmarks in Netscape HTML format which you may obtain from Firefox, Chrome, or other
-    web-browsers. Its own collections of bookmarks and archived pages could also be exported or imported in ORG and
-    JSON formats through the corresponding items of the shelf operations menu:</p>
+    web-browsers. Its own collections of bookmarks and archived pages could also be exported or imported in JSON and
+    ORG formats through the corresponding items of the shelf operations menu:</p>
 
     <p style="text-align: center">
         <img src="images/impexp.png">
@@ -526,29 +505,26 @@
 
     <h3 id="rdf-import-manual">Importing Legacy ScrapBook RDF Archives</h3>
 
-    <p>To import legacy ScrapBook RDF archives you need to install the Scrapyard <a
-        href="#helperapp">helper application</a>. There are two import modes:</p>
+    <p>RDF archives could be imported from the corresponding <a href="options.html#rdf">options tab</a>.
+        There are two import modes:</p>
 
     <ul>
-        <li>The full import. In this mode, the archived files are transferred into the browser
-            internal database. This may take a substantial amount of time.
+        <li><b>Import RDF to Scrapyard</b>. In this mode, the archived files are transferred into the
+            scrapyard storage directory. After the import, the original RDF folder is not necessary
+            to access the imported archives from Scrapyard.
         </li>
-        <li>The quick import. Import in this mode only recreates the RDF directory
-            structure in the Scrapyard database. The archived ScrapBook files are served from the
-            disk by the helper application.
+        <li><b>Open RDF for editing</b>. Import in this mode only recreates the RDF directory
+            structure in the Scrapyard internal browser storage.
+            The archived ScrapBook files are served from their original RDF folder.
         </li>
     </ul>
 
-    <p>The quick import may be useful for arranging the contents of an RDF archive before the full
-        import (RDF editing is available on Firefox only). See the "<a href="#rdf">Import RDF</a>"
-        tab of the settings page for more details about the available import options.</p>
-
-    <p>Shelves imported in the quick mode are marked with a tape reel icon. It is possible to add
+    <p>The recent import mode may be useful for arranging the contents of an RDF archive before the full
+        import (RDF editing is available on Firefox only). Shelves imported in the editing mode are
+        marked with a tape reel icon. It is possible to add
         new archives to these shelves and physically delete RDF entries along with the attached
-        files (it could not be undone). Although when a quickly imported shelf itself is deleted,
-        the corresponding RDF file and the archived pages are left intact. Some features, such as
-        page editing, full-text search, and bookmark transferring/copying are not available for the
-        shelves imported in the quick mode.</p>
+        files (this could not be undone). Some features, such as bookmark transferring or copying are
+        not available for the shelves imported in the editing mode.</p>
 
     <p>It is possible to edit the path of the imported RDF file through the "RDF Directory..." context
         menu item of a shelf.</p>
@@ -557,7 +533,7 @@
         <img src="images/quick-imported-rdf.png">
     </p>
 
-    <h3>Backup</h3>
+    <!--h3>Backup</h3>
     <p>It is possible to backup contents of any bookmark shelf to a designated directory on the hard
         drive by using the backup manager. This feature requires the helper application version 0.3
         or above. Backups will be automatically compressed if the corresponding option is checked.
@@ -569,8 +545,7 @@
 
     <p style="text-align: center">
         <img src="images/backup.png">
-    </p>
-
+    </p-->
 
     <h3>Link Checker</h3>
     <p>The automatic link checker allows finding broken links or URL duplicates. Its mode of
@@ -603,7 +578,7 @@
         with, as it is shown in the examples below.</p>
 
     <p>At first, you need to enable cloud shelf in Scrapyard by checking the corresponding option at
-        the "Cloud" setting tab and sign into a cloud service. The bookmarks also may be shared into the
+        the "<a href="options.html#cloud">Cloud</a>" setting tab and sign into a cloud service. The bookmarks also may be shared into the
         default Sync shelf, if synchronization is enabled, although it is recommended to use the
         cloud shelf for the sharing from mobile devices.</p>
 
@@ -717,13 +692,6 @@
     <p style="text-align: center">
         <img src="images/custom-command.png">
     </p>
-
-    <h2>Automation</h2>
-
-    <p>The automation API provided by Scrapyard allows to programmatically create,
-        modify, and delete bookmarks or page archives from iShell commands and your own extensions.
-        See the <a href="https://github.com/GChristensen/scrapyard/blob/master/AUTOMATION.md"
-                   target="_blank">automation API documentation</a> for more details.</p>
 </div>
 
     <div id="help-spacer-right"></div>

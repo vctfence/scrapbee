@@ -69,9 +69,9 @@ class UndoManager {
     }
 
     async #commitDelete(batch) {
-        const nodeIDs = batch.map(u => u.node.id);
+        const nodes = batch.map(u => u.node);
 
-        await Node.deleteDependencies(nodeIDs);
+        await Node.deleteDependencies(nodes);
     }
 
 }

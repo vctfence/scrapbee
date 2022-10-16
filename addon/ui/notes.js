@@ -9,13 +9,13 @@ import {PlainTextEditor, WYSIWYGEditor} from "./notes_editor.js";
 
 const INPUT_TIMEOUT = 3000;
 const DEFAULT_WIDTH = "790px";
-const DEFAULT_FONT_SIZE = 120;
+const DEFAULT_FONT_SIZE = 115;
 
 let examples;
 const styles = {"org": `#+CSS: p {text-align: justify;}`,
                 "markdown": `[//]: # (p {text-align: justify;})`};
 
-const NODE_ID = parseInt(location.hash?.split(":")?.pop());
+let NODE_ID;
 
 let format = "delta";
 let align;
@@ -46,9 +46,12 @@ async function init() {
 
 
     try {
-        let node = await Node.get(NODE_ID);
-        let sourceURL = $("#source-url");
+        const uuid = location.hash.substring(1);
+        const node = await Node.getByUUID(uuid);
+        const sourceURL = $("#source-url");
         sourceURL.text(node.name);
+
+        NODE_ID = node.id;
 
         if (node.type === NODE_TYPE_NOTES) {
             sourceURL.removeClass("source-url");
@@ -65,7 +68,7 @@ async function init() {
                 send.browseNode({node: node});
             });
 
-        let notes = await Notes.get(NODE_ID);
+        let notes = await Notes.get(node);
         if (notes) {
             format = notes.format || "org";
             $("#notes-format").val(format === "html"? "delta": format);
@@ -125,7 +128,7 @@ async function init() {
         $(e.target).addClass("focus");
 
         $(`.content`).hide();
-        $(`#content-${e.target.id}`).css("display", "flex");
+        $(`#${e.target.id}-content`).css("display", "flex");
 
         if (e.target.id === "notes-button") {
             formatNotes(editor.renderContent(), format);

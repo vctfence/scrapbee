@@ -20,7 +20,7 @@
                     <i id="backup-directory-path-refresh" title="Refresh backup list">&#xF2F1;</i>
                 </div>
             </div>
-            <h3 id="create-backup-title">Create Backup</h3>
+            <h3 id="create-backup-title">Backup Options</h3>
             <div id="create-backup-container">
                 <div id="backup-shelves-container">
                     <img class="shelves-icon" title="Shelf" src="../icons/books.svg"/>
@@ -33,6 +33,35 @@
                 <div id="backup-compression-container">
                     <input id="compress-backup" type="checkbox" />
                     <label for="compress-backup"><img class="zip-icon" title="Compress" src="../icons/zip.svg"/></label>
+                </div>
+            </div>
+            <h3 id="backup-compression-options-title">Backup Compression</h3>
+            <div id="backup-compression-options-container">
+                <div class="item-aligner">
+                    <label for="option-compression-method">Compression method:&nbsp;&nbsp;</label>
+                    <select id="option-compression-method" type="select" style="color: black">
+                        <option value="EMPTY"></option>
+                        <option value="DEFLATE">DEFLATE</option>
+                        <option value="LZMA">LZMA</option>
+                        <option value="BZIP2">BZIP2</option>
+                    </select>
+                </div>
+
+                <div class="item-aligner">
+                    <label for="option-compression-level" style="margin-right: 2px">Compression level:&nbsp;&nbsp;</label>
+                    <select id="option-compression-level" style="color: black;">
+                        <option value="EMPTY"></option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                    </select>
                 </div>
             </div>
             <div id="backup-status-container">
