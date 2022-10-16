@@ -119,6 +119,9 @@ function configureCaptureSettingsPage() {
     }
 
     setSaveCheckHandler("option-save-unpacked-archives", "save_unpacked_archives");
+
+    if (settings.platform.firefox)
+        $("#save-options-row").show();
 }
 
 export async function load() {

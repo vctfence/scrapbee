@@ -1669,17 +1669,6 @@ function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfont
 
             try
             {
-                // Scrapyard //////////////////////////////////////////////////////////////////
-
-                if (!element.contentDocument && element.src) {
-                    let url = new URL(element.src);
-                    if (url.pathname.endsWith(".pdf")) {
-                        rememberURL(url.pathname,url.origin,"application/pdf","",false);
-                        return;
-                    }
-                }
-                ////////////////////////////////////////////////////////////////// Scrapyard //
-
                 if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before finding */
                 {
                     element.contentDocument.fonts.forEach(  /* CSS Font Loading Module */
@@ -2098,7 +2087,7 @@ async function loadResources()
                                          bookmark: scrapyardBookmark });
 
             if (saveUnpacked)
-                console.log(await result);
+                await result;
             ////////////////////////////////////////////////////////////////// Scrapyard //
         }
     }
@@ -4186,23 +4175,6 @@ async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,pa
 
                 try
                 {
-                    // Scrapyard //////////////////////////////////////////////////////////////////
-                    // Usecase for sci-hub embedded pdfs
-                    // TODO: fix on Chrome
-                    if (!element.contentDocument && element.src) {
-                        let url = new URL(element.src);
-
-                        if (url.pathname.toLowerCase().endsWith(".pdf")) {
-                            await saveFrame(replaceURL(url.pathname, url.origin));
-                            htmlStrings[htmlStrings.length] = startTag;
-                            htmlStrings[htmlStrings.length] = endTag;
-                            return;
-                        }
-                        else
-                            throw new Error();
-                    }
-                    ////////////////////////////////////////////////////////////////// Scrapyard //
-
                     if (element.contentDocument.documentElement != null)  /* in case web page not fully loaded before extracting */
                     {
                         startindex = htmlStrings.length;

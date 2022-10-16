@@ -1,11 +1,14 @@
 import json
 
-from flask import request, abort
+from flask import request
 
 from .storage_rdf import build_archive_index
+from .request_queue import RequestQueue
 from .server import app, requires_auth, storage_manager
 
 # JSON Scrapbook support
+
+request_queue = RequestQueue()
 
 
 @app.route("/storage/check_directory", methods=['POST'])
@@ -32,35 +35,35 @@ def close_batch_session():
 @app.route("/storage/persist_node", methods=['POST'])
 @requires_auth
 def add_node():
-    storage_manager.persist_node(request.json)
+    request_queue.add(storage_manager.persist_node, request.json)
     return "", 204
 
 
 @app.route("/storage/update_node", methods=['POST'])
 @requires_auth
 def update_node():
-    storage_manager.update_node(request.json)
+    request_queue.add(storage_manager.update_node, request.json)
     return "", 204
 
 
 @app.route("/storage/update_nodes", methods=['POST'])
 @requires_auth
 def update_nodes():
-    storage_manager.update_nodes(request.json)
+    request_queue.add(storage_manager.update_nodes, request.json)
     return "", 204
 
 
 @app.route("/storage/delete_nodes", methods=['POST'])
 @requires_auth
 def delete_nodes():
-    storage_manager.delete_nodes(request.json)
+    request_queue.add(storage_manager.delete_nodes, request.json)
     return "", 204
 
 
 @app.route("/storage/delete_nodes_shallow", methods=['POST'])
 @requires_auth
 def delete_nodes_shallow():
-    storage_manager.delete_nodes_shallow(request.json)
+    request_queue.add(storage_manager.delete_nodes_shallow, request.json)
     return "", 204
 
 

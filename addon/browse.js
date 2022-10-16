@@ -12,7 +12,7 @@ import {
     injectCSSFile,
     injectScriptFile,
     openContainerTab,
-    openPage, showNotification,
+    openPage,
     updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
@@ -26,7 +26,7 @@ function configureArchiveTab(node, archiveTab) {
         if (tab.id === archiveTab.id) {
             if (changed?.hasOwnProperty("attention"))
                 return;
-_log(changed, tab)
+
             if (changed.status === "complete")
                 await configureArchivePage(tab, node);
         }
@@ -68,8 +68,6 @@ async function configureArchivePage(tab, node) {
 async function configureSiteLinks(node, tab) {
     await injectScriptFile(tab.id, {file: "content_site.js", allFrames: true});
     const siteMap = await buildSiteMap(node);
-    _log("configuring tab")
-    _tr()
     browser.tabs.sendMessage(tab.id, {type: "CONFIGURE_SITE_LINKS", siteMap, useProtocol: _BACKGROUND_PAGE});
 }
 
