@@ -420,5 +420,5 @@ Example usage:
 
 **upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
 
-See the iShell [tutorial](https://gchristensen.github.io/ishell/res/tutorial.html) for more details on command authoring.
+See the iShell [tutorial](https://gchristensen.github.io/ishell/addon/ui/options/tutorial.html) for more details on command authoring.
 With iShell commands, there is no need to create separate add-ons for the Scrapyard automation in the most cases.

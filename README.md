@@ -13,7 +13,7 @@ control from [iShell](https://gchristensen.github.io/ishell/), I decided to
 rewrite [vctfence's](https://github.com/vctfence) ScrapBee from scratch to
 obtain the desired features.
 
-### JSON Scrapbook file format
+### JSON Scrapbook File Format
 
 The JSON Scrapbook file format used by Scrapyard is documented
 [here](https://github.com/GChristensen/scrapyard/wiki/JSON-Scrapbook-File-Format).
