@@ -189,6 +189,40 @@ class RDFImporter {
         }
     }
 
+    async #importRDFArchive(path, node, scrapbookId) {
+        const params = {
+            data_path: settings.data_folder_path(),
+            rdf_archive_path: path,
+            uuid: node.uuid,
+            scrapbook_id: scrapbookId
+        };
+
+        try {
+            const url = `/rdf/import/archive?type=${this.#importType}`;
+            const response = await helperApp.fetchJSON_postJSON(url, params);
+
+            if (response?.size) {
+                node.size = response.size;
+                await Node.update(node);
+            }
+
+            if (response?.archive_index)
+                Archive.idb.import.storeIndex(node, response.archive_index);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async #onFinish() {
+        this.#sidebarSender.nodesImported({shelf: this.#shelf});
+
+        if (this.#options.createIndex)
+            this.#progressCounter.finish();
+
+        send.obtainingIcons({shelf: this.#shelf});
+        await this.#startThreads(this.#iconImportThread.bind(this), this.#options.threads);
+    }
+
     async #iconImportThread(bookmarks) {
         if (bookmarks.length && !this.#cancelled) {
             let bookmark = bookmarks.shift();
@@ -206,35 +240,6 @@ class RDFImporter {
             if (this.#threadCount === 0)
                 this.#sidebarSender.nodesReady({shelf: this.#shelf});
         }
-    }
-
-    async #importRDFArchive(path, node, scrapbookId) {
-        const params = {
-            data_path: settings.data_folder_path(),
-            rdf_archive_path: path,
-            uuid: node.uuid,
-            scrapbook_id: scrapbookId
-        };
-
-        try {
-            const url = `/rdf/import/archive?type=${this.#importType}`;
-            const response = await helperApp.fetchJSON_postJSON(url, params);
-
-            if (response?.archive_index)
-                Archive.idb.import.storeIndex(node, response.archive_index);
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    async #onFinish() {
-        this.#sidebarSender.nodesImported({shelf: this.#shelf});
-
-        if (this.#options.createIndex)
-            this.#progressCounter.finish();
-
-        send.obtainingIcons({shelf: this.#shelf});
-        await this.#startThreads(this.#iconImportThread.bind(this), this.#options.threads);
     }
 
     async #createShelf(path) {

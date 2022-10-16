@@ -7,7 +7,7 @@ import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {ArchiveProxy} from "./storage_archive_proxy.js";
 import {ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT} from "./storage.js";
 
-// The Archive entity has three fields:
+// An Archive entity has three fields:
 //   object - the contents of an archive, may be anything (the reify function deals with this)
 //            usually a String or ArrayBuffer
 //   byte_length - the presence of this field indicates that the archive was created from a non-text source
@@ -98,12 +98,7 @@ export class ArchiveIDB extends EntityIDB {
         if (!this._importer) {
             node.contains = node.contains || (archive.byte_length? ARCHIVE_TYPE_BYTES: undefined)
             node.content_type = archive.type;
-
-            let blob = archive.object;
-            if (!(archive.object instanceof Blob))
-                blob = new Blob([archive.object], {type: archive.type});
-
-            node.size = blob.size;
+            node.size = (await this.getSize(node))?.size;
 
             await Node.updateContentModified(node);
         }
@@ -130,14 +125,19 @@ export class ArchiveIDB extends EntityIDB {
         return this._db.blobs.where("node_id").equals(node.id).first();
     }
 
+    // get size of an archive, not including size of metadata and indexes
+    async getSize(node) {
+        // NOP, implemented in proxy
+    }
+
     // get file of an unpacked archive
     async getFile(node, file) {
-        // NOP, used in proxy
+        // NOP, implemented in proxy
     }
 
     // save file of an unpacked archive
-    async getFile(node, file, content) {
-        // NOP, used in proxy
+    async saveFile(node, file, content) {
+        // NOP, implemented in proxy
     }
 
     async delete(node) {

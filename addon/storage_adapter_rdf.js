@@ -70,6 +70,10 @@ export class StorageAdapterRDF {
 
     }
 
+    async getArchiveSize(params) {
+
+    }
+
     async fetchArchiveContent(params) {
 
     }

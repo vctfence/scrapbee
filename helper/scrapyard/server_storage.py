@@ -106,6 +106,17 @@ def persist_archive_content():
     return "", 204
 
 
+@app.route("/storage/get_archive_size", methods=['POST'])
+@requires_auth
+def get_archive_size():
+    result = storage_manager.get_archive_size(request.json)
+
+    if result:
+        return result
+    else:
+        return "", 404
+
+
 @app.route("/storage/fetch_archive_object", methods=['POST'])
 @requires_auth
 def fetch_archive_object():

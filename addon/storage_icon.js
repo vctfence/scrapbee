@@ -42,7 +42,7 @@ export class IconIDB extends EntityIDB {
     }
 
     persist(node, dataUrl) {
-        // NOP, used in proxy
+        // NOP, implemented in proxy
     }
 
     async update(iconId, options) {

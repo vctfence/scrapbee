@@ -91,6 +91,13 @@ export class StorageAdapterDisk {
         }
     }
 
+    async getArchiveSize(params) {
+        const response = await this._postJSON("/storage/get_archive_size", params);
+
+        if (response.ok)
+            return response.json();
+    }
+
     async fetchArchiveContent(params) {
         const node = params.node;
         delete params.node;

@@ -92,7 +92,7 @@ export class NodeIDB extends EntityIDB {
 
     // retains node in IDB, but removes from storage
     async unpersist(node) {
-        // NOP, used in proxy
+        // NOP, implemented in proxy
     }
 
     exists(node) {

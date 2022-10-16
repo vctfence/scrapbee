@@ -98,6 +98,10 @@ export class StorageAdapterCloud {
             return this._provider.assets.storeArchiveContent(params.uuid, params.content);
     }
 
+    async getArchiveSize(params) {
+
+    }
+
     async fetchArchiveContent(params) {
         const node = params.node;
         //archive = archive || await this._provider.assets.fetchArchiveObject(params.uuid);

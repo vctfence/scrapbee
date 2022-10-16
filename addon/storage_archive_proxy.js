@@ -22,6 +22,10 @@ export class ArchiveProxy extends StorageProxy {
         return this.#fetchArchive(node);
     }
 
+    async getSize(node) {
+        return this.#getArchiveSize(node);
+    }
+
     async getFile(node, file) {
         return this.#fetchArchiveFile(node, file);
     }
@@ -90,7 +94,14 @@ export class ArchiveProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter)
-            return await adapter.fetchArchiveFile({uuid: node.uuid, file, ...await adapter.getParams(node)});
+            return adapter.fetchArchiveFile({uuid: node.uuid, file, ...await adapter.getParams(node)});
+    }
+
+    async #getArchiveSize(node) {
+        const adapter = this.adapter(node);
+
+        if (adapter)
+            return adapter.getArchiveSize({uuid: node.uuid, ...await adapter.getParams(node)});
     }
 }
 

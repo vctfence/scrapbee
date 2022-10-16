@@ -4,6 +4,7 @@ import {showNotification} from "../../utils_browser.js";
 import {Query} from "../../storage_query.js";
 import {ensureSidebarWindow} from "../../utils_sidebar.js";
 import {simpleSelectric} from "../shelf_list.js";
+import {settings} from "../../settings.js";
 
 const RDF_IMPORT_THREADS = 5;
 
@@ -26,6 +27,11 @@ async function onStartRDFImport(e) {
     if (importing) {
         send.cancelRdfImport();
         finalize();
+        return;
+    }
+
+    if (settings.platform.chrome && $("#rdf-import-type").val() === "rdf-open") {
+        showNotification({message: "RDF editing is only available on firefox."});
         return;
     }
 

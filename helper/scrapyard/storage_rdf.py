@@ -37,6 +37,7 @@ def import_rdf_archive(params):
 
     if os.path.exists(rdf_archive_directory):
         with_mutex(lambda: shutil.copytree(rdf_archive_directory, unpacked_archive_directory, dirs_exist_ok=True))
+        result["size"] = sum(f.stat().st_size for f in Path(unpacked_archive_directory).glob('**/*') if f.is_file())
         words = build_archive_index(rdf_archive_directory)
         import_archive_index(params, words)
         result["archive_index"] = words
@@ -56,6 +57,7 @@ def import_rdf_archive_index(params):
     result = dict()
 
     if os.path.exists(rdf_archive_directory):
+        result["size"] = sum(f.stat().st_size for f in Path(rdf_archive_directory).glob('**/*') if f.is_file())
         words = build_archive_index(rdf_archive_directory)
         result["archive_index"] = words
 

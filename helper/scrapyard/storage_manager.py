@@ -84,6 +84,10 @@ class StorageManager:
     def get_comments_index_object_path(self, object_directory):
         return os.path.join(object_directory, COMMENTS_INDEX_OBJECT_FILE)
 
+    def compute_directory_size(self, path):
+        root_directory = Path(path)
+        return sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
+
     def open_batch_session(self, params):
         node_db_path = self.get_node_db_path(params)
         self.bach_node_db = NodeDB.from_file(node_db_path)
@@ -270,6 +274,20 @@ class StorageManager:
                     zip_file.writestr(archive_filename, file_content)
 
         return zip_buffer.getvalue()
+
+    def get_archive_size(self, params):
+        object_directory_path = self.get_object_directory(params)
+        archive_directory_path = self.get_archive_unpacked_path(object_directory_path)
+        result = None
+
+        if os.path.exists(archive_directory_path):
+            result = dict(size=self.compute_directory_size(archive_directory_path))
+        else:
+            archive_file_path = self.get_archive_content_path(object_directory_path)
+            if os.path.exists(archive_file_path):
+                result = dict(size=os.path.getsize(archive_file_path))
+
+        return result
 
     def persist_icon(self, params):
         self.persist_object(ICON_OBJECT_FILE, params, "icon_json")

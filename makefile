@@ -17,7 +17,7 @@ build:
 build-chrome:
 	make chrome-mv3
 	rm -f build/Scrapyard.zip
-	7za a build/Scrapyard-`cat ./addon/version.txt`.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
+	7za a build/Scrapyard-chrome-`cat ./addon/version.txt`.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
 
 sign:
 	make firefox-mv2
