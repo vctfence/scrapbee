@@ -4187,6 +4187,8 @@ async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,pa
                 try
                 {
                     // Scrapyard //////////////////////////////////////////////////////////////////
+                    // Usecase for sci-hub embedded pdfs
+                    // TODO: fix on Chrome
                     if (!element.contentDocument && element.src) {
                         let url = new URL(element.src);
 

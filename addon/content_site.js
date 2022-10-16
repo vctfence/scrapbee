@@ -1,3 +1,5 @@
+var configured;
+
 function makeReferenceURL(uuid, useProtocol) {
     let referenceURL = `ext+scrapyard://${uuid}`;
 
@@ -59,10 +61,13 @@ function configureSiteLinks(siteMap, useProtocol) {
     processIFrames(document, siteMap, useProtocol);
 }
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.type) {
         case "CONFIGURE_SITE_LINKS":
-            configureSiteLinks(message.siteMap, message.useProtocol);
+            if (!configured) {
+                configured = true;
+                configureSiteLinks(message.siteMap, message.useProtocol);
+            }
             break;
     }
 });
