@@ -1,49 +1,41 @@
-import json
 import traceback
 import threading
 import logging
 import socket
-import queue
 import time
 import os
 from functools import wraps
 from contextlib import closing
 
 import flask
-from flask import request, abort, render_template
+from flask import request, abort, render_template, send_file
 from werkzeug.serving import make_server
-# from werkzeug.middleware.profiler import ProfilerMiddleware
 
-from .server_debug import DEBUG
 from .storage_manager import StorageManager
+from .utils import module_property
 
 app = flask.Flask(__name__, template_folder="resources", static_folder="resources")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-log = logging.getLogger('werkzeug')
-log.disabled = True
-app.logger.disabled = not DEBUG
+accessLog = logging.getLogger('werkzeug')
+accessLog.disabled = True
 
-###
-if DEBUG:
-    logging.basicConfig(filename="../.local/helper.log", encoding="utf-8", level=logging.DEBUG)
-    # profiler_log_file = open("../.local/profiler.log", "w", encoding="utf-8")
-    # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, profiler_log_file)
-###
+helper_log_file = None
 
 auth_token = None
 host = "localhost"
 port = None
 httpd = None
 
-message_mutex = threading.Lock()
-message_queue = queue.Queue()
+storage_manager = None
 
-storage_manager = StorageManager()
+
+@module_property
+def _storage_manager():
+    return storage_manager
 
 
 class Httpd(threading.Thread):
-
     def __init__(self, app, port):
         threading.Thread.__init__(self, daemon=True)
         self.srv = make_server(host, port, app, True)
@@ -57,17 +49,28 @@ class Httpd(threading.Thread):
         self.srv.shutdown()
 
 
-def start(a_port, an_auth):
+def start(options):
     global httpd
     global port
     global auth_token
-    port = a_port
-    auth_token = an_auth
+    global storage_manager
+
+    port = options["port"]
+    auth_token = options["auth"]
 
     if not wait_for_port(port):
         return False
 
-    httpd = Httpd(app, a_port)
+    storage_manager = StorageManager(port)
+    storage_manager.clean_temp_directory()
+
+    logging_enabled = options.get("logging", False)
+    app.logger.disabled = not logging_enabled
+    if logging_enabled:
+        enable_logging()
+    # enable_profiling()
+
+    httpd = Httpd(app, port)
     httpd.start()
 
     return True
@@ -76,16 +79,6 @@ def start(a_port, an_auth):
 def stop():
     global httpd
     httpd.shutdown()
-
-
-def port_available(port):
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        sock.settimeout(0.1)
-        result = sock.connect_ex(("127.0.0.1", port))
-        if result == 0:
-            return False
-        else:
-            return True
 
 
 def wait_for_port(port):
@@ -100,6 +93,16 @@ def wait_for_port(port):
     return False
 
 
+def port_available(port):
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        sock.settimeout(0.1)
+        result = sock.connect_ex(("127.0.0.1", port))
+        if result == 0:
+            return False
+        else:
+            return True
+
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -109,37 +112,20 @@ def requires_auth(f):
     return decorated
 
 
-###
-#if DEBUG:
-if True:
-    @app.errorhandler(500)
-    def handle_500(e=None):
-        return f"<pre>{traceback.format_exc()}</pre>", 500
-###
+def enable_logging():
+    global helper_log_file
+
+    helper_log_file = os.path.join(storage_manager.get_temp_directory(), "helper.log")
+    logging.basicConfig(filename=helper_log_file, encoding="utf-8", level=logging.DEBUG,
+                        format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
 
-@app.after_request
-def add_header(r):
-    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    r.headers["Pragma"] = "no-cache"
-    r.headers["Expires"] = "0"
-    r.headers['Cache-Control'] = 'public, max-age=0'
-    return r
+def enable_profiling():
+    from werkzeug.middleware.profiler import ProfilerMiddleware
 
-
-def send_native_message(msg):
-    message_mutex.acquire()
-    response = {}
-
-    try:
-        msg_json = json.dumps(msg)
-        browser.send_message(msg_json)
-        response = message_queue.get()
-    finally:
-        message_mutex.release()
-
-    return response
-
+    profiler_log_file = os.path.join(storage_manager.get_temp_directory(), "profiler.log")
+    profiler_log_file = open(profiler_log_file, "w", encoding="utf-8")
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, profiler_log_file)
 
 
 from . import browser
@@ -150,6 +136,20 @@ from . import server_export
 from . import server_backup
 from . import server_upload
 from . import server_storage
+
+
+@app.errorhandler(500)
+def handle_500(e=None):
+    return f"<pre>{traceback.format_exc()}</pre>", 500
+
+
+@app.after_request
+def add_header(r):
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
 
 
 @app.route("/")
@@ -166,3 +166,11 @@ def page_not_found(e):
 @requires_auth
 def exit_app():
     os._exit(0)
+
+
+@app.route("/helper_log")
+def helper_log():
+    if app.logger.disabled:
+        return "", 404
+    else:
+        return send_file(helper_log_file, mimetype="text/plain")

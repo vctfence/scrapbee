@@ -7,11 +7,12 @@ from pathlib import Path
 import flask
 from flask import request, render_template
 
+from .browser import send_with_response
 from .browse import highlight_words_in_index
 from .cache_dict import CacheDict
 from .storage_rdf import import_rdf_archive, import_rdf_archive_index, fetch_archive_file, save_archive_file, \
     persist_comments, persist_archive
-from .server import app, requires_auth, send_native_message
+from .server import app, requires_auth
 
 # Scrapbook RDF support
 
@@ -100,7 +101,7 @@ rdf_page_directories = CacheDict()
 
 @app.route("/rdf/browse/<uuid>/", methods=['GET'])
 def rdf_browse(uuid):
-    msg = send_native_message({"type": "REQUEST_RDF_PATH", "uuid": uuid})
+    msg = send_with_response({"type": "REQUEST_RDF_PATH", "uuid": uuid})
     rdf_archive_directory = msg["rdf_archive_path"]
     archive_index_path = os.path.join(rdf_archive_directory, "index.html")
 

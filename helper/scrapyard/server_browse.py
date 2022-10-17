@@ -4,11 +4,14 @@ import logging
 import zipfile
 
 import flask
-from flask import abort, send_file, send_from_directory, request, render_template
+from flask import send_file, send_from_directory, request, render_template
 
+from . import server
+
+from .browser import send_with_response
 from .browse import highlight_words_in_index
 from .cache_dict import CacheDict
-from .server import app, send_native_message, storage_manager
+from .server import app
 from .storage_manager import StorageManager
 
 # Browse regular scrapyard archives
@@ -19,7 +22,7 @@ unpacked_archives = CacheDict()
 
 @app.route("/browse/<uuid>/")
 def browse(uuid):
-    msg = send_native_message({"type": "REQUEST_ARCHIVE", "uuid": uuid})
+    msg = send_with_response({"type": "REQUEST_ARCHIVE", "uuid": uuid})
     highlight = request.args.get("highlight", None)
 
     if highlight:
@@ -41,15 +44,15 @@ def browse(uuid):
 def serve_from_file(params, uuid):
     params["uuid"] = uuid
 
-    object_directory = storage_manager.get_object_directory(params, uuid)
+    object_directory = server.storage_manager.get_object_directory(params, uuid)
     archive_type = params.get("contains", None)
 
     if archive_type == StorageManager.ARCHIVE_TYPE_FILES:
-        archive_directory = storage_manager.get_archive_unpacked_path(object_directory)
+        archive_directory = server.storage_manager.get_archive_unpacked_path(object_directory)
         unpacked_archives[uuid] = archive_directory
         return serve_unpacked_archive(params, archive_directory)
     else:
-        archive_content_path = storage_manager.get_archive_content_path(object_directory)
+        archive_content_path = server.storage_manager.get_archive_content_path(object_directory)
         content_type = params.get("content_type", "text/html")
         return send_file(archive_content_path, mimetype=content_type)
 
@@ -70,7 +73,7 @@ def serve_content(params):
 
 
 def extract_unpacked_archive(params, content):
-    archive_directory_path = storage_manager.get_cloud_archive_temp_directory(params)
+    archive_directory_path = server.storage_manager.get_cloud_archive_temp_directory(params)
     zip_buffer = io.BytesIO(content)
 
     with zipfile.ZipFile(zip_buffer, "r", zipfile.ZIP_DEFLATED, False) as zip_file:

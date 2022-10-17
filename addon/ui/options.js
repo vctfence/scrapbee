@@ -69,7 +69,7 @@ function initHelpMarks(container = "") {
     });
 }
 
-export async function setSaveCheckHandler(id, setting, callback) {
+export function setSaveCheckHandler(id, setting, callback) {
     $(`#${id}`).on("click", async e => {
         await settings.load();
         await settings[setting](e.target.checked);

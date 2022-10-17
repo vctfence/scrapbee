@@ -1,7 +1,12 @@
 import logging
+import queue
 import sys
 import struct
 import json
+import threading
+
+message_mutex = threading.Lock()
+message_queue = queue.Queue()
 
 
 def get_message():
@@ -25,3 +30,17 @@ def send_message(message):
     sys.stdout.buffer.write(encoded_message['length'])
     sys.stdout.buffer.write(encoded_message['content'])
     sys.stdout.buffer.flush()
+
+
+def send_with_response(msg):
+    message_mutex.acquire()
+    response = {}
+
+    try:
+        msg_json = json.dumps(msg)
+        send_message(msg_json)
+        response = message_queue.get()
+    finally:
+        message_mutex.release()
+
+    return response

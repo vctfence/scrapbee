@@ -1,7 +1,7 @@
 # uses git shell
 
 test:
-	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard1" --keep-profile-changes
+	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard" --keep-profile-changes
 
 test-nightly:
 	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard.nightly" --firefox=nightly --keep-profile-changes
@@ -16,8 +16,8 @@ build:
 .PHONY: build-chrome
 build-chrome:
 	make chrome-mv3
-	rm -f build/Scrapyard.zip
-	7za a build/Scrapyard-chrome-`cat ./addon/version.txt`.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
+	rm -f build/scrapyard-chrome-*.zip
+	7za a build/scrapyard-chrome-`cat ./addon/version.txt`.zip ./addon/* -xr!web-ext-artifacts -xr!.web-extension-id -xr!_metadata -xr!*.mv2* -xr!*.mv3*
 
 sign:
 	make firefox-mv2

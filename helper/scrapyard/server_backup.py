@@ -5,8 +5,8 @@ from pathlib import Path
 
 from flask import request, abort
 
-from . import browser
-from .server import app, requires_auth, message_mutex, message_queue
+from .browser import message_mutex, message_queue
+from .server import app, requires_auth
 
 # Backup routines
 

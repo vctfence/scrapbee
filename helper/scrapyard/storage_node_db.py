@@ -121,6 +121,12 @@ class NodeDB:
             "pos": 1
         }
 
+    def parse_json(self, s):
+        try:
+            return json.loads(s)
+        except Exception as e:
+            logging.error(e)
+
     @classmethod
     def read_header(cls, path):
         if os.path.exists(path):
@@ -135,12 +141,13 @@ class NodeDB:
 
                 if header_json != "":
                     nodes_json = node_db_file.readlines()
-                    self.header = json.loads(header_json)
+                    self.header = self.parse_json(header_json)
 
                 for node_json in nodes_json:
                     if node_json:
-                        node = json.loads(node_json)
-                        self.nodes[node["uuid"]] = node
+                        node = self.parse_json(node_json)
+                        if node:
+                            self.nodes[node["uuid"]] = node
 
         if not self.header:
             self.header = self.create_format_header()

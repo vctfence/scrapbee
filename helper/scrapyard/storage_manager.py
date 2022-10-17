@@ -32,7 +32,8 @@ class StorageManager:
     ARCHIVE_TYPE_TEXT = "text"
     ARCHIVE_TYPE_FILES = "files"
 
-    def __init__(self):
+    def __init__(self, port):
+        self.port = port
         self.bach_node_db = None
 
     def get_node_db_path(self, params):
@@ -51,7 +52,12 @@ class StorageManager:
         return os.path.join(data_directory, OBJECT_DIRECTORY, uuid)
 
     def get_temp_directory(self):
-        return os.path.join(tempfile.gettempdir(), SCRAPYARD_DIRECTORY)
+        temp_directory_path = os.path.join(tempfile.gettempdir(), f"{SCRAPYARD_DIRECTORY}_{self.port}")
+
+        if not os.path.exists(temp_directory_path):
+            Path(temp_directory_path).mkdir(parents=True, exist_ok=True)
+
+        return temp_directory_path
 
     def get_cloud_archive_temp_directory(self, params):
         temp_directory = self.get_temp_directory()
@@ -120,7 +126,10 @@ class StorageManager:
         temp_directory = self.get_temp_directory()
 
         if os.path.exists(temp_directory):
-            shutil.rmtree(temp_directory)
+            try:
+                shutil.rmtree(temp_directory)
+            except Exception as e:
+                logging.error(e)
 
     def persist_node(self, params):
         def persist(node_db):

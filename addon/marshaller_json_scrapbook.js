@@ -1,12 +1,12 @@
 import {Marshaller, Unmarshaller} from "./marshaller.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {
-    ARCHIVE_TYPE_BYTES,
     ARCHIVE_TYPE_TEXT,
     createJSONScrapBookMeta,
     DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME, JSON_SCRAPBOOK_SHELVES,
-    JSON_SCRAPBOOK_FORMAT, JSON_SCRAPBOOK_FOLDERS,
+    JSON_SCRAPBOOK_FORMAT,
     JSON_SCRAPBOOK_VERSION,
+    NODE_TYPE_BOOKMARK,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NAMES,
     NODE_TYPES,
@@ -260,7 +260,7 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
         unconvertedNode.name = node.title;
         delete unconvertedNode.title;
 
-        unconvertedNode.type = NODE_TYPES[node.type];
+        unconvertedNode.type = NODE_TYPES[node.type] || NODE_TYPE_BOOKMARK;
 
         if (node.todo_state)
             unconvertedNode.todo_state = TODO_STATES[node.todo_state];

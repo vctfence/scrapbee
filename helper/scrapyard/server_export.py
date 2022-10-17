@@ -3,8 +3,8 @@ import os
 
 import flask
 
-from . import browser
-from .server import app, requires_auth, message_mutex, message_queue
+from .browser import message_mutex, message_queue
+from .server import app, requires_auth
 
 # Export using helper
 
@@ -31,6 +31,7 @@ def export_initialize():
             message_mutex.release()
 
     return "", 204
+
 
 @app.route("/export/download", methods=['GET'])
 def export_download():

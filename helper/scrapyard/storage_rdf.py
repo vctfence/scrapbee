@@ -10,7 +10,7 @@ import regex
 
 from bs4 import BeautifulSoup
 
-from .server import storage_manager
+from . import server
 
 
 archive_import_mutex = threading.Lock()
@@ -29,8 +29,8 @@ def import_rdf_archive(params):
     scrapbook_id = params["scrapbook_id"]
     rdf_path = params["rdf_archive_path"]
 
-    object_directory = storage_manager.get_object_directory(params, uuid)
-    unpacked_archive_directory = storage_manager.get_archive_unpacked_path(object_directory)
+    object_directory = server.storage_manager.get_object_directory(params, uuid)
+    unpacked_archive_directory = server.storage_manager.get_archive_unpacked_path(object_directory)
     rdf_archive_directory = os.path.join(rdf_path, "data", scrapbook_id)
 
     result = dict()
@@ -141,17 +141,17 @@ def import_rdf_metadata(rdf_archive_directory, result):
 def import_archive_comments(params, result):
     comments = {"content": result["comments"]}
     params["comments_json"] = json.dumps(comments, ensure_ascii=False, separators=(',', ':'))
-    with_mutex(lambda: storage_manager.persist_comments(params))
+    with_mutex(lambda: server.storage_manager.persist_comments(params))
 
     comments_index = {"content": result["comments_index"]}
     params["index_json"] = json.dumps(comments_index, ensure_ascii=False, separators=(',', ':'))
-    with_mutex(lambda: storage_manager.persist_comments_index(params))
+    with_mutex(lambda: server.storage_manager.persist_comments_index(params))
 
 
 def import_archive_index(params, words):
     index = {"content": words}
     params["index_json"] = json.dumps(index, ensure_ascii=False, separators=(',', ':'))
-    with_mutex(lambda: storage_manager.persist_archive_index(params))
+    with_mutex(lambda: server.storage_manager.persist_archive_index(params))
 
 
 def persist_archive(params, files):

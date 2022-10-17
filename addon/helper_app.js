@@ -55,7 +55,8 @@ class HelperApp {
                     port.postMessage({
                         type: "INITIALIZE",
                         port: settings.helper_port_number(),
-                        auth: this.auth
+                        auth: this.auth,
+                        logging: !!settings.enable_helper_app_logging()
                     });
                 }
                 catch (e) {
