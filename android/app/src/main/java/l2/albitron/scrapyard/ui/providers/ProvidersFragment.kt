@@ -82,8 +82,7 @@ class ProvidersFragment : Fragment() {
 
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
-
-                    // OneDriveProvider.getSignature(context)
+                    //OneDriveProvider.getSignature(context)
 
                     if (settings.isOneDriveSignedIn)
                         OneDriveProvider.signOut(context)
@@ -100,8 +99,6 @@ class ProvidersFragment : Fragment() {
                         getString(if (settings.isOneDriveSignedIn) R.string.sign_out else R.string.sign_in)
                 }
             }
-
-            //OneDriveProvider.getSignature(activity)
         }
         else
             showToast(R.string.no_internet)

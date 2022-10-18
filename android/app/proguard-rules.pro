@@ -21,3 +21,4 @@
 -renamesourcefileattribute SourceFile
 
 -keep class l2.albitron.scrapyard.** {*;}
+-keep class com.microsoft.graph.models.** {*;}
