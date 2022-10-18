@@ -16,7 +16,7 @@ async function loadHelperAppLinks() {
     }
 
     try {
-        const apiURL = "https://api.github.com/repos/gchristensen/scrapyard/releases/75327866"; // helper v1.2
+        const apiURL = "https://api.github.com/repos/gchristensen/scrapyard/releases/latest";
         const response = await fetchWithTimeout(apiURL, {timeout: 30000});
 
         if (response.ok) {
