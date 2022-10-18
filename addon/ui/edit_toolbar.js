@@ -1,7 +1,10 @@
 $(document).ready(async function () {
     const scrapyardNotFound = !!$("meta[name='scrapyard-not-found']").length;
 
-    if (!scrapyardNotFound) {
+    if (scrapyardNotFound) {
+        await configureNotFoundTransition();
+    }
+    else {
         const toolbar = new EditToolbar();
 
         $(window).on("beforeunload", e => {
@@ -506,6 +509,37 @@ function isDescendant(parent, child) {
         node = node.parentNode;
     }
     return false;
+}
+
+async function configureNotFoundTransition() {
+    const SCRAPYARD_SETTINGS_KEY = "scrapyard-settings";
+    const settings = (await browser.storage.local.get(SCRAPYARD_SETTINGS_KEY))?.[SCRAPYARD_SETTINGS_KEY];
+
+    if (settings?.transition_to_disk) {
+        const notFoundWrapperDiv = document.getElementById("not-found-wrapper");
+        const notFoundTextDiv = document.getElementById("not-found-text");
+        notFoundTextDiv.textContent = "TRANSITION REQUIRED";
+
+        const notFoundImg = document.getElementById("not-found-image");
+        notFoundImg.parentElement.removeChild(notFoundImg);
+
+        const transitionLink = document.createElement("a");
+        transitionLink.setAttribute("style", "font-family: Arial, sans-serif;");
+        transitionLink.textContent = "Transition Guide";
+        transitionLink.addEventListener("click", e => {
+            e.preventDefault();
+
+            browser.runtime.sendMessage({
+                type: "browseNode",
+                node: {
+                    type: 3,
+                    uri: browser.runtime.getURL("/ui/options.html#transition")
+                }
+            });
+        });
+        transitionLink.href = "#";
+        notFoundWrapperDiv.appendChild(transitionLink);
+    }
 }
 
 console.log("==> edit_toolbar.js loaded")
