@@ -4,3 +4,6 @@
 2. Execute ./install.sh to install the Scrapyard helper application on Linux
    or MacOS.
 3. Execute install.cmd to install the Scrapyard helper application on Windows.
+
+The application is installed into the Python user site directory. These
+distribution files could be safely deleted afterwards.
