@@ -29,7 +29,7 @@ class NodeDB:
         try:
             f(node_db)
         except Exception as e:
-            logging.error(e)
+            logging.exception(e)
 
         node_db.write(path)
 
@@ -45,7 +45,7 @@ class NodeDB:
                     try:
                         f(json.loads(node_json))
                     except Exception as e:
-                        logging.error(e)
+                        logging.exception(e)
 
                     node_json = node_db_file.readline()
 
@@ -125,7 +125,7 @@ class NodeDB:
         try:
             return json.loads(s)
         except Exception as e:
-            logging.error(e)
+            logging.exception(e)
 
     @classmethod
     def read_header(cls, path):

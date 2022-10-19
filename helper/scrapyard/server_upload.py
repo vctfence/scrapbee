@@ -60,7 +60,7 @@ def upload_show_dialog():
             serve_mutex.release()
 
     except Exception as e:
-        logging.error(e)
+        logging.exception(e)
         return "[]"
 
     return json.dumps(uuids)

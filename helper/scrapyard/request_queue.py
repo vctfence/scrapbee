@@ -15,7 +15,7 @@ class RequestQueue:
                 request, params = self.request_queue.get()
                 request(params)
             except Exception as e:
-                logging.error(e)
+                logging.exception(e)
 
     def add(self, request, params):
         self.request_queue.put((request, params,))

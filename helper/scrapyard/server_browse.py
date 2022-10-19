@@ -36,7 +36,7 @@ def browse(uuid):
         elif msg["type"] == "ARCHIVE_INFO" and msg["kind"] == "content":
             return serve_content(msg)
     except Exception as e:
-        logging.error(e)
+        logging.exception(e)
 
     return render_template("404.html"), 404
 

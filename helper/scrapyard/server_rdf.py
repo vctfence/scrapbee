@@ -162,6 +162,6 @@ def rdf_item_delete(uuid):
     try:
         shutil.rmtree(rdf_item_path)
     except Exception as e:
-        logging.error(e)
+        logging.exception(e)
 
     return "", 204

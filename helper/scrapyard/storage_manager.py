@@ -109,7 +109,7 @@ class StorageManager:
             try:
                 f(self.bach_node_db)
             except Exception as e:
-                logging.error(e)
+                logging.exception(e)
         else:
             node_db_path = self.get_node_db_path(params)
             NodeDB.with_file(node_db_path, f)
@@ -129,7 +129,7 @@ class StorageManager:
             try:
                 shutil.rmtree(temp_directory)
             except Exception as e:
-                logging.error(e)
+                logging.exception(e)
 
     def persist_node(self, params):
         def persist(node_db):
@@ -183,13 +183,13 @@ class StorageManager:
             node_db_path = self.get_node_db_path(params)
             os.remove(node_db_path)
         except Exception as e:
-            logging.error(e)
+            logging.exception(e)
 
         try:
             object_root_directory = self.get_object_root_directory(params)
             shutil.rmtree(object_root_directory)
         except Exception as e:
-            logging.error(e)
+            logging.exception(e)
 
     def persist_object(self, object_file_name, params, param_name):
         object_directory_path = self.get_object_directory(params)
@@ -353,7 +353,7 @@ class StorageManager:
             else:
                 result = {"error": "empty"}
         except Exception as e:
-            logging.error(e)
+            logging.exception(e)
 
         return result
 
