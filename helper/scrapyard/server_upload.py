@@ -34,7 +34,7 @@ def open_file_dialog(queue):
     queue.put(filename)
 
 
-# does not work, it is impossible to spawn a multiprocessing.Process when the main
+# currently does not work, it is impossible to spawn a multiprocessing.Process when the main
 # process waits on stdin in the loop to process native messages
 @app.route("/upload/open_file_dialog", methods=['GET'])
 @requires_auth

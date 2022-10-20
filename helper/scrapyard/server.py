@@ -58,9 +58,6 @@ def start(options):
     port = options["port"]
     auth_token = options["auth"]
 
-    if not wait_for_port(port):
-        return False
-
     storage_manager = StorageManager(port)
     storage_manager.clean_temp_directory()
 
@@ -70,8 +67,14 @@ def start(options):
         enable_logging()
     # enable_profiling()
 
+    if not wait_for_port(port):
+        logging.error(f"Server port {port} is not available.")
+        return False
+
     httpd = Httpd(app, port)
     httpd.start()
+
+    logging.info("Server initialized.")
 
     return True
 

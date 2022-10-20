@@ -41,9 +41,10 @@ class NodeDB:
 
                 node_json = node_db_file.readline()
 
-                while node_json != "":
+                while node_json:
                     try:
-                        f(json.loads(node_json))
+                        node = json.loads(node_json)
+                        f(node)
                     except Exception as e:
                         logging.exception(e)
 
