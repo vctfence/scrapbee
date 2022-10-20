@@ -1,4 +1,4 @@
-import {byName, DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF} from "../storage.js";
+import {byName, DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, NODE_TYPE_FOLDER} from "../storage.js";
 import {askCSRPermission, getActiveTab} from "../utils_browser.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {systemInitialization} from "../bookmarks_init.js";
@@ -35,7 +35,8 @@ async function init() {
 
     await saveActiveTabProperties();
 
-    $("#new-folder").on("click", createNewFolder);
+    $("#new-shelf").on("click", () => createNewFolder(NODE_TYPE_SHELF));
+    $("#new-folder").on("click", () => createNewFolder(NODE_TYPE_FOLDER));
     $("#crawler-check").on("click", switchCrawlerMode);
     $("#treeview").on("select_node.jstree", onTreeFolderSelected);
     $("#sidebar-toggle").on("click", toggleSidebar);
@@ -124,8 +125,8 @@ function onTreeFolderSelected(e, {node: jnode}) {
     selectricRefresh(bookmarkFolderSelect)
 }
 
-async function createNewFolder() {
-    const folder = await tree.createNewFolderUnderSelection("$new_node$");
+async function createNewFolder(type) {
+    const folder = await tree.createNewFolderUnderSelection("$new_node$", type);
 
     if (folder) {
         let newOption = $(`#bookmark-folder option[value='$new_node$']`);

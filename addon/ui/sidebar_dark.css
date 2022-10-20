@@ -325,3 +325,10 @@ select#link-scope, select#option-export-format, select#notes-format {
     color: #ff7b7b;
 }
 
+#new-folder {
+    background-image: url("/icons/new-group2.svg");
+}
+
+#new-shelf {
+    background-image: url("/icons/new-shelf2.svg");
+}

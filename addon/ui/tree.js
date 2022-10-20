@@ -624,18 +624,23 @@ class BookmarkTree {
         }
     }
 
-    async createNewFolderUnderSelection(id) {
+    async createNewFolderUnderSelection(id, type) {
         let selectedJNode = this.selected?.[0];
 
-        if (!selectedJNode)
+        if (!selectedJNode && type !== NODE_TYPE_SHELF)
             return;
 
-        let jnode = this._jstree.create_node(selectedJNode, {
+        const parent = type === NODE_TYPE_SHELF? "#": selectedJNode;
+        const title = type === NODE_TYPE_SHELF? "Shelf": "Folder";
+        const className = type === NODE_TYPE_SHELF? "scrapyard-shelf": "scrapyard-group";
+        const icon = type === NODE_TYPE_SHELF? "/icons/shelf.svg": "/icons/group.svg";
+
+        let jnode = this._jstree.create_node(parent, {
             id: id,
-            text: "New Folder",
-            type: NODE_TYPE_FOLDER,
-            icon: "/icons/group.svg",
-            li_attr: {"class": "scrapyard-group"}
+            text: `New ${title}`,
+            type: type,
+            icon: icon,
+            li_attr: {"class": className}
         });
 
         this._jstree.deselect_all();
@@ -648,7 +653,10 @@ class BookmarkTree {
                     resolve(null);
                 }
                 else {
-                    const folder = await send.createFolder({parent: parseInt(selectedJNode.id), name: jnode.text});
+                    const folder = type === NODE_TYPE_SHELF
+                        ? await send.createShelf({name: jnode.text})
+                        : await send.createFolder({parent: parseInt(selectedJNode.id), name: jnode.text});
+
                     if (folder) {
                         this._jstree.set_id(jnode.id, folder.id);
                         jnode.original = BookmarkTree.toJsTreeNode(folder);

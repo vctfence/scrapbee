@@ -90,9 +90,21 @@ input:focus {
 	width: 100%;
 }
 
-#new-folder {
+#new-folder, #new-shelf {
 	margin-left: 4px;
 	flex: 0 1 auto;
+    min-width: 22px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+}
+
+#new-folder {
+    background-image: url("/icons/new-group.svg");
+}
+
+#new-shelf {
+    background-image: url("/icons/new-shelf.svg");
 }
 
 #buttons {
