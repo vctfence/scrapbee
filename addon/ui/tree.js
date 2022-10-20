@@ -1547,7 +1547,7 @@ class BookmarkTree {
             delete items.newItem.submenu.newSiblingFolderItem;
         }
 
-        if (!ctxNode.__filtering) {
+        if (!(ctxNode.__filtering || ctxNode.__extended_todo)) {
             delete items.locateItem;
         }
 
