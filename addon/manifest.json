@@ -1,5 +1,5 @@
 {
-    "version": "2.0.2.1",
+    "version": "2.0.2.2",
     "applications": {
         "gecko": {
             "id": "scrapyard@firefox",
@@ -85,8 +85,8 @@
         "ui/edit_toolbar.css",
         "savepage/shadowloader.js",
         "ui/site_capture.html",
-        "ui/site_capture.css",
-        "ui/site_capture.js"
+        "ui/notes_iframe.html",
+        "ui/notes.html"
     ],
     "protocol_handlers": [
         {

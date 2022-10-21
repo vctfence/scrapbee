@@ -13,7 +13,7 @@ async function injectCSSFileMV3(tabId, options) {
     return browser.scripting.insertCSS({target: {tabId}, files: [options.file]})
 }
 
-export const injectCSSFile = _MANIFEST_V3? injectCSSFileMV3: browser.tabs.insertCSS;
+export const injectCSSFile = _MANIFEST_V3? injectCSSFileMV3: browser.tabs?.insertCSS;
 
 async function injectScriptFileMV3(tabId, options) {
     const target = {tabId};
@@ -31,7 +31,7 @@ async function injectScriptFileMV3(tabId, options) {
     return browser.scripting.executeScript({target, files: [options.file], injectImmediately: immediately});
 }
 
-export const injectScriptFile = _MANIFEST_V3? injectScriptFileMV3: browser.tabs.executeScript;
+export const injectScriptFile = _MANIFEST_V3? injectScriptFileMV3: browser.tabs?.executeScript;
 
 async function scriptsAllowedMV3(tabId, frameId = 0) {
     try {

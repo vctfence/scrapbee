@@ -256,9 +256,8 @@ async function init() {
     $("#notes").css("font-size", fontSize + "%");
 
     $("#close-button").on("click", e => {
-        if (window.parent) {
+        if (window.parent)
             window.parent.postMessage("SCRAPYARD_CLOSE_NOTES");
-        }
     });
 
     if (isInline) {

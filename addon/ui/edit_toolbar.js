@@ -15,6 +15,8 @@ $(document).ready(async function () {
 });
 
 class EditToolbar {
+    #tabId;
+
     constructor() {
         this.targetBorder = $("<div id='scrapyard-dom-eraser-border'>").appendTo(document.body);
         this.buildTools()
@@ -259,7 +261,7 @@ class EditToolbar {
         const uuid = location.href.split("/").at(-2);
 
         append(`<input id="scrapyard-view-notes" type="button" class="blue-button" value="Notes">`)
-            .on("click", e => {
+            .on("click", async e => {
                 const iframe = $("#scrapyard-notes-frame");
 
                 if (iframe.length) {
@@ -269,25 +271,26 @@ class EditToolbar {
                 }
                 else {
                     // if (location.origin.startsWith("http"))
-                    browser.runtime.sendMessage({type: "browseNotes", uuid});
+//                    browser.runtime.sendMessage({type: "browseNotes", uuid});
                     // else {
-                    //     let notes_page = browser.runtime.getURL("/ui/notes_iframe.html");
-                    //
-                    //     $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notes_page}#${uuid}"/>
-                    //                               <div id="scrapyard-notes-dim"></div>`)
-                    //         .addClass("scrapyard-no-overflow");
+                        const notesPageURL = browser.runtime.getURL("/ui/notes_iframe.html")
+                            + "#" + uuid + ":" + this.#tabId;
+
+                        $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notesPageURL}"/>
+                                                  <div id="scrapyard-notes-dim"></div>`)
+                            .addClass("scrapyard-no-overflow");
                     //}
                 }
             });
 
 
-        window.addEventListener("message", e => {
-            if (e.data === "SCRAPYARD_CLOSE_NOTES") {
+        browser.runtime.onMessage.addListener(message => {
+            if (message.type === "SCRAPYARD_CLOSE_NOTES") {
                 $("#scrapyard-notes-frame").remove();
                 $("#scrapyard-notes-dim").remove();
                 $(document.body).removeClass("scrapyard-no-overflow");
             }
-        }, false);
+        });
 
         append(`<span id="scrapyard-original-url-label">Original URL: </span>`);
         const originalURLText = append(`<input id="scrapyard-original-url-text" type="text" readonly="readonly">`)[0];
@@ -297,9 +300,10 @@ class EditToolbar {
             type: "getBookmarkInfo",
             uuid
         }).then(node => {
+            this.#tabId = node.__tab_id;
             originalURLText.value = node?.uri || "";
             originalURLLink.href = node?.uri || "#";
-            $("#scrapyard-page-info", editBar).html(this.formatPageInfo(node))
+            $("#scrapyard-page-info", editBar).html(this.formatPageInfo(node));
         });
 
         append(`<input id="scrapyard-go-button" class="blue-button" type="button" value="Go">`)

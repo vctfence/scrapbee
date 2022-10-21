@@ -25,17 +25,19 @@ class ScrapyardSettings {
 
     async _loadPlatform() {
         if (!this._platform) {
-            const platformInfo = await browser.runtime.getPlatformInfo();
+            this._platform = {};
 
-            this._platform = {[platformInfo.os]: true};
+            if (browser.runtime.getPlatformInfo) {
+                const platformInfo = await browser.runtime.getPlatformInfo();
 
-            if (navigator.userAgent.indexOf("Firefox") >= 0) {
+                this._platform[platformInfo.os] = true;
+            }
+
+            if (navigator.userAgent.indexOf("Firefox") >= 0)
                 this._platform.firefox = true;
-            }
 
-            if (navigator.userAgent.indexOf("Chrome") >= 0) {
+            if (navigator.userAgent.indexOf("Chrome") >= 0)
                 this._platform.chrome = true;
-            }
         }
     }
 

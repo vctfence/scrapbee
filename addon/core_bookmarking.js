@@ -138,14 +138,19 @@ receive.updateArchive = message => Bookmark.updateArchive(message.uuid, message.
 
 receive.setTODOState = message => TODO.setState(message.nodes);
 
-receive.getBookmarkInfo = async message => {
-    let node = await Node.getByUUID(message.uuid);
+receive.getBookmarkInfo = async (message, sender) => {
+    const node = await Node.getByUUID(message.uuid);
+
     node.__formatted_size = node.size ? formatBytes(node.size) : null;
     node.__formatted_date = node.date_added
         ? node.date_added.toString().replace(/:[^:]*$/, "")
         : null;
+    node.__tab_id = sender.tab.id;
+
     return node;
 };
+
+receive.closeNotes = async message => browser.tabs.sendMessage(message.tabId, {type: "SCRAPYARD_CLOSE_NOTES"});
 
 receive.getHideToolbarSetting = async message => {
     await settings.load();

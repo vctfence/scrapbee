@@ -87,7 +87,10 @@
         {
             "resources": [
                 "icons/lock.svg",
-                "ui/site_capture.html"
+                "ui/site_capture.html",
+                "reference.html",
+                "ui/notes.html",
+                "ui/notes_iframe.html"
             ],
             "matches": ["*://*/*"]
         }
