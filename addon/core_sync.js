@@ -218,7 +218,7 @@ async function performOperations(syncOperations, syncDirectory) {
 
     const total = syncOperations.push.length
         + Math.floor(syncOperations.pull.length / SYNC_NODE_CHUNK_SIZE)
-        + syncOperations.delete.length;
+        /*+ syncOperations.delete.length*/;
     const progress = new ProgressCounter(total, "syncProgress");
 
     // const syncMarshaller = new MarshallerSync();
