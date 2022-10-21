@@ -270,16 +270,12 @@ class EditToolbar {
                     $(document.body).removeClass("scrapyard-no-overflow");
                 }
                 else {
-                    // if (location.origin.startsWith("http"))
-//                    browser.runtime.sendMessage({type: "browseNotes", uuid});
-                    // else {
-                        const notesPageURL = browser.runtime.getURL("/ui/notes_iframe.html")
-                            + "#" + uuid + ":" + this.#tabId;
+                    const notesPageURL = browser.runtime.getURL("/ui/notes_iframe.html")
+                        + "#" + uuid + ":" + this.#tabId;
 
-                        $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notesPageURL}"/>
-                                                  <div id="scrapyard-notes-dim"></div>`)
-                            .addClass("scrapyard-no-overflow");
-                    //}
+                    $(document.body).prepend(`<iframe id="scrapyard-notes-frame" src="${notesPageURL}"/>
+                                              <div id="scrapyard-notes-dim"></div>`)
+                        .addClass("scrapyard-no-overflow");
                 }
             });
 
