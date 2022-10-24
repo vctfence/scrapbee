@@ -11,8 +11,8 @@ JavaScript wrapper which is used in the examples below.
 
 To call Scrapyard API from regular extensions, automation should be enabled manually at the Scrapyard advanced settings
 page (**ext+scrapyard://advanced**). It is not necessary to enable automation to use the code below from iShell commands.
-With iShell helper application it is, for example, possible to retrieve the content of Scrapyard archives and pass it
-for processing in Python.
+With iShell helper application it is, for example, possible to retrieve the contents of Scrapyard archives and pass them
+for processing with Python.
 
 The following messages are currently available:
 
@@ -228,6 +228,7 @@ Returns an object with the following properties:
 * todo_date
 * comments
 * container
+* path
 
 Only `type`, `uuid`, and `title` properties are always present.
 

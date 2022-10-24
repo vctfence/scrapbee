@@ -46,6 +46,7 @@ export class Path {
 
         while (node) {
             path.push(node);
+
             if (node.parent_id)
                 node = await Node.get(node.parent_id);
             else
@@ -53,6 +54,12 @@ export class Path {
         }
 
         return path.reverse();
+    }
+
+    static async asString(node) {
+        const path = await Path.compute(node);
+        path.splice(path.length - 1, 1);
+        return path.map(n => n.name).join("/");
     }
 }
 

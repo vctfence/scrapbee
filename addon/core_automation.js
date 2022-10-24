@@ -307,54 +307,54 @@ receiveExternal.scrapyardAddSeparator = async (message, sender) => {
 }
 
 async function nodeToAPIObject(node) {
-    if (node) {
-        const comments =
-            node.has_comments
-                ? await Comments.get(node)
-                : undefined;
+    const comments =
+        node.has_comments
+            ? await Comments.get(node)
+            : undefined;
 
-        const icon =
-            node.stored_icon
-                ? await Icon.get(node)
-                : node.icon;
+    const icon =
+        node.stored_icon
+            ? await Icon.get(node)
+            : node.icon;
 
-        const uuid = node.uuid;
+    const uuid = node.uuid;
 
-        const options = {
-            type: NODE_TYPE_NAMES[node.type],
-            uuid: uuid,
-            title: node.name || ""
-        };
+    const options = {
+        type: NODE_TYPE_NAMES[node.type],
+        uuid: uuid,
+        title: node.name || ""
+    };
 
-        if (node.uri)
-            options.url = node.uri;
+    if (node.uri)
+        options.url = node.uri;
 
-        if (icon)
-            options.icon = icon;
+    if (icon)
+        options.icon = icon;
 
-        if (node.tags)
-            options.tags = node.tags;
+    if (node.tags)
+        options.tags = node.tags;
 
-        if (node.details)
-            options.details = node.details;
+    if (node.details)
+        options.details = node.details;
 
-        if (node.todo_state)
-            options.todo_state = TODO_STATE_NAMES[node.todo_state];
+    if (node.todo_state)
+        options.todo_state = TODO_STATE_NAMES[node.todo_state];
 
-        if (node.todo_date)
-            options.todo_date = node.todo_date;
+    if (node.todo_date)
+        options.todo_date = node.todo_date;
 
-        if (comments)
-            options.comments = comments;
+    if (comments)
+        options.comments = comments;
 
-        if (node.container)
-            options.container = node.container;
+    if (node.container)
+        options.container = node.container;
 
-        if (node.contains)
-            options.contains = node.contains;
+    if (node.contains)
+        options.contains = node.contains;
 
-        return options;
-    }
+    options.path = await Path.asString(node);
+
+    return options;
 }
 
 receiveExternal.scrapyardGetUuid = async (message, sender) => {
