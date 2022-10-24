@@ -6,7 +6,7 @@ import {
     CLOUD_SHELF_NAME, CLOUD_SHELF_UUID,
     DEFAULT_SHELF_NAME, DEFAULT_SHELF_UUID,
     BROWSER_SHELF_NAME, BROWSER_SHELF_UUID,
-    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NAMES
+    NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, NODE_TYPE_NAMES, ARCHIVE_TYPE_TEXT
 } from "./storage.js";
 import {settings} from "./settings.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
@@ -20,9 +20,10 @@ import {Query} from "./storage_query.js";
 import {Path} from "./path.js";
 import {Folder} from "./bookmarks_folder.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
-import {Comments, Icon, Node} from "./storage_entities.js";
+import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {browseNode} from "./browse.js";
 import {DiskStorage} from "./storage_external.js";
+import {notes2html} from "./notes_render.js";
 
 export function isAutomationAllowed(sender) {
     const extension_whitelist = settings.extension_whitelist();
@@ -33,7 +34,7 @@ export function isAutomationAllowed(sender) {
 }
 
 const ALLOWED_API_FIELDS = ["type", "uuid", "title", "url", "icon", "path", "tags", "details", "todo_state", "todo_date",
-                            "comments", "container", "content", "content_type", "pack", "local", "select", "refresh",
+                            "comments", "container", "contains", "content", "content_type", "pack", "local", "select", "refresh",
                             "hide_tab"];
 
 function sanitizeIncomingObject(object) {
@@ -59,12 +60,12 @@ export async function createBookmarkNode(message, sender, activeTab) {
 
     node.__automation = true;
 
-    if (node.type === NODE_TYPE_ARCHIVE && node.url === "")
+    if (node.type === NODE_TYPE_NOTES || node.type === NODE_TYPE_ARCHIVE && node.url === "")
         node.uri = undefined;
     else if (!node.uri)
         node.uri = node.url || activeTab.url;
 
-    if (node.uri === null || node.uri === undefined || isSpecialPage(node.uri)) {
+    if (node.type !== NODE_TYPE_NOTES && (node.uri === null || node.uri === undefined || isSpecialPage(node.uri))) {
         notifySpecialPage();
         return null;
     }
@@ -257,6 +258,54 @@ async function cleanUpLocalFileCapture(message) {
         await helperApp.fetch(`/serve/release_path/${message.__local_uuid}`);
 }
 
+receiveExternal.scrapyardAddNotes = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    message.type = NODE_TYPE_NOTES;
+    message.icon = "";
+
+    const node = await createBookmarkNode(message, sender, {});
+    if (!node)
+        return;
+
+    return Bookmark.add(node, NODE_TYPE_NOTES)
+        .then(async bookmark => {
+            const options = {
+                node_id: bookmark.id,
+                content: message.content || "",
+                format: message.format || "text"
+            };
+
+            options.html = notes2html(options);
+
+            await Bookmark.storeNotes(options);
+
+            if (node.comments)
+                await Bookmark.storeComments(bookmark.id, node.comments);
+
+            if (node.select)
+                send.bookmarkCreated({node: bookmark});
+
+            return bookmark.uuid;
+        });
+};
+
+receiveExternal.scrapyardAddSeparator = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    if (message.path) {
+        const path = Path.expand(message.path);
+        const folder = await Folder.getOrCreateByPath(path);
+
+        const node = await Bookmark.addSeparator(folder.id);
+
+        if (message.select)
+            send.bookmarkCreated({node});
+    }
+}
+
 async function nodeToAPIObject(node) {
     if (node) {
         const comments =
@@ -301,6 +350,9 @@ async function nodeToAPIObject(node) {
         if (node.container)
             options.container = node.container;
 
+        if (node.contains)
+            options.contains = node.contains;
+
         return options;
     }
 }
@@ -311,8 +363,35 @@ receiveExternal.scrapyardGetUuid = async (message, sender) => {
 
     const node = await Node.getByUUID(message.uuid);
 
-    return nodeToAPIObject(node);
+    if (node)
+        return nodeToAPIObject(node);
 };
+
+receiveExternal.scrapyardGetUuidContent = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    const node = await Node.getByUUID(message.uuid);
+    let result = {};
+
+    if (node) {
+        if (node.type === NODE_TYPE_ARCHIVE) {
+            const archive = await Archive.get(node);
+            result.content = archive.object;
+            result.contains = node.contains || ARCHIVE_TYPE_TEXT;
+            result.content_type = node.content_type;
+        }
+        else if (node.type === NODE_TYPE_NOTES) {
+            const notes = await Notes.get(node);
+            result.content = notes.content;
+            result.format = notes.format;
+        }
+    }
+
+    if (result.content)
+        return result;
+};
+
 
 receiveExternal.scrapyardListUuid = async (message, sender) => {
     if (!isAutomationAllowed(sender))
@@ -387,6 +466,25 @@ receiveExternal.scrapyardListPath = async (message, sender) => {
     }
 
     return container? result: undefined;
+};
+
+receiveExternal.scrapyardGetSelection = async (message, sender) => {
+    if (!isAutomationAllowed(sender))
+        throw new Error();
+
+    let result = [];
+
+    try {
+        const selectedNodes = await send.getTreeSelection();
+
+        for (let entry of selectedNodes) {
+            result.push(await nodeToAPIObject(entry));
+        }
+    } catch (e) {
+        console.error(e);
+    }
+
+    return result;
 };
 
 receiveExternal.scrapyardUpdateUuid = async (message, sender) => {

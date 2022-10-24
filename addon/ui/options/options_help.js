@@ -1,4 +1,5 @@
 import {fetchText} from "../../utils_io.js";
+import {settings} from "../../settings.js";
 
 function scrollToElement (subsection) {
     let element = document.getElementById(subsection);
@@ -14,6 +15,9 @@ export async function load() {
     }
 
     $("[id^='for-read-more-']").on("click", expandReadMore)
+
+    if (settings.transition_to_disk())
+        $("#transition-help-warning").show();
 }
 
 export function navigate(subsection) {

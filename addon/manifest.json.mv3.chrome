@@ -4,6 +4,7 @@
     "name": "Scrapyard",
     "description": "Advanced bookmark manager with page archiving functionality.",
     "homepage_url": "https://gchristensen.github.io/scrapyard",
+    "default_locale": "en",
     "icons": {
         "16": "icons/logo16.png",
         "24": "icons/logo24.png",

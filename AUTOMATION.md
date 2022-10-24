@@ -11,6 +11,8 @@ JavaScript wrapper which is used in the examples below.
 
 To call Scrapyard API from regular extensions, automation should be enabled manually at the Scrapyard advanced settings
 page (**ext+scrapyard://advanced**). It is not necessary to enable automation to use the code below from iShell commands.
+With iShell helper application it is, for example, possible to retrieve the content of Scrapyard archives and pass it
+for processing in Python.
 
 The following messages are currently available:
 
@@ -137,6 +139,45 @@ If the `pack` or `local` parameters are set, bookmark icon and title will be ass
 
 Returns UUID of the newly created archive.
 
+#### SCRAPYARD_ADD_NOTES
+
+Creates notes.
+
+```js
+import {addNotes} from "./scrapyard_api.js";
+
+const uuid = await addNotes({
+    title:        "Bookmark Title",                 // Bookmark title
+    path:         "shelf/my/directory",             // Bookmark shelf and directory
+    tags:         "comma, separated",               // List of bookmark tags
+    details:      "Bookmark details",               // Bookmark details
+    todo_state:   "TODO",                           // One of the following strings:
+                                                    // TODO, WAITING, POSTPONED, DONE, CANCELLED
+    todo_date:    "YYYY-MM-DD",                     // TODO expiration date
+    comments:     "comment text",                   // Bookmark comments
+    content:      "Notes content",                  // A string
+    format:       "text",                           // One of the following strings: text, markdown, org
+    select:       true                              // Select the newly created bookmark in the interface
+});
+```
+
+Returns UUID of the newly created notes.
+
+#### SCRAPYARD_ADD_SEPARATOR
+
+Creates separator.
+
+```js
+import {addSeparator} from "./scrapyard_api.js";
+
+const uuid = await addSeparator({
+    path:         "shelf/my/directory",             // Separator shelf and directory
+    select:       true                              // Select the newly created bookmark in the interface
+});
+```
+
+Returns UUID of the newly created separator.
+
 #### SCRAPYARD_PACK_PAGE
 
 Packs content of all resources (images, CSS, etc.) referenced by a web-page into a single HTML string.
@@ -189,6 +230,38 @@ Returns an object with the following properties:
 * container
 
 Only `type`, `uuid`, and `title` properties are always present.
+
+#### SCRAPYARD_GET_UUID_CONTENT
+
+Retrieves the content of an archive or notes defined by the `uuid` parameter.
+
+```js
+import {getItemContent} from "./scrapyard_api.js";
+
+const item = await getItemContent({
+    uuid: "F0D858C6ED40416AA402EB2C3257EA17"
+});
+```
+
+Returns an object with the following properties:
+
+* content - content of the archive or notes, may be a string or array-buffer.
+* content_type - content MIME-type.
+* contains - may be one of the following strings: text, bytes, files.
+* format - format of the notes.
+
+Only content property is always present. The type of the content depends on the value of the `contains` property.
+When `contains` is equal to "files", `content` property contains an array-buffer with the bytes of a ZIP-archive.
+
+#### SCRAPYARD_GET_SELECTION
+
+Retrieves the properties of bookmarks selected in the Scrapyard sidebar.
+
+```js
+import {getSelection} from "./scrapyard_api.js";
+
+const items = await getSelection();
+```
 
 #### SCRAPYARD_LIST_UUID, SCRAPYARD_LIST_PATH
 
@@ -263,7 +336,7 @@ await browseItem({
 #### Creating Dedicated iShell Bookmark Commands
 
 It is possible to quickly open dedicated bookmarks with iShell commands. This may
-be helpful in the case of bookmarks with assigned multi-account containers. The example below
+be helpful in the case of bookmarks with assigned Firefox identity containers. The example below
 demonstrates an iShell command used to open a single bookmark defined by its UUID.
 
 ```js
@@ -272,12 +345,12 @@ demonstrates an iShell command used to open a single bookmark defined by its UUI
     creates a command named "my-twitter", which opens
     a single bookmark defined by its UUID.
 
-    @description Opens my twitter account in a personal container
+    @description Opens my twitter account in a personal container.
     @command
 */
 class MyTwitter {
     execute() {
-        // cmdAPI.scrapyard property offers the same methods as the API wrapper mentioned above.
+        // cmdAPI.scrapyard offers the same methods as the API wrapper mentioned above.
         cmdAPI.scrapyard.browseItem({
             uuid: "F0D858C6ED40416AA402EB2C3257EA17"
         });
@@ -286,17 +359,17 @@ class MyTwitter {
 ```
 
 It is possible to create more complex commands with arguments corresponding to the bookmarks you want to open.
-The following example creates a command named **my-site** which can be called with either
+The following example creates a command named **my-site** which can be executed with either
 *personal* or *work* arguments.
 
 ```js
 /**
     This command (my-site) has an argument that allows to open
-    a site in a work or a personal context. The corresponding
+    a site in a work or a personal container. The corresponding
     containers should be assigned to the bookmarks in Scrapyard.
 
     @command
-    @description Opens my site in different contexts
+    @description Opens my site in different containers.
 */
 class MySite {
     constructor(args) {
@@ -306,7 +379,7 @@ class MySite {
     }
 
     preview({OBJECT}, display) {
-        display.text("Opens my site in " + OBJECT?.text + " context.");
+        display.text("Opens my site in " + OBJECT?.text + " container.");
     }
 
     execute({OBJECT}) {
@@ -317,7 +390,7 @@ class MySite {
 }
 ```
 
-The `createBookmarkCommand` function in the listing below allows to create such commands with one line of code:
+The `createBrowseCommand` function in the listing below allows to create such commands with one line of code:
 
 ```js
 /**
@@ -325,7 +398,7 @@ The `createBookmarkCommand` function in the listing below allows to create such 
 
     @command
     @metaclass
-    @description Opens a bookmark
+    @description Opens a bookmark.
 */
 class BrowseBookmarkCommand {
     metaconstructor(name, uuid) {
@@ -348,22 +421,22 @@ class BrowseBookmarkCommand {
     }
 }
 
-function createBookmarkCommand(name, uuid) {
+function createBrowseCommand(name, uuid) {
     cmdAPI.createCommand(new BrowseBookmarkCommand(name, uuid))
 }
 
 // Now bookmarking commands could be created with a single function call:
 
-createBookmarkCommand("my-twitter", "F0D858C6ED40416AA402EB2C3257EA17");
-createBookmarkCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
-                                  "work":     "6C53355203D94BC59996E21D15C86C3E"});
+createBrowseCommand("my-twitter", "F0D858C6ED40416AA402EB2C3257EA17");
+createBrowseCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
+                                "work":     "6C53355203D94BC59996E21D15C86C3E"});
 
 ```
 
 #### Uploading Local Files to Scrapyard
 
-It is possible to pass a local file path to the following iShell command to store a file in Scrapyard
-under the folder specified by the `at` argument.
+In the following example, we create a command that stores a local file
+in Scrapyard under the folder specified by the `at` argument.
 
 ```js
 /**
@@ -380,7 +453,7 @@ under the folder specified by the `at` argument.
     @command
     @markdown
     @icon /ui/icons/scrapyard.svg
-    @description Stores a local file at the specified Scrapyard folder
+    @description Stores a local file under the specified Scrapyard folder.
     @uuid 674BF919-3BCA-4378-AB8F-C873F8CFE42A
  */
 class UploadFile {
@@ -393,7 +466,7 @@ class UploadFile {
     }
 
     preview({OBJECT, AT}, display) {
-        display.text(`Archive file <b>${OBJECT?.text}</b> at the <b>${AT?.text}</b> folder in Scrapyard.`);
+        display.text(`Upload file <b>${OBJECT?.text}</b> to the <b>${AT?.text}</b> folder in Scrapyard.`);
     }
 
     async execute({OBJECT, AT}) {
@@ -416,7 +489,7 @@ class UploadFile {
 }
 ```
 
-Example usage:
+Command example:
 
 **upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
 

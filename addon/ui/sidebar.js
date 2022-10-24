@@ -802,6 +802,10 @@ receive.selectPath = async (message, sender) => {
     await selectOrCreatePath(message.path);
 };
 
+receive.getTreeSelection = async (message, sender) => {
+    return tree.getSelectedNodes();
+};
+
 receive.notesChanged = message => {
     tree.setNotesState(message.node_id, !message.removed);
 };
