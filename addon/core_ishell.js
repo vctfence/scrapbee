@@ -2,9 +2,8 @@ import {receiveExternal, send, sendLocal} from "./proxy.js";
 import {
     BROWSER_EXTERNAL_TYPE,
     DEFAULT_SHELF_NAME, DONE_SHELF_NAME, EVERYTHING_SHELF_NAME, FIREFOX_BOOKMARK_MENU,
-    FIREFOX_BOOKMARK_UNFILED, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK,
-    NODE_TYPE_FOLDER,
-    NODE_TYPE_SHELF, TODO_SHELF_NAME
+    FIREFOX_BOOKMARK_UNFILED, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES,
+    NODE_TYPE_FOLDER, NODE_TYPE_SHELF, TODO_SHELF_NAME
 } from "./storage.js";
 import {ishellConnector} from "./plugin_ishell.js";
 import {getActiveTabMetadata} from "./bookmarking.js";
@@ -14,6 +13,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Icon, Node} from "./storage_entities.js";
 import {Folder} from "./bookmarks_folder.js";
 import {browseNode} from "./browse.js";
+import {showNotification} from "./utils_browser.js";
 
 receiveExternal.scrapyardListShelvesIshell = async (message, sender) => {
     if (!ishellConnector.isIShell(sender.id))
@@ -137,6 +137,19 @@ receiveExternal.scrapyardAddSiteIshell = async (message, sender) => {
     addBookmarkFromIshell(message, NODE_TYPE_ARCHIVE);
 }
 
+receiveExternal.scrapyardAddNotesIshell = async (message, sender) => {
+    if (!ishellConnector.isIShell(sender.id))
+        throw new Error();
+
+    if (!message.name) {
+        showNotification({title: "Error", message: "Bookmark name is empty!"});
+        return;
+    }
+
+    const bookmark = await addBookmarkFromIshell(message, NODE_TYPE_NOTES);
+    return browseNode(bookmark, {edit: true});
+}
+
 async function addBookmarkFromIshell(message, type) {
     const node = await getActiveTabMetadata();
 
@@ -155,7 +168,9 @@ async function addBookmarkFromIshell(message, type) {
     delete message.path;
 
     if (type === NODE_TYPE_BOOKMARK)
-        sendLocal.createBookmark({node});
+        return sendLocal.createBookmark({node});
+    else if (type === NODE_TYPE_NOTES)
+        return sendLocal.createNotes({node});
     else
-        sendLocal.createArchive({node});
+        return sendLocal.createArchive({node});
 }

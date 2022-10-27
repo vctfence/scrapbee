@@ -31,6 +31,7 @@ async function init() {
     await systemInitialization;
 
     const isInline = location.search.startsWith("?i");
+    const isEditMode = location.search.startsWith("?edit");
 
     if (isInline)
         $("#tabbar").html(`<a id="notes-button" class="focus" href="#">Notes</a>
@@ -138,6 +139,7 @@ async function init() {
         else if (e.target.id === "edit-button") {
             $("#format-selector").show();
             $("#align-selector").hide();
+            editor.focus();
         }
     });
 
@@ -268,7 +270,10 @@ async function init() {
         e.preventDefault();
         send.browseOrgReference({link: e.target.href});
     });
-};
+
+    if (isEditMode)
+        $("#tabbar a#edit-button").click();
+}
 
 window.onbeforeunload = function() {
     if (editorChanged)

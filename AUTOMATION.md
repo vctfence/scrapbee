@@ -11,8 +11,6 @@ JavaScript wrapper which is used in the examples below.
 
 To call Scrapyard API from regular extensions, automation should be enabled manually at the Scrapyard advanced settings
 page (**ext+scrapyard://advanced**). It is not necessary to enable automation to use the code below from iShell commands.
-With iShell helper application it is, for example, possible to retrieve the contents of Scrapyard archives and pass them
-for processing with Python.
 
 The following messages are currently available:
 
@@ -334,113 +332,23 @@ await browseItem({
 
 ### Examples
 
-#### Creating Dedicated iShell Bookmark Commands
-
-It is possible to quickly open dedicated bookmarks with iShell commands. This may
-be helpful in the case of bookmarks with assigned Firefox identity containers. The example below
-demonstrates an iShell command used to open a single bookmark defined by its UUID.
-
-```js
-/**
-    Being placed in the iShell command editor, this code
-    creates a command named "my-twitter", which opens
-    a single bookmark defined by its UUID.
-
-    @description Opens my twitter account in a personal container.
-    @command
-*/
-class MyTwitter {
-    execute() {
-        // cmdAPI.scrapyard offers the same methods as the API wrapper mentioned above.
-        cmdAPI.scrapyard.browseItem({
-            uuid: "F0D858C6ED40416AA402EB2C3257EA17"
-        });
-    }
-}
-```
-
-It is possible to create more complex commands with arguments corresponding to the bookmarks you want to open.
-The following example creates a command named **my-site** which can be executed with either
-*personal* or *work* arguments.
-
-```js
-/**
-    This command (my-site) has an argument that allows to open
-    a site in a work or a personal container. The corresponding
-    containers should be assigned to the bookmarks in Scrapyard.
-
-    @command
-    @description Opens my site in different containers.
-*/
-class MySite {
-    constructor(args) {
-        const sites = {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
-                       "work":     "6C53355203D94BC59996E21D15C86C3E"};
-        args[OBJECT] = {nountype: sites, label: "site"};
-    }
-
-    preview({OBJECT}, display) {
-        display.text("Opens my site in " + OBJECT?.text + " container.");
-    }
-
-    execute({OBJECT}) {
-        cmdAPI.scrapyard.browseItem({
-            uuid: OBJECT?.data
-        });
-    }
-}
-```
-
-The `createBrowseCommand` function in the listing below allows to create such commands with one line of code:
-
-```js
-/**
-    This class is used to dynamically create iShell commands
-
-    @command
-    @metaclass
-    @description Opens a bookmark.
-*/
-class BrowseBookmarkCommand {
-    metaconstructor(name, uuid) {
-        this.name = name;
-
-        if (typeof uuid === "object")
-            this.arguments = [{role: "object", nountype: uuid, label: "site"}];
-        else
-            this._uuid = uuid;
-    }
-
-    preview({OBJECT}, display) {
-        this.previewDefault(display);
-    }
-
-    execute({OBJECT}) {
-        cmdAPI.scrapyard.browseItem({
-            uuid: this._uuid || OBJECT?.data
-        });
-    }
-}
-
-function createBrowseCommand(name, uuid) {
-    cmdAPI.createCommand(new BrowseBookmarkCommand(name, uuid))
-}
-
-// Now bookmarking commands could be created with a single function call:
-
-createBrowseCommand("my-twitter", "F0D858C6ED40416AA402EB2C3257EA17");
-createBrowseCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
-                                "work":     "6C53355203D94BC59996E21D15C86C3E"});
-
-```
+In the following examples we use iShell commands to interact with Scrapyard. With iShell, there is no need to
+create separate add-ons for the Scrapyard automation in the most cases. See the iShell
+[tutorial](https://gchristensen.github.io/ishell/addon/ui/options/tutorial.html) for more details on command authoring.
 
 #### Uploading Local Files to Scrapyard
 
 In the following example, we create a command that stores a local file
 in Scrapyard under the folder specified by the `at` argument.
 
-```js
+In iShell the global object cmdAPI.scrapyard provides the same methods as the ES6 wrapper referenced above, so
+there is no need to import anything.
+
+```javascript
 /**
+    Being placed in the iShell command editor, this code
+    creates a command named "upload-file".
+
     # Syntax
     **upload-file** _file path_ **at** _folder path_
 
@@ -494,5 +402,152 @@ Command example:
 
 **upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
 
-See the iShell [tutorial](https://gchristensen.github.io/ishell/addon/ui/options/tutorial.html) for more details on command authoring.
-With iShell commands, there is no need to create separate add-ons for the Scrapyard automation in the most cases.
+#### Processing Archives with Python
+
+The iShell command demonstrated below sends the content of the currently selected archives for processing in
+the iShell helper application written in Python. There you can develop your own [Flask](https://flask.palletsprojects.com/)
+handlers.
+
+```javascript
+/**
+    This command has no arguments.
+
+    @command
+    @markdown
+    @icon /ui/icons/scrapyard.svg
+    @description Process with Python the curretnly selected Scrapyard archives.
+    @uuid 37B60EBB-F216-4A36-88DA-4703579A6457
+*/
+class ConvertToMarkdown {
+    async execute() {
+        const items = await cmdAPI.scrapyard.getSelection();
+
+        for (const item of items) {
+            if (item.type === "archive") {
+                try {
+                    const content = await cmdAPI.scrapyard.getItemContent({uuid: item.uuid});
+                    const payload = JSON.stringify({item, content});
+                    const headers = {"content-type": "application/json"};
+
+                    await cmdAPI.helperFetch("/convert_to_markdown", {method: "post", body: payload, headers});
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+    }
+}
+```
+
+The Flask handler:
+
+```python
+import markdownify # 3-rd party library
+from flask import request
+
+@app.route("/convert_to_markdown", methods=['POST'])
+def convert_to_markdown():
+    title, content = request.json["item"]["title"], request.json["content"]["content"]
+    markdown = markdownify.markdownify(content)
+
+    with open(f"d:/markdown/{title}.md", "w", encoding="utf-8") as file:
+        file.write(markdown)
+
+    return "", 204
+```
+
+#### Creating Dedicated iShell Bookmark Commands
+
+Let's open dedicated bookmarks with iShell commands. This may
+be helpful in the case of bookmarks with assigned Firefox identity containers. The example below
+demonstrates an iShell command used to open a single bookmark defined by its UUID.
+
+```javascript
+/**
+    @description Opens my twitter account in a personal container.
+    @command
+*/
+class MyTwitter {
+    execute() {
+        cmdAPI.scrapyard.browseItem({
+            uuid: "F0D858C6ED40416AA402EB2C3257EA17"
+        });
+    }
+}
+```
+
+It is possible to create commands with arguments corresponding to the bookmarks you want to open.
+The following example creates a command named **my-site** which can be executed with either
+*personal* or *work* arguments.
+
+```javascript
+/**
+    This command (my-site) has an argument that allows to open
+    a site in a work or a personal container. The corresponding
+    containers should be assigned to the bookmarks in Scrapyard.
+
+    @command
+    @description Opens my site in different containers.
+*/
+class MySite {
+    constructor(args) {
+        const sites = {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
+                       "work":     "6C53355203D94BC59996E21D15C86C3E"};
+        args[OBJECT] = {nountype: sites, label: "site"};
+    }
+
+    preview({OBJECT}, display) {
+        display.text("Opens my site in " + OBJECT?.text + " container.");
+    }
+
+    execute({OBJECT}) {
+        cmdAPI.scrapyard.browseItem({
+            uuid: OBJECT?.data
+        });
+    }
+}
+```
+
+The `createBrowseCommand` function in the listing below allows to create such commands with one line of code:
+
+```javascript
+/**
+    This class is used to dynamically create iShell commands
+
+    @command
+    @metaclass
+    @description Opens a bookmark.
+*/
+class BrowseBookmarkCommand {
+    metaconstructor(name, uuid) {
+        this.name = name;
+
+        if (typeof uuid === "object")
+            this.arguments = [{role: "object", nountype: uuid, label: "site"}];
+        else
+            this._uuid = uuid;
+    }
+
+    preview({OBJECT}, display) {
+        this.previewDefault(display);
+    }
+
+    execute({OBJECT}) {
+        cmdAPI.scrapyard.browseItem({
+            uuid: this._uuid || OBJECT?.data
+        });
+    }
+}
+
+function createBrowseCommand(name, uuid) {
+    cmdAPI.createCommand(new BrowseBookmarkCommand(name, uuid))
+}
+
+// Now bookmarking commands could be created with a single function call:
+
+createBrowseCommand("my-twitter", "F0D858C6ED40416AA402EB2C3257EA17");
+createBrowseCommand("my-site", {"personal": "589421A3D93941B4BAD4A2DEE8FF5297",
+                                "work":     "6C53355203D94BC59996E21D15C86C3E"});
+
+```

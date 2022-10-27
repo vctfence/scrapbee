@@ -37,7 +37,7 @@ export class WYSIWYGEditor extends Editor {
             [{ 'color': [] }, { 'background': [] }],
             [{ 'align': [] }],
             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-            ['blockquote', 'code'],
+            ['blockquote', 'code-block'],
             [{ 'script': 'sub'}, { 'script': 'super' }],
             [{ 'indent': '-1'}, { 'indent': '+1' }],
             ['hr'],
@@ -245,6 +245,10 @@ export class WYSIWYGEditor extends Editor {
     renderContent() {
         return this.editor.getHTML();
     }
+
+    focus() {
+        this.editor.focus();
+    }
 }
 
 WYSIWYGEditor.ELEMENT_ID = "#wysiwyg-editor";
@@ -288,6 +292,10 @@ export class PlainTextEditor extends Editor {
 
     setChangeHandler(handler) {
         $("#editor").on("input", handler);
+    }
+
+    focus() {
+        $("#editor")[0].focus();
     }
 }
 

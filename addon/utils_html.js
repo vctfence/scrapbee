@@ -102,7 +102,7 @@ export function applyInlineStyles(element, recursive = true, exclude) {
                 if (rules[r].selectorText?.includes("*"))
                     continue;
                 if (el.localName === "pre" && el.matches(rules[r].selectorText)) {
-                    log(rules[r].selectorText)
+                    _log(rules[r].selectorText)
                 }
                 if (el.matches(rules[r].selectorText)) {
                     ret.push(rules[r]);

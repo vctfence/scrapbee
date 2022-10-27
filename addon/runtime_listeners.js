@@ -15,7 +15,7 @@ browser.runtime.onInstalled.addListener(async details => {
 function writeInstallVersion() {
     return browser.storage.local.set({[INSTALL_SETTINGS_KEY]: {
         install_date: Date.now(),
-        install_version: browser.runtime.getManifest().version
+        install_version: _ADDON_VERSION
     }});
 }
 

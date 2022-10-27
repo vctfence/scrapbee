@@ -1,11 +1,10 @@
 import {formatBytes, getMimetypeByExt} from "./utils.js";
 import {receive, send} from "./proxy.js";
 import {
-    ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES,
     CLOUD_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
-    NODE_TYPE_SHELF,
+    NODE_TYPE_NOTES,
     UNDO_DELETE
 } from "./storage.js";
 import {getActiveTab, gettingStarted, showNotification, updateTabURL} from "./utils_browser.js";
@@ -32,7 +31,6 @@ import {Archive, Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {browseNode} from "./browse.js";
 import UUID from "./uuid.js";
-
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -135,6 +133,35 @@ receive.archiveBookmarks = async message => {
 };
 
 receive.updateArchive = message => Bookmark.updateArchive(message.uuid, message.data);
+
+receive.createNotes = async message => {
+    if (!settings.data_folder_path())
+        return gettingStarted();
+
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (!helper)
+        return;
+
+    const node = message.node;
+
+    const addNotes = () =>
+        Bookmark.addNotes(node.parent_id, node.name)
+            .then(bookmark => {
+                send.bookmarkAdded({node: bookmark});
+                return bookmark;
+            })
+            .catch(e => {
+                showNotification(e.message);
+                send.bookmarkCreationFailed({node});
+            });
+
+    Bookmark.setTentativeId(node);
+    node.type = NODE_TYPE_NOTES; // needed for beforeBookmarkAdded
+    return send.beforeBookmarkAdded({node})
+        .then(addNotes)
+        .catch(addNotes);
+};
 
 receive.setTODOState = message => TODO.setState(message.nodes);
 

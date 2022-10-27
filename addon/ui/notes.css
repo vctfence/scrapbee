@@ -86,12 +86,12 @@ a#notes-button.focus, a#edit-button.focus {
     font-family: "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans", sans-serif;
 }
 
-#notes *:last-child {
+#notes > *:last-child {
     margin-bottom: 16px !important;
 }
 
 #notes code, .ql-editor code {
-    font-family: "Lucida Console", "Courier New", monospace;
+    font-family: "Courier New", monospace;
     display: inline-block;
 }
 
@@ -315,6 +315,8 @@ button.ql-hr {
 
 .ql-snow .ql-editor pre.ql-syntax {
     font-size: 90%;
+    background-color: #f5f5f5;
+    color: black;
 }
 
 .quill-html-editor {
@@ -326,7 +328,7 @@ button.ql-hr {
     outline: none;
     padding: 20px;
     line-height: 24px;
-    font-family: "Lucida Console", Consolas, Menlo, Monaco, "Courier New", monospace;
+    font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
     position: absolute;
     top: 0;
     bottom: 0;

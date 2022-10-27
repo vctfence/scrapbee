@@ -1,3 +1,159 @@
+* {
+    font-family: "Helvetica", "Arial", sans-serif;
+}
+
+input, textarea {
+    outline: none !important;
+}
+
+textarea:focus {
+    border: 1px solid #007799;
+}
+
+#root-container {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    font-size: 12pt;
+    min-height: 0;
+    background: white;
+}
+
+#full-width-container {
+    display: none;
+}
+
+#tabbar {
+    height: 38px;
+    flex: 0 1 auto;
+    display: flex;
+    border-bottom: 1px solid #777;
+    line-height: 37px;
+}
+
+a#notes-button, a#edit-button {
+    outline: none;
+    padding: 0px 15px;
+    font-size: 14px;
+    text-align: center;
+    height: 100%;
+    width: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    color: black;
+    flex: 0 1 auto;
+}
+
+a#notes-button.focus, a#edit-button.focus {
+    border-bottom: 3px solid #079;
+    background: #ddd;
+}
+
+#notes-for {
+    display: none;
+}
+
+.source-url {
+    color: #0074D9 !important;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#notes-for, span#source-url.notes-title {
+    font-weight: bold;
+    color: black !important;
+}
+
+#content {
+    padding: 16px;
+    display: flex;
+    align-items: stretch;
+    min-height: 0;
+    flex-grow: 1;
+    overflow: auto;
+}
+
+#notes {
+    width: 798px;
+    font-size: 100%;
+}
+
+#notes *, .ql-editor * {
+    font-family: "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans", sans-serif;
+}
+
+#notes > *:last-child {
+    margin-bottom: 16px !important;
+}
+
+#notes code, .ql-editor code {
+    font-family: "Courier New", monospace;
+    display: inline-block;
+}
+
+#notes > ul#toc {
+    padding-left: 0;
+    margin-top: 0;
+    list-style: none;
+}
+
+#notes-button-content, #edit-button-content {
+    flex: 1 1 auto;
+    height: 100%;
+    display: flex;
+}
+
+#edit-button-content {
+    display: none;
+}
+
+#wysiwyg-editor {
+    height: calc(100% - 24px);
+}
+
+#editor {
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    font-size: 12pt;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+#bottomline {
+    flex: 0 1 auto;
+    display: flex;
+    border-top: 1px solid #777;
+    line-height: 24px;
+    padding: 4px 8px;
+}
+
+#bottomline > * {
+    flex: 0 1 auto;
+}
+
+#tabbar .spacer, #bottomline .spacer {
+    flex: 1 1 auto;
+}
+
+#inserts {
+    display: none;
+}
+
+#close-button {
+    display: none;
+    background: #09c;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 3px 15px;
+    border: none;
+    line-height: 20px;
+    margin-left: 5px;
+}
+
 span.task-status {
     color: white !important;
 }
@@ -8,6 +164,61 @@ span.task-status.todo {
 
 span.task-status.done {
     color: white !important;
+}
+
+#format-selector {
+    display: none;
+}
+
+#notes-width option[value="actual"] {
+    display: none;
+}
+
+#font-sizes, #editor-font-sizes, #width-controls {
+    user-select: none;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.font-button, .width-button {
+    cursor: pointer;
+    padding: 0 4px;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.width-button {
+    background-size: 12px 12px;
+    margin-bottom: -2px;
+}
+
+#font-size-smaller, #editor-font-size-smaller {
+    background-image: url("../icons/font-smaller.svg");
+}
+
+#font-size-default, #editor-font-size-default {
+    background-image: url("../icons/font-default.svg");
+}
+
+#font-size-larger, #editor-font-size-larger {
+    background-image: url("../icons/font-larger.svg");
+}
+
+#decrease-width, #decrease-width {
+    background-image: url("../icons/dec.svg");
+}
+
+#increase-width {
+    background-image: url("../icons/inc.svg");
+}
+
+pre {
+    tab-size: 4;
+    -moz-tab-size: 4;
 }
 
 pre.plaintext {
@@ -24,8 +235,132 @@ pre.plaintext {
     font-size: 94%;
 }
 
+#space-left, #space-right, .content-filler {
+    flex: 1;
+}
+
+#editor-container {
+    display: flex;
+    flex-direction: column;
+    width: 830px;
+}
+
+#editor {
+    display: none;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+    margin-right: 4px;
+}
+
+.ql-snow .ql-picker.ql-size {
+    width: 76px;
+}
+
+.ql-snow .ql-picker.ql-header {
+    width: 90px;
+}
+
+.ql-snow .ql-picker.ql-font {
+    width: 100px;
+}
+
+.ql-snow.ql-toolbar button, .ql-snow .ql-toolbar button {
+    height: 22px;
+    padding: 2px 3px;
+    width: 26px;
+}
+
+.ql-toolbar.ql-snow {
+    padding: 4px;
+    min-height: 34px;
+}
+
+.ql-container {
+    font-size: 115%;
+}
+
+.ql-editor .ql-align-justify {
+    white-space: normal;
+}
+
+.ql-editor p, .ql-editor ol, .ql-editor ul, .ql-editor pre, .ql-editor blockquote, .ql-editor h1, .ql-editor h2,
+.ql-editor h3, .ql-editor h4, .ql-editor h5, .ql-editor h6 {
+    margin-top: 10px;
+}
+
+.ql-editor *:first-child {
+    margin-top: 0;
+}
+
+p.linebreak-true {
+    text-indent: 0px;
+    margin-top: 0px;
+}
+
+button.ql-showHtml {
+    background-image: url("../icons/code.svg") !important;
+    background-size: 16px 16px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+button.ql-hr {
+    background-image: url("../icons/line.svg") !important;
+    /*background-size: 16px 16px !important;*/
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+
+.ql-snow .ql-editor pre.ql-syntax {
+    font-size: 90%;
+    background-color: #f5f5f5;
+    color: black;
+}
+
+.quill-html-editor {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    box-sizing: border-box;
+    font-size: 15px;
+    outline: none;
+    padding: 20px;
+    line-height: 24px;
+    font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border: none;
+    display: none;
+    resize: none;
+}
+
+#quill {
+    width: unset;
+    height: calc(100% - 40px);
+}
+
 .format-html {
-    line-height: 1.42;
+    line-height: 1.3;
     font-size: 115%;
     box-sizing: border-box;
+}
+
+.format-html ul > li::before {
+    content: '\2022';
+}
+
+.format-html li::before {
+    margin-left: -1.5em;
+    margin-right: 0.3em;
+    text-align: right;
+    display: inline-block;
+    white-space: nowrap;
+    width: 1.2em;
+}
+
+.format-html ol li::before {
+    content: counter(list-0, decimal) '. ';
 }

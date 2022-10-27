@@ -208,8 +208,10 @@ export async function browseNode(node, options) {
         case NODE_TYPE_ARCHIVE:
             return browseArchive(node, options);
 
-        case NODE_TYPE_NOTES:
-            return openURL("ui/notes.html#" + node.uuid, options);
+        case NODE_TYPE_NOTES: {
+            const edit = options.edit? "?edit": "";
+            return openURL(`ui/notes.html${edit}#` + node.uuid, options);
+        }
 
         case NODE_TYPE_FOLDER:
             return browseFolder(node, options);
