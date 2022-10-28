@@ -377,14 +377,20 @@ receiveExternal.scrapyardGetUuidContent = async (message, sender) => {
     if (node) {
         if (node.type === NODE_TYPE_ARCHIVE) {
             const archive = await Archive.get(node);
-            result.content = archive.object;
-            result.contains = node.contains || ARCHIVE_TYPE_TEXT;
-            result.content_type = node.content_type;
+
+            if (archive) {
+                result.content = archive.object;
+                result.contains = node.contains || ARCHIVE_TYPE_TEXT;
+                result.content_type = node.content_type;
+            }
         }
         else if (node.type === NODE_TYPE_NOTES) {
             const notes = await Notes.get(node);
-            result.content = notes.content;
-            result.format = notes.format;
+
+            if (notes) {
+                result.content = notes.content;
+                result.format = notes.format;
+            }
         }
     }
 
