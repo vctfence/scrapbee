@@ -37,7 +37,7 @@ export class ArchiveProxy extends StorageProxy {
     async #persistArchiveIndex(node, words) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             let index = this.wrapped.indexEntity(node, words);
             index = await this.#marshaller.convertIndex(index);
 
@@ -52,9 +52,9 @@ export class ArchiveProxy extends StorageProxy {
 
     async #persistArchive(node, archive) {
         const adapter = this.adapter(node);
-        let content = await Archive.reify(archive);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
+            const content = await Archive.reify(archive);
             archive = await this.#marshaller.convertArchive(archive);
 
             delete archive.content;
@@ -68,6 +68,8 @@ export class ArchiveProxy extends StorageProxy {
 
             await adapter.persistArchive(params);
         }
+        else if (adapter?.internalStorage)
+            return Archive.idb.add(node, archive);
 
         return archive;
     }
@@ -75,32 +77,34 @@ export class ArchiveProxy extends StorageProxy {
     async #saveArchiveFile(node, file, content) {
         const adapter = this.adapter(node);
 
-        if (adapter)
+        if (adapter && !adapter.internalStorage)
             return adapter.saveArchiveFile({uuid: node.uuid, file, content, ...await adapter.getParams(node)});
     }
 
     async #fetchArchive(node) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             const content = await adapter.fetchArchiveContent({uuid: node.uuid, node});
 
             if (content)
                 return Archive.entity(node, content, node.content_type);
         }
+        else if (adapter?.internalStorage)
+            return Archive.idb.get(node);
     }
 
     async #fetchArchiveFile(node, file) {
         const adapter = this.adapter(node);
 
-        if (adapter)
+        if (adapter && !adapter.internalStorage)
             return adapter.fetchArchiveFile({uuid: node.uuid, file, ...await adapter.getParams(node)});
     }
 
     async #getArchiveSize(node) {
         const adapter = this.adapter(node);
 
-        if (adapter)
+        if (adapter && !adapter.internalStorage)
             return adapter.getArchiveSize({uuid: node.uuid, ...await adapter.getParams(node)});
     }
 }

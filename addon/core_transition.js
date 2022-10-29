@@ -11,6 +11,8 @@ import UUID from "./uuid.js";
 import {DiskStorage} from "./storage_external.js";
 import {indexHTML} from "./utils_html.js";
 
+
+
 receive.transferContentToDisk = async message => {
 
     if (!settings.data_folder_path()) {
@@ -18,7 +20,8 @@ receive.transferContentToDisk = async message => {
         return;
     }
 
-    const helper = helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
     if (!helper)
         return;
 

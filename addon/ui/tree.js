@@ -1094,9 +1094,12 @@ class BookmarkTree {
                         }
 
                         await this.reorderNodes(ctxJNode);
-
                         tree.clear_buffer();
                     }
+                    catch (e) {
+                        console.error(e)
+                    }
+
                     finally {
                         DiskStorage.closeBatchSession();
                         this.stopProcessingIndication();

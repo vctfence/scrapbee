@@ -7,6 +7,8 @@ export async function load() {
 
     $("#debug-browser-version").text(navigator.userAgent);
     $("#debug-addon-version").text(browser.runtime.getManifest().version);
+    $("#debug-internal-storage-mode").text(settings.storage_mode_internal()? "Yes": "No");
+    $("#debug-unpacked-archives").text(settings.save_unpacked_archives()? "Yes": "No");
 
     const addonID = browser.runtime.getManifest().applications?.gecko?.id;
     const consoleURL = `about:devtools-toolbox?id=${addonID}&type=extension`

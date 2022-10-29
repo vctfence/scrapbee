@@ -1,24 +1,25 @@
 import {StorageAdapterDisk} from "./storage_adapter_disk.js";
+import {settings} from "./settings.js";
 
 class StorageDisk extends StorageAdapterDisk {
     wipeStorage() {
-        return this._postJSON("/storage/wipe", {});
-    }
-
-    cleanTempDirectory() {
-        return this._postJSON("/storage/clean_temp_directory", {});
+        if (!settings.storage_mode_internal())
+            return this._postJSON("/storage/wipe", {});
     }
 
     openBatchSession() {
-        return this._postJSON("/storage/open_batch_session", {});
+        if (!settings.storage_mode_internal())
+            return this._postJSON("/storage/open_batch_session", {});
     }
 
     closeBatchSession() {
-        return this._postJSON("/storage/close_batch_session", {});
+        if (!settings.storage_mode_internal())
+            return this._postJSON("/storage/close_batch_session", {});
     }
 
     async deleteOrphanedItems(orphanedItems) {
-        return this._postJSON("/storage/delete_orphaned_items", {node_uuids: orphanedItems});
+        if (!settings.storage_mode_internal())
+            return this._postJSON("/storage/delete_orphaned_items", {node_uuids: orphanedItems});
     }
 }
 

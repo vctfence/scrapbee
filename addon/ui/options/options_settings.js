@@ -3,9 +3,11 @@ import {setSaveCheckHandler} from "../options.js";
 import {selectricRefresh, simpleSelectric} from "../shelf_list.js";
 import {STORAGE_POPULATED} from "../../storage.js";
 import {send} from "../../proxy.js";
+import {alert, confirm} from "../dialog.js";
 
 function configureScrapyardSettingsPage() {
     simpleSelectric("#option-sidebar-theme");
+    const storageModeSelect = simpleSelectric("#option-storage-mode");
 
     let dataFolderInputTimeout;
     $("#option-data-folder-path").on("input", e => {
@@ -23,6 +25,18 @@ function configureScrapyardSettingsPage() {
 
         }, 1000)
     });
+
+    storageModeSelect.on("change", async e => {
+        if (e.target.value === "filesystem")
+            setStorageModeToFilesystem();
+        else
+            setStorageModeToInternal();
+    });
+
+    if (settings.storage_mode_internal()) {
+        $("#option-data-folder-path").prop("disabled", true);
+        $("#option-synchronize-at-startup").prop("disabled", true);
+    }
 
     $("#option-sidebar-theme").on("change", e => {
         localStorage.setItem("scrapyard-sidebar-theme", e.target.value);
@@ -56,6 +70,7 @@ function configureScrapyardSettingsPage() {
     if (settings.transition_to_disk()) {
         $("#transfer-content-container").show();
         $("#synchronize-at-startup-wrapper").hide();
+        $("#storage-mode-wrapper").hide();
     }
 
     setSaveCheckHandler("option-synchronize-at-startup", "synchronize_storage_at_startup",
@@ -88,6 +103,7 @@ function configureScrapyardSettingsPage() {
 
 function loadScrapyardSettings() {
     $("#option-data-folder-path").val(settings.data_folder_path() || "");
+    $("#option-storage-mode").val(settings.storage_mode_internal()? "internal": "filesystem");
     $("#option-synchronize-at-startup").prop("checked", settings.synchronize_storage_at_startup());
     $("#option-sidebar-theme").val(localStorage.getItem("scrapyard-sidebar-theme") || "light");
     $("#option-shelf-list-max-height").val(settings.shelf_list_height());
@@ -107,15 +123,55 @@ function loadScrapyardSettings() {
     $("#option-capitalize-builtin-shelf-names").prop("checked", settings.capitalize_builtin_shelf_names());
     $("#option-sidebar-filter-partial-match").prop("checked", settings.sidebar_filter_partial_match());
     $("#option-remember-last-filtering-mode").prop("checked", settings.remember_last_filtering_mode());
-    //$("#option-export-format").val(settings.export_format());
     $("#option-undo-failed-imports").prop("checked", settings.undo_failed_imports());
     $("#option-helper-port").val(settings.helper_port_number());
 
     selectricRefresh($("#option-sidebar-theme"));
-    //selectricRefresh($("#option-export-format"));
+    selectricRefresh($("#option-storage-mode"));
 }
 
 export function load() {
     configureScrapyardSettingsPage();
     loadScrapyardSettings();
+}
+
+async function setStorageModeToFilesystem() {
+    if (await confirm("Warning", "This will reset the browser internal storage. "
+            + "Make sure that you have exported important content. Continue?")) {
+        $("#option-data-folder-path").prop("disabled", false);
+        $("#option-synchronize-at-startup").prop("disabled", false);
+
+        await settings.storage_mode_internal(false);
+
+        await send.resetScrapyard();
+        await send.shelvesChanged();
+    }
+    else {
+        const storageModeSelect = $("#option-storage-mode").val("internal");
+        selectricRefresh(storageModeSelect);
+    }
+}
+
+async function setStorageModeToInternal() {
+    if (await confirm("Warning", "This will reset the browser internal storage. Continue?")) {
+        $("#option-data-folder-path")
+            .val("")
+            .prop("disabled", true);
+        $("#option-synchronize-at-startup")
+            .prop("checked", false)
+            .prop("disabled", true)
+
+        settings.save_unpacked_archives(false, false);
+        settings.data_folder_path("", false);
+        settings.synchronize_storage_at_startup(false, false);
+        await settings.storage_mode_internal(true);
+
+        await send.storageModeInternal();
+        await send.resetScrapyard();
+        await send.shelvesChanged();
+    }
+    else {
+        const storageModeSelect = $("#option-storage-mode").val("filesystem");
+        selectricRefresh(storageModeSelect);
+    }
 }

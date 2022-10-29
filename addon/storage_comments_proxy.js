@@ -21,14 +21,10 @@ export class CommentsProxy extends StorageProxy {
         return result;
     }
 
-    // async get(node) {
-    //     return await this.#fetchComments(node);
-    // }
-
     async #persistCommentsIndex(node, words) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             let index = this.wrapped.indexEntity(node, words);
             index = await this.#marshaller.convertIndex(index);
 
@@ -44,7 +40,7 @@ export class CommentsProxy extends StorageProxy {
     async #persistComments(node, text) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             const comments = await this.#marshaller.convertComments(text);
 
             const params = {
@@ -56,14 +52,4 @@ export class CommentsProxy extends StorageProxy {
             await adapter.persistComments(params);
         }
     }
-
-    // async #fetchComments(node) {
-    //     const adapter = this.adapter(node);
-    //
-    //     if (adapter) {
-    //         const comments = await adapter.fetchComments({uuid: node.uuid});
-    //         if (comments)
-    //             return this.#unmarshaller.unconvertComments(comments)?.text;
-    //     }
-    // }
 }

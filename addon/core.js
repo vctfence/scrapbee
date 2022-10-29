@@ -46,10 +46,12 @@ async function performStartupInitialization() {
         await cloudShelf.enableBackgroundSync(settings.cloud_background_sync());
     }
 
-    await helperApp.probe();
+    if (!settings.storage_mode_internal())
+        await helperApp.probe();
+
     await undoManager.commit();
 
-    if (settings.synchronize_storage_at_startup())
+    if (!settings.storage_mode_internal() && settings.synchronize_storage_at_startup())
         await sendLocal.performSync();
 
     console.log("==> core.js initialized");

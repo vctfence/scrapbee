@@ -23,6 +23,10 @@
         font-size: 12pt;
     }
 
+    #help-content span {
+        font-size: 12pt;
+    }
+
     #help-content li {
         padding: 0;
     }
@@ -152,7 +156,7 @@
 
     <h3 id="start">Getting Started</h3>
 
-    <p id="transition-help-warning"><b>IMPORTANT</b>: Scrapyard version 2 stores the archived content in the filesystem.
+    <p class="transition-help-warning"><b>IMPORTANT</b>: Scrapyard version 2 stores the archived content in the filesystem.
     Please see the <a href="#transition">transition manual</a> from the Scrapyard version 1.</p>
 
     <h4>1. Installing the Helper Application</h4>
@@ -168,6 +172,11 @@
         Use the path <b>&lt;your cloud folder&gt;/Apps/Scrapyard/Sync</b> to make Scrapyard content available on mobile devices.
         Only content shared through Dropbox or OneDrive could be browsed with the Scrapyard application for Android.
     </p>
+
+    <p>A limited subset of functionality is available without the helper application if the "Content location" option
+    in the main settings page is set to "Browser internal storage"<span class="transition-help-warning">
+            (not available if content transfer is required)</span>.
+    Please use this mode only in the cases when the amount of archived content is relatively small.</p>
 
     <h2>Main Features</h2>
 
@@ -341,7 +350,7 @@
     <p>
         Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available
         across different browser instances that use a cloud provider with the same credentials.
-        Cloud providers are configurable at the addon settings. It is possible to authorize in several
+        Cloud providers are configurable in the addon settings. It is possible to authorize in several
         cloud providers and quickly switch between them (currently only Dropbox and OneDrive are supported).</p>
     <p><a href="https://scrapyard.page.link/android" target="_blank">Scrapyard application for
         Android</a> allows to save links and text into the Cloud shelf from mobile devices,

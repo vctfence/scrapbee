@@ -2,20 +2,19 @@ import {EntityIDB} from "./storage_idb.js";
 import {indexString} from "./utils_html.js";
 import {Node} from "./storage_entities.js";
 import {delegateProxy} from "./proxy.js";
-import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {CommentsProxy} from "./storage_comments_proxy.js";
 
 export class CommentsIDB extends EntityIDB {
     static newInstance() {
         const instance = new CommentsIDB();
 
-        instance.import = delegateProxy(new CommentsProxy(new StorageAdapterDisk()), new CommentsIDB());
+        instance.import = delegateProxy(new CommentsProxy(), new CommentsIDB());
         instance.import._importer = true;
 
         instance.idb = {import: new CommentsIDB()};
         instance.idb.import._importer = true;
 
-        return delegateProxy(new CommentsProxy(new StorageAdapterDisk()), instance);
+        return delegateProxy(new CommentsProxy(), instance);
     }
 
     indexEntity(node, words) {

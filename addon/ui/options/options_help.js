@@ -17,7 +17,7 @@ export async function load() {
     $("[id^='for-read-more-']").on("click", expandReadMore)
 
     if (settings.transition_to_disk())
-        $("#transition-help-warning").show();
+        $(".transition-help-warning").show();
 }
 
 export function navigate(subsection) {

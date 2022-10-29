@@ -68,6 +68,8 @@ let shelfList;
 let randomBookmark;
 let randomBookmarkTimeout;
 
+let browseNode;
+
 window.addEventListener('DOMContentLoaded', () => {
     const shelfListPlaceholderDiv = $("#shelfList-placeholder");
     shelfListPlaceholderDiv.css("width", ShelfList.getStoredWidth("sidebar") || ShelfList.DEFAULT_WIDTH);
@@ -310,10 +312,18 @@ async function loadSidebar() {
     if (settings.display_random_bookmark())
         displayRandomBookmark();
 
-    const helper = await helperApp.probe();
+    if (settings.storage_mode_internal()) {
+        if (!_BACKGROUND_PAGE) {
+            const browseModule = await import("../browse.js");
+            browseNode = browseModule.browseNodeBackground;
+        }
+    }
+    else {
+        const helper = await helperApp.probe();
 
-    if (!helper)
-        $("#btnHelperWarning").css("display", "inline-block");
+        if (!helper)
+            $("#btnHelperWarning").css("display", "inline-block");
+    }
 }
 
 let processingTimeout;
@@ -623,8 +633,10 @@ async function performExport(node) {
 async function performSync(verbose = true) {
     if (getLastShelf() === CLOUD_SHELF_ID)
         await switchShelf(CLOUD_SHELF_ID, true);
-    else
-        return send.performSync();
+    else {
+        if (!settings.storage_mode_internal())
+            return send.performSync();
+    }
 }
 
 async function selectNode(node, open, forceScroll) {
@@ -892,6 +904,15 @@ function updateProgress(message) {
     else
         progressDiv.css("width", "0");
 }
+
+receive.browseNodeSidebar = message => {
+    if (browseNode)
+        browseNode(message.node, message);
+};
+
+receive.storageModeInternal = message => {
+    $("#btnHelperWarning").hide();
+};
 
 receiveExternal.scrapyardSwitchShelfIshell = async (message, sender) => {
     if (!ishellConnector.isIShell(sender.id))

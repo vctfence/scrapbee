@@ -29,8 +29,13 @@ import {Shelf} from "./bookmarks_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {Archive, Node} from "./storage_entities.js";
 import {undoManager} from "./bookmarks_undo.js";
-import {browseNode} from "./browse.js";
+import {browseNodeBackground} from "./browse.js";
 import UUID from "./uuid.js";
+import {ensureSidebarWindow} from "./utils_sidebar.js";
+
+async function canUseBookmarking() {
+    return settings.storage_mode_internal() || await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+}
 
 receive.createShelf = message => Shelf.add(message.name);
 
@@ -41,12 +46,10 @@ receive.renameFolder = message => Folder.rename(message.id, message.name);
 receive.addSeparator = message => Bookmark.addSeparator(message.parent_id);
 
 receive.createBookmark = async message => {
-    if (!settings.data_folder_path())
+    if (!settings.storage_mode_internal() && !settings.data_folder_path())
         return gettingStarted();
 
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     const node = message.node;
@@ -75,12 +78,10 @@ receive.createBookmark = async message => {
 receive.updateBookmark = message => Bookmark.update(message.node);
 
 receive.createArchive = async message => {
-    if (!settings.data_folder_path())
+    if (!settings.storage_mode_internal() && !settings.data_folder_path())
         return gettingStarted();
 
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     const node = message.node;
@@ -113,9 +114,7 @@ receive.createArchive = async message => {
 };
 
 receive.archiveBookmarks = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     send.startProcessingIndication();
@@ -135,12 +134,10 @@ receive.archiveBookmarks = async message => {
 receive.updateArchive = message => Bookmark.updateArchive(message.uuid, message.data);
 
 receive.createNotes = async message => {
-    if (!settings.data_folder_path())
+    if (!settings.storage_mode_internal() && !settings.data_folder_path())
         return gettingStarted();
 
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     const node = message.node;
@@ -185,54 +182,42 @@ receive.getHideToolbarSetting = async message => {
 };
 
 receive.copyNodes = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     return Bookmark.copy(message.node_ids, message.dest_id, message.move_last);
 };
 
 receive.shareToCloud = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     return Bookmark.copy(message.node_ids, CLOUD_SHELF_ID, true);
 }
 
 receive.moveNodes = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     return Bookmark.move(message.node_ids, message.dest_id, message.move_last);
 };
 
 receive.deleteNodes = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     return Bookmark.delete(message.node_ids);
 };
 
 receive.softDeleteNodes = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     return Bookmark.softDelete(message.node_ids);
 };
 
 receive.reorderNodes = async message => {
-    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
-
-    if (!helper)
+    if (!await canUseBookmarking())
         return;
 
     return Bookmark.reorder(message.positions, message.posProperty);
@@ -327,9 +312,19 @@ receive.uploadFiles = async message => {
     }
 }
 
+// receive.browseNode = async message => {
+//     return browseNode(message.node, message);
+// };
+
 receive.browseNode = async message => {
-    return browseNode(message.node, message);
+    if (!_BACKGROUND_PAGE && settings.storage_mode_internal()) {
+        await ensureSidebarWindow();
+        return send.browseNodeSidebar(message);
+    }
+    else
+        return browseNodeBackground(message.node, message);
 };
+
 
 receive.browseNotes = message => {
     (message.tab

@@ -2,6 +2,7 @@ import {cleanObject} from "./utils.js";
 import {DEFAULT_SHELF_ID, DEFAULT_SHELF_UUID, NODE_TYPE_ARCHIVE, NODE_TYPE_SHELF} from "./storage.js";
 import {Archive, Comments, Icon, Node, Notes} from "./storage_entities.js";
 import {Bookmark} from "./bookmarks_bookmark.js";
+import {settings} from "./settings.js";
 
 export class Marshaller {
     _date2UnixTime(date) {

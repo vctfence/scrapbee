@@ -2,20 +2,20 @@ import {EntityIDB} from "./storage_idb.js";
 import {Node} from "./storage_entities.js";
 import {delegateProxy} from "./proxy.js";
 import {IconProxy} from "./storage_icon_proxy.js";
-import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {computeSHA1} from "./utils.js";
 
 export class IconIDB extends EntityIDB {
     static newInstance() {
         const instance = new IconIDB();
 
-        instance.import = delegateProxy(new IconProxy(new StorageAdapterDisk()), new IconIDB());
+        instance.import = delegateProxy(new IconProxy(), new IconIDB());
         instance.import._importer = true;
 
-        instance.idb = {import: new IconIDB()};
+        instance.idb = new IconIDB();
+        instance.idb.import = new IconIDB();
         instance.idb.import._importer = true;
 
-        return delegateProxy(new IconProxy(new StorageAdapterDisk()), instance);
+        return delegateProxy(new IconProxy(), instance);
     }
 
     async add(node, dataUrl) {

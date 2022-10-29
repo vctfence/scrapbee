@@ -80,6 +80,9 @@ function configureMaintenancePanel() {
     $("#remove-orphaned-link").on("click", async e => {
         e.preventDefault();
 
+        if (settings.storage_mode_internal())
+            return;
+
         const orphanedItems = await send.getOrphanedItems();
 
         if (orphanedItems?.length) {
@@ -101,6 +104,9 @@ function configureMaintenancePanel() {
 
     $("#rebuild-item-index-link").on("click", async e => {
         e.preventDefault();
+
+        if (settings.storage_mode_internal())
+            return;
 
         const message = `This will restore orphaned items. Continue?`
         if (await showDlg("confirm", {title: "Rebuild Item Index", message})) {

@@ -431,6 +431,6 @@ a, a:visited {
     overflow-y: scroll;
 }
 
-#transition-help-warning {
+.transition-help-warning {
     display: none;
 }

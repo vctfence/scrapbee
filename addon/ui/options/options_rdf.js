@@ -21,12 +21,18 @@ async function onStartRDFImport(e) {
         browser.runtime.onMessage.removeListener(importListener);
     };
 
-    let shelf = $("#rdf-shelf-name").val();
-    let path = $("#rdf-import-path").val();
+    const shelf = $("#rdf-shelf-name").val();
+    const path = $("#rdf-import-path").val();
+    const openMode = $("#rdf-import-type").val() === "rdf-open";
 
     if (importing) {
         send.cancelRdfImport();
         finalize();
+        return;
+    }
+
+    if (settings.storage_mode_internal() && !openMode) {
+        showNotification({message: "Only \"Open RDF for editing\" mode is supported when content is stored internally."});
         return;
     }
 
@@ -37,6 +43,11 @@ async function onStartRDFImport(e) {
 
     if (!shelf || !path) {
         showNotification({message: "Please, specify all import parameters."});
+        return;
+    }
+
+    if (!path.toLowerCase().endsWith(".rdf")) {
+        showNotification({message: "Only RDF files are supported."});
         return;
     }
 
@@ -93,7 +104,7 @@ async function onStartRDFImport(e) {
         file_name: shelf,
         file_ext: "RDF",
         threads: RDF_IMPORT_THREADS,
-        quick: $("#rdf-import-type").val() === "rdf-open",
+        quick: openMode,
         createIndex: $("#rdf-import-create-search-index").is(":checked")
     }).then(finalize)
       .catch(e => {

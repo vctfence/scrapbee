@@ -1,24 +1,31 @@
 <table width="815px" cellspacing="" cellpadding="" border="0" class="form-table">
     <tr>
-        <td>Data Folder</td>
+        <td>Content</td>
         <td>
             <div class="panel" id="display" >
                 <form>
                     <fieldset style="border: none;">
                         <div style="margin-bottom: 5px; margin-left: 0; display: flex;">
-                            <label for="option-data-folder-path">Path:</label>
-                            <input id="option-data-folder-path" type="text" style="flex: 1"/>
+                            <label for="option-data-folder-path">Content folder:</label>
+                            <input id="option-data-folder-path" type="text" style="flex: 1; margin-left: 18px;"/>
                             <div id="transfer-content-container" style="display: none; margin-left: 10px">
                                 <a href="#" id="transfer-content" title="Transfer content to disk">Transfer content</a>
                             </div>
                         </div>
                         <div class="double-container">
                             <div class="double-first" style="width: 320px">
+                                <div id="storage-mode-wrapper" style="display: flex;">
+                                    <label>Content location:&nbsp;</label>
+                                    <select id="option-storage-mode">
+                                        <option value="filesystem">Filesystem</option>
+                                        <option value="internal">Browser internal storage</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="double-last">
                                 <div id="synchronize-at-startup-wrapper">
                                     <input id="option-synchronize-at-startup" type="checkbox"
-                                    /><label for="option-synchronize-at-startup">Synchronize with the storage at startup</label>
+                                    /><label for="option-synchronize-at-startup">Synchronize with the filesystem at startup</label>
                                     <i class="help-mark"></i>
                                     <span class="tips hide">Enable this option if Scrapyard files are updated<br> externally,
                                         for example, through cloud.</span>

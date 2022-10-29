@@ -1,5 +1,6 @@
 import {MarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 import {StorageProxy} from "./storage_proxy.js";
+import {Icon} from "./storage_entities.js";
 
 export class IconProxy extends StorageProxy {
     #marshaller = new MarshallerJSONScrapbook();
@@ -20,7 +21,7 @@ export class IconProxy extends StorageProxy {
     async #persistIcon(node, dataUrl) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             let icon = this.wrapped.entity(node, dataUrl);
             icon = this.#marshaller.convertIcon(icon);
 

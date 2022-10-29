@@ -1,16 +1,16 @@
 import {EntityIDB} from "./storage_idb.js";
 import {indexHTML} from "./utils_html.js";
 import {arrayToBinaryString, binaryString2Array, readBlob} from "./utils_io.js";
-import {Node} from "./storage_entities.js";
+import {Archive, Node} from "./storage_entities.js";
 import {delegateProxy} from "./proxy.js";
-import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {ArchiveProxy} from "./storage_archive_proxy.js";
 import {ARCHIVE_TYPE_BYTES, ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT} from "./storage.js";
+import {settings} from "./settings.js";
 
 // An Archive entity has three fields:
 //   object - the contents of an archive, may be anything (the reify function deals with this)
 //            usually a String or ArrayBuffer
-//   byte_length - the presence of this field indicates that the archive was created from a non-text source
+//   byte_length - the presence of this field indicates that the archive was created from a non-text source;
 //                 if object contains a string, this is a binary string
 //   type - mime type of the archive content
 
@@ -19,13 +19,14 @@ export class ArchiveIDB extends EntityIDB {
     static newInstance() {
         const instance = new ArchiveIDB();
 
-        instance.import = delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), new ArchiveIDB());
+        instance.import = delegateProxy(new ArchiveProxy(), new ArchiveIDB());
         instance.import._importer = true;
 
-        instance.idb = {import: new ArchiveIDB()};
+        instance.idb = new ArchiveIDB();
+        instance.idb.import = new ArchiveIDB();
         instance.idb.import._importer = true;
 
-        return delegateProxy(new ArchiveProxy(new StorageAdapterDisk()), instance);
+        return delegateProxy(new ArchiveProxy(), instance);
     }
 
     entity(node, data, contentType, byteLength) {
@@ -33,14 +34,17 @@ export class ArchiveIDB extends EntityIDB {
 
         if (typeof data !== "string" && data?.byteLength) // from ArrayBuffer
             byteLength = data.byteLength;
-        // else if (typeof data === "string" && byteLength) // from binary string
-        //     data = this._binaryString2Array(data);
-        //
-        // data = data instanceof Blob? data: new Blob([data], {type: contentType});
+
+        if (settings.storage_mode_internal()) {
+            if (typeof data === "string" && byteLength) // from binary string
+                data = binaryString2Array(data);
+
+            data = data instanceof Blob? data: new Blob([data], {type: contentType});
+        }
 
         const result = {
             object: data,
-            byte_length: byteLength, // presence of this field indicates that the object is binary
+            byte_length: byteLength,
             type: contentType
         };
 
@@ -85,6 +89,9 @@ export class ArchiveIDB extends EntityIDB {
     }
 
     async add(node, archive, index) {
+        if (settings.storage_mode_internal() && !(archive.object instanceof Blob))
+            archive = Archive.entity(node, archive.object, archive.type, archive.byte_length);
+
         await this._add(node, archive);
         await this.updateContentModified(node, archive);
 
@@ -98,7 +105,9 @@ export class ArchiveIDB extends EntityIDB {
         if (!this._importer) {
             node.contains = node.contains || (archive.byte_length? ARCHIVE_TYPE_BYTES: undefined)
             node.content_type = archive.type;
-            node.size = (await this.getSize(node))?.size;
+            node.size = settings.storage_mode_internal()
+                ? archive.object.size
+                : (await this.getSize(node))?.size;
 
             await Node.updateContentModified(node);
         }

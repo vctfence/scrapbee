@@ -3,20 +3,20 @@ import {indexHTML, indexString} from "./utils_html.js";
 import {notes2html} from "./notes_render.js";
 import {Node} from "./storage_entities.js";
 import {delegateProxy} from "./proxy.js";
-import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {NotesProxy} from "./storage_notes_proxy.js";
 
 export class NotesIDB extends EntityIDB {
     static newInstance() {
         const instance = new NotesIDB();
 
-        instance.import = delegateProxy(new NotesProxy(new StorageAdapterDisk()), new NotesIDB());
+        instance.import = delegateProxy(new NotesProxy(), new NotesIDB());
         instance.import._importer = true;
 
-        instance.idb = {import: new NotesIDB()};
+        instance.idb = new NotesIDB();
+        instance.idb.import = new NotesIDB();
         instance.idb.import._importer = true;
 
-        return delegateProxy(new NotesProxy(new StorageAdapterDisk()), instance);
+        return delegateProxy(new NotesProxy(), instance);
     }
 
     indexEntity(node, words) {

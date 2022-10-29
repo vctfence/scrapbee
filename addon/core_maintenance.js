@@ -37,7 +37,8 @@ receive.resetScrapyard = async message => {
 
     send.stopProcessingIndication();
 
-    return sendLocal.performSync();
+    if (!settings.storage_mode_internal())
+        return sendLocal.performSync();
 }
 
 receive.computeStatistics = async message => {

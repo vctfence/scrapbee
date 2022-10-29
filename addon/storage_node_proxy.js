@@ -7,6 +7,7 @@ export class NodeProxy extends StorageProxy {
 
     async _add(node) {
         const result = await this.wrapped._add(node);
+
         await this.#persistNode(node);
 
         return result;
@@ -33,9 +34,8 @@ export class NodeProxy extends StorageProxy {
 
     async batchUpdate(updater, ids) {
         const result = await this.wrapped.batchUpdate(updater, ids);
-        const nodes = await Node.get(ids);
 
-        await this.#updateNodes(nodes);
+        await this.#updateNodes(ids);
 
         return result;
     }
@@ -63,7 +63,7 @@ export class NodeProxy extends StorageProxy {
     async #persistNode(node) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             node = this.#marshaller.serializeNode(node);
             node = await this.#marshaller.convertNode(node);
 
@@ -78,7 +78,7 @@ export class NodeProxy extends StorageProxy {
     async #updateNode(node) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             const params = {
                 remove_fields: Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined)
             };
@@ -93,10 +93,12 @@ export class NodeProxy extends StorageProxy {
         }
     }
 
-    async #updateNodes(nodes) {
-        const adapter = this.adapter(nodes);
+    async #updateNodes(ids) {
+        const probeNode = ids.length? await Node.get(ids[0]): null;
+        const adapter = probeNode? this.adapter(probeNode): null;
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
+            const nodes = await Node.get(ids);
             const params = {
                 remove_fields: nodes.map(node =>
                     Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined))
@@ -115,7 +117,7 @@ export class NodeProxy extends StorageProxy {
     async #unpersistNode(node) {
         const adapter = this.adapter(node);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             const params = {
                 node_uuids: [node.uuid]
             };
@@ -130,7 +132,7 @@ export class NodeProxy extends StorageProxy {
 
         const adapter = this.adapter(nodes);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             const params = {
                 node_uuids: nodes.map(n => n.uuid)
             };
@@ -145,7 +147,7 @@ export class NodeProxy extends StorageProxy {
 
         const adapter = this.adapter(nodes);
 
-        if (adapter) {
+        if (adapter && !adapter.internalStorage) {
             const params = {
                 node_uuids: nodes.map(n => n.uuid)
             };

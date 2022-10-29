@@ -3,17 +3,16 @@ import {NODE_PROPERTIES} from "./storage.js";
 import UUID from "./uuid.js";
 import {delegateProxy} from "./proxy.js";
 import {NodeProxy} from "./storage_node_proxy.js";
-import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {settings} from "./settings.js";
 
 export class NodeIDB extends EntityIDB {
     static newInstance() {
         const instance = new NodeIDB();
 
-        // bypass the disk proxy
+        // bypass the proxy
         instance.idb = new NodeIDB();
 
-        return delegateProxy(new NodeProxy(new StorageAdapterDisk()), instance);
+        return delegateProxy(new NodeProxy(), instance);
     }
 
     resetDates(node) {

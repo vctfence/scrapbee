@@ -12,12 +12,12 @@ import {
     injectCSSFile,
     injectScriptFile,
     openContainerTab,
-    openPage,
+    openPage, showNotification,
     updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
 import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
-import {send} from "./proxy.js";
+import {send, sendLocal} from "./proxy.js";
 import {rdfShelf} from "./plugin_rdf_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js"
 
@@ -36,6 +36,9 @@ function configureArchiveTab(node, archiveTab) {
 
     function tabRemoveListener(tabId) {
         if (tabId === archiveTab.id) {
+            if (storage.storage_mode_internal())
+                revokeTrackedObjectURLs(tabId);
+
             browser.tabs.onRemoved.removeListener(tabRemoveListener);
             browser.tabs.onUpdated.removeListener(tabUpdateListener);
         }
@@ -54,7 +57,8 @@ async function configureArchivePage(tab, node) {
         await injectScriptFile(tab.id, {file: "lib/browser-polyfill.js", frameId: 0});
     await injectScriptFile(tab.id, {file: "ui/edit_toolbar.js", frameId: 0});
 
-    if (tab.url?.startsWith(helperApp.url("/browse")) && settings.open_bookmark_in_active_tab()) {
+    if ((tab.url?.startsWith("blob:") || tab.url?.startsWith(helperApp.url("/browse")))
+            && settings.open_bookmark_in_active_tab()) {
         const uuid = tab.url.split("/").at(-2);
         node = await Node.getByUUID(uuid);
     }
@@ -104,7 +108,81 @@ function browseBookmark(node, options) {
     }
 }
 
-async function browseArchive(node, options) {
+var archiveTabs = {};
+
+function trackArchiveTab(tabId, url) {
+    let urls = archiveTabs[tabId];
+    if (!urls) {
+        urls = new Set([url]);
+        archiveTabs[tabId] = urls;
+    }
+    else
+        urls.add(url);
+}
+
+function isArchiveTabTracked(tabId) {
+    return !!archiveTabs[tabId];
+}
+
+function revokeTrackedObjectURLs(tabId) {
+    const objectURLs = archiveTabs[tabId];
+
+    if (objectURLs) {
+        delete archiveTabs[tabId];
+
+        for (const url of objectURLs)
+            if (url.startsWith("blob:"))
+                URL.revokeObjectURL(url);
+    }
+}
+
+async function browseArchiveIDB(node, options) {
+    if (node.__tentative)
+        return;
+
+    if (node.external === RDF_EXTERNAL_TYPE)
+        return browseRDFArchive(node, options);
+
+    const archive = await Archive.get(node);
+    if (archive) {
+        let objectURL = await getBlobURL(archive);
+
+        if (objectURL) {
+            const archiveURL = objectURL + "#/" + node.uuid + "/";
+            const archiveTab = await openURL(archiveURL, options);
+            const tabTracked = isArchiveTabTracked(archiveTab.id);
+
+            // configureArchiveTab depends on the tracked url
+            trackArchiveTab(archiveTab.id, objectURL);
+
+            if (!tabTracked)
+                configureArchiveTab(node, archiveTab);
+        }
+    }
+    else
+        showNotification({message: "No data is stored."});
+}
+
+async function browseRDFArchive(node, options) {
+    const helper = await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
+
+    if (helper) {
+        const url = helperApp.url(`/rdf/browse/${node.uuid}/`);
+        return openURL(url, options);
+    }
+}
+
+async function getBlobURL(archive) {
+    if (archive.data) { // legacy string content
+        let object = new Blob([await Archive.reify(archive)],
+            {type: archive.type? archive.type: "text/html"});
+        return URL.createObjectURL(object);
+    }
+    else
+        return URL.createObjectURL(archive.object);
+}
+
+async function browseArchiveHelper(node, options) {
     if (node.__tentative)
         return;
 
@@ -200,13 +278,16 @@ async function listSiteArchives(node) {
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
 }
 
-export async function browseNode(node, options) {
+export async function browseNodeBackground(node, options) {
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
             return browseBookmark(node, options);
 
         case NODE_TYPE_ARCHIVE:
-            return browseArchive(node, options);
+            if (settings.storage_mode_internal())
+                return browseArchiveIDB(node, options);
+            else
+                return browseArchiveHelper(node, options);
 
         case NODE_TYPE_NOTES: {
             const edit = options.edit? "?edit": "";
@@ -217,3 +298,11 @@ export async function browseNode(node, options) {
             return browseFolder(node, options);
     }
 }
+
+export async function browseNode(node) {
+    if (!_BACKGROUND_PAGE && settings.storage_mode_internal())
+        return sendLocal.browseNode({node});
+    else
+        return browseNodeBackground(node);
+}
+

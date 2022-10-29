@@ -6,6 +6,8 @@ import {receive} from "./proxy.js";
 import {Import, Export} from "./import.js";
 import {helperApp} from "./helper_app.js";
 import {sleep} from "./utils.js";
+import UUID from "./uuid.js";
+import {ExportArea} from "./storage_export.js";
 
 receive.importFile = async message => {
     const shelf = isBuiltInShelf(message.file_name)? message.file_name.toLocaleLowerCase(): message.file_name;
@@ -83,7 +85,11 @@ receive.exportFile = async message => {
         .setObjects(nodes)
         .setSidebarContext(!_BACKGROUND_PAGE);
 
-    await exportWithHelperApp(exportBuilder, fileName, format);
+
+    if (settings.storage_mode_internal())
+        await exportStandalone(exportBuilder, fileName, format);
+    else
+        await exportWithHelperApp(exportBuilder, fileName, format);
 };
 
 async function exportWithHelperApp(exportBuilder, fileName, format) {
@@ -130,6 +136,61 @@ async function exportWithHelperApp(exportBuilder, fileName, format) {
                 if (delta.state && delta.state.current === "complete" || delta.error) {
                     browser.downloads.onChanged.removeListener(download_listener);
                     helperApp.fetch("/export/finalize");
+                }
+            }
+        };
+        browser.downloads.onChanged.addListener(download_listener);
+    }
+}
+
+async function exportStandalone(exportBuilder, fileName, format) {
+    const MAX_BLOB_SIZE = 1024 * 1024 * 10; // ~20 mb of UTF-16
+    const exportId = UUID.numeric();
+
+    let file = {
+        content: [],
+        size: 0,
+        append: async function (text) { // store intermediate export results to IDB
+            this.content.push(text);
+            this.size += text.length;
+
+            if (this.size >= MAX_BLOB_SIZE) {
+                await ExportArea.addBlob(exportId, new Blob(this.content, {type: "text/plain"}));
+                this.content = [];
+                this.size = 0;
+            }
+        },
+        flush: async function () {
+            if (this.size && this.content.length)
+                await ExportArea.addBlob(exportId, new Blob(this.content, {type: "text/plain"}));
+        }
+    };
+
+    await ExportArea.wipe();
+    exportBuilder.setStream(file);
+    const exporter = exportBuilder.build();
+    await exporter.export();
+    await file.flush();
+
+    const mimeType = format === "json"? "application/json": "text/plain";
+    let blob = new Blob(await ExportArea.getBlobs(exportId), {type: mimeType});
+    let url = URL.createObjectURL(blob);
+    let download;
+
+    try {
+        download = await browser.downloads.download({url: url, filename: fileName, saveAs: true});
+    } catch (e) {
+        console.error(e);
+        ExportArea.removeBlobs(exportId);
+    }
+
+    if (download) {
+        let download_listener = delta => {
+            if (delta.id === download) {
+                if (delta.state && delta.state.current === "complete" || delta.error) {
+                    browser.downloads.onChanged.removeListener(download_listener);
+                    URL.revokeObjectURL(url);
+                    ExportArea.removeBlobs(exportId);
                 }
             }
         };

@@ -1,10 +1,30 @@
 import {snakeCaseToCamelCase} from "./utils.js";
 
+export function nullProxy(wrapped) {
+    return new Proxy(wrapped, {
+        get(target, key, receiver) {
+            if (key in target) {
+                const value = target[key];
+
+                return "function" === typeof value
+                    ? (...args) => value.apply(target, args)
+                    : value;
+            }
+            else
+                return () => {};
+        },
+
+        set(target, key, value, receiver) {
+            return Reflect.set(target, key, value, receiver);
+        }
+    })
+}
+
 export function delegateProxy(proxy, wrapped) {
     proxy.wrapped = wrapped;
 
     return new Proxy(wrapped, {
-        get (target, key, receiver) {
+        get(target, key, receiver) {
             if (key in proxy) {
                 const value = proxy[key];
 
@@ -16,7 +36,7 @@ export function delegateProxy(proxy, wrapped) {
             return Reflect.get(target, key, receiver);
         },
 
-        set (target, key, value, receiver) {
+        set(target, key, value, receiver) {
             if (key in proxy) {
                 proxy[key] = value;
                 return true;
@@ -35,8 +55,7 @@ class ReceiveHandler {
     }
 
     set(target, key, value, receiver) {
-        const type = key;
-        this.methods.set(type, value);
+        this.methods.set(key, value);
         return true;
     }
 

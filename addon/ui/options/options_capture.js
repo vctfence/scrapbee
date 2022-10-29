@@ -120,7 +120,7 @@ function configureCaptureSettingsPage() {
 
     setSaveCheckHandler("option-save-unpacked-archives", "save_unpacked_archives");
 
-    if (settings.platform.firefox)
+    if (settings.platform.firefox && !settings.storage_mode_internal())
         $("#save-options-row").show();
 }
 

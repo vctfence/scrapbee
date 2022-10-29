@@ -768,7 +768,7 @@ function addListeners()
         var messagePromise = saveUnpacked
             ? (_BACKGROUND_PAGE
                 ? new Promise(resolve => messageResolve = resolve)
-                :true)
+                : true)
             : undefined;
         ////////////////////////////////////////////////////////////////// Scrapyard //
 
