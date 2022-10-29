@@ -155,8 +155,33 @@ export class LineStream {
 
 export async function fetchText(url, init) {
     const response = await fetch(url, init);
-    if (response.ok)
-        return response.text();
+
+    if (response.ok) {
+        const contentType = response.headers.get("content-type");
+
+        let encoding;
+        let result;
+
+        if (contentType) {
+            const charset = contentType.match(/;\s*charset=([^;]+)/i);
+            if (charset)
+                encoding = charset[1].toLowerCase();
+
+            if (encoding === "utf-8")
+                encoding = null;
+        }
+
+        if (encoding) {
+            const buffer = await response.arrayBuffer();
+            const decoder = new TextDecoder(encoding);
+
+            result = decoder.decode(buffer);
+        }
+        else
+            result = await response.text();
+
+        return result;
+    }
 }
 
 export async function fetchWithTimeout(resource, options = {}) {

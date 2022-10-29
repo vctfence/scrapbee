@@ -936,7 +936,7 @@ function addListeners()
                         mimeType = matches[1].toLowerCase();
                     else mimeType = "";
 
-                    matches = contentType.match(/;charset=([^;]+)/i);
+                    matches = contentType.match(/;\s*charset=([^;]+)/i);
                     if (matches)
                         charset = matches[1].toLowerCase();
                     else charset = "";

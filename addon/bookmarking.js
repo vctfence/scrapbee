@@ -394,6 +394,7 @@ export async function createBookmarkFromURL (url, parentId) {
 
     try {
         const html = await fetchText(options.uri);
+
         let doc;
         if (html)
             doc = parseHtml(html);

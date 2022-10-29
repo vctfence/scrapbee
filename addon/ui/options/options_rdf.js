@@ -3,7 +3,7 @@ import {isBuiltInShelf} from "../../storage.js";
 import {showNotification} from "../../utils_browser.js";
 import {Query} from "../../storage_query.js";
 import {ensureSidebarWindow} from "../../utils_sidebar.js";
-import {simpleSelectric} from "../shelf_list.js";
+import {selectricRefresh, simpleSelectric} from "../shelf_list.js";
 import {settings} from "../../settings.js";
 
 const RDF_IMPORT_THREADS = 5;
@@ -119,7 +119,8 @@ function selectNode(e) {
 }
 
 export function load() {
-    simpleSelectric("#rdf-import-type");
+    const rdfImportTypeSelect = simpleSelectric("#rdf-import-type");
+    selectricRefresh(rdfImportTypeSelect);
 
     $("#rdf-import-type").on("change", e => {
         if ($(e.target).val() === "rdf-open") {

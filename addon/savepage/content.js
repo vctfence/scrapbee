@@ -2116,7 +2116,7 @@ function loadSuccess(index,content,contenttype,alloworigin,filename)
     if (matches != null) mimetype = matches[1].toLowerCase();
     else mimetype = "";
 
-    matches = contenttype.match(/;charset=([^;]+)/i);
+    matches = contenttype.match(/;\s*([^;]+)/i);
     if (matches != null) charset = matches[1].toLowerCase();
     else charset = "";
 
@@ -5627,7 +5627,7 @@ function removeResourceLoader()
             if (matches != null) mimetype = matches[1].toLowerCase();
             else mimetype = "";
 
-            matches = contenttype.match(/;charset=([^;]+)/i);
+            matches = contenttype.match(/;\s*charset=([^;]+)/i);
             if (matches != null) charset = matches[1].toLowerCase();
             else charset = "";
 

@@ -312,6 +312,9 @@ button.ql-hr {
     background-repeat: no-repeat !important;
 }
 
+button.ql-hr:hover {
+    background-image: url("../icons/line-hover.svg") !important;
+}
 
 .ql-snow .ql-editor pre.ql-syntax {
     font-size: 90%;

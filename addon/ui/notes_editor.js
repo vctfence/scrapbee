@@ -73,7 +73,6 @@ export class WYSIWYGEditor extends Editor {
 
         Quill.register('formats/linebreak', LineBreakClass);
 
-
         this.editor = new Quill(WYSIWYGEditor.ELEMENT_ID, {
             modules: {
                 clipboard: {
