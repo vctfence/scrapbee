@@ -69,15 +69,19 @@ export function isElementInViewport(el) {
     );
 }
 
-export function injectCSS(file) {
-    let link = document.querySelector(`link[href="${file}]"`)
+export function injectCSS(file, doc) {
+    if (!doc)
+        doc = document;
+
+    let link = doc.querySelector(`link[href="${file}]"`);
+
     if (!link) {
-        link = document.createElement("link");
+        link = doc.createElement("link");
         link.rel = "stylesheet";
         link.type = "text/css";
         link.href = file;
         link.media = "all";
-        document.head.appendChild(link);
+        doc.head.appendChild(link);
     }
 }
 

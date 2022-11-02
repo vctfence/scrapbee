@@ -113,9 +113,7 @@ def files_save_file_content(params):
 
 
 def files_create_index(params):
-    path = params.get("path", None)
+    content = files_fetch_file_content(params)
 
-    if path and os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as file:
-            content = file.read()
-            return index_text(content)
+    if content:
+        return index_text(content)

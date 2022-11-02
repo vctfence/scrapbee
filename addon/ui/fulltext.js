@@ -2,7 +2,7 @@ import {send} from "../proxy.js"
 import {settings} from "../settings.js";
 import {
     assembleUnpackedIndex,
-    fixDocumentEncoding,
+    fixDocumentEncoding, injectCSS,
     instantiateIFramesRecursive,
     parseHtml,
     rebuildIFramesRecursive
@@ -10,11 +10,12 @@ import {
 import {getActiveTab} from "../utils_browser.js";
 import {ShelfList} from "./shelf_list.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
-import {Archive, Icon} from "../storage_entities.js";
+import {Archive, Icon, Notes} from "../storage_entities.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {ProgressCounter, sleep} from "../utils.js";
 import {helperApp} from "../helper_app.js";
-import {RDF_EXTERNAL_TYPE} from "../storage.js";
+import {RDF_EXTERNAL_TYPE, NODE_TYPE_NOTES} from "../storage.js";
+import {notes2html} from "../notes_render.js";
 
 const IGNORE_PUNCTUATION = ",-–—‒'\"+=".split("");
 
@@ -48,6 +49,8 @@ let previewURL;
 let resultsFound;
 
 async function previewResult(query, node) {
+    if (node.__notes_search)
+        return previewNotes(query, node);
     if (Archive.isUnpacked(node))
         return previewUnpackedResult(query, node);
     else
@@ -99,6 +102,25 @@ async function previewUnpackedResult(query, node) {
     displayURL(previewURL, node);
 }
 
+async function previewNotes(query, node) {
+    const notes = await Notes.get(node);
+    const html = notes2html(notes);
+    const doc = parseHtml(html);
+    const mark = new Mark(doc.body);
+
+    injectCSS(browser.runtime.getURL("/lib/quill/quill.snow.css"), doc);
+    injectCSS(browser.runtime.getURL("/lib/org/org.css"), doc);
+    injectCSS(browser.runtime.getURL("/ui/notes.css"), doc);
+
+    mark.mark(query, {
+        iframes: true,
+        acrossElements: true,
+        separateWordSearch: false,
+        ignorePunctuation: IGNORE_PUNCTUATION,
+        done: () => displayDocument(doc, node)
+    });
+}
+
 function displayURL(previewURL, node) {
     $(`#found-items td`).css("background-color", "transparent");
     $(`#row_${node.id} .result-row`).css("background-color", "#DDDDDD");
@@ -127,7 +149,9 @@ async function appendSearchResult(query, node, occurrences) {
     const fallbackIcon = "/icons/globe.svg";
 
     let icon = node.icon;
-    if (node.stored_icon)
+    if (node.__notes_search)
+        icon = "/icons/notes.svg"
+    else if (node.stored_icon)
         icon = await Icon.get(node);
 
     if (!icon)
@@ -201,7 +225,17 @@ async function markSearch(query, nodes, acrossElements) {
 }
 
 async function getArchiveFrames(node) {
-    if (Archive.isUnpacked(node))
+    if (node.__notes_search) {
+        const notes = await Notes.get(node);
+
+        if (notes) {
+            const html = notes2html(notes);
+            return [parseHtml(html)];
+        }
+        else
+            return [];
+    }
+    else if (Archive.isUnpacked(node))
         return await assembleUnpackedIndex(node);
     else {
         const archive = await Archive.get(node);
@@ -257,7 +291,7 @@ async function performSearch() {
 
         send.startProcessingIndication({noWait: true});
 
-        const nodes = await Bookmark.list({
+        let nodes = await Bookmark.list({
             search: searchQuery,
             content: true,
             index: "content",
@@ -265,6 +299,19 @@ async function performSearch() {
             order: "date_desc",
             path: shelfList.selectedShelfName
         });
+
+        const noteNodes = await Bookmark.list({
+            search: searchQuery,
+            content: true,
+            index: "notes",
+            partial: true,
+            order: "date_desc",
+            path: shelfList.selectedShelfName
+        });
+
+        noteNodes.forEach(n => n.__notes_search = true);
+
+        nodes = [...noteNodes, ...nodes];
 
         $("#found-items").empty();
         $("#search-preview").empty();
