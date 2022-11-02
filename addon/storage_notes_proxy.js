@@ -46,7 +46,8 @@ export class NotesProxy extends StorageProxy {
 
             const params = {
                 uuid: node.uuid,
-                notes_json: JSON.stringify(notes)
+                notes_json: JSON.stringify(notes),
+                ...await adapter.getParams(node)
             };
 
             await adapter.persistNotes(params);
@@ -59,7 +60,7 @@ export class NotesProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter && !adapter.internalStorage) {
-            const notes = await adapter.fetchNotes({uuid: node.uuid});
+            const notes = await adapter.fetchNotes({uuid: node.uuid, ...await adapter.getParams(node)});
 
             if (notes)
                 return this.#unmarshaller.unconvertNotes(notes);

@@ -14,7 +14,7 @@ import {
     BROWSER_SHELF_NAME,
     BROWSER_SHELF_UUID,
     TODO_SHELF_ID,
-    TODO_SHELF_NAME, DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME
+    TODO_SHELF_NAME, DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME, FILES_SHELF_UUID, FILES_SHELF_NAME, FILES_SHELF_ID
 } from "../storage.js";
 import {formatShelfName} from "../bookmarking.js";
 import {Query} from "../storage_query.js";
@@ -110,6 +110,10 @@ export class ShelfList {
             <option class="option-builtin divide" value="${EVERYTHING_SHELF_ID}"
                     data-uuid="${EVERYTHING_SHELF_UUID}">${formatShelfName(EVERYTHING_SHELF_NAME)}</option>`
 
+        if (settings.enable_files_shelf())
+            html += `<option class=\"option-builtin\" data-uuid="${FILES_SHELF_UUID}"
+                             value=\"${FILES_SHELF_ID}\">${formatShelfName(FILES_SHELF_NAME)}</option>`;
+
         if (settings.cloud_enabled())
             html += `<option class=\"option-builtin\" data-uuid="${CLOUD_SHELF_UUID}"
                              value=\"${CLOUD_SHELF_ID}\">${formatShelfName(CLOUD_SHELF_NAME)}</option>`;
@@ -119,6 +123,10 @@ export class ShelfList {
                              value=\"${BROWSER_SHELF_ID}\">${formatShelfName(BROWSER_SHELF_NAME)}</option>`;
 
         let shelves = await Query.allShelves();
+
+        let orgShelfNode = shelves.find(s => s.id === FILES_SHELF_ID);
+        if (orgShelfNode)
+            shelves.splice(shelves.indexOf(orgShelfNode), 1);
 
         let cloudShelfNode = shelves.find(s => s.id === CLOUD_SHELF_ID);
         if (cloudShelfNode)

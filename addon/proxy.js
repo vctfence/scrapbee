@@ -3,11 +3,11 @@ import {snakeCaseToCamelCase} from "./utils.js";
 export function nullProxy(wrapped) {
     return new Proxy(wrapped, {
         get(target, key, receiver) {
-            if (key in target) {
-                const value = target[key];
+            if (key in wrapped) {
+                const value = wrapped[key];
 
                 return "function" === typeof value
-                    ? (...args) => value.apply(target, args)
+                    ? (...args) => value.apply(wrapped, args)
                     : value;
             }
             else
@@ -17,7 +17,7 @@ export function nullProxy(wrapped) {
         set(target, key, value, receiver) {
             return Reflect.set(target, key, value, receiver);
         }
-    })
+    });
 }
 
 export function delegateProxy(proxy, wrapped) {

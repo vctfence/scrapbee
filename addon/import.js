@@ -3,7 +3,7 @@ import {
     CLOUD_SHELF_ID,
     DEFAULT_SHELF_NAME,
     DONE_SHELF_NAME,
-    EVERYTHING_SHELF_NAME,
+    EVERYTHING_SHELF_NAME, FILES_SHELF_ID,
     RDF_EXTERNAL_TYPE,
     TODO_SHELF_NAME
 } from "./storage.js";
@@ -68,6 +68,10 @@ export class Export {
             const browser = shelves.find(s => s.id === BROWSER_SHELF_ID);
             if (browser)
                 shelves.splice(shelves.indexOf(browser), 1);
+
+            const files = shelves.find(s => s.id === FILES_SHELF_ID);
+            if (files)
+                shelves.splice(shelves.indexOf(files), 1);
 
             const openRDFShelves = shelves.filter(n => n.external === RDF_EXTERNAL_TYPE);
             for (const node of openRDFShelves)

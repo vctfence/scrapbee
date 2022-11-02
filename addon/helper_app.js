@@ -4,6 +4,7 @@ import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} 
 import {send} from "./proxy.js"
 
 export const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
+export const HELPER_APP_v2_1_IS_REQUIRED = "Scrapyard helper application v2.1+ is required.";
 
 class HelperApp {
     #auth;

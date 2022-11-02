@@ -134,6 +134,7 @@ def enable_profiling():
 from . import browser
 from . import server_resources
 from . import server_rdf
+from . import server_files
 from . import server_browse
 from . import server_export
 from . import server_backup

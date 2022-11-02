@@ -55,6 +55,7 @@ export const DONE_SHELF_ID = -2;
 export const TODO_SHELF_ID = -3;
 export const BROWSER_SHELF_ID = -4;
 export const CLOUD_SHELF_ID = -5;
+export const FILES_SHELF_ID = -6;
 
 export const TODO_SHELF_NAME = "TODO";
 export const TODO_SHELF_UUID = TODO_SHELF_NAME;
@@ -84,9 +85,14 @@ export const CLOUD_EXTERNAL_TYPE = "cloud";
 
 export const RDF_EXTERNAL_TYPE = "rdf";
 
-export const NON_IMPORTABLE_SHELVES = [BROWSER_SHELF_UUID, CLOUD_SHELF_UUID];
+export const FILES_SHELF_NAME = "files";
+export const FILES_SHELF_UUID = "files";
+export const FILES_EXTERNAL_TYPE = "files";
+export const FILES_EXTERNAL_ROOT_PREFIX = "files-root-";
 
-export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_TYPE, CLOUD_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE];
+export const NON_IMPORTABLE_SHELVES = [BROWSER_SHELF_UUID, CLOUD_SHELF_UUID, FILES_SHELF_UUID];
+
+export const NON_SYNCHRONIZED_EXTERNALS = [BROWSER_EXTERNAL_TYPE, CLOUD_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE, FILES_EXTERNAL_TYPE];
 
 export const DEFAULT_POSITION = 2147483647;
 
@@ -154,7 +160,8 @@ const BUILTIN_SHELVES = [
     DONE_SHELF_NAME,
     DEFAULT_SHELF_NAME,
     BROWSER_SHELF_NAME,
-    CLOUD_SHELF_NAME
+    CLOUD_SHELF_NAME,
+    FILES_SHELF_NAME
 ].map(s => s.toLocaleLowerCase());
 
 export function isBuiltInShelf(name) {
@@ -177,6 +184,8 @@ export function getBuiltInShelfName(uuid) {
             return TODO_SHELF_NAME;
         case DONE_SHELF_UUID:
             return DONE_SHELF_NAME;
+        case FILES_SHELF_UUID:
+            return FILES_SHELF_NAME;
     }
 }
 

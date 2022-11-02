@@ -73,7 +73,7 @@ function configureMaintenancePanel() {
         e.preventDefault();
 
         if (await confirm("Warning",
-            "This will reset the Scrapyard browser internal storage. All archived content on disk will remain intact. Continue?"))
+            "This will reset the Scrapyard browser internal storage. Continue?"))
             await send.resetScrapyard();
     });
 

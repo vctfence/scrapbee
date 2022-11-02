@@ -274,7 +274,9 @@ export class PlainTextEditor extends Editor {
     }
 
     setContent(content) {
-        $(PlainTextEditor.ELEMENT_ID).val(content);
+        const editor = $(PlainTextEditor.ELEMENT_ID);
+        editor.val(content);
+        editor[0].setSelectionRange(0, 0);
     }
 
     getContent() {

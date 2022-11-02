@@ -30,6 +30,7 @@ import {
     TODO_SHELF_ID,
     TODO_SHELF_NAME,
     RDF_EXTERNAL_TYPE,
+    FILES_SHELF_ID,
     isBuiltInShelf,
     isVirtualShelf,
     isContentNode
@@ -263,6 +264,7 @@ async function init() {
 
     tree.sidebarSelectNode = selectNode;
     tree.performExport = performExport;
+    tree.addFilesDirectory = addFilesDirectory;
 
     receive.startListener();
     receiveExternal.startListener();
@@ -391,7 +393,15 @@ async function loadShelves(selected, synchronize = true, clearSelection = false)
 
 async function syncShelves() {
     await loadShelves();
-    await performSync();
+
+    if (getLastShelf() === CLOUD_SHELF_ID)
+        ;
+    else if (getLastShelf() === FILES_SHELF_ID)
+        ;
+    else {
+        if (!settings.storage_mode_internal())
+            return send.performSync();
+    }
 }
 
 async function switchShelf(shelf_id, synchronize = true, clearSelection = false) {
@@ -425,15 +435,28 @@ async function switchShelf(shelf_id, synchronize = true, clearSelection = false)
         else if (shelf_id == EVERYTHING_SHELF_ID) {
             const nodes = await Shelf.listContent(EVERYTHING_SHELF_NAME);
             tree.update(nodes, true, clearSelection);
+
             if (synchronize && settings.cloud_enabled()) {
-                send.reconcileCloudBookmarkDb({verbose: true});
+                await send.reconcileCloudBookmarkDb({verbose: true});
             }
+
+            if (synchronize && settings.enable_files_shelf()) {
+                await send.reconcileExternalFiles();
+            }
+        }
+        else if (shelf_id == FILES_SHELF_ID) {
+            const nodes = await Shelf.listContent(path);
+            tree.update(nodes, false, clearSelection);
+            if (synchronize && settings.enable_files_shelf()) {
+                await send.reconcileExternalFiles();
+            }
+            tree.openRoot();
         }
         else if (shelf_id == CLOUD_SHELF_ID) {
             const nodes = await Shelf.listContent(path);
             tree.update(nodes, false, clearSelection);
             if (synchronize && settings.cloud_enabled()) {
-                send.reconcileCloudBookmarkDb({verbose: true});
+                await send.reconcileCloudBookmarkDb({verbose: true});
             }
             tree.openRoot();
         }
@@ -630,15 +653,6 @@ async function performExport(node) {
     }
 }
 
-async function performSync(verbose = true) {
-    if (getLastShelf() === CLOUD_SHELF_ID)
-        await switchShelf(CLOUD_SHELF_ID, true);
-    else {
-        if (!settings.storage_mode_internal())
-            return send.performSync();
-    }
-}
-
 async function selectNode(node, open, forceScroll) {
     $("#search-input").val("");
     $("#search-input-clear").hide();
@@ -693,7 +707,8 @@ function sidebarRefresh() {
 function sidebarRefreshExternal() {
     let last_shelf = getLastShelf();
 
-    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === BROWSER_SHELF_ID || last_shelf === CLOUD_SHELF_ID)
+    if (last_shelf === EVERYTHING_SHELF_ID || last_shelf === BROWSER_SHELF_ID || last_shelf === CLOUD_SHELF_ID
+            || last_shelf === FILES_SHELF_ID)
         settings.load().then(() => loadShelves(last_shelf, false));
 }
 
@@ -756,6 +771,12 @@ async function displayRandomBookmark() {
 
         randomBookmarkTimeout = setTimeout(displayRandomBookmark, 60000 * 5);
     }
+}
+
+async function addFilesDirectory() {
+    return showDlg("orgdir", {
+        caption: "Add Org-mode Directory"
+    });
 }
 
 receive.startProcessingIndication = message => {
@@ -952,14 +973,14 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
         const folder = await Folder.getOrCreateByPath(external_path);
 
         try {
-            DiskStorage.openBatchSession();
+            await DiskStorage.openBatchSession();
             let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
             let topNodes = newNodes.filter(n => selection.some(id => id === n.source_node_id)).map(n => n.id);
 
             await switchAfterCopy(message, external_path, folder, topNodes);
         }
         finally {
-            DiskStorage.closeBatchSession();
+            await DiskStorage.closeBatchSession();
         }
     }
 };

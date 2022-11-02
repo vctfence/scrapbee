@@ -18,10 +18,11 @@ class QueryIDB extends EntityIDB {
         return this._db.nodes.orderBy("id").keys();
     }
 
-    async _selectDirectChildrenIdsOf(id, children) {
+    async selectDirectChildrenIdsOf(id, children) {
         await this._db.nodes.where("parent_id").equals(id).each(n => children.push(n.id));
     }
 
+    // the root shelf node is the last item of the resulting array
     async ascendantIdsOf(id) {
         let node = id;
         if (typeof id === "number")
@@ -130,7 +131,7 @@ class QueryIDB extends EntityIDB {
             let subtree = [];
 
             if (depth === "group")
-                await this._selectDirectChildrenIdsOf(folder.id, subtree);
+                await this.selectDirectChildrenIdsOf(folder.id, subtree);
             else if (depth === "root+subtree") {
                 await this.selectAllChildrenIdsOf(folder.id, subtree);
                 subtree.push(folder.id);

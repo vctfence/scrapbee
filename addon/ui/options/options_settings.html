@@ -90,39 +90,6 @@
         </td>
     </tr>
     <tr>
-        <td>Browser Bookmarks</td>
-        <td>
-            <div class="panel" id="firefox-integration" >
-                <div class="double-container">
-                    <div class="double-first" style="width: 320px">
-                        <form>
-                            <fieldset style="border: none;">
-                                <input id="option-show-firefox-bookmarks" type="checkbox"
-                                /><label for="option-show-firefox-bookmarks">Enable browser bookmarks integration</label>
-                                <div style="margin: 0; margin-left: 20px; width: max-content;">
-                                    <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"
-                                    /><label for="option-show-firefox-bookmarks-toolbar">Show the bookmark toolbar folder</label><br>
-                                    <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"
-                                    /><label for="option-show-firefox-bookmarks-mobile" style="display: none">Show the mobile bookmarks folder</label>
-                                </div>
-                            </fieldset>
-                        </form>
-                    </div>
-                    <div class="double-last">
-                        <form>
-                            <fieldset style="border: none;">
-                                <div class="align-checkbox">
-                                    <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"
-                                    /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to new browser bookmarks</label>
-                                </div>
-                            </fieldset>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </td>
-    </tr>
-    <tr>
         <td>Behavior</td>
         <td>
             <div class="panel double-container" id="behavior">
@@ -160,14 +127,14 @@
         </td>
     </tr>
     <tr>
-        <td>Search</td>
+        <td>Sidebar Search</td>
         <td>
             <div class="panel double-container" id="export">
                 <div class="double-first" style="width: 320px">
                     <form>
                         <fieldset style="border: none;">
                             <input id="option-remember-last-filtering-mode" type="checkbox"/><label for="option-remember-last-filtering-mode"
-                                    >Remember the last filtering mode</label>
+                        >Remember the last filtering mode</label>
                         </fieldset>
                     </form>
                 </div>
@@ -178,8 +145,70 @@
                                 <input id="option-sidebar-filter-partial-match" type="checkbox"/><label for="option-sidebar-filter-partial-match"
                             >Use partial content matching in the sidebar filter</label>
                                 <i class="help-mark"></i>
-                                <span class="tips hide">When this setting is enabled, <b>cake</b> will also match <b>cheesecake</b>
-                                    <br>in the content of a page.</span>
+                                <span class="tips hide">When this setting is enabled, <b>cake</b> will also match <br><b>cheesecake</b>
+                                    in the content of a page.</span>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>Browser Bookmarks</td>
+        <td>
+            <div class="panel" id="firefox-integration" >
+                <div class="double-container">
+                    <div class="double-first" style="width: 320px">
+                        <form>
+                            <fieldset style="border: none;">
+                                <input id="option-show-firefox-bookmarks" type="checkbox"
+                                /><label for="option-show-firefox-bookmarks">Enable browser bookmarks integration</label>
+                                <div style="margin: 0; margin-left: 20px; width: max-content;">
+                                    <input id="option-show-firefox-bookmarks-toolbar" type="checkbox"
+                                    /><label for="option-show-firefox-bookmarks-toolbar">Show the bookmark toolbar folder</label><br>
+                                    <input id="option-show-firefox-bookmarks-mobile" type="checkbox" style="display: none"
+                                    /><label for="option-show-firefox-bookmarks-mobile" style="display: none">Show the mobile bookmarks folder</label>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                    <div class="double-last">
+                        <form>
+                            <fieldset style="border: none;">
+                                <div class="align-checkbox">
+                                    <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"
+                                    /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to new browser bookmarks</label>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>Files</td>
+        <td>
+            <div class="panel double-container" id="org-shelf">
+                <div class="double-first" style="width: 320px">
+                    <form>
+                        <fieldset style="border: none;">
+                            <input id="option-enable-files-shelf" type="checkbox"/><label for="option-enable-files-shelf"
+                        >Enable files shelf</label>
+                            <i class="help-mark"></i>
+                            <span class="tips hide">The files shelf allows to browse org-mode files <br>and files of other types as notes in Scrapyard.</span>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="double-last">
+                    <form>
+                        <fieldset style="border: none;">
+                            <div style="width: 316px; display: flex;">
+                                <label>Editor:&nbsp</label>
+                                <input id="option-editor-executable" type="text" style="flex-grow: 1"/>
+                                <i class="help-mark" style="margin-top: 2px"></i>
+                                <span class="tips hide">The full path or name (accessible through PATH) <br>of your text editor executable.</span>
                             </div>
                         </fieldset>
                     </form>

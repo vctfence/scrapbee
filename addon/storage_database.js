@@ -1,5 +1,11 @@
 import {EntityIDB} from "./storage_idb.js";
-import {BROWSER_SHELF_ID, DEFAULT_SHELF_ID, CLOUD_SHELF_ID, RDF_EXTERNAL_TYPE, NODE_TYPE_SHELF} from "./storage.js";
+import {
+    BROWSER_SHELF_ID,
+    DEFAULT_SHELF_ID,
+    CLOUD_SHELF_ID,
+    RDF_EXTERNAL_TYPE,
+    FILES_SHELF_ID
+} from "./storage.js";
 import {Query} from "./storage_query.js";
 
 class StorageDatabase extends EntityIDB {
@@ -40,6 +46,7 @@ class StorageDatabase extends EntityIDB {
 
     async wipeImportable() {
         let retain = [DEFAULT_SHELF_ID, BROWSER_SHELF_ID, CLOUD_SHELF_ID,
+            ...(await Query.fullSubtreeOfIDs(FILES_SHELF_ID)),
             ...(await Query.fullSubtreeOfIDs(BROWSER_SHELF_ID)),
             ...(await Query.fullSubtreeOfIDs(CLOUD_SHELF_ID))];
 

@@ -3,6 +3,7 @@ import {settings} from "./settings.js";
 import {cloudShelf} from "./plugin_cloud_shelf.js";
 import {helperApp} from "./helper_app.js";
 import {receive} from "./proxy.js";
+import {filesShelf} from "./plugin_files_shelf.js";
 
 receive.uiLockGet = message => {
     browserShelf.getUILock();
@@ -32,6 +33,22 @@ receive.reconcileCloudBookmarkDb = async message => {
 
 receive.enableCloudBackgroundSync = async message => {
     cloudShelf.enableBackgroundSync(message.enable);
+};
+
+receive.addFilesDirectory = async message => {
+    return filesShelf.addDirectory(message.options);
+};
+
+receive.reconcileExternalFiles = async message => {
+    return filesShelf.reconcileExternalFiles();
+};
+
+receive.openWithEditor = async message => {
+    return filesShelf.openWithEditor(message.node);
+};
+
+receive.browseOrgWikiReference = message => {
+    return filesShelf.openExternalLink(message.link, message.node);
 };
 
 receive.helperAppProbe = message => {

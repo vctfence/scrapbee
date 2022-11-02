@@ -290,7 +290,7 @@ export async function browseNodeBackground(node, options) {
                 return browseArchiveHelper(node, options);
 
         case NODE_TYPE_NOTES: {
-            const edit = options.edit? "?edit": "";
+            const edit = options?.edit? "?edit": "";
             return openURL(`ui/notes.html${edit}#` + node.uuid, options);
         }
 

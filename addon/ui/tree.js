@@ -27,7 +27,7 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_TYPE
+    DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_TYPE, FILES_EXTERNAL_TYPE, FILES_EXTERNAL_ROOT_PREFIX
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
@@ -37,6 +37,7 @@ import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 import UUID from "../uuid.js";
 import {DiskStorage} from "../storage_external.js";
+import {filesShelf} from "../plugin_files_shelf.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 const FOLDER_SELECT_STATE = "folder-select";
@@ -380,9 +381,7 @@ class BookmarkTree {
         }
         else if (node.type === NODE_TYPE_FOLDER) {
             jnode.icon = "/icons/group.svg";
-            jnode.li_attr = {
-                class: "scrapyard-group",
-            };
+            jnode.li_attr = {class: "scrapyard-group"};
 
             if (node.site) {
                 jnode.li_attr["data-clickable"] = "true";
@@ -391,6 +390,11 @@ class BookmarkTree {
             }
 
             BookmarkTree.styleFirefoxFolders(node, jnode);
+
+            if (node.external === FILES_EXTERNAL_TYPE && node.external_id?.startsWith(FILES_EXTERNAL_ROOT_PREFIX)) {
+                jnode.icon = "/icons/bookmarksMenu.svg";
+                jnode.li_attr = {"class": "browser-bookmark-menu"};
+            }
         }
         else if (node.type === NODE_TYPE_SEPARATOR) {
             jnode.text = "─".repeat(60);
@@ -697,6 +701,11 @@ class BookmarkTree {
                     || o(jnode)?.external === RDF_EXTERNAL_TYPE
                         && more.ref && jnode.parent !== "#" && o(more.ref)?.external !== RDF_EXTERNAL_TYPE)
                 return false;
+
+            if (o(jnode)?.external !== FILES_EXTERNAL_TYPE && o(jparent)?.external === FILES_EXTERNAL_TYPE
+                    || o(jnode)?.external === FILES_EXTERNAL_TYPE
+                        && more.ref && jnode.parent !== "#" && o(more.ref)?.external !== FILES_EXTERNAL_TYPE)
+                return false;
         }
 
         return true;
@@ -869,6 +878,12 @@ class BookmarkTree {
                         await send.browseNode({node: o(jnode)});
                 }
             },
+            openWithEditorItem: {
+                label: "Edit",
+                action: async () => {
+                    send.openWithEditor({node: ctxNode});
+                }
+            },
             openNotesItem: {
                 label: "Open Notes",
                 action: () => {
@@ -908,6 +923,25 @@ class BookmarkTree {
 
                     tree.redraw_node(ctxJNode, true, false, true);
                     this.reorderNodes(ctxJNode);
+                }
+            },
+            addFilesDirectoryItem: {
+                label: "Add directory",
+                action: async () => {
+                    const options = await this.addFilesDirectory();
+
+                    if (options?.path) {
+                        options.title = options.title || "Untitled";
+
+                        this.startProcessingIndication();
+
+                        try {
+                            return send.addFilesDirectory({options});
+                        }
+                        finally {
+                            this.stopProcessingIndication();
+                        }
+                    }
                 }
             },
             newItem: {
@@ -1489,6 +1523,7 @@ class BookmarkTree {
                 break;
             case NODE_TYPE_NOTES:
                 delete items.shareItem.submenu.pocketItem;
+                delete items.pasteItem;
             case NODE_TYPE_BOOKMARK:
                 delete items.openOriginalItem;
             case NODE_TYPE_ARCHIVE:
@@ -1591,6 +1626,37 @@ class BookmarkTree {
 
         if (ctxNode.external === RDF_EXTERNAL_TYPE && ctxNode.type === NODE_TYPE_SHELF) {
             items.deleteItem.label = "Close";
+        }
+
+        if (ctxNode.type === NODE_TYPE_SHELF && ctxNode.external === FILES_EXTERNAL_TYPE) {
+            for (let k in items)
+                if (!["addFilesDirectoryItem"].find(s => s === k))
+                    delete items[k];
+        }
+        else {
+            delete items.addFilesDirectoryItem;
+        }
+
+        if (ctxNode.external === FILES_EXTERNAL_TYPE) {
+            delete items.cutItem;
+            delete items.pasteItem;
+            delete items.newItem;
+            delete items.newItem;
+            delete items.uploadItem;
+            delete items.checkLinksItem;
+            delete items.openInContainerItem;
+
+            if (items.copyItem)
+                items.copyItem.separator_before = true;
+
+            if (!ctxNode.external_id?.startsWith(FILES_EXTERNAL_ROOT_PREFIX))
+                delete items.deleteItem;
+
+            if (isContainerNode(ctxNode))
+                delete items.openWithEditorItem;
+        }
+        else {
+            delete items.openWithEditorItem;
         }
 
         return items;

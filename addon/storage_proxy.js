@@ -1,14 +1,17 @@
+import {CLOUD_EXTERNAL_TYPE, FILES_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE} from "./storage.js";
 import {StorageAdapterDisk} from "./storage_adapter_disk.js";
 import {StorageAdapterCloud} from "./storage_adapter_cloud.js";
-import {CLOUD_EXTERNAL_TYPE, RDF_EXTERNAL_TYPE} from "./storage.js";
+import {StorageAdapterFiles} from "./storage_adapter_files.js";
 import {StorageAdapterRDF} from "./storage_adapter_rdf.js";
-import {nullProxy} from "./proxy.js";
 import {settings} from "./settings.js";
+import {nullProxy} from "./proxy.js";
+
 
 export class StorageProxy {
     static _adapterDisk = new StorageAdapterDisk();
     static _adapterCloud = new StorageAdapterCloud();
-    static _adapterRDF = new StorageAdapterRDF();
+    static _adapterRDF = nullProxy(new StorageAdapterRDF());
+    static _adapterFiles = nullProxy(new StorageAdapterFiles());
 
     static setCloudProvider(provider) {
         this._adapterCloud.setProvider(provider);
@@ -33,6 +36,8 @@ export class StorageProxy {
             return StorageProxy._adapterCloud;
         else if (node.external === RDF_EXTERNAL_TYPE)
             return StorageProxy._adapterRDF;
+        else if (node.external === FILES_EXTERNAL_TYPE)
+            return StorageProxy._adapterFiles;
         else if (!node.external) {
             if (settings.storage_mode_internal())
                 return {internalStorage: true};

@@ -2,9 +2,13 @@ import {escapeCSS, escapeHtml} from "./utils_html.js";
 import * as org from "./lib/org/org.js";
 import {marked} from "./lib/marked.js";
 
-export function org2html(org_text) {
-    let doc = new org.Parser().parse(org_text);
-    let html = new org.ConverterHTML(doc).result;
+export function org2html(org_text, toc) {
+    const doc = new org.Parser().parse(org_text);
+
+    if (toc)
+        doc.options.toc = true;
+
+    const html = new org.ConverterHTML(doc).result;
 
     let output = doc.directiveValues["css:"]
         ? `<style>${escapeCSS(doc.directiveValues["css:"])}</style>`
@@ -82,7 +86,7 @@ export function notes2html(notes) {
         case "org":
         default:
             if (notes?.content)
-                return org2html(notes.content);
+                return org2html(notes.content, notes.__generate_toc);
             return "";
     }
 }

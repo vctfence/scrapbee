@@ -45,10 +45,11 @@ async function init() {
                                  <a id="notes-button" class="focus" href="#">View</a>
                                  <a id="edit-button" href="#">Edit</a>`);
 
+    let node;
 
     try {
         const uuid = location.hash.substring(1);
-        const node = await Node.getByUUID(uuid);
+        node = await Node.getByUUID(uuid);
         const sourceURL = $("#source-url");
         sourceURL.text(node.name);
 
@@ -76,7 +77,7 @@ async function init() {
 
             editor = createEditor(format);
             editor.setContent(notes.content);
-            formatNotes(editor.renderContent(), format);
+            formatNotes(editor.renderContent(), format, notes);
 
             if (format === "html")
                 format = "delta";
@@ -266,10 +267,15 @@ async function init() {
         $("#close-button").show();
     }
 
-    $("#notes").on("click", "a[href^='org-protocol://']", e => {
-        e.preventDefault();
-        send.browseOrgReference({link: e.target.href});
-    });
+    $("#notes")
+        .on("click", "a[href^='org-protocol://']", e => {
+            e.preventDefault();
+            send.browseOrgReference({link: e.target.href, node});
+        })
+        .on("click", "a[href^='file://'], a[href^='wiki:'], a[href^='wiki-asset-sys:']", e => {
+            e.preventDefault();
+            send.browseOrgWikiReference({link: e.target.href, node});
+        });
 
     if (isEditMode)
         $("#tabbar a#edit-button").click();
@@ -347,7 +353,7 @@ function formatNotes(text, format) {
             $("#notes").attr("class", "notes format-html").html(text);
             break;
         default:
-            $("#notes").attr("class", "notes format-text").html(text2html(text));;
+            $("#notes").attr("class", "notes format-text").html(text2html(text));
     }
 }
 

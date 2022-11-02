@@ -18,6 +18,7 @@ import "./core_ishell.js";
 import "./core_automation.js";
 import "./core_sync.js";
 import "./core_transition.js";
+import {filesShelf} from "./plugin_files_shelf.js";
 
 if (_BACKGROUND_PAGE)
     import("./core_import.js");
@@ -40,6 +41,10 @@ async function performStartupInitialization() {
     search.initializeOmnibox();
 
     await browserShelf.reconcileBrowserBookmarksDB();
+
+    if (settings.enable_files_shelf()) {
+        await filesShelf.createIfMissing();
+    }
 
     if (settings.cloud_enabled()) {
         await cloudShelf.createIfMissing();

@@ -178,6 +178,8 @@ export class CloudShelfPlugin {
         if (dest.external !== CLOUD_EXTERNAL_TYPE && node.external === CLOUD_EXTERNAL_TYPE) {
             if (dest.external)
                 node.external = dest.external;
+            else
+                delete node.external;
             delete node.external_id;
         }
         else if (dest.external === CLOUD_EXTERNAL_TYPE && node.external !== CLOUD_EXTERNAL_TYPE) {

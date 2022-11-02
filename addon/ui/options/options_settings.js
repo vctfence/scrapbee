@@ -3,7 +3,8 @@ import {setSaveCheckHandler} from "../options.js";
 import {selectricRefresh, simpleSelectric} from "../shelf_list.js";
 import {STORAGE_POPULATED} from "../../storage.js";
 import {send} from "../../proxy.js";
-import {alert, confirm} from "../dialog.js";
+import {confirm} from "../dialog.js";
+import {helperApp, HELPER_APP_v2_1_IS_REQUIRED} from "../../helper_app.js";
 
 function configureScrapyardSettingsPage() {
     simpleSelectric("#option-sidebar-theme");
@@ -53,6 +54,15 @@ function configureScrapyardSettingsPage() {
         }, 1000)
     });
 
+    let filesEditorInputTimeout;
+    $("#option-editor-executable").on("input", e => {
+        clearTimeout(filesEditorInputTimeout);
+        filesEditorInputTimeout = setTimeout(async () => {
+            await settings.load();
+            await settings.files_editor_executable(e.target.value);
+        }, 1000)
+    });
+
     $("#option-helper-port").on("input", async e => {
         await settings.load();
         settings.helper_port_number(+e.target.value);
@@ -81,6 +91,8 @@ function configureScrapyardSettingsPage() {
         () => send.reconcileBrowserBookmarkDb());
     setSaveCheckHandler("option-show-firefox-bookmarks-toolbar", "show_firefox_toolbar",
         () => send.externalNodesReady());
+    setSaveCheckHandler("option-enable-files-shelf", "enable_files_shelf",
+        e => enableFilesShelf(e));
     setSaveCheckHandler("option-visually-emphasise-archives", "visually_emphasise_archives",
         () => send.shelvesChanged());
     setSaveCheckHandler("option-archives-icon", "visual_archive_icon",
@@ -109,6 +121,8 @@ function loadScrapyardSettings() {
     $("#option-shelf-list-max-height").val(settings.shelf_list_height());
     $("#option-show-firefox-bookmarks").prop("checked", settings.show_firefox_bookmarks());
     $("#option-show-firefox-bookmarks-toolbar").prop("checked", settings.show_firefox_toolbar());
+    $("#option-enable-files-shelf").prop("checked", settings.enable_files_shelf());
+    $("#option-editor-executable").val(settings.files_editor_executable());
     $("#option-visually-emphasise-archives").prop("checked", settings.visually_emphasise_archives());
     $("#option-archives-icon").prop("checked", settings.visual_archive_icon());
     $("#option-archives-color").prop("checked", settings.visual_archive_color());
@@ -136,7 +150,7 @@ export function load() {
 }
 
 async function setStorageModeToFilesystem() {
-    if (await confirm("Warning", "This will reset the browser internal storage. "
+    if (await confirm("Warning", "This will reset the Scrapyard browser internal storage. "
             + "Make sure that you have exported important content. Continue?")) {
         $("#option-data-folder-path").prop("disabled", false);
         $("#option-synchronize-at-startup").prop("disabled", false);
@@ -153,7 +167,7 @@ async function setStorageModeToFilesystem() {
 }
 
 async function setStorageModeToInternal() {
-    if (await confirm("Warning", "This will reset the browser internal storage. Continue?")) {
+    if (await confirm("Warning", "This will reset the Scrapyard browser internal storage. Continue?")) {
         $("#option-data-folder-path")
             .val("")
             .prop("disabled", true);
@@ -174,4 +188,13 @@ async function setStorageModeToInternal() {
         const storageModeSelect = $("#option-storage-mode").val("filesystem");
         selectricRefresh(storageModeSelect);
     }
+}
+
+async function enableFilesShelf(e) {
+    const helper = await helperApp.hasVersion("2.1", HELPER_APP_v2_1_IS_REQUIRED);
+
+    if (helper)
+        return send.enable();
+    else
+        e.target.checked = false;
 }

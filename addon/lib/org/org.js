@@ -1365,7 +1365,7 @@ Converter.prototype = {
             case Node.types.property:
                 break;
             default:
-                throw Error("Unknown node type: " + node.type);
+                //throw Error("Unknown node type: " + node.type);
         }
 
         if (typeof this.postProcess === "function") {

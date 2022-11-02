@@ -1,17 +1,14 @@
 import base64
 import json
-import logging
 import os
 import shutil
 import threading
 from pathlib import Path
 
-import regex
-
 from bs4 import BeautifulSoup
 
 from . import server
-
+from .utils import index_text
 
 archive_import_mutex = threading.Lock()
 
@@ -81,14 +78,6 @@ def build_archive_index(path):
                 words += file_words
 
     return list(set(words))
-
-
-def index_text(string):
-    string = string.replace("\n", " ")
-    string = regex.sub(r"(?:\p{Z}|[^\p{L}-])+", " ", string)
-    words = string.split(" ")
-    words = [w.lower() for w in words if len(w) > 2]
-    return words
 
 
 def create_rdf_metadata(params):

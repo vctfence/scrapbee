@@ -1,4 +1,5 @@
 import sys
+import regex
 
 
 def module_property(func):
@@ -20,3 +21,11 @@ def module_property(func):
 
     module.__getattr__ = new_getattr
     return func
+
+
+def index_text(string):
+    string = string.replace("\n", " ")
+    string = regex.sub(r"(?:\p{Z}|[^\p{L}-])+", " ", string)
+    words = string.split(" ")
+    words = [w.lower() for w in words if len(w) > 2]
+    return words
