@@ -74,7 +74,7 @@ export class UniversalSearchProvider extends SearchProvider {
 
     async _searchByUUID(text) {
         let result = [];
-        text = text.replace(UUID_SEARCH_PREFIX, "");
+        text = text.replace(UUID_SEARCH_PREFIX, "").trim();
 
         const node = await Node.getByUUID(text);
 

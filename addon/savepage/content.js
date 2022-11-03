@@ -1166,7 +1166,7 @@ function findStyleSheets(depth,frame,element)
 
 /* Second Pass - to find other external resources and load into arrays */
 
-function gatherOtherResources()
+async function gatherOtherResources()
 {
     var loadedfonts = new Array();
 
@@ -1193,7 +1193,7 @@ function gatherOtherResources()
 
     timeFinish[2] = performance.now();
 
-    loadResources();
+    await loadResources();
 }
 
 function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfonts,framekey)
@@ -2096,15 +2096,15 @@ async function loadResources()
     {
         timeFinish[passNumber+3] = performance.now();
 
-        if (passNumber == 1) gatherOtherResources();
+        if (passNumber == 1) await gatherOtherResources();
         // Scrapyard //////////////////////////////////////////////////////////////////
-        else if (passNumber == 2) generateHTML();
+        else if (passNumber == 2) await generateHTML();
         ////////////////////////////////////////////////////////////////// Scrapyard //
     }
 }
 
 // Scrapyard //////////////////////////////////////////////////////////////////
-function loadSuccess(index,content,contenttype,alloworigin,filename)
+async function loadSuccess(index,content,contenttype,alloworigin,filename)
 ////////////////////////////////////////////////////////////////// Scrapyard //
 {
     var i,mimetype,charset,resourceURL,frameURL,csstext,baseuri,regex,documentURL;
@@ -2122,7 +2122,7 @@ function loadSuccess(index,content,contenttype,alloworigin,filename)
 
     /* Process file based on expected MIME type */
 
-    switch (resourceMimeType[index].toLowerCase())  /* expected MIME type */
+    switch (resourceMimeType[index]?.toLowerCase())  /* expected MIME type */
     {
         case "application/font-woff":  /* font file */
 
@@ -2136,7 +2136,7 @@ function loadSuccess(index,content,contenttype,alloworigin,filename)
                 if (resourceURL.origin != frameURL.origin &&  /* cross-origin resource */
                     (alloworigin == "" || alloworigin != frameURL.origin))  /* either no header or no origin match */
                 {
-                    loadFailure(index,"cors");
+                    await loadFailure(index,"cors");
 
                     return;
                 }
@@ -2177,7 +2177,7 @@ function loadSuccess(index,content,contenttype,alloworigin,filename)
                 if (mimetype != "application/javascript" && mimetype != "application/x-javascript" && mimetype != "application/ecmascript" &&
                     mimetype != "application/json" && mimetype != "text/javascript" && mimetype != "text/x-javascript" && mimetype != "text/json")  /* incorrect MIME type */
                 {
-                    loadFailure(index,"mime");
+                    await loadFailure(index,"mime");
 
                     return;
                 }
@@ -2216,7 +2216,7 @@ function loadSuccess(index,content,contenttype,alloworigin,filename)
 
             if (mimetype != "text/css")  /* incorrect MIME type */
             {
-                loadFailure(index,"mime");
+                await loadFailure(index,"mime");
 
                 return;
             }
@@ -2289,14 +2289,14 @@ function loadSuccess(index,content,contenttype,alloworigin,filename)
     {
         timeFinish[passNumber+3] = performance.now();
 
-        if (passNumber == 1) gatherOtherResources();
+        if (passNumber == 1) await gatherOtherResources();
         // Scrapyard //////////////////////////////////////////////////////////////////
-        else if (passNumber == 2) generateHTML();
+        else if (passNumber == 2) await generateHTML();
         ////////////////////////////////////////////////////////////////// Scrapyard //
     }
 }
 
-function loadFailure(index,reason)
+async function loadFailure(index,reason)
 {
     resourceStatus[index] = "failure";
 
@@ -2306,9 +2306,9 @@ function loadFailure(index,reason)
     {
         timeFinish[passNumber+3] = performance.now();
 
-        if (passNumber == 1) gatherOtherResources();
+        if (passNumber == 1) await gatherOtherResources();
         // Scrapyard //////////////////////////////////////////////////////////////////
-        else if (passNumber == 2) generateHTML();
+        else if (passNumber == 2) await generateHTML();
         ////////////////////////////////////////////////////////////////// Scrapyard //
     }
 }

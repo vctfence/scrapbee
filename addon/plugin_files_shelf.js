@@ -25,7 +25,8 @@ const FILES_ITEM_TYPE_FILE = "file";
 
 export class FilesShelfPlugin {
     newFilesRootNode() {
-        return {id: FILES_SHELF_ID,
+        return {
+            id: FILES_SHELF_ID,
             pos: -3,
             name: FILES_SHELF_NAME,
             uuid: FILES_SHELF_UUID,
@@ -46,9 +47,16 @@ export class FilesShelfPlugin {
             return this.createFilesShelf();
     }
 
-    async enable() {
-        await this.createIfMissing();
-        send.shelvesChanged()
+    async enable(state) {
+        if (state) {
+            await this.createIfMissing();
+            send.shelvesChanged();
+        }
+        else {
+            const nodes = await Query.fullSubtree(FILES_SHELF_ID);
+            await Node.delete(nodes);
+            send.shelvesChanged();
+        }
     }
 
     async addDirectory(options) {

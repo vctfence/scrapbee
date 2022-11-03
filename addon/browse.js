@@ -36,7 +36,7 @@ function configureArchiveTab(node, archiveTab) {
 
     function tabRemoveListener(tabId) {
         if (tabId === archiveTab.id) {
-            if (storage.storage_mode_internal())
+            if (settings.storage_mode_internal())
                 revokeTrackedObjectURLs(tabId);
 
             browser.tabs.onRemoved.removeListener(tabRemoveListener);

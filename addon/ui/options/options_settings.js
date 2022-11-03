@@ -5,6 +5,7 @@ import {STORAGE_POPULATED} from "../../storage.js";
 import {send} from "../../proxy.js";
 import {confirm} from "../dialog.js";
 import {helperApp, HELPER_APP_v2_1_IS_REQUIRED} from "../../helper_app.js";
+import {filesShelf} from "../../plugin_files_shelf.js";
 
 function configureScrapyardSettingsPage() {
     simpleSelectric("#option-sidebar-theme");
@@ -194,7 +195,7 @@ async function enableFilesShelf(e) {
     const helper = await helperApp.hasVersion("2.1", HELPER_APP_v2_1_IS_REQUIRED);
 
     if (helper)
-        return send.enable();
+        return filesShelf.enable(e.target.checked);
     else
         e.target.checked = false;
 }

@@ -32,6 +32,9 @@
     --theme-version: 0.2;
     --theme-background: var(--in-content-page-background) !important;
 
+    --themed-firefox-icon: url("../icons/firefox2.svg") !important;
+    --themed-chrome-icon: url("../icons/chrome2.svg") !important;
+
     --themed-files-box-icon: url("../icons/files-box2.svg") !important;
 
     --themed-cloud-icon: url("../icons/cloud2.svg") !important;
@@ -193,10 +196,6 @@ select,
 
 .jstree-default .browser-bookmark-toolbar > .jstree-anchor .jstree-themeicon {
     background-image: url("../icons/bookmarksToolbar2.svg") !important;
-}
-
-.jstree-default .browser-logo > .jstree-anchor .jstree-themeicon {
-    background-image: url("../icons/firefox2.svg") !important;
 }
 
 .jstree-default .rdf-archive > .jstree-anchor .jstree-themeicon {

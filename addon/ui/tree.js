@@ -353,9 +353,9 @@ class BookmarkTree {
             jnode.text = formatShelfName(node.name);
             jnode.li_attr = {"class": "browser-logo"};
             if (settings.platform.firefox)
-                jnode.icon = "/icons/firefox.svg";
+                jnode.icon = "var(--themed-firefox-icon)";
             else if (settings.platform.chrome)
-                jnode.icon = "/icons/chrome.svg";
+                jnode.icon = "var(--themed-chrome-icon)";
             else
                 jnode.icon = "/icons/shelf.svg";
             if (!settings.show_firefox_bookmarks()) {
