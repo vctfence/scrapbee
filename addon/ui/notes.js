@@ -334,7 +334,7 @@ function editorSaveOnChange(e) {
 }
 
 function editorSaveOnBlur(e) {
-    if (e && NODE_ID) {
+    if (e && NODE_ID && editorChanged) {
         clearTimeout(editorTimeout);
         saveNotes();
     }

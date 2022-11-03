@@ -32,6 +32,8 @@
     --theme-version: 0.2;
     --theme-background: var(--in-content-page-background) !important;
 
+    --themed-files-box-icon: url("../icons/files-box2.svg") !important;
+
     --themed-cloud-icon: url("../icons/cloud2.svg") !important;
     --themed-cloud-sync-icon: url("../icons/cloud_sync2.svg") !important;
     --themed-tape-icon: url("../icons/tape2.svg");
@@ -64,7 +66,6 @@ select,
     -moz-appearance: none !important;
     outline: none !important;
 }
-
 
 .jstree-default .jstree-anchor.jstree-clicked,
 .jstree-default .jstree-anchor.jstree-clicked .todo-path,

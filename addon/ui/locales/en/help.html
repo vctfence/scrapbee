@@ -347,7 +347,7 @@
 
     <h3>Cloud Bookmarking</h3>
     <p>
-        Adding or copying/pasting bookmarks into a special shelf named Cloud makes them available
+        Adding or copying/pasting bookmarks into the special shelf named Cloud makes them available
         across different browser instances that use a cloud provider with the same credentials.
         Cloud providers are configurable in the addon settings. It is possible to authorize in several
         cloud providers and quickly switch between them (currently only Dropbox and OneDrive are supported).</p>
@@ -361,6 +361,22 @@
 
     <p style="text-align: center">
         <img src="images/cloud.png">
+    </p>
+
+    <h3>Files Shelf</h3>
+    <p>
+        The Files shelf allows browsing org-mode, markdown, and plain text files as notes in
+        Scrapyard. Select "Add directory" in the context menu of the shelf to add a directory
+        from the local filesystem. Scrapyard will create a full-text search index for all
+        added files. It is possible to open files from this shelf in a user-specified text editor,
+        for example, Emacs, through the context menu of a file.
+    </p>
+
+    <p>Add <code>#+OPTIONS: toc:t</code> or <code>#+OPTIONS: toc:t num:t</code> directive to
+    your org files to generate a table of contents.</p>
+
+    <p style="text-align: center">
+        <img src="images/files-shelf.png">
     </p>
 
     <h3>Sharing Bookmarks</h3>
@@ -467,6 +483,8 @@
         reasonably fast, it matches all items that contain every entered word longer than two
         characters in any order and distance. Use the full-text search if you need exact results.
     <p>
+
+    <p>To search a bookmark by its UUID, enter the UUID prefixed with <code>uuid:</code> into the input field.</p>
 
     <p>Filtering by date supports simple queries:</p>
 

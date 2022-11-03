@@ -37,7 +37,6 @@ import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 import UUID from "../uuid.js";
 import {DiskStorage} from "../storage_external.js";
-import {filesShelf} from "../plugin_files_shelf.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 const FOLDER_SELECT_STATE = "folder-select";
@@ -363,6 +362,10 @@ class BookmarkTree {
                 jnode.state = {hidden: true};
             }
             BookmarkTree.styleFirefoxFolders(node, jnode);
+        }
+        else if (node.type === NODE_TYPE_SHELF && node.external === FILES_EXTERNAL_TYPE) {
+            jnode.li_attr = {"class": "files-shelf"};
+            jnode.icon = "var(--themed-files-box-icon)";
         }
         else if (node.type === NODE_TYPE_SHELF && node.external === CLOUD_EXTERNAL_TYPE) {
             jnode.text = formatShelfName(node.name);

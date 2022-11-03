@@ -4,6 +4,7 @@ import {getActiveTab, openContainerTab, makeReferenceURL} from "./utils_browser.
 import {Bookmark} from "./bookmarks_bookmark.js";
 import {escapeHtml} from "./utils_html.js";
 import {settings} from "./settings.js";
+import {Node} from "./storage_entities.js";
 
 export const SEARCH_MODE_UNIVERSAL = 0;
 export const SEARCH_MODE_TITLE = 1;
@@ -13,6 +14,8 @@ export const SEARCH_MODE_NOTES = 4;
 export const SEARCH_MODE_COMMENTS = 5;
 export const SEARCH_MODE_DATE = 6;
 export const SEARCH_MODE_FOLDER = 7;
+
+const UUID_SEARCH_PREFIX = "uuid:";
 
 class SearchProvider {
     constructor(shelf) {
@@ -48,14 +51,18 @@ export class UniversalSearchProvider extends SearchProvider {
     }
 
     search(text) {
-        const availableProviders = this.providers.filter(p => p.isInputValid(text));
-        const results = availableProviders.map(p => p.search(text));
+        if (text?.startsWith(UUID_SEARCH_PREFIX))
+            return this._searchByUUID(text);
+        else {
+            const availableProviders = this.providers.filter(p => p.isInputValid(text));
+            const results = availableProviders.map(p => p.search(text));
 
-        return Promise.all(results).then(results => {
-            results = results.reduce((acc, arr) => [...acc, ...arr], []);
-            results = results.filter((n, i, a) => this._indexByUUID(a, n.uuid) === i); // distinct
-            return results;
-        });
+            return Promise.all(results).then(results => {
+                results = results.reduce((acc, arr) => [...acc, ...arr], []);
+                results = results.filter((n, i, a) => this._indexByUUID(a, n.uuid) === i); // distinct
+                return results;
+            });
+        }
     }
 
     _indexByUUID(nodes, uuid) {
@@ -63,6 +70,18 @@ export class UniversalSearchProvider extends SearchProvider {
             if (nodes[i].uuid === uuid)
                 return i;
         }
+    }
+
+    async _searchByUUID(text) {
+        let result = [];
+        text = text.replace(UUID_SEARCH_PREFIX, "");
+
+        const node = await Node.getByUUID(text);
+
+        if (node)
+            result = [node];
+
+        return result;
     }
 }
 
@@ -72,7 +91,7 @@ export class TitleSearchProvider extends SearchProvider {
     }
 
     search(text, limit) {
-        if (text)
+        if (text) {
             return Bookmark.list({
                 search: text,
                 depth: "subtree",
@@ -80,6 +99,7 @@ export class TitleSearchProvider extends SearchProvider {
                 limit: limit,
                 types: CONTENT_NODE_TYPES
             });
+        }
 
         return [];
     }
