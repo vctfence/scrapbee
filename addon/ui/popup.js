@@ -1,5 +1,13 @@
-import {byName, DEFAULT_SHELF_NAME, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_SHELF, NODE_TYPE_FOLDER} from "../storage.js";
-import {askCSRPermission, getActiveTab} from "../utils_browser.js";
+import {
+    byName,
+    DEFAULT_SHELF_NAME,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_SHELF,
+    NODE_TYPE_FOLDER,
+    BROWSER_EXTERNAL_TYPE
+} from "../storage.js";
+import {askCSRPermission, getActiveTab, showNotification} from "../utils_browser.js";
 import {selectricRefresh, simpleSelectric} from "./shelf_list.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {getFaviconFromTab} from "../favicon.js";
@@ -116,7 +124,7 @@ function onTreeFolderSelected(e, {node: jnode}) {
 
     if (!existing.length) {
         $("#bookmark-folder option[data-tentative='true']").remove();
-        bookmarkFolderSelect.prepend(`<option  class='folder-label' data-tentative='true' selected
+        bookmarkFolderSelect.prepend(`<option class='folder-label' data-tentative='true' selected
                                                     value='${jnode.id}'>${jnode.text}</option>`)
         selectricRefresh(bookmarkFolderSelect)
     }
@@ -151,8 +159,8 @@ function switchCrawlerMode(e) {
 }
 
 async function addBookmark(nodeType) {
-    let parentJNode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
-    saveFolderHistory(parentJNode.id, parentJNode.text, folderHistory);
+    let parentNode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
+    saveFolderHistory(parentNode.id + "", parentNode.name, folderHistory);
 
     const payload = {
         type: nodeType,
@@ -160,12 +168,16 @@ async function addBookmark(nodeType) {
         uri:  $("#bookmark-url").val(),
         tags: $("#bookmark-tags").val(),
         icon: $("#bookmark-icon").val(),
-        parent_id: parseInt(parentJNode.id),
+        parent_id: parentNode.id,
         __crawl: crawlerMode
     };
 
     if (nodeType === NODE_TYPE_ARCHIVE) {
-        if (await askCSRPermission())
+        if (parentNode.external === BROWSER_EXTERNAL_TYPE) {
+            showNotification({title: "Warning", message: "Only bookmarks are saved to the browser bookmarks folder."});
+            await send.createBookmark({node: payload});
+        }
+        else if (await askCSRPermission())
             await send.createArchive({node: payload});
     }
     else

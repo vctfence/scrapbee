@@ -22,7 +22,6 @@ class QueryIDB extends EntityIDB {
         await this._db.nodes.where("parent_id").equals(id).each(n => children.push(n.id));
     }
 
-    // the root shelf node is the last item of the resulting array
     async ascendantIdsOf(id) {
         let node = id;
         if (typeof id === "number")
@@ -41,7 +40,7 @@ class QueryIDB extends EntityIDB {
 
     async rootOf(id) {
         const ascendants = await this.ascendantIdsOf(id);
-        return Node.get(ascendants.at(-1));
+        return Node.get(ascendants[0]);
     }
 
     async selectAllChildrenIdsOf(id, children) {

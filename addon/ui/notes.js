@@ -74,6 +74,8 @@ async function init() {
         if (notes) {
             format = notes.format || "org";
             $("#notes-format").val(format === "html"? "delta": format);
+            if (notes.__file_as_notes)
+                $("#notes-format").prop("disabled", true);
 
             editor = createEditor(format);
             editor.setContent(notes.content);

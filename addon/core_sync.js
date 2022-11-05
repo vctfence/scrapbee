@@ -53,10 +53,10 @@ async function performSync() {
 
     await settings.load();
 
-    if (syncing || !await helperApp.probe(true))
-        return;
-
     const syncDirectory = settings.data_folder_path();
+
+    if (syncing || !syncDirectory || !await helperApp.probe(true))
+        return;
 
     try {
         syncing = true;

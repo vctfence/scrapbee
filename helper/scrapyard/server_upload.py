@@ -77,12 +77,16 @@ serve_mutex = threading.Lock()
 def serve_set_path(uuid):
     global serve_path_map
     path = request.form["path"]
+
     if path:
         path = os.path.expanduser(path)
+
         if path and os.path.exists(path):
-            serve_mutex.acquire()
-            serve_path_map[uuid] = path
-            serve_mutex.release()
+            try:
+                serve_mutex.acquire()
+                serve_path_map[uuid] = path
+            finally:
+                serve_mutex.release()
     return "OK"
 
 
@@ -90,20 +94,28 @@ def serve_set_path(uuid):
 @requires_auth
 def serve_release_path(uuid):
     global serve_path_map
-    serve_mutex.acquire()
-    del serve_path_map[uuid]
-    serve_mutex.release()
+
+    try:
+        serve_mutex.acquire()
+        if uuid in serve_path_map:
+            del serve_path_map[uuid]
+    finally:
+        serve_mutex.release()
+
     return "OK"
 
 
 @app.route("/serve/file/<uuid>/", methods=['GET'])
 def serve_file(uuid):
-    path = serve_path_map[uuid]
+    path = serve_path_map.get(uuid, None)
+
     if path:
         response = flask.make_response(flask.send_file(path))
         mime_type = mimetypes.guess_type(path)[0]
+
         if mime_type:
             response.headers["content-type"] = mime_type
+
         return response
     else:
         abort(404)
@@ -111,7 +123,11 @@ def serve_file(uuid):
 
 @app.route("/serve/file/<uuid>/<path:file>", methods=['GET'])
 def serve_file_deps(uuid, file):
-    [directory, _] = os.path.split(serve_path_map[uuid])
-    return flask.send_from_directory(directory, file)
+    path = serve_path_map.get(uuid, None)
 
+    if path:
+        [directory, _] = os.path.split(path)
+        return flask.send_from_directory(directory, file)
+    else:
+        abort(404)
 

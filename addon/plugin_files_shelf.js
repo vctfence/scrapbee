@@ -22,6 +22,7 @@ import {ExternalNode} from "./storage_node_external.js";
 import {ProgressCounter} from "./utils.js";
 
 const FILES_ITEM_TYPE_FILE = "file";
+const FILES_ITEM_TYPE_DIR = "dir";
 
 export class FilesShelfPlugin {
     newFilesRootNode() {
@@ -94,7 +95,10 @@ export class FilesShelfPlugin {
         await Node.update(root);
 
         for (const file of files)
-            if (file.type === FILES_ITEM_TYPE_FILE) {
+            if (file.type === FILES_ITEM_TYPE_DIR) {
+                await this.#createExternalDirectoryNode(options, file);
+            }
+            else if (file.type === FILES_ITEM_TYPE_FILE) {
                 const node = await this.#createExternalFileNode(options, file);
                 fileNodes.push(node);
             }
@@ -102,6 +106,14 @@ export class FilesShelfPlugin {
         await send.externalNodesReady();
 
         return this.#createSearchIndex(fileNodes);
+    }
+
+    async #createExternalDirectoryNode(options, item) {
+        const rootPath = FILES_SHELF_NAME + "/" + options.title;
+        const scrapyardPath = rootPath + "/" + item.path;
+        const folder = await Folder.getOrCreateByPath(scrapyardPath);
+
+        await this.#setExternalForPath(folder, rootPath, options);
     }
 
     async #createExternalFileNode(options, item) {
@@ -148,6 +160,7 @@ export class FilesShelfPlugin {
                     const scrapyardPath = await Path.asString(ascendant);
                     const folderPath = scrapyardPath.replace(rootPath, "");
                     const diskPath = options.path + folderPath + "/" + ascendant.name;
+
                     ascendant.external_id = diskPath.replace("//", "/");
 
                     await Node.update(ascendant);
@@ -227,7 +240,6 @@ export class FilesShelfPlugin {
     }
 
     async #reconcileExternalFiles() {
-        const existingFiles = [FILES_SHELF_UUID];
         const itemsToIndex = [];
         const filesRoots = [];
 
@@ -237,37 +249,47 @@ export class FilesShelfPlugin {
             const fileNodes = await Query.fullSubtree(rootId);
             const filesRoot = fileNodes.find(n => n.external_id.startsWith(FILES_EXTERNAL_ROOT_PREFIX));
             const details = JSON.parse(filesRoot.details);
-            const options = {title: filesRoot.name, path: filesRoot.external_id, file_mask: details.file_mask};
+            const options = {title: filesRoot.name, path: filesRoot.uri, file_mask: details.file_mask};
             const files = await this.#listDirectoryFiles(filesRoot.uri, options.file_mask);
 
-            existingFiles.push(filesRoot.external_id);
+            if (files) {
+                for (const file of files) {
+                    const existingFileNode = fileNodes.find(n => n.external_id === file.full_path);
 
-            for (const file of files) {
-                const existingFileNode = fileNodes.find(n => n.external_id === file.full_path);
+                    if (file.type === FILES_ITEM_TYPE_DIR && !existingFileNode) {
+                        await this.#createExternalDirectoryNode(options, file);
+                    }
+                    if (file.type === FILES_ITEM_TYPE_FILE && !existingFileNode) {
+                        const node = await this.#createExternalFileNode(options, file);
+                        itemsToIndex.push(node);
+                    }
+                    else if (file.type === FILES_ITEM_TYPE_FILE
+                        && existingFileNode.content_modified.getTime() < file.content_modified) {
+                        itemsToIndex.push(existingFileNode);
 
-                existingFiles.push(file.full_path);
-
-                if (file.type === FILES_ITEM_TYPE_FILE && !existingFileNode) {
-                    const node = await this.#createExternalFileNode(options, file);
-                    itemsToIndex.push(node);
+                        existingFileNode.content_modified = new Date(file.content_modified);
+                        await Node.update(existingFileNode);
+                    }
                 }
-                else if (file.type === FILES_ITEM_TYPE_FILE
-                            && existingFileNode.content_modified.getTime() < file.content_modified) {
-                    itemsToIndex.push(existingFileNode);
 
-                    existingFileNode.content_modified = new Date(file.content_modified);
-                    await Node.update(existingFileNode);
-                }
+                const deletedFiles = [];
+
+                for (const existingFile of fileNodes)
+                    if (!existingFile.external_id.startsWith(FILES_EXTERNAL_ROOT_PREFIX)
+                            && !files.some(f => f.full_path === existingFile.external_id))
+                        deletedFiles.push(existingFile);
+
+                if (deletedFiles.length)
+                    await Node.delete(deletedFiles)
             }
         }
 
         await this.#createSearchIndex(itemsToIndex);
-        await ExternalNode.deleteMissingIn(existingFiles, FILES_EXTERNAL_TYPE);
         send.externalNodesReady();
     }
 
     async #listDirectoryFiles(path, fileMask) {
-        let result = [];
+        let result;
 
         try {
             const response = await helperApp.fetchJSON_postJSON("/files/list_directory", {

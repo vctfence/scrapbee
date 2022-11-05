@@ -27,13 +27,13 @@ export async function getFaviconFromTab(tab, tabOnly = false) {
     let favicon;
     let origin = new URL(tab.url).origin;
 
-    if (!origin)
-        return undefined;
+    if (!origin || origin === "null")
+        return;
 
     if (tab.favIconUrl)
         return tab.favIconUrl;
     else if (tabOnly)
-        return undefined;
+        return;
 
     try {
         let icon = await injectScriptFile(tab.id, {file: "/content_favicon.js"});
@@ -90,7 +90,7 @@ export async function getFaviconFromContent(url, doc) {
 
     const origin = new URL(url).origin;
 
-    if (origin)
+    if (origin && origin !== "null")
         return favIcon && await testFavicon(new URL(favIcon, origin))
             || await testFavicon(new URL("/favicon.ico", origin));
 }

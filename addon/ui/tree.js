@@ -688,7 +688,7 @@ class BookmarkTree {
                 jnode = this._jstree.get_node(odata.find(n => n.name === DEFAULT_SHELF_NAME).id);
         }
 
-        return jnode;
+        return o(jnode);
     }
 
     #checkOperation(operation, jnode, jparent, position, more) {
@@ -1364,7 +1364,7 @@ class BookmarkTree {
                             if (properties.user_icon === "") {
                                 properties.icon = undefined;
                                 properties.stored_icon = undefined;
-                                ctxJNode.icon = "var(--themed-globe-icon)";
+                                ctxJNode.icon = BookmarkTree.toJsTreeNode(ctxNode).icon;
                             }
                             else if (properties.user_icon && properties.user_icon !== properties.displayed_icon)
                                 newIcon = properties.user_icon;
@@ -1571,7 +1571,7 @@ class BookmarkTree {
             delete items.openInContainerItem;
             delete items.copyLinkItem;
         }
-        else {
+        else if (selectedNodes.length < 2) {
             delete items.openItem;
         }
 

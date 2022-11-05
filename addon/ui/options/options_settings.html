@@ -20,6 +20,9 @@
                                         <option value="filesystem">Filesystem</option>
                                         <option value="internal">Browser internal storage</option>
                                     </select>
+                                    <i class="help-mark" style="margin-top: 2px;"></i>
+                                    <span class="tips hide">It is possible to use a limited set of Scrapyard functionality
+                                    without the<br> helper application when storing content in the browser internal storage.</span>
                                 </div>
                             </div>
                             <div class="double-last">
@@ -178,7 +181,14 @@
                             <fieldset style="border: none;">
                                 <div class="align-checkbox">
                                     <input id="option-do-not-switch-to-ff-bookmark" type="checkbox"
-                                    /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to new browser bookmarks</label>
+                                    /><label for="option-do-not-switch-to-ff-bookmark">Do not switch to the new browser bookmarks</label>
+                                </div>
+                                <div class="align-checkbox">
+                                    <input id="option-add-to-bookmarks-toolbar" type="checkbox"
+                                    /><label for="option-add-to-bookmarks-toolbar">Add the new items to the bookmarks toolbar</label>
+                                    <i class="help-mark"></i>
+                                    <span class="tips hide">References to the newly archived or bookmarked items will be added<br>
+                                    to the <b>Scrapyard</b> folder at the browser bookmarks toolbar.</span>
                                 </div>
                             </fieldset>
                         </form>

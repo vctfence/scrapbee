@@ -11,6 +11,10 @@ from bs4 import UnicodeDammit
 from .utils import index_text
 
 
+DIR_ITEM_TYPE = "dir"
+FILE_ITEM_TYPE = "file"
+
+
 def files_list_directory(params):
     path = os.path.expanduser(params["path"])
     file_mask = params.get("file_mask", None)
@@ -25,23 +29,26 @@ def files_list_directory(params):
             path = path + "/"
 
         items = []
-        result = dict(status="success", content=items)
 
         for root, dirs, files in os.walk(path):
             for dir in dirs:
-                create_dir_item(dir, root, items)
+                create_dir_item(dir, path, root, items)
 
             for file in files:
                 create_file_item(file, file_mask, path, root, items)
 
-        return result
+        items = filter_directories(items)
+
+        return dict(status="success", content=items)
     else:
         return dict(status="error", error="incorrect_path")
 
 
-def create_dir_item(dir, root, items):
-    dir_path = os.path.join(root, dir).replace("\\", "/")
-    dir_item = dict(type="dir", name=dir, full_path=dir_path)
+def create_dir_item(dir, path, root, items):
+    full_path = os.path.join(root, dir).replace("\\", "/")
+    dir_path = full_path.replace(path, "", 1)
+    dir_item = dict(type=DIR_ITEM_TYPE, name=dir, path=dir_path, full_path=full_path)
+
     items.append(dir_item)
 
 
@@ -50,7 +57,7 @@ def create_file_item(file, file_mask, path, root, items):
     file_path = full_path.replace(path, "", 1)
 
     if satisfies_mask(file, file_mask):
-        file_item = dict(type="file",
+        file_item = dict(type=FILE_ITEM_TYPE,
                          name=file,
                          path=file_path,
                          full_path=full_path,
@@ -64,6 +71,15 @@ def satisfies_mask(file, mask):
             return True
 
     return False
+
+
+def filter_directories(items):
+    dirs = [i for i in items if i["type"] == DIR_ITEM_TYPE]
+    files = [i for i in items if i["type"] == FILE_ITEM_TYPE]
+
+    filtered_dirs = [d for d in dirs if any(f["full_path"].startswith(d["full_path"] + "/") for f in files)]
+
+    return [*filtered_dirs, *files]
 
 
 def files_open_with_editor(params):

@@ -20,7 +20,7 @@ import {
     performSiteCapture,
     startCrawling,
     abortCrawling,
-    archiveBookmark
+    archiveBookmark, addToBookmarksToolbar
 } from "./bookmarking.js";
 import {fetchText} from "./utils_io.js";
 import {TODO} from "./bookmarks_todo.js";
@@ -57,16 +57,21 @@ receive.createBookmark = async message => {
     if (isSpecialPage(node.uri))
         return notifySpecialPage();
 
-    const addBookmark = () =>
-        Bookmark.add(node, NODE_TYPE_BOOKMARK)
-            .then(bookmark => {
-                send.bookmarkAdded({node: bookmark});
-                return bookmark;
-            })
-            .catch(e => {
-                showNotification(e.message);
-                send.bookmarkCreationFailed({node});
-            });
+    async function addBookmark() {
+        try {
+            const bookmark = await Bookmark.add(node, NODE_TYPE_BOOKMARK);
+
+            if (settings.add_to_bookmarks_toolbar())
+                await addToBookmarksToolbar(bookmark);
+
+            send.bookmarkAdded({node: bookmark});
+            return bookmark;
+        }
+        catch (e) {
+            showNotification(e.message);
+            send.bookmarkCreationFailed({node});
+        }
+    }
 
     Bookmark.setTentativeId(node);
     node.type = NODE_TYPE_BOOKMARK; // needed for beforeBookmarkAdded
@@ -89,20 +94,27 @@ receive.createArchive = async message => {
     if (isSpecialPage(node.uri))
         return notifySpecialPage();
 
-    let addBookmark = () =>
-        Bookmark.idb.add(node, NODE_TYPE_ARCHIVE) // added to the storage on archive content update
-            .then(bookmark => {
-                getActiveTab().then(tab => {
-                    bookmark.__tab_id = tab.id;
-                    captureTab(tab, bookmark);
-                    return bookmark;
-                });
-            });
+    async function addBookmark() {
+        try {
+            const bookmark = await Bookmark.idb.add(node, NODE_TYPE_ARCHIVE); // added to the storage on archive content update
+            const tab = await getActiveTab();
+
+            if (settings.add_to_bookmarks_toolbar())
+                await addToBookmarksToolbar(bookmark);
+
+            bookmark.__tab_id = tab.id;
+            captureTab(tab, bookmark); // !sic
+            return bookmark;
+        }
+        catch (e) {
+            showNotification(e.message);
+            send.bookmarkCreationFailed({node});
+        }
+    }
 
     if (node.__crawl && !node.__site_capture) {
-        getActiveTab().then(tab => {
-            showSiteCaptureOptions(tab, node);
-        });
+        const tab = await getActiveTab();
+        showSiteCaptureOptions(tab, node);
         return;
     }
 
@@ -142,16 +154,21 @@ receive.createNotes = async message => {
 
     const node = message.node;
 
-    const addNotes = () =>
-        Bookmark.addNotes(node.parent_id, node.name)
-            .then(bookmark => {
-                send.bookmarkAdded({node: bookmark});
-                return bookmark;
-            })
-            .catch(e => {
-                showNotification(e.message);
-                send.bookmarkCreationFailed({node});
-            });
+    async function addNotes() {
+        try {
+            const bookmark = await Bookmark.addNotes(node.parent_id, node.name);
+
+            if (settings.add_to_bookmarks_toolbar())
+                await addToBookmarksToolbar(bookmark);
+
+            send.bookmarkAdded({node: bookmark});
+            return bookmark;
+        }
+        catch (e) {
+            showNotification(e.message);
+            send.bookmarkCreationFailed({node});
+        }
+    }
 
     Bookmark.setTentativeId(node);
     node.type = NODE_TYPE_NOTES; // needed for beforeBookmarkAdded

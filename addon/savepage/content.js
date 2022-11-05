@@ -2116,7 +2116,7 @@ async function loadSuccess(index,content,contenttype,alloworigin,filename)
     if (matches != null) mimetype = matches[1].toLowerCase();
     else mimetype = "";
 
-    matches = contenttype.match(/;\s*([^;]+)/i);
+    matches = contenttype.match(/;\s*charset=([^;]+)/i);
     if (matches != null) charset = matches[1].toLowerCase();
     else charset = "";
 

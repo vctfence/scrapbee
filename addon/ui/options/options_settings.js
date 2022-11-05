@@ -109,6 +109,7 @@ function configureScrapyardSettingsPage() {
     setSaveCheckHandler("option-open-bookmark-in-active-tab", "open_bookmark_in_active_tab");
     setSaveCheckHandler("option-open-sidebar-from-shortcut", "open_sidebar_from_shortcut");
     setSaveCheckHandler("option-do-not-switch-to-ff-bookmark", "do_not_switch_to_ff_bookmark");
+    setSaveCheckHandler("option-add-to-bookmarks-toolbar", "add_to_bookmarks_toolbar");
     setSaveCheckHandler("option-undo-failed-imports", "undo_failed_imports");
     setSaveCheckHandler("option-sidebar-filter-partial-match", "sidebar_filter_partial_match");
     setSaveCheckHandler("option-remember-last-filtering-mode", "remember_last_filtering_mode");
@@ -132,6 +133,7 @@ function loadScrapyardSettings() {
     $("#option-switch-to-bookmark").prop("checked", settings.switch_to_new_bookmark());
     $("#option-do-not-show-archive-toolbar").prop("checked", settings.do_not_show_archive_toolbar());
     $("#option-do-not-switch-to-ff-bookmark").prop("checked", settings.do_not_switch_to_ff_bookmark());
+    $("#option-add-to-bookmarks-toolbar").prop("checked", settings.add_to_bookmarks_toolbar());
     $("#option-display-random-bookmark").prop("checked", settings.display_random_bookmark());
     $("#option-open-bookmark-in-active-tab").prop("checked", settings.open_bookmark_in_active_tab());
     $("#option-open-sidebar-from-shortcut").prop("checked", settings.open_sidebar_from_shortcut());
@@ -159,7 +161,7 @@ async function setStorageModeToFilesystem() {
         await settings.storage_mode_internal(false);
 
         await send.resetScrapyard();
-        await send.shelvesChanged();
+        browser.runtime.reload();
     }
     else {
         const storageModeSelect = $("#option-storage-mode").val("internal");
@@ -183,7 +185,7 @@ async function setStorageModeToInternal() {
 
         await send.storageModeInternal();
         await send.resetScrapyard();
-        await send.shelvesChanged();
+        browser.runtime.reload();
     }
     else {
         const storageModeSelect = $("#option-storage-mode").val("filesystem");

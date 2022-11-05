@@ -58,7 +58,7 @@ export class StorageAdapterFiles {
             const response = await helperApp.postJSON(`/files/fetch_file_content`, params);
 
             if (response.ok) {
-                const notes = {__generate_toc: false};
+                const notes = {__file_as_notes: true};
 
                 notes.content = await response.text();
                 notes.format = this.#getNotesFormat(params.path);

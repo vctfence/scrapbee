@@ -7,9 +7,15 @@ import {
     showNotification,
     isHTMLTab, askCSRPermission
 } from "./utils_browser.js";
-import {capitalize, getMimetypeByExt} from "./utils.js";
+import {capitalize, getMimetypeByExt, sleep} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
-import {ARCHIVE_TYPE_FILES, DEFAULT_SHELF_ID, NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK} from "./storage.js";
+import {
+    ARCHIVE_TYPE_FILES,
+    DEFAULT_SHELF_ID,
+    FIREFOX_BOOKMARK_TOOLBAR,
+    NODE_TYPE_ARCHIVE,
+    NODE_TYPE_BOOKMARK
+} from "./storage.js";
 import {fetchText, fetchWithTimeout} from "./utils_io.js";
 import {Node} from "./storage_entities.js";
 import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
@@ -19,6 +25,8 @@ import {Folder} from "./bookmarks_folder.js";
 import {isHTMLLink, parseHtml} from "./utils_html.js";
 import {getSidebarWindow, toggleSidebarWindow} from "./utils_sidebar.js";
 import {helperApp} from "./helper_app.js";
+
+const SCRAPYARD_FOLDER_NAME = "Scrapyard";
 
 export function formatShelfName(name) {
     if (name && settings.capitalize_builtin_shelf_names())
@@ -112,8 +120,7 @@ async function captureHTMLTab(tab, bookmark) {
                 }
 
                 if (typeof response == "undefined")
-                    showNotification("Cannot initialize capture script, please retry.");
-
+                    showNotification("Cannot initialize the capture script, please retry.");
             }
         };
         browser.runtime.onMessage.addListener(onScriptInitialized);
@@ -157,6 +164,11 @@ async function injectSavePageScripts(tab, onError) {
 }
 
 async function captureNonHTMLTab(tab, bookmark) {
+    if (/^file:/i.exec(tab.url) && settings.platform.firefox) {
+        showNotification("Firefox version of Scrapyard can not be used with file:// URLs.");
+        return;
+    }
+
     try {
         const headers = {"Cache-Control": "no-store"};
         const response = await fetchWithTimeout(tab.url, {timeout: 60000, headers});
@@ -415,4 +427,43 @@ export async function createBookmarkFromURL (url, parentId) {
     const bookmark = await Bookmark.add(options, NODE_TYPE_BOOKMARK);
     await sendLocal.stopProcessingIndication();
     sendLocal.bookmarkCreated({node: bookmark});
+}
+
+export async function addToBookmarksToolbar(node) {
+    const scrapyardFolders = await browser.bookmarks.search({title: SCRAPYARD_FOLDER_NAME});
+    let scrapyardFolder = scrapyardFolders.find(f => !f.url &&
+        (settings.platform.firefox && f.parentId === FIREFOX_BOOKMARK_TOOLBAR
+            || settings.platform.chrome && f.parentId === "1"));
+
+    if (!scrapyardFolder)
+        scrapyardFolder = await createScrapyardBookmarkFolder();
+
+    await browser.bookmarks.create({
+        parentId: scrapyardFolder.id,
+        title: node.name,
+        url: createLongScrapyardReference(node)
+    });
+}
+
+async function createScrapyardBookmarkFolder() {
+    let parentId = FIREFOX_BOOKMARK_TOOLBAR;
+
+    if (settings.platform.chrome)
+        parentId = "1";
+
+    const options = {
+        parentId: parentId,
+        title: SCRAPYARD_FOLDER_NAME
+    };
+
+    if (settings.platform.firefox)
+        options.type = "folder";
+
+    return browser.bookmarks.create(options);
+}
+
+export function createLongScrapyardReference(node = {uuid: ""}) {
+    let referenceURL = `ext+scrapyard://${node.uuid}`;
+
+    return browser.runtime.getURL(`/reference.html#${referenceURL}`);
 }
