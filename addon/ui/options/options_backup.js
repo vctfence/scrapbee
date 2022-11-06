@@ -77,7 +77,7 @@ export class BackupManager {
             $("#backup-button").attr("disabled", false);
         }
         else {
-            this.setStatus(`<div>Scrapyard <a href="#helperapp">helper application</a> v0.4+ is required</div>`);
+            this.setStatus(`<div>Scrapyard <a href="#nativeapp">native application</a> v0.4+ is required</div>`);
             $("#backup-button").attr("disabled", true);
         }
     }
@@ -189,7 +189,7 @@ export class BackupManager {
             }
             catch (e) {
                 error = true;
-                this.setStatus("Error connecting the helper application.");
+                this.setStatus("Error connecting the native application.");
             }
             finally {
                 this.listingBackups = false;

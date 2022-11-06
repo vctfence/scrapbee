@@ -272,7 +272,7 @@ receive.uploadFiles = async message => {
     send.startProcessingIndication();
 
     try {
-        const helper = await helperApp.hasVersion("0.4", `Scrapyard helper application v0.4+ is required for this feature.`);
+        const helper = await helperApp.hasVersion("0.4", `Scrapyard native application v0.4+ is required for this feature.`);
 
         if (helper) {
             const fileUUID = UUID.numeric();

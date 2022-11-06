@@ -405,7 +405,7 @@ Command example:
 #### Processing Archives with Python
 
 The iShell command demonstrated below sends the content of the currently selected archives for processing in
-the iShell helper application written in Python. There you can develop your own [Flask](https://flask.palletsprojects.com/)
+the iShell native application written in Python. There you can develop your own [Flask](https://flask.palletsprojects.com/)
 handlers.
 
 ```javascript

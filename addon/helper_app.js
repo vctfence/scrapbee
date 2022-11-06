@@ -3,8 +3,8 @@ import {settings} from "./settings.js"
 import {CONTEXT_BACKGROUND, getContextType, hasCSRPermission, showNotification} from "./utils_browser.js";
 import {send} from "./proxy.js"
 
-export const HELPER_APP_v2_IS_REQUIRED = "Scrapyard helper application v2.0+ is required.";
-export const HELPER_APP_v2_1_IS_REQUIRED = "Scrapyard helper application v2.1+ is required.";
+export const HELPER_APP_v2_IS_REQUIRED = "Scrapyard native application v2.0+ is required.";
+export const HELPER_APP_v2_1_IS_REQUIRED = "Scrapyard native application v2.1+ is required.";
 
 class HelperApp {
     #auth;
@@ -77,7 +77,7 @@ class HelperApp {
         port.onMessage.addListener(HelperApp._incomingMessages.bind(this));
 
         if (msg.error === "address_in_use")
-            showNotification(`The helper application HTTP port ${settings.helper_port_number()} is not available.`);
+            showNotification(`The native application HTTP port ${settings.helper_port_number()} is not available.`);
     }
 
     async probe(verbose) {
@@ -94,7 +94,7 @@ class HelperApp {
         const port = await this.getPort();
 
         if (!port && verbose)
-            showNotification({message: "Can not connect to the helper application."})
+            showNotification({message: "Can not connect to the native application."})
 
         return !!port;
     }
