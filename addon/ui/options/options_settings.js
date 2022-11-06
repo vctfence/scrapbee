@@ -68,9 +68,6 @@ function configureScrapyardSettingsPage() {
         await settings.load();
         let value = parseInt(e.target.value) || 0;
 
-        if (!value)
-            value = null;
-
         await settings.number_of_bookmarks_toolbar_references(value);
     });
 

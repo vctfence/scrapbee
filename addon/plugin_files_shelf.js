@@ -281,7 +281,7 @@ export class FilesShelfPlugin {
                     }
                     else if (file.type === FILES_ITEM_TYPE_FILE
                             && existingFileNode.content_modified.getTime() < file.content_modified) {
-                        if (this.#isIndexable(node))
+                        if (this.#isIndexable(existingFileNode))
                             itemsToIndex.push(existingFileNode);
 
                         existingFileNode.content_modified = new Date(file.content_modified);
