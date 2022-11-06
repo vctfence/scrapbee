@@ -441,8 +441,22 @@ export async function addToBookmarksToolbar(node) {
     await browser.bookmarks.create({
         parentId: scrapyardFolder.id,
         title: node.name,
-        url: createLongScrapyardReference(node)
+        url: createLongScrapyardReference(node),
+        index: 0
     });
+
+    const maxReferences = settings.number_of_bookmarks_toolbar_references();
+
+    if (maxReferences) {
+        const references = await browser.bookmarks.getChildren(scrapyardFolder.id);
+
+        if (references.length > maxReferences) {
+            const refsToDelete = references.slice(maxReferences, references.length);
+
+            for (const ref of refsToDelete)
+                browser.bookmarks.remove(ref.id);
+        }
+    }
 }
 
 async function createScrapyardBookmarkFolder() {

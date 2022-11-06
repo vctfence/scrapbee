@@ -85,7 +85,11 @@ export class ArchiveProxy extends StorageProxy {
         const adapter = this.adapter(node);
 
         if (adapter && !adapter.internalStorage) {
-            const content = await adapter.fetchArchiveContent({uuid: node.uuid, node});
+            const content = await adapter.fetchArchiveContent({
+                node,
+                uuid: node.uuid,
+                ...await adapter.getParams(node)
+            });
 
             if (content)
                 return Archive.entity(node, content, node.content_type);

@@ -114,6 +114,8 @@ export class ArchiveIDB extends EntityIDB {
     }
 
     async updateHTML(node, data) {
+        const entity = this.entity(node, data);
+
         if (node.contains === ARCHIVE_TYPE_FILES) {
             const index = await this.saveFile(node, "index.html", data);
 
@@ -121,8 +123,6 @@ export class ArchiveIDB extends EntityIDB {
                 await this.idb.import.storeIndex(node, index);
         }
         else {
-            const entity = this.entity(node, data);
-
             await this._add(node, entity);
             await this.storeIndex(node, indexHTML(data));
         }
@@ -173,7 +173,7 @@ export class ArchiveIDB extends EntityIDB {
                 if (binarystring)
                     result = archive.data;
                 else
-                    result = this._binaryString2Array(archive.data);
+                    result = binaryString2Array(archive.data);
             }
             else if (archive.object instanceof Blob) {
                 if (binarystring)

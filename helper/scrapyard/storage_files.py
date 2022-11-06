@@ -99,7 +99,15 @@ def files_shell_open_asset(params):
         subprocess.call(('xdg-open', params["path"]))
 
 
-def files_fetch_file_content(params):
+def files_fetch_file_bytes(params):
+    path = params.get("path", None)
+
+    if path and os.path.exists(path):
+        with open(path, "rb") as file:
+            return file.read()
+
+
+def files_fetch_file_text(params):
     path = params.get("path", None)
 
     if path and os.path.exists(path):
@@ -119,7 +127,7 @@ def files_fetch_file_content(params):
                 return file.read()
 
 
-def files_save_file_content(params):
+def files_save_file_text(params):
     path = params.get("path", None)
 
     if path and os.path.exists(path):
@@ -129,7 +137,7 @@ def files_save_file_content(params):
 
 
 def files_create_index(params):
-    content = files_fetch_file_content(params)
+    content = files_fetch_file_text(params)
 
     if content:
         return index_text(content)

@@ -31,3 +31,4 @@ async function openReference(tab) {
 }
 
 browser.tabs.getCurrent().then(openReference);
+window.onhashchange = () => browser.tabs.getCurrent().then(openReference);

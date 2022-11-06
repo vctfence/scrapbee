@@ -1,4 +1,6 @@
 import {helperApp} from "./helper_app.js";
+import {settings} from "./settings.js";
+import {ARCHIVE_TYPE_TEXT} from "./storage.js";
 
 export class StorageAdapterFiles {
     internalStorage = false;
@@ -47,7 +49,7 @@ export class StorageAdapterFiles {
 
     async persistNotes(params) {
         try {
-            return helperApp.postJSON(`/files/save_file_content`, params);
+            return helperApp.postJSON(`/files/save_file_text`, params);
         } catch (e) {
             console.error(e);
         }
@@ -55,7 +57,7 @@ export class StorageAdapterFiles {
 
     async fetchNotes(params) {
         try {
-            const response = await helperApp.postJSON(`/files/fetch_file_content`, params);
+            const response = await helperApp.postJSON(`/files/fetch_file_text`, params);
 
             if (response.ok) {
                 const notes = {__file_as_notes: true};
@@ -65,6 +67,29 @@ export class StorageAdapterFiles {
 
                 return notes;
             }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async fetchArchiveContent(params) {
+        const node = params.node;
+        delete params.node;
+
+        try {
+            const response = await helperApp.postJSON(`/files/fetch_file_bytes`, params);
+
+            if (response.ok) {
+                let content = await response.arrayBuffer();
+
+                if (!node.contains || node.contains === ARCHIVE_TYPE_TEXT) {
+                    const decoder = new TextDecoder();
+                    content = decoder.decode(content);
+                }
+
+                return content;
+            }
+
         } catch (e) {
             console.error(e);
         }

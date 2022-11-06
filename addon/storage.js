@@ -5,6 +5,7 @@ export const NODE_TYPE_ARCHIVE = 4;
 export const NODE_TYPE_SEPARATOR = 5;
 export const NODE_TYPE_NOTES = 6;
 export const NODE_TYPE_UNLISTED = 7;
+export const NODE_TYPE_FILE = 8;
 
 export const NODE_TYPE_NAMES = {
     [NODE_TYPE_SHELF]: "shelf",
@@ -12,7 +13,8 @@ export const NODE_TYPE_NAMES = {
     [NODE_TYPE_BOOKMARK]: "bookmark",
     [NODE_TYPE_ARCHIVE]: "archive",
     [NODE_TYPE_SEPARATOR]: "separator",
-    [NODE_TYPE_NOTES]: "notes"
+    [NODE_TYPE_NOTES]: "notes",
+    [NODE_TYPE_FILE]: "file"
 };
 
 export const NODE_TYPES = {
@@ -21,11 +23,12 @@ export const NODE_TYPES = {
     "bookmark": NODE_TYPE_BOOKMARK,
     "archive": NODE_TYPE_ARCHIVE,
     "separator": NODE_TYPE_SEPARATOR,
-    "notes": NODE_TYPE_NOTES
+    "notes": NODE_TYPE_NOTES,
+    "file": NODE_TYPE_FILE
 };
 
 export const CONTAINER_NODE_TYPES = [NODE_TYPE_SHELF, NODE_TYPE_FOLDER, NODE_TYPE_UNLISTED];
-export const CONTENT_NODE_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES];
+export const CONTENT_NODE_TYPES = [NODE_TYPE_ARCHIVE, NODE_TYPE_BOOKMARK, NODE_TYPE_NOTES, NODE_TYPE_FILE];
 
 export const TODO_STATE_TODO = 1;
 export const TODO_STATE_DONE = 4;

@@ -27,7 +27,12 @@ import {
     TODO_STATE_POSTPONED,
     TODO_STATE_TODO,
     TODO_STATE_WAITING,
-    DEFAULT_SHELF_NAME, byPosition, BROWSER_EXTERNAL_TYPE, FILES_EXTERNAL_TYPE, FILES_EXTERNAL_ROOT_PREFIX
+    DEFAULT_SHELF_NAME,
+    byPosition,
+    BROWSER_EXTERNAL_TYPE,
+    FILES_EXTERNAL_TYPE,
+    FILES_EXTERNAL_ROOT_PREFIX,
+    NODE_TYPE_FILE
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
@@ -404,6 +409,13 @@ class BookmarkTree {
             jnode.icon = false;
             jnode.a_attr = {
                 class: "separator-node"
+            };
+        }
+        else if (node.type === NODE_TYPE_FILE) {
+            jnode.icon = "/icons/file.svg";
+            jnode.li_attr = {
+                "class": "scrapyard-file",
+                "data-clickable": "true"
             };
         }
         else {
@@ -1525,7 +1537,11 @@ class BookmarkTree {
                 }
                 break;
             case NODE_TYPE_NOTES:
+            case NODE_TYPE_FILE:
                 delete items.shareItem.submenu.pocketItem;
+                delete items.newItem.submenu.newNotesItem;
+                delete items.openInContainerItem;
+                delete items.copyLinkItem;
                 delete items.pasteItem;
             case NODE_TYPE_BOOKMARK:
                 delete items.openOriginalItem;
@@ -1566,12 +1582,7 @@ class BookmarkTree {
             items.deleteItem = deleteItem;
         }
 
-        if (ctxNode.type === NODE_TYPE_NOTES) {
-            delete items.newItem.submenu.newNotesItem;
-            delete items.openInContainerItem;
-            delete items.copyLinkItem;
-        }
-        else if (selectedNodes.length < 2) {
+        if (selectedNodes.length < 2) {
             delete items.openItem;
         }
 
@@ -1648,6 +1659,12 @@ class BookmarkTree {
             delete items.uploadItem;
             delete items.checkLinksItem;
             delete items.openInContainerItem;
+
+            if (ctxNode.type === NODE_TYPE_FILE) {
+                delete items.shareItem.submenu.cloudItem;
+                delete items.openWithEditorItem;
+                delete items.copyItem;
+            }
 
             if (items.copyItem)
                 items.copyItem.separator_before = true;

@@ -6,7 +6,7 @@ import {
     NODE_TYPE_SHELF,
     NODE_TYPE_FOLDER,
     NODE_TYPE_NOTES,
-    FILES_EXTERNAL_ROOT_PREFIX, CLOUD_EXTERNAL_TYPE
+    FILES_EXTERNAL_ROOT_PREFIX, CLOUD_EXTERNAL_TYPE, NODE_TYPE_FILE
 } from "./storage.js";
 import {Node, Notes} from "./storage_entities.js";
 import {send} from "./proxy.js";
@@ -94,7 +94,7 @@ export class FilesShelfPlugin {
         root.details = JSON.stringify({file_mask: options.file_mask});
         await Node.update(root);
 
-        for (const file of files)
+        for (const file of files) {
             if (file.type === FILES_ITEM_TYPE_DIR) {
                 await this.#createExternalDirectoryNode(options, file);
             }
@@ -102,10 +102,12 @@ export class FilesShelfPlugin {
                 const node = await this.#createExternalFileNode(options, file);
                 fileNodes.push(node);
             }
+        }
 
         await send.externalNodesReady();
 
-        return this.#createSearchIndex(fileNodes);
+        const indexableNodes = fileNodes.filter(n => this.#isIndexable(n));
+        return this.#createSearchIndex(indexableNodes);
     }
 
     async #createExternalDirectoryNode(options, item) {
@@ -117,13 +119,17 @@ export class FilesShelfPlugin {
     }
 
     async #createExternalFileNode(options, item) {
+        const indexable = this.#isIndexable(item.full_path);
         const node = {
             name: item.name,
-            type: NODE_TYPE_NOTES,
+            uri: item.full_path,
+            type: indexable? NODE_TYPE_NOTES: NODE_TYPE_FILE,
+            content_type: indexable? "text/plain": "application/octet-stream",
+            contains: indexable? "text": "bytes",
             external: FILES_EXTERNAL_TYPE,
             external_id: item.full_path,
             content_modified: new Date(item.content_modified),
-            has_notes: true
+            has_notes: indexable
         };
 
         const rootPath = FILES_SHELF_NAME + "/" + options.title;
@@ -167,6 +173,14 @@ export class FilesShelfPlugin {
                 }
             }
         }
+    }
+
+    #isIndexable(node) {
+        const fileName = typeof node === "string"
+            ? node
+            : node.external_id;
+
+        return !!/(.org|.md|.txt)$/i.exec(fileName);
     }
 
     async openWithEditor(node) {
@@ -261,11 +275,14 @@ export class FilesShelfPlugin {
                     }
                     if (file.type === FILES_ITEM_TYPE_FILE && !existingFileNode) {
                         const node = await this.#createExternalFileNode(options, file);
-                        itemsToIndex.push(node);
+
+                        if (this.#isIndexable(node))
+                            itemsToIndex.push(node);
                     }
                     else if (file.type === FILES_ITEM_TYPE_FILE
-                        && existingFileNode.content_modified.getTime() < file.content_modified) {
-                        itemsToIndex.push(existingFileNode);
+                            && existingFileNode.content_modified.getTime() < file.content_modified) {
+                        if (this.#isIndexable(node))
+                            itemsToIndex.push(existingFileNode);
 
                         existingFileNode.content_modified = new Date(file.content_modified);
                         await Node.update(existingFileNode);

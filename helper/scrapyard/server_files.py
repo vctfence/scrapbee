@@ -5,8 +5,8 @@ import flask
 from flask import request
 
 from .server import requires_auth, app
-from .storage_files import files_list_directory, files_open_with_editor, files_fetch_file_content, \
-    files_save_file_content, files_shell_open_asset, files_create_index
+from .storage_files import files_list_directory, files_open_with_editor, files_fetch_file_text, \
+    files_fetch_file_bytes, files_save_file_text, files_shell_open_asset, files_create_index
 
 
 @app.route("/files/list_directory", methods=['POST'])
@@ -29,10 +29,10 @@ def shell_open_asset():
     return "", 204
 
 
-@app.route("/files/fetch_file_content", methods=['POST'])
+@app.route("/files/fetch_file_bytes", methods=['POST'])
 @requires_auth
-def fetch_file_content():
-    content = files_fetch_file_content(request.json)
+def fetch_file_bytes():
+    content = files_fetch_file_bytes(request.json)
 
     if content:
         return content
@@ -40,10 +40,21 @@ def fetch_file_content():
         return "", 404
 
 
-@app.route("/files/save_file_content", methods=['POST'])
+@app.route("/files/fetch_file_text", methods=['POST'])
 @requires_auth
-def save_file_content():
-    files_save_file_content(request.json)
+def fetch_file_text():
+    content = files_fetch_file_text(request.json)
+
+    if content:
+        return content
+    else:
+        return "", 404
+
+
+@app.route("/files/save_file_text", methods=['POST'])
+@requires_auth
+def save_file_text():
+    files_save_file_text(request.json)
     return "", 204
 
 

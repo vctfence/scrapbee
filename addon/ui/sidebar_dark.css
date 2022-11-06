@@ -182,6 +182,10 @@ select,
     background-image: url("../icons/notes2.svg") !important;
 }
 
+.jstree-default .scrapyard-file > .jstree-anchor .jstree-themeicon {
+    background-image: url("../icons/file2.svg") !important;
+}
+
 .jstree-default .jstree-anchor.generic-icon .jstree-themeicon {
     background-image: url("../icons/globe2.svg") !important;
 }

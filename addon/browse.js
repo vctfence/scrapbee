@@ -1,7 +1,7 @@
 import {
     CLOUD_EXTERNAL_TYPE,
     NODE_TYPE_ARCHIVE,
-    NODE_TYPE_BOOKMARK,
+    NODE_TYPE_BOOKMARK, NODE_TYPE_FILE,
     NODE_TYPE_FOLDER,
     NODE_TYPE_NOTES,
     RDF_EXTERNAL_TYPE
@@ -16,7 +16,7 @@ import {
     updateTabURL
 } from "./utils_browser.js";
 import {settings} from "./settings.js";
-import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
+import {HELPER_APP_v2_1_IS_REQUIRED, HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {send, sendLocal} from "./proxy.js";
 import {rdfShelf} from "./plugin_rdf_shelf.js";
 import {Bookmark} from "./bookmarks_bookmark.js"
@@ -278,6 +278,16 @@ async function listSiteArchives(node) {
     return pages.filter(n => n.type === NODE_TYPE_ARCHIVE);
 }
 
+async function browseFile(node) {
+    const helper = await helperApp.hasVersion("2.1", HELPER_APP_v2_1_IS_REQUIRED);
+
+    if (helper) {
+        return helperApp.postJSON("/files/shell_open_asset", {
+            path: node.uri
+        });
+    }
+}
+
 export async function browseNodeBackground(node, options) {
     switch (node.type) {
         case NODE_TYPE_BOOKMARK:
@@ -296,6 +306,9 @@ export async function browseNodeBackground(node, options) {
 
         case NODE_TYPE_FOLDER:
             return browseFolder(node, options);
+
+        case NODE_TYPE_FILE:
+            return browseFile(node);
     }
 }
 

@@ -1,4 +1,4 @@
-import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_NOTES, RDF_EXTERNAL_TYPE} from "../storage.js";
+import {BROWSER_EXTERNAL_TYPE, NODE_TYPE_FILE, NODE_TYPE_NOTES, RDF_EXTERNAL_TYPE} from "../storage.js";
 import {formatBytes} from "../utils.js";
 
 const DEFAULT_CONTAINER = "--default-container";
@@ -144,7 +144,9 @@ function showDlg(name, data, init = () => {}) {
 
     const bookmarkIconDiv = $dlg.find("#prop-title-icon-image").first();
     if (bookmarkIconDiv.length) {
-        if (data.displayed_icon)
+        if (data.type === NODE_TYPE_NOTES || data.type === NODE_TYPE_FILE)
+            bookmarkIconDiv.hide();
+        else if (data.displayed_icon)
             bookmarkIconDiv.css("background-image", `url("${data.displayed_icon}")`);
         else
             bookmarkIconDiv.css("background-image", `var(--themed-globe-icon)`);

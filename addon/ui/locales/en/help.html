@@ -370,12 +370,15 @@
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>, and plain text files as notes in
         Scrapyard. Select "Add directory" in the context menu of the shelf to add a directory
         from the local filesystem. Scrapyard will create a full-text search index for all
-        added files. It is possible to open files from this shelf in a user-specified text editor
+        added text files. It is possible to open files from this shelf in a user-specified text editor
         through the context menu of a file.
     </p>
 
     <p>Add <code>#+OPTIONS: toc:t</code> or <code>#+OPTIONS: toc:t num:t</code> directive to
     your org-mode files to generate a table of contents.</p>
+
+    <p>Files other types could be included by altering the file mask used during the shelf
+    creation and will be opened with the associated application.</p>
 
     <p style="text-align: center">
         <img src="images/files-shelf.png">
