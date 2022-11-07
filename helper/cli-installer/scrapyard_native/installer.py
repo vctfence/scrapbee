@@ -54,7 +54,7 @@ def write_reg_hkcu_value(path, value):
         print("Can't access registry")
 
 
-helper_base = "scrapyard_helper"
+helper_base = "scrapyard_server"
 
 package_path = os.path.abspath(os.path.dirname(__file__))
 subprocess.check_call([sys.executable, "-m", "pip", "install", package_path, "--user"])
@@ -94,5 +94,5 @@ if platform.system() != "Windows":
 if platform.system() == "Windows":
     import winreg
 
-    write_reg_hkcu_value(f"Software\\Mozilla\\NativeMessagingHosts\\{helper_base}", firefox_manifest_path)
-    write_reg_hkcu_value(f"Software\\Google\\Chrome\\NativeMessagingHosts\\{helper_base}", chrome_manifest_path)
+    write_reg_hkcu_value(f"Software\\Mozilla\\NativeMessagingHosts\\scrapyard_helper", firefox_manifest_path)
+    write_reg_hkcu_value(f"Software\\Google\\Chrome\\NativeMessagingHosts\\scrapyard_helper", chrome_manifest_path)

@@ -1,1 +1,1 @@
-python ./scrapyard_helper/installer.py
+python ./scrapyard_native/installer.py

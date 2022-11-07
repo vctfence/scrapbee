@@ -1,15 +1,16 @@
 Unicode True
 
-!define APPNAME "Scrapyard Helper"
-!define VERSION "2.0"
+!define APPNAME "Scrapyard Native Application"
+!define DIRNAME "Scrapyard"
+!define VERSION "2.1"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
 ; Main Install settings
 Name "${APPNAMEANDVERSION}"
-InstallDir "$PROGRAMFILES64\${APPNAME}"
+InstallDir "$PROGRAMFILES64\${DIRNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" ""
-OutFile "scrapyard-helper-${VERSION}_x86_64.exe"
+OutFile "scrapyard-native-${VERSION}_x86_64.exe"
 
 ; Use compression
 SetCompressor LZMA
@@ -153,18 +154,24 @@ Section "Scrapyard Helper" Section1
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\"
 	File "assets\scrapyard.ico"
-	File /r "dist/scrapyard_helper\"
+	File /r "dist/scrapyard_server\"
 
-	Push '$INSTDIR\scrapyard_helper.exe'
-    Push "\"
+	Push '$INSTDIR\scrapyard_server.exe'
     Push "/"
+    Push "\"
+    Call StrReplace
+    Pop $2
+
+    Push $2
+    Push "\"
+    Push "\\"
     Call StrReplace
     Pop $1
 
 	FileOpen $0 manifest.json w
 	FileWrite $0 '{$\n'
     FileWrite $0 '"name": "scrapyard_helper",$\n'
-    FileWrite $0 '"description": "Scrapyard helper application",$\n'
+    FileWrite $0 '"description": "Scrapyard native application",$\n'
     FileWrite $0 '"path": "$1",$\n'
     FileWrite $0 '"type": "stdio",$\n'
     FileWrite $0 '"allowed_extensions": [ "scrapyard@firefox", "scrapyard-we@firefox" ]$\n'
@@ -174,7 +181,7 @@ Section "Scrapyard Helper" Section1
     FileOpen $0 manifest.json.chrome w
     FileWrite $0 '{$\n'
     FileWrite $0 '"name": "scrapyard_helper",$\n'
-    FileWrite $0 '"description": "Scrapyard helper application",$\n'
+    FileWrite $0 '"description": "Scrapyard native application",$\n'
     FileWrite $0 '"path": "$1",$\n'
     FileWrite $0 '"type": "stdio",$\n'
     FileWrite $0 '"allowed_origins": [ "chrome-extension://fhgomkcfijbifanbkppjhgmcdkmbacep/", "chrome-extension://jlpgjeiblkojkaedoobnfkgobdddimon/" ]$\n'
@@ -208,6 +215,7 @@ Section Uninstall
 
 	;Remove from registry...
 	DeleteRegKey HKCU "Software\Mozilla\NativeMessagingHosts\scrapyard_helper"
+	DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\scrapyard_helper"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 	DeleteRegKey HKLM "SOFTWARE\${APPNAME}"
 

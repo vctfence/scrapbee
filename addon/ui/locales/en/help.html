@@ -161,10 +161,15 @@
 
     <h4>1. Installing the Native Application</h4>
     <p>
-        Scrapyard requires the installation of a native helper application to access the filesystem.
+        Scrapyard requires the installation of a native backend application to access the filesystem.
         Please install the native application using one of the download links provided in
         the <a href="options.html#nativeapp">Native App</a> options tab.
     </p>
+
+    <p>A limited set of functionality is available without the backend application if the "Content location" option
+        in the main settings page is set to "Browser internal storage"<span class="transition-help-warning">
+            (not available if content transfer is required, disabling the automatic transition will turin it on)</span>.
+        Generally, it is recommended to store the archived content in the filesystem.</p>
 
     <h4>2. Specifying the Content Directory Path</h4>
     <p>
@@ -173,18 +178,14 @@
         Only content shared through Dropbox or OneDrive could be browsed with the Scrapyard application for Android.
     </p>
 
-    <p>A limited set of functionality is available without the native application if the "Content location" option
-    in the main settings page is set to "Browser internal storage"<span class="transition-help-warning">
-            (not available if content transfer is required, disabling the automatic transition will turin it on)</span>.
-        Generally, it is recommended to store the archived content in the filesystem.</p>
-
     <h2>Main Features</h2>
 
     <h3 id="page-capture-manual">Capturing Pages</h3>
     <p>
         To capture a web page or its fragment, select the part of the page you want to archive, open the Scrapyard popup dialog
         by clicking its icon on the browser toolbar, choose the destination shelf and folder, then press the "Bookmark"
-        or "Archive" button. The "Bookmark" button stores only web-page URLs as bookmarks. The "Archive" button captures
+        or "Archive" button. To capture multiple tabs, highlight them with Ctrl+click.
+        The "Bookmark" button stores only web-page URLs as bookmarks. The "Archive" button captures
         the current selection, the whole page, if there is no active selection, or the whole document, if the opened
         link is not a web-page (for example, a PDF file). </p>
 
@@ -370,7 +371,7 @@
         <a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>, and plain text files as notes in
         Scrapyard. Select "Add directory" in the context menu of the shelf to add a directory
         from the local filesystem. It is possible to open files from this shelf in a user-specified text editor
-        through the context menu of a file. Scrapyard will create a full-text search index for all
+        through the context menu of an item. Scrapyard will create a full-text search index for all
         added plain text files.
     </p>
 
@@ -378,7 +379,7 @@
     your org-mode files to generate a table of contents.</p>
 
     <p>Files other types could be included by altering the file mask used during the shelf
-    creation and will be opened with the associated application.</p>
+    creation. Non-textual files are opened with the associated application.</p>
 
     <p style="text-align: center">
         <img src="images/files-shelf.png">

@@ -154,6 +154,7 @@ async function addBookmarkFromIshell(message, type) {
     const node = await getActiveTabMetadata();
 
     node.name = message.name || node.name;
+    node.type = type;
     node.tags = message.tags;
     node.todo_state = message.todo_state;
     node.todo_date = message.todo_date;
@@ -167,10 +168,8 @@ async function addBookmarkFromIshell(message, type) {
     node.parent_id = folder.id;
     delete message.path;
 
-    if (type === NODE_TYPE_BOOKMARK)
-        return sendLocal.createBookmark({node});
-    else if (type === NODE_TYPE_NOTES)
+    if (type === NODE_TYPE_NOTES)
         return sendLocal.createNotes({node});
     else
-        return sendLocal.createArchive({node});
+        return sendLocal.captureHighlightedTabs({options: node});
 }

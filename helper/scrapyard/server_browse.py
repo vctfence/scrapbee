@@ -46,6 +46,7 @@ def serve_from_file(params, uuid):
 
     object_directory = server.storage_manager.get_object_directory(params, uuid)
     archive_type = params.get("contains", None)
+    archive_name = params.get("name", uuid)
 
     if archive_type == StorageManager.ARCHIVE_TYPE_FILES:
         archive_directory = server.storage_manager.get_archive_unpacked_path(object_directory)
@@ -54,7 +55,7 @@ def serve_from_file(params, uuid):
     else:
         archive_content_path = server.storage_manager.get_archive_content_path(object_directory)
         content_type = params.get("content_type", "text/html")
-        return send_file(archive_content_path, mimetype=content_type)
+        return send_file(archive_content_path, mimetype=content_type, download_name=archive_name)
 
 
 def serve_content(params):

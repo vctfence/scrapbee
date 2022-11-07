@@ -47,22 +47,22 @@ helper-win:
 	cd helper; rm -f *.exe
 	cd helper; rm -f *.zip
 	echo "DEBUG = False" > ./helper/scrapyard/server_debug.py
-	cd helper; pyinstaller scrapyard_helper.py
-	mkdir ./helper/dist/scrapyard_helper/scrapyard
-	cp -r ./helper/scrapyard/resources ./helper/dist/scrapyard_helper/scrapyard
+	cd helper; pyinstaller scrapyard_server.py
+	mkdir ./helper/dist/scrapyard_server/scrapyard
+	cp -r ./helper/scrapyard/resources ./helper/dist/scrapyard_server/scrapyard
 	cd helper; makensis setup.nsi
 	make helper-clean
 	echo "DEBUG = True" > ./helper/scrapyard/server_debug.py
 
 .PHONY: helper-cli
 helper-cli:
-	cd helper; cp -r ./scrapyard ./cli-installer/scrapyard_helper/
-	echo "DEBUG = False" > ./helper/cli-installer/scrapyard_helper/scrapyard/server_debug.py
-	cd helper; cp -r ./manifests ./cli-installer/scrapyard_helper/
-	cd helper; rm -r -f ./cli-installer/scrapyard_helper/manifests/debug_manifest*
-	cd helper; cp -r ./setup.py ./cli-installer/scrapyard_helper/
+	cd helper; cp -r ./scrapyard ./cli-installer/scrapyard_native/
+	echo "DEBUG = False" > ./helper/cli-installer/scrapyard_native/scrapyard/server_debug.py
+	cd helper; cp -r ./manifests ./cli-installer/scrapyard_native/
+	cd helper; rm -r -f ./cli-installer/scrapyard_native/manifests/debug_manifest*
+	cd helper; cp -r ./setup.py ./cli-installer/scrapyard_native/
 	cd helper; rm -f scrapyard-helper.tgz
-	cd helper; 7za.exe a -ttar -so -an ./cli-installer/* -xr!__pycache__ | 7za.exe a -si scrapyard-helper.tgz
-	cd helper; rm ./cli-installer/scrapyard_helper/setup.py
-	cd helper; rm -r -f ./cli-installer/scrapyard_helper/scrapyard
-	cd helper; rm -r -f ./cli-installer/scrapyard_helper/manifests
+	cd helper; 7za.exe a -ttar -so -an ./cli-installer/* -xr!__pycache__ | 7za.exe a -si scrapyard-native.tgz
+	cd helper; rm ./cli-installer/scrapyard_native/setup.py
+	cd helper; rm -r -f ./cli-installer/scrapyard_native/scrapyard
+	cd helper; rm -r -f ./cli-installer/scrapyard_native/manifests

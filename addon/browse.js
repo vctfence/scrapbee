@@ -218,6 +218,7 @@ export async function onRequestArchiveMessage(msg) {
                         const content = await Archive.reify(archive, true);
 
                         result.kind = "content";
+                        result.name = node.name;
                         result.uuid = node.uuid;
                         result.content_type = node.content_type || "text/html";
                         result.content = content;
@@ -229,6 +230,7 @@ export async function onRequestArchiveMessage(msg) {
             }
             else {
                 result.kind = "metadata";
+                result.name = node.name;
                 result.content_type = node.content_type || "text/html";
                 result.contains = node.contains || null;
             }
@@ -267,7 +269,7 @@ async function browseFolder(node, options) {
         const archives = await listSiteArchives(node);
         const page = archives[0];
         if (page)
-            return browseArchive(page, options);
+            return browseNode(page, options);
     }
 }
 

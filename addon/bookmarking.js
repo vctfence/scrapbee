@@ -345,34 +345,34 @@ export async function packUrlExt(url, hide_tab) {
 }
 
 export function addBookmarkOnCommand(command) {
-    let action = command === "archive_to_default_shelf"? "createArchive": "createBookmark";
+    let type = command === "archive_to_default_shelf"? NODE_TYPE_ARCHIVE: NODE_TYPE_BOOKMARK;
 
     if (settings.platform.firefox)
-        addBookmarkOnCommandFirefox(action);
+        addBookmarkOnCommandFirefox(type);
     else
-        addBookmarkOnCommandNonFirefox(action);
+        addBookmarkOnCommandNonFirefox(type);
 }
 
-function addBookmarkOnCommandFirefox(action) {
+function addBookmarkOnCommandFirefox(type) {
     if (localStorage.getItem("option-open-sidebar-from-shortcut") === "open") {
         localStorage.setItem("sidebar-select-shelf", DEFAULT_SHELF_ID);
         browser.sidebarAction.open();
     }
 
-    if (action === "createArchive")
-        askCSRPermission()// requires non-async function
+    if (type === NODE_TYPE_ARCHIVE)
+        askCSRPermission() // requires non-async function
             .then(response => {
                 if (response)
-                    addBookmarkOnCommandSendPayload(action);
+                    addBookmarkOnCommandSendPayload(type);
             })
             .catch(e => console.error(e));
     else
-        addBookmarkOnCommandSendPayload(action);
+        addBookmarkOnCommandSendPayload(type);
 }
 
-async function addBookmarkOnCommandNonFirefox(action) {
+async function addBookmarkOnCommandNonFirefox(type) {
     const payload = await getActiveTabMetadata();
-    await addBookmarkOnCommandSendPayload(action, payload);
+    await addBookmarkOnCommandSendPayload(type, payload);
 
     await settings.load();
     if (settings.open_sidebar_from_shortcut()) {
@@ -384,12 +384,14 @@ async function addBookmarkOnCommandNonFirefox(action) {
     }
 }
 
-async function addBookmarkOnCommandSendPayload(action, payload) {
+async function addBookmarkOnCommandSendPayload(type, payload) {
     if (!payload)
         payload = await getActiveTabMetadata();
 
+    payload.type = type;
     payload.parent_id = DEFAULT_SHELF_ID;
-    return sendLocal[action]({node: payload});
+
+    return sendLocal.captureHighlightedTabs({options: payload});
 }
 
 export async function createBookmarkFromURL (url, parentId) {

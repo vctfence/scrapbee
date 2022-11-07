@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='scrapyard_helper',
-    version='2.0',
+    name='scrapyard_server',
+    version='2.1',
     packages=find_packages(),
     url='',
     license='',
@@ -11,9 +11,9 @@ setup(
     description='',
     install_requires=['Flask', 'bs4', 'regex'],
     entry_points={
-        'console_scripts': ['scrapyard_helper=scrapyard.helper:main'],
+        'console_scripts': ['scrapyard_server=scrapyard.helper:main'],
     },
     package_data={
-        '': ['resources/*.png', 'resources/*.svg', 'resources/js/*.js', 'resources/*.html']
+        '': ['resources/*', 'resources/*/*']
     }
 )

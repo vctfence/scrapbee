@@ -17,6 +17,6 @@ export async function load() {
     setSaveCheckHandler("option-enable-helper-app-logging", "enable_helper_app_logging");
     $("#option-enable-helper-app-logging").prop("checked", settings.enable_helper_app_logging());
 
-    $("#helper-app-log-link").prop("href", helperApp.url("/helper_log"));
+    $("#helper-app-log-link").prop("href", helperApp.url("/server_log"));
 }
 

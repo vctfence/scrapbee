@@ -4,4 +4,4 @@ if [ `id -u` -eq 0 ]
   exit
 fi
 
-python3 ./scrapyard_helper/installer.py
+python3 ./scrapyard_native/installer.py

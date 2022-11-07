@@ -1,13 +1,14 @@
 import {formatBytes, getMimetypeByExt} from "./utils.js";
-import {receive, send} from "./proxy.js";
+import {receive, send, sendLocal} from "./proxy.js";
 import {
+    BROWSER_EXTERNAL_TYPE,
     CLOUD_SHELF_ID,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES,
     UNDO_DELETE
 } from "./storage.js";
-import {getActiveTab, gettingStarted, showNotification, updateTabURL} from "./utils_browser.js";
+import {askCSRPermission, getActiveTab, gettingStarted, showNotification, updateTabURL} from "./utils_browser.js";
 import {HELPER_APP_v2_IS_REQUIRED, helperApp} from "./helper_app.js";
 import {settings} from "./settings.js";
 import {
@@ -32,6 +33,7 @@ import {undoManager} from "./bookmarks_undo.js";
 import {browseNodeBackground} from "./browse.js";
 import UUID from "./uuid.js";
 import {ensureSidebarWindow} from "./utils_sidebar.js";
+import {getFaviconFromContent, getFaviconFromTab} from "./favicon.js";
 
 async function canUseBookmarking() {
     return settings.storage_mode_internal() || await helperApp.hasVersion("2.0", HELPER_APP_v2_IS_REQUIRED);
@@ -90,6 +92,7 @@ receive.createArchive = async message => {
         return;
 
     const node = message.node;
+    const tab = message.tab || await getActiveTab();
 
     if (isSpecialPage(node.uri))
         return notifySpecialPage();
@@ -97,7 +100,6 @@ receive.createArchive = async message => {
     async function addBookmark() {
         try {
             const bookmark = await Bookmark.idb.add(node, NODE_TYPE_ARCHIVE); // added to the storage on archive content update
-            const tab = await getActiveTab();
 
             if (settings.add_to_bookmarks_toolbar())
                 await addToBookmarksToolbar(bookmark);
@@ -172,10 +174,49 @@ receive.createNotes = async message => {
 
     Bookmark.setTentativeId(node);
     node.type = NODE_TYPE_NOTES; // needed for beforeBookmarkAdded
+
     return send.beforeBookmarkAdded({node})
         .then(addNotes)
         .catch(addNotes);
 };
+
+receive.captureHighlightedTabs = async message => {
+    const options = message.options;
+    const highlightedTabs = await browser.tabs.query({highlighted: true, currentWindow: true});
+    let parentNode;
+
+    if (options.type === NODE_TYPE_ARCHIVE) {
+        parentNode = await Node.get(options.parent_id);
+
+        if (parentNode.external === BROWSER_EXTERNAL_TYPE) {
+            showNotification({title: "Warning", message: "Only bookmarks are saved to the browser bookmarks folder."});
+        }
+    }
+
+    if (highlightedTabs.length === 1)
+        return captureBookmarkForTab(highlightedTabs[0], message.options, parentNode);
+    else
+        for (const tab of highlightedTabs) {
+            const node = {...message.options};
+
+            node.uri = tab.url;
+            node.name = tab.title;
+            node.icon = await getFaviconFromTab(tab);
+
+            await captureBookmarkForTab(tab, node, parentNode);
+        }
+} ;
+
+async function captureBookmarkForTab(tab, node, parentNode) {
+    if (node.type === NODE_TYPE_ARCHIVE) {
+        if (parentNode?.external === BROWSER_EXTERNAL_TYPE)
+            return sendLocal.createBookmark({node});
+        else
+            return sendLocal.createArchive({node, tab});
+    }
+    else
+        return sendLocal.createBookmark({node});
+}
 
 receive.setTODOState = message => TODO.setState(message.nodes);
 
@@ -341,7 +382,6 @@ receive.browseNode = async message => {
     else
         return browseNodeBackground(message.node, message);
 };
-
 
 receive.browseNotes = message => {
     (message.tab

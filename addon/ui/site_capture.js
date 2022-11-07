@@ -98,7 +98,7 @@ function setUpMenu(id) {
         .addEventListener("click", e => {
             let links = "";
             for (const link of pageLinks)
-                links += `${link.url}  [${link.text}]\n`;
+                links += `${link.url} ${formatLinkText(link.text)}\n`;
             insertRule(id, links.trim());
         });
 
@@ -118,4 +118,15 @@ function hideMenu() {
 function insertRule(id, rule) {
     const textarea = document.getElementById(`${id}-links`);
     textarea.value = textarea.value + (textarea.value? "\n": "") + `${rule}`;
+}
+
+function formatLinkText(text) {
+    text = text?.trim()?.replace(/\n/g, " ")?.replace(/\s+/g, " ") || "";
+
+    let result = `[${text}]`;
+
+    if (result === "[]")
+        result = "";
+
+    return result;
 }

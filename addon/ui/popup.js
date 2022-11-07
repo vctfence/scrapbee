@@ -103,22 +103,6 @@ function initBookmarkFolderSelect(bookmarkFolderSelect, folderHistory) {
     selectricRefresh(bookmarkFolderSelect);
 }
 
-async function saveActiveTabProperties() {
-    const activeTab = await getActiveTab();
-
-    if (activeTab) {
-        $("#bookmark-name").val(activeTab.title);
-        $("#bookmark-url").val(activeTab.url);
-
-        let favicon;
-        if (!isSpecialPage(activeTab.url))
-             favicon = await getFaviconFromTab(activeTab);
-
-        if (favicon)
-            $("#bookmark-icon").val(favicon);
-    }
-}
-
 function onTreeFolderSelected(e, {node: jnode}) {
     let existing = $(`#bookmark-folder option[value='${jnode.id}']`);
 
@@ -158,6 +142,23 @@ function switchCrawlerMode(e) {
     }
 }
 
+async function saveActiveTabProperties() {
+    const activeTab = await getActiveTab();
+    const highlightedTabs = await browser.tabs.query({highlighted: true, currentWindow: true});
+
+    if (activeTab && highlightedTabs.length === 1) {
+        $("#bookmark-name").val(activeTab.title);
+        $("#bookmark-url").val(activeTab.url);
+
+        let favicon;
+        if (!isSpecialPage(activeTab.url))
+            favicon = await getFaviconFromTab(activeTab);
+
+        if (favicon)
+            $("#bookmark-icon").val(favicon);
+    }
+}
+
 async function addBookmark(nodeType) {
     let parentNode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
     saveFolderHistory(parentNode.id + "", parentNode.name, folderHistory);
@@ -172,16 +173,13 @@ async function addBookmark(nodeType) {
         __crawl: crawlerMode
     };
 
-    if (nodeType === NODE_TYPE_ARCHIVE) {
-        if (parentNode.external === BROWSER_EXTERNAL_TYPE) {
-            showNotification({title: "Warning", message: "Only bookmarks are saved to the browser bookmarks folder."});
-            await send.createBookmark({node: payload});
-        }
-        else if (await askCSRPermission())
-            await send.createArchive({node: payload});
-    }
-    else
-        await send.createBookmark({node: payload});
+    let canProceed = true;
+    if (nodeType === NODE_TYPE_ARCHIVE)
+        if (!await askCSRPermission())
+            canProceed = false;
+
+    if (canProceed)
+        await send.captureHighlightedTabs({options: payload});
 
     window.close();
 }
