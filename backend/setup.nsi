@@ -1,6 +1,6 @@
 Unicode True
 
-!define APPNAME "Scrapyard Native Application"
+!define APPNAME "Scrapyard Backend"
 !define DIRNAME "Scrapyard"
 !define VERSION "2.1"
 
@@ -10,7 +10,7 @@ Unicode True
 Name "${APPNAMEANDVERSION}"
 InstallDir "$PROGRAMFILES64\${DIRNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" ""
-OutFile "scrapyard-native-${VERSION}_x86_64.exe"
+OutFile "scrapyard-backend-${VERSION}_x86_64.exe"
 
 ; Use compression
 SetCompressor LZMA
@@ -136,7 +136,7 @@ Function UninstallExisting
     Exch $1
 FunctionEnd
 
-Section "Scrapyard Helper" Section1
+Section "Scrapyard Backend" Section1
 
     ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
     ${If} $0 != ""
@@ -154,9 +154,9 @@ Section "Scrapyard Helper" Section1
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\"
 	File "assets\scrapyard.ico"
-	File /r "dist/scrapyard_server\"
+	File /r "dist/scrapyard_backend\"
 
-	Push '$INSTDIR\scrapyard_server.exe'
+	Push '$INSTDIR\scrapyard_backend.exe'
     Push "/"
     Push "\"
     Call StrReplace
@@ -171,7 +171,7 @@ Section "Scrapyard Helper" Section1
 	FileOpen $0 manifest.json w
 	FileWrite $0 '{$\n'
     FileWrite $0 '"name": "scrapyard_helper",$\n'
-    FileWrite $0 '"description": "Scrapyard native application",$\n'
+    FileWrite $0 '"description": "Scrapyard backend application",$\n'
     FileWrite $0 '"path": "$1",$\n'
     FileWrite $0 '"type": "stdio",$\n'
     FileWrite $0 '"allowed_extensions": [ "scrapyard@firefox", "scrapyard-we@firefox" ]$\n'
@@ -181,7 +181,7 @@ Section "Scrapyard Helper" Section1
     FileOpen $0 manifest.json.chrome w
     FileWrite $0 '{$\n'
     FileWrite $0 '"name": "scrapyard_helper",$\n'
-    FileWrite $0 '"description": "Scrapyard native application",$\n'
+    FileWrite $0 '"description": "Scrapyard backend application",$\n'
     FileWrite $0 '"path": "$1",$\n'
     FileWrite $0 '"type": "stdio",$\n'
     FileWrite $0 '"allowed_origins": [ "chrome-extension://fhgomkcfijbifanbkppjhgmcdkmbacep/", "chrome-extension://jlpgjeiblkojkaedoobnfkgobdddimon/" ]$\n'
@@ -238,6 +238,6 @@ Function .onInit
 
 FunctionEnd
 
-BrandingText "Scrapyard Helper"
+BrandingText "Scrapyard Backend"
 
 ; eof

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='scrapyard_server',
+    name='scrapyard_backend',
     version='2.1',
     packages=find_packages(),
     url='',
@@ -11,7 +11,7 @@ setup(
     description='',
     install_requires=['Flask', 'bs4', 'regex'],
     entry_points={
-        'console_scripts': ['scrapyard_server=scrapyard.helper:main'],
+        'console_scripts': ['scrapyard_backend=scrapyard.backend:main'],
     },
     package_data={
         '': ['resources/*', 'resources/*/*']

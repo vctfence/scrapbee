@@ -9,8 +9,8 @@ node_modules
 addon/.web-extension-id
 addon/_metadata
 __pycache__
-helper/build/
-helper/dist/
-helper/*.exe
-helper/*.zip
-helper/*.tgz
+backend/build/
+backend/dist/
+backend/*.exe
+backend/*.zip
+backend/*.tgz

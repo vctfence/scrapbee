@@ -97,7 +97,7 @@ async function init() {
     $("#btnSearch").on("click", () => openPage("/ui/fulltext.html"));
     $("#btnSettings").on("click", () => openPage("/ui/options.html"));
     $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
-    $("#btnHelperWarning").on("click", () => openPage("/ui/options.html#helperapp"));
+    $("#btnHelperWarning").on("click", () => openPage("/ui/options.html#backend"));
 
     $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();

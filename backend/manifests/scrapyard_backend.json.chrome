@@ -1,6 +1,6 @@
 {
     "name": "scrapyard_helper",
-    "description": "Scrapyard native application",
+    "description": "Scrapyard backend application",
     "path": "$EXECUTABLE_PATH$",
     "type": "stdio",
     "allowed_origins": ["chrome-extension://fhgomkcfijbifanbkppjhgmcdkmbacep/", "chrome-extension://jlpgjeiblkojkaedoobnfkgobdddimon/"]

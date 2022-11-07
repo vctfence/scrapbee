@@ -36,33 +36,33 @@ chrome-mv3:
 	cd addon; python ../scripts/mkmanifest.py manifest.json.mv3.chrome manifest.json `cat version.txt`
 
 .PHONY: helper-clean
-helper-clean:
-	cd helper; rm -r -f build
-	cd helper; rm -r -f dist
-	cd helper; rm -f *.spec
+backend-clean:
+	cd backend; rm -r -f build
+	cd backend; rm -r -f dist
+	cd backend; rm -f *.spec
 
-.PHONY: helper-win
-helper-win:
-	make helper-clean
-	cd helper; rm -f *.exe
-	cd helper; rm -f *.zip
-	echo "DEBUG = False" > ./helper/scrapyard/server_debug.py
-	cd helper; pyinstaller scrapyard_server.py
-	mkdir ./helper/dist/scrapyard_server/scrapyard
-	cp -r ./helper/scrapyard/resources ./helper/dist/scrapyard_server/scrapyard
-	cd helper; makensis setup.nsi
-	make helper-clean
-	echo "DEBUG = True" > ./helper/scrapyard/server_debug.py
+.PHONY: backend-win
+backend-win:
+	make backend-clean
+	cd backend; rm -f *.exe
+	cd backend; rm -f *.zip
+	echo "DEBUG = False" > ./backend/scrapyard/server_debug.py
+	cd backend; pyinstaller scrapyard_backend.py
+	mkdir ./backend/dist/scrapyard_backend/scrapyard
+	cp -r ./backend/scrapyard/resources ./backend/dist/scrapyard_backend/scrapyard
+	cd backend; makensis setup.nsi
+	make backend-clean
+	echo "DEBUG = True" > ./backend/scrapyard/server_debug.py
 
-.PHONY: helper-cli
-helper-cli:
-	cd helper; cp -r ./scrapyard ./cli-installer/scrapyard_native/
-	echo "DEBUG = False" > ./helper/cli-installer/scrapyard_native/scrapyard/server_debug.py
-	cd helper; cp -r ./manifests ./cli-installer/scrapyard_native/
-	cd helper; rm -r -f ./cli-installer/scrapyard_native/manifests/debug_manifest*
-	cd helper; cp -r ./setup.py ./cli-installer/scrapyard_native/
-	cd helper; rm -f scrapyard-helper.tgz
-	cd helper; 7za.exe a -ttar -so -an ./cli-installer/* -xr!__pycache__ | 7za.exe a -si scrapyard-native.tgz
-	cd helper; rm ./cli-installer/scrapyard_native/setup.py
-	cd helper; rm -r -f ./cli-installer/scrapyard_native/scrapyard
-	cd helper; rm -r -f ./cli-installer/scrapyard_native/manifests
+.PHONY: backend-cli
+backend-cli:
+	cd backend; cp -r ./scrapyard ./cli-installer/scrapyard_backend/
+	echo "DEBUG = False" > ./backend/cli-installer/scrapyard_backend/scrapyard/server_debug.py
+	cd backend; cp -r ./manifests ./cli-installer/scrapyard_backend/
+	cd backend; rm -r -f ./cli-installer/scrapyard_backend/manifests/debug_manifest*
+	cd backend; cp -r ./setup.py ./cli-installer/scrapyard_backend/
+	cd backend; rm -f scrapyard-backend.tgz
+	cd backend; 7za.exe a -ttar -so -an ./cli-installer/* -xr!__pycache__ | 7za.exe a -si scrapyard-backend.tgz
+	cd backend; rm ./cli-installer/scrapyard_backend/setup.py
+	cd backend; rm -r -f ./cli-installer/scrapyard_backend/scrapyard
+	cd backend; rm -r -f ./cli-installer/scrapyard_backend/manifests

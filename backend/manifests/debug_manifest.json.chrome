@@ -1,7 +1,7 @@
 {
 "name": "scrapyard_helper",
-"description": "Scrapyard native application",
-"path": "D:\\sandbox\\firefox\\scrapyard\\helper\\debug.cmd",
+"description": "Scrapyard backend application",
+"path": "D:\\sandbox\\firefox\\scrapyard\\backend\\debug.cmd",
 "type": "stdio",
 "allowed_origins": ["chrome-extension://fhgomkcfijbifanbkppjhgmcdkmbacep/", "chrome-extension://jlpgjeiblkojkaedoobnfkgobdddimon/"]
 }
