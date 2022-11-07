@@ -36,6 +36,7 @@
     --themed-chrome-icon: url("../icons/chrome2.svg") !important;
 
     --themed-files-box-icon: url("../icons/files-box2.svg") !important;
+    --themed-file-icon: url("../icons/file2.svg") !important;
 
     --themed-cloud-icon: url("../icons/cloud2.svg") !important;
     --themed-cloud-sync-icon: url("../icons/cloud_sync2.svg") !important;
@@ -180,10 +181,6 @@ select,
 
 .jstree-default .scrapyard-notes > .jstree-anchor .jstree-themeicon {
     background-image: url("../icons/notes2.svg") !important;
-}
-
-.jstree-default .scrapyard-file > .jstree-anchor .jstree-themeicon {
-    background-image: url("../icons/file2.svg") !important;
 }
 
 .jstree-default .jstree-anchor.generic-icon .jstree-themeicon {

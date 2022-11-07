@@ -63,22 +63,22 @@ class FolderManager extends EntityManager {
 
     // returns map of folders the function was able to find in the path
     async _queryFolders(pathList) {
-        pathList = pathList.slice(0);
+        pathList = [...pathList];
 
-        let folders = {};
+        let folders = [];
         let shelfName = pathList.shift();
         let shelf = await Query.shelf(shelfName);
 
         if (shelf)
-            folders[shelf.name.toLocaleLowerCase()] = shelf;
+            folders.push(shelf);
         else
-            return {};
+            return [];
 
         let parent = shelf;
         for (let name of pathList) {
             if (parent) {
                 let folder = await Query.subfolder(parent.id, name);
-                folders[name.toLocaleLowerCase()] = folder;
+                folders.push(folder);
                 parent = folder;
             }
             else
@@ -93,7 +93,7 @@ class FolderManager extends EntityManager {
         let pathList = Path.split(path);
         let folders = await this._queryFolders(pathList);
 
-        return folders[pathList[pathList.length - 1].toLocaleLowerCase()];
+        return folders.at(-1);
     }
 
     // creates all non-existent folders in the path
@@ -101,7 +101,7 @@ class FolderManager extends EntityManager {
         let pathList = Path.split(path);
         let folders = await this._queryFolders(pathList);
         let shelfName = pathList.shift();
-        let parent = folders[shelfName.toLowerCase()];
+        let parent = folders.shift();
 
         if (!parent) {
             parent = await this.#Node.add({
@@ -111,8 +111,9 @@ class FolderManager extends EntityManager {
             ishellConnector.invalidateCompletion();
         }
 
+        let ctr = 0;
         for (let name of pathList) {
-            let folder = folders[name.toLowerCase()];
+            let folder = folders[ctr++];
 
             if (folder) {
                 parent = folder;

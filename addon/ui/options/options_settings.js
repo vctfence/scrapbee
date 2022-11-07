@@ -141,7 +141,7 @@ function loadScrapyardSettings() {
     $("#option-do-not-show-archive-toolbar").prop("checked", settings.do_not_show_archive_toolbar());
     $("#option-do-not-switch-to-ff-bookmark").prop("checked", settings.do_not_switch_to_ff_bookmark());
     $("#option-add-to-bookmarks-toolbar").prop("checked", settings.add_to_bookmarks_toolbar());
-    $("#option-number-of-bookmarks-toolbar-references").val(settings.number_of_bookmarks_toolbar_references());
+    $("#option-number-of-bookmarks-toolbar-references").val(settings.number_of_bookmarks_toolbar_references() || "");
     $("#option-display-random-bookmark").prop("checked", settings.display_random_bookmark());
     $("#option-open-bookmark-in-active-tab").prop("checked", settings.open_bookmark_in_active_tab());
     $("#option-open-sidebar-from-shortcut").prop("checked", settings.open_sidebar_from_shortcut());

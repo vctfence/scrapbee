@@ -2,7 +2,7 @@ import {fetchText} from "../utils_io.js";
 import {send} from "../proxy.js";
 import * as org from "../lib/org/org.js"
 import {NODE_TYPE_NOTES} from "../storage.js";
-import {markdown2html, org2html, text2html} from "../notes_render.js";
+import {markdown2html, notes2html, org2html, text2html} from "../notes_render.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {Node, Notes} from "../storage_entities.js";
 import {PlainTextEditor, WYSIWYGEditor} from "./notes_editor.js";
@@ -316,9 +316,14 @@ async function initExamples() {
 }
 
 function saveNotes() {
-    let options = {node_id: NODE_ID, content: editor.getContent(), format, align, width};
-    if (format === "delta")
+    let options = {node_id: NODE_ID, format, align, width};
+
+    options.content = editor.getContent();
+
+    if (options.content && format === "delta")
         options.html = editor.renderContent();
+
+    options.html = notes2html(options);
 
     send.storeNotes({options});
     send.notesChanged({node_id: NODE_ID, removed: !options.content});

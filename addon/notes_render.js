@@ -86,7 +86,7 @@ export function notes2html(notes) {
         case "org":
         default:
             if (notes?.content)
-                return org2html(notes.content, notes.__generate_toc);
+                return org2html(notes.content);
             return "";
     }
 }

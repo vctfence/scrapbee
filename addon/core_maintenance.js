@@ -4,10 +4,10 @@ import {
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_NOTES,
-    DEFAULT_SHELF_UUID,
-    JSON_SCRAPBOOK_FORMAT
+    DEFAULT_SHELF_UUID
 } from "./storage.js";
 import {cloudShelf} from "./plugin_cloud_shelf.js";
+import {filesShelf} from "./plugin_files_shelf.js";
 import {Node} from "./storage_entities.js";
 import {Database} from "./storage_database.js";
 import {settings} from "./settings.js";
@@ -34,6 +34,12 @@ receive.resetScrapyard = async message => {
 
     await Database.wipeEverything();
     await settings.last_sync_date(null);
+
+    if (settings.enable_files_shelf())
+        await filesShelf.createIfMissing();
+
+    if (settings.cloud_enabled())
+        await cloudShelf.createIfMissing();
 
     send.stopProcessingIndication();
 

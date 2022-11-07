@@ -411,13 +411,6 @@ class BookmarkTree {
                 class: "separator-node"
             };
         }
-        else if (node.type === NODE_TYPE_FILE) {
-            jnode.icon = "/icons/file.svg";
-            jnode.li_attr = {
-                "class": "scrapyard-file",
-                "data-clickable": "true"
-            };
-        }
         else {
             jnode.li_attr = {
                 class: "show_tooltip",
@@ -440,7 +433,6 @@ class BookmarkTree {
                     if (settings.visual_archive_color())
                         jnode.a_attr.class += " archive-node-color";
                 }
-
             }
 
             if (node.todo_state) {
@@ -458,6 +450,8 @@ class BookmarkTree {
             if (!node.icon) {
                 if (node.type === NODE_TYPE_NOTES)
                     jnode.icon = "var(--themed-notes-icon)";
+                else if (node.type === NODE_TYPE_FILE)
+                    jnode.icon = "var(--themed-file-icon)";
                 else if (node.content_type === "application/pdf")
                     jnode.icon = "var(--themed-pdf-icon)";
                 else if (IMAGE_FORMATS.some(f => f === node.content_type))
@@ -815,13 +809,7 @@ class BookmarkTree {
 
             // a minimal set of attributes compatible with marshalling
             selectedNodes.forEach(n => nodes.push({id: n.id, parent_id: n.parent_id, name: n.name, uuid: n.uuid,
-                external: n.external, todo_state: state, todo_pos: state? n.todo_pos: undefined}));
-
-            this.startProcessingIndication();
-
-            await send.setTODOState({nodes});
-
-            this.stopProcessingIndication();
+                external: n.external, external_id: n.external_id, todo_state: state, todo_pos: state? n.todo_pos: undefined}));
 
             selectedIds.forEach(id => {
                 let jnode = tree.get_node(id);
@@ -831,6 +819,15 @@ class BookmarkTree {
                 jnode.text = jnode.text.replace(/todo-state-[a-zA-Z]+/g, jnode.a_attr.class);
                 tree.redraw_node(jnode, true, false, true);
             });
+
+            this.startProcessingIndication();
+
+            try {
+                await send.setTODOState({nodes});
+            }
+            finally {
+                this.stopProcessingIndication();
+            }
         }
 
         let containers = this._containers || [];

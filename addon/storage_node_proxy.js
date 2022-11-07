@@ -34,8 +34,9 @@ export class NodeProxy extends StorageProxy {
 
     async batchUpdate(updater, ids) {
         const result = await this.wrapped.batchUpdate(updater, ids);
+        const nodes = await Node.get(ids);
 
-        await this.#updateNodes(ids);
+        await this.#updateNodes(nodes);
 
         return result;
     }
@@ -93,12 +94,10 @@ export class NodeProxy extends StorageProxy {
         }
     }
 
-    async #updateNodes(ids) {
-        const probeNode = ids.length? await Node.get(ids[0]): null;
-        const adapter = probeNode? this.adapter(probeNode): null;
+    async #updateNodes(nodes) {
+        const adapter = this.adapter(nodes);
 
         if (adapter && !adapter.internalStorage) {
-            const nodes = await Node.get(ids);
             const params = {
                 remove_fields: nodes.map(node =>
                     Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined))
