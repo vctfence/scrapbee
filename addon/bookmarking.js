@@ -432,10 +432,7 @@ export async function createBookmarkFromURL (url, parentId) {
 }
 
 export async function addToBookmarksToolbar(node) {
-    const scrapyardFolders = await browser.bookmarks.search({title: SCRAPYARD_FOLDER_NAME});
-    let scrapyardFolder = scrapyardFolders.find(f => !f.url &&
-        (settings.platform.firefox && f.parentId === FIREFOX_BOOKMARK_TOOLBAR
-            || settings.platform.chrome && f.parentId === "1"));
+    let scrapyardFolder = await findScrapyardBookmarkFolder();
 
     if (!scrapyardFolder)
         scrapyardFolder = await createScrapyardBookmarkFolder();
@@ -443,7 +440,7 @@ export async function addToBookmarksToolbar(node) {
     await browser.bookmarks.create({
         parentId: scrapyardFolder.id,
         title: node.name,
-        url: createLongScrapyardReference(node),
+        url: createScrapyardToolbarReference(node.uuid),
         index: 0
     });
 
@@ -459,6 +456,14 @@ export async function addToBookmarksToolbar(node) {
                 browser.bookmarks.remove(ref.id);
         }
     }
+}
+
+async function findScrapyardBookmarkFolder() {
+    const scrapyardFolders = await browser.bookmarks.search({title: SCRAPYARD_FOLDER_NAME});
+
+    return scrapyardFolders.find(f => !f.url &&
+        (settings.platform.firefox && f.parentId === FIREFOX_BOOKMARK_TOOLBAR
+            || settings.platform.chrome && f.parentId === "1"));
 }
 
 async function createScrapyardBookmarkFolder() {
@@ -478,8 +483,20 @@ async function createScrapyardBookmarkFolder() {
     return browser.bookmarks.create(options);
 }
 
-export function createLongScrapyardReference(node = {uuid: ""}) {
-    let referenceURL = `ext+scrapyard://${node.uuid}`;
+export function createScrapyardToolbarReference(uuid = "") {
+    let referenceURL = `ext+scrapyard://${uuid}`;
 
-    return browser.runtime.getURL(`/reference.html#${referenceURL}`);
+    return browser.runtime.getURL(`/reference.html?toolbar#${referenceURL}`);
+}
+
+export async function removeFromBookmarksToolbar(uuid) {
+    const scrapyardFolder = await findScrapyardBookmarkFolder();
+
+    if (scrapyardFolder) {
+        const references = await browser.bookmarks.getChildren(scrapyardFolder.id);
+        const refToRemove = references.find(r => r.url.endsWith(uuid));
+
+        if (refToRemove)
+            return browser.bookmarks.remove(refToRemove.id);
+    }
 }

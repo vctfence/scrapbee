@@ -20,7 +20,7 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 accessLog = logging.getLogger('werkzeug')
 accessLog.disabled = True
 
-server_log_file = None
+backend_log_file = None
 
 auth_token = None
 host = "localhost"
@@ -116,10 +116,10 @@ def requires_auth(f):
 
 
 def enable_logging():
-    global server_log_file
+    global backend_log_file
 
-    server_log_file = os.path.join(storage_manager.get_temp_directory(), "server.log")
-    logging.basicConfig(filename=server_log_file, encoding="utf-8", level=logging.DEBUG,
+    backend_log_file = os.path.join(storage_manager.get_temp_directory(), "backend.log")
+    logging.basicConfig(filename=backend_log_file, encoding="utf-8", level=logging.DEBUG,
                         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
 
@@ -172,9 +172,9 @@ def exit_app():
     os._exit(0)
 
 
-@app.route("/server_log")
+@app.route("/backend_log")
 def helper_log():
     if app.logger.disabled:
         return "", 404
     else:
-        return send_file(server_log_file, mimetype="text/plain")
+        return send_file(backend_log_file, mimetype="text/plain")

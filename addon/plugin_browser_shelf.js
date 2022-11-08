@@ -13,7 +13,7 @@ import {Bookmark} from "./bookmarks_bookmark.js";
 import {Icon, Node} from "./storage_entities.js";
 import {CONTEXT_FOREGROUND, getContextType} from "./utils_browser.js";
 import {Shelf} from "./bookmarks_shelf.js";
-import {createLongScrapyardReference} from "./bookmarking.js";
+import {createScrapyardToolbarReference} from "./bookmarking.js";
 
 const CATEGORY_ADDED = 0;
 const CATEGORY_CHANGED = 1;
@@ -340,7 +340,7 @@ export class BrowserShelfPlugin {
                     await Bookmark.storeIconFromURI(node);
 
                 if (node.type === NODE_TYPE_BOOKMARK && !settings.do_not_switch_to_ff_bookmark()
-                        && !bookmark.url?.startsWith(createLongScrapyardReference()))
+                        && !bookmark.url?.startsWith(createScrapyardToolbarReference()))
                     send.bookmarkCreated({node: node});
             }
         }

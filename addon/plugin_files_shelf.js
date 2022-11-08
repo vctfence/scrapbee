@@ -191,7 +191,7 @@ export class FilesShelfPlugin {
             });
         }
         else
-            showNotification("Please specify the editor in the add-on settings.");
+            showNotification("Please configure the editor in the add-on settings.");
     }
 
     openExternalLink(link, node) {
