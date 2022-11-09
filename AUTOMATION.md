@@ -405,7 +405,7 @@ Command example:
 #### Processing Archives with Python
 
 The iShell command demonstrated below sends the content of the currently selected archives for processing in
-the iShell native application written in Python. There you can develop your own [Flask](https://flask.palletsprojects.com/)
+the iShell backend application written in Python. There you can develop your own [Flask](https://flask.palletsprojects.com/)
 handlers.
 
 ```javascript
@@ -433,7 +433,7 @@ class ConvertToMarkdown {
                     const payload = JSON.stringify({item, content});
                     const headers = {"content-type": "application/json"};
 
-                    await cmdAPI.helperFetch("/convert_to_markdown", {method: "post", body: payload, headers});
+                    await cmdAPI.backendFetch("/convert_to_markdown", {method: "post", body: payload, headers});
                 } catch (e) {
                     console.error(e);
                 }
