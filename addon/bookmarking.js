@@ -10,7 +10,7 @@ import {
 import {capitalize, getMimetypeByExt, sleep} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
 import {
-    ARCHIVE_TYPE_FILES,
+    ARCHIVE_TYPE_FILES, CHROME_BOOKMARK_TOOLBAR,
     DEFAULT_SHELF_ID,
     FIREFOX_BOOKMARK_TOOLBAR,
     NODE_TYPE_ARCHIVE,
@@ -463,7 +463,7 @@ async function findScrapyardBookmarkFolder() {
 
     return scrapyardFolders.find(f => !f.url &&
         (settings.platform.firefox && f.parentId === FIREFOX_BOOKMARK_TOOLBAR
-            || settings.platform.chrome && f.parentId === "1"));
+            || settings.platform.chrome && f.parentId === CHROME_BOOKMARK_TOOLBAR));
 }
 
 async function createScrapyardBookmarkFolder() {

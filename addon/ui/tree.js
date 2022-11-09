@@ -32,7 +32,7 @@ import {
     BROWSER_EXTERNAL_TYPE,
     FILES_EXTERNAL_TYPE,
     FILES_EXTERNAL_ROOT_PREFIX,
-    NODE_TYPE_FILE
+    NODE_TYPE_FILE, CHROME_BOOKMARK_UNFILED, CHROME_BOOKMARK_TOOLBAR
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
@@ -320,14 +320,14 @@ class BookmarkTree {
         }
         else if (node.external === BROWSER_EXTERNAL_TYPE
                 && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_UNFILED
-                        || settings.platform.chrome && node.external_id === "2")) {
+                        || settings.platform.chrome && node.external_id === CHROME_BOOKMARK_UNFILED)) {
             jnode.icon = "/icons/unfiledBookmarks.svg";
             jnode.li_attr = {"class": "browser-unfiled-bookmarks"};
             node.special_browser_folder = true;
         }
         else if (node.external === BROWSER_EXTERNAL_TYPE
                 && (settings.platform.firefox && node.external_id === FIREFOX_BOOKMARK_TOOLBAR
-                        || settings.platform.chrome && node.external_id === "1")) {
+                        || settings.platform.chrome && node.external_id === CHROME_BOOKMARK_TOOLBAR)) {
             jnode.icon = "/icons/bookmarksToolbar.svg";
             jnode.li_attr = {"class": "browser-bookmark-toolbar"};
             if (!settings.show_firefox_toolbar())
