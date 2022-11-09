@@ -225,6 +225,13 @@ export function byDateAddedAsc(a, b) {
     return 0;
 }
 
+export function byContainer(a, b) {
+    const ac = isContainerNode(a)? 0: 1;
+    const bc = isContainerNode(b)? 0: 1;
+
+    return ac - bc;
+}
+
 export const JSON_SCRAPBOOK_FORMAT = "JSON Scrapbook";
 export const JSON_SCRAPBOOK_VERSION = 1;
 export const JSON_SCRAPBOOK_SHELVES = "shelves";

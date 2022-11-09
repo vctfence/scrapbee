@@ -32,7 +32,7 @@ import {
     BROWSER_EXTERNAL_TYPE,
     FILES_EXTERNAL_TYPE,
     FILES_EXTERNAL_ROOT_PREFIX,
-    NODE_TYPE_FILE, CHROME_BOOKMARK_UNFILED, CHROME_BOOKMARK_TOOLBAR
+    NODE_TYPE_FILE, CHROME_BOOKMARK_UNFILED, CHROME_BOOKMARK_TOOLBAR, byContainer
 } from "../storage.js";
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
@@ -931,6 +931,7 @@ class BookmarkTree {
                 action: () => {
                     let jchildren = ctxJNode.children.map(c => tree.get_node(c));
                     jchildren.sort((a, b) => a.text.localeCompare(b.text));
+                    jchildren.sort((a, b) => byContainer(o(a), o(b)));
                     ctxJNode.children = jchildren.map(c => c.id);
 
                     tree.redraw_node(ctxJNode, true, false, true);
