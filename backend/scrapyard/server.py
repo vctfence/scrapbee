@@ -158,7 +158,7 @@ def add_header(r):
 
 @app.route("/")
 def root():
-    return "Scrapyard native application"
+    return "Scrapyard backend application"
 
 
 @app.errorhandler(404)

@@ -154,9 +154,10 @@ Section "Scrapyard Backend" Section1
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\"
 	File "assets\scrapyard.ico"
-	File /r "dist/scrapyard_backend\"
+	File /r "dist\"
+    File /r "scrapyard_backend.cmd"
 
-	Push '$INSTDIR\scrapyard_backend.exe'
+	Push '$INSTDIR\scrapyard_backend.cmd'
     Push "/"
     Push "\"
     Call StrReplace

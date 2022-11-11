@@ -37,19 +37,22 @@ chrome-mv3:
 
 .PHONY: helper-clean
 backend-clean:
-	cd backend; rm -r -f build
 	cd backend; rm -r -f dist
-	cd backend; rm -f *.spec
+
+# to create .local/dist
+# 1. download embeddable Python zip
+# 2. add pip with get-pip.py
+# 3. install the scrapyard package specifying the ./backend as the package directory
+# 4. delete pip-related packages at Lib/site-packages
 
 .PHONY: backend-win
 backend-win:
 	make backend-clean
 	cd backend; rm -f *.exe
-	cd backend; rm -f *.zip
 	echo "DEBUG = False" > ./backend/scrapyard/server_debug.py
-	cd backend; pyinstaller scrapyard_backend.py
-	mkdir ./backend/dist/scrapyard_backend/scrapyard
-	cp -r ./backend/scrapyard/resources ./backend/dist/scrapyard_backend/scrapyard
+	cp -r ./.local/dist ./backend/
+	rm -r -f ./backend/dist/Lib/site-packages/scrapyard
+	cp -r ./backend/scrapyard ./backend/dist/Lib/site-packages/
 	cd backend; makensis setup.nsi
 	make backend-clean
 	echo "DEBUG = True" > ./backend/scrapyard/server_debug.py
