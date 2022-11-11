@@ -160,7 +160,8 @@ async function saveActiveTabProperties() {
 }
 
 async function addBookmark(nodeType) {
-    let parentNode = tree.adjustBookmarkingTarget($("#bookmark-folder").val());
+    const parentNodeId = $("#bookmark-folder").val();
+    let parentNode = tree.adjustBookmarkingTarget(parentNodeId);
     saveFolderHistory(parentNode.id + "", parentNode.name, folderHistory);
 
     const payload = {

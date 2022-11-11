@@ -673,6 +673,7 @@ class BookmarkTree {
                     if (folder) {
                         this._jstree.set_id(jnode.id, folder.id);
                         jnode.original = BookmarkTree.toJsTreeNode(folder);
+                        jnode.data = folder;
                         this._jstree.rename_node(jnode, folder.name);
                         //this.reorderNodes(selectedJNode);
                         resolve(folder);
