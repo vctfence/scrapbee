@@ -160,17 +160,17 @@ export class UnmarshallerSync extends UnmarshallerJSONScrapbook {
 
         if (comments) {
             comments = this.unconvertComments(comments);
-            Comments.idb.import.add(node, comments.text);
+            await Comments.idb.import.add(node, comments.text);
         }
 
         if (archive_index) {
             archive_index = this.unconvertIndex(archive_index);
-            Archive.idb.import.storeIndex(node, archive_index.words);
+            await Archive.idb.import.storeIndex(node, archive_index.words);
         }
 
         if (notes_index) {
             notes_index = this.unconvertIndex(notes_index);
-            Notes.idb.import.storeIndex(node, notes_index.words);
+            await Notes.idb.import.storeIndex(node, notes_index.words);
         }
     }
 }

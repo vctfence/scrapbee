@@ -141,28 +141,28 @@ def assemble_node_payload(storage_manager, params, sync_node):
 
     object_directory_path = storage_manager.get_object_directory(params, uuid)
     node_object_path = storage_manager.get_node_object_path(object_directory_path)
-    node_object = read_object_file(node_object_path)
+    node_object = storage_manager.read_object_file(node_object_path)
     if node_object:
         result += "\"item\":" + node_object
 
     if sync_node["pull_content"]:
         icon_object_path = storage_manager.get_icon_object_path(object_directory_path)
-        icon_object = read_object_file(icon_object_path)
+        icon_object = storage_manager.read_object_file(icon_object_path)
         if icon_object:
             result += ",\"icon\":" + icon_object
 
         comments_object_path = storage_manager.get_comments_object_path(object_directory_path)
-        comments_object = read_object_file(comments_object_path)
+        comments_object = storage_manager.read_object_file(comments_object_path)
         if comments_object:
             result += ",\"comments\":" + comments_object
 
         archive_index_object_path = storage_manager.get_archive_index_object_path(object_directory_path)
-        archive_index_object = read_object_file(archive_index_object_path)
+        archive_index_object = storage_manager.read_object_file(archive_index_object_path)
         if archive_index_object:
             result += ",\"archive_index\":" + archive_index_object
 
         notes_index_object_path = storage_manager.get_notes_index_object_path(object_directory_path)
-        notes_index_object = read_object_file(notes_index_object_path)
+        notes_index_object = storage_manager.read_object_file(notes_index_object_path)
         if notes_index_object:
             result += ",\"notes_index\":" + notes_index_object
 
@@ -171,8 +171,5 @@ def assemble_node_payload(storage_manager, params, sync_node):
     return result
 
 
-def read_object_file(path):
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as object_file:
-            return object_file.readline()
+
 

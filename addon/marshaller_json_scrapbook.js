@@ -6,6 +6,7 @@ import {
     DEFAULT_SHELF_UUID, EVERYTHING_SHELF_NAME, JSON_SCRAPBOOK_SHELVES,
     JSON_SCRAPBOOK_FORMAT,
     JSON_SCRAPBOOK_VERSION,
+    JSON_SCRAPBOOK_TYPE_INDEX,
     NODE_TYPE_BOOKMARK,
     NODE_TYPE_ARCHIVE,
     NODE_TYPE_NAMES,
@@ -336,6 +337,9 @@ export class UnmarshallerJSONScrapbook extends Unmarshaller {
 
         if (meta.format === JSON_SCRAPBOOK_FORMAT && meta.version > JSON_SCRAPBOOK_VERSION)
             throw new Error("Export format version is not supported.");
+
+        if (meta.type === JSON_SCRAPBOOK_TYPE_INDEX)
+            throw new Error("Import of JSON Scrapbook index is not supported.");
 
         return meta;
     }

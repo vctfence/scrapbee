@@ -357,6 +357,11 @@ class StorageManager:
 
         return result
 
+    def read_object_file(self, path):
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as object_file:
+                return object_file.readline()
+
     def sync_open_session(self, params):
         storage_sync.open_session(self, params)
 

@@ -558,7 +558,7 @@ export class BookmarkManager extends EntityManager {
         const archive = Archive.entity(node, data, contentType);
 
         if (node.contains === ARCHIVE_TYPE_FILES) {
-            await Archive.storeIndex(node, index);
+            await Archive.storeIndex(node, index.words);
             await Archive.saveFile(node, "index.html", data);
             await Archive.updateContentModified(node, archive);
         }

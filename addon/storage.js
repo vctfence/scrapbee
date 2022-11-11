@@ -236,7 +236,7 @@ export const JSON_SCRAPBOOK_FORMAT = "JSON Scrapbook";
 export const JSON_SCRAPBOOK_VERSION = 1;
 export const JSON_SCRAPBOOK_SHELVES = "shelves";
 export const JSON_SCRAPBOOK_FOLDERS = "folders";
-
+export const JSON_SCRAPBOOK_TYPE_INDEX = "index";
 
 export function createJSONScrapBookMeta(type, contains = JSON_SCRAPBOOK_SHELVES, title) {
     const now = new Date();

@@ -15,6 +15,7 @@ import {helperApp} from "./helper_app.js";
 import {Export} from "./import.js";
 import {FORMAT_DEFAULT_SHELF_UUID, UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 import {isDeepEqual} from "./utils.js";
+import {browserShelf} from "./plugin_browser_shelf.js";
 
 receive.resetCloud = async message => {
     if (!cloudShelf.isAuthenticated())
@@ -40,6 +41,9 @@ receive.resetScrapyard = async message => {
 
     if (settings.cloud_enabled())
         await cloudShelf.createIfMissing();
+
+    if (settings.show_firefox_bookmarks())
+        /*await*/ browserShelf.reconcileBrowserBookmarksDB();
 
     send.stopProcessingIndication();
 
