@@ -6,7 +6,7 @@ can import hierarchical content, manage TODO lists, or create something similar 
 
 All automation features are implemented through the WebExtensions
 [runtime messaging API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage).
-The ES6 module available by [this](https://raw.githubusercontent.com/GChristensen/ishell/master/addon/commands/scrapyard_api.js) link provides a
+The ES6 module available by [this](https://raw.githubusercontent.com/GChristensen/ishell/master/addon/api/scrapyard.js) link provides a
 JavaScript wrapper which is used in the examples below.
 
 To call Scrapyard API from regular extensions, automation should be enabled manually at the Scrapyard advanced settings
@@ -19,7 +19,7 @@ The following messages are currently available:
 Returns Scrapyard version. Useful for testing if Scrapyard presents in the browser:
 
 ```javascript
-import {getVersion} from "./scrapyard_api.js";
+import {getVersion} from "./scrapyard.js";
 
 try {
     let version = await getVersion();
@@ -36,7 +36,7 @@ To optimize disk operations on the Scrapyard storage, these messages need to be 
 when creating or modifying multiple bookmark or archive items.
 
 ```javascript
-import {openBatchSession, closeBatchSession} from "./scrapyard_api.js";
+import {openBatchSession, closeBatchSession} from "./scrapyard.js";
 
 try {
     await openBatchSession();
@@ -53,7 +53,7 @@ finally {
 Creates a bookmark.
 
 ```js
-import {addBookmark} from "./scrapyard_api.js";
+import {addBookmark} from "./scrapyard.js";
 
 const uuid = await addBookmark({
     url:        "http://example.com",             // Bookmark URL
@@ -92,7 +92,7 @@ executing `python3 -m http.server` in the desired directory.
 Creates an archive.
 
 ```js
-import {addArchive} from "./scrapyard_api.js";
+import {addArchive} from "./scrapyard.js";
 
 const uuid = await addArchive({
     url:          "http://example.com",             // Bookmark URL
@@ -142,7 +142,7 @@ Returns UUID of the newly created archive.
 Creates notes.
 
 ```js
-import {addNotes} from "./scrapyard_api.js";
+import {addNotes} from "./scrapyard.js";
 
 const uuid = await addNotes({
     title:        "Bookmark Title",                 // Bookmark title
@@ -166,7 +166,7 @@ Returns UUID of the newly created notes.
 Creates separator.
 
 ```js
-import {addSeparator} from "./scrapyard_api.js";
+import {addSeparator} from "./scrapyard.js";
 
 const uuid = await addSeparator({
     path:         "shelf/my/directory",             // Separator shelf and directory
@@ -186,7 +186,7 @@ This API creates a new tab which is required for its operation.
 This tab could be hidden through the `hide_tab` message option.
 
 ```js
-import {packPage} from "./scrapyard_api.js";
+import {packPage} from "./scrapyard.js";
 
 const {html, title, icon} = await packPage({
     url:      "http://example.com",  // URL of the page to be packed
@@ -206,7 +206,7 @@ Returns an object with the following properties:
 Retrieves the properties of a bookmark or archive defined by the `uuid` parameter.
 
 ```js
-import {getItem} from "./scrapyard_api.js";
+import {getItem} from "./scrapyard.js";
 
 const item = await getItem({
     uuid: "F0D858C6ED40416AA402EB2C3257EA17"
@@ -235,7 +235,7 @@ Only `type`, `uuid`, and `title` properties are always present.
 Retrieves the content of an archive or notes defined by the `uuid` parameter.
 
 ```js
-import {getItemContent} from "./scrapyard_api.js";
+import {getItemContent} from "./scrapyard.js";
 
 const item = await getItemContent({
     uuid: "F0D858C6ED40416AA402EB2C3257EA17"
@@ -257,7 +257,7 @@ When `contains` is equal to "files", `content` property contains an array-buffer
 Retrieves the properties of bookmarks selected in the Scrapyard sidebar.
 
 ```js
-import {getSelection} from "./scrapyard_api.js";
+import {getSelection} from "./scrapyard.js";
 
 const items = await getSelection();
 ```
@@ -267,7 +267,7 @@ const items = await getSelection();
 Lists the direct descendants of a shelf or folder defined by the `uuid` or `path` parameter.
 
 ```js
-import {listItems} from "./scrapyard_api.js";
+import {listItems} from "./scrapyard.js";
 
 const items = await listItems({
     uuid: null,  // the uuid and path parameters are mutually exclusive
@@ -282,7 +282,7 @@ If `null` is specified as the value of the `uuid` parameter, the list of all she
 Updates the properties of a bookmark, archive, or folder represented by the given UUID.
 
 ```js
-import {updateItem} from "./scrapyard_api.js";
+import {updateItem} from "./scrapyard.js";
 
 await updateItem({
     uuid:       "F0D858C6ED40416AA402EB2C3257EA17",
@@ -308,7 +308,7 @@ It is preferable to use the `refresh` parameter only on the last invocation in t
 Removes a bookmark or archive defined by the given UUID.
 
 ```js
-import {deleteItem} from "./scrapyard_api.js";
+import {deleteItem} from "./scrapyard.js";
 
 const items = await deleteItem({
     uuid:    "F0D858C6ED40416AA402EB2C3257EA17",
@@ -323,7 +323,7 @@ It is preferable to use the `refresh` parameter only on the last invocation in t
 Opens a bookmark or archive defined by the UUID, which could be found at the bookmark property dialog.
 
 ```js
-import {browseItem} from "./scrapyard_api.js";
+import {browseItem} from "./scrapyard.js";
 
 await browseItem({
     uuid: "F0D858C6ED40416AA402EB2C3257EA17"

@@ -6,6 +6,13 @@ test:
 test-nightly:
 	cd addon; start web-ext run -p "$(HOME)/../firefox/debug.scrapyard.nightly" --firefox=nightly --keep-profile-changes
 
+.PHONY: set-version
+set-version:
+	echo $(filter-out $@,$(MAKECMDGOALS)) > ./addon/version.txt
+
+.PHONY: get-version
+get-version:
+	@cat ./addon/version.txt
 
 .PHONY: build
 build:
@@ -69,3 +76,6 @@ backend-cli:
 	cd backend; rm ./cli-installer/scrapyard_backend/setup.py
 	cd backend; rm -r -f ./cli-installer/scrapyard_backend/scrapyard
 	cd backend; rm -r -f ./cli-installer/scrapyard_backend/manifests
+
+%:
+	@:
