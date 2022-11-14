@@ -40,6 +40,8 @@ export class StorageProxy {
             return StorageProxy._adapterFiles;
         else if (!node.external) {
             if (settings.storage_mode_internal())
+                // this is a hack; there should be converting and non-converting adapters
+                // to refactor, factor out converting code from proxies to a converting adapter base class
                 return {internalStorage: true};
             else
                 return StorageProxy._adapterDisk;
