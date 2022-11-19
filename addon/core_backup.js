@@ -110,7 +110,7 @@ receive.restoreShelf = async message => {
             .setStream(new LineStream(new Reader()))
             .build();
 
-        shelf = await Import.transaction(shelfName, importer);
+        shelf = await Import.transaction(importer);
     } catch (e) {
         console.log(e.stack);
         error = e;

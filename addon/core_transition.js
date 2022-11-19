@@ -11,10 +11,7 @@ import UUID from "./uuid.js";
 import {DiskStorage} from "./storage_external.js";
 import {indexHTML} from "./utils_html.js";
 
-
-
 receive.transferContentToDisk = async message => {
-
     if (!settings.data_folder_path()) {
         showNotification("Data folder path is not set.");
         return;

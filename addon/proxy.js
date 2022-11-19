@@ -1,6 +1,6 @@
 import {snakeCaseToCamelCase} from "./utils.js";
 
-export function nullProxy(wrapped) {
+export function nullDelegatingProxy(wrapped) {
     return new Proxy(wrapped, {
         get(target, key, receiver) {
             if (key in wrapped) {

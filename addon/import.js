@@ -126,7 +126,7 @@ export class Import {
         }
     }
 
-    static async transaction(shelf, importer) {
+    static async transaction(importer) {
         try {
             await DiskStorage.openBatchSession();
             return importer.import();

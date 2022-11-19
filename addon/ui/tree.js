@@ -41,7 +41,7 @@ import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 import UUID from "../uuid.js";
-import {DiskStorage} from "../storage_external.js";
+import {DiskStorage, ExternalStorage} from "../storage_external.js";
 
 export const TREE_STATE_PREFIX = "tree-state-";
 const FOLDER_SELECT_STATE = "folder-select";
@@ -723,15 +723,17 @@ class BookmarkTree {
 
     async #moveNode(_, data) {
         const tree = this._jstree;
-        const jparent = tree.get_node(data.parent);
         const jnode = tree.get_node(data.node);
+        const jparent = tree.get_node(data.parent);
+        const destNode = o(jparent);
 
         if (data.parent != data.old_parent) {
             this.startProcessingIndication();
 
             try {
-                await DiskStorage.openBatchSession();
-                const newNodes = await send.moveNodes({node_ids: [o(jnode).id], dest_id: o(jparent).id});
+
+                await ExternalStorage.openBatchSession(destNode);
+                const newNodes = await send.moveNodes({node_ids: [o(jnode).id], dest_id: destNode.id});
 
                 // keep jstree nodes synchronized with the database
                 for (let node of newNodes) {
@@ -747,7 +749,7 @@ class BookmarkTree {
                 await this.reorderNodes(jparent);
             }
             finally {
-                await DiskStorage.closeBatchSession();
+                await ExternalStorage.closeBatchSession(destNode);
                 this.stopProcessingIndication();
             }
         }
@@ -1119,7 +1121,7 @@ class BookmarkTree {
                     try {
                         let newNodes;
 
-                        await DiskStorage.openBatchSession();
+                        await ExternalStorage.openBatchSession(ctxNode);
 
                         if (buffer.mode === "copy_node")
                             newNodes = await send.copyNodes({node_ids: selection, dest_id: ctxNode.id});
@@ -1149,7 +1151,7 @@ class BookmarkTree {
                     }
 
                     finally {
-                        DiskStorage.closeBatchSession();
+                        await ExternalStorage.closeBatchSession(ctxNode);
                         this.stopProcessingIndication();
                     }
                 }

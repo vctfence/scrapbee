@@ -1,23 +1,62 @@
 import {ARCHIVE_TYPE_FILES, ARCHIVE_TYPE_TEXT, CLOUD_EXTERNAL_TYPE, UNPACKED_ARCHIVE_DIRECTORY} from "./storage.js";
+import {CONTEXT_BACKGROUND, getContextType} from "./utils_browser.js";
 import {unzip} from "./lib/unzipit.js";
+import {send} from "./proxy.js";
 
 export class StorageAdapterCloud {
     _provider;
+    _batchCloudDB;
 
     setProvider(provider) {
         this._provider = provider;
     }
 
     async withCloudDB(f, fe) {
+        if (this._batchCloudDB) {
+            try {
+                await f(this._batchCloudDB);
+            } catch (e) {
+                console.error(e);
+                if (fe) fe(e);
+            }
+        }
+        else {
+            try {
+                let db = await this._provider.downloadDB();
+                await f(db);
+                await this._provider.persistDB(db);
+            } catch (e) {
+                console.error(e);
+                if (fe) fe(e);
+            }
+        }
+    }
+
+    async #openBatchSession() {
+        this._batchCloudDB = await this._provider.downloadDB();
+    }
+
+    async openBatchSession() {
+        if (getContextType() === CONTEXT_BACKGROUND)
+            return this.#openBatchSession();
+        else
+            return send.openCloudBatchSession();
+    }
+
+    async #closeBatchSession() {
         try {
-            let db = await this._provider.downloadDB();
-            await f(db);
-            await this._provider.persistDB(db);
+            await this._provider.persistDB(this._batchCloudDB);
         }
-        catch (e) {
-            console.error(e);
-            if (fe) fe(e);
+        finally {
+            this._batchCloudDB = undefined;
         }
+    }
+
+    async closeBatchSession() {
+        if (getContextType() === CONTEXT_BACKGROUND)
+            return this.#closeBatchSession();
+        else
+            return send.closeCloudBatchSession();
     }
 
     accepts(node) {
@@ -158,3 +197,4 @@ export class StorageAdapterCloud {
             return JSON.parse(json);
     }
 }
+

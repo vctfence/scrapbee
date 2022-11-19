@@ -41,7 +41,7 @@ receive.importFile = async message => {
 
         let invalidationState = ishellConnector.isInvalidationEnabled();
         ishellConnector.enableInvalidation(false);
-        return Import.transaction(shelf, importer).finally(() => {
+        return Import.transaction(importer).finally(() => {
             ishellConnector.enableInvalidation(invalidationState);
             ishellConnector.invalidateCompletion();
         });

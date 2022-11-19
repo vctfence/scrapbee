@@ -48,7 +48,7 @@ import {undoManager} from "../bookmarks_undo.js";
 import {systemInitialization} from "../bookmarks_init.js";
 import {getSidebarWindow} from "../utils_sidebar.js";
 import {helperApp} from "../helper_app.js";
-import {DiskStorage} from "../storage_external.js";
+import {ExternalStorage} from "../storage_external.js";
 
 const INPUT_TIMEOUT = 1000;
 const MENU_ID_TO_SEARCH_MODE = {
@@ -960,7 +960,7 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
     if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
-    let external_path = Path.expand(message.path);
+    let externalPath = Path.expand(message.path);
     let selection = tree.getSelectedNodes();
 
     if (selection.some(n => n.type === NODE_TYPE_SHELF)) {
@@ -970,17 +970,17 @@ receiveExternal.scrapyardCopyAtIshell = async (message, sender) => {
         selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const folder = await Folder.getOrCreateByPath(external_path);
+        const folder = await Folder.getOrCreateByPath(externalPath);
 
         try {
-            await DiskStorage.openBatchSession();
+            await ExternalStorage.openBatchSession(folder);
             let newNodes = await send.copyNodes({node_ids: selection, dest_id: folder.id, move_last: true});
             let topNodes = newNodes.filter(n => selection.some(id => id === n.source_node_id)).map(n => n.id);
 
-            await switchAfterCopy(message, external_path, folder, topNodes);
+            await switchAfterCopy(message, externalPath, folder, topNodes);
         }
         finally {
-            await DiskStorage.closeBatchSession();
+            await ExternalStorage.closeBatchSession(folder);
         }
     }
 };
@@ -989,7 +989,7 @@ receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
     if (!ishellConnector.isIShell(sender.id))
         throw new Error();
 
-    let external_path = Path.expand(message.path);
+    let externalPath = Path.expand(message.path);
     let selection = tree.getSelectedNodes();
     if (selection.some(n => n.type === NODE_TYPE_SHELF)) {
         showNotification("Can not move shelves.")
@@ -998,17 +998,17 @@ receiveExternal.scrapyardMoveAtIshell = async (message, sender) => {
         selection.sort(byPosition);
         selection = selection.map(n => n.id);
 
-        const folder = await Folder.getOrCreateByPath(external_path);
+        const folder = await Folder.getOrCreateByPath(externalPath);
 
         try {
-            await DiskStorage.openBatchSession();
+            await ExternalStorage.openBatchSession(folder);
             await send.moveNodes({node_ids: selection, dest_id: folder.id, move_last: true});
         }
         finally {
-            await DiskStorage.closeBatchSession();
+            await ExternalStorage.closeBatchSession(folder);
         }
 
-        await switchAfterCopy(message, external_path, folder, selection);
+        await switchAfterCopy(message, externalPath, folder, selection);
     }
 };
 
