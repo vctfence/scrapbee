@@ -24,7 +24,7 @@ export class CommentsProxy extends StorageProxy {
     async #persistCommentsIndex(node, words) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             let index = this.wrapped.indexEntity(node, words);
             index = await this.#marshaller.convertIndex(index);
 
@@ -40,7 +40,7 @@ export class CommentsProxy extends StorageProxy {
     async #persistComments(node, text) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const comments = await this.#marshaller.convertComments(text);
 
             const params = {

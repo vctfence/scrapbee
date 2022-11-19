@@ -2,8 +2,6 @@ import {helperApp} from "./helper_app.js";
 import {rdfShelf} from "./plugin_rdf_shelf.js";
 
 export class StorageAdapterRDF {
-    internalStorage = false;
-
     async _postJSON(path, fields) {
         try {
             return helperApp.postJSON(path, fields);

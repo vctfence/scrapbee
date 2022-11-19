@@ -64,7 +64,7 @@ export class NodeProxy extends StorageProxy {
     async #persistNode(node) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             node = this.#marshaller.serializeNode(node);
             node = await this.#marshaller.convertNode(node);
 
@@ -79,7 +79,7 @@ export class NodeProxy extends StorageProxy {
     async #updateNode(node) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const params = {
                 remove_fields: Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined)
             };
@@ -97,7 +97,7 @@ export class NodeProxy extends StorageProxy {
     async #updateNodes(nodes) {
         const adapter = this.adapter(nodes);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const params = {
                 remove_fields: nodes.map(node =>
                     Object.keys(node).filter(k => node.hasOwnProperty(k) && node[k] === undefined))
@@ -116,7 +116,7 @@ export class NodeProxy extends StorageProxy {
     async #unpersistNode(node) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const params = {
                 node_uuids: [node.uuid]
             };
@@ -131,7 +131,7 @@ export class NodeProxy extends StorageProxy {
 
         const adapter = this.adapter(nodes);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const params = {
                 node_uuids: nodes.map(n => n.uuid)
             };
@@ -146,7 +146,7 @@ export class NodeProxy extends StorageProxy {
 
         const adapter = this.adapter(nodes);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const params = {
                 node_uuids: nodes.map(n => n.uuid)
             };

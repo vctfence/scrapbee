@@ -21,7 +21,7 @@ export class IconProxy extends StorageProxy {
     async #persistIcon(node, dataUrl) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             let icon = this.wrapped.entity(node, dataUrl);
             icon = this.#marshaller.convertIcon(icon);
 

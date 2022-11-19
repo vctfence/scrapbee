@@ -61,7 +61,6 @@ export class ArchiveIDB extends EntityIDB {
         };
     }
 
-    // TODO: refactor all repositories to use full entities
     async storeIndex(node, words) {
         const exists = await this._db.index.where("node_id").equals(node.id).count();
         const entity = this.indexEntity(node, words);

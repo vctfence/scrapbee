@@ -1,10 +1,7 @@
 import {helperApp} from "./helper_app.js";
-import {settings} from "./settings.js";
 import {ARCHIVE_TYPE_TEXT} from "./storage.js";
 
 export class StorageAdapterFiles {
-    internalStorage = false;
-
     async _postJSON(path, fields) {
         try {
             return helperApp.postJSON(path, fields);

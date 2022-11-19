@@ -1,6 +1,7 @@
 import {MarshallerJSONScrapbook, UnmarshallerJSONScrapbook} from "./marshaller_json_scrapbook.js";
 import {Archive} from "./storage_entities.js";
 import {StorageProxy} from "./storage_proxy.js";
+import {settings} from "./settings.js";
 
 export class ArchiveProxy extends StorageProxy {
     #marshaller = new MarshallerJSONScrapbook();
@@ -37,7 +38,7 @@ export class ArchiveProxy extends StorageProxy {
     async #persistArchiveIndex(node, words) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             let index = this.wrapped.indexEntity(node, words);
             index = await this.#marshaller.convertIndex(index);
 
@@ -53,7 +54,7 @@ export class ArchiveProxy extends StorageProxy {
     async #persistArchive(node, archive) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const content = await Archive.reify(archive);
             archive = await this.#marshaller.convertArchive(archive);
 
@@ -68,7 +69,7 @@ export class ArchiveProxy extends StorageProxy {
 
             await adapter.persistArchive(params);
         }
-        else if (adapter?.internalStorage)
+        else if (settings.storage_mode_internal())
             return Archive.idb.add(node, archive);
 
         return archive;
@@ -77,14 +78,14 @@ export class ArchiveProxy extends StorageProxy {
     async #saveArchiveFile(node, file, content) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage)
+        if (adapter)
             return adapter.saveArchiveFile({uuid: node.uuid, file, content, ...await adapter.getParams(node)});
     }
 
     async #fetchArchive(node) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage) {
+        if (adapter) {
             const content = await adapter.fetchArchiveContent({
                 node,
                 uuid: node.uuid,
@@ -94,21 +95,21 @@ export class ArchiveProxy extends StorageProxy {
             if (content)
                 return Archive.entity(node, content, node.content_type);
         }
-        else if (adapter?.internalStorage)
+        else if (settings.storage_mode_internal())
             return Archive.idb.get(node);
     }
 
     async #fetchArchiveFile(node, file) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage)
+        if (adapter)
             return adapter.fetchArchiveFile({uuid: node.uuid, file, ...await adapter.getParams(node)});
     }
 
     async #getArchiveSize(node) {
         const adapter = this.adapter(node);
 
-        if (adapter && !adapter.internalStorage)
+        if (adapter)
             return adapter.getArchiveSize({uuid: node.uuid, ...await adapter.getParams(node)});
     }
 }
