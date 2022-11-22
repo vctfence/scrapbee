@@ -55,6 +55,7 @@ def write_reg_hkcu_value(path, value):
 
 
 backend_base = "scrapyard_backend"
+native_base = "scrapyard_helper"
 
 package_path = os.path.abspath(os.path.dirname(__file__))
 subprocess.check_call([sys.executable, "-m", "pip", "install", package_path, "--user"])
@@ -66,24 +67,24 @@ if platform.system() == "Windows":
 
 executable_path = get_binary_path(executable_base_path)
 
-firefox_manifest_path = os.path.expanduser(f"~/.mozilla/native-messaging-hosts/{backend_base}.json")
+firefox_manifest_path = os.path.expanduser(f"~/.mozilla/native-messaging-hosts/{native_base}.json")
 
 if platform.system() == "Windows":
     firefox_manifest_path = executable_base_path + ".json.firefox"
 elif platform.system() == "Darwin":
     firefox_manifest_path = \
-        os.path.expanduser(f"~/Library/Application Support/Mozilla/NativeMessagingHosts/{backend_base}.json")
+        os.path.expanduser(f"~/Library/Application Support/Mozilla/NativeMessagingHosts/{native_base}.json")
 
 write_manifest(package_path + f"/manifests/{backend_base}.json.firefox", firefox_manifest_path, executable_path)
 
-chrome_manifest_path = os.path.expanduser(f"~/.config/google-chrome/NativeMessagingHosts/{backend_base}.json")
+chrome_manifest_path = os.path.expanduser(f"~/.config/google-chrome/NativeMessagingHosts/{native_base}.json")
 chromium_manifest_path = chrome_manifest_path.replace("google-chrome", "chromium")
 
 if platform.system() == "Windows":
     chrome_manifest_path = executable_base_path + ".json.chrome"
 elif platform.system() == "Darwin":
     chrome_manifest_path = \
-        os.path.expanduser(f"~/Library/Application Support/Google/Chrome/NativeMessagingHosts/{backend_base}.json")
+        os.path.expanduser(f"~/Library/Application Support/Google/Chrome/NativeMessagingHosts/{native_base}.json")
     chromium_manifest_path = chrome_manifest_path.replace("Chrome", "Chromium")
 
 write_manifest(package_path + f"/manifests/{backend_base}.json.chrome", chrome_manifest_path, executable_path)
@@ -94,5 +95,5 @@ if platform.system() != "Windows":
 if platform.system() == "Windows":
     import winreg
 
-    write_reg_hkcu_value(f"Software\\Mozilla\\NativeMessagingHosts\\scrapyard_helper", firefox_manifest_path)
-    write_reg_hkcu_value(f"Software\\Google\\Chrome\\NativeMessagingHosts\\scrapyard_helper", chrome_manifest_path)
+    write_reg_hkcu_value(f"Software\\Mozilla\\NativeMessagingHosts\\{native_base}", firefox_manifest_path)
+    write_reg_hkcu_value(f"Software\\Google\\Chrome\\NativeMessagingHosts\\{native_base}", chrome_manifest_path)
