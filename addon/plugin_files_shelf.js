@@ -309,7 +309,8 @@ export class FilesShelfPlugin {
         const deletedFiles = [];
 
         for (const existingFile of fileNodes)
-            if (!existingFile.external_id.startsWith(FILES_EXTERNAL_ROOT_PREFIX)
+            if (existingFile.external === FILES_EXTERNAL_TYPE
+                    && !existingFile.external_id.startsWith(FILES_EXTERNAL_ROOT_PREFIX)
                     && !files.some(f => f.full_path === existingFile.external_id))
                 deletedFiles.push(existingFile);
 

@@ -2,8 +2,8 @@
 
 body {
 	font-family: "Helvetica", "Arial", 'sans-serif';
-    max-width: 330px;
     width: 330px;
+    min-height: 383px;
 }
 
 input {

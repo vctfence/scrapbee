@@ -78,7 +78,9 @@ export function setSaveCheckHandler(id, setting, callback) {
     });
 }
 
-export async function setSaveSelectHandler(id, setting) {
-    await settings.load();
-    $(`#${id}`).on("change", e => settings[setting](e.target.value));
+export function setSaveSelectHandler(id, setting) {
+    $(`#${id}`).on("change", async e => {
+        await settings.load();
+        settings[setting](e.target.value);
+    });
 }
