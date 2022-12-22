@@ -25,7 +25,7 @@ function configureScrapyardSettingsPage() {
             if (status === STORAGE_POPULATED)
                 send.performSync();
 
-        }, 1000)
+        }, 1000);
     });
 
     storageModeSelect.on("change", async e => {
