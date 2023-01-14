@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='scrapyard_backend',
-    version='2.1',
+    version='2.1.1',
     packages=find_packages(),
     url='',
     license='',

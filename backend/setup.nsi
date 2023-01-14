@@ -2,7 +2,7 @@ Unicode True
 
 !define APPNAME "Scrapyard Backend"
 !define DIRNAME "Scrapyard"
-!define VERSION "2.1"
+!define VERSION "2.1.1"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
