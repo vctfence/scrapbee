@@ -30,6 +30,7 @@ import {
     TODO_SHELF_ID,
     TODO_SHELF_NAME,
     RDF_EXTERNAL_TYPE,
+    CLOUD_EXTERNAL_TYPE,
     FILES_SHELF_ID,
     isBuiltInShelf,
     isVirtualShelf,
@@ -98,6 +99,7 @@ async function init() {
     $("#btnSettings").on("click", () => openPage("/ui/options.html"));
     $("#btnHelp").on("click", () => openPage("/ui/options.html#help"));
     $("#btnHelperWarning").on("click", () => openPage("/ui/options.html#backend"));
+    $("#btnBatchWarning").on("click", () => cancelBatchMode());
 
     $("#shelf-menu-button").click(async () => {
         $("#search-mode-menu").hide();
@@ -269,7 +271,7 @@ async function init() {
     receive.startListener();
     receiveExternal.startListener();
 
-    loadSidebar();
+    await loadSidebar();
 }
 
 window.onbeforeunload = function() {
@@ -311,9 +313,6 @@ async function loadSidebar() {
         $("#btnAnnouncement").css("display", "inline-block");
     }
 
-    if (settings.display_random_bookmark())
-        displayRandomBookmark();
-
     if (settings.storage_mode_internal()) {
         if (!_BACKGROUND_PAGE) {
             const browseModule = await import("../browse.js");
@@ -326,6 +325,13 @@ async function loadSidebar() {
         if (!helper)
             $("#btnHelperWarning").css("display", "inline-block");
     }
+
+    if (settings.display_random_bookmark())
+        /* await */ displayRandomBookmark();
+
+    if (await ExternalStorage.isBatchSessionOpen())
+        $("#btnBatchWarning").css("display", "inline-block");
+
 }
 
 let processingTimeout;
@@ -777,6 +783,11 @@ async function addFilesDirectory() {
     return showDlg("orgdir", {
         caption: "Add Org-mode Directory"
     });
+}
+
+async function cancelBatchMode() {
+    await ExternalStorage.closeBatchSession({external: CLOUD_EXTERNAL_TYPE});
+    $("#btnBatchWarning").hide();
 }
 
 receive.startProcessingIndication = message => {

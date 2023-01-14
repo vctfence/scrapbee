@@ -5,7 +5,7 @@ import os
 from . import server, browser
 from .browser import message_queue
 
-VERSION = "2.1"
+VERSION = "2.1.1"
 
 
 def main():

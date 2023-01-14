@@ -104,6 +104,9 @@ class StorageManager:
             self.bach_node_db.write(node_db_path)
             self.bach_node_db = None
 
+    def is_batch_session_open(self):
+        return {"result": not not self.bach_node_db}
+
     def with_node_db(self, params, f):
         if self.bach_node_db:
             try:

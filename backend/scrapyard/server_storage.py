@@ -34,6 +34,12 @@ def close_batch_session():
     return "", 204
 
 
+@app.route("/storage/is_batch_session_open", methods=['POST'])
+@requires_auth
+def is_batch_session_open():
+    return server.storage_manager.is_batch_session_open()
+
+
 @app.route("/storage/persist_node", methods=['POST'])
 @requires_auth
 def add_node():

@@ -95,7 +95,7 @@ input:focus {
     z-index:1; /* prevent dots of "text-overflow:ellipsis" diplayed over me */
 }
 
-#btnAnnouncement, #btnHelperWarning {
+#btnAnnouncement, #btnHelperWarning, #btnBatchWarning {
     display: none;
 }
 

@@ -21,6 +21,17 @@ class StorageDisk extends StorageAdapterDisk {
             return this._postJSON("/storage/close_batch_session", {});
     }
 
+    async isBatchSessionOpen() {
+        if (!settings.storage_mode_internal()) {
+            const response = await this._postJSON("/storage/is_batch_session_open", {});
+
+            if (response.ok) {
+                const json = await response.json();
+                return json.result;
+            }
+        }
+    }
+
     async deleteOrphanedItems(orphanedItems) {
         if (!settings.storage_mode_internal())
             return this._postJSON("/storage/delete_orphaned_items", {node_uuids: orphanedItems});
@@ -54,6 +65,10 @@ class StorageExternal {
 
         if (referenceNode.external === CLOUD_EXTERNAL_TYPE)
             await CloudStorage.closeBatchSession();
+    }
+
+    async isBatchSessionOpen() {
+        return DiskStorage.isBatchSessionOpen();
     }
 }
 
