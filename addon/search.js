@@ -352,10 +352,10 @@ export function initializeOmnibox() {
 
                 let node = suggestion.__node;
                 if (node.type === NODE_TYPE_BOOKMARK && node.container) {
+                    await openContainerTab(url, node.container);
+
                     if (activeTab && activeTab.url === "about:newtab")
                         browser.tabs.remove(activeTab.id);
-
-                    openContainerTab(url, node.container);
                     return;
                 }
             }
