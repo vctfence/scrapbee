@@ -119,7 +119,7 @@ class ScrAddArchiveLocal {
     async execute(args) {
 
         const uuid = await cmdAPI.scrapyard.addArchive({
-            url:        "D:/sandbox/firefox/scrapyard/addon/icons/cloud.png",
+            url:        "D:/dev/firefox/scrapyard/addon/icons/cloud.png",
             title:      "Example Archive (Local)",
             icon:       "",
             path:       "shelf/my/directory",

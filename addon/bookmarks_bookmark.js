@@ -269,7 +269,7 @@ export class BookmarkManager extends EntityManager {
         return result;
     }
 
-    async reorder(positions, posProperty) {
+    async reorder(positions, posProperty = "pos") {
         try {
             await this.plugins.reorderBookmarks(positions);
         }
