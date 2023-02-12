@@ -3099,8 +3099,8 @@ async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,pa
 
         origstr = (datauri == origurl)? "": " data-savepage-src=\"" + origurl + "\"";
 
-        if (sandboxed)
-            origstr += " sandbox=\"allow-scripts\"";
+        // if (sandboxed)
+        //     origstr += " sandbox=\"allow-scripts\"";
 
         startTag = startTag.replace(/ src="[^"]*"/, origstr + " src=\"" + datauri + "\"");
 
@@ -4279,16 +4279,16 @@ async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,pa
                             }
                             else startTag = startTag.replace(/<iframe/,"<iframe srcdoc=\"" + htmltext + "\"");
 
-                            if (element.hasAttribute("sandbox"))  /* prevent scripts executing in cross-origin frames */
-                            {
-                                origsandbox = element.getAttribute("sandbox");
-
-                                origstr = " data-savepage-sandbox=\"" + origsandbox + "\"";
-
-                                startTag = startTag.replace(/ sandbox="[^"]*"/,origstr + " sandbox=\"allow-scripts\"");
-                            }
-                            else startTag = startTag.replace(/<iframe/,"<iframe sandbox=\"allow-scripts\"");
                             // Scrapyard //////////////////////////////////////////////////////////////////
+                            // if (element.hasAttribute("sandbox"))  /* prevent scripts executing in cross-origin frames */
+                            // {
+                            //     origsandbox = element.getAttribute("sandbox");
+                            //
+                            //     origstr = " data-savepage-sandbox=\"" + origsandbox + "\"";
+                            //
+                            //     startTag = startTag.replace(/ sandbox="[^"]*"/,origstr + " sandbox=\"allow-scripts\"");
+                            // }
+                            // else startTag = startTag.replace(/<iframe/,"<iframe sandbox=\"allow-scripts\"");
                             }
                             ////////////////////////////////////////////////////////////////// Scrapyard //
                         }

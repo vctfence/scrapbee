@@ -333,10 +333,8 @@ export class BrowserShelfPlugin {
         try {
             let parent = await ExternalNode.get(bookmark.parentId, BROWSER_EXTERNAL_TYPE);
             if (parent) {
-                _log({...bookmark})
                 let node = this._convertBookmark(bookmark, parent);
                 node = await Node.add(node);
-                _log({...node})
 
                 if (node.type !== NODE_TYPE_SEPARATOR)
                     await Bookmark.storeIconFromURI(node);
