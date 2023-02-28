@@ -115,7 +115,7 @@ export class CloudShelfPlugin {
         let otherNodes = nodes.filter(n => n.external !== CLOUD_EXTERNAL_TYPE);
 
         if (dest.external === CLOUD_EXTERNAL_TYPE) {
-            return Promise.all(otherNodes.map(async n => {
+            for (const n of otherNodes) {
                 if (isContainerNode(n)) {
                     return Bookmark.traverse(n, async (parent, node) => {
                         await this._moveNodeToCloud(dest, node);
@@ -126,9 +126,9 @@ export class CloudShelfPlugin {
                     await this._moveNodeToCloud(dest, n);
                     await this._createBookmarkInternal(n);
                 }
-            }));
+            }
         } else {
-            return Promise.all(cloudNodes.map(async n => {
+            for (const n of otherNodes) {
                 try {
                     if (isContainerNode(n)) {
                         await Bookmark.traverse(n, async (parent, node) => {
@@ -142,7 +142,7 @@ export class CloudShelfPlugin {
                 catch (e) {
                     console.error(e);
                 }
-            }));
+            }
         }
     }
 

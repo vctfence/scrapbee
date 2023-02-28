@@ -277,7 +277,6 @@ function lockDocument() {
 }
 
 function unlockDocument() {
-
     let lock = document.getElementById("scrapyard-waiting");
 
     if (lock)
