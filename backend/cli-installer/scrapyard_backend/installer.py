@@ -44,10 +44,10 @@ def write_manifest(template, destination, executable_path):
             manifest_out.write(manifest_text)
 
 
-def write_reg_hkcu_value(path, value):
+def write_reg_hklm_value(path, value):
     try:
-        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
-        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, winreg.KEY_WRITE)
+        winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, path)
+        registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path, 0, winreg.KEY_WRITE)
         winreg.SetValueEx(registry_key, "", 0, winreg.REG_SZ, value)
         winreg.CloseKey(registry_key)
     except WindowsError:
@@ -95,5 +95,5 @@ if platform.system() != "Windows":
 if platform.system() == "Windows":
     import winreg
 
-    write_reg_hkcu_value(f"Software\\Mozilla\\NativeMessagingHosts\\{native_base}", firefox_manifest_path)
-    write_reg_hkcu_value(f"Software\\Google\\Chrome\\NativeMessagingHosts\\{native_base}", chrome_manifest_path)
+    write_reg_hklm_value(f"Software\\Mozilla\\NativeMessagingHosts\\{native_base}", firefox_manifest_path)
+    write_reg_hklm_value(f"Software\\Google\\Chrome\\NativeMessagingHosts\\{native_base}", chrome_manifest_path)

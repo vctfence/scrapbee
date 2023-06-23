@@ -102,7 +102,8 @@ async function getStorageMetadata(syncDirectory) {
         return;
     }
     else if (storageMetadata.error === "empty" || !storageMetadata.entities) {
-        showNotification("The disk storage is missing or empty.");
+        showNotification("The disk storage is missing or empty.\n"
+                            + "If you are just starting to work with Scrapyard, please create a bookmark to mute this message.");
         return;
     }
     else if (storageMetadata.type !== "index") {

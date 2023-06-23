@@ -2,13 +2,13 @@ Unicode True
 
 !define APPNAME "Scrapyard Backend"
 !define DIRNAME "Scrapyard"
-!define VERSION "2.1.1"
+!define VERSION "2.1.2"
 
 !define APPNAMEANDVERSION "${APPNAME} ${VERSION}"
 
 ; Main Install settings
 Name "${APPNAMEANDVERSION}"
-InstallDir "$PROGRAMFILES64\${DIRNAME}"
+InstallDir "$APPDATA\${DIRNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" ""
 OutFile "scrapyard-backend-${VERSION}_x86_64.exe"
 
@@ -193,8 +193,8 @@ SectionEnd
 
 Section -FinishSection
 
-    WriteRegStr HKCU "Software\Mozilla\NativeMessagingHosts\scrapyard_helper" "" "$INSTDIR\manifest.json"
-    WriteRegStr HKCU "SOFTWARE\Google\Chrome\NativeMessagingHosts\scrapyard_helper" "" "$INSTDIR\manifest.json.chrome"
+    WriteRegStr HKLM "Software\Mozilla\NativeMessagingHosts\scrapyard_helper" "" "$INSTDIR\manifest.json"
+    WriteRegStr HKLM "SOFTWARE\Google\Chrome\NativeMessagingHosts\scrapyard_helper" "" "$INSTDIR\manifest.json.chrome"
 
 	WriteRegStr HKLM "Software\${APPNAME}" "" "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"

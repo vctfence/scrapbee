@@ -4472,8 +4472,9 @@ async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,pa
             htmlStrings[htmlStrings.length] = htmltext;
 
             // Undo style alterations made by Chrome
-            htmltext = prefix + `<style>body {font-family: initial; font-size: initial;}</style>`;
-            htmlStrings[htmlStrings.length] = htmltext;
+            // currently disabled since it changes look of some pages and is required only for the IDB storage mode on Chrome
+            // htmltext = prefix + `<style>body {font-family: initial; font-size: initial;}</style>`;
+            // htmlStrings[htmlStrings.length] = htmltext;
             ////////////////////////////////////////////////////////////////// Scrapyard //
 
             /* Add first favicon from document head or if none add favicon from website root */
