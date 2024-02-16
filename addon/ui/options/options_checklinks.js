@@ -87,7 +87,7 @@ export class LinkChecker {
         const path = await Path.compute(node);
         path.length = path.length - 1;
 
-        let breadcrumb = " &#187; ";
+        let breadcrumb = " &nbsp; ";
 
         for (let i = 0; i < path.length; ++i) {
             breadcrumb += path[i].name;
@@ -223,6 +223,7 @@ export class LinkChecker {
 
                 if (error) {
                     this.resultCount += 1;
+                    this._appendSelectAllRow(checkResultTable, 5);
                     await displayLinkError(error, node);
 
                     if (networkError && updateIcons && node.icon && !node.stored_icon) {
@@ -336,6 +337,7 @@ export class LinkChecker {
 
         if (this.resultCount) {
             for (const [link, bucket] of buckets.entries()) {
+                this._appendSelectAllRow(checkResultTable, 2);
                 displayLink(link);
                 for (const node of bucket) {
                     await displayLinkDuplicate(node);
@@ -347,6 +349,25 @@ export class LinkChecker {
         }
 
         send.stopProcessingIndication();
+    }
+
+    _appendSelectAllRow(table, span) {
+        if (table.children().length === 0) {
+            table.append(`
+                <tr>
+                    <td class="link-check-service-cell">
+                        <input class="check-result-selected" id="check-all-links" type="checkbox"/>
+                    </td>
+                    <td colspan="${span}"><label for="check-all-links">Select all</label></td>
+                </tr>`);
+
+            $("#check-all-links").on("change", e => {
+                if ($(e.target).is(":checked"))
+                    $(".check-result-selected").prop("checked", true);
+                else
+                    $(".check-result-selected").prop("checked", false);
+            });
+        }
     }
 
     async startCheckLinks() {

@@ -249,7 +249,7 @@ async function setUpLocalFileCapture(message) {
         return local_uri;
     }
     else {
-        throw new Error("Can not connect to the native application.");
+        throw new Error("Can not connect to the backend application.");
     }
 }
 
