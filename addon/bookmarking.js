@@ -5,7 +5,7 @@ import {
     injectCSSFile,
     injectScriptFile,
     showNotification,
-    isHTMLTab, askCSRPermission
+    isHTMLTab, askCSRPermission, ACTION_ICONS
 } from "./utils_browser.js";
 import {capitalize, getMimetypeByExt, sleep} from "./utils.js";
 import {send, sendLocal} from "./proxy.js";
@@ -498,5 +498,25 @@ export async function removeFromBookmarksToolbar(uuid) {
 
         if (refToRemove)
             return browser.bookmarks.remove(refToRemove.id);
+    }
+}
+
+export async function setBookmarkedActionIcon(url) {
+    const action = _MANIFEST_V3? browser.action: browser.browserAction;
+
+    if (!url)
+        url = (await getActiveTab())?.url;
+
+    if (await Node.urlExists(url)) {
+        if (settings.platform.firefox)
+            action.setIcon({path: "/icons/scrapyard-star.svg"});
+        else
+            action.setIcon({path: "/icons/scrapyard-star.png"});
+    }
+    else {
+        if (settings.platform.firefox)
+            action.setIcon({path: "/icons/scrapyard.svg"});
+        else
+            action.setIcon({path: ACTION_ICONS});
     }
 }

@@ -50,6 +50,7 @@ import {systemInitialization} from "../bookmarks_init.js";
 import {getSidebarWindow} from "../utils_sidebar.js";
 import {helperApp} from "../helper_app.js";
 import {ExternalStorage} from "../storage_external.js";
+import {setBookmarkedActionIcon} from "../bookmarking.js";
 
 const INPUT_TIMEOUT = 1000;
 const MENU_ID_TO_SEARCH_MODE = {
@@ -831,6 +832,8 @@ receive.bookmarkAdded = message => {
     if (settings.switch_to_new_bookmark())
         if (!tree.updateTentativeNode(message.node))
             selectNode(message.node);
+
+    return setBookmarkedActionIcon();
 };
 
 receive.bookmarkCreated = message => {

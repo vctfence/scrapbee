@@ -3,7 +3,7 @@ import {receive, receiveExternal, sendLocal} from "./proxy.js";
 import {systemInitialization} from "./bookmarks_init.js";
 import {browserShelf} from "./plugin_browser_shelf.js";
 import {cloudShelf} from "./plugin_cloud_shelf.js";
-import {addBookmarkOnCommand} from "./bookmarking.js";
+import {addBookmarkOnCommand, setBookmarkedActionIcon} from "./bookmarking.js";
 import {toggleSidebarWindow} from "./utils_sidebar.js";
 import {undoManager} from "./bookmarks_undo.js";
 import {helperApp} from "./helper_app.js";
@@ -84,6 +84,16 @@ browser.commands.onCommand.addListener(function(command) {
         toggleSidebarWindow();
     else
         addBookmarkOnCommand(command);
+});
+
+browser.tabs.onActivated.addListener(async activeInfo => {
+    const tab = await browser.tabs.get(activeInfo.tabId);
+    return setBookmarkedActionIcon(tab.url);
+});
+
+browser.tabs.onUpdated.addListener(async (tabId, changed, tab) => {
+    if (tab.status === "complete")
+        return setBookmarkedActionIcon(tab.url);
 });
 
 console.log("==> core.js loaded");

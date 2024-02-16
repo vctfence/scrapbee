@@ -101,6 +101,12 @@ export class NodeIDB extends EntityIDB {
         return this._db.nodes.where("uuid").equals(node.uuid).count();
     }
 
+    async urlExists(url) {
+        if (!url)
+            return false;
+        return !!await this._db.nodes.where("uri").equals(url).count();
+    }
+
     async get(ids) {
         if (!ids)
             return this._db.nodes.toArray();

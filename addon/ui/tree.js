@@ -37,7 +37,7 @@ import {
 import {getThemeVar, isElementInViewport} from "../utils_html.js";
 import {getActiveTabFromSidebar, openContainerTab, openPage, showNotification} from "../utils_browser.js";
 import {IMAGE_FORMATS} from "../utils.js";
-import {createBookmarkFromURL, formatShelfName} from "../bookmarking.js";
+import {createBookmarkFromURL, formatShelfName, setBookmarkedActionIcon} from "../bookmarking.js";
 import {Bookmark} from "../bookmarks_bookmark.js";
 import {Comments, Icon, Node} from "../storage_entities.js";
 import UUID from "../uuid.js";
@@ -1294,6 +1294,8 @@ class BookmarkTree {
 
                                 tree.delete_node(selectedNodes);
                                 this.onDeleteShelf(selectedIds);
+
+                                await setBookmarkedActionIcon();
                             }
                             finally {
                                 this.stopProcessingIndication();
@@ -1307,6 +1309,8 @@ class BookmarkTree {
                             try {
                                 await send.softDeleteNodes({node_ids: selectedNodes.map(n => o(n).id)});
                                 tree.delete_node(selectedNodes);
+
+                                await setBookmarkedActionIcon();
                             }
                             finally {
                                 this.stopProcessingIndication();
