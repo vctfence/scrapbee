@@ -249,9 +249,12 @@ var skipIfSelected;
 
 var loadShadowDom;
 
+var isReddit = location.origin.includes("reddit.com");
+
 function lockDocument() {
     if (document.body.firstChild && document.body.firstChild.id !== "scrapyard-waiting") {
-        let lock = document.createElement("div");
+        const imgDomains = ["reddit.com"];
+        const lock = document.createElement("div");
         lock.id = "scrapyard-waiting";
 
         lock.style.zIndex = 2147483647;
@@ -267,8 +270,12 @@ function lockDocument() {
         lock.style.alignItems = "center";
         lock.style.justifyContent = "center";
 
-        let image = document.createElement("object");
-        image.setAttribute("data", browser.runtime.getURL(`icons/lock.svg`));
+        const useImg = imgDomains.some(d => location.origin.includes(d));
+        const elementTagName = useImg? "img": "object";
+        const propertyName = useImg? "src": "data";
+
+        const image = document.createElement(elementTagName);
+        image.setAttribute(propertyName, browser.runtime.getURL(`icons/lock.svg`));
         image.setAttribute("type", "image/svg+xml");
         lock.appendChild(image);
 
@@ -289,6 +296,20 @@ function clearDocumentEncoding(doc) {
 
     if (meta)
         meta.parentNode.removeChild(meta);
+}
+
+var subredditVarsCtr = 0;
+function scrapyardExcludeElement(element) {
+    if (element?.id === "scrapyard-waiting")
+        return true;
+    else if (isReddit && element?.className?.startsWith && element?.className?.startsWith("subredditvars")
+                && subredditVarsCtr === 0) {
+        element.style.height = "0";
+        subredditVarsCtr++;
+        return true;
+    }
+
+    return false;
 }
 ////////////////////////////////////////////////////////////////// Scrapyard //
 
@@ -1197,6 +1218,11 @@ async function gatherOtherResources()
 
 function findOtherResources(depth,frame,element,crossframe,nosrcframe,loadedfonts,framekey)
 {
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    if (scrapyardExcludeElement(element))
+        return;
+    ////////////////////////////////////////////////////////////////// Scrapyard //
+
     var i,j,displayed,style,csstext,baseuri,charset,dupelement,dupsheet,location,currentsrc,passive,documenturi,origurl,newurl,subframekey,parser,framedoc,shadowroot;
     var subloadedfonts = new Array();
 
@@ -3081,6 +3107,11 @@ function createLargeTestFile()
 async function extractHTML(depth,frame,element,crossframe,nosrcframe,framekey,parentpreserve,indent)
 ////////////////////////////////////////////////////////////////// Scrapyard //
 {
+    // Scrapyard //////////////////////////////////////////////////////////////////
+    if (scrapyardExcludeElement(element))
+        return;
+    ////////////////////////////////////////////////////////////////// Scrapyard //
+
     var i,j,startTag,textContent,endTag,inline,preserve,style,display,position,whitespace,displayed,csstext,baseuri,documenturi,separator,origurl,datauri,origstr,dupelement,dupsheet,location,newurl;
     var visible,width,height,currentsrc,svgstr,parser,svgdoc,svgfragid,svgelement,svghref,subframekey,startindex,endindex,htmltext,origsrcdoc,origsandbox,framedoc,prefix,shadowroot;
     var doctype,target,text,asciistring,date,datestr,pubelement,pubstr,pubzone,pubdate,pubdatestr,pageurl,state;
