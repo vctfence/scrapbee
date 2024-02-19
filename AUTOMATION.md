@@ -339,7 +339,7 @@ create separate add-ons for the Scrapyard automation in the most cases. See the 
 #### Uploading Local Files to Scrapyard
 
 In the following example, we create a command that stores a local file
-in Scrapyard under the folder specified by the `at` argument.
+in Scrapyard under the folder specified by the `to` argument.
 
 In iShell, the global object `cmdAPI.scrapyard` provides the same methods as the ES6 wrapper referenced above, so
 there is no need to import anything.
@@ -350,14 +350,14 @@ there is no need to import anything.
     creates the command named "upload-file".
 
     # Syntax
-    **upload-file** _file path_ **at** _folder path_
+    **upload-file** _file path_ **to** _folder path_
 
     # Arguments
     - _file path_ - a local file path
     - _folder path_ - a full path of a folder in Scrapyard
 
     # Examples
-    **upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
+    **upload-file** *d:/documents/my file.pdf* **to** *papers/misc*
 
     @command
     @markdown
@@ -371,14 +371,14 @@ class UploadFile {
         // cmdAPI.scrapyard.noun_type_directory provides the list of all Scrapyard directories
         // to autocompletion. A precaution is taken in the case of missing Scrapyard add-on.
         const directory_noun = cmdAPI.scrapyard?.noun_type_directory || {suggest: () => ({})};
-        args[AT] = {nountype: directory_noun, label: "directory"};
+        args[TO] = {nountype: directory_noun, label: "directory"};
     }
 
-    preview({OBJECT, AT}, display) {
+    preview({OBJECT, TO}, display) {
         display.text(`Upload file <b>${OBJECT?.text}</b> to the <b>${AT?.text}</b> folder in Scrapyard.`);
     }
 
-    async execute({OBJECT, AT}) {
+    async execute({OBJECT, TO}) {
         if (!OBJECT?.text)
             return;
 
@@ -390,7 +390,7 @@ class UploadFile {
         cmdAPI.scrapyard.addArchive({
             title:   title,
             url:     localPath,
-            path:    AT?.text,
+            path:    TO?.text,
             local:   true,
             select:  true
         });
@@ -400,7 +400,7 @@ class UploadFile {
 
 Command example:
 
-**upload-file** *d:/documents/my file.pdf* **at** *papers/misc*
+**upload-file** *d:/documents/my file.pdf* **to** *papers/misc*
 
 #### Processing Archives with Python
 
