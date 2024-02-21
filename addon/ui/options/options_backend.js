@@ -8,9 +8,9 @@ async function loadHelperAppLinks() {
 
     helperAppVersionP.data("loaded", true);
 
-    function setDownloadLinks(link1, link2) {
-        const app = link1.endsWith(".exe")? link1: link2;
-        const archive = link1.endsWith(".tgz")? link1: link2;
+    function setDownloadLinks(assets) {
+        const app = assets.find(a => a.browser_download_url.endsWith(".exe")).browser_download_url;
+        const archive = assets.find(a => a.browser_download_url.endsWith(".tgz")).browser_download_url;
         $("#helper-windows-inst").attr("href", app);
         $("#helper-manual-inst").attr("href", archive);
     }
@@ -21,7 +21,7 @@ async function loadHelperAppLinks() {
 
         if (response.ok) {
             let release = JSON.parse(await response.text());
-            setDownloadLinks(release.assets[0].browser_download_url, release.assets[1].browser_download_url);
+            setDownloadLinks(release.assets);
 
             let version = release.name.split(" ");
             version = version[version.length - 1];

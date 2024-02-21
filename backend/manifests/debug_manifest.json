@@ -1,7 +1,7 @@
 {
 "name": "scrapyard_helper",
 "description": "Scrapyard backend application",
-"path": "D:\\dev\\firefox\\scrapyard\\backend\\debug.cmd",
+"path": "D:\\dev\\browser\\scrapyard\\backend\\debug.cmd",
 "type": "stdio",
 "allowed_extensions": [ "scrapyard@firefox", "scrapyard-we@firefox" ]
 }

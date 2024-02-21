@@ -18,7 +18,7 @@ class Settings(context: Context) {
     }
 
     val startupScreen: String
-        get() = this.getString(PREF_STARTUP_SCREEN, STARTUP_SCREEN_PROVIDERS)!!
+        get() = this.getString(PREF_STARTUP_SCREEN, STARTUP_SCREEN_SETTINGS)!!
 
     val rememberTreeState: Boolean
         get() = this.getBoolean(PREF_REMEMBER_TREE_STATE, false)
@@ -73,7 +73,7 @@ class Settings(context: Context) {
     companion object {
         const val STARTUP_SCREEN_CLOUD = "cloud"
         const val STARTUP_SCREEN_SYNC = "sync"
-        const val STARTUP_SCREEN_PROVIDERS = "providers"
+        const val STARTUP_SCREEN_SETTINGS = "settings"
 
         const val CLOUD_PROVIDER_DROPBOX = "dropbox"
         const val CLOUD_PROVIDER_ONEDRIVE = "onedrive"

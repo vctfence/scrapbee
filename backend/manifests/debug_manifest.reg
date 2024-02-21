@@ -1,7 +1,7 @@
 Windows Registry Editor Version 5.00
 
 [HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\scrapyard_helper]
-@="D:\\dev\\firefox\\scrapyard\\backend\\manifests\\debug_manifest.json"
+@="D:\\dev\\browser\\scrapyard\\backend\\manifests\\debug_manifest.json"
 
 [HKEY_CURRENT_USER\SOFTWARE\Google\Chrome\NativeMessagingHosts\scrapyard_helper]
-@="D:\\dev\\firefox\\scrapyard\\backend\\manifests\\debug_manifest.json.chrome"
+@="D:\\dev\\browser\\scrapyard\\backend\\manifests\\debug_manifest.json.chrome"

@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
                 when (settings.startupScreen) {
                     Settings.STARTUP_SCREEN_CLOUD -> R.id.nav_cloud_shelf
                     Settings.STARTUP_SCREEN_SYNC -> R.id.nav_sync
-                    else -> R.id.nav_providers
+                    else -> R.id.nav_settings
                 }
 
             navController.graph = navGraph

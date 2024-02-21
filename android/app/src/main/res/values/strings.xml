@@ -22,7 +22,7 @@
     <string name="successfully_shared">Successfully shared to Scrapyard</string>
     <string name="error_accessing_cloud">Error accessing cloud</string>
     <string name="no_internet">No Internet connection</string>
-    <string name="configure_cloud_provider">A cloud provider needs to be configured</string>
+    <string name="configure_cloud_provider">Please, authorize a cloud provider</string>
     <string name="can_not_share_to_empty_sync">Can not share to the empty Sync storage</string>
     <string name="sharing_failure">Sharing failure</string>
 
@@ -53,12 +53,12 @@
     <string-array name="startup_screen_entries">
         <item>Cloud Shelf</item>
         <item>Sync Bookmarks</item>
-        <item>Providers</item>
+        <item>Settings</item>
     </string-array>
     <string-array name="startup_screen_values">
         <item>cloud</item>
         <item>sync</item>
-        <item>providers</item>
+        <item>settings</item>
     </string-array>
 
     <string name="remember_tree_state">Remember tree state</string>
